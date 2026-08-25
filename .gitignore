@@ -1,0 +1,21 @@
+.env
+.env.*
+!.env.example
+
+# Database dumps
+*.sql
+
+# Uploaded files
+uploads/
+
+# Runtime files
+writable/cache/
+writable/logs/
+writable/session/
+
+# Dependencies
+vendor/
+
+# IDE
+.vscode/
+.idea/
