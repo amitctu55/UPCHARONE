@@ -66,235 +66,147 @@ if(
   <link rel="stylesheet" type="text/css" href="<?=base_url();?>style_home.css">
   <link rel="stylesheet" type="text/css" href="<?=base_url();?>style_home2.css">
   <link rel="stylesheet" type="text/css" href="<?=base_url();?>media.css">
-  <style type="text/css">
-     .login
- {
-    margin-left: 54px;
-    border: 1px solid #fff;
-    padding: 11px 30px;
-    margin-top: 9px;
-    float: right;
-    color: #fff;
-}
-.login a
-{color: #fff;}
-.login:hover
-{background: #9bc03c;
-color: #fff;}
+  <link rel="stylesheet" type="text/css" href="<?=base_url();?>public/css/landing_modern.css">
+</head>
 
-.iconEffect {
-    padding: 7px;
-    border-radius: 20px;
-    transition:0.2s;
-    transition-timing-function: ease-in;
-}
-.navbar-nav > li:hover .iconEffect{
-   transform: scale(1.3, 1.3);
-}
-
- .dropdown:hover .dropdown-menu{
-     display:block;
- }
-
-.nav .open>a, .nav .open>a:focus, .nav .open>a:hover {
-    background-color: #9bc03c;
-    border-color: #337ab7;
-}
-
-.careplus-user-list li {
-  
-    margin: 15px 0px 0px -11px!important;
- 
-}
-/*--madicine model box css--*/
-#login-form-link, #register-form-link{color:white;padding: 10px 22%;}
-#login-form-link, #register-form-link:hover{text-decoration:none;}
-.modelhead{background:#9bc03c;}
-#login-submit{background: #9bc03c;color: white;}
-
-.dropdown {
-  position: relative;
-  display: inline-block;
-}
-
-.dropdown-content {
-    display: none;
-    position: absolute;
-    background-color: #f1f1f1;
-    min-width: 158px;
-    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
-    z-index: 9;
-    text-align: center;
-}
-
-.dropdown-content a {
-    color: white;
-    padding: 12px 16px;
-    text-decoration: none;
-    display: block;
-    background: #043d5b;
-}
-.dropdown-content a:active {background:red;}
-.dropdown-content a:hover {
-    background-color: #073146;
-    color: white;
-}
-.dropdown-menu li {
-    background: #9bbf3c;
-    text-align: center;
-    border-bottom: 2px solid #82a032;
-    
-}
-
-.dropdown-menu li a {
-    color: white;
-    font-weight: bold;
-    background: #9abf3c;
-    padding: 12px 55px;
-}
-.dropdown:hover .dropdown-content {display: block;}
-
-.dropdown:hover .dropbtn {background-color: #073146;color:white;}
-
-.mynavback {
-    background: none!important;
-}
-#boxdiv {
-    margin-bottom: 31px!important;
-}
-
-.popboxdesign2{
-     float: left;
-    width: 100%;
-    height: 88px;
-}
-
-
-  </style>
-
-
+<body>
+<header>
   <div class="container">
     <div class="row">
-      <aside class="col-md-3 logocont"><a href="<?=base_url();?>" class="careplus-logo"><img id="upchar_logo" src="<?=base_url();?>images/Final_logo23.png" alt=""></a></aside>
+      <aside class="col-md-3 logocont">
+        <a href="<?=base_url();?>" class="careplus-logo">
+          <img id="upchar_logo" src="<?=base_url();?>images/Final_logo23.png" alt="Upchar Logo">
+        </a>
+      </aside>
       <aside class="col-md-9" id="HeadMobile">
-        <h2 class="sitename"><b>UPCHAR</b></h2>
-        <h6 class="slogan">one place of your healthcare</h6>
         <nav class="navbar">
           <ul class="nav navbar-nav navbar-right">
-            <li><a href="<?=base_url();?>"><span class="glyphicon glyphicon-home iconEffect"></span> Home</a></li>
-            <li class="showPartners" data-target="#madicine"><a href="<?=base_url();?>"><span class="glyphicon glyphicon-thumbs-up iconEffect"></span> Upchar Partner</a></li>
-            <li class="dropdown">
-              <a class="dropdown-toggle" data-toggle="dropdown" href="<?=base_url();?>">
-              <i class="fas fa-handshake iconEffect"></i> Partner Login <span class="caret"></span></a>
-              <ul class="dropdown-menu" style="background: none;">
-                <li> <a href="<?=base_url();?>doctor-aindex">Doctor</a></li>
-                <li> <a href="<?=base_url();?>hospital-aindex">Hospital</a></li>
-                <li> <a href="<?=base_url();?>pathlab-login">Pathology</a></li>
-              </ul>
+            <li>
+              <a href="<?=base_url();?>">
+                <span class="glyphicon glyphicon-home iconEffect"></span> Home
+              </a>
             </li>
+
+            <!-- 1. Our Partners (4-Category Dropdown: Hospital, Doctor, Pathology, Pharmacy) -->
+            <li class="dropdown partner-dropdown-container">
+              <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
+                <i class="fas fa-handshake iconEffect"></i> Our Partners <span class="caret"></span>
+              </a>
+              <div class="partner-menu-box">
+                <div class="partner-menu-header">
+                  <h5><i class="fas fa-hospital-user" style="color: #00A896;"></i> Our Partner Network</h5>
+                  <span>Verified Healthcare Providers</span>
+                </div>
+                <div class="partner-grid">
+                  <a href="<?=base_url('hospitals');?>" class="partner-card-link">
+                    <div class="partner-card-icon"><i class="fas fa-hospital"></i></div>
+                    <div class="partner-card-text">
+                      <h6>Hospital</h6>
+                      <p>Browse network hospitals & clinics</p>
+                    </div>
+                  </a>
+                  <a href="<?=base_url('doctors');?>" class="partner-card-link">
+                    <div class="partner-card-icon"><i class="fas fa-user-md"></i></div>
+                    <div class="partner-card-text">
+                      <h6>Doctor</h6>
+                      <p>Certified specialists & surgeons</p>
+                    </div>
+                  </a>
+                  <a href="<?=base_url('mytest');?>" class="partner-card-link">
+                    <div class="partner-card-icon"><i class="fas fa-flask"></i></div>
+                    <div class="partner-card-text">
+                      <h6>Pathology</h6>
+                      <p>Diagnostic labs & sample testing</p>
+                    </div>
+                  </a>
+                  <a href="<?=base_url('medical-signup');?>" class="partner-card-link">
+                    <div class="partner-card-icon"><i class="fas fa-pills"></i></div>
+                    <div class="partner-card-text">
+                      <h6>Pharmacy</h6>
+                      <p>Verified chemist & medical stores</p>
+                    </div>
+                  </a>
+                </div>
+              </div>
+            </li>
+
+            <!-- 2. Become Partner / Login (4 Portal Categories with Login & Join Actions) -->
+            <li class="dropdown partner-dropdown-container">
+              <a class="dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">
+                <i class="fas fa-user-plus iconEffect"></i> Become Partner / Login <span class="caret"></span>
+              </a>
+              <div class="partner-menu-box">
+                <div class="partner-menu-header">
+                  <h5><i class="fas fa-shield-alt" style="color: #00A896;"></i> Partner Access Portal</h5>
+                  <span>Onboarding & Account Login</span>
+                </div>
+                <div class="partner-grid">
+                  <div class="partner-login-card">
+                    <div class="partner-card-icon"><i class="fas fa-user-md"></i></div>
+                    <div class="partner-card-text">
+                      <h6>Doctor Portal</h6>
+                      <div class="partner-card-actions">
+                        <a href="<?=base_url('doctor-aindex');?>" class="partner-btn-login"><i class="fas fa-sign-in-alt"></i> Login</a>
+                        <a href="<?=base_url('doctor-signup');?>" class="partner-btn-join"><i class="fas fa-plus"></i> Join</a>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="partner-login-card">
+                    <div class="partner-card-icon"><i class="fas fa-hospital"></i></div>
+                    <div class="partner-card-text">
+                      <h6>Hospital Portal</h6>
+                      <div class="partner-card-actions">
+                        <a href="<?=base_url('hospital-aindex');?>" class="partner-btn-login"><i class="fas fa-sign-in-alt"></i> Login</a>
+                        <a href="<?=base_url('hospital-signup');?>" class="partner-btn-join"><i class="fas fa-plus"></i> Join</a>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="partner-login-card">
+                    <div class="partner-card-icon"><i class="fas fa-flask"></i></div>
+                    <div class="partner-card-text">
+                      <h6>Pathology Lab</h6>
+                      <div class="partner-card-actions">
+                        <a href="<?=base_url('pathlab-login');?>" class="partner-btn-login"><i class="fas fa-sign-in-alt"></i> Login</a>
+                        <a href="<?=base_url('pathlab-signup');?>" class="partner-btn-join"><i class="fas fa-plus"></i> Join</a>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="partner-login-card">
+                    <div class="partner-card-icon"><i class="fas fa-pills"></i></div>
+                    <div class="partner-card-text">
+                      <h6>Pharmacy Store</h6>
+                      <div class="partner-card-actions">
+                        <a href="<?=base_url('medical-login');?>" class="partner-btn-login"><i class="fas fa-sign-in-alt"></i> Login</a>
+                        <a href="<?=base_url('medical-signup');?>" class="partner-btn-join"><i class="fas fa-plus"></i> Join</a>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </li>
+
             <?php if ($this->session->userdata('userid')==''){ ?>
             <li>
               <a href="https://upcharrnews.blogspot.com/" target="_blank"><i class="fas fa-newspaper iconEffect"></i> Blog</a>
             </li>
             <li>
-              <a href="<?=base_url('login');?>"><span class="glyphicon glyphicon-log-in iconEffect"></span> Login / <span class="glyphicon glyphicon-user iconEffect"></span> Sign Up </a>
+              <a href="<?=base_url('login');?>" class="nav-login-btn"><span class="glyphicon glyphicon-log-in iconEffect"></span> Patient Login</a>
             </li>
-        	  <?php } ?>
+            <?php } else { ?>
+            <li>
+              <a href="<?=base_url('myappointments');?>"><i class="fas fa-calendar-alt iconEffect"></i> My Appointments</a>
+            </li>
+            <li>
+              <a href="<?=base_url('Home/logout');?>" class="nav-logout-btn"><span class="glyphicon glyphicon-log-out iconEffect"></span> Logout</a>
+            </li>
+            <?php } ?>
           </ul>
         </nav>
       </aside>
-      <img class="mobileIcon" src="images/menu_icon.png" />
+      <img class="mobileIcon" src="<?=base_url();?>images/menu_icon.png" alt="Menu" />
     </div>    
   </div>
 </header>
-<div id="showBox">
-  <div class="col-md-12" id="showboxmargin">
-    <div class="careplus-fancy-title" id="boxdiv">
-      <button style="background: #043d5b;color:white;padding: 11px 13px;opacity: 1;" class="close">x</button>
-      <h2 style="color:black;">Our Partner's</h2>
-      <span><small></small><i class="fas fa-link"></i></span>
-    </div>
-    <div class="careplus-blog careplus-blog-modern">
-      <ul class="row">
-        <li class="col-md-3" id="tabpopup">  
-          <figure class="popboxdesign"><a href='<?=base_url();?>hospitals'><img class="popboxdesign" src="images/Hospital.jpg" alt=""><span><i class="fa fa-link"></i><small></small></span></a>
-          </figure>
-          <div class="careplus-blog-modern-text text-center">
-            <h6><a href='<?=base_url();?>hospitals'>Hospital</a></h6>
-          </div> 
-        </li>
-        <li class="col-md-3" id="tabpopup">
-          <figure class="popboxdesign"><a href="#"><img class="popboxdesign" src="images/blog-modern-img3.jpg" alt=""><span><i class="fa fa-link"></i><small></small></span></a>
-          </figure>
-          <div class="careplus-blog-modern-text text-center">
-            <h6><a href="#">Pathology</a></h6>
-          </div>
-        </li>
-        <li class="col-md-3" id="tabpopup">
-          <figure class="popboxdesign"><a href="#"><img class="popboxdesign" src="images/3d-printed-pharmaceuticals-header_kss.jpg" alt=""><span><i class="fa fa-link"></i><small></small></span></a>
-          </figure>
-          <div class="careplus-blog-modern-text text-center">
-            <h6><a href="#" data-toggle="modal" data-target="#madicine">Medicine</a></h6>
-          </div>
-        </li>
-        <li class="col-md-3" id="tabpopup">
-          <figure class="popboxdesign"> <a href='<?=base_url();?>doctors'><img class="popboxdesign" class="popboxdesign" src="images/blog-modern-img2.jpg" alt=""><span><i class="fa fa-link"></i><small></small></span></a>
-          </figure>
-          <div class="careplus-blog-modern-text text-center">
-            <h6><a href='<?=base_url();?>doctors'>Doctor</a></h6>
-          </div>
-        </li>
-      </ul>
-    </div>
-  </div>
-</div>
-
-<script type="text/javascript">
-  $(function() {
-
-    $('#login-form-link').click(function(e) {
-    $("#login-form").delay(100).fadeIn(100);
-    $("#register-form").fadeOut(100);
-    $('#register-form-link').removeClass('active');
-    $(this).addClass('active');
-    e.preventDefault();
-  });
-  $('#register-form-link').click(function(e) {
-    $("#register-form").delay(100).fadeIn(100);
-    $("#login-form").fadeOut(100);
-    $('#login-form-link').removeClass('active');
-    $(this).addClass('active');
-    e.preventDefault();
-  });
-
-});
-
-</script>
-
-<script>
-$(document).ready(function() {
-        $("#showBox").hide();
-    $(".showPartners").on("mouseenter", function() {
-        $("#showBox").show();
-    })
-     $(".showPartners").on("mouseleave", function() {
-        $("#showBox").hide();
-    })
-    $('#showBox').on("mouseleave", function() {
-        $("#showBox").hide();
-    });
-
-    $(".close").click(function(){
-    $("#showBox").css("display", "none");
-    
-  });
-
-     $("#showBox").on("mouseenter", function() {
-        $("#showBox").show();
-    })
-});
-
-</script>
 
 <script> 
 $(document).ready(function(){
@@ -302,5 +214,4 @@ $(document).ready(function(){
     $(".navbar").slideToggle("slow");
   });
 });
-
 </script>

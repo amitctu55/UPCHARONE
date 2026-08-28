@@ -1,375 +1,607 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <style>
-  .label-name{
-    text-align:left!important;
-    margin-top:-5px;
+<style>
+  :root {
+    --adm-navy: #1d2a44;
+    --adm-teal: #00a896;
+    --adm-slate-900: #0f172a;
+    --adm-slate-800: #1e293b;
+    --adm-slate-700: #334155;
+    --adm-slate-600: #475569;
+    --adm-slate-100: #f1f5f9;
+    --adm-border: #cbd5e1;
   }
-  .starspan
-  {
-    color:#e80909;
-    font-size:18px;
+
+  .dashboard-wrapper {
+    font-family: 'Inter', sans-serif;
+    color: var(--adm-slate-800);
   }
-  .mainheadlinerow
-  {
-    padding:5px;margin-top:10px;margin-bottom:10px;
+
+  .content-header h1 {
+    color: var(--adm-slate-900) !important;
+    font-weight: 700;
+    font-size: 22px;
+    margin-bottom: 5px;
   }
-  .mainheadline
-  {
-    background:#3c8dbc;margin-top:10px;margin-bottom:10px;color:#fff;padding:9px;font-weight:600;
+  .content-header h1 small {
+    color: var(--adm-slate-600) !important;
+    font-size: 13px;
   }
-  .mainheadlinefirstrow
-  {
-    padding:5px;
+
+  .section-banner {
+    background: linear-gradient(135deg, #1d2a44 0%, #0f172a 100%);
+    color: #ffffff;
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
   }
-  .mainheadlinefirst
-  {
-    background:#3c8dbc;margin-top:-15px;margin-bottom:15px;color:#fff;padding:9px;font-weight:600;
+  .section-banner h2 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
   }
-  .othernote{
-      font-weight:600;font-size:13px;color:#d20c0c;
+
+  /* 8 Core Metrics Grid - Auto-responsive & equal height */
+  .dash-metric-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 18px;
+    margin-bottom: 25px;
   }
-  .mainhead{font-weight:600;margin-bottom:20px;}
-  .formbody{border:1px solid #d6d2d2;padding:10px;border-radius:4px;}
-  .note{font-weight:600;margin-top:10px;margin-bottom:20px;}
-  
-  #reset{background:#fff;color:#000;padding: 6px 30px;}
-  </style>
-</head>
-<body class="hold-transition skin-blue sidebar-mini">
-	<div class="wrapper">
-		<div class="content-wrapper">
-			<section class="content-header">
-				<h1>
-					Dashboard
-					<small>Control panel</small>
-				</h1>
-				<ol class="breadcrumb">
-					<li><a href="<?php echo base_url();?>masters/dashboard"><i class="fa fa-dashboard"></i> Home</a></li>
-					<li class="active">Dashboard</li>
-				</ol>
-			</section>
-			<section class="content">
-				<?php  /* ?>
-				<!-- Small boxes (Stat box) -->
-				<div class="row">
-					<div class="col-lg-3 col-xs-6">
-						<!-- small box -->
-						<div class="small-box bg-aqua">
-							<div class="inner">
-								<h3><?=@$center;?></h3>
-								<p>Total Center</p>
-							</div>
-							<div class="icon">
-							  <i class="fa fa-snowflake-o"></i>
-							</div>
-							<a href="#" class="small-box-footer">More info <i class="fa fa-arrow-circle-right"></i></a>
-						</div>
-					</div>
-					<!-- ./col -->
-					<div class="col-lg-3 col-xs-6">
-					  <!-- small box -->
-					  <div class="small-box bg-green">
-						<div class="inner">
-						  <h3><?=@$subcenter;?></h3>
+  @media (max-width: 1199px) {
+    .dash-metric-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+  @media (max-width: 600px) {
+    .dash-metric-grid {
+      grid-template-columns: 1fr;
+    }
+  }
 
-						  <p>Total Sub Center</p>
-						</div>
-						<div class="icon">
-						  <i class="fa fa-building-o"></i>
-						</div>
-						<a href="#" class="small-box-footer">More info <i class="fa fa-arrow-circle-right"></i></a>
-					  </div>
-					</div>
-					<!-- ./col -->
-					<div class="col-lg-3 col-xs-6">
-					  <!-- small box -->
-					  <div class="small-box bg-red">
-						<div class="inner">
-						  <h3><?=@$faculty;?></h3>
+  .dash-metric-link {
+    text-decoration: none !important;
+    display: flex;
+    height: 100%;
+    color: inherit;
+  }
 
-						  <p>Total Faculty</p>
-						</div>
-						<div class="icon">
-						  <i class="fa fa-users"></i>
-						</div>
-						<a href="#" class="small-box-footer">More info <i class="fa fa-arrow-circle-right"></i></a>
-					  </div>
-					</div>
-					<!-- ./col -->
-					<!-- ./col -->
-					<div class="col-lg-3 col-xs-6">
-					  <!-- small box -->
-					  <div class="small-box bg-yellow">
-						<div class="inner">
-						  <h3><?=@$trainee;?></h3>
+  /* Metric Cards */
+  .dash-metric-card {
+    background: #ffffff;
+    border-radius: 10px;
+    padding: 18px;
+    border: 1px solid var(--adm-border);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+    margin-bottom: 0;
+    transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+    position: relative;
+    overflow: hidden;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  .dash-metric-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 16px -2px rgba(0,0,0,0.08);
+    border-color: var(--adm-teal);
+  }
 
-						  <p>Total Regd. Trainee</p>
-						</div>
-						<div class="icon">
-						  <i class="ion ion-person-add"></i>
-						</div>
-						<a href="#" class="small-box-footer">More info <i class="fa fa-arrow-circle-right"></i></a>
-					  </div>
-					</div>
-					<!-- ./col -->
-					<div class="col-lg-3 col-xs-6">
-					  <!-- small box -->
-					  <div class="small-box bg-yellow">
-						<div class="inner">
-						  <h3><?=@$enrolled;?></h3>
+  .dash-metric-top {
+    display: flex;
+    flex-direction: column;
+  }
 
-						  <p>Total Enrolled Trainee</p>
-						</div>
-						<div class="icon">
-						  <i class="fa fa-file-text"></i>
-						</div>
-						<a href="#" class="small-box-footer">More info <i class="fa fa-arrow-circle-right"></i></a>
-					  </div>
-					</div>
-					<!-- ./col -->
-					<div class="col-lg-3 col-xs-6">
-					  <!-- small box -->
-					  <div class="small-box bg-aqua">
-						<div class="inner">
-						  <h3><?=@$trained;?></h3>
+  .dash-metric-icon-wrap {
+    width: 46px;
+    height: 46px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    margin-bottom: 12px;
+  }
 
-						  <p>Total Trained Trainee</p>
-						</div>
-						<div class="icon">
-						  <i class="fa fa-graduation-cap"></i>
-						</div>
-						<a href="#" class="small-box-footer">More info <i class="fa fa-arrow-circle-right"></i></a>
-					  </div>
-					</div>
-					<!-- ./col -->
-					<div class="col-lg-3 col-xs-6">
-					  <!-- small box -->
-					  <div class="small-box bg-green">
-						<div class="inner">
-						  <h3><?=@$placed;?></h3>
+  .icon-blue { background: #e0f2fe; color: #0284c7; }
+  .icon-green { background: #dcfce7; color: #16a34a; }
+  .icon-amber { background: #fef3c7; color: #d97706; }
+  .icon-purple { background: #f3e8ff; color: #9333ea; }
+  .icon-red { background: #fee2e2; color: #dc2626; }
+  .icon-teal { background: #ccfbf1; color: #0d9488; }
+  .icon-indigo { background: #e0e7ff; color: #4f46e5; }
+  .icon-rose { background: #ffe4e6; color: #e11d48; }
 
-						  <p>Total Placed Trainee</p>
-						</div>
-						<div class="icon">
-						  <i class="fa fa-industry"></i>
-						</div>
-						<a href="#" class="small-box-footer">More info <i class="fa fa-arrow-circle-right"></i></a>
-					  </div>
-					</div>
-				</div>
-				<!-- /.row -->
-				<!-- Main row -->
-				<div class="row">
-					<!--Will be image here -->
-					<div class="col-md-12">
-						<img src="https://www.fddiindia.com/upload/banners/resize/21173252035a8e981a713bc4.22429220_noida.jpg" class="img-responsive">
-					</div>
-				</div>
-				<?php   */ ?>
-				
-			</section>
-		</div>
-	</div>
-</body>
-<?=$this->load->view('inc/footer');?>
+  .dash-metric-num {
+    font-size: 24px;
+    font-weight: 800;
+    color: var(--adm-slate-900);
+    line-height: 1.1;
+    margin-bottom: 4px;
+  }
+  .dash-metric-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--adm-slate-700);
+  }
+  .dash-metric-sub {
+    font-size: 11.5px;
+    color: var(--adm-slate-600);
+    margin-top: 10px;
+  }
 
-  <!-- Control Sidebar -->
-  <aside class="control-sidebar control-sidebar-dark">
-    <!-- Create the tabs -->
-    <ul class="nav nav-tabs nav-justified control-sidebar-tabs">
-     
-    </ul>
-    <!-- Tab panes -->
-    <div class="tab-content">
-      <!-- Home tab content -->
-      <div class="tab-pane" id="control-sidebar-home-tab">
-        <h3 class="control-sidebar-heading">Recent Activity</h3>
-        <ul class="control-sidebar-menu">
-          <li>
-            <a href="javascript:void(0)">
-              <i class="menu-icon fa fa-birthday-cake bg-red"></i>
+  /* Chart & Card Boxes */
+  .dash-box {
+    background: #ffffff;
+    border-radius: 10px;
+    border: 1px solid var(--adm-border);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+    margin-bottom: 25px;
+  }
+  .dash-box-header {
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--adm-border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .dash-box-title {
+    font-size: 14.5px;
+    font-weight: 700;
+    color: var(--adm-slate-900);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .dash-box-body {
+    padding: 18px;
+  }
 
-              <div class="menu-info">
-                <h4 class="control-sidebar-subheading">Langdon's Birthday</h4>
+  /* Quick Actions Grid - Auto-responsive & equal height */
+  .quick-actions-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+  @media (max-width: 600px) {
+    .quick-actions-grid {
+      grid-template-columns: 1fr;
+    }
+  }
 
-                <p>Will be 23 on April 24th</p>
-              </div>
+  .quick-action-card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 16px;
+    border-radius: 8px;
+    background: #f8fafc;
+    border: 1px solid var(--adm-border);
+    color: var(--adm-slate-800);
+    text-decoration: none !important;
+    transition: all 0.2s;
+    margin-bottom: 0;
+    height: 100%;
+  }
+  .quick-action-card:hover {
+    background: #ffffff;
+    border-color: var(--adm-teal);
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+    color: var(--adm-teal);
+    transform: translateX(3px);
+  }
+  .quick-action-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+</style>
+
+<div class="content-wrapper dashboard-wrapper">
+    <!-- Header -->
+    <section class="content-header" style="padding-top: 15px;">
+        <h1>
+            <i class="fa fa-dashboard" style="color: var(--adm-teal);"></i> Executive Master Dashboard
+            <small>Healthcare Ecosystem Overview &amp; Live System Telemetry</small>
+        </h1>
+        <ol class="breadcrumb">
+            <li><a href="<?=base_url('masters/dashboard');?>"><i class="fa fa-home"></i> Home</a></li>
+            <li class="active" style="color: var(--adm-slate-800); font-weight: 600;">Dashboard</li>
+        </ol>
+    </section>
+
+    <!-- Main Content -->
+    <section class="content">
+        <!-- God's Eye Banner -->
+        <div class="section-banner">
+            <h2><i class="fa fa-eye" style="color: var(--adm-teal);"></i> God's Eye View &mdash; Platform Ecosystem Metrics</h2>
+            <div style="font-size: 12px; color: #94a3b8;">
+                <i class="fa fa-clock-o"></i> Live Synchronized: <?=date('d M Y, h:i A');?>
+            </div>
+        </div>
+
+        <!-- 8 Core Metrics Grid (Auto-responsive & Equal Height) -->
+        <div class="dash-metric-grid">
+            <!-- 1. Total Hospitals (Approved vs Pending) -->
+            <a href="<?=base_url('doctor/clinicreg/viewhospital');?>" class="dash-metric-link">
+                <div class="dash-metric-card">
+                    <div class="dash-metric-top">
+                        <div class="dash-metric-icon-wrap icon-blue">
+                            <i class="fa fa-hospital-o"></i>
+                        </div>
+                        <div class="dash-metric-num"><?=number_format($approved_hospitals ?? $total_hospitals);?> <small style="font-size: 13px; font-weight: 600; color: #64748b;">Approved</small></div>
+                        <div class="dash-metric-label">Hospital Facilities</div>
+                    </div>
+                    <div class="dash-metric-sub" style="display: flex; gap: 6px; flex-wrap: wrap;">
+                        <span class="label label-success" style="background: #dcfce7 !important; color: #16a34a !important; border: 1px solid #bbf7d0; font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 4px;">
+                            <i class="fa fa-check-circle"></i> <?=number_format($approved_hospitals ?? $total_hospitals);?> Verified
+                        </span>
+                        <span class="label label-warning" style="background: #fef3c7 !important; color: #d97706 !important; border: 1px solid #fde68a; font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 4px;">
+                            <i class="fa fa-clock-o"></i> <?=number_format($pending_hospitals ?? 0);?> Pending
+                        </span>
+                    </div>
+                </div>
             </a>
-          </li>
-          <li>
-            <a href="javascript:void(0)">
-              <i class="menu-icon fa fa-user bg-yellow"></i>
 
-              <div class="menu-info">
-                <h4 class="control-sidebar-subheading">Frodo Updated His Profile</h4>
-
-                <p>New phone +1(800)555-1234</p>
-              </div>
+            <!-- 2. Total Clinics -->
+            <a href="<?=base_url('doctor/clinicreg/viewclinic');?>" class="dash-metric-link">
+                <div class="dash-metric-card">
+                    <div class="dash-metric-top">
+                        <div class="dash-metric-icon-wrap icon-green">
+                            <i class="fa fa-medkit"></i>
+                        </div>
+                        <div class="dash-metric-num"><?=number_format($total_clinics);?></div>
+                        <div class="dash-metric-label">Active Clinics</div>
+                    </div>
+                    <div class="dash-metric-sub">
+                        <span class="text-primary"><i class="fa fa-map-marker"></i> Outpatient Centers</span>
+                    </div>
+                </div>
             </a>
-          </li>
-          <li>
-            <a href="javascript:void(0)">
-              <i class="menu-icon fa fa-envelope-o bg-light-blue"></i>
 
-              <div class="menu-info">
-                <h4 class="control-sidebar-subheading">Nora Joined Mailing List</h4>
-
-                <p>nora@example.com</p>
-              </div>
+            <!-- 3. Total Doctors -->
+            <a href="<?=base_url('doctor/doctorview');?>" class="dash-metric-link">
+                <div class="dash-metric-card">
+                    <div class="dash-metric-top">
+                        <div class="dash-metric-icon-wrap icon-amber">
+                            <i class="fa fa-user-md"></i>
+                        </div>
+                        <div class="dash-metric-num"><?=number_format($total_doctors);?></div>
+                        <div class="dash-metric-label">Verified Doctors</div>
+                    </div>
+                    <div class="dash-metric-sub">
+                        <span class="text-warning"><i class="fa fa-stethoscope"></i> Multi-Specialty Practitioners</span>
+                    </div>
+                </div>
             </a>
-          </li>
-          <li>
-            <a href="javascript:void(0)">
-              <i class="menu-icon fa fa-file-code-o bg-green"></i>
 
-              <div class="menu-info">
-                <h4 class="control-sidebar-subheading">Cron Job 254 Executed</h4>
-
-                <p>Execution time 5 seconds</p>
-              </div>
+            <!-- 4. Total Appointments -->
+            <a href="<?=base_url('doctor/appointment/doctorappointment');?>" class="dash-metric-link">
+                <div class="dash-metric-card">
+                    <div class="dash-metric-top">
+                        <div class="dash-metric-icon-wrap icon-red">
+                            <i class="fa fa-calendar-check-o"></i>
+                        </div>
+                        <div class="dash-metric-num"><?=number_format($total_appointments);?></div>
+                        <div class="dash-metric-label">Total Appointments</div>
+                    </div>
+                    <div class="dash-metric-sub">
+                        <span class="text-muted"><i class="fa fa-users"></i> <?=number_format($total_users);?> Registered Users</span>
+                    </div>
+                </div>
             </a>
-          </li>
-        </ul>
-        <!-- /.control-sidebar-menu -->
 
-        <h3 class="control-sidebar-heading">Tasks Progress</h3>
-        <ul class="control-sidebar-menu">
-          <li>
-            <a href="javascript:void(0)">
-              <h4 class="control-sidebar-subheading">
-                Custom Template Design
-                <span class="label label-danger pull-right">70%</span>
-              </h4>
-
-              <div class="progress progress-xxs">
-                <div class="progress-bar progress-bar-danger" style="width: 70%"></div>
-              </div>
+            <!-- 5. ABHA IDs -->
+            <a href="<?=base_url('abdm');?>" class="dash-metric-link">
+                <div class="dash-metric-card">
+                    <div class="dash-metric-top">
+                        <div class="dash-metric-icon-wrap icon-purple">
+                            <i class="fa fa-id-card"></i>
+                        </div>
+                        <div class="dash-metric-num"><?=number_format($total_abha_ids);?></div>
+                        <div class="dash-metric-label">ABDM ABHA IDs</div>
+                    </div>
+                    <div class="dash-metric-sub">
+                        <span class="text-success"><i class="fa fa-shield"></i> <?=number_format($active_abha_ids);?> Active Linked</span>
+                    </div>
+                </div>
             </a>
-          </li>
-          <li>
-            <a href="javascript:void(0)">
-              <h4 class="control-sidebar-subheading">
-                Update Resume
-                <span class="label label-success pull-right">95%</span>
-              </h4>
 
-              <div class="progress progress-xxs">
-                <div class="progress-bar progress-bar-success" style="width: 95%"></div>
-              </div>
+            <!-- 6. Consent Records -->
+            <a href="<?=base_url('abdm');?>" class="dash-metric-link">
+                <div class="dash-metric-card">
+                    <div class="dash-metric-top">
+                        <div class="dash-metric-icon-wrap icon-rose">
+                            <i class="fa fa-file-text-o"></i>
+                        </div>
+                        <div class="dash-metric-num"><?=number_format($total_consent_records);?></div>
+                        <div class="dash-metric-label">Consent Artifacts</div>
+                    </div>
+                    <div class="dash-metric-sub">
+                        <span class="text-primary"><i class="fa fa-lock"></i> <?=number_format($active_consent_records);?> Active Records</span>
+                    </div>
+                </div>
             </a>
-          </li>
-          <li>
-            <a href="javascript:void(0)">
-              <h4 class="control-sidebar-subheading">
-                Laravel Integration
-                <span class="label label-warning pull-right">50%</span>
-              </h4>
 
-              <div class="progress progress-xxs">
-                <div class="progress-bar progress-bar-warning" style="width: 50%"></div>
-              </div>
+            <!-- 7. HPR Registrations -->
+            <a href="<?=base_url('abdm');?>" class="dash-metric-link">
+                <div class="dash-metric-card">
+                    <div class="dash-metric-top">
+                        <div class="dash-metric-icon-wrap icon-teal">
+                            <i class="fa fa-address-book-o"></i>
+                        </div>
+                        <div class="dash-metric-num"><?=number_format($total_hpr_registrations);?></div>
+                        <div class="dash-metric-label">HPR Healthcare Registry</div>
+                    </div>
+                    <div class="dash-metric-sub">
+                        <span class="text-success"><i class="fa fa-check"></i> <?=number_format($approved_hpr_registrations);?> Approved Practitioners</span>
+                    </div>
+                </div>
             </a>
-          </li>
-          <li>
-            <a href="javascript:void(0)">
-              <h4 class="control-sidebar-subheading">
-                Back End Framework
-                <span class="label label-primary pull-right">68%</span>
-              </h4>
 
-              <div class="progress progress-xxs">
-                <div class="progress-bar progress-bar-primary" style="width: 68%"></div>
-              </div>
+            <!-- 8. HFR Registrations -->
+            <a href="<?=base_url('abdm');?>" class="dash-metric-link">
+                <div class="dash-metric-card">
+                    <div class="dash-metric-top">
+                        <div class="dash-metric-icon-wrap icon-indigo">
+                            <i class="fa fa-building-o"></i>
+                        </div>
+                        <div class="dash-metric-num"><?=number_format($total_hfr_registrations);?></div>
+                        <div class="dash-metric-label">HFR Facilities Registry</div>
+                    </div>
+                    <div class="dash-metric-sub">
+                        <span class="text-success"><i class="fa fa-check"></i> <?=number_format($approved_hfr_registrations);?> Approved Facilities</span>
+                    </div>
+                </div>
             </a>
-          </li>
-        </ul>
-        <!-- /.control-sidebar-menu -->
+        </div>
 
-      </div>
-      <!-- /.tab-pane -->
-      <!-- Stats tab content -->
-      <div class="tab-pane" id="control-sidebar-stats-tab">Stats Tab Content</div>
-      <!-- /.tab-pane -->
-      <!-- Settings tab content -->
-      <div class="tab-pane" id="control-sidebar-settings-tab">
-        <form method="post">
-          <h3 class="control-sidebar-heading">General Settings</h3>
+        <!-- Analytics Charts Row 1 -->
+        <div class="row">
+            <!-- Appointment Status Doughnut -->
+            <div class="col-md-6 col-xs-12">
+                <div class="dash-box">
+                    <div class="dash-box-header">
+                        <h3 class="dash-box-title">
+                            <i class="fa fa-pie-chart" style="color: #0284c7;"></i> Appointment Status Distribution
+                        </h3>
+                    </div>
+                    <div class="dash-box-body">
+                        <div style="position: relative; height: 240px;">
+                            <canvas id="appointmentStatusChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-          <div class="form-group">
-            <label class="control-sidebar-subheading">
-              Report panel usage
-              <input type="checkbox" class="pull-right" checked>
-            </label>
+            <!-- User Registration Trend Line -->
+            <div class="col-md-6 col-xs-12">
+                <div class="dash-box">
+                    <div class="dash-box-header">
+                        <h3 class="dash-box-title">
+                            <i class="fa fa-line-chart" style="color: #10b981;"></i> User Registration Trend (Last 6 Months)
+                        </h3>
+                    </div>
+                    <div class="dash-box-body">
+                        <div style="position: relative; height: 240px;">
+                            <canvas id="userTrendChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-            <p>
-              Some information about this general settings option
-            </p>
-          </div>
-          <!-- /.form-group -->
+        <!-- Analytics Charts Row 2 & Quick Actions -->
+        <div class="row">
+            <!-- Doctor Specializations Bar -->
+            <div class="col-md-6 col-xs-12">
+                <div class="dash-box">
+                    <div class="dash-box-header">
+                        <h3 class="dash-box-title">
+                            <i class="fa fa-bar-chart" style="color: #f59e0b;"></i> Top Doctor Specializations
+                        </h3>
+                    </div>
+                    <div class="dash-box-body">
+                        <div style="position: relative; height: 260px;">
+                            <canvas id="specializationChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-          <div class="form-group">
-            <label class="control-sidebar-subheading">
-              Allow mail redirect
-              <input type="checkbox" class="pull-right" checked>
-            </label>
-
-            <p>
-              Other sets of options are available
-            </p>
-          </div>
-          <!-- /.form-group -->
-
-          <div class="form-group">
-            <label class="control-sidebar-subheading">
-              Expose author name in posts
-              <input type="checkbox" class="pull-right" checked>
-            </label>
-
-            <p>
-              Allow the user to show his name in blog posts
-            </p>
-          </div>
-          <!-- /.form-group -->
-
-          <h3 class="control-sidebar-heading">Chat Settings</h3>
-
-          <div class="form-group">
-            <label class="control-sidebar-subheading">
-              Show me as online
-              <input type="checkbox" class="pull-right" checked>
-            </label>
-          </div>
-          <!-- /.form-group -->
-
-          <div class="form-group">
-            <label class="control-sidebar-subheading">
-              Turn off notifications
-              <input type="checkbox" class="pull-right">
-            </label>
-          </div>
-          <!-- /.form-group -->
-
-          <div class="form-group">
-            <label class="control-sidebar-subheading">
-              Delete chat history
-              <a href="javascript:void(0)" class="text-red pull-right"><i class="fa fa-trash-o"></i></a>
-            </label>
-          </div>
-          <!-- /.form-group -->
-        </form>
-      </div>
-      <!-- /.tab-pane -->
-    </div>
-  </aside>
-  <!-- /.control-sidebar -->
-  <!-- Add the sidebar's background. This div must be placed
-       immediately after the control sidebar -->
-  <div class="control-sidebar-bg"></div>
+            <!-- Hospital Approval Status Pie & Shortcuts -->
+            <div class="col-md-6 col-xs-12">
+                <div class="dash-box">
+                    <div class="dash-box-header">
+                        <h3 class="dash-box-title">
+                            <i class="fa fa-bolt" style="color: var(--adm-teal);"></i> Quick Operations &amp; Portals
+                        </h3>
+                    </div>
+                    <div class="dash-box-body">
+                        <div class="quick-actions-grid">
+                            <a href="<?=base_url('doctor/clinicreg/viewhospital');?>" class="quick-action-card">
+                                <div class="quick-action-icon icon-blue"><i class="fa fa-hospital-o"></i></div>
+                                <div>
+                                    <div style="font-weight: 700; font-size: 13.5px;">Hospitals</div>
+                                    <div style="font-size: 11.5px; color: #64748b;">Manage &amp; verify facilities</div>
+                                </div>
+                            </a>
+                            <a href="<?=base_url('doctor/doctorview');?>" class="quick-action-card">
+                                <div class="quick-action-icon icon-amber"><i class="fa fa-user-md"></i></div>
+                                <div>
+                                    <div style="font-weight: 700; font-size: 13.5px;">Doctors</div>
+                                    <div style="font-size: 11.5px; color: #64748b;">Directory &amp; credentials</div>
+                                </div>
+                            </a>
+                            <a href="<?=base_url('contactus');?>" class="quick-action-card">
+                                <div class="quick-action-icon icon-teal"><i class="fa fa-envelope-o"></i></div>
+                                <div>
+                                    <div style="font-weight: 700; font-size: 13.5px;">Contact Inquiries</div>
+                                    <div style="font-size: 11.5px; color: #64748b;">Patient &amp; partner tickets</div>
+                                </div>
+                            </a>
+                            <a href="<?=base_url('settings');?>" class="quick-action-card">
+                                <div class="quick-action-icon icon-purple"><i class="fa fa-sliders"></i></div>
+                                <div>
+                                    <div style="font-weight: 700; font-size: 13.5px;">System Settings</div>
+                                    <div style="font-size: 11.5px; color: #64748b;">Email, SMS, ABDM, APIs</div>
+                                </div>
+                            </a>
+                            <a href="<?=base_url('abdm');?>" class="quick-action-card">
+                                <div class="quick-action-icon icon-rose"><i class="fa fa-id-card"></i></div>
+                                <div>
+                                    <div style="font-weight: 700; font-size: 13.5px;">ABDM Gateway</div>
+                                    <div style="font-size: 11.5px; color: #64748b;">ABHA &amp; HPR records</div>
+                                </div>
+                            </a>
+                            <a href="<?=base_url('doctor/appointment/doctorappointment');?>" class="quick-action-card">
+                                <div class="quick-action-icon icon-red"><i class="fa fa-calendar"></i></div>
+                                <div>
+                                    <div style="font-weight: 700; font-size: 13.5px;">Appointments</div>
+                                    <div style="font-size: 11.5px; color: #64748b;">Consultation schedules</div>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
 </div>
-<!-- ./wrapper -->
 
+<!-- Load Chart.js CDN safely -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.4/dist/Chart.min.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    // 1. Appointment Status Doughnut
+    var apptEl = document.getElementById("appointmentStatusChart");
+    if (apptEl) {
+        new Chart(apptEl.getContext('2d'), {
+            type: 'doughnut',
+            data: {
+                labels: [<?php
+                    $lbls = [];
+                    foreach ($appointment_status as $status) {
+                        $label = $status_labels[$status['status']] ?? "Status " . $status['status'];
+                        $lbls[] = json_encode($label);
+                    }
+                    echo !empty($lbls) ? implode(", ", $lbls) : '"Pending", "Confirmed", "Completed", "Cancelled"';
+                ?>],
+                datasets: [{
+                    data: [<?php
+                        $counts = [];
+                        foreach ($appointment_status as $status) {
+                            $counts[] = intval($status['count']);
+                        }
+                        echo !empty($counts) ? implode(", ", $counts) : '0, 0, 0, 0';
+                    ?>],
+                    backgroundColor: ['#f59e0b', '#10b981', '#0284c7', '#ef4444'],
+                    borderWidth: 2,
+                    borderColor: '#ffffff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                legend: { position: 'bottom', labels: { fontColor: '#334155', fontFamily: 'Inter', fontSize: 11, boxWidth: 12 } }
+            }
+        });
+    }
 
-</body>
-</html>
+    // 2. User Registration Trend Line
+    var userEl = document.getElementById("userTrendChart");
+    if (userEl) {
+        new Chart(userEl.getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: [<?php
+                    $mLabels = [];
+                    foreach ($user_trend as $trend) {
+                        $mLabels[] = json_encode($trend['month']);
+                    }
+                    echo !empty($mLabels) ? implode(", ", $mLabels) : '"Recent"';
+                ?>],
+                datasets: [{
+                    label: 'New Registrations',
+                    data: [<?php
+                        $mCounts = [];
+                        foreach ($user_trend as $trend) {
+                            $mCounts[] = intval($trend['count']);
+                        }
+                        echo !empty($mCounts) ? implode(", ", $mCounts) : '0';
+                    ?>],
+                    fill: true,
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    borderColor: '#10b981',
+                    borderWidth: 2.5,
+                    pointBackgroundColor: '#10b981',
+                    pointBorderColor: '#ffffff',
+                    pointRadius: 4,
+                    pointHoverRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                legend: { display: false },
+                scales: {
+                    xAxes: [{ gridLines: { display: false }, ticks: { fontColor: '#64748b', fontFamily: 'Inter' } }],
+                    yAxes: [{ gridLines: { color: '#f1f5f9' }, ticks: { beginAtZero: true, fontColor: '#64748b', fontFamily: 'Inter' } }]
+                }
+            }
+        });
+    }
+
+    // 3. Doctor Specialization Bar
+    var specEl = document.getElementById("specializationChart");
+    if (specEl) {
+        new Chart(specEl.getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: [<?php
+                    $sLabels = [];
+                    foreach ($specialization_dist as $spec) {
+                        $sLabels[] = json_encode($spec['specialization']);
+                    }
+                    echo !empty($sLabels) ? implode(", ", $sLabels) : '"General"';
+                ?>],
+                datasets: [{
+                    label: 'Practitioners',
+                    data: [<?php
+                        $sCounts = [];
+                        foreach ($specialization_dist as $spec) {
+                            $sCounts[] = intval($spec['count']);
+                        }
+                        echo !empty($sCounts) ? implode(", ", $sCounts) : '0';
+                    ?>],
+                    backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4', '#14b8a6', '#6366f1'],
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                legend: { display: false },
+                scales: {
+                    xAxes: [{ gridLines: { display: false }, ticks: { fontColor: '#64748b', fontFamily: 'Inter', autoSkip: false } }],
+                    yAxes: [{ gridLines: { color: '#f1f5f9' }, ticks: { beginAtZero: true, fontColor: '#64748b', fontFamily: 'Inter' } }]
+                }
+            }
+        });
+    }
+});
+</script>

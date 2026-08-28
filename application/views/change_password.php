@@ -1,149 +1,137 @@
-
-<head>
-
-    <link rel="icon" href="images/logo.png" type="image/gif" sizes="16x16">
-    <style>
-#designforform{
-    border-radius: 0px 29px;
-    background:white;
-    padding: 20px;
-    margin-top: 47px;
-    box-shadow:0px -2px 8px #173242;
-}
-
-
-
- .menutab {
-    background: #043d5b;
-    margin-bottom: 3px;
-}
-.menutab:first-child {
-    border-radius: 14px 0px 0px 0px;
-        box-shadow: -4px -3px 6px #17303e;
-}
-.menutab:last-child {
-    border-radius: 0px 0px 14px 0px;
-}
-.colorwhite{color:white;}
-
-.continue2 {
-    background: #295771;
-    color: white;
-    border: none;
-    padding: 10px 30px;
-}
-    </style>
-</head>
-
-
-<!-- Mirrored from eyecix.com/html/careplus/team-list.html by --->
-<?php $this->load->view("includes/header_new.php"); ?>
-
-
-<form action='<?=base_url();?>search' method='GET'>
-                <div class="box-form">
-                      
-      
-                    <div class="col-sm-2 col-sm-offset-1">
-                        <div class="input-group shadow">
-                            <span class="input-group-addon"><i class="fa fa-map-marker" aria-hidden="true"></i></span>
-                            <input type="text" class="form-control ui-autocomplete-input" name="location" placeholder="Location" id="hintcity" autocomplete="off">
-                            <input type="hidden" class="form-control" name="city" id="city">
-                        </div>
-                    </div>
-                    <div class="col-sm-5">
-                        <div class="input-group shadow">
-                            <span class="input-group-addon"><i class="fa fa-search"></i></span>
-                            <input type="text" id="hint" class="form-control ui-autocomplete-input" name="keyword" placeholder="Search Hospitals/Doctors/Clinics etc" autocomplete="off">
-                        </div>
-                        
-                    </div>
-                    <div class="col-sm-2">
-                        <div class="input-group shadow">
-                            <span class="input-group-addon"><i class="fa fa-user-md"></i></span>
-                            <select class="form-control" name="spl">
-              <option value="">-Specialization-</option>
-                                              <?php foreach($specialization as $s){ ?>
-                                <option value='<?=$s->id;?>'><?=$s->name;?></option>
-							<?php } ?>
-                                               
-                            </select>
-                        </div>
-                        
-                    </div>
-                    <div class="col-sm-1">
-<button class="careplus-booking-btn careplus-bgcolor-two" id="searchBTN"><i class="fa fa-search" aria-hidden="true"></i></button>
-                        </div>
-
-
-
-
-                    <div class="clearfix"></div>
-                </div>
-                </form>
-   
-
-         
-
-<div class="container">
-    
-                             <div class="col-md-3" id="sidebartab">
-                            <div class="sidebar" style="border-radius: 1px 17px;">
-
-            
-			
-            <div class="sidebar-inner">
-          <ul class="nav nav-sidebar">
-              <li class="menutab"><a href="<?=base_url();?>myappointents"><i class="fa fa-calendar" aria-hidden="true" style="font-size: 24px;"></i><span style="padding: 9px 19px;font-weight:bold;">Appointment History</span> </a> </li>
-            <li class="menutab"><a href="<?=base_url();?>index.php"><i class="icon-home" style="font-size: 24px;"></i><span style="padding: 9px 19px;font-weight:bold;">Dashboard</span></a></li>
-            <li class="menutab"><a href="#"><i class="fa fa-medkit" style="font-size: 24px;"></i><span style="padding: 9px 19px;font-weight:bold;">Medicine Pathology</span> </a></li>
-		<!--	 <li class="menutab"><a href="#"><i class="fa fa-user-md" style="font-size: 24px;"></i><span style="padding: 9px 19px;font-weight:bold;">Doctor History</span> </a> </li>
-            <li class="menutab"><a href="#"><i class="fa fa-hospital-o" style="font-size: 24px;"></i><span style="padding: 9px 19px;font-weight:bold;">Hospital History</span> </a></li> -->
-            <li class="menutab"><a href="<?=base_url();?>Home/profile"><i class="fa fa-user-md" aria-hidden="true" style="font-size: 24px;"></i><span style="padding: 9px 19px;font-weight:bold;">Profile</span> </a> </li>
-            <li class="menutab"><a href="<?=base_url();?>hospitallist"><i class="fa fa-hospital-o" aria-hidden="true" style="font-size: 24px;"></i><span style="padding: 9px 19px;font-weight:bold;">Hospital List</span> </a> </li>
-            <li class="menutab"><a href="<?=base_url();?>doctors"><i class="fa fa-user-md" aria-hidden="true" style="font-size: 24px;"></i><span style="padding: 9px 19px;font-weight:bold;">Doctor List</span> </a> </li>
-
-           
-          </ul>
-        </div>
-        </div>
-                        </div>
-                        <div class="col-md-2"></div>
-        <div class="col-md-4" id="designforform">
-            <h2>Change Password</h2>
-   <?=$this->session->flashdata('msg');?>
-
-            <form method="post" action=''>
-            	<h5 style="color:black;">Old Password </h5>
-            		
-
-            		<input type="password" class="form-control" name="password" id="name" placeholder="Old Pass"/>
-            		<h5 style="color:black;">New Password </h5>
-            		<input type="password" class="form-control" name="newpass" id="password" placeholder="New Password"/>
-            
-            		<h5 style="color:black;">Confirm Password</h5>
-            		<input type="password" class="form-control" name="confpassword" id="password" placeholder="Confirm Password"/>
-            	
-            	
-            		
-            			<input type="submit" value="SAVE" name="change_pass" style="
-    background: #295771;
-    color: white;
-    border: none;
-    border-radius: 0px 12px;
-    margin-top: 20px;
-    padding: 7px 27px;
-    color: #ffffff;
-    font-weight: bold;
-">
-
-            </form>            
-            
-        </div>        
-        <div class="col-md-4"></div>    
+<!-- Patient Dashboard Topbar -->
+<div class="patient-topbar">
+    <div>
+        <h2 class="patient-topbar-title">Change Account Password</h2>
+        <p style="margin: 4px 0 0 0; color: #64748b; font-size: 13.5px;">
+            Update your patient portal security credentials to safeguard your personal health information.
+        </p>
+    </div>
+    <div>
+        <a href="<?=base_url('profile');?>" class="btn" style="background: #ffffff; color: #475569; font-weight: 600; border-radius: 8px; padding: 9px 18px; border: 1px solid #cbd5e1; text-decoration: none; font-size: 13px;">
+            <i class="fa fa-user" style="margin-right: 6px;"></i> Back to Profile
+        </a>
     </div>
 </div>
 
+<!-- Flash Messages -->
+<?php if($this->session->flashdata('msg')): ?>
+    <div style="margin-bottom: 20px;">
+        <?=$this->session->flashdata('msg');?>
+    </div>
+<?php elseif($this->session->flashdata('flashmsg')): ?>
+    <div style="margin-bottom: 20px;">
+        <?=$this->session->flashdata('flashmsg');?>
+    </div>
+<?php endif; ?>
 
-    <?php $this->load->view('includes/footer.php'); ?>
-	 
+<style>
+.password-card-box {
+    background: #ffffff;
+    border-radius: 16px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+    padding: 32px;
+    margin-bottom: 30px;
+}
+
+.password-section-heading {
+    font-size: 16px;
+    font-weight: 700;
+    color: #0f172a;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-bottom: 1px solid #f1f5f9;
+    padding-bottom: 14px;
+}
+
+.password-field-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #334155;
+    margin-bottom: 6px;
+    display: block;
+}
+
+.password-input-control {
+    height: 44px;
+    border-radius: 8px;
+    border: 1px solid #cbd5e1;
+    font-size: 14px;
+    padding: 10px 14px;
+    color: #1e293b;
+    background-color: #ffffff;
+    transition: all 0.2s ease;
+    width: 100%;
+}
+
+.password-input-control:focus {
+    border-color: var(--upchar-teal);
+    box-shadow: 0 0 0 3px rgba(0, 168, 150, 0.15);
+    outline: none;
+}
+
+.btn-update-password {
+    background-color: var(--upchar-teal);
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 14px;
+    padding: 11px 32px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 8px rgba(0, 168, 150, 0.3);
+}
+
+.btn-update-password:hover {
+    background-color: var(--upchar-teal-dark);
+    color: #ffffff;
+    box-shadow: 0 4px 14px rgba(0, 168, 150, 0.4);
+}
+</style>
+
+<div class="row">
+    <div class="col-lg-7 col-md-9 col-12 mx-auto">
+        <div class="password-card-box">
+            
+            <div class="password-section-heading">
+                <i class="fa fa-lock" style="color: var(--upchar-teal); font-size: 20px;"></i>
+                <span>Update Account Password</span>
+            </div>
+
+            <form action="" method="post">
+                
+                <!-- Current Password -->
+                <div style="margin-bottom: 20px;">
+                    <label class="password-field-label">Current / Old Password *</label>
+                    <input type="password" name="password" class="password-input-control" placeholder="Enter current password" required autocomplete="current-password">
+                </div>
+
+                <!-- New Password -->
+                <div style="margin-bottom: 20px;">
+                    <label class="password-field-label">New Password *</label>
+                    <input type="password" name="newpass" class="password-input-control" placeholder="Minimum 6 characters" required autocomplete="new-password">
+                </div>
+
+                <!-- Confirm Password -->
+                <div style="margin-bottom: 24px;">
+                    <label class="password-field-label">Confirm New Password *</label>
+                    <input type="password" name="confpassword" class="password-input-control" placeholder="Re-enter new password" required autocomplete="new-password">
+                </div>
+
+                <div style="padding-top: 16px; border-top: 1px solid #f1f5f9; display: flex; justify-content: flex-end; gap: 12px;">
+                    <a href="<?=base_url('profile');?>" class="btn" style="background: #ffffff; color: #64748b; border: 1px solid #cbd5e1; font-weight: 600; border-radius: 8px; padding: 10px 20px;">
+                        Cancel
+                    </a>
+                    <button type="submit" name="change_pass" value="1" class="btn-update-password">
+                        <i class="fa fa-check-circle" style="margin-right: 6px;"></i> Save New Password
+                    </button>
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+</div>

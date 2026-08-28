@@ -1,527 +1,317 @@
-<!DOCTYPE html>
-<html>
-<style>
-.label-name{
-  text-align:left!important;
-  margin-top:-5px;
-}
-.starspan
-{
-  color:#e80909;
-  font-size:18px;
-}
-.mainheadlinerow
-{
-  padding:5px;margin-top:10px;margin-bottom:10px;
-}
-.mainheadline
-{
-  background:#605ca8;margin-top:10px;margin-bottom:10px;color:#fff;padding:9px;font-weight:600;
-}
-.mainheadlinefirstrow
-{
-  padding:5px;
-}
-.mainheadlinefirst
-{
-  background:#605ca8;margin-top:-15px;margin-bottom:15px;color:#fff;padding:9px;font-weight:600;
-}
-.othernote{
-  font-weight:600;font-size:13px;color:#d20c0c;
-}
-.mainhead{font-weight:600;margin-bottom:20px;}
-.formbody{border:1px solid #d6d2d2;padding:10px;border-radius:4px;}
-.note{font-weight:600;margin-top:10px;margin-bottom:20px;}
-#submit{background:#605ca8;padding: 6px 30px;}
-#reset{background:#fff;color:#000;padding: 6px 30px;}
-</style>
-<body class="hold-transition skin-blue sidebar-mini">
-	<div class="wrapper">
-		<!--there was sidebar -->
-		<div class="content-wrapper">
-			<!-- Content Header (Page header) -->
-			<section class="content-header">
-				<h1>
-					<?php echo $module;?>
-					<small>Control panel</small>
-				</h1>
-				<ol class="breadcrumb">
-					<li><a href="<?php echo base_url();?>masters/dashboard"><i class="fa fa-dashboard"></i> Home</a></li>
-					<li><a href="<?php echo base_url();?>doctor/clinicreg/viewclinic"> Back To List</a></li>
-					<li class="active"><?php echo $heading_title;?></li>
-				</ol>
-			</section>
-			<!-- Main content -->
-			<section class="content">
-				<link rel="stylesheet" href="https://jqueryvalidation.org/files/demo/site-demos.css">
-				<link rel="stylesheet" href="<?=base_url();?>public/assets/dist/css/metallic/zebra_datepicker.min.css" type="text/css">
-				<div class="container bg-3 ">  
-					<div class="row text-">
-						<div class="container">
-							<?=$this->session->flashdata('flashmsg');?>
-							<?php //echo validation_errors();?>
-							<?php //echo error_message(); ?>  
-							<form class="form-horizontal formbody" action="<?=base_url()?>doctor/clinicreg/add" method="post" enctype="multipart/form-data">
-								<!--Basic Details-->
-								<div class="row mainheadlinefirstrow">
-									<div class="col-md-12 mainheadlinefirst">Basic Details</div>
-								</div>
-								<div class="row">
-									<div class="col-md-12">
-										<div class="form-group">
-											<label class="control-label col-sm-2 label-name" for="email">Type<span class="starspan">*</span></label>
-											<div class="col-sm-4">
-												<select name="objective" id="objective" class="form-control" data-validation="required"
-												data-validation-error-msg="This Field is required">
-													<option value="">Select</option>
-													<option value="H" <?php if(set_value('objective')=='H'){ echo "selected"; } ?> >Hospital</option>
-													<option value="C" <?php if(set_value('objective')=='C'){ echo "selected"; } ?>>Clinic</option>
-												</select>
-												<span style="color:red;"><?php echo form_error('objective');?></span>
-											</div>
-											<label class="control-label col-sm-2 label-name" for="email">Hospital Type<span class="starspan">*</span></label>
-											<div class="col-sm-4">
-												<select name="type" id="type" class="form-control" data-validation="required"
-												data-validation-error-msg="This Field is required">
-													<option value="">Select</option>
-													<option value="1" <?php if(set_value('type')=='1'){ echo "selected"; } ?>>Private Hospital</option>
-													<option value="2" <?php if(set_value('type')=='2'){ echo "selected"; } ?>>Government Hospital</option>
-												</select>
-												<span style="color:red;"><?php echo form_error('type');?></span>
-											</div>
-										</div>
-										<div class="form-group">
-											<label class="control-label col-sm-2 label-name" for="email"> Name<span class="starspan">*</span></label>
-											<div class="col-sm-4">
-												<input type="text" class="form-control input-sm" id="name" name="name" data-validation="required"
-												data-validation-error-msg="This Field is required" value="<?=set_value('name');?>">
-												<span style="color:red;"><?php echo form_error('name');?></span>
-											</div>
-											<label class="control-label col-sm-2 label-name" for="email">Website<span class="starspan"></span></label>
-											<div class="col-sm-4">
-												<input type="text" class="form-control input-sm" id="website" name="website" value="<?=set_value('website');?>">
-												<span style="color:red;"><?php echo form_error('website');?></span>
-											</div>
-										</div>
-										<div class="form-group">
-											<label class="control-label col-sm-2 label-name" for="email">City<span class="starspan">*</span></label>
-											<div class="col-sm-4">
-												<select class="form-control input-sm" id="city" data-validation="required"
-												data-validation-error-msg="This Field is required" name="city">
-													<option value="">Select</option>
-													<?php
-													$citylist=$this->db->get_where('master_city',array('status'=>'1'));
-													foreach(@$citylist->result() as $list){
-													?>
-													<option value="<?=$list->id;?>" <?php if(set_value('city')==$list->id){ echo "selected"; }?> ><?=$list->name;?></option>
-													<?php } ?>
-												</select>
-												<span style="color:red;"><?php echo form_error('city');?></span>
-											</div>
-											<label class="control-label col-sm-2 label-name" for="email">Location<span class="starspan"></span></label>
-											<div class="col-sm-4">
-												<input type="text" class="form-control input-sm" id="location" name="location" value="<?=set_value('location');?>">
-												<span style="color:red;"><?php echo form_error('location');?></span>
-											</div>
-										</div>
-										<div class="form-group">
-											<label class="control-label col-sm-2 label-name" for="email">Address<span class="starspan"></span></label>
-											<div class="col-sm-4">
-												<input type="text" class="form-control input-sm" id="address" name="address" value="<?=set_value('address');?>">
-												<span style="color:red;"><?php echo form_error('address');?></span>
-											</div>
-											<label class="control-label col-sm-2 label-name" for="email">Email<span class="starspan">*</span></label>
-											<div class="col-sm-4">
-												<input type="email" class="form-control input-sm" id="email" name="email" data-validation="required" value="<?=set_value('email');?>">
-												<span style="color:red;"><?php echo form_error('email');?></span>
-											</div>
-										</div>
-										<div class="form-group">
-											<label class="control-label col-sm-2 label-name" for="email">Mobile No.<span class="starspan">*</span></label>
-											<div class="col-sm-4">
-												<input type="text" class="form-control input-sm" id="mobile" name="mobile" data-validation="required,number" data-validation-allowing="range[0000000000;9999999999]" data-validation-error-msg="Enter 10 digit valid no." onkeypress="return isNumber(event)" value="<?=set_value('mobile');?>">
-												<span style="color:red;"><?php echo form_error('mobile');?></span>
-											</div>
-											<label class="control-label col-sm-2 label-name" for="email">Password<span class="starspan">*</span></label>
-											<div class="col-sm-4">
-												<input type="password" class="form-control input-sm" id="password" name="password" data-validation="required"   value="<?=set_value('password');?>">
-												<span style="color:red;"><?php echo form_error('password');?></span>
-											</div>
-										</div>
-										<!--Father's Details-->
-										<div class="row mainheadlinerow">
-											<div class="col-md-12 mainheadline">Upload About , Images & Other</div>
-										</div>
-										<div class="form-group">
-											<label class="control-label col-sm-2 label-name" for="email">About<span class="starspan"></span></label>
-											<div class="col-sm-4">
-												<textarea class="form-control input-sm" id="about" name="about" data-validation=""
-												data-validation-error-msg="This Field is required" ><?=set_value('about');?></textarea>
-												<span style="color:red;"><?php echo form_error('about');?></span>
-											</div>
-											<label class="control-label col-sm-2 label-name" for="email">Tags<span class="starspan"></span></label>
-											<div class="col-sm-4">
-												<input type="text" class="form-control input-sm" id="tags" name="tags" value="<?=set_value('tags');?>">
-												<span style="color:red;"><?php echo form_error('tags');?></span>
-											</div>
-										</div>
-										<div class="form-group">
-											<label class="control-label col-sm-2 label-name" for="email">Passport size Image<span class="starspan">*</span></label>
-											<div class="col-sm-4">
-												<input type="file" class="form-control input-sm" id="uploadimage" name="uploadimage" data-validation="required"
-												data-validation-error-msg="This Field is required">
-												<p class="othernote">Image should be jpg or png, less than  1MB.</p>
-											</div>
-											<label class="control-label col-sm-2 label-name" for="email">ID Proof<span class="starspan"></span></label>
-											<div class="col-sm-4">
-												<input type="file" class="form-control input-sm" id="idproof" name="idproof" data-validation=""
-												data-validation-error-msg="This Field is required">
-												<p class="othernote">Image should be jpg or png, less than  1MB.</p>
-											</div>
-										</div>
-										<div class="form-group">
-											<label class="control-label col-sm-2 label-name" for="email">Medi. Reg. Proof<span class="starspan"></span></label>
-											<div class="col-sm-4">
-												<input type="file" class="form-control input-sm" id="regpoof" name="regproof" data-validation=""
-												data-validation-error-msg="This Field is required">
-												<p class="othernote">Image should be jpg or png, less than 1MB.</p>
-											</div>
-											<label class="control-label col-sm-2 label-name" for="email">Services<span class="starspan">*</span></label>
-											<div class="col-sm-4">
-												<select class="form-control input-sm  show-menu-arrow " id="services[]" data-validation="required"
-												data-validation-error-msg="This Field is required" name="services"   data-actions-box="true"  readonly >
-												<?php
-													$servicelist=$this->db->get_where('master_services',array('status'=>1))->result();
-													if(is_array($servicelist) && !empty($servicelist)){
-													foreach($servicelist as $list){
-													?>
-													<option value="<?=$list->id;?>" <?php if(set_value('services')==$list->id){ echo "selected"; } ?> ><?=$list->name;?></option>
-													<?php }} ?>
-												</select>
-											</div>
-										</div>
-										<!--Pre-Training Details-->
-										<div class="row mainheadlinerow">
-											<div class="col-md-12 mainheadline">Timing Details </div>
-										</div>
-										<div class="practicewrapper">
-											<div class="row" style="margin-top:5px;">
-												<input type='hidden' id='hiddenday_0' name='hiddenday[0]' value='1'>
-												<div class="timmingwrapper">
-													<div class="col-md-8">
-														<div class="form-group">
-														  <label class="control-label col-sm-4 label-name" for="email">Select Day<span class="starspan wg"></span></label>
-														  <div class="col-sm-8" id="cadd">
-															<label class="checkbox-inline"><input type="checkbox" name='sun[0][0]' value="S">Sun</label>
-															<label class="checkbox-inline"><input type="checkbox" name='mon[0][0]' value="M">Mon</label>
-															<label class="checkbox-inline"><input type="checkbox" name='tue[0][0]' value="T">Tue</label>
-															<label class="checkbox-inline"><input type="checkbox" name='wed[0][0]' value="W">Wed</label>
-															<label class="checkbox-inline"><input type="checkbox" name='thu[0][0]' value="TH">Thus</label>
-															<label class="checkbox-inline"><input type="checkbox" name='fri[0][0]' value="F">Fri</label>
-															<label class="checkbox-inline"><input type="checkbox" name='sat[0][0]' value="SA">Sat</label>
-														  </div>
-														</div>
-													</div>
-													<br>
-													<br>
-													<div class='sessionwrapper'>
-														<div class="col-md-5">
-															<div class="form-group">
-															  <label class="control-label col-sm-4 label-name" for="email">From<span class="starspan wg"></span></label>
-															  <div class="col-sm-7" id="ccont">
-																<input type="time" class="form-control input-sm timepicker" id="fromtime[0][0][]" name="fromtime[0][0][]"  value="">
-															  </div>
-															</div>
-														</div>
-														<div class="col-md-5">
-															<div class="form-group">
-															  <label class="control-label col-sm-4 label-name" for="email">To<span class="starspan wg"></span></label>
-															  <div class="col-sm-7" id="cema">
-																<input type="time" class="form-control input-sm timepicker" id="totime[0][0][]" name="totime[0][0][]" value="">
-															  </div>
-															</div>
-														</div>
-													</div>
-													<button type="button" class="btn btn-info btn-xs addsession" name="" data-clinicblock-id='0' data-dayblock-id='0'>Add More Session</button>
-												</div>
-												<button type="button" class="btn btn-info btn-xs addtiming" name=""  data-clinicblock-id='0'   data-dayblock-id='0' >Add Timing For Remaining Day</button>
-											</div>
-										</div>
-										<!--Trainee Bank Details-->
-										<div class="row mainheadlinerow">
-											<div class="col-md-12 mainheadline">Subscription/ Service Plan</div>
-										</div>
-										<div class="row">
-											<div class="col-md-12">
-												<div class="form-group">
-												  <div class="radio"><label><input type="radio" name="package" value='0' checked>Basic (Free)</label></div>
-												  <div class="radio"><label><input type="radio" name="package" value='1'>Premium (Paid)</label></div>
-												</div>
-											</div>
-											<br>
-											<div class="col-md-12">
-												<div class="form-group">
-												  <div class="radio"><label><input type="radio" name="status" value='1' checked>Active</label></div>
-												  <div class="radio"><label><input type="radio" name="status" value='0'>Inactive</label></div>
-												</div>
-											</div>
-										</div>
-										<div class="row">
-											<div class="col-md-12">
-												<!--<p class="note">Note: Size of image must be less than 50 KB. Only jpg and png file allowed.</p>-->
-												<br><br>
-												<div class="form-group">        
-													<div class="col-sm-9">
-														<button type="submit" class="btn btn-info" id="submit" name="submit">Add</button>
-														<button type="reset" class="btn btn-info" id="reset" name="reset">Reset</button>
-													</div>
-												</div>
-											</div>
-										</div>
-									</div>	
-								</div>		
-							</form>
-						</div>
-						<br>
-					</div>
-				</div>
-			</section>
-			<!-- /.content -->
-		</div>
-		<!-- /.content-wrapper -->
-		<?=$this->load->view('inc/footer');?>
-		<!-- /.control-sidebar -->
-		<!-- Add the sidebar's background. This div must be placed
-		   immediately after the control sidebar -->
-		<div class="control-sidebar-bg"></div>
-	</div>
-	<!-- ./wrapper -->
-</body>
-</html>
-<script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
-<script src="//cdnjs.cloudflare.com/ajax/libs/jquery-form-validator/2.3.26/jquery.form-validator.min.js"></script>
-<script>
-  $.validate({
-   
-  });
-</script>
-<script>
- function bplcardyes(checkboxElem) {
-  if (checkboxElem.checked) {
-    $("#bplcodediv").html(' <input type="text" class="form-control input-sm" id="bplcode" name="bplcode" data-validation="required" data-validation-error-msg="This Field is required">');
-  } 
- }
+<div class="content-wrapper">
+  <!-- Content Header & Breadcrumbs -->
+  <section class="content-header" style="padding: 20px 20px 10px;">
+    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+      <div>
+        <h1 style="font-size: 22px; font-weight: 700; color: #1e293b; margin: 0;">Add Clinic / Hospital</h1>
+        <small style="color: #64748b; font-size: 13px;">Register a healthcare facility, clinical center, or multi-specialty hospital</small>
+      </div>
+      <ol class="breadcrumb" style="position: static; float: none; margin: 0; background: transparent; padding: 0;">
+        <li><a href="<?=base_url('masters/dashboard')?>" style="color: #00a896;"><i class="fa fa-dashboard"></i> Dashboard</a></li>
+        <li><a href="<?=base_url('doctor/clinicreg/viewclinic')?>" style="color: #64748b;">Facilities</a></li>
+        <li class="active" style="color: #1e293b; font-weight: 600;">Add Facility</li>
+      </ol>
+    </div>
+  </section>
 
- function bplcardno(checkboxElem) {
-  if (checkboxElem.checked) {
-    $("#bplcodediv").html('');
-  } 
- }
- 
-</script>
-<script src="https://cdn.jsdelivr.net/npm/zebra_datepicker@latest/dist/zebra_datepicker.min.js"></script>
+  <!-- Main content -->
+  <section class="content" style="padding: 15px 20px;">
+    <div class="container-fluid" style="padding: 0;">
+      
+      <!-- Flash Alert Messages -->
+      <?php if($this->session->flashdata('flashmsg')): ?>
+        <div style="margin-bottom: 15px;">
+          <?=$this->session->flashdata('flashmsg');?>
+        </div>
+      <?php endif; ?>
+
+      <div class="master-card" style="max-width: 1000px; margin: 0 auto 30px;">
+        <div class="master-card-header" style="background: #f8fafc;">
+          <h3 class="master-card-title">
+            <i class="fa fa-hospital-o" style="color: #00a896;"></i>
+            <span>Facility Registration Form</span>
+          </h3>
+          <div style="display: flex; gap: 8px;">
+            <a href="<?=base_url('doctor/clinicreg/viewclinic')?>" class="btn btn-sm btn-default" style="border-radius: 6px; font-weight: 600;">
+              <i class="fa fa-building-o"></i> View Clinics
+            </a>
+            <a href="<?=base_url('doctor/clinicreg/viewhospital')?>" class="btn btn-sm btn-default" style="border-radius: 6px; font-weight: 600;">
+              <i class="fa fa-hospital-o"></i> View Hospitals
+            </a>
+          </div>
+        </div>
+
+        <!-- Multi-Step Wizard Tabs -->
+        <ul class="form-wizard-tabs" id="clinicTabNav">
+          <li class="active">
+            <a href="#cstep-basic" data-toggle="tab">
+              <span class="step-number">1</span> Basic Details
+            </a>
+          </li>
+          <li>
+            <a href="#cstep-location" data-toggle="tab">
+              <span class="step-number">2</span> Location & Address
+            </a>
+          </li>
+          <li>
+            <a href="#cstep-services" data-toggle="tab">
+              <span class="step-number">3</span> Services & Packages
+            </a>
+          </li>
+          <li>
+            <a href="#cstep-media" data-toggle="tab">
+              <span class="step-number">4</span> Media & Documents
+            </a>
+          </li>
+        </ul>
+
+        <form action="<?=base_url('doctor/clinicreg/add')?>" method="post" id="clinic-reg-form" enctype="multipart/form-data" style="padding: 10px 24px 24px;">
+          <div class="tab-content" style="padding: 10px 0;">
+            
+            <!-- STEP 1: Basic Details -->
+            <div class="tab-pane active" id="cstep-basic">
+              <div style="border-bottom: 1px solid #e2e8f0; margin-bottom: 20px; padding-bottom: 8px;">
+                <h4 style="font-size: 15px; font-weight: 700; color: #1e293b; margin: 0;">Step 1: Facility Type & Account Credentials</h4>
+                <p style="font-size: 12.5px; color: #64748b; margin: 4px 0 0;">Select institution classification and create admin login details.</p>
+              </div>
+
+              <div class="row">
+                <div class="col-md-6 form-group" style="margin-bottom: 18px;">
+                  <label for="objective" style="font-weight: 600; font-size: 13px; color: #334155;">Facility Category <span style="color:#ef4444;">*</span></label>
+                  <select name="objective" id="objective" class="form-control" required>
+                    <option value="">-- Choose Category --</option>
+                    <option value="H" <?=set_value('objective')=='H' ? 'selected' : '';?>>Hospital</option>
+                    <option value="C" <?=set_value('objective')=='C' ? 'selected' : '';?>>Clinic / Day Care</option>
+                  </select>
+                  <span style="color:#ef4444; font-size: 12px;"><?=form_error('objective');?></span>
+                </div>
+
+                <div class="col-md-6 form-group" style="margin-bottom: 18px;">
+                  <label for="type" style="font-weight: 600; font-size: 13px; color: #334155;">Ownership Type <span style="color:#ef4444;">*</span></label>
+                  <select name="type" id="type" class="form-control" required>
+                    <option value="">-- Choose Ownership --</option>
+                    <option value="1" <?=set_value('type')=='1' ? 'selected' : '';?>>Private Sector</option>
+                    <option value="2" <?=set_value('type')=='2' ? 'selected' : '';?>>Government / Autonomous</option>
+                  </select>
+                  <span style="color:#ef4444; font-size: 12px;"><?=form_error('type');?></span>
+                </div>
+
+                <div class="col-md-6 form-group" style="margin-bottom: 18px;">
+                  <label for="name" style="font-weight: 600; font-size: 13px; color: #334155;">Facility / Hospital Name <span style="color:#ef4444;">*</span></label>
+                  <input type="text" class="form-control" id="name" name="name" placeholder="e.g. Apex Multi-Specialty Hospital" value="<?=set_value('name');?>" required>
+                  <span style="color:#ef4444; font-size: 12px;"><?=form_error('name');?></span>
+                </div>
+
+                <div class="col-md-6 form-group" style="margin-bottom: 18px;">
+                  <label for="website" style="font-weight: 600; font-size: 13px; color: #334155;">Official Website</label>
+                  <input type="url" class="form-control" id="website" name="website" placeholder="https://www.example.com" value="<?=set_value('website');?>">
+                </div>
+
+                <div class="col-md-4 form-group" style="margin-bottom: 18px;">
+                  <label for="email" style="font-weight: 600; font-size: 13px; color: #334155;">Official Email <span style="color:#ef4444;">*</span></label>
+                  <input type="email" class="form-control" id="email" name="email" placeholder="contact@hospital.com" value="<?=set_value('email');?>" required>
+                  <span style="color:#ef4444; font-size: 12px;"><?=form_error('email');?></span>
+                </div>
+
+                <div class="col-md-4 form-group" style="margin-bottom: 18px;">
+                  <label for="mobile" style="font-weight: 600; font-size: 13px; color: #334155;">Contact / Emergency Phone <span style="color:#ef4444;">*</span></label>
+                  <input type="text" class="form-control" id="mobile" name="mobile" placeholder="10-digit phone number" maxlength="10" value="<?=set_value('mobile');?>" required>
+                  <span style="color:#ef4444; font-size: 12px;"><?=form_error('mobile');?></span>
+                </div>
+
+                <div class="col-md-4 form-group" style="margin-bottom: 18px;">
+                  <label for="password" style="font-weight: 600; font-size: 13px; color: #334155;">Account Password <span style="color:#ef4444;">*</span></label>
+                  <input type="password" class="form-control" id="password" name="password" placeholder="Account password" value="<?=set_value('password');?>" required>
+                  <span style="color:#ef4444; font-size: 12px;"><?=form_error('password');?></span>
+                </div>
+              </div>
+
+              <div style="display: flex; justify-content: flex-end; margin-top: 15px;">
+                <button type="button" class="btn btn-primary next-step-btn" data-next="#cstep-location" style="background: #00a896; border-color: #00a896; font-weight: 600; padding: 8px 22px;">
+                  Continue to Location <i class="fa fa-arrow-right"></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- STEP 2: Location & Address -->
+            <div class="tab-pane" id="cstep-location">
+              <div style="border-bottom: 1px solid #e2e8f0; margin-bottom: 20px; padding-bottom: 8px;">
+                <h4 style="font-size: 15px; font-weight: 700; color: #1e293b; margin: 0;">Step 2: Operational Territory & Physical Address</h4>
+                <p style="font-size: 12.5px; color: #64748b; margin: 4px 0 0;">Specify city jurisdiction, local area, and postal address.</p>
+              </div>
+
+              <div class="row">
+                <div class="col-md-6 form-group" style="margin-bottom: 18px;">
+                  <label for="city" style="font-weight: 600; font-size: 13px; color: #334155;">City <span style="color:#ef4444;">*</span></label>
+                  <select class="form-control" id="city" name="city" required>
+                    <option value="">-- Select City --</option>
+                    <?php
+                    $cities = $this->db->get_where('master_city', array('status'=>1))->result();
+                    foreach($cities as $ct):
+                    ?>
+                      <option value="<?=$ct->id;?>" <?=set_value('city')==$ct->id ? 'selected' : '';?>><?=$ct->name;?></option>
+                    <?php endforeach; ?>
+                  </select>
+                  <span style="color:#ef4444; font-size: 12px;"><?=form_error('city');?></span>
+                </div>
+
+                <div class="col-md-6 form-group" style="margin-bottom: 18px;">
+                  <label for="location" style="font-weight: 600; font-size: 13px; color: #334155;">Locality / Area Name</label>
+                  <input type="text" class="form-control" id="location" name="location" placeholder="e.g. Mahmoorganj, Sigra" value="<?=set_value('location');?>">
+                </div>
+
+                <div class="col-md-12 form-group" style="margin-bottom: 18px;">
+                  <label for="address" style="font-weight: 600; font-size: 13px; color: #334155;">Full Physical Address</label>
+                  <textarea class="form-control" id="address" name="address" rows="3" placeholder="Plot / Street no., Landmark, Pincode..."><?=set_value('address');?></textarea>
+                </div>
+              </div>
+
+              <div style="display: flex; justify-content: space-between; margin-top: 15px;">
+                <button type="button" class="btn btn-default prev-step-btn" data-prev="#cstep-basic" style="font-weight: 600; padding: 8px 20px;">
+                  <i class="fa fa-arrow-left"></i> Back
+                </button>
+                <button type="button" class="btn btn-primary next-step-btn" data-next="#cstep-services" style="background: #00a896; border-color: #00a896; font-weight: 600; padding: 8px 22px;">
+                  Continue to Services <i class="fa fa-arrow-right"></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- STEP 3: Services & Packages -->
+            <div class="tab-pane" id="cstep-services">
+              <div style="border-bottom: 1px solid #e2e8f0; margin-bottom: 20px; padding-bottom: 8px;">
+                <h4 style="font-size: 15px; font-weight: 700; color: #1e293b; margin: 0;">Step 3: Clinical Services & Health Packages</h4>
+                <p style="font-size: 12.5px; color: #64748b; margin: 4px 0 0;">Select hospital departments, offered services, and featured healthcare packages.</p>
+              </div>
+
+              <div class="row">
+                <div class="col-md-6 form-group" style="margin-bottom: 18px;">
+                  <label for="services" style="font-weight: 600; font-size: 13px; color: #334155;">Offered Services / Departments <span style="color:#ef4444;">*</span></label>
+                  <select class="form-control" id="services" name="services[]" multiple style="height: 120px;" required>
+                    <?php
+                    $services = $this->db->get_where('master_services', array('status'=>1))->result();
+                    foreach($services as $srv):
+                    ?>
+                      <option value="<?=$srv->id;?>"><?=$srv->name;?></option>
+                    <?php endforeach; ?>
+                  </select>
+                  <small class="text-muted">Hold Ctrl / Cmd to select multiple services</small>
+                </div>
+
+                <div class="col-md-6 form-group" style="margin-bottom: 18px;">
+                  <label for="package" style="font-weight: 600; font-size: 13px; color: #334155;">Healthcare Packages <span style="color:#ef4444;">*</span></label>
+                  <input type="text" class="form-control" id="package" name="package" placeholder="e.g. Executive Full Body Checkup, Cardiac Wellness" value="<?=set_value('package');?>" required>
+                  <small class="text-muted">Enter comma-separated health checkup packages</small>
+                </div>
+              </div>
+
+              <div style="display: flex; justify-content: space-between; margin-top: 15px;">
+                <button type="button" class="btn btn-default prev-step-btn" data-prev="#cstep-location" style="font-weight: 600; padding: 8px 20px;">
+                  <i class="fa fa-arrow-left"></i> Back
+                </button>
+                <button type="button" class="btn btn-primary next-step-btn" data-next="#cstep-media" style="background: #00a896; border-color: #00a896; font-weight: 600; padding: 8px 22px;">
+                  Continue to Media <i class="fa fa-arrow-right"></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- STEP 4: Media & Documents -->
+            <div class="tab-pane" id="cstep-media">
+              <div style="border-bottom: 1px solid #e2e8f0; margin-bottom: 20px; padding-bottom: 8px;">
+                <h4 style="font-size: 15px; font-weight: 700; color: #1e293b; margin: 0;">Step 4: Media Assets & Verification Certificates</h4>
+                <p style="font-size: 12.5px; color: #64748b; margin: 4px 0 0;">Upload hospital logo, building picture, and registration proof (JPG, PNG up to 2MB).</p>
+              </div>
+
+              <div class="row">
+                <div class="col-md-4">
+                  <label style="font-weight: 600; font-size: 13px; color: #334155;">Facility Logo / Picture <span style="color:#ef4444;">*</span></label>
+                  <div class="upload-dropzone" onclick="document.getElementById('uploadimage').click();">
+                    <i class="fa fa-hospital-o fa-2x" style="color: #00a896; margin-bottom: 6px;"></i>
+                    <p style="margin: 0; font-size: 12.5px; font-weight: 600; color: #334155;">Hospital Logo / Photo</p>
+                    <span style="font-size: 11px; color: #94a3b8;">Click or drag photo</span>
+                    <div>
+                      <img id="preview_hosp_pic" class="upload-preview-thumb" src="#" alt="Preview">
+                    </div>
+                  </div>
+                  <input type="file" id="uploadimage" name="uploadimage" accept="image/*" style="display: none;" onchange="previewFile(this, '#preview_hosp_pic');" required>
+                </div>
+
+                <div class="col-md-4">
+                  <label style="font-weight: 600; font-size: 13px; color: #334155;">Authorized ID Proof</label>
+                  <div class="upload-dropzone" onclick="document.getElementById('idproof').click();">
+                    <i class="fa fa-id-card fa-2x" style="color: #0284c7; margin-bottom: 6px;"></i>
+                    <p style="margin: 0; font-size: 12.5px; font-weight: 600; color: #334155;">Director / Admin ID</p>
+                    <span style="font-size: 11px; color: #94a3b8;">Click or drag file</span>
+                    <div>
+                      <img id="preview_hosp_id" class="upload-preview-thumb" src="#" alt="Preview">
+                    </div>
+                  </div>
+                  <input type="file" id="idproof" name="idproof" accept="image/*" style="display: none;" onchange="previewFile(this, '#preview_hosp_id');">
+                </div>
+
+                <div class="col-md-4">
+                  <label style="font-weight: 600; font-size: 13px; color: #334155;">Registration Certificate</label>
+                  <div class="upload-dropzone" onclick="document.getElementById('regproof').click();">
+                    <i class="fa fa-certificate fa-2x" style="color: #d97706; margin-bottom: 6px;"></i>
+                    <p style="margin: 0; font-size: 12.5px; font-weight: 600; color: #334155;">Clinical Est. License</p>
+                    <span style="font-size: 11px; color: #94a3b8;">Click or drag file</span>
+                    <div>
+                      <img id="preview_hosp_reg" class="upload-preview-thumb" src="#" alt="Preview">
+                    </div>
+                  </div>
+                  <input type="file" id="regproof" name="regproof" accept="image/*" style="display: none;" onchange="previewFile(this, '#preview_hosp_reg');">
+                </div>
+
+                <div class="col-md-12 form-group" style="margin-top: 15px;">
+                  <label for="about" style="font-weight: 600; font-size: 13px; color: #334155;">About Facility / Summary</label>
+                  <textarea class="form-control" id="about" name="about" rows="2" placeholder="Brief overview of healthcare infrastructure and specializations..."><?=set_value('about');?></textarea>
+                </div>
+              </div>
+
+              <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #e2e8f0; padding-top: 20px; margin-top: 15px;">
+                <button type="button" class="btn btn-default prev-step-btn" data-prev="#cstep-services" style="font-weight: 600; padding: 8px 20px;">
+                  <i class="fa fa-arrow-left"></i> Back
+                </button>
+                <div style="display: flex; gap: 10px;">
+                  <button type="reset" class="btn btn-default" style="font-weight: 600; padding: 8px 20px;">
+                    <i class="fa fa-refresh"></i> Reset
+                  </button>
+                  <button type="submit" class="btn btn-primary" name="submit" style="background: #00a896; border-color: #00a896; font-weight: 600; padding: 8px 28px;">
+                    <i class="fa fa-check"></i> Save & Register Facility
+                  </button>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </form>
+      </div>
+
+    </div>
+  </section>
+</div>
+
 <script>
-		function isNumber(evt) {
-    evt = (evt) ? evt : window.event;
-    var charCode = (evt.which) ? evt.which : evt.keyCode;
-    if (charCode > 31 && (charCode < 48 || charCode > 57)) {
-        return false;
+function previewFile(input, previewSelector) {
+  if (input.files && input.files[0]) {
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      $(previewSelector).attr('src', e.target.result).show();
     }
-    return true;
+    reader.readAsDataURL(input.files[0]);
+  }
 }
-</script>
-<script>
-		$(document).ready(function(){
-			$(document).on('click','.addsession',function(){
-				var dblockid = $(this).attr('data-dayblock-id');
-				var cblockid = $(this).attr('data-clinicblock-id');
-					var code ='<br><div class="col-md-5">' +
-				'	<div class="form-group">' +
-				'	  <label class="control-label col-sm-4 label-name" for="email">From<span class="starspan wg"></span></label>' +
-				'	  <div class="col-sm-7" id="ccont">' +
-				'		<input type="time" class="form-control input-sm timepicker" id="" name="fromtime['+cblockid+']['+dblockid+'][]" value="">' +
-				'	  </div>' +
-				'	</div>' +
-				'</div>' +
-				'<div class="col-md-5">' +
-				'	<div class="form-group">' +
-				'	  <label class="control-label col-sm-4 label-name" for="email">To<span class="starspan wg"></span></label>' +
-				'	  <div class="col-sm-7" id="cema">' +
-				'		<input type="time" class="form-control input-sm timepicker" id="" name="totime['+cblockid+']['+dblockid+'][]" value="">' +
-				'	  </div>' +
-				'	</div>' +
-				'</div>';
-				$(this).parent().find(".sessionwrapper:eq( "+dblockid+" )").append(code);
-			});
-			
-			$(document).on('click','.addtiming',function(){
-				var dblockid = $(this).attr('data-dayblock-id');
-				dblockid=  parseInt(dblockid)+1;
-				$(this).attr('data-dayblock-id',dblockid);
-				var cblockid = $(this).attr('data-clinicblock-id');
-				
-				var hiddendayseq = parseInt($('#hiddenday_'+cblockid).val());
-				$('#hiddenday_'+cblockid).val( parseInt($('#hiddenday_'+cblockid).val()) +1 );
-				
-				var code = '<br><hr  style="width:60%;border-top-color:black;"><br><div class="col-md-8">' +
-					'<div class="form-group">' +
-					 ' <label class="control-label col-sm-4 label-name" for="email">Select Day<span class="starspan wg"></span></label>' +
-					  '<div class="col-sm-7" id="cadd">' +
-						'<label class="checkbox-inline"><input type="checkbox" name="sun['+cblockid+']['+hiddendayseq+']" value="S">Sun</label>' +
-						'<label class="checkbox-inline"><input type="checkbox" name="mon['+cblockid+']['+hiddendayseq+']" value="M">Mon</label>' +
-						'<label class="checkbox-inline"><input type="checkbox" name="tue['+cblockid+']['+hiddendayseq+']" value="T">Tue</label>' +
-						'<label class="checkbox-inline"><input type="checkbox" name="wed['+cblockid+']['+hiddendayseq+']" value="W">Wed</label>' +
-						'<label class="checkbox-inline"><input type="checkbox" name="thu['+cblockid+']['+hiddendayseq+']" value="TH">Thus</label>' +
-						'<label class="checkbox-inline"><input type="checkbox" name="fri['+cblockid+']['+hiddendayseq+']" value="F">Fri</label>' +
-						'<label class="checkbox-inline"><input type="checkbox" name="sat['+cblockid+']['+hiddendayseq+']" value="SA">Sat</label>' +
-						
-					  '</div>' +
-					'</div>' +
-				'</div>' +
-				
-				'<br>' +
-				'<br>' +
-				'<div class="sessionwrapper">' +
-				'	<div class="col-md-4">' +
-				'		<div class="form-group">' +
-				'		  <label class="control-label col-sm-4 label-name" for="email">From<span class="starspan wg"></span></label>' +
-				'		  <div class="col-sm-7" id="ccont">' +
-				'			<input type="time" class="form-control input-sm timepicker" id="" name="fromtime['+cblockid+']['+dblockid+'][]"  value="">' +
-				'		  </div>' +
-				'		</div>' +
-				'	</div>' +
-				'	<div class="col-md-4">' +
-				'		<div class="form-group">' +
-				'		  <label class="control-label col-sm-4 label-name" for="email">To<span class="starspan wg"></span></label>' +
-				'		  <div class="col-sm-7" id="cema">' +
-				'			<input type="time" class="form-control input-sm timepicker" id="" name="totime['+cblockid+']['+dblockid+'][]" value="">' +
-				'		  </div>' +
-				'		</div>' +
-				'	</div>' +
-				'</div>' +
-				
-				'<button type="button" class="btn btn-info btn-xs addsession" name="" data-clinicblock-id="'+cblockid+'" data-dayblock-id="'+dblockid+'">Add More Session</button>';
-				
-				
-				$(this).parent().find(".timmingwrapper").append(code);
-			});
-			
-			$("#addclinic").click(function(){
-				
-				
-				var cblockid = $(this).attr('data-clinicblock-id');
-				cblockid=  parseInt(cblockid)+1;
-				$(this).attr('data-clinicblock-id',cblockid);
-				var dblockid = $(this).attr('data-dayblock-id');
-				var code = '<br><hr style="border-top-color:blue;"><br>'+
-		'<div class="row" style="margin-top:5px;">'+
-		'<div class="col-md-12">'+
-			'	<div class="form-group">'+
-			'	  <label class="control-label col-sm-2 label-name" for="email">Type<span class="starspan">*</span></label>'+
-			'	  <div class="col-sm-7">'+
-			'		 <label class="radio-inline"> <input type="radio" class="objective" data-objectiveid="'+cblockid+'"  id="objectiveself" name="objective['+cblockid+']" value="H" >Hospital</label>'+
-			'		 <label class="radio-inline"> <input type="radio" class="objective" data-objectiveid="'+cblockid+'"  id="objectivewage" name="objective['+cblockid+']" value="C">Clinic</label>'+
-			'	  </div>'+
-			'	</div>'+
-			'</div>'+
-			'<br><br>'+
-			'<div class="col-md-4">'+
-			'	<div class="form-group">'+
-			'	  <label class="control-label col-sm-4 label-name" for="email" style="white-space: nowrap;">Clinic/Hospital<span class="starspan wg"></span></label>'+
-			'	  <div class="col-sm-7" id="cemp">'+
-			'		<select class="form-control input-sm" id="clinic" name="clinic['+cblockid+']" >'+
-			'		</select>'+
-			'	  </div>'+
-			'	</div>'+
-			'</div>'+
-			'<div class="col-md-4">'+
-			'	<div class="form-group">'+
-			'	  <label class="control-label col-sm-4 label-name" for="email">Fee<span class="starspan wg"></span></label>'+
-			'	  <div class="col-sm-7" id="cadd">'+
-			'		<input type="text" class="form-control input-sm" id="fee" name="fee[]" value="">'+
-			'	  </div>'+
-			'	</div>'+
-			'</div>'+
-			'<br>			<br>'+
-			'<div class="timmingwrapper">'+
-				'<div class="col-md-8">' +
-					'<div class="form-group">' +
-					 ' <label class="control-label col-sm-4 label-name" for="email">Select Day<span class="starspan wg"></span></label>' +
-					  '<div class="col-sm-7" id="cadd">' +
-						'<label class="checkbox-inline"><input type="checkbox" name="sun['+cblockid+'][]" value="S">Sun</label>' +
-						'<label class="checkbox-inline"><input type="checkbox" name="mon['+cblockid+'][]" value="M">Mon</label>' +
-						'<label class="checkbox-inline"><input type="checkbox" name="tue['+cblockid+'][]" value="T">Tue</label>' +
-						'<label class="checkbox-inline"><input type="checkbox" name="wed['+cblockid+'][]" value="W">Wed</label>' +
-						'<label class="checkbox-inline"><input type="checkbox" name="thu['+cblockid+'][]" value="TH">Thus</label>'+
-						'<label class="checkbox-inline"><input type="checkbox" name="fri['+cblockid+'][]" value="F">Fri</label>' +
-						'<label class="checkbox-inline"><input type="checkbox" name="sat['+cblockid+'][]" value="SA">Sat</label>' +
-					  '</div>' +
-					'</div>' +
-				'</div>' +
-				'<br>' +
-				'<br>' +
-				'<div class="sessionwrapper">' +
-				'	<div class="col-md-4">' +
-				'		<div class="form-group">' +
-				'		  <label class="control-label col-sm-4 label-name" for="email">From<span class="starspan wg"></span></label>' +
-				'		  <div class="col-sm-7" id="ccont">' +
-				'			<input type="time" class="form-control input-sm timepicker" id="" name="fromtime['+cblockid+']['+dblockid+'][]"  value="">' +
-				'		  </div>' +
-				'		</div>' +
-				'	</div>' +
-				'	<div class="col-md-4">' +
-				'		<div class="form-group">' +
-				'		  <label class="control-label col-sm-4 label-name" for="email">To<span class="starspan wg"></span></label>' +
-				'		  <div class="col-sm-7" id="cema">' +
-				'			<input type="time" class="form-control input-sm timepicker" id="" name="totime['+cblockid+']['+dblockid+'][]" value="">' +
-				'		  </div>' +
-				'		</div>' +
-				'	</div>' +
-				'</div>' +
-				'<button type="button" class="btn btn-info btn-xs addsession" name="" data-clinicblock-id="'+cblockid+'" data-dayblock-id="'+dblockid+'">Add More Session</button>'+
-				'</div>'+
-				'<button type="button" class="btn btn-info btn-xs addtiming" name=""  data-clinicblock-id="'+cblockid+'"   data-dayblock-id="'+dblockid+'" >Add Timing For Remaining Day</button>'+
-				'</div>';
-				
-				
-				
-				$(".practicewrapper").append(code);
-			});
-				
-				
-				
-			$(document).on('change','.objective',function(){
-				var oid = $(this).attr('data-objectiveid');
-				var type= $("input[name='objective["+oid+"]']:checked").val();
-				var uri='<?=base_url();?>doctor/doctorreg/getobjectivelist';
-				$.ajax({
-				 type:"post", 
-				 url: uri,
-				 //dataType: 'json',
-				 data:{type:type},
-				 success: function(result){
 
-					
-					$("select[name='clinic["+oid+"]']").html(result);
-				 }
-				});
-			});
-		});
-		
-		$('.timepicker').Zebra_DatePicker({
+$(document).ready(function(){
+  $('.next-step-btn').click(function(){
+    var target = $(this).data('next');
+    $('#clinicTabNav a[href="' + target + '"]').tab('show');
+    $('html, body').animate({ scrollTop: $('#clinicTabNav').offset().top - 80 }, 200);
+  });
 
-    format: 'H:i'
+  $('.prev-step-btn').click(function(){
+    var target = $(this).data('prev');
+    $('#clinicTabNav a[href="' + target + '"]').tab('show');
+    $('html, body').animate({ scrollTop: $('#clinicTabNav').offset().top - 80 }, 200);
+  });
 });
-
-/*  $("body").on("click", ".timepicker", function(){
-        if (!$(this).hasClass("hasDatepicker"))
-        {
-            $(this).Zebra_DatePicker();
-            $(this).Zebra_DatePicker("show");
-        }
-    }); */
 </script>
-	 
-    
-  
- 

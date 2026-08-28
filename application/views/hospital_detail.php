@@ -1,466 +1,340 @@
-<head>
-  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-  <link rel="icon" href="images/logo.png" type="image/gif" sizes="16x16">
-  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css" integrity="sha384-50oBUHEmvpQ+1lW4y57PTFmhCaXp0ML5d60M1M7uH2+nqUivzIebhndOJK28anvf" crossorigin="anonymous">
-  <style>
-    #searchBTN {width: 100%;margin-top: 0px;box-shadow: 0px -4px 6px #244c63;padding: 12px;border: none;
-    background-color: #9bc03c;color: white;margin-top:4px;}
-  </style>
-</head>
+<?php include ("includes/header.php"); ?>
 
-<?php include ('includes/header_new.php'); ?>
-
-<form action='<?=base_url();?>search' method='GET'>
-  <div class="box-form">
-    <div class="col-sm-3">
-      <div class="input-group shadow">
-        <span class="input-group-addon"><i class="fa fa-map-marker" aria-hidden="true"></i></span>
-        <input type="text" class="form-control ui-autocomplete-input" name="location" placeholder="Location" id="hintcity" autocomplete="off">
-        <input type="hidden" class="form-control" name="city" id="city">
-      </div>
-    </div>
-    <div class="col-sm-5">
-      <div class="input-group shadow">
-        <span class="input-group-addon"><i class="fa fa-search"></i></span>
-        <input type="text" id="hint" class="form-control ui-autocomplete-input" name="keyword" placeholder="Search Hospitals/Doctors/Clinics etc" autocomplete="off">
-      </div> 
-    </div>
-    <div class="col-sm-3">
-      <div class="input-group shadow">
-        <span class="input-group-addon"><i class="fa fa-user-md"></i></span>
-        <select class="form-control" name="spl">
-          <option value="">-Specialization-</option>
-          <?php foreach($specialization as $s){ ?>
-          <option value='<?=$s->id;?>'><?=$s->name;?></option>
-          <?php } ?>                  
-        </select>
-      </div>     
-    </div>
-    <div class="col-sm-1">
-      <button class="careplus-booking-btn careplus-bgcolor-two" id="searchBTN"><i class="fa fa-search" aria-hidden="true"></i></button>
-    </div>
-    <div class="clearfix"></div>
-  </div>
-</form>
-<div class="clearfix"></div>
-<div class="col-md-12">	
-
-  <!---- MAIN PAGE CONTENT --->		
-  <div class="blackshad">
-    <img class="MainPhoto" id="display_pic" data-pid="1" src="<?=admin_url();?>public/assets/upload/<?=($hospital->drimage)? $hospital->drimage : 'dummydr.jpg';?>" data-src="https://content.jdmagicbox.com/comp/def_content/hospitals/default-hospitals-23.jpg?interpolation=lanczos-none&amp;output-format=jpg&amp;resize=1024:370&amp;crop=1024:370px;*,*">
-  </div>
-  <div class="company-details">
-    <div class="col-md-1"></div>
-    <div class="col-sm-6 text-center blackBack">
-      <h4 class="content_design"><?=$hospital->name;?></h4>
-      <p>WE ARE ONLINE FOR PATIENT'S 24 HOUR'S</p>
-      <!-- <a href="https://www.upcharr.com/search?location=&city=&keyword=&spl=#" class="btn BooKNow">Book Now</a> -->
-      <!--  <h6>Message on WhatsApp</h6> -->
-    </div>
-    <div class="col-md-1"></div>
-    <div class="col-md-4">
-      <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d1041.5382881225871!2d77.32916749191378!3d28.590678045657178!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x390ce4ff07da730b%3A0x74119cc5681c0b56!2s!5e0!3m2!1sen!2sin!4v1562824058764!5m2!1sen!2sin" width="100%" height="355px" frameborder="0" style="border:0;box-shadow: 0px -3px 6px -2px #c5bebe;padding: 20px 0px;" allowfullscreen></iframe>
-    </div>
-  </div>
-	<div class="col-md-12" style="background:white;">
-    <div class="col-md-4" style="padding: 12px 0px;">
-      <p style="color:black;padding:3px; font-weight:bold;">Photos</p>
-        <?php foreach($gallery as $g) {?>
-          <img src="<?=base_url();?>admin1947/public/assets/upload/<?=$g->image;?>" class="galleryimages">
-        <?php } ?>
-      <p><a href="#" class="morebtn">See More</a> </p>
-      <div class="col-md-12">
-        <hr>
-        <p class="detailsinfo"><a href="skype:+1-425-793-8900?call" class="link_ar"><i class="fa fa-mobile colmd4icon" aria-hidden="true"></i><?=$hospital->mobile;?></a></p>
-        <p class="detailsinfo"><i class="fa fa-location-arrow colmd4icon" aria-hidden="true"></i> <strong><?=$hospital->address;?></strong></p>
-        <p class="detailsinfo">
-        <a href='mailto:info@upcharr.com'><i class="fa fa-envelope colmd4icon" aria-hidden="true"></i> Send Enquiry By Email</a></p>
-      </div>
-    </div>
-    <div class="col-md-8">
-      <div id="myCarousel" class="carousel slide" data-ride="carousel">
-        <ul class="carousel-inner">
-          <li class="item active">
-	          <?php foreach($clinic as $p){ ?>
-              <div class="col-md-4">
-                <div class="col-md-12 innerbox">
-                  <a data-toggle="pill" href="#home"><span class="titleinbox"><?=prefixdr($p->fname).' '.$p->lname;?></span>
-                  <p class="datadoctor"><?php $splstring=''; $sp=$this->db->get_where('dr_specialization',array('user_id'=>$p->id))->result();
-                  foreach($sp as $s)						
-                  $splstring.=getSpecilizationName($s->specialization_id).', ';	
-                  echo $splstring=rtrim($splstring,', ');						
-                  ?>,</p></a>
-                  <p class="datadoctor2"><i class="fa fa-clock-o" aria-hidden="true"></i> 11:00 AM To 1:00 PM</p>
-                  <a href="<?=base_url();?>doctor/<?=$p->id;?>" class="bookbtn text-center">View Details<i class="fa fa-chevron-right" id="bookbtn_icon" aria-hidden="true"></i></a>
+<!-- Floating Search & Filter Bar -->
+<div class="container" style="margin-top: 24px;">
+    <form action='<?=base_url();?>search' method='GET'>
+        <div class="box-form">
+            <div class="row" style="margin: 0;">
+                <div class="col-md-3 col-sm-6" style="padding: 6px;">
+                    <div class="input-group">
+                        <span class="input-group-addon"><i class="fas fa-map-marker-alt"></i></span>
+                        <select class="form-control" name="city" id="searchCitySelect" title="Select Location">
+                            <option value="">All Locations / Cities</option>
+                            <?php if (!empty($cities)) { foreach($cities as $c){ ?>
+                            <option value='<?=$c->id;?>' <?=(isset($_GET['city']) && $_GET['city'] == $c->id) ? 'selected' : '';?>><?=$c->name;?></option>
+                            <?php } } ?>
+                        </select>
+                    </div>
                 </div>
-              </div>
-            <?php } ?>
-          </li>
-          <?php foreach($clinic as $p){ ?>
-            <li class="item">
-              <div class="col-md-4">
-                <div class="col-md-12 innerbox">
-                  <a data-toggle="pill" href="#home"><span class="titleinbox"><?=prefixdr($p->fname).' '.$p->lname;?></span>
-                  <p class="datadoctor"><?php $splstring=''; $sp=$this->db->get_where('dr_specialization',array('user_id'=>$p->id))->result();
-                  foreach($sp as $s)						
-                  $splstring.=getSpecilizationName($s->specialization_id).', ';	
-                  echo $splstring=rtrim($splstring,', ');						
-                  ?>,</p></a>
-                  <p class="datadoctor2"><i class="fa fa-clock-o" aria-hidden="true"></i> 11:00 AM To 1:00 PM</p>
-                  <a href="<?=base_url();?>doctor/<?=$p->id;?>" class="bookbtn text-center">See Details<i class="fa fa-chevron-right" id="bookbtn_icon" aria-hidden="true"></i></a>
+                <div class="col-md-5 col-sm-6" style="padding: 6px;">
+                    <div class="input-group">
+                        <span class="input-group-addon"><i class="fas fa-search"></i></span>
+                        <input type="text" id="hint" class="form-control ui-autocomplete-input" name="keyword" value="<?=@$_GET['keyword'];?>" placeholder="Search Doctors, Clinics, Specializations, Hospitals..." autocomplete="off">
+                    </div>       
                 </div>
-              </div>
-            </li>
-          <?php } ?>
-        </ul>
-      </div>
-      <div class="tab-content">
-        <div id="home" class="tab-pane fade in active">
-          <div class="col-md-12 innerboxdetail" >
-            <div class="row">
-              <div class="col-md-3">
-                <img class="tabdoctorimage" src="<?=admin_url();?>public/assets/upload/<?=($p->drimage)? $p->drimage : 'dummydr.jpg';?>">
-              </div>
-              <div class="col-md-9" style="padding-top: 19px;">
-                <span class="titleinbox"><?=($p->fname).' '.$p->lname;?></span>
-                <p class="datadoctor"><?php $quastring='';
-        			  $qu=$this->db->get_where('dr_qualifications',array('user_id'=>$p->id));
-        			  foreach(@$qu->result() as $q)				
-        			  $quastring.=getQualificationName($q->qualification_id).', ';	
-        			  echo $quastring=rtrim($quastring,', ');				
-        			  ?></p>
-                <p class="doctoreducation"><?php $splstring=''; $sp=$this->db->get_where('dr_specialization',array('user_id'=>$p->id))->result();	
-        			  foreach($sp as $s)								
-        			  $splstring.=getSpecilizationName($s->specialization_id).', ';	
-        			  echo $splstring=rtrim($splstring,', ');					
-        			  ?>,</p>
-                <p class="colorblack"><?=$p->about;?></p>
-				<?=$p->id;?>
-                <a href="#" class="morebtn getappointment" data-upchar-did='<?=$p->id;?>' data-toggle="modal" data-target="#myModal">Book Appointment</a>
-              </div>
+                <div class="col-md-3 col-sm-8" style="padding: 6px;">
+                    <div class="input-group">
+                        <span class="input-group-addon"><i class="fas fa-user-md"></i></span>
+                        <select class="form-control" name="spl" title="Select Specialization">
+                            <option value="">All Specializations</option>
+                            <?php if (!empty($specialization)) { foreach($specialization as $s){ ?>
+                            <option value='<?=$s->id;?>' <?=(isset($_GET['spl']) && $_GET['spl'] == $s->id) ? 'selected' : '';?>><?=$s->name;?></option>
+                            <?php } } ?>                   
+                        </select>
+                    </div> 
+                </div>
+                <div class="col-md-1 col-sm-4" style="padding: 6px;">
+                    <button type="submit" id="searchBTN" title="Search"><i class="fas fa-search" aria-hidden="true"></i></button>
+                </div>
             </div>
-          </div>
         </div>
-        <div id="menu3" class="tab-pane fade">
-          <h3>Menu 3</h3>
-          <p>upchar one place of Healthcare.</p>
-        </div>
-      </div>
-    </div>
-  </div>
+    </form>
 </div>
-		
-<?php include ('includes/footer.php'); ?>
-         
-<style>
-.MainPhoto{
-    width:100%;
-    height:686px;
-}
-.blackBack {
-    background: #0000004d;
-    padding: 90px 0px;
-    border-radius: 22px;
-}
 
-.BooKNow {
-    background: #9bc03c;
-    color: white !important;
-    padding: 12px 30px;
-    font-weight: bold;
-    transition:0.3s;
-}
-.BooKNow:hover{
-    background:#809e34;
-}
+<?php
+$hospImg = (!empty($hospital->drimage) && file_exists('admin1947/public/assets/upload/'.$hospital->drimage)) 
+           ? admin_url().'public/assets/upload/'.$hospital->drimage 
+           : admin_url().'public/assets/upload/dummyhospital.jpg';
 
-         
-         .carousel-indicators li {
-    background-color: rgb(53, 149, 48);
-    border: 1px solid black;
-    border-radius: 10px;
-    padding: 5px;    
-    
-}
+$cityName = getCityName($hospital->city) ?: 'Varanasi';
+$hospAddress = !empty($hospital->address) ? $hospital->address : ($cityName . ', Uttar Pradesh, India');
+$hospMobile = !empty($hospital->mobile) ? $hospital->mobile : '8448440603';
+$hospEmail = !empty($hospital->email) ? $hospital->email : 'support@upchar.info';
+?>
 
-		 .small-box {
-    border-radius: 2px;
-    position: relative;
-    display: block;
-    margin-bottom: 20px;
-    box-shadow: 0 1px 1px rgba(0,0,0,0.1);
-}
-.bg-green, .callout.callout-success, .alert-success, .label-success, .modal-success .modal-body {
-    background-color: #00a65a !important;   
-}
+<!-- Hospital Profile Detail Section -->
+<div class="hosp-profile-container">
+    <!-- Hero Banner Card -->
+    <div class="hosp-profile-card">
+        <div class="hosp-profile-header">
+            <!-- Hospital Avatar / Thumbnail -->
+            <div class="hosp-profile-avatar-wrap">
+                <img src="<?=$hospImg;?>" alt="<?=$hospital->name;?>" class="hosp-profile-avatar">
+                <span class="hosp-profile-badge-verified"><i class="fas fa-check-circle"></i> Verified Hospital</span>
+            </div>
 
-.small-box .icon {
-    -webkit-transition: all .3s linear;
-    -o-transition: all .3s linear;
-    transition: all .3s linear;
-    position: absolute;
-    top: 6px;
-    right: 10px;
-    z-index: 0;
-    font-size: 90px;
-    color: rgba(0,0,0,0.15);
-}
-.small-box>.inner {
-    padding: 10px;
-	 color: #fff !important;
-}
-.small-box h3 {
-    font-size: 38px;
-    font-weight: bold;
-    margin: 0 0 10px 0;
-    white-space: nowrap;
-    padding: 0;
-}
-.small-box>.small-box-footer {
-    position: relative;
-    text-align: center;
-    padding: 3px 0;
-    color: #fff;
-    color: rgba(255,255,255,0.8);
-    display: block;
-    z-index: 10;
-    background: rgba(0,0,0,0.1);
-    text-decoration: none;
-	    color: #fff !important;
-}
-.small-box:hover .icon {
-    font-size: 95px;
-}
+            <!-- Hospital Information -->
+            <div class="hosp-profile-info">
+                <h1 class="hosp-profile-name"><?=$hospital->name;?></h1>
+                <div class="hosp-profile-address">
+                    <i class="fas fa-map-marker-alt" style="color: #00A896;"></i>
+                    <span><?=$hospAddress;?></span>
+                </div>
 
-/*-- page css here --*/
+                <div class="hosp-profile-tags">
+                    <span class="spec-pill" style="background: #E8F0FE; color: #1A73E8; border: 1px solid #D2E3FC; font-weight: 600;">
+                        <i class="fas fa-clock"></i> Open 24/7 • Emergency & Critical Care
+                    </span>
+                    <span class="spec-pill"><i class="fas fa-bed"></i> Inpatient & ICU Beds</span>
+                    <span class="spec-pill"><i class="fas fa-ambulance"></i> 24/7 Ambulance Support</span>
+                    <span class="spec-pill"><i class="fas fa-shield-alt"></i> NABH / Clinical Compliance</span>
+                </div>
 
-.blackshad {
-    background: black;
-    z-index: 2;
-    height: 1px;
-}
+                <div class="hosp-profile-metrics">
+                    <div class="hosp-profile-metric-item">
+                        <i class="fas fa-ambulance" style="color: #DC2626;"></i>
+                        <span><strong>24/7</strong> Emergency Trauma</span>
+                    </div>
+                    <div class="hosp-profile-metric-item">
+                        <i class="fas fa-stethoscope" style="color: #00A896;"></i>
+                        <span><strong>Multi-Specialty</strong> OPD</span>
+                    </div>
+                    <div class="hosp-profile-metric-item">
+                        <i class="fas fa-bed" style="color: #16A34A;"></i>
+                        <span><strong>Live</strong> Bed Tracking</span>
+                    </div>
+                    <div class="hosp-profile-metric-item">
+                        <i class="fas fa-star" style="color: #F59E0B;"></i>
+                        <span><strong>4.8</strong> (150+ Verified Reviews)</span>
+                    </div>
+                </div>
+            </div>
 
-#image_div{
-  background-image:url("");
-  width:100%;
-  height:200px;
-  background-repeat:no-repeat;
-  background-size:cover;
+            <!-- Actions & Contact Column -->
+            <div class="hosp-profile-actions">
+                <div class="wait-time-badge" style="margin-bottom: 10px;">
+                    <i class="fas fa-check-circle" style="color: #16A34A;"></i> Verified Partner Facility
+                </div>
+                <a href="tel:<?=$hospMobile;?>" class="btn btn-primary-cta" style="padding: 12px 20px; font-size: 15px; justify-content: center; display: flex; align-items: center; gap: 8px;">
+                    <i class="fas fa-phone-alt"></i> Contact Hospital
+                </a>
+                <a href="mailto:<?=$hospEmail;?>" class="btn btn-secondary" style="padding: 10px 16px; justify-content: center; display: flex; align-items: center; gap: 8px;">
+                    <i class="fas fa-envelope"></i> Send Enquiry
+                </a>
+            </div>
+        </div>
+    </div>
 
-}
-.company-details {
-    z-index: 2;
-    color: white;
-}
-.flex-container {
-  display: flex;
-  justify-content: center;
-}
+    <div class="row">
+        <!-- Left Column: Overview, Bed Tracking, Doctors, Gallery -->
+        <div class="col-md-8">
+            <!-- About Hospital -->
+            <div class="hosp-profile-card">
+                <h3 class="hosp-profile-section-title">
+                    <i class="fas fa-hospital" style="color: #00A896;"></i> About <?=$hospital->name;?>
+                </h3>
+                <p style="font-size: 14.5px; color: #334155; line-height: 1.7; margin-bottom: 18px;">
+                    <?=(!empty($hospital->about)) ? nl2br(strip_tags($hospital->about)) : $hospital->name.' is a premier multi-specialty healthcare institution in '.$cityName.', delivering advanced medical care, 24/7 emergency response, modern inpatient accommodations, and highly qualified specialist consultations through the Upchar healthcare network.';?>
+                </p>
 
-.flex-container > div {
-    background-color: #f1f1f1;
-    width: 100px;
-    margin: 2px;
-    text-align: center;
-    line-height: 95px;
-    font-size: 30px;
-    border-radius: 5px;
-    overflow:hidden;
+                <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px; padding: 14px 18px;">
+                    <div style="display: flex; align-items: center; gap: 10px; color: #16A34A; font-weight: 600; font-size: 13.5px;">
+                        <i class="fas fa-shield-alt" style="font-size: 16px;"></i> Verified Healthcare Facility & Regulatory Compliance
+                    </div>
+                </div>
+            </div>
 
-}
-.holder {
-    background-color: #efefef;
-    margin: auto;
-    width: 1024px;
-    position: relative;
-}
-.innerbox {
-    background: #f9f9f9;
-    padding: 13px 9px;
-    border-radius: 2px 12px;
-    border: 1px solid #e6e4e4;
-    margin: 15px 0px;
-    transition:0.4s;
-    height: 136px;
-}
-.innerboxdetail{
-    background: #f9f9f9;
-    padding: 13px 9px;
-    border-radius: 2px 12px;
-    border: 1px solid #e6e4e4;
-    margin: 15px 0px;
-    transition:0.4s;
-    height: auto;
-}
+            <!-- Facilities & Live Bed Availability Tracking -->
+            <div class="hosp-profile-card">
+                <h3 class="hosp-profile-section-title">
+                    <i class="fas fa-procedures" style="color: #00A896;"></i> Live Facilities & Bed Availability Status
+                </h3>
+                
+                <div class="facility-live-grid">
+                    <div class="facility-live-card">
+                        <div class="facility-live-info">
+                            <div class="facility-live-icon"><i class="fas fa-bed"></i></div>
+                            <div>
+                                <h4 class="facility-live-title">ICU & Critical Care</h4>
+                                <span style="font-size: 12px; color: #64748B;">Ventilator support ready</span>
+                            </div>
+                        </div>
+                        <span class="facility-live-status-pill"><i class="fas fa-check"></i> Available</span>
+                    </div>
 
-.content_design {
-    font-weight: bold;
-    letter-spacing: 2px;
-    color: white;
-    text-transform: uppercase;
-}
-.bookbtn {
-    background: #94b63c;
-    float: right;
-    font-size: 12px;
-    padding: 0px 20px;
-    transition: 1s;
-    color: white !important;
-}
+                    <div class="facility-live-card">
+                        <div class="facility-live-info">
+                            <div class="facility-live-icon"><i class="fas fa-hospital-alt"></i></div>
+                            <div>
+                                <h4 class="facility-live-title">General / Oxygen Beds</h4>
+                                <span style="font-size: 12px; color: #64748B;">Continuous O2 pipeline</span>
+                            </div>
+                        </div>
+                        <span class="facility-live-status-pill"><i class="fas fa-check"></i> Available</span>
+                    </div>
 
-.bookbtn:hover{
-    color:#d0dcd0;
-}
-.bookbtn:hover #bookbtn_icon {
-    text-shadow: -6px 0px 4px #2f6b2b;
-}
+                    <div class="facility-live-card">
+                        <div class="facility-live-info">
+                            <div class="facility-live-icon"><i class="fas fa-heartbeat"></i></div>
+                            <div>
+                                <h4 class="facility-live-title">Emergency Trauma & OT</h4>
+                                <span style="font-size: 12px; color: #64748B;">Round-the-clock surgeons</span>
+                            </div>
+                        </div>
+                        <span class="facility-live-status-pill"><i class="fas fa-circle" style="font-size: 8px;"></i> 24/7 Active</span>
+                    </div>
 
-.gallarytitle {
-    font-weight: bold;
-    color: gray;
-    padding: 2px 14px;
-}
-#bookbtn_icon {
-    color: white;
-    font-weight: bold;
-    font-size: 11px;
-    margin-left: 5px;
-}
-.nav-tabs {
-    border-bottom: 1px solid #bec0c2;
-}
-.bookdtab {
-    cursor: pointer;
-    text-transform: uppercase;
-    background: #f5f5f5;
-    padding: 0px;
-    text-align: center;
-    border: #e8e8e8 solid 1px;
-    
-}
+                    <div class="facility-live-card">
+                        <div class="facility-live-info">
+                            <div class="facility-live-icon"><i class="fas fa-pills"></i></div>
+                            <div>
+                                <h4 class="facility-live-title">Pharmacy & Pathology</h4>
+                                <span style="font-size: 12px; color: #64748B;">In-house 24 hrs diagnostic</span>
+                            </div>
+                        </div>
+                        <span class="facility-live-status-pill"><i class="fas fa-check"></i> Open Now</span>
+                    </div>
+                </div>
+            </div>
 
-.bookdtabcontent {
-    width: 100%;
-    position: relative;
-    outline: 0;
-    cursor: pointer;
-    text-transform: uppercase;
-    background: #439c3e;
-    padding: 15px 23px;
-    color: white;
-}
+            <!-- Associated Specialists & Doctors Grid -->
+            <div class="hosp-profile-card">
+                <h3 class="hosp-profile-section-title">
+                    <i class="fas fa-user-md" style="color: #00A896;"></i> Associated Specialists & Doctors
+                </h3>
 
-.myactive{
-    background: #d2c2c2;
-    
+                <div class="associated-doctors-grid">
+                    <?php if (!empty($clinic)) { foreach($clinic as $doc) { 
+                        $docImg = (!empty($doc->drimage) && file_exists('admin1947/public/assets/upload/'.$doc->drimage)) 
+                                  ? admin_url().'public/assets/upload/'.$doc->drimage 
+                                  : admin_url().'public/assets/upload/dummydr.jpg';
+                        $docPrefix = (strcasecmp(substr($doc->fname, 0, 2), 'Dr') != 0) ? 'Dr. ' : '';
+                        
+                        // Specialization
+                        $docSpecs = $this->db->get_where('dr_specialization', array('user_id' => $doc->id))->result();
+                        $specName = (!empty($docSpecs) && !empty($docSpecs[0]->specialization_id)) 
+                                    ? getSpecilizationName($docSpecs[0]->specialization_id) 
+                                    : 'Specialist Physician';
 
-}
+                        // Qualifications
+                        $docQuals = $this->db->get_where('dr_qualifications', array('user_id' => $doc->id))->result();
+                        $qualName = (!empty($docQuals) && !empty($docQuals[0]->qualification_id)) 
+                                    ? getQualificationName($docQuals[0]->qualification_id) 
+                                    : 'MBBS';
 
-.titleinbox {
-    color: black;
-    font-family: cambria;
-        font-size: 14px;
-    text-transform: capitalize;
-    font-family:verdana;
-    
-}
-.galleryimages {
-    border-radius: 2px;
-    width: 131px;
-    border: 1px solid #295771;
-    transition: 0.3s;
-    margin: 4px;
-    height: 134px;
-}
-.galleryimages:hover {
-    border: 1px solid white;
-     transform: scale(1.1,1.1);
-}
-.detailsinfo{
-    color:black;
-}
-.colorblack{
-    color:black;
-}
-.nav>li>a:focus, .nav>li>a:hover {
-    text-decoration: none;
-    background-color: #295771;
-    color: white;
-    border-radius:0px;
-}
-.morebtn {
-    background:#94b63c;
-    padding: 6px 21px;
-    color: white;
-    font-weight: bold;
-    border-radius: 23px;
-}
-.datadoctor{
-    color:black;
-    text-transform:capitalize;
-    font-size:12px;
-    margin-bottom:0px;
-}
-.datadoctor2 {
-    color: black;
-    text-transform: capitalize;
-    font-size: 12px;
-    margin-bottom: ;
-}
+                        $docFee = (!empty($doc->p_fee)) ? $doc->p_fee : '500';
+                        $docExp = (!empty($doc->exp) && $doc->exp > 0) ? $doc->exp : 8;
+                    ?>
+                    <div class="associated-doctor-card">
+                        <div>
+                            <div class="associated-doctor-top">
+                                <img src="<?=$docImg;?>" alt="<?=$docPrefix.$doc->fname.' '.$doc->lname;?>" class="associated-doctor-avatar">
+                                <div>
+                                    <h4 class="associated-doctor-name"><?=$docPrefix.$doc->fname.' '.$doc->lname;?></h4>
+                                    <div class="associated-doctor-spec"><?=$specName;?></div>
+                                    <p class="associated-doctor-qual"><?=$qualName;?></p>
+                                </div>
+                            </div>
 
-.nav-tabs>li.active>a, .nav-tabs>li.active>a:focus, .nav-tabs>li.active>a:hover {
-    color: white;
-    cursor: default;
-    background-color: #295771;
-    border: 1px solid #ddd;
-    border-bottom-color: transparent;
-}
-.innerbox:hover{
-    box-shadow:-4px 0px 3px #d0cece;
-}
-.colmd4icon {
-    margin: 4px 3px;
-    color: #94b63c;
-    font-size: 19px;
-    width: 30px;
-    height: 30px;
-    text-align: center;
-}
-.tabdoctorimage {
-    height: 100px;
-    width: 100px;
-    border-radius: 63px;
-    box-shadow: 0px -1px 7px #7b7777;
-}
-.doctoreducation{
-    color:black;
-    
-}
-/*--slider page css --*/
-.carousel-control.left {
-    background-image: -webkit-linear-gradient(left,rgba(0,0,0,.5) 0,rgba(0,0,0,.0001) 100%);
-    background-image: -o-linear-gradient(left,rgba(0,0,0,.5) 0,rgba(0,0,0,.0001) 100%);
-    background-image: -webkit-gradient(linear,left top,right top,from(rgba(0,0,0,.5)),to(rgba(0,0,0,.0001)));
-    background-image: linear-gradient(to right,rgba(0, 0, 0, 0.12) 0,rgba(0,0,0,.0001) 100%);
-    filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#80000000', endColorstr='#00000000', GradientType=1);
-    background-repeat: repeat-x;
-}
-.carousel-control.right {
-    right: 0;
-    left: auto;
-    background-image: -webkit-linear-gradient(left,rgba(0,0,0,.0001) 0,rgba(0,0,0,.5) 100%);
-    background-image: -o-linear-gradient(left,rgba(0,0,0,.0001) 0,rgba(0,0,0,.5) 100%);
-    background-image: -webkit-gradient(linear,left top,right top,from(rgba(0,0,0,.0001)),to(rgba(0,0,0,.5)));
-    background-image: linear-gradient(to right,rgba(0,0,0,.0001) 0,rgba(187, 183, 183, 0.5) 100%);
-    filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#00000000', endColorstr='#80000000', GradientType=1);
-    background-repeat: repeat-x;
-}
+                            <div class="associated-doctor-meta">
+                                <span><i class="fas fa-briefcase" style="color: #00A896;"></i> <strong><?=$docExp;?>+ Yrs</strong> Exp</span>
+                                <span><i class="fas fa-rupee-sign" style="color: #05668D;"></i> <strong>₹<?=$docFee;?></strong> Fee</span>
+                                <span><i class="fas fa-clock" style="color: #16A34A;"></i> 10 AM - 1 PM</span>
+                            </div>
+                        </div>
 
-@media screen and (max-width: 680px) {
-  .mobileslider {
-    height:164px;
-  }
-}
+                        <div style="display: flex; gap: 8px;">
+                            <a href="<?=base_url('doctor/'.$doc->id);?>" class="btn btn-secondary" style="flex: 1; padding: 8px 10px; font-size: 13px; text-align: center;">
+                                View Profile
+                            </a>
+                            <a href="javascript:void(0);" class="btn btn-primary-cta getappointment" data-upchar-did="<?=$doc->id;?>" data-toggle="modal" data-target="#myModal" style="flex: 1.2; padding: 8px 10px; font-size: 13px; text-align: center; display: flex; align-items: center; justify-content: center; gap: 4px;">
+                                <i class="fas fa-calendar-check"></i> Book
+                            </a>
+                        </div>
+                    </div>
+                    <?php } } else { ?>
+                    <p style="color: #64748B; font-size: 14px;">No doctors currently listed for this facility.</p>
+                    <?php } ?>
+                </div>
+            </div>
 
-         </style>
- 
+            <!-- Photos & Facility Gallery -->
+            <div class="hosp-profile-card">
+                <h3 class="hosp-profile-section-title">
+                    <i class="fas fa-images" style="color: #00A896;"></i> Photos & Infrastructure
+                </h3>
+
+                <div class="hosp-gallery-grid">
+                    <?php if (!empty($gallery)) { foreach($gallery as $g) { ?>
+                    <div class="hosp-gallery-item">
+                        <img src="<?=admin_url();?>public/assets/upload/<?=$g->image;?>" alt="Hospital Infrastructure" class="hosp-gallery-img">
+                    </div>
+                    <?php } } else { ?>
+                    <div class="hosp-gallery-item">
+                        <img src="<?=$hospImg;?>" alt="Hospital Building" class="hosp-gallery-img">
+                    </div>
+                    <div class="hosp-gallery-item">
+                        <img src="<?=base_url();?>images/Hospital.jpg" alt="Hospital Facility" class="hosp-gallery-img">
+                    </div>
+                    <div class="hosp-gallery-item">
+                        <img src="<?=admin_url();?>public/assets/upload/dummyhospital.jpg" alt="Hospital Reception" class="hosp-gallery-img">
+                    </div>
+                    <?php } ?>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column / Sidebar: Contact Info & Location Map -->
+        <div class="col-md-4">
+            <!-- Contact Details Card -->
+            <div class="hosp-profile-card">
+                <h3 class="hosp-profile-section-title">
+                    <i class="fas fa-phone-volume" style="color: #00A896;"></i> Emergency & Helpline
+                </h3>
+                
+                <div style="margin-bottom: 16px;">
+                    <div style="font-size: 12px; color: #64748B; margin-bottom: 2px;">Admissions & Appointments</div>
+                    <a href="tel:<?=$hospMobile;?>" style="font-size: 16px; font-weight: 700; color: #05668D; text-decoration: none;">
+                        <i class="fas fa-phone-alt" style="color: #00A896; margin-right: 6px;"></i> <?=$hospMobile;?>
+                    </a>
+                </div>
+
+                <div style="margin-bottom: 16px;">
+                    <div style="font-size: 12px; color: #64748B; margin-bottom: 2px;">Email Support & Enquiries</div>
+                    <a href="mailto:<?=$hospEmail;?>" style="font-size: 14px; font-weight: 600; color: #334155; text-decoration: none;">
+                        <i class="fas fa-envelope" style="color: #00A896; margin-right: 6px;"></i> <?=$hospEmail;?>
+                    </a>
+                </div>
+
+                <div style="margin-bottom: 16px;">
+                    <div style="font-size: 12px; color: #64748B; margin-bottom: 2px;">Hospital Address</div>
+                    <div style="font-size: 13.5px; color: #334155; line-height: 1.5;">
+                        <i class="fas fa-map-marker-alt" style="color: #00A896; margin-right: 6px;"></i> <?=$hospAddress;?>
+                    </div>
+                </div>
+
+                <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 12px; font-size: 12.5px; color: #475569;">
+                    <i class="fas fa-clock" style="color: #16A34A; margin-right: 6px;"></i> <strong>Emergency Services:</strong> Open 24 Hours, 7 Days a Week
+                </div>
+            </div>
+
+            <!-- Embedded Map Card -->
+            <div class="hosp-profile-card">
+                <h3 class="hosp-profile-section-title">
+                    <i class="fas fa-map-marked-alt" style="color: #00A896;"></i> Hospital Location
+                </h3>
+                <div class="hosp-map-wrapper">
+                    <iframe src="https://maps.google.com/maps?q=<?=urlencode($hospital->name.' '.$hospAddress);?>&t=&z=14&ie=UTF8&iwloc=&output=embed" allowfullscreen loading="lazy"></iframe>
+                </div>
+                <a href="https://maps.google.com/?q=<?=urlencode($hospital->name.' '.$hospAddress);?>" target="_blank" class="btn btn-secondary" style="width: 100%; text-align: center; padding: 8px; font-size: 13px;">
+                    <i class="fas fa-directions" style="color: #00A896;"></i> Get Directions on Google Maps
+                </a>
+            </div>
+
+            <!-- Emergency Assistance Box -->
+            <div class="hosp-profile-card" style="background: linear-gradient(135deg, #05668D 0%, #00A896 100%); color: #FFFFFF; border: none;">
+                <h4 style="font-size: 17px; font-weight: 700; color: #FFFFFF; margin: 0 0 8px;">
+                    <i class="fas fa-ambulance"></i> Need Emergency Admission?
+                </h4>
+                <p style="font-size: 13px; color: #E6F4EA; line-height: 1.5; margin-bottom: 14px;">
+                    Connect with Upchar Emergency Coordinators for immediate bed reservation and ambulance dispatch.
+                </p>
+                <a href="tel:8448440603" class="btn" style="background: #FFFFFF; color: #05668D; font-weight: 700; border-radius: 8px; width: 100%; text-align: center; padding: 10px;">
+                    <i class="fas fa-headset" style="color: #00A896; margin-right: 6px;"></i> Call 8448440603
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<?php include ("includes/footer.php"); ?>

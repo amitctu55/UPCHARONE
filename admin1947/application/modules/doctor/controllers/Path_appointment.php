@@ -13,7 +13,6 @@ class Path_appointment extends CI_Controller
 		 $date=date('Y-m-d h:i:s');
 		 $this->load->helper(array('query_string_helper','dbquery_helper','admin_helper'));
 		 $this->load->model('path_appointmentmodel');
-		 $this->load->library('Pdf');
 	}
  
 	public function index()
@@ -108,7 +107,13 @@ class Path_appointment extends CI_Controller
 			//redirect('doctor/path_appointment/book_test/'.$booking_id.'','');
 		}
 		$data['test_list']		= $this->path_appointmentmodel->test_list(array('path_lab_test.status'=>1));
+		$this->load->view('inc/topheaderlink');
+		$this->load->view('inc/topheader');
 		$this->load->view('path_appointment/book_test',$data);
+		$this->load->view('sidebar');
+		$this->load->view('inc/headersetting');
+		$this->load->view('inc/footerlink');
+		$this->load->view('inc/table_footer');
 	}
 	
 	public function booking_details()
@@ -123,15 +128,62 @@ class Path_appointment extends CI_Controller
 		{
 			redirect('doctor/path_appointment/','');
 		}
+		$this->load->view('inc/topheaderlink');
+		$this->load->view('inc/topheader');
 		$this->load->view('path_appointment/booking_details',$data);
+		$this->load->view('sidebar');
+		$this->load->view('inc/headersetting');
+		$this->load->view('inc/footerlink');
+		$this->load->view('inc/table_footer');
 	}
 	
-    public function delete_booking()
+    public function delete_booking($id = null)
     {
-		$booking_id		=	$this->uri->segment(4);
-		$this->path_appointmentmodel->delete_booking($booking_id);
-		redirect(base_url().'doctor/path_appointment/');
+		if ($this->input->post('ids') && is_array($this->input->post('ids'))) {
+			$this->bulk_delete_booking();
+			return;
+		}
+
+		$del_id = $id ? $id : ($this->input->post('id') ? $this->input->post('id') : ($this->input->get('booking_id') ? $this->input->get('booking_id') : $this->uri->segment(4)));
+		if ($del_id) {
+			$this->path_appointmentmodel->delete_booking($del_id);
+			$msg = "Pathology booking deleted successfully.";
+			if ($this->input->is_ajax_request() || $this->input->post('is_ajax') || $this->input->post('id')) {
+				echo json_encode(array('status' => 1, 'message' => $msg));
+				return;
+			}
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-success'>$msg</div>");
+		}
+		redirect(base_url('doctor/path_appointment/'));
     }
+
+	public function bulk_delete_booking()
+	{
+		$ids = $this->input->post('ids');
+		if (!empty($ids) && is_array($ids)) {
+			$deleted_count = 0;
+			foreach ($ids as $bid) {
+				$bid = (int)$bid;
+				if ($bid > 0) {
+					$this->path_appointmentmodel->delete_booking($bid);
+					$deleted_count++;
+				}
+			}
+			$msg = "$deleted_count booking(s) deleted successfully.";
+			if ($this->input->is_ajax_request() || $this->input->post('is_ajax')) {
+				echo json_encode(array('status' => 1, 'count' => $deleted_count, 'message' => $msg));
+				return;
+			}
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-success'>$msg</div>");
+		} else {
+			if ($this->input->is_ajax_request() || $this->input->post('is_ajax')) {
+				echo json_encode(array('status' => 0, 'message' => 'No bookings selected.'));
+				return;
+			}
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-warning'>No bookings selected.</div>");
+		}
+		redirect(base_url('doctor/path_appointment/'));
+	}
 
    	public function get_locality_by_city_id()
     {   

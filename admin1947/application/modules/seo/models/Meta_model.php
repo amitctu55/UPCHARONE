@@ -11,6 +11,10 @@ class Meta_model extends CI_Model
 		$meta_id 		= $this->db->escape_str($this->input->get_post('meta_id',TRUE));
 		$meta_title 	= $this->db->escape_str($this->input->get_post('meta_title',TRUE));
 		
+		if($meta_id!='')
+		{
+			$this->db->where("meta_id",$meta_id);
+		}
 		if($meta_title!='')
 		{
 			$this->db->where("(meta_title LIKE '%".$meta_title."%' )");
@@ -19,7 +23,7 @@ class Meta_model extends CI_Model
 		$this->db->order_by('meta_id','desc');
 		$this->db->limit($limit,$offset);
 		$this->db->select('SQL_CALC_FOUND_ROWS meta_tags.*',FALSE);
-		$result = $this->db->get_where('meta_tags', array('meta_id'))->result();
+		$result = $this->db->get('meta_tags')->result();
 		return $result;
 	}
 	
@@ -28,7 +32,7 @@ class Meta_model extends CI_Model
 		$this->db->select('*');
 		$this->db->from('meta_tags');
 		$this->db->where('faq_id',$faq_id);
-		$result =$this->db->get()->result_rows();
+		$result =$this->db->get()->result_array();
 		return $result;
 	}
 }

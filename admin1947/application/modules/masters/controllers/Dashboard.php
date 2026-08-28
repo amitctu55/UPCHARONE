@@ -3,50 +3,96 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 
 class Dashboard extends CI_Controller 
 {
-	function __construct() 
+	function __construct()
 	{
 		 parent::__construct();
 		 date_default_timezone_set("Asia/Kolkata");
-		 $date=date('Y-m-d h:i:s');
+		 $this->load->helper(array('query_string_helper','dbquery_helper','admin_helper'));
 		 $this->load->model('Dashboardmodel');
-		 
-		 //$this->load->model('educationmodel');
+		 $this->load->model('abdm/abdm_model'); // Load ABDM model
+
+		 if(!$this->session->userdata('userid') && !$this->session->userdata('username'))
+		 {
+			 redirect(base_url().'login');
+		 }
 	}
 	public function index()
-	{   
-		/* $currentdpr=currentDpr();
-		$data['center'] = $this->db->join('dpr_center',"dpr_center.center_id=fddi_center.id AND dpr_center.dpr_id = '$currentdpr'")->count_all_results('fddi_center');
-		$data['subcenter'] = $this->db->join('dpr_subcenter',"dpr_subcenter.subcenter_id=fddi_subcenter.subcenter_id  AND dpr_subcenter.dpr_id = '$currentdpr'")->count_all_results('fddi_subcenter');
-		$data['trainee'] = $this->db->where('dpr',$currentdpr)->count_all_results('fddi_trainee_registration');
-		$data['placed'] = $this->db->where('dpr',$currentdpr)->count_all_results('placement_details');
-		$data['faculty'] = $this->db->join('dpr_faculty',"dpr_faculty.faculty_id=fddi_faculty_reg.faculty_id AND dpr_faculty.dpr_id = '$currentdpr'")->count_all_results('fddi_faculty_reg');
-		
-		$this->db->join('fddi_trainee_batch','fddi_trainee_registration.id = fddi_trainee_batch.trainee_id');
-		$this->db->join('fddi_batch',"fddi_batch.batch_id = fddi_trainee_batch.batch_id AND approval='A'");
-		$data['enrolled'] = $this->db->where('fddi_trainee_registration.dpr',$currentdpr)->count_all_results('fddi_trainee_registration');
-		
-		
-		$min_ojt_hr=getMinOJT($currentdpr);
-		
-		$this->db->where('fddi_trainee_registration.dpr',$currentdpr);
-		$this->db->where("fddi_trainee_registration.industrial_attendance >= $min_ojt_hr");
-		$this->db->where('placement_details.trainee_id IS NULL');
-		$this->db->join('placement_details',"fddi_trainee_registration.id = placement_details.trainee_id",'left');
-		$this->db->join('trainee_result',"fddi_trainee_registration.id = trainee_result.trainee_id AND trainee_result.result='PASS'");
-		$data['trained']=$this->db->count_all_results('fddi_trainee_registration');
-		 */
-		 
-		 
+    {
+        // Get general statistics
+        $data['approved_hospitals'] = $this->db->where('approved', '1')->where('verified', '1')->where('status !=', '2')->count_all_results('hospital');
+        $data['pending_hospitals']  = $this->db->group_start()->where('approved', '0')->or_where('verified', '0')->group_end()->where('status !=', '2')->count_all_results('hospital');
+        $data['total_hospitals']    = $data['approved_hospitals'];
+        $data['total_clinics']      = $this->db->where('status', '1')->count_all_results('clinic');
+        $data['total_doctors']      = $this->db->where('approved', '1')->where('verified', '1')->count_all_results('profile_dr');
+        $data['total_appointments'] = $this->db->count_all_results('appointment');
+        $data['total_users']        = $this->db->where('STATUS', '1')->where('APPROVED', '1')->count_all_results('userlogin');
 
-		
-		
-		$this->load->view('inc/topheaderlink');
-		$this->load->view('inc/topheader');
-		$this->load->view('dashboard',@$data);
-		$this->load->view('sidebar');
-		$this->load->view('inc/headersetting');
-		$this->load->view('inc/footerlink');
-		$this->load->view('inc/table_footer');
-	}
+        // Recent statistics (last 30 days)
+        $data['recent_appointments'] = $this->db->where('appointment_date >=', date('Y-m-d', strtotime('-30 days')))->count_all_results('appointment');
+        $data['recent_users'] = $this->db->where('REG_DATE >=', date('Y-m-d', strtotime('-30 days')))->where('STATUS', '1')->where('APPROVED', '1')->count_all_results('userlogin');
+
+        // Appointment status breakdown
+        $this->db->select('status, COUNT(*) as count');
+        $this->db->from('appointment');
+        $this->db->group_by('status');
+        $appointment_status = $this->db->get()->result_array();
+        $data['appointment_status'] = $appointment_status;
+
+        // User registration trend (last 6 months)
+        $this->db->select("DATE_FORMAT(REG_DATE, '%Y-%m') as month, COUNT(*) as count");
+        $this->db->from('userlogin');
+        $this->db->where('STATUS', '1');
+        $this->db->where('APPROVED', '1');
+        $this->db->group_by("DATE_FORMAT(REG_DATE, '%Y-%m')");
+        $this->db->order_by("REG_DATE", "DESC");
+        $this->db->limit(6);
+        $user_trend = $this->db->get()->result_array();
+        $data['user_trend'] = array_reverse($user_trend); // Oldest first for chart
+
+        // Doctor specialization distribution (top 8)
+        $this->db->select('ms.name as specialization, COUNT(pd.id) as count');
+        $this->db->from('profile_dr pd');
+        $this->db->join('master_specialization ms', 'pd.specialization = ms.id');
+        $this->db->where('pd.approved', '1');
+        $this->db->where('pd.verified', '1');
+        $this->db->group_by('pd.specialization');
+        $this->db->order_by('count', 'DESC');
+        $this->db->limit(8);
+        $spec_dist = $this->db->get()->result_array();
+        $data['specialization_dist'] = $spec_dist;
+
+        // Hospital approval status
+        $this->db->select('approved, verified, COUNT(*) as count');
+        $this->db->from('hospital');
+        $this->db->group_by('approved, verified');
+        $hospital_status = $this->db->get()->result_array();
+        $data['hospital_status'] = $hospital_status;
+
+        // Labels for charts
+        $data['status_labels'] = [
+            '0' => 'Pending',
+            '1' => 'Confirmed',
+            '2' => 'Cancelled',
+            '3' => 'Completed'
+        ];
+        $data['hospital_labels'] = [
+            '1_1' => 'Approved & Verified',
+            '1_0' => 'Approved (Unverified)',
+            '0_1' => 'Pending (Verified)',
+            '0_0' => 'Pending'
+        ];
+
+        // Get ABDM statistics from model
+        $abdm_stats = $this->abdm_model->get_abdm_stats();
+        $data = array_merge($data, $abdm_stats);
+
+        $this->load->view('inc/topheaderlink');
+        $this->load->view('inc/topheader');
+        $this->load->view('dashboard', $data);
+        $this->load->view('inc/sidebar');
+        $this->load->view('inc/headersetting');
+        $this->load->view('inc/footerlink');
+        $this->load->view('inc/table_footer');
+    }
 	
 }

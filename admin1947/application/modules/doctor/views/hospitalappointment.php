@@ -1,182 +1,95 @@
-<!DOCTYPE html>
-<html>
-<style>
-  <style>
-  .tabledata{
-    border:1px solid #fff!important;
-    font-weight:600;
-  }
-  .tableheaddata{
-    border:1px solid #fff!important;
-    background:#605CA8;
-    color:#fff;
-  }
-  .error valid{
-    color:green!important;
-  }
-  .tabledataactive{
-    color:green;
-  }
-  .tabledatainactive{
-    color:red;
-  }
-   table.dataTable tbody tr {
-    background-color: #e5e4f1;
-}
-  </style>
+<div class="content-wrapper">
+  <!-- Content Header & Breadcrumbs -->
+  <section class="content-header" style="padding: 20px 20px 10px;">
+    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+      <div>
+        <h1 style="font-size: 22px; font-weight: 700; color: #1E293B; margin: 0 0 4px 0; font-family: 'Inter', sans-serif;">
+          Hospital Appointments Directory
+        </h1>
+        <p style="margin: 0; color: #64748B; font-size: 13px;">Manage facility bookings, doctor schedules, and hospital-assigned appointments</p>
+      </div>
+      <div style="display: flex; gap: 10px; align-items: center;">
+        <a href="<?=base_url()?>doctor/appointment/doctorappointment" class="btn" style="background: #F1F5F9; color: #334155; font-weight: 600; padding: 8px 16px; border-radius: 8px; border: 1px solid #CBD5E1; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; font-size: 13px;">
+          <i class="fa fa-user-md"></i> Doctor Appointments
+        </a>
+      </div>
+    </div>
+  </section>
 
-   <style>
-  
-  .label-name{
-    text-align:left!important;
-    margin-top:-5px;
-  }
-  .starspan
-  {
-    color:#e80909;
-    font-size:18px;
-  }
-  .mainheadlinerow
-  {
-    padding:5px;margin-top:10px;margin-bottom:10px;
-  }
-  .mainheadline
-  {
-    background:#605ca8;margin-top:10px;margin-bottom:10px;color:#fff;padding:9px;font-weight:600;
-  }
-  .mainheadlinefirstrow
-  {
-    padding:5px;
-  }
-  .mainheadlinefirst
-  {
-    background:#605ca8;margin-top:-15px;margin-bottom:15px;color:#fff;padding:9px;font-weight:600;
-  }
-  .mainhead{font-weight:600;margin-bottom:20px;}
-  .formbody{border:1px solid #d6d2d2;padding:10px;border-radius:4px;}
-  .note{font-weight:600;margin-top:10px;margin-bottom:20px;}
-  #submit{background:#605ca8;padding: 6px 30px;}
-  #reset{background:#fff;color:#000;padding: 6px 30px;}
-  </style>
-<body class="hold-transition skin-blue sidebar-mini">
-<div class="wrapper">
+  <!-- Main content -->
+  <section class="content" style="padding: 10px 20px 30px;">
+    <?=$this->session->flashdata('flashmsg');?>
 
-  <!--there was sidebar -->
-  
-  <!-- Content Wrapper. Contains page content -->
-  <div class="content-wrapper">
-    <!-- Content Header (Page header) -->
-   
+    <!-- Data Table Card -->
+    <div style="background: #FFFFFF; border-radius: 12px; border: 1px solid #E2E8F0; box-shadow: 0 1px 3px rgba(0,0,0,0.05); overflow: hidden;">
+      <div style="padding: 16px 20px; border-bottom: 1px solid #F1F5F9; background: #F8FAFC;">
+        <h3 style="margin: 0; font-size: 15px; font-weight: 700; color: #0F172A; text-transform: uppercase; letter-spacing: 0.5px;">
+          <i class="fa fa-hospital-o" style="color: #0d9488; margin-right: 8px;"></i> Hospital Facilities List
+        </h3>
+      </div>
 
-    <!-- Main content -->
-    <section class="content">
-      
-      <link rel="stylesheet" href="https://jqueryvalidation.org/files/demo/site-demos.css">
-  <link rel="stylesheet" href="<?=base_url();?>public/assets/dist/css/metallic/zebra_datepicker.min.css" type="text/css">
-  
-<div class="container bg-3 ">  
-<br>  
-  <br>
-  <div class="row text-">
-    
-  
-  <?=$this->session->flashdata('flashmsg');?>
-  <h4 style="font-weight:600;margin-bottom:20px;">Appointment List</h2>
-  <br>
- 
-    
-   
-    
-  </div><br>
-   
-        
-  
- 
-  <table class="table table-hover table-bordered table-bordered" id='example' style="border:none;">
-    <thead>
-      <tr>
-        <th class="tableheaddata">Hospital  ID</th>
-        
-        
-        
-         <th class="tableheaddata">Hospital Name</th>
-          <th class="tableheaddata">Hospital Email</th>
-          <th class="tableheaddata">Hospital Mobile</th>
-        <th class="tableheaddata">View Doctors</th>
-        
-        
-      </tr>
-    </thead>
-    <tbody id="tviewtablebody">
- <?php 
-   foreach($data as $p)
-   {
-
-  echo"<tr>";
- 
-
-echo"<td>".$p->id."</td>";
-echo "<td>".$p->name."</td>";
-//echo "<td>".$p->fname."</td>";
-echo"<td>".$p->email."</td>";
-echo"<td>".$p->mobile."</td>";
-echo "<td><a href=".base_url()."doctor/appointment/doctordata/".$p->uid." style=color:red;><span class='glyphicon glyphicon-eye-open'></span></a></td>";
-        echo"</tr>";
-
-echo"</tr>";
-  
-
-   }
-  ?>
-   
-    </tbody>
-    <tfoot>
-      <tr>
-        <th class="tableheaddata">Hospital  ID</th>
-        
-        
-        
-         <th class="tableheaddata">Hospital Name</th>
-          <th class="tableheaddata">Hospital Email</th>
-          <th class="tableheaddata">Hospital Mobile</th>
-        <th class="tableheaddata">View Doctors</th>
-        
-        
-      </tr>
-    </tfoot>
-  </table>
-  
-  </div>
-</div><br>
-
+      <div class="table-responsive" style="padding: 16px;">
+        <table class="table table-hover" id="example" style="width: 100%; border-collapse: separate; border-spacing: 0;">
+          <thead>
+            <tr style="background: #F8FAFC; border-bottom: 1px solid #E2E8F0;">
+              <th style="padding: 12px 16px; font-size: 12px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.5px; width: 90px;">Hospital ID</th>
+              <th style="padding: 12px 16px; font-size: 12px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.5px;">Hospital Name</th>
+              <th style="padding: 12px 16px; font-size: 12px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.5px;">Contact Email</th>
+              <th style="padding: 12px 16px; font-size: 12px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.5px;">Phone Number</th>
+              <th style="padding: 12px 16px; font-size: 12px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.5px; text-align: right;">View Doctors</th>
+            </tr>
+          </thead>
+          <tbody>
+            <?php 
+            if(!empty($data)) {
+              foreach($data as $p) { ?>
+              <tr style="border-bottom: 1px solid #F1F5F9;">
+                <td style="padding: 12px 16px; font-weight: 600; color: #64748B; font-size: 13px;">
+                  #<?=$p->id;?>
+                </td>
+                <td style="padding: 12px 16px; font-weight: 600; color: #0F172A; font-size: 14px;">
+                  <i class="fa fa-building-o" style="color: #0d9488; margin-right: 6px;"></i> <?=$p->name;?>
+                </td>
+                <td style="padding: 12px 16px; font-size: 13px; color: #475569;">
+                  <?=$p->email;?>
+                </td>
+                <td style="padding: 12px 16px; font-size: 13px; color: #475569;">
+                  <i class="fa fa-phone" style="color: #64748B; margin-right: 4px;"></i> <?=$p->mobile;?>
+                </td>
+                <td style="padding: 12px 16px; text-align: right;">
+                  <a href="<?=base_url()?>doctor/appointment/doctordata/<?=$p->uid?>" class="btn btn-sm" style="background: #F0FDFA; color: #0d9488; border: 1px solid #CCFBF1; border-radius: 6px; padding: 6px 12px; font-weight: 600; font-size: 12px; display: inline-flex; align-items: center; gap: 6px; text-decoration: none;">
+                    <i class="fa fa-user-md"></i> Doctor Appointments
+                  </a>
+                </td>
+              </tr>
+            <?php } } else { ?>
+              <tr>
+                <td colspan="5" style="text-align: center; padding: 32px; color: #94A3B8; font-size: 14px;">
+                  No hospital appointments found.
+                </td>
+              </tr>
+            <?php } ?>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+</div>
 
 <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
-
-   <script type="text/javascript">
-    
+<script type="text/javascript">
 $(document).ready(function() {
-    $('#example').DataTable();
-} );
-
-  </script> 
-  
-  
-    </section>
-    <!-- /.content -->
-  </div>
-  
-  
-  <!-- /.content-wrapper -->
-  <?php $this->load->view('footer');?>
-
- 
-  <!-- /.control-sidebar -->
-  <!-- Add the sidebar's background. This div must be placed
-       immediately after the control sidebar -->
-  <div class="control-sidebar-bg"></div>
-</div>
-<!-- ./wrapper -->
-
-
-</body>
-</html>
+  if ($.fn.DataTable.isDataTable('#example')) {
+    $('#example').DataTable().destroy();
+  }
+  $('#example').DataTable({
+    pageLength: 25,
+    responsive: true,
+    language: {
+      search: "_INPUT_",
+      searchPlaceholder: "Search hospitals..."
+    }
+  });
+});
+</script>
+<?=$this->load->view('inc/footer');?>

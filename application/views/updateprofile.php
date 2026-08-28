@@ -1,266 +1,158 @@
-<head>
-    <link rel="icon" href="images/logo.png" type="image/gif" sizes="16x16">
-</head>
+<!-- Patient Dashboard Topbar -->
+<div class="patient-topbar">
+    <div>
+        <h2 class="patient-topbar-title">Update Display Photo</h2>
+        <p style="margin: 4px 0 0 0; color: #64748b; font-size: 13.5px;">
+            Upload or change your profile picture displayed on your patient account and appointments.
+        </p>
+    </div>
+    <div>
+        <a href="<?=base_url('profile');?>" class="btn" style="background: #ffffff; color: #475569; font-weight: 600; border-radius: 8px; padding: 9px 18px; border: 1px solid #cbd5e1; text-decoration: none; font-size: 13px;">
+            <i class="fa fa-arrow-left" style="margin-right: 6px;"></i> Back to Profile
+        </a>
+    </div>
+</div>
 
-<?php include ("includes/header_new.php"); ?>
+<!-- Flash Alert Messages -->
+<?php if($this->session->flashdata('flashmsg')): ?>
+    <div style="margin-bottom: 20px;">
+        <?=$this->session->flashdata('flashmsg');?>
+    </div>
+<?php endif; ?>
+
 <style>
-#searchBTN {
-    width: 100%;
-    margin-top: 0px;
-    box-shadow: 0px -4px 6px #204356;
-    padding: 12px;
-    border: none;
-    background-color: #043d5b;
-    color: white;
-    margin-top: 5px;
-}
-.img-picker {
-	width: 0.1px;
-	height: 0.1px;
-	opacity: 0;
-	overflow: hidden;
-	position: absolute;
-	z-index: -1;
-	
-}
-.Innerimg {
-    border-radius: 113px;
-    width: 214px;
-    height: 214px;
-    padding: 15px;
-}
-.img-picker + label {
-    font-size: 1.25em;
-    font-weight: 700;
-    color: white;
-    
-    display: inline-block;
-    background-color: #08364b;
-    padding: 3px 23px;
+.upload-card-box {
+    background: #ffffff;
     border-radius: 16px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+    padding: 36px;
+    margin-bottom: 30px;
+    text-align: center;
 }
 
-.img-picker:focus + label,
-.img-picker + label:hover {
-    background-color: #295771;
+.current-avatar-preview {
+    width: 140px;
+    height: 140px;
+    border-radius: 50%;
+    overflow: hidden;
+    margin: 0 auto 20px auto;
+    border: 4px solid var(--upchar-teal);
+    box-shadow: 0 6px 15px rgba(0, 168, 150, 0.2);
+    background: #f0fdfa;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-  .tabledata{
-      border:1px solid #fff!important;
-      font-weight:600;
-  }
-  .tableheaddata{
-      border:1px solid #fff!important;
-      background:#605CA8;
-      color:#fff;
-  }
-  .error valid{
-      color:green!important;
-  }
-  .tabledataactive{
-      color:green;
-  }
-  .tabledatainactive{
-      color:red;
-  }
-   .formdiv{
-      padding:25px; border-bottom-left-radius: 4px;; border-bottom-right-radius: 4px;
-  }
-  .formheader{
-      background:#605CA8;padding:10px;color:#fff;font-size:16px;
-  }
-  #submit{background:#605ca8;padding: 6px 30px;}
-  #reset{background:#fff;color:#000;padding: 6px 30px;}
-  
-  @media only screen and (min-width: 1350px) and (max-width: 1442px) {
-    #mydata_wrapper {
-        max-width:85%!important;
-        margin-left:7%!important;
-    }
-    
-  }
-  @media only screen and (min-width: 1300px) and (max-width: 1349px) {
-    #mydata_wrapper {
-        max-width:85%!important;
-        margin-left:3%!important;
-    }
-    #formdiv{
-        margin-left:-55px;
-    }
-  }
-  @media only screen and (min-width: 1200px) and (max-width: 1299px) {
-    #mydata_wrapper {
-        max-width:78%;
-        margin-left:3%!important;
-    }
-    #formdiv{
-        margin-left:-85px;
-    }
-  }
-  @media only screen and (min-width: 1065px) and (max-width: 1199px) {
-    #mydata_wrapper {
-        max-width:80%;
-        margin-left:3%!important;
-    }
-    #formdiv{
-        margin-left:-85px;
-    }
-  }
-  
-  @media only screen and (min-width: 1000px) and (max-width: 1064px) {
-    #mydata_wrapper {
-        max-width:75%;
-        margin-left:2%!important;
-    }
-    #formdiv{
-        margin-left:-105px;
-    }
-  }
-  
-  
+.current-avatar-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
 
-.colorwhite{color:white;}
+.dropzone-file-picker {
+    border: 2px dashed #cbd5e1;
+    border-radius: 12px;
+    padding: 30px 20px;
+    background: #f8fafc;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-bottom: 24px;
+}
 
-.continue2 {
-    background: #9bc03c;
-    color: white;
+.dropzone-file-picker:hover {
+    border-color: var(--upchar-teal);
+    background: #f0fdfa;
+}
+
+.btn-upload-photo {
+    background-color: var(--upchar-teal);
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 14.5px;
+    padding: 12px 36px;
+    border-radius: 8px;
     border: none;
-    padding: 8px 36px;
-    font-weight: bold;
-    border-radius: 23px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 8px rgba(0, 168, 150, 0.3);
 }
-  </style>
-  
-  <?php include("sidebar.php");?>
-  
-    <div class="careplus-banner">
-<div class="container-fluid">
 
-<form action='<?=base_url();?>search' method='GET'>
-                <div class="box-form">
-                      
-      
-                    <div class="col-sm-3">
-                        <div class="input-group shadow">
-                            <span class="input-group-addon"><i class="fa fa-map-marker" aria-hidden="true"></i></span>
-                            <input type="text" class="form-control ui-autocomplete-input" name="location" placeholder="Location" id="hintcity" autocomplete="off">
-                            <input type="hidden" class="form-control" name="city" id="city">
-                        </div>
-                    </div>
-                    <div class="col-sm-5">
-                        <div class="input-group shadow">
-                            <span class="input-group-addon"><i class="fa fa-search"></i></span>
-                            <input type="text" id="hint" class="form-control ui-autocomplete-input" name="keyword" placeholder="Search Hospitals/Doctors/Clinics etc" autocomplete="off">
-                        </div>
-                        
-                    </div>
-                    <div class="col-sm-3">
-                        <div class="input-group shadow">
-                            <span class="input-group-addon"><i class="fa fa-user-md"></i></span>
-                            <select class="form-control" name="spl">
-              <option value="">-Specialization-</option>
-                                              <?php foreach($specialization as $s){ ?>
-                                <option value='<?=$s->id;?>'><?=$s->name;?></option>
-                            <?php } ?>
-                                               
-                            </select>
-                        </div>
-                        
-                    </div>
-                    <div class="col-sm-1">
-<button class="careplus-booking-btn careplus-bgcolor-two" id="searchBTN"><i class="fa fa-search" aria-hidden="true"></i></button>
-                        </div>
+.btn-upload-photo:hover {
+    background-color: var(--upchar-teal-dark);
+    color: #ffffff;
+    box-shadow: 0 4px 14px rgba(0, 168, 150, 0.4);
+}
+</style>
 
-
-
-
-                    <div class="clearfix"></div>
-                </div>
-                </form>
-
-
-                        <div class="clearfix"></div>
+<div class="row">
+    <div class="col-lg-6 col-md-8 col-12 mx-auto">
+        <div class="upload-card-box">
             
-        </div>
-           
-            
-        </div>
-        
-        
-        <div class="container">
-        <div class="pag_cstm">
+            <h3 style="font-size: 18px; font-weight: 700; color: #0f172a; margin: 0 0 6px 0;">
+                Your Display Picture
+            </h3>
+            <p style="font-size: 13px; color: #64748b; margin-bottom: 24px;">
+                Supported file formats: JPG, PNG, WEBP (Max 5MB)
+            </p>
 
-            <div class="row">
+            <form action="" method="post" enctype="multipart/form-data">
                 
-                <div class="col-md-3" id="sidebartab">
-        
-                        </div>
-                <div class="col-lg-9">
-                    <div class="pag_cstm_panel">
-                        <div class="pag_cstm_panel_panel_ontent p-t-0">
-                            <div class="row paddb40">
-						
-
-						 <div class="pag_cstm">
-
-            <div class="row">
-                <div class="col-lg-12">
-                    <div class="pag_cstm_panel" style="color:white;">
-                        <div class="pag_cstm_panel_panel_ontent p-t-0">
-                            <div class="row paddb40">
-                                
-							<form action='' method='post' enctype="multipart/form-data">
-                              <!--  <div class="col-sm-12 processsstep3">
-									<p><?=$this->session->userdata('username');?></p>
-                                </div> -->
-                                
-
-                                <div class="col-sm-6 col-md-offset-2 id_proof">
-
-                                    <div class="col-sm-12 bggrya" style="background: #9bc03c;text-align: center;border-radius: 9px;">
-                                        
-                                          <img src="<?=base_url();?>admin1947/public/assets/upload/<?=$src;?>" class="Innerimg" alt='No Profile Image'>
-							<h6 class="colorwhite">Your Display Picture</h6>
-							
-								
-                                    <input type="file" name="file" id="file" class="img-picker" />
-                                    <label for="file">Choose a file</label>									
-                                     
-									<P>Please upload your Profile picture it will be displayed in  your profile .</p>
-									<br>
-									<button class="continue2"  name='submit' type='submit'>Upload</button>
-                                    </div>
-
-                                  <div class="col-sm-8 click_step2 mrt30 padding0">
-                                        <a class="backiocn" href="<?=base_url();?>profile"><i class="fa fa-long-arrow-left" aria-hidden="true"></i> Back</a>
-                                    </div>
-                                    <div class="col-sm-4 click_step2 mrt20 padding0">
-                                        
-                                            
-                                        
-
-                                    </div>
-
-                                </div>
-
-                                
-								<form>
-                            </div>
-                        </div>
-                    </div>
+                <!-- Current Profile Image Avatar Preview -->
+                <div class="current-avatar-preview">
+                    <?php 
+                        $img_src = !empty($src) ? base_url('admin1947/public/assets/upload/' . html_escape($src)) : '';
+                    ?>
+                    <?php if(!empty($src) && file_exists(FCPATH . 'admin1947/public/assets/upload/' . $src)): ?>
+                        <img id="avatar-preview-img" src="<?=$img_src;?>" alt="User Profile Image">
+                    <?php else: ?>
+                        <i id="avatar-fallback-icon" class="fa fa-user" style="font-size: 54px; color: var(--upchar-teal);"></i>
+                        <img id="avatar-preview-img" src="" alt="User Profile Image" style="display: none;">
+                    <?php endif; ?>
                 </div>
-            </div>
-        </div>
 
-                               
+                <!-- Styled File Upload Picker -->
+                <div class="dropzone-file-picker" onclick="document.getElementById('file').click();">
+                    <i class="fa fa-cloud-upload" style="font-size: 36px; color: var(--upchar-teal); margin-bottom: 8px; display: block;"></i>
+                    <span style="font-size: 14px; font-weight: 700; color: #0f172a; display: block;">
+                        Click to select photo or drag file here
+                    </span>
+                    <span id="selected-file-name" style="font-size: 12px; color: #64748b; margin-top: 4px; display: block;">
+                        No file chosen yet
+                    </span>
 
-                            </div>
-                        </div>
-                    </div>
+                    <input type="file" name="file" id="file" accept="image/*" style="display: none;" onchange="handleFileSelect(this);">
                 </div>
-            </div>
+
+                <div>
+                    <button type="submit" name="submit" class="btn-upload-photo">
+                        <i class="fa fa-upload" style="margin-right: 8px;"></i> Upload Display Picture
+                    </button>
+                </div>
+
+            </form>
+
         </div>
+    </div>
+</div>
+
+<script>
+function handleFileSelect(input) {
+    if (input.files && input.files[0]) {
+        const file = input.files[0];
+        document.getElementById('selected-file-name').textContent = 'Selected: ' + file.name;
         
-        </div>
-        
-        <?php include ("includes/footer.php"); ?>
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const previewImg = document.getElementById('avatar-preview-img');
+            const fallbackIcon = document.getElementById('avatar-fallback-icon');
+            
+            previewImg.src = e.target.result;
+            previewImg.style.display = 'block';
+            if (fallbackIcon) fallbackIcon.style.display = 'none';
+        }
+        reader.readAsDataURL(file);
+    }
+}
+</script>

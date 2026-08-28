@@ -8,6 +8,7 @@ class Hospitalpanel extends CI_Controller
 		date_default_timezone_set("Asia/Kolkata");
 		$date=date('Y-m-d h:i:s');
 		$this->load->model('Hospital_Model');
+		$this->load->model('Financial_Model');
 		$this->load->library(array('Form_validation'));		
 		$this->load->helper(array('query_string_helper','dbquery_helper','admin_helper'));
 		
@@ -20,7 +21,8 @@ class Hospitalpanel extends CI_Controller
 		}
 		else
 		{
-			$this->did= $this->db->where('uid',$this->session->userdata('hosuserid'))->get('hospital')->row()->id;
+			$row = $this->db->where('uid',$this->session->userdata('hosuserid'))->get('hospital')->row();
+			$this->did = ($row && isset($row->id)) ? $row->id : null;
 		}
 	}
 	
@@ -53,11 +55,29 @@ class Hospitalpanel extends CI_Controller
 	
 	public function aindex()
 	{
-	    $this->load->view('hospitalpanel/aindex');
+		if ($this->session->userdata('userid')) {
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-info'>You are logged in as a Patient. Please logout to access Hospital Partner Login.</div>");
+			redirect('myappointments');
+			return;
+		}
+		if ($this->session->userdata('hospuserid')) {
+			redirect('hospitalpanel/milestone');
+			return;
+		}
+		$this->load->view('hospitalpanel/login');
 	}
 	
 	public function login()
-	{	//echo "hi"; die;
+	{
+		if ($this->session->userdata('userid')) {
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-info'>You are logged in as a Patient. Please logout to access Hospital Partner Login.</div>");
+			redirect('myappointments');
+			return;
+		}
+		if ($this->session->userdata('hospuserid')) {
+			redirect('hospitalpanel/milestone');
+			return;
+		}
 		$this->load->view('hospitalpanel/login');
 	}
 	
@@ -1437,11 +1457,136 @@ class Hospitalpanel extends CI_Controller
 
 	   
     public function biomedical()
-	   {
-	        $data['data'] = $this->db->get_where('biomedical',array('id'))->result();
-	       
-	       //print_r($data);
-	       $this->load->view('hospitalpanel/biomedical',$data);
-	   }
-    
+	{
+		$data['data'] = $this->db->get('biomedical')->result();
+		$this->load->view('hospitalpanel/biomedical',$data);
+	}
+
+	public function bed_matrix()
+	{
+		$hospital_id = $this->did;
+		$data['hospital'] = $this->db->get_where('hospital', array('id' => $hospital_id))->row();
+		$data['beds'] = $this->db->get_where('hospital_bed', array('hospital_id' => $hospital_id))->result();
+		
+		// Summary statistics
+		$data['total_beds'] = count($data['beds']);
+		$data['occupied_beds'] = 0;
+		$data['vacant_beds'] = 0;
+		$data['maintenance_beds'] = 0;
+		
+		foreach ($data['beds'] as $bed) {
+			if ($bed->status == 'OCCUPIED') $data['occupied_beds']++;
+			elseif ($bed->status == 'MAINTENANCE' || $bed->status == 'CLEANING') $data['maintenance_beds']++;
+			else $data['vacant_beds']++;
+		}
+
+		$this->load->view('hospitalpanel/bed_matrix', $data);
+	}
+
+	public function admissions()
+	{
+		$hospital_id = $this->did;
+		$data['admissions'] = $this->db->select('hospital_admissions.*, userlogin.FNAME as patient_fname, userlogin.LNAME as patient_lname, userlogin.MOBILE as patient_mobile, profile_dr.fname as dr_fname, profile_dr.lname as dr_lname, hospital_bed.bed_number, hospital_bed.category as bed_type')
+			->from('hospital_admissions')
+			->join('userlogin', 'userlogin.USERID = hospital_admissions.patient_id', 'left')
+			->join('profile_dr', 'profile_dr.id = hospital_admissions.attending_doctor_id', 'left')
+			->join('hospital_bed', 'hospital_bed.id = hospital_admissions.bed_id', 'left')
+			->where('hospital_admissions.hospital_id', $hospital_id)
+			->order_by('hospital_admissions.id', 'DESC')
+			->get()
+			->result();
+
+		$data['vacant_beds'] = $this->db->get_where('hospital_bed', array('hospital_id' => $hospital_id, 'status' => 'VACANT'))->result();
+		$data['doctors'] = $this->db->select('profile_dr.*')
+			->from('dr_practice')
+			->join('profile_dr', 'profile_dr.id = dr_practice.user_id')
+			->where(array('dr_practice.institution_id' => $hospital_id, 'dr_practice.type' => 'H', 'dr_practice.status' => '1'))
+			->get()
+			->result();
+
+		$this->load->view('hospitalpanel/admissions', $data);
+	}
+
+	public function admit_patient()
+	{
+		$hospital_id = $this->did;
+		$patient_name = trim($this->input->post('patient_name', TRUE));
+		$patient_mobile = trim($this->input->post('patient_mobile', TRUE));
+		$bed_id = intval($this->input->post('bed_id'));
+		$doctor_id = intval($this->input->post('doctor_id'));
+		$reason = trim($this->input->post('reason', TRUE));
+		$deposit = floatval($this->input->post('deposit_amount'));
+		$tpa = trim($this->input->post('insurance_tpa', TRUE));
+		$claim_no = trim($this->input->post('claim_number', TRUE));
+
+		if (!empty($patient_mobile) && !empty($bed_id)) {
+			// Find or create userlogin record
+			$user = $this->db->get_where('userlogin', array('MOBILE' => $patient_mobile))->row();
+			if (!$user) {
+				$name_parts = explode(' ', $patient_name, 2);
+				$this->db->insert('userlogin', array(
+					'FNAME' => $name_parts[0],
+					'LNAME' => isset($name_parts[1]) ? $name_parts[1] : '',
+					'MOBILE' => $patient_mobile,
+					'STATUS' => '1',
+					'APPROVED' => '1',
+					'REG_DATE' => date('Y-m-d')
+				));
+				$patient_id = $this->db->insert_id();
+			} else {
+				$patient_id = $user->USERID;
+			}
+
+			$admission_no = 'IPD' . date('Ymd') . rand(100, 999);
+			$this->db->insert('hospital_admissions', array(
+				'hospital_id'            => $hospital_id,
+				'patient_id'             => $patient_id,
+				'attending_doctor_id'    => $doctor_id,
+				'bed_id'                 => $bed_id,
+				'admission_number'       => $admission_no,
+				'admission_date'         => date('Y-m-d H:i:s'),
+				'admission_reason'       => $reason,
+				'deposit_amount'         => $deposit,
+				'current_running_bill'   => $deposit,
+				'insurance_tpa_name'     => $tpa,
+				'insurance_claim_number' => $claim_no,
+				'status'                 => 'ADMITTED'
+			));
+
+			// Update bed status to OCCUPIED
+			$this->db->where('id', $bed_id)->update('hospital_bed', array('status' => 'OCCUPIED'));
+
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-success'>Patient admitted successfully! Admission #$admission_no</div>");
+		}
+		redirect('hospitalpanel/admissions');
+	}
+
+	public function discharge_patient()
+	{
+		$adm_id = intval($this->input->get_post('adm_id'));
+		$hospital_id = $this->did;
+		$admission = $this->db->get_where('hospital_admissions', array('id' => $adm_id, 'hospital_id' => $hospital_id))->row();
+
+		if ($admission) {
+			$this->db->where('id', $adm_id)->update('hospital_admissions', array(
+				'discharge_date' => date('Y-m-d H:i:s'),
+				'status'         => 'DISCHARGED'
+			));
+
+			// Free up bed
+			$this->db->where('id', $admission->bed_id)->update('hospital_bed', array('status' => 'VACANT'));
+
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-success'>Patient discharged successfully and bed marked vacant!</div>");
+		}
+		redirect('hospitalpanel/admissions');
+	}
+
+	public function earnings()
+	{
+		$hospital_id = $this->did;
+		$data['earnings'] = $this->Financial_Model->get_hospital_earnings($hospital_id);
+		$data['ledger'] = $this->Financial_Model->get_ledger_history('HOSPITAL', $hospital_id, 50);
+		$data['hospital'] = $this->db->get_where('hospital', array('id' => $hospital_id))->row();
+		$this->load->view('hospitalpanel/earnings', $data);
+	}
 }

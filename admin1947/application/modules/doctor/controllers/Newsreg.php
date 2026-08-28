@@ -114,47 +114,107 @@ class Newsreg extends CI_Controller
 	}
 
 
-    public function newsapprove()
+	public function newsapprove($id = null)
 	{
-		$did=$this->input->post('did');
-		$current=$this->db->select('approved')->get_where('news',array('id'=>$did))->row()->approved;
-		if($current=='1')
-		{
-			$this->db->set('approved','0')->where(array('id'=>$did))->update('news');
-			$response=array('status'=>'0');
+		$did = $this->input->post('did') ? $this->input->post('did') : ($id ? $id : $this->uri->segment(4));
+		$row = $this->db->select('approved')->get_where('news', array('id' => $did))->row();
+		$current = $row ? $row->approved : '0';
+		if ($current == '1') {
+			$this->db->set('approved', '0')->where(array('id' => $did))->update('news');
+			$status = '0';
+			$msg = 'News approval status updated to Pending.';
+		} else {
+			$this->db->set('approved', '1')->where(array('id' => $did))->update('news');
+			$status = '1';
+			$msg = 'News has been Approved successfully.';
 		}
-		else if($current=='0')
-		{
-			$this->db->set('approved','1')->where(array('id'=>$did))->update('news');
-			$response=array('status'=>'1');
+		if ($this->input->is_ajax_request() || $this->input->post('did')) {
+			echo json_encode(array('status' => $status, 'message' => $msg));
+			return;
 		}
-		echo json_encode($response);
+		$this->session->set_flashdata('flashmsg', "<div class='alert alert-success'>$msg</div>");
+		redirect(base_url('doctor/newsreg/viewnews'));
 	}
 	 
-	public function newsverify()
+	public function newsverify($id = null)
 	{
-		$did=$this->input->post('did');
-		$current=$this->db->select('verified')->get_where('news',array('id'=>$did))->row()->verified;
-		if($current=='1')
-		{
-			$this->db->set('verified','0')->where(array('id'=>$did))->update('news');
-			$response=array('status'=>'0');
+		$did = $this->input->post('did') ? $this->input->post('did') : ($id ? $id : $this->uri->segment(4));
+		$row = $this->db->select('status')->get_where('news', array('id' => $did))->row();
+		$current = $row ? $row->status : '0';
+		if ($current == '1') {
+			$this->db->set('status', '0')->where(array('id' => $did))->update('news');
+			$status = '0';
+			$msg = 'News status updated to Inactive.';
+		} else {
+			$this->db->set('status', '1')->where(array('id' => $did))->update('news');
+			$status = '1';
+			$msg = 'News has been Activated successfully.';
 		}
-		else if($current=='0')
-		{
-			$this->db->set('verified','1')->where(array('id'=>$did))->update('news');
-			$response=array('status'=>'1');
+		if ($this->input->is_ajax_request() || $this->input->post('did')) {
+			echo json_encode(array('status' => $status, 'message' => $msg));
+			return;
 		}
-		echo json_encode($response);
+		$this->session->set_flashdata('flashmsg', "<div class='alert alert-success'>$msg</div>");
+		redirect(base_url('doctor/newsreg/viewnews'));
+	}
+
+	public function deletenews($id = null)
+	{
+		if ($this->input->post('ids') && is_array($this->input->post('ids'))) {
+			$this->bulk_delete_news();
+			return;
+		}
+
+		$del_id = $id ? $id : ($this->input->post('id') ? $this->input->post('id') : $this->uri->segment(4));
+		if ($del_id) {
+			$this->load->model('newsregmodel');
+			$this->newsregmodel->newsdelete($del_id);
+			$msg = "News article deleted successfully.";
+			if ($this->input->is_ajax_request() || $this->input->post('is_ajax') || $this->input->post('id')) {
+				echo json_encode(array('status' => 1, 'message' => $msg));
+				return;
+			}
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-success'><strong>Success!</strong> $msg</div>");
+		}
+		redirect(base_url('doctor/newsreg/viewnews'));
+	}
+
+	public function bulk_delete_news()
+	{
+		$ids = $this->input->post('ids');
+		if (!empty($ids) && is_array($ids)) {
+			$this->load->model('newsregmodel');
+			$deleted_count = 0;
+			foreach ($ids as $nid) {
+				$nid = (int)$nid;
+				if ($nid > 0) {
+					$this->newsregmodel->newsdelete($nid);
+					$deleted_count++;
+				}
+			}
+			$msg = "$deleted_count news article(s) deleted successfully.";
+			if ($this->input->is_ajax_request() || $this->input->post('is_ajax')) {
+				echo json_encode(array('status' => 1, 'count' => $deleted_count, 'message' => $msg));
+				return;
+			}
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-success'><strong>Success!</strong> $msg</div>");
+		} else {
+			if ($this->input->is_ajax_request() || $this->input->post('is_ajax')) {
+				echo json_encode(array('status' => 0, 'message' => 'No articles selected.'));
+				return;
+			}
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-warning'>No articles selected.</div>");
+		}
+		redirect(base_url('doctor/newsreg/viewnews'));
 	}
 	 
 	public function newsview($id)
 	{
-		$data['news']=$this->db->get_where('news',array('id'=>$id))->row();
-		$data['module']='news';
+		$data['news'] = $this->db->get_where('news', array('id' => $id))->row();
+		$data['module'] = 'news';
 		$this->load->view('inc/topheaderlink');
 		$this->load->view('inc/topheader');
-		$this->load->view('viewnews',$data);
+		$this->load->view('previewnews', $data);
 		$this->load->view('sidebar');
 		$this->load->view('inc/headersetting');
 		$this->load->view('inc/footerlink');
@@ -207,16 +267,4 @@ class Newsreg extends CI_Controller
 		$this->load->view('inc/footerlink');
 		$this->load->view('inc/table_footer');
 	}
-
-	public function deletenews()
-    {
-        $id=$this->uri->segment(4);
-        $this->load->model('newsregmodel');
-        $this->newsregmodel->newsdelete($id);
-        $msg="<div class='alert alert-success'><strong>Success!</strong> Data Deleted Successfully</div>";
-	    $this->session->set_flashdata('flashmsg',$msg);
-        redirect(base_url().'doctor/newsreg/viewnews');
-    }
-
-
-	}
+}

@@ -1,120 +1,54 @@
-<!DOCTYPE html>
-<html>
-  <style>
-  .label-name{
-	  text-align:left!important;
-	  margin-top:-5px;
-  }
-  .starspan
-  {
-	  color:#e80909;
-	  font-size:18px;
-  }
-  .mainheadlinerow
-  {
-	  padding:5px;margin-top:10px;margin-bottom:10px;
-  }
-  .mainheadline
-  {
-	  background:#3c8dbc;margin-top:10px;margin-bottom:10px;color:#fff;padding:9px;font-weight:600;
-  }
-  .mainheadlinefirstrow
-  {
-	  padding:5px;
-  }
-  .mainheadlinefirst
-  {
-	  background:#3c8dbc;margin-top:-15px;margin-bottom:15px;color:#fff;padding:9px;font-weight:600;
-  }
-  .othernote{
-      font-weight:600;font-size:13px;color:#d20c0c;
-  }
-  .mainhead{font-weight:600;margin-bottom:20px;}
-  .formbody{border:1px solid #d6d2d2;padding:10px;border-radius:4px;}
-  .note{font-weight:600;margin-top:10px;margin-bottom:20px;}
-  
-  #reset{background:#fff;color:#000;padding: 6px 30px;}
-  </style>
-<body class="hold-transition skin-blue sidebar-mini">
-	<div class="wrapper">
-		<!--there was sidebar -->
-		<!-- Content Wrapper. Contains page content -->
-		<div class="content-wrapper">
-			<!-- Content Header (Page header) -->
-			<section class="content-header"></section>
-			<!-- Main content -->
-			<section class="content">
-				<link rel="stylesheet" href="https://jqueryvalidation.org/files/demo/site-demos.css">
-				<link rel="stylesheet" href="<?=base_url();?>public/assets/dist/css/metallic/zebra_datepicker.min.css" type="text/css">
-				<div class="container bg-3 ">  
-					<div class="row text-">
-						<div class="container">
-							<?=$this->session->flashdata('flashmsg');?>
-							<h4 class="mainhead">Category</h4>
-							<form class="form-horizontal formbody" id='mainform' action="<?=base_url()?>doctor/pathtest/editcategory/<?php echo $res->category_id; ?>"  method="post" enctype="multipart/form-data">
-								<!--Basic Details-->
-								<div class="row mainheadlinefirstrow">
-									<div class="col-md-12 mainheadlinefirst">Basic Details</div>
-								</div>
-								<div class="row">
-									<div class="col-md-6">
-										<div class="form-group">
-										  <label class="control-label col-sm-4 label-name" for="email">First Name<span class="starspan">*</span></label>
-										  <div class="col-sm-7">
-											<input type="text" class="form-control input-sm" id="category_name" value="<?php echo set_value('category_name',$res->category_name);?>" name="category_name" >
-											<span style="color:red;"><?php echo form_error('category_name');?></span>
-										  </div>
-										</div>
-									</div>
-								</div>
-								<!--Trainee Bank Details-->
-								<div class="row mainheadlinerow">
-									<div class="col-md-12 mainheadline">Status</div>
-								</div>
-								<div class="row">
-									
-									<div class="col-md-8">
-										<div class="form-group">
-										  <div class="radio"><label><input type="radio" name="status" value='1' checked>Active</label></div>
-										  <div class="radio"><label><input type="radio" name="status" value='0'>Inactive</label></div>
-										</div>
-									</div>
-								</div>
-								<div class="row">
-									<div class="col-md-12">
-										<div class="form-group">        
-											  <div class="col-sm-9">
-												<input type="submit" class="btn btn-info" id="submit" name="submit" value='Update' />
-												<button type="reset" class="btn btn-info" id="reset" name="reset">Reset</button>
-											  </div>
-										</div>
-									</div>
-								</div>
-							</form>
-						</div>
-						<br>
-						<br>
-						<br>
-					</div>
-				</div><br>
+<div class="content-wrapper">
+  <!-- Content Header & Breadcrumbs -->
+  <section class="content-header" style="padding: 20px 20px 10px;">
+    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+      <div>
+        <h1 style="font-size: 22px; font-weight: 700; color: #1E293B; margin: 0 0 4px 0; font-family: 'Inter', sans-serif;">
+          Edit Pathology Category
+        </h1>
+        <p style="margin: 0; color: #64748B; font-size: 13px;">Update diagnostic panel title and department classification</p>
+      </div>
+      <div style="display: flex; gap: 10px; align-items: center;">
+        <a href="<?=base_url('doctor/pathtest/category')?>" class="btn" style="background: #F1F5F9; color: #334155; font-weight: 600; padding: 8px 16px; border-radius: 8px; border: 1px solid #CBD5E1; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; font-size: 13px;">
+          <i class="fa fa-arrow-left"></i> Back to Categories
+        </a>
+      </div>
+    </div>
+  </section>
 
-	 
-    </section>
-    <!-- /.content -->
-  </div>
-  
-  
-  <!-- /.content-wrapper -->
-   <?=$this->load->view('inc/footer');?>
+  <!-- Main content -->
+  <section class="content" style="padding: 10px 20px 30px;">
+    <?=$this->session->flashdata('flashmsg');?>
 
- 
-  <!-- /.control-sidebar -->
-  <!-- Add the sidebar's background. This div must be placed
-       immediately after the control sidebar -->
-  <div class="control-sidebar-bg"></div>
+    <div style="max-width: 650px; margin: 0 auto; background: #FFFFFF; border-radius: 12px; border: 1px solid #E2E8F0; box-shadow: 0 1px 3px rgba(0,0,0,0.05); overflow: hidden;">
+      <div style="padding: 18px 24px; border-bottom: 1px solid #F1F5F9; background: #F8FAFC;">
+        <h3 style="margin: 0; font-size: 15px; font-weight: 700; color: #0F172A; text-transform: uppercase; letter-spacing: 0.5px;">
+          <i class="fa fa-pencil-square-o" style="color: #0d9488; margin-right: 8px;"></i> Category Details
+        </h3>
+      </div>
+
+      <form id="mainform" action="<?=base_url()?>doctor/pathtest/editcategory/<?php echo $res->category_id; ?>" method="post" enctype="multipart/form-data" style="padding: 24px;">
+        <div style="display: flex; flex-direction: column; gap: 20px;">
+          
+          <div>
+            <label style="display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 6px;">
+              Category Name <span style="color: #EF4444;">*</span>
+            </label>
+            <input type="text" class="form-control" id="category_name" name="category_name" data-validation="required" data-validation-error-msg="Category name is required" value="<?php echo $res->category_name; ?>" style="height: 42px; border-radius: 8px; border: 1px solid #CBD5E1; font-size: 14px; padding: 8px 14px;">
+          </div>
+
+          <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 10px;">
+            <button type="submit" id="submit" name="submit" value="Update" class="btn" style="background: #0d9488; color: #FFFFFF; font-weight: 600; padding: 10px 28px; border-radius: 8px; border: none; box-shadow: 0 2px 4px rgba(13,148,136,0.3);">
+              <i class="fa fa-save" style="margin-right: 6px;"></i> Save Changes
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </section>
 </div>
-<!-- ./wrapper -->
 
-
-</body>
-</html>
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/jquery-form-validator/2.3.26/jquery.form-validator.min.js"></script>
+<script> $.validate({}); </script>
+<?=$this->load->view('inc/footer');?>

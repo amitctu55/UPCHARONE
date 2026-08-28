@@ -30,32 +30,53 @@ class Doctorviewmodel extends CI_Model
 				
 	public function get_doctor($limit='10',$offset='0',$param=array())
 	{	
-		$id			= @$param['id'];
-		$keyword 	= $this->db->escape_str($this->input->get('keyword',TRUE));
-		$mobile 	= $this->db->escape_str($this->input->get('mobile',TRUE));
-		$city_name 	= $this->db->escape_str($this->input->get('city_name',TRUE));
+		$id				= @$param['id'];
+		$keyword 		= $this->db->escape_str($this->input->get('keyword',TRUE));
+		$mobile 		= $this->db->escape_str($this->input->get('mobile',TRUE));
+		$city_name 		= $this->db->escape_str($this->input->get('city_name',TRUE));
+		$status_filter 	= $this->db->escape_str($this->input->get('status_filter',TRUE));
 	
 		if($id!='')
 		{
-			$this->db->where("id",$id);
+			$this->db->where("profile_dr.id",$id);
 		}
 		
 		if($keyword!='')
 		{
-			$this->db->where("(fname LIKE '%".$keyword."%' )");
+			$this->db->where("(profile_dr.fname LIKE '%".$keyword."%' OR profile_dr.lname LIKE '%".$keyword."%' OR profile_dr.email LIKE '%".$keyword."%')");
 		}
 		if($mobile!='')
 		{
-			$this->db->where("mobile",$mobile);
+			$this->db->where("profile_dr.mobile",$mobile);
 		}
 		if($city_name!='')
 		{
-			$this->db->where("city",$city_name);
+			$this->db->where("profile_dr.city",$city_name);
 		}
-		$this->db->order_by('id','desc');
+		if($status_filter == 'approved' || $status_filter == 'registered')
+		{
+			$this->db->where("profile_dr.approved", "1");
+			$this->db->where("profile_dr.verified", "1");
+		}
+		elseif($status_filter == 'pending' || $status_filter == 'pending_verification')
+		{
+			$this->db->where("(profile_dr.approved = '0' OR profile_dr.verified = '0')");
+		}
+		elseif($status_filter == 'verified')
+		{
+			$this->db->where("profile_dr.verified", "1");
+		}
+		elseif($status_filter == 'unverified')
+		{
+			$this->db->where("profile_dr.verified", "0");
+		}
+		elseif($status_filter == 'pending_approval')
+		{
+			$this->db->where("profile_dr.approved", "0");
+		}
+		$this->db->order_by('profile_dr.id','desc');
 		$this->db->limit($limit,$offset);
 		$this->db->select('SQL_CALC_FOUND_ROWS profile_dr.*',FALSE);
-		//$this->db->join('hospitallogin','hospitallogin.USERID = hospital.uid','left');
 		$result = $this->db->get('profile_dr')->result_array();
 		$result = ($limit=='1') ? @$result[0]: $result;	
 		return $result;
@@ -63,29 +84,51 @@ class Doctorviewmodel extends CI_Model
 	
 	public function get_doctor_list($param=array())
 	{	
-		$id			= @$param['id'];
-		$keyword 	= $this->db->escape_str($this->input->get('keyword',TRUE));
-		$mobile 	= $this->db->escape_str($this->input->get('mobile',TRUE));
-		$city_name 	= $this->db->escape_str($this->input->get('city_name',TRUE));
+		$id				= @$param['id'];
+		$keyword 		= $this->db->escape_str($this->input->get('keyword',TRUE));
+		$mobile 		= $this->db->escape_str($this->input->get('mobile',TRUE));
+		$city_name 		= $this->db->escape_str($this->input->get('city_name',TRUE));
+		$status_filter 	= $this->db->escape_str($this->input->get('status_filter',TRUE));
 	
 		if($id!='')
 		{
-			$this->db->where("id",$id);
+			$this->db->where("profile_dr.id",$id);
 		}
 		
 		if($keyword!='')
 		{
-			$this->db->where("(fname LIKE '%".$keyword."%' )");
+			$this->db->where("(profile_dr.fname LIKE '%".$keyword."%' OR profile_dr.lname LIKE '%".$keyword."%' OR profile_dr.email LIKE '%".$keyword."%')");
 		}
 		if($mobile!='')
 		{
-			$this->db->where("mobile",$mobile);
+			$this->db->where("profile_dr.mobile",$mobile);
 		}
 		if($city_name!='')
 		{
-			$this->db->where("city",$city_name);
+			$this->db->where("profile_dr.city",$city_name);
 		}
-		$this->db->order_by('id','desc');
+		if($status_filter == 'approved' || $status_filter == 'registered')
+		{
+			$this->db->where("profile_dr.approved", "1");
+			$this->db->where("profile_dr.verified", "1");
+		}
+		elseif($status_filter == 'pending' || $status_filter == 'pending_verification')
+		{
+			$this->db->where("(profile_dr.approved = '0' OR profile_dr.verified = '0')");
+		}
+		elseif($status_filter == 'verified')
+		{
+			$this->db->where("profile_dr.verified", "1");
+		}
+		elseif($status_filter == 'unverified')
+		{
+			$this->db->where("profile_dr.verified", "0");
+		}
+		elseif($status_filter == 'pending_approval')
+		{
+			$this->db->where("profile_dr.approved", "0");
+		}
+		$this->db->order_by('profile_dr.id','desc');
 		$this->db->select('SQL_CALC_FOUND_ROWS profile_dr.*',FALSE);
 		$result = $this->db->get('profile_dr')->result_array();
 		return $result;
@@ -93,11 +136,7 @@ class Doctorviewmodel extends CI_Model
 
     public function deletedoctor($id)
 	{
-		return $this->db->query("
-		 DELETE t1.*, t2.*
-		  FROM profile_dr t1, doctorlogin t2 
-		   WHERE t1.user_id = t2.USERID 
-				AND t1.id = '".$id."'");
-
+		$this->load->model('doctorregmodel');
+		return $this->doctorregmodel->deletedoctor($id);
 	}
 }

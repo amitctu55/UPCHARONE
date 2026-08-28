@@ -1,464 +1,475 @@
-<?php //echo "<pre>"; print_r($clinic); die;?>
-<!DOCTYPE html>
-<html>
-  <style>
-  .label-name{
-	  text-align:left!important;
-	  margin-top:-5px;
-  }
-  .starspan
-  {
-	  color:#e80909;
-	  font-size:18px;
-  }
-  .mainheadlinerow
-  {
-	  padding:5px;margin-top:10px;margin-bottom:10px;
-  }
-  .mainheadline
-  {
-	  background:#3c8dbc;margin-top:10px;margin-bottom:10px;color:#fff;padding:9px;font-weight:600;
-  }
-  .mainheadlinefirstrow
-  {
-	  padding:5px;
-  }
-  .mainheadlinefirst
-  {
-	  background:#3c8dbc;margin-top:-15px;margin-bottom:15px;color:#fff;padding:9px;font-weight:600;
-  }
-  .othernote{
-      font-weight:600;font-size:13px;color:#d20c0c;
-  }
-  .mainhead{font-weight:600;margin-bottom:20px;}
-  .formbody{border:1px solid #d6d2d2;padding:10px;border-radius:4px;}
-  .note{font-weight:600;margin-top:10px;margin-bottom:20px;}
-  
-  #reset{background:#fff;color:#000;padding: 6px 30px;}
-  .docimg {
-    margin-bottom: 30px;
-    height: 134px;
-    border-radius: 14px;
-    box-shadow: 0px -5px 4px -1px #848181;
-    width: 122px;
-}
-  .doc_nam_inf span {
-    font-size: 12px;
-    color: #9bc03c;
-    letter-spacing: 0.8px;
-    font-size: 16px;
-    font-weight: 600;
-    font-family: 'Lato', sans-serif;
-}
-ol, ul {
-    margin: 0;
-    padding: 0;
-    border: 0;
-    font-size: 100%;
-    font: inherit;
-    vertical-align: baseline;
-}
-ul {
-    display: block;
-    list-style-type: disc;
-    margin-block-start: 1em;
-    margin-block-end: 1em;
-    margin-inline-start: 0px;
-    margin-inline-end: 0px;
-    padding-inline-start: 40px;
-}
-  </style>
-<body class="hold-transition skin-blue sidebar-mini">
-	<div class="wrapper">
-		<!--there was sidebar -->
-		<!-- Content Wrapper. Contains page content -->
-		<div class="content-wrapper">
-			<!-- Content Header (Page header) -->
-			<!-- Main content -->
-			<section class="content">
-				<link rel="stylesheet" href="https://jqueryvalidation.org/files/demo/site-demos.css">
-				<link rel="stylesheet" href="<?=base_url();?>public/assets/dist/css/metallic/zebra_datepicker.min.css" type="text/css">
-				<div class="container bg-3 ">  
-					<div class="row text-">
-						<div class="container">
-							<h4 class="mainhead">Add Appointment</h4>
-							<?=$this->session->flashdata('flashmsg');?>
-							<form class="form-horizontal formbody" id='app_conf_form' action="<?=base_url()?>doctor/appointment/bookappointment_admin"  method="POST">
-								<!--Basic Details-->
-								<div class="row mainheadlinefirstrow">
-									<div class="col-md-12 mainheadlinefirst">Patient's Details</div>
-								</div>
-								<div class="row">
-									<div class="col-md-6">
-										<div class="form-group">
-											<label class="control-label col-sm-4 label-name" for="email">City Name<span class="starspan"></span></label>
-											<div class="col-sm-8">
-												<select class="form-control" id="city_name" name="city_name" >
-													<option value="">Select</option>
-													<?php $city = $this->appointmentmodel->get_city(array('status'=>'1'));
-													if(is_array($city) && !empty($city)){
-													foreach($city as $list){
-													?>
-													<option value="<?php echo $list['id'];?>"  ><?php echo $list['name'];?></option>
-													<?php } } ?>
-												</select>
-											</div>
-										</div>
-										<div class="form-group">
-											<label class="control-label col-sm-4 label-name" for="email">Locality Name<span class="starspan"></span></label>
-											<div class="col-sm-8">
-												<select class="form-control" id="locality_name" name="locality_name" >
-													<option value="">Select</option>
-												</select>
-											</div>
-										</div>
-										<div class="form-group">
-											<label class="control-label col-sm-4 label-name" for="email">Specialization Name<span class="starspan"></span></label>
-											<div class="col-sm-8">
-												<select class="form-control" id="specialization_name" name="specialization_name">
-													<option value="">Select</option>
-													<?php
-													if(is_array($specialization) && !empty($specialization)){
-													foreach($specialization as $list){
-													?>
-													<option value="<?php echo $list['id'];?>"  ><?php echo $list['name'];?></option>
-													<?php } } ?>
-												</select>
-											</div>
-										</div>
-										<div class="form-group">
-											<label class="control-label col-sm-4 label-name" for="email">Hospital Name<span class="starspan"></span></label>
-											<div class="col-sm-8">
-												<select class="form-control" id="hospital_name" name="hospital_name">
-													<option value="">Select</option>
-													<?php
-													if(is_array($hospital) && !empty($hospital)){
-													foreach($hospital as $list){
-													?>
-													<option value="<?php echo $list['id'];?>"  ><?php echo $list['name'];?></option>
-													<?php } } ?>
-												</select>
-											</div>
-										</div>
-										
-										<div class="form-group">
-											<label class="control-label col-sm-4 label-name" for="email">Dr. Name<span class="starspan">*</span></label>
-											<div class="col-sm-8">
-												<select class="form-control input-sm" id="app_conf_pop_doctorid"  name="app_doctor" required>
-													<option value="">Select Doctor</option>
-													<?php $hospital_name = $this->input->get_post('hospital_name');
-													if($hospital_name!='')
-													{
-													  $doctor_list         =  $this->appointmentmodel->doctor_list(array('type'=>'H','institution_id'=>$hospital_name));
-													}
-													else
-													{
-														$doctor_list         =  $this->appointmentmodel->doctor_list(array('type'=>'H'));
-													}
-													if(is_array($doctor_list) && !empty($doctor_list)){
-													foreach ($doctor_list as $key => $value) {?>
-													<option value="<?php echo $value['id']; ?>" <?php if($this->input->get_post('doctor_name')==$value['id']){ echo "selected"; } ?>><?php echo $value['fname']; ?></option>
-													<?php } } ?>
-												</select>
-											</div>
-										</div>
-										<div class="form-group">
-											<label class="control-label col-sm-4 label-name" for="email">Appointment Date<span class="starspan">*</span></label>
-											<div class="col-sm-8">
-												<select class="form-control" name='app_date' id='app_conf_pop_date' required>
-													<option value="">Select Date</option>
-												</select>
-											</div>
-										</div>
-										<div class="form-group">
-											<label class="control-label col-sm-4 label-name" for="email">Appointment Time<span class="starspan">*</span></label>
-											<div class="col-sm-8">
-												<select class="form-control" name='app_time' id='app_conf_pop_time' required>
-													<option value="">Select Time</option>
-												</select>
-											</div>
-										</div>
-										<div class="form-group">
-											<label class="control-label col-sm-4 label-name" for="email">Mobile<span class="starspan">*</span></label>
-											<div class="col-sm-8">
-												<input type="text" id='app_conf_mobile' name="app_mobile" class="form-control" value=''  placeholder="Mobile Number" required>
-											</div>
-										</div>
-										<div class="form-group">
-											<label class="control-label col-sm-4 label-name" for="email">Patient/Visitor Name<span class="starspan">*</span></label>
-											<div class="col-sm-8">
-												<input type="text" name="app_name"  id='app_conf_name' class="form-control">
-											</div>
-										</div>
-										<div class="form-group">
-											<label class="control-label col-sm-4 label-name" for="email">Email<span class="starspan"></span></label>
-											<div class="col-sm-8">
-												<input type="text" name="app_email" class="form-control"  placeholder="Email Id">
-											</div>
-										</div>
-										<!--<div class="form-group" style='display:none;' id='app_conf_otp'>
-											<label class="control-label col-sm-4 label-name" for="email">Send OTP<span class="starspan"></span></label>
-											<div class="col-sm-8">
-												<input value="" type="text" name="app_otp" class="form-control" required>
-											</div>
-										</div>-->
-									</div>
-									<div class="col-sm-6">
-										<div class="col-lg-10 padding0">  
-											<div  id='app_conf_pop_doctor'>
-												<div class="col-md-6">
-													<img src="extra-images/team-list-img1.jpg" alt="">
-												</div>
-												<div class="col-md-6">
-													<div class="doc_nam_inf" >
-														
-													</div>
-												</div>
-											</div>
-										</div>
-										<div class="col-lg-10 padding0"> 
-											<div  id='app_conf_pop_institute'>
-												<div class="col-md-6">
-													<img src="images/dentist.png" alt="">
-												</div>  
-												<div class="col-md-6">
-													<div class="doc_nam_inf">
-													 
-													</div>
-												</div>
-											</div>
-										</div>
-									</div>	
-								</div>
-								<div class="row">
-									<div class="col-md-12">
-										<div class="form-group">        
-											<div class="col-sm-9">
-												<!--<input type="submit" class="btn btn-info" id="submit" name="submit" value='Add' />
-												<button type="reset" class="btn btn-info" id="reset" name="reset">Reset</button>-->
-												<!--<p style=" margin-top: 10px;">You will receive an SMS with a verification code on this number
-												By booking the appointment, you agree to Upchar's <a href="#">Terms and Conditions.</a></p>
-												<button type="button" id='app_conf_otp_submit' class="continue2  btn-lg common-btn con_done">Send OTP    </button>-->
-												<button type="submit"  id='app_conf_submit' class="continue2  btn-lg common-btn con_done"> Book Appointment </button>
-												<!--<button type='submit' name='submit' class="continue2">Add Appointment</button>-->
-											</div>
-										</div>
-									</div>
-								</div>
-							</form>
-						</div>
-					</div>
-				</div>
-			</section>
-			<!-- /.content -->
-		</div>
-		<!-- /.content-wrapper -->
-		<?=$this->load->view('inc/footer');?>
-		<div class="control-sidebar-bg"></div>
-	</div>
-<!-- ./wrapper -->
-</body>
-</html>
-<script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
-<script>
+<div class="content-wrapper">
+  <!-- Content Header & Breadcrumbs -->
+  <section class="content-header" style="padding: 20px 20px 10px;">
+    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+      <div>
+        <h1 style="font-size: 22px; font-weight: 700; color: #1e293b; margin: 0;">Book New Appointment</h1>
+        <small style="color: #64748b; font-size: 13px;">Schedule doctor consultations, configure visit timings, and register patient details</small>
+      </div>
+      <ol class="breadcrumb" style="position: static; float: none; margin: 0; background: transparent; padding: 0;">
+        <li><a href="<?=base_url('masters/dashboard')?>" style="color: #00a896;"><i class="fa fa-dashboard"></i> Dashboard</a></li>
+        <li><a href="<?=base_url('doctor/appointment/doctorappointment')?>" style="color: #64748b;">Appointments</a></li>
+        <li class="active" style="color: #1e293b; font-weight: 600;">Add Appointment</li>
+      </ol>
+    </div>
+  </section>
 
-$(function() {
-    $('#city_name').change( function() {
+  <!-- Main content -->
+  <section class="content" style="padding: 15px 20px;">
+    <div class="container-fluid" style="padding: 0;">
+      
+      <!-- Flash Alert Messages -->
+      <?php if($this->session->flashdata('flashmsg')): ?>
+        <div style="margin-bottom: 15px;">
+          <?=$this->session->flashdata('flashmsg');?>
+        </div>
+      <?php endif; ?>
+
+      <!-- Toast Notification Container -->
+      <div id="toast-container" style="position: fixed; top: 20px; right: 20px; z-index: 99999; display: flex; flex-direction: column; gap: 10px; pointer-events: none;"></div>
+
+      <div class="row">
+        <!-- Left: Booking Form -->
+        <div class="col-md-7 col-sm-12">
+          <div class="master-card" style="background: #ffffff; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 4px 16px rgba(0,0,0,0.04); margin-bottom: 24px;">
+            <div class="master-card-header" style="padding: 18px 24px; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center;">
+              <h3 class="master-card-title" style="margin: 0; font-size: 16px; font-weight: 700; color: #0f172a; display: flex; align-items: center; gap: 8px;">
+                <i class="fa fa-calendar-plus-o" style="color: #00a896;"></i>
+                <span>Appointment Booking Form</span>
+              </h3>
+              <a href="<?=base_url('doctor/appointment/doctorappointment')?>" class="btn btn-sm btn-default" style="font-weight: 600; border-radius: 6px; border-color: #cbd5e1; color: #475569;">
+                <i class="fa fa-list"></i> View All Appointments
+              </a>
+            </div>
+
+            <div class="master-card-body" style="padding: 24px;">
+              <form id="app_conf_form" action="<?=base_url('doctor/appointment/bookappointment_admin');?>" method="POST">
+                
+                <!-- Section 1: Location & Doctor Selection -->
+                <div style="margin-bottom: 24px;">
+                  <div style="font-size: 13px; font-weight: 700; color: #00a896; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 14px; display: flex; align-items: center; gap: 6px; border-bottom: 1px solid #f1f5f9; padding-bottom: 6px;">
+                    <i class="fa fa-map-marker"></i> 1. Location &amp; Practitioner Selection
+                  </div>
+
+                  <div class="row">
+                    <!-- City -->
+                    <div class="col-md-6 col-sm-12">
+                      <div class="form-group" style="margin-bottom: 16px;">
+                        <label style="font-size: 12.5px; font-weight: 600; color: #334155; margin-bottom: 6px; display: block;">City</label>
+                        <select class="form-control" id="city_name" name="city_name" style="border-radius: 8px; border-color: #cbd5e1; height: 38px; font-size: 13px;">
+                          <option value="">-- Select City --</option>
+                          <?php 
+                          $city = $this->appointmentmodel->get_city(array('status'=>'1'));
+                          if(is_array($city) && !empty($city)):
+                            foreach($city as $list):
+                          ?>
+                            <option value="<?=$list['id'];?>"><?=$list['name'];?></option>
+                          <?php endforeach; endif; ?>
+                        </select>
+                      </div>
+                    </div>
+
+                    <!-- Locality -->
+                    <div class="col-md-6 col-sm-12">
+                      <div class="form-group" style="margin-bottom: 16px;">
+                        <label style="font-size: 12.5px; font-weight: 600; color: #334155; margin-bottom: 6px; display: block;">Locality / Area</label>
+                        <select class="form-control" id="locality_name" name="locality_name" style="border-radius: 8px; border-color: #cbd5e1; height: 38px; font-size: 13px;">
+                          <option value="">-- All Localities --</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <!-- Specialization -->
+                    <div class="col-md-6 col-sm-12">
+                      <div class="form-group" style="margin-bottom: 16px;">
+                        <label style="font-size: 12.5px; font-weight: 600; color: #334155; margin-bottom: 6px; display: block;">Medical Specialization</label>
+                        <select class="form-control" id="specialization_name" name="specialization_name" style="border-radius: 8px; border-color: #cbd5e1; height: 38px; font-size: 13px;">
+                          <option value="">-- All Specializations --</option>
+                          <?php 
+                          if(is_array($specialization) && !empty($specialization)):
+                            foreach($specialization as $list):
+                          ?>
+                            <option value="<?=$list['id'];?>"><?=$list['name'];?></option>
+                          <?php endforeach; endif; ?>
+                        </select>
+                      </div>
+                    </div>
+
+                    <!-- Hospital / Facility -->
+                    <div class="col-md-6 col-sm-12">
+                      <div class="form-group" style="margin-bottom: 16px;">
+                        <label style="font-size: 12.5px; font-weight: 600; color: #334155; margin-bottom: 6px; display: block;">Hospital / Institution</label>
+                        <select class="form-control" id="hospital_name" name="hospital_name" style="border-radius: 8px; border-color: #cbd5e1; height: 38px; font-size: 13px;">
+                          <option value="">-- All Hospitals --</option>
+                          <?php 
+                          if(is_array($hospital) && !empty($hospital)):
+                            foreach($hospital as $list):
+                          ?>
+                            <option value="<?=$list['id'];?>"><?=$list['name'];?></option>
+                          <?php endforeach; endif; ?>
+                        </select>
+                      </div>
+                    </div>
+
+                    <!-- Doctor Select -->
+                    <div class="col-md-12">
+                      <div class="form-group" style="margin-bottom: 16px;">
+                        <label style="font-size: 12.5px; font-weight: 700; color: #0f172a; margin-bottom: 6px; display: block;">
+                          Doctor Name <span style="color: #ef4444;">*</span>
+                        </label>
+                        <select class="form-control" id="app_conf_pop_doctorid" name="app_doctor" required style="border-radius: 8px; border-color: #00a896; height: 42px; font-size: 13.5px; font-weight: 600; background: #f0fdfa;">
+                          <option value="">-- Choose Doctor / Clinical Practitioner --</option>
+                          <?php 
+                          $doctor_list = $this->appointmentmodel->doctor_list(array('type'=>'H'));
+                          if(is_array($doctor_list) && !empty($doctor_list)):
+                            foreach ($doctor_list as $key => $value):
+                          ?>
+                            <option value="<?=$value['id']; ?>">Dr. <?=trim($value['fname'] . ' ' . ($value['lname'] ?? ''));?></option>
+                          <?php endforeach; endif; ?>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Section 2: Date & Slot Availability -->
+                <div style="margin-bottom: 24px;">
+                  <div style="font-size: 13px; font-weight: 700; color: #00a896; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 14px; display: flex; align-items: center; gap: 6px; border-bottom: 1px solid #f1f5f9; padding-bottom: 6px;">
+                    <i class="fa fa-clock-o"></i> 2. Visit Date &amp; Timing Slot
+                  </div>
+
+                  <div class="row">
+                    <!-- Date -->
+                    <div class="col-md-6 col-sm-12">
+                      <div class="form-group" style="margin-bottom: 16px;">
+                        <label style="font-size: 12.5px; font-weight: 600; color: #334155; margin-bottom: 6px; display: block;">
+                          Appointment Date <span style="color: #ef4444;">*</span>
+                        </label>
+                        <select class="form-control" name="app_date" id="app_conf_pop_date" required style="border-radius: 8px; border-color: #cbd5e1; height: 38px; font-size: 13px;">
+                          <option value="">-- Select Doctor First --</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <!-- Time Slot -->
+                    <div class="col-md-6 col-sm-12">
+                      <div class="form-group" style="margin-bottom: 16px;">
+                        <label style="font-size: 12.5px; font-weight: 600; color: #334155; margin-bottom: 6px; display: block;">
+                          Appointment Slot / Session <span style="color: #ef4444;">*</span>
+                        </label>
+                        <select class="form-control" name="app_time" id="app_conf_pop_time" required style="border-radius: 8px; border-color: #cbd5e1; height: 38px; font-size: 13px;">
+                          <option value="">-- Select Date First --</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Section 3: Patient Information -->
+                <div style="margin-bottom: 24px;">
+                  <div style="font-size: 13px; font-weight: 700; color: #00a896; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 14px; display: flex; align-items: center; gap: 6px; border-bottom: 1px solid #f1f5f9; padding-bottom: 6px;">
+                    <i class="fa fa-user"></i> 3. Patient Information
+                  </div>
+
+                  <div class="row">
+                    <!-- Mobile -->
+                    <div class="col-md-6 col-sm-12">
+                      <div class="form-group" style="margin-bottom: 16px;">
+                        <label style="font-size: 12.5px; font-weight: 600; color: #334155; margin-bottom: 6px; display: block;">
+                          Mobile Number <span style="color: #ef4444;">*</span>
+                        </label>
+                        <div class="input-group">
+                          <span class="input-group-addon" style="background: #f8fafc; border-color: #cbd5e1; color: #64748b;"><i class="fa fa-phone"></i></span>
+                          <input type="tel" id="app_conf_mobile" name="app_mobile" class="form-control" placeholder="10-digit mobile" pattern="[0-9]{10,12}" required style="border-color: #cbd5e1; height: 38px; font-size: 13px;">
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Patient Name -->
+                    <div class="col-md-6 col-sm-12">
+                      <div class="form-group" style="margin-bottom: 16px;">
+                        <label style="font-size: 12.5px; font-weight: 600; color: #334155; margin-bottom: 6px; display: block;">
+                          Patient Full Name <span style="color: #ef4444;">*</span>
+                        </label>
+                        <div class="input-group">
+                          <span class="input-group-addon" style="background: #f8fafc; border-color: #cbd5e1; color: #64748b;"><i class="fa fa-user"></i></span>
+                          <input type="text" name="app_name" id="app_conf_name" class="form-control" placeholder="Enter patient name" required style="border-color: #cbd5e1; height: 38px; font-size: 13px;">
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Email -->
+                    <div class="col-md-6 col-sm-12">
+                      <div class="form-group" style="margin-bottom: 16px;">
+                        <label style="font-size: 12.5px; font-weight: 600; color: #334155; margin-bottom: 6px; display: block;">
+                          Email Address (Optional)
+                        </label>
+                        <div class="input-group">
+                          <span class="input-group-addon" style="background: #f8fafc; border-color: #cbd5e1; color: #64748b;"><i class="fa fa-envelope"></i></span>
+                          <input type="email" name="app_email" id="app_conf_email" class="form-control" placeholder="patient@example.com" style="border-color: #cbd5e1; height: 38px; font-size: 13px;">
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Age / Notes -->
+                    <div class="col-md-6 col-sm-12">
+                      <div class="form-group" style="margin-bottom: 16px;">
+                        <label style="font-size: 12.5px; font-weight: 600; color: #334155; margin-bottom: 6px; display: block;">
+                          Patient Age (Years)
+                        </label>
+                        <div class="input-group">
+                          <span class="input-group-addon" style="background: #f8fafc; border-color: #cbd5e1; color: #64748b;"><i class="fa fa-birthday-cake"></i></span>
+                          <input type="number" name="app_age" id="app_conf_age" class="form-control" placeholder="e.g. 35" min="1" max="120" style="border-color: #cbd5e1; height: 38px; font-size: 13px;">
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Submit Action Buttons -->
+                <div style="border-top: 1px solid #f1f5f9; padding-top: 20px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+                  <button type="submit" id="app_conf_submit" class="btn btn-primary" style="background: #00a896; border-color: #00a896; font-weight: 700; padding: 10px 24px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0, 168, 150, 0.25);">
+                    <i class="fa fa-check-circle"></i> Confirm &amp; Book Appointment
+                  </button>
+                  <button type="reset" class="btn btn-default" style="font-weight: 600; padding: 10px 20px; border-radius: 8px; color: #64748b; border-color: #cbd5e1;">
+                    <i class="fa fa-refresh"></i> Reset Form
+                  </button>
+                </div>
+
+              </form>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Live Doctor & Facility Summary Card -->
+        <div class="col-md-5 col-sm-12">
+          
+          <!-- Doctor Summary Card -->
+          <div class="master-card" style="background: #ffffff; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 4px 16px rgba(0,0,0,0.04); margin-bottom: 20px;">
+            <div class="master-card-header" style="padding: 16px 20px; border-bottom: 1px solid #f1f5f9;">
+              <h4 style="margin: 0; font-size: 15px; font-weight: 700; color: #0f172a; display: flex; align-items: center; gap: 8px;">
+                <i class="fa fa-user-md" style="color: #00a896;"></i> Selected Doctor Summary
+              </h4>
+            </div>
+            <div class="master-card-body" style="padding: 20px;">
+              <div id="app_conf_pop_doctor">
+                <div style="text-align: center; padding: 24px 10px; color: #94a3b8;">
+                  <i class="fa fa-stethoscope fa-2x" style="display: block; margin-bottom: 8px; opacity: 0.5;"></i>
+                  <p style="margin: 0; font-size: 13px; font-weight: 500;">Select a doctor from the form to view qualifications and specialty profile.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Facility & Chamber Info Card -->
+          <div class="master-card" style="background: #ffffff; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 4px 16px rgba(0,0,0,0.04); margin-bottom: 20px;">
+            <div class="master-card-header" style="padding: 16px 20px; border-bottom: 1px solid #f1f5f9;">
+              <h4 style="margin: 0; font-size: 15px; font-weight: 700; color: #0f172a; display: flex; align-items: center; gap: 8px;">
+                <i class="fa fa-hospital-o" style="color: #00a896;"></i> Practice Chamber &amp; Fee Details
+              </h4>
+            </div>
+            <div class="master-card-body" style="padding: 20px;">
+              <div id="app_conf_pop_institute">
+                <div style="text-align: center; padding: 24px 10px; color: #94a3b8;">
+                  <i class="fa fa-clock-o fa-2x" style="display: block; margin-bottom: 8px; opacity: 0.5;"></i>
+                  <p style="margin: 0; font-size: 13px; font-weight: 500;">Select date and slot to load chamber location, fee, and available OPD capacity.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Fast Guidance Card -->
+          <div style="background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 12px; padding: 18px 20px;">
+            <h5 style="font-size: 13px; font-weight: 700; color: #0f172a; margin: 0 0 8px 0; display: flex; align-items: center; gap: 6px;">
+              <i class="fa fa-info-circle" style="color: #00a896;"></i> Booking &amp; Notification Flow
+            </h5>
+            <ul style="margin: 0; padding-left: 18px; font-size: 12px; color: #64748b; line-height: 1.6;">
+              <li>Patients are automatically mapped by their 10-digit mobile number.</li>
+              <li>Booking confirmation is dispatched via SMS &amp; Email to both doctor and patient.</li>
+              <li>Counter bookings (COC) can be marked completed inside the doctor or hospital portal.</li>
+            </ul>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </section>
+</div>
+
+<script>
+$(document).ready(function() {
+
+    // Helper: Show toast
+    function showToast(message, type) {
+        var bg = type === 'success' ? '#10b981' : '#ef4444';
+        var icon = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle';
+        var toast = $('<div style="background: ' + bg + '; color: #ffffff; padding: 12px 20px; border-radius: 8px; font-weight: 600; font-size: 13px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); display: flex; align-items: center; gap: 10px; pointer-events: auto;"><i class="fa ' + icon + '"></i> ' + message + '</div>');
+        $('#toast-container').append(toast);
+        setTimeout(function() { toast.fadeOut(300, function() { $(this).remove(); }); }, 3500);
+    }
+
+    // 1. City Change -> Load Localities and Hospitals
+    $('#city_name').on('change', function() {
         var val = $(this).val();
-        //alert(val);
-        if (val!='') 
-        {
-            $('#doctor_name').val('');
+        if (val) {
             $.ajax({
-               url: '<?php echo base_url();?>doctor/appointment/get_locality_by_city_id/',
-               dataType: 'html',
-               data: { city_id : val },
-               success: function(data) {
-                   $('#locality_name').html( data );
-               }
+                url: '<?=base_url();?>doctor/appointment/get_locality_by_city_id',
+                data: { city_id: val },
+                success: function(data) { $('#locality_name').html(data); }
             });
-			$.ajax({
-               url: '<?php echo base_url();?>doctor/appointment/get_hospital_by_city_id/',
-               dataType: 'html',
-               data: { city_id : val },
-               success: function(data) {
-                   $('#hospital_name').html( data );
-               }
+            $.ajax({
+                url: '<?=base_url();?>doctor/appointment/get_hospital_by_city_id',
+                data: { city_id: val },
+                success: function(data) { $('#hospital_name').html(data); }
             });
-        }
-		else 
-        {
-		   $("#locality_name").empty();
-		   //$("#hospital_name").empty();
+        } else {
+            $('#locality_name').html('<option value="">-- All Localities --</option>');
+            $('#hospital_name').html('<option value="">-- All Hospitals --</option>');
         }
     });
-});
-</script>
-<script>
-$(function() {
-    $('#locality_name').change( function() {
-        var val 	= $(this).val();
-		var city_id = $('#city_name').val();
-        if (val!='') 
-        {
-            $('#doctor_name').val('');
+
+    // 2. Locality Change -> Filter Hospitals
+    $('#locality_name').on('change', function() {
+        var locId = $(this).val();
+        var cityId = $('#city_name').val();
+        if (locId && cityId) {
             $.ajax({
-               url: '<?php echo base_url();?>doctor/appointment/get_hospital_by_locality_id/',
-               dataType: 'html',
-			   data:{"city_id": city_id,"locality_id": val},
-               success: function(data) {
-                   $('#hospital_name').html(data);
-               }
+                url: '<?=base_url();?>doctor/appointment/get_hospital_by_locality_id',
+                data: { city_id: cityId, locality_id: locId },
+                success: function(data) { $('#hospital_name').html(data); }
             });
         }
     });
-}); 
-</script>
-<script>
-$(function() {
-    $('#specialization_name').change( function() {
-        var val = $(this).val();
-        if (val!='') 
-        {
-            $('#doctor_name').val('');
+
+    // 3. Specialization Change -> Filter Doctors
+    $('#specialization_name').on('change', function() {
+        var specId = $(this).val();
+        if (specId) {
             $.ajax({
-               url: '<?php echo base_url();?>doctor/appointment/get_doctor_by_specialization_id/',
-               dataType: 'html',
-               data: { specialization_id : val },
-               success: function(data) {
-                   $('#app_conf_pop_doctorid').html(data);
-               }
+                url: '<?=base_url();?>doctor/appointment/get_doctor_by_specialization_id',
+                data: { specialization_id: specId },
+                success: function(data) { 
+                    $('#app_conf_pop_doctorid').html(data);
+                    $('#app_conf_pop_doctorid').trigger('change');
+                }
             });
         }
-        else 
-        {
-		   $("#app_conf_pop_doctorid").empty();
-        }
     });
-});
-</script>
-<script>
-$(function() {
-    $('#hospital_name').change( function() {
-        var val = $(this).val();
-        if (val!='') 
-        {
-            $('#doctor_name').val('');
+
+    // 4. Hospital Change -> Filter Doctors
+    $('#hospital_name').on('change', function() {
+        var hospId = $(this).val();
+        if (hospId) {
             $.ajax({
-               url: '<?php echo base_url();?>doctor/appointment/get_doctor_by_hospital_id/',
-               dataType: 'html',
-               data: { hospital_id : val },
-               success: function(data) {
-              
-                   $('#app_conf_pop_doctorid').html( data );
-               }
+                url: '<?=base_url();?>doctor/appointment/get_doctor_by_hospital_id',
+                data: { hospital_id: hospId },
+                success: function(data) { 
+                    $('#app_conf_pop_doctorid').html(data);
+                    $('#app_conf_pop_doctorid').trigger('change');
+                }
             });
         }
-        else 
-        {
-		   $("#app_conf_pop_doctorid").empty();
+    });
+
+    // 5. Doctor Change -> Load Doctor Preview & Available Dates
+    $('#app_conf_pop_doctorid').on('change', function() {
+        var did = $(this).val();
+        $('#app_conf_pop_date').html('<option value="">-- Loading Dates... --</option>');
+        $('#app_conf_pop_time').html('<option value="">-- Select Date First --</option>');
+        $('#app_conf_pop_institute').html('<div style="text-align: center; padding: 20px; color: #94a3b8;"><p style="margin: 0; font-size: 13px;">Select date and slot above.</p></div>');
+
+        if (did) {
+            $.ajax({
+                type: "GET",
+                url: "<?=base_url();?>doctor/appointment/app_conf_hospital_doctor",
+                data: { doctor: did },
+                success: function(data) {
+                    $('#app_conf_pop_doctor').html(data);
+                }
+            });
+            $.ajax({
+                type: "GET",
+                url: "<?=base_url();?>doctor/appointment/app_conf_pop_date",
+                data: { doctor: did },
+                success: function(data) {
+                    $('#app_conf_pop_date').html(data);
+                }
+            });
+        } else {
+            $('#app_conf_pop_doctor').html('<div style="text-align: center; padding: 24px 10px; color: #94a3b8;"><p style="margin: 0; font-size: 13px;">Select a doctor from the form.</p></div>');
+            $('#app_conf_pop_date').html('<option value="">-- Select Doctor First --</option>');
         }
     });
-});
-</script>
-<script>
-$('body').on('click','#app_conf_pop_doctorid',function(e) {
-	e.preventDefault(e);
-	$('#app_conf_pop_doctor').html('');
-	$('#app_conf_pop_date').html('');
-	$('#app_conf_pop_time').html('');
-	$('#app_conf_pop_institute').html('');
-		var did = $('#app_conf_pop_doctorid').val();
-		//console.log(did);
-		$('#app_conf_pop_doctorid').val(did);
-	$.ajax({
-		  type: "POST",
-		  url: "<?=base_url();?>doctor/appointment/app_conf_hospital_doctor?doctor="+did,
-		  success: function( data ) 
-		  {	   console.log(data);
-			  $('#app_conf_pop_doctor').html(data);
-		  }
-		});
-	$.ajax({
-		  type: "POST",
-		  url: "<?=base_url();?>doctor/appointment/app_conf_pop_date?doctor="+did,
-		  success: function( data ) {
-			  $('#app_conf_pop_date').html(data);
-		  }
-		});
-});
 
-$('body').on('change','#app_conf_pop_date',function(e) {
-	$('#app_conf_pop_institute').html('');
-		var date = $(this).val();
-		var did = $('#app_conf_pop_doctorid').val();
+    // 6. Date Change -> Load Time Slots
+    $('#app_conf_pop_date').on('change', function() {
+        var date = $(this).val();
+        var did = $('#app_conf_pop_doctorid').val();
+        $('#app_conf_pop_time').html('<option value="">-- Loading Slots... --</option>');
 
-	 $.ajax({
-		  type: "POST",
-		  url: "<?=base_url();?>doctor/appointment/app_conf_pop_time?doctor="+did+"&date="+date,
-		  success: function( data ) {
-			  $('#app_conf_pop_time').html(data);
-		  }
-		});
-});
-$('body').on('change','#app_conf_pop_time',function(e) {	
-	var date = $('#app_conf_pop_date').val();
-	var did = $('#app_conf_pop_doctorid').val();
-	var time = $('#app_conf_pop_time').val();
-	$.ajax({
-		  type: "POST",
-		  url: "<?=base_url();?>doctor/appointment/app_conf_hospital_institute?doctor="+did+"&date="+date+"&time="+time,
-		  success: function( data ) {
-			  $('#app_conf_pop_institute').html(data);
-		  }
-		});
-});
+        if (date && did) {
+            $.ajax({
+                type: "GET",
+                url: "<?=base_url();?>doctor/appointment/app_conf_pop_time",
+                data: { doctor: did, date: date },
+                success: function(data) {
+                    $('#app_conf_pop_time').html(data);
+                }
+            });
+        } else {
+            $('#app_conf_pop_time').html('<option value="">-- Select Date First --</option>');
+        }
+    });
 
+    // 7. Time Slot Change -> Load Hospital / Chamber & Fee
+    $('#app_conf_pop_time').on('change', function() {
+        var time = $(this).val();
+        var date = $('#app_conf_pop_date').val();
+        var did = $('#app_conf_pop_doctorid').val();
 
-$('body').on('click','#app_conf_otp_submit',function(e) {
-	var date = $('#app_conf_pop_date').val();
-	var did = $('#app_conf_pop_doctorid').val();
-	var time = $('#app_conf_pop_time').val();
-	var mobile = $('#app_conf_mobile').val();
-	var name = $('#app_conf_name').val();
-	if(name=='' || mobile=='' || mobile.length<10 ||mobile.length>10 || time==''){
-		myalert('Please Fill the Form with Valid Details');
-	}else{
-	  $.ajax({
-		  type: "POST",
-		  url: "<?=base_url();?>doctor/appointment/app_conf_pop_otpgen",
-		  data: 'mobile=' + mobile,
-		  success: function( data ) {
-		  }
-		});
-	$('#app_conf_otp').show();
-	$('#app_conf_otp_submit').hide();
-	$('#app_conf_submit').show();
+        if (time && date && did) {
+            $.ajax({
+                type: "GET",
+                url: "<?=base_url();?>doctor/appointment/app_conf_hospital_institute",
+                data: { doctor: did, date: date, time: time },
+                success: function(data) {
+                    $('#app_conf_pop_institute').html(data);
+                }
+            });
+        }
+    });
 
-		}
-});
+    // 8. Form Submit
+    $('#app_conf_form').on('submit', function(e) {
+        e.preventDefault();
+        var btn = $('#app_conf_submit');
+        var originalText = btn.html();
+        btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Processing Booking...');
 
-$('body').on('submit','#app_conf_form',function(e) {
-	e.preventDefault(e);
-	var myform=$(this);
-	  $.ajax({
-		  url: myform.attr('action'),
-		  data: myform.serialize(),
-		  type: "POST",
-		  success: function( data ) {
-			//alert(data);
-			 if(data=='OK')
-			 {
-				window.location="<?=base_url();?>doctor/appointment/acheckout_admin";
-			 }
-			 else if(data=='Not Available')
-			 {
-				$('#myModal').modal('hide');
-				myalert('Not available','Not Available');
-			 }
-			 else
-				 myalert('Failed');
-		  }
-		});
+        $.ajax({
+            url: $(this).attr('action'),
+            data: $(this).serialize(),
+            type: "POST",
+            success: function(response) {
+                btn.prop('disabled', false).html(originalText);
+                if (response.trim() === 'OK') {
+                    showToast('Appointment booked! Redirecting to confirmation...', 'success');
+                    setTimeout(function() {
+                        window.location = "<?=base_url();?>doctor/appointment/acheckout_admin";
+                    }, 800);
+                } else if (response.trim() === 'Not Available') {
+                    showToast('Selected appointment slot is full. Please choose another slot.', 'error');
+                } else {
+                    showToast('Booking failed. Please check the form fields and try again.', 'error');
+                }
+            },
+            error: function() {
+                btn.prop('disabled', false).html(originalText);
+                showToast('Server error while processing booking. Please try again.', 'error');
+            }
+        });
+    });
+
 });
 </script>

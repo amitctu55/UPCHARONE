@@ -157,7 +157,7 @@ class Managementmodel extends CI_Model
 		redirect($_SERVER['HTTP_REFERER'], '');
 	}
 	
-	public function safe_update($table,$data=array(),$where,$debug=FALSE)
+	public function safe_update($table, $data = array(), $where = '', $debug = FALSE)
 	{	 
 		if($table!="" && is_array($data) && !empty($data) && $where!="" )
 		{

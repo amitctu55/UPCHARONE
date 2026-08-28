@@ -1,495 +1,371 @@
-<!DOCTYPE html>
-<html>
-  <style>
-    .tabledata{
-      border:1px solid #fff!important;
-      font-weight:600;
-    }
-    .tableheaddata{
-      border:1px solid #fff!important;
-      background:#605CA8;
-      color:#fff;
-    }
-    .error valid{
-      color:green!important;
-    }
-    .tabledataactive{
-      color:green;
-    }
-    .tabledatainactive{
-      color:red;
-    }
-     table.dataTable tbody tr {
-      background-color: #e5e4f1;
-  }
-  </style>
-  <style>
-    
-    .label-name{
-      text-align:left!important;
-      margin-top:-5px;
-    }
-    .starspan
-    {
-      color:#e80909;
-      font-size:18px;
-    }
-    .mainheadlinerow
-    {
-      padding:5px;margin-top:10px;margin-bottom:10px;
-    }
-    .mainheadline
-    {
-      background:#605ca8;margin-top:10px;margin-bottom:10px;color:#fff;padding:9px;font-weight:600;
-    }
-    .mainheadlinefirstrow
-    {
-      padding:5px;
-    }
-    .mainheadlinefirst
-    {
-      background:#605ca8;margin-top:-15px;margin-bottom:15px;color:#fff;padding:9px;font-weight:600;
-    }
-    .mainhead{font-weight:600;margin-bottom:20px;}
-    .formbody{border:1px solid #d6d2d2;padding:10px;border-radius:4px;}
-    .note{font-weight:600;margin-top:10px;margin-bottom:20px;}
-    #submit{background:#605ca8;padding: 6px 30px;}
-    #reset{background:#fff;color:#000;padding: 6px 30px;}
-  </style>
-  <style>
-  .label-name{
-    text-align:left!important;
-    margin-top:-5px;
-  }
-  .starspan
-  {
-    color:#e80909;
-    font-size:18px;
-  }
-  .mainheadlinerow
-  {
-    padding:5px;margin-top:10px;margin-bottom:10px;
-  }
-  .mainheadline
-  {
-    background:#3c8dbc;margin-top:10px;margin-bottom:10px;color:#fff;padding:9px;font-weight:600;
-  }
-  .mainheadlinefirstrow
-  {
-    padding:5px;
-  }
-  .mainheadlinefirst
-  {
-    background:#3c8dbc;margin-top:-15px;margin-bottom:15px;color:#fff;padding:9px;font-weight:600;
-  }
-  .othernote{
-      font-weight:600;font-size:13px;color:#d20c0c;
-  }
-  .mainhead{font-weight:600;margin-bottom:20px;}
-  .formbody{border:1px solid #d6d2d2;padding:10px;border-radius:4px;}
-  .note{font-weight:600;margin-top:10px;margin-bottom:20px;}
-  
-  #reset{background:#fff;color:#000;padding: 6px 30px;}
-  </style>
-  <link rel="stylesheet" href="<?=base_url();?>public/assets/dist/css/metallic/zebra_datepicker.min.css" type="text/css">
-  <link rel="stylesheet" href="https://jqueryvalidation.org/files/demo/site-demos.css">
-  <link rel="stylesheet" href="<?=base_url();?>public/assets/dist/css/metallic/zebra_datepicker.min.css" type="text/css">
-  <body class="hold-transition skin-blue sidebar-mini">
-    <div class="wrapper">
-      <div class="content-wrapper">
-        <section class="content">
-          <div class="container bg-3 ">  
-            <div class="row text-">
-              <!--<form class="form-horizontal formbody" id='mainform' action="<?=base_url()?>doctor/appointment/user" method="get" enctype="multipart/form-data">-->
-              <?php echo form_open("doctor/path_appointment/",'class="form-horizontal formbody" id="search_form" method="get"');  ?>
-				<div class="row mainheadlinefirstrow">
-					<div class="col-md-12 mainheadlinefirst">Basic Filter
-					<a  href="<?php echo base_url();?>doctor/path_appointment/book_test" class="btn btn-info" style="float:right;" id="submit" >Add Test Booking</a>
-					</div>
-                </div>
-                <div class="row">
-                  <div class="col-md-12">
-                    <div class="form-group">
-                      <label class="control-label col-sm-1 label-name" for="email">Paient Name</label>
-                      <div class="col-sm-3">
-                        <input type="text" class="form-control input-sm"  name="paient_name" value="<?php echo $this->input->get_post('paient_name');?>">
-                      </div>
-                      <label class="control-label col-sm-1 label-name" for="email">Date From</label>
-                      <div class="col-sm-3">
-                        <input type="text" class="form-control datepicker"  name="date_from" value="<?php echo $this->input->get_post('date_from');?>" onkeypress="return isNumber(event)" data-validation="required"
-                        data-validation-error-msg="This Field is required">
-                      </div>
-                      <label class="control-label col-sm-1 label-name" for="email">Date To</label>
-                      <div class="col-sm-3">
-                        <input type="text" class="form-control datepicker"  name="date_to" value="<?php echo $this->input->get_post('date_to');?>" onkeypress="return isNumber(event)" data-validation="required"
-                        data-validation-error-msg="This Field is required">
-                      </div>
-                    </div>
-                  
-                    <div class="form-group">
-					  <label class="control-label col-sm-2 label-name" for="email">Records Per Page</label> 
-					  <div class="col-sm-2"><?php echo display_record_per_page();?></div>
-                      <label class="control-label col-sm-1 label-name" for="email"></label>
-					  <div class="col-sm-3">
-						
-						<a  onclick="$('#search_form').submit();" style="padding-top:1px" class="button2 btn-lg btn btn-info" ><span> Search </span></a>
-						<?php 
-						 if( $this->input->get_post('hospital_name')!='' ||  $this->input->get_post('hospital_email')!='' ||  $this->input->get_post('hospital_phone')!='' ||  $this->input->get_post('city_name')!='' ||  $this->input->get_post('paient_name')!='' ||  $this->input->get_post('paient_email')!='' ||  $this->input->get_post('paient_phone')!='' ||  $this->input->get_post('appointment_id')!='' ||  $this->input->get_post('appointment_id')!='' ||  $this->input->get_post('date_from')!='' ||  $this->input->get_post('date_to')!='' ||  $this->input->get_post('time_from')!='' ||  $this->input->get_post('time_to')!='' ||  $this->input->get_post('doctor_name')!='' )
-						  { 
-							echo anchor("doctor/path_appointment/",'<span>Clear Search</span>');    
-						  } 
-						?>
-					  </div>
-                    </div>
-					<!--<div class="form-group">
-						<label class="control-label col-sm-1 label-name" for="email">City</label>
-						<div class="col-sm-3">
-                        <select class="form-control input-sm"  name="city_name">
-                          <option value="">Select City</option>
-                          <?php /*
-                          if(is_array($city) && !empty($city)){
-                          foreach ($city as $key => $value) {?>
-                          <option value="<?php echo $value['id']; ?>" <?php if($this->input->get_post('city_name')==$value['id']){ echo "selected"; } ?>><?php echo $value['name']; ?></option>
-                        <?php } } ?>
-                        </select>
-                      </div>
-					  <label class="control-label col-sm-1 label-name" for="email">Payment Mode</label>
-                      <div class="col-sm-3">
-                        <select class="form-control input-sm"  name="payment_mode">
-                          <option value="">Select</option>
-                          <option value="ONLINE" <?php if($this->input->get_post('payment_mode')=='ONLINE'){ echo "selected";}?>>ON LINE</option>
-                          <option value="COC" <?php if($this->input->get_post('payment_mode')=='COC'){ echo "selected";} */?>>OFF LINE</option>
-                        </select>
-                      </div>
-						
-                    </div>-->
-                  </div>
-                </div>
-             <?php echo form_close();?>
-              <h4 style="font-weight:600;margin-bottom:20px;">Test Booking List</h4>
-              <?=$this->session->flashdata('flashmsg');?>
-			<div class="table-responsive">
-              <table class="table table-hover table-bordered table-bordered" id='exportTable' style="border:none;">
-                <thead>
-                  <tr>
-                    <th class="tableheaddata">Booking ID</th>
-                    <th class="tableheaddata">Name</th>
-                    <th class="tableheaddata">Email</th>
-                    <th class="tableheaddata">Mobile</th>
-                    <th class="tableheaddata">Total Amount</th>
-                    <th class="tableheaddata">Path Lab Name</th>
-					<th class="tableheaddata">City Name</th>
-					<th class="tableheaddata">Payment</th>
-					<th class="tableheaddata">Appointment</th>
-					<th class="tableheaddata">Date</th>
-                    <th class="tableheaddata">View Test</th>
-                    <th class="tableheaddata">Delete</th>
-                  </tr>
-                </thead>
-                <tbody id="tviewtablebody">
-                  <?php 
-				  //echo "<pre>"; print_r($data); die;
-                  foreach($data as $p)
-                  {	
-                    echo"<tr>";
-                    echo"<td>".$p->booking_id."</td>";
-                   
-                    echo"<td>".$p->patient_name."</td>";
-                    echo"<td>".$p->patient_email."</td>";
-                    echo"<td>".$p->patient_mobile."</td>";
-                    echo"<td>".$p->total_amount."</td>";
-                    echo"<td>".$p->pathlab_name."</td>";
-					echo"<td>".$p->city_name."</td>";
-					?>
-					<td><?php if($p->payment_status=='0'){ echo '<span class="alert-danger">Pending</span>'; } else if($p->payment_status=='1'){ echo '<span class="alert-success">Done</span>'; }else { echo '<span class="alert-warning">Failed</span>'; } ?></td>
-					<td><?php if($p->status=='0'){ echo '<span style="color:red;">Pending</span>'; } else{ echo '<span style="color:green;">Done</span>'; } ?></td>
-                   <?php 
-				    echo"<td>".$p->book_date."</td>";
-					echo "<td><a href='".base_url()."doctor/path_appointment/booking_details/".$p->booking_id."' style=color:red;><span class='glyphicon glyphicon-eye-open'></span></a></td>";
-                    echo "<td><a href='".base_url()."doctor/path_appointment/delete_booking/".$p->booking_id."' style=color:red;><span class='glyphicon glyphicon-trash'></span></a></td>";
-                    echo"</tr>";
-                    echo"</tr>";
-                  }
-                  ?>
-                </tbody>
-                <tfoot>
-                  <tr>
-                    <th class="tableheaddata">Booking ID</th>
-                    <th class="tableheaddata">Name</th>
-                    <th class="tableheaddata">Email</th>
-                    <th class="tableheaddata">Mobile</th>
-                    <th class="tableheaddata">Total Amount</th>
-                    <th class="tableheaddata">Path Lab Name</th>
-					<th class="tableheaddata">City Name</th>
-					<th class="tableheaddata">Payment</th>
-					<th class="tableheaddata">Appointment</th>
-					<th class="tableheaddata">Date</th>
-                    <th class="tableheaddata">View Test</th>
-                    <th class="tableheaddata">Delete</th>
-                  </tr>
-                </tfoot>
-              </table>
-			</div>  
-			  <div class="row">
-				<div class="col-md-6">
-					
-				</div>
-				<div class="col-md-6">
-					<div class="pagination"><?php echo $page_links; ?></div>
-				</div>
-			  </div>
-            </div>
-          </div>
-        </section>
+<div class="content-wrapper">
+  <!-- Content Header & Breadcrumbs -->
+  <section class="content-header" style="padding: 20px 20px 10px;">
+    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+      <div>
+        <h1 style="font-size: 22px; font-weight: 700; color: #1E293B; margin: 0 0 4px 0; font-family: 'Inter', sans-serif;">
+          Pathology Test Bookings
+        </h1>
+        <p style="margin: 0; color: #64748B; font-size: 13px;">Manage diagnostic test appointments, sample collections, lab assignments, and payments</p>
       </div>
-    <div class="control-sidebar-bg"></div>
+      <div style="display: flex; gap: 10px; align-items: center;">
+        <button type="button" id="bulk-delete-booking-btn" class="btn btn-sm btn-danger" style="display: none; border-radius: 6px; font-weight: 600; background: #dc2626; border-color: #dc2626;">
+          <i class="fa fa-trash"></i> Delete Selected (<span id="booking-selected-count">0</span>)
+        </button>
+        <a href="<?=base_url();?>doctor/path_appointment/book_test" class="btn btn-sm btn-primary" style="background: #00a896; border-color: #00a896; color: #FFFFFF; font-weight: 600; padding: 8px 18px; border-radius: 6px; display: inline-flex; align-items: center; gap: 6px; font-size: 13px;">
+          <i class="fa fa-plus"></i> Book Lab Test
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main content -->
+  <section class="content" style="padding: 15px 20px;">
+    <div class="container-fluid" style="padding: 0;">
+      
+      <!-- Flash Alert Messages -->
+      <?php if($this->session->flashdata('flashmsg')): ?>
+        <div style="margin-bottom: 15px;">
+          <?=$this->session->flashdata('flashmsg');?>
+        </div>
+      <?php endif; ?>
+
+      <!-- Toast Notification Container -->
+      <div id="toast-container" style="position: fixed; top: 20px; right: 20px; z-index: 99999; display: flex; flex-direction: column; gap: 10px; pointer-events: none;"></div>
+
+      <div class="master-card">
+        <div class="master-card-header">
+          <h3 class="master-card-title">
+            <i class="fa fa-flask" style="color: #00a896;"></i>
+            <span>Lab Diagnostic Bookings Directory</span>
+          </h3>
+        </div>
+
+        <div class="master-card-body" style="padding: 20px;">
+          <!-- Filter Toolbar -->
+          <form action="<?=base_url('doctor/path_appointment/')?>" method="get" id="search_form" class="master-toolbar">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="font-size: 13px; font-weight: 600; color: #475569;">Show:</span>
+              <div style="width: 85px;">
+                <?php echo display_record_per_page();?>
+              </div>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap; flex-grow: 1; justify-content: flex-end;">
+              <div style="width: 200px;">
+                <input type="text" class="form-control input-sm" name="paient_name" value="<?=$this->input->get_post('paient_name');?>" placeholder="Filter patient..." style="height: 34px; border-radius: 6px;">
+              </div>
+
+              <div style="width: 150px;">
+                <input type="date" class="form-control input-sm" name="date_from" value="<?=$this->input->get_post('date_from');?>" style="height: 34px; border-radius: 6px;">
+              </div>
+
+              <div style="width: 150px;">
+                <input type="date" class="form-control input-sm" name="date_to" value="<?=$this->input->get_post('date_to');?>" style="height: 34px; border-radius: 6px;">
+              </div>
+
+              <button type="submit" class="btn btn-sm btn-primary" style="height: 34px; background: #00a896; border-color: #00a896; color: #fff; font-weight: 600; padding: 0 16px; border-radius: 6px;">
+                <i class="fa fa-search"></i> Filter
+              </button>
+
+              <?php if($this->input->get_post('paient_name') != '' || $this->input->get_post('date_from') != '') { ?>
+                <a href="<?=base_url();?>doctor/path_appointment/" class="btn btn-sm btn-default" style="height: 34px; line-height: 22px; border-radius: 6px;">
+                  <i class="fa fa-times text-danger"></i> Clear
+                </a>
+              <?php } ?>
+            </div>
+          </form>
+
+          <!-- Table -->
+          <div class="table-responsive" style="border-radius: 8px; border: 1px solid #e2e8f0;">
+            <table class="table table-hover table-striped" id="booking-table" style="margin: 0;">
+              <thead>
+                <tr>
+                  <th style="width: 40px; text-align: center;">
+                    <input type="checkbox" id="select-all-bookings" style="cursor: pointer; width: 16px; height: 16px; accent-color: #00a896;" title="Select All on Current Page">
+                  </th>
+                  <th style="width: 80px; text-align: center;">#ID</th>
+                  <th>Patient Details</th>
+                  <th>Pathology Lab</th>
+                  <th>Total Amount</th>
+                  <th style="width: 100px; text-align: center;">Payment</th>
+                  <th style="width: 100px; text-align: center;">Status</th>
+                  <th style="width: 110px; text-align: center;">Date</th>
+                  <th style="width: 100px; text-align: center;">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                <?php if(!empty($data)): foreach($data as $p): 
+                  $bid = $p->booking_id;
+                  $pname = $p->patient_name;
+                  $pmobile = $p->patient_mobile;
+                  $pemail = $p->patient_email;
+                  $labname = $p->pathlab_name;
+                  $amount = $p->total_amount;
+                  $paymentStatus = $p->payment_status;
+                  $status = $p->status;
+                ?>
+                  <tr id="row-<?=$bid;?>">
+                    <td style="text-align: center; vertical-align: middle;">
+                      <input type="checkbox" class="booking-checkbox" value="<?=$bid;?>" data-name="<?=htmlspecialchars($pname);?>" style="cursor: pointer; width: 16px; height: 16px; accent-color: #00a896;">
+                    </td>
+                    <td style="text-align: center; font-weight: 600; color: #64748b; vertical-align: middle;">#<?=$bid;?></td>
+                    <td style="vertical-align: middle;">
+                      <strong style="color: #1e293b; font-size: 13.5px;"><?=htmlspecialchars($pname);?></strong>
+                      <div style="font-size: 12px; color: #64748b; margin-top: 2px;">
+                        <i class="fa fa-phone text-muted"></i> <?=htmlspecialchars($pmobile);?>
+                      </div>
+                      <?php if(!empty($pemail)): ?>
+                        <div style="font-size: 11.5px; color: #94a3b8;">
+                          <i class="fa fa-envelope-o text-muted"></i> <?=htmlspecialchars($pemail);?>
+                        </div>
+                      <?php endif; ?>
+                    </td>
+                    <td style="vertical-align: middle;">
+                      <strong style="color: #334155; font-size: 13px;"><i class="fa fa-hospital-o text-muted"></i> <?=htmlspecialchars($labname);?></strong>
+                      <div style="font-size: 11.5px; color: #94a3b8;"><?=htmlspecialchars($p->city_name);?></div>
+                    </td>
+                    <td style="vertical-align: middle; font-weight: 700; color: #00a896; font-size: 14px;">
+                      ₹<?=number_format($amount, 2);?>
+                    </td>
+                    <td style="text-align: center; vertical-align: middle;">
+                      <?php if($paymentStatus == '1'): ?>
+                        <span class="label label-success" style="font-size: 11px;">Paid</span>
+                      <?php elseif($paymentStatus == '0'): ?>
+                        <span class="label label-warning" style="font-size: 11px;">Pending</span>
+                      <?php else: ?>
+                        <span class="label label-danger" style="font-size: 11px;">Failed</span>
+                      <?php endif; ?>
+                    </td>
+                    <td style="text-align: center; vertical-align: middle;">
+                      <span class="badge-pill-status <?=$status=='1'?'badge-status-active':'badge-status-inactive';?>">
+                        <i class="fa fa-circle" style="font-size: 6px;"></i>
+                        <span><?=$status=='1'?'Completed':'Pending';?></span>
+                      </span>
+                    </td>
+                    <td style="text-align: center; font-size: 12px; color: #64748b; vertical-align: middle;">
+                      <?=date('d M Y', strtotime($p->book_date));?>
+                    </td>
+                    <td style="text-align: center; vertical-align: middle;">
+                      <a href="<?=base_url('doctor/path_appointment/booking_details/'.$bid);?>" class="btn-icon-action" style="background: #f1f5f9; color: #475569;" title="View Details">
+                        <i class="fa fa-eye"></i>
+                      </a>
+                      <a href="<?=base_url('doctor/path_appointment/delete_booking/'.$bid);?>" class="btn-icon-action btn-action-delete delete-booking-btn" data-id="<?=$bid;?>" data-name="<?=htmlspecialchars($pname);?>" title="Delete Booking">
+                        <i class="fa fa-trash-o"></i>
+                      </a>
+                    </td>
+                  </tr>
+                <?php endforeach; else: ?>
+                  <tr>
+                    <td colspan="9" style="text-align: center; padding: 40px 20px; color: #94a3b8;">
+                      <i class="fa fa-flask fa-3x" style="margin-bottom: 10px; display: block; opacity: 0.5;"></i>
+                      <p style="font-size: 14px; font-weight: 500; margin: 0;">No lab test bookings found.</p>
+                    </td>
+                  </tr>
+                <?php endif; ?>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Pagination Footer -->
+          <?php if(!empty($page_links)): ?>
+            <div style="display: flex; justify-content: flex-end; align-items: center; margin-top: 18px;">
+              <div class="pagination-wrapper">
+                <?=$page_links;?>
+              </div>
+            </div>
+          <?php endif; ?>
+        </div>
+      </div>
+
+    </div>
+  </section>
+</div>
+
+<!-- Single Delete Confirmation Modal -->
+<div class="modal fade" id="deleteBookingModal" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" style="max-width: 400px; margin-top: 100px;">
+    <div class="modal-content" style="border-radius: 12px; border: none; box-shadow: 0 10px 25px rgba(0,0,0,0.15); overflow: hidden;">
+      <div class="modal-body" style="padding: 28px 24px; text-align: center;">
+        <div style="width: 56px; height: 56px; border-radius: 50%; background: #fee2e2; color: #dc2626; display: inline-flex; align-items: center; justify-content: center; font-size: 24px; margin-bottom: 16px;">
+          <i class="fa fa-trash-o"></i>
+        </div>
+        <h4 style="font-weight: 700; color: #1e293b; margin: 0 0 8px;">Delete Pathology Booking</h4>
+        <p style="font-size: 13.5px; color: #64748b; margin-bottom: 20px;">
+          Are you sure you want to delete booking for <strong id="delete-booking-name" style="color: #1e293b;">this patient</strong>? This action cannot be undone.
+        </p>
+        <div style="display: flex; gap: 10px; justify-content: center;">
+          <button type="button" class="btn btn-default" data-dismiss="modal" style="border-radius: 8px; font-weight: 600; padding: 8px 20px;">
+            Cancel
+          </button>
+          <button type="button" id="confirm-delete-booking-btn" class="btn btn-danger" style="border-radius: 8px; font-weight: 600; padding: 8px 20px; background: #dc2626; border-color: #dc2626;">
+            Yes, Delete
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
-</body>
-</html>
+</div>
 
-<script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
-<script type="text/javascript" src="<?=base_url();?>public/assets/dist/js/zebra_datepicker.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/zebra_datepicker@latest/dist/zebra_datepicker.min.js"></script>
-<link rel="stylesheet" type="text/css" href="http://www.shieldui.com/shared/components/latest/css/light/all.min.css" />
-<script type="text/javascript" src="http://www.shieldui.com/shared/components/latest/js/shieldui-all.min.js"></script>
-<script type="text/javascript" src="http://www.shieldui.com/shared/components/latest/js/jszip.min.js"></script>
+<!-- Bulk Delete Confirmation Modal -->
+<div class="modal fade" id="bulkDeleteBookingModal" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" style="max-width: 420px; margin-top: 100px;">
+    <div class="modal-content" style="border-radius: 12px; border: none; box-shadow: 0 10px 25px rgba(0,0,0,0.15); overflow: hidden;">
+      <div class="modal-body" style="padding: 28px 24px; text-align: center;">
+        <div style="width: 56px; height: 56px; border-radius: 50%; background: #fee2e2; color: #dc2626; display: inline-flex; align-items: center; justify-content: center; font-size: 24px; margin-bottom: 16px;">
+          <i class="fa fa-trash-o"></i>
+        </div>
+        <h4 style="font-weight: 700; color: #1e293b; margin: 0 0 8px;">Delete Multiple Bookings</h4>
+        <p style="font-size: 13.5px; color: #64748b; margin-bottom: 20px;">
+          Are you sure you want to delete <strong id="bulk-booking-count" style="color: #dc2626;">0</strong> selected pathology bookings? This action cannot be undone.
+        </p>
+        <div style="display: flex; gap: 10px; justify-content: center;">
+          <button type="button" class="btn btn-default" data-dismiss="modal" style="border-radius: 8px; font-weight: 600; padding: 8px 20px;">
+            Cancel
+          </button>
+          <button type="button" id="confirm-bulk-delete-booking-btn" class="btn btn-danger" style="border-radius: 8px; font-weight: 600; padding: 8px 20px; background: #dc2626; border-color: #dc2626;">
+            Yes, Delete Selected
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
-<script type="text/javascript">
-jQuery(function ($) {
-	$("#exportButton").click(function () {
-		// parse the HTML table element having an id=exportTable
-		var dataSource = shield.DataSource.create({
-			data: "#exportTable",
-			schema: {
-				type: "table",
-				fields: {
-					ID: { type: Number },
-					Date: { type: String },
-					Name: { type: String },
-					Email: { type: String },
-					Mobile: { type: String },
-					Hospital: { type: String },
-					Doctor: { type: String },
-					Payment : { type: String },
-					Appointment: { type: String }
-				}
-			}
-		});
-
-		// when parsing is done, export the data to PDF
-		dataSource.read().then(function (data) {
-			var pdf = new shield.exp.PDFDocument({
-				author: "PrepBootstrap",
-				created: new Date()
-			});
-
-			pdf.addPage("a4", "portrait");
-
-			pdf.table(
-				25,
-				25,
-				data,
-				[
-					{ field: "ID", title: "ID", width: 40 },
-					{ field: "Date", title: "Date", width: 50 },
-					{ field: "Name", title: "Name", width: 60 },
-					{ field: "Email", title: "Email", width: 100 },
-					{ field: "Mobile", title: "Mobile", width: 70 },
-					{ field: "Hospital", title: "Hospital", width: 60 },
-					{ field: "Doctor", title: "Doctor", width: 60 },
-					{ field: "Payment", title: "Payment", width: 55 },
-					{ field: "Appointment", title: "Appointment", width: 45 }
-				],
-				{
-					margins: {
-						top: 25,
-						left: 25
-					}
-				}
-			);
-
-			pdf.saveAs({
-				fileName: "Appointment"
-			});
-		});
-	});
-});
-</script>
-
-<style>
-    #exportButton {
-        border-radius: 0;
-    }
-</style>
 <script>
-$(document).ready(function(){
-  $(document).on('click','.addsession',function(){
-    var dblockid = $(this).attr('data-dayblock-id');
-    var cblockid = $(this).attr('data-clinicblock-id');
-      var code ='<br><div class="col-md-4">' +
-    ' <div class="form-group">' +
-    '   <label class="control-label col-sm-4 label-name" for="email">From<span class="starspan wg"></span></label>' +
-    '   <div class="col-sm-7" id="ccont">' +
-    '   <input type="time" class="form-control input-sm timepicker" id="" name="fromtime['+cblockid+']['+dblockid+'][]" value="">' +
-    '   </div>' +
-    ' </div>' +
-    '</div>' +
-    '<div class="col-md-4">' +
-    ' <div class="form-group">' +
-    '   <label class="control-label col-sm-4 label-name" for="email">To<span class="starspan wg"></span></label>' +
-    '   <div class="col-sm-7" id="cema">' +
-    '   <input type="time" class="form-control input-sm timepicker" id="" name="totime['+cblockid+']['+dblockid+'][]" value="">' +
-    '   </div>' +
-    ' </div>' +
-    '</div>';
-    $(this).parent().find(".sessionwrapper:eq( "+dblockid+" )").append(code);
-  });
+function showToast(message, type) {
+  var bg = (type === 'success') ? '#10b981' : ((type === 'danger') ? '#ef4444' : '#00a896');
+  var icon = (type === 'success') ? 'fa-check-circle' : ((type === 'danger') ? 'fa-exclamation-triangle' : 'fa-info-circle');
+  var toastId = 'toast-' + Date.now();
   
-  $(document).on('click','.addtiming',function(){
-    var dblockid = $(this).attr('data-dayblock-id');
-    dblockid=  parseInt(dblockid)+1;
-    $(this).attr('data-dayblock-id',dblockid);
-    var cblockid = $(this).attr('data-clinicblock-id');
-    
-    var hiddendayseq = parseInt($('#hiddenday_'+cblockid).val());
-    $('#hiddenday_'+cblockid).val( parseInt($('#hiddenday_'+cblockid).val()) +1 );
-    
-    var code = '<br><hr  style="width:60%;border-top-color:black;"><br><div class="col-md-8">' +
-      '<div class="form-group">' +
-       ' <label class="control-label col-sm-4 label-name" for="email">Select Day<span class="starspan wg"></span></label>' +
-        '<div class="col-sm-7" id="cadd">' +
-        '<label class="checkbox-inline"><input type="checkbox" name="sun['+cblockid+']['+hiddendayseq+']" value="S">Sun</label>' +
-        '<label class="checkbox-inline"><input type="checkbox" name="mon['+cblockid+']['+hiddendayseq+']" value="M">Mon</label>' +
-        '<label class="checkbox-inline"><input type="checkbox" name="tue['+cblockid+']['+hiddendayseq+']" value="T">Tue</label>' +
-        '<label class="checkbox-inline"><input type="checkbox" name="wed['+cblockid+']['+hiddendayseq+']" value="W">Wed</label>' +
-        '<label class="checkbox-inline"><input type="checkbox" name="thu['+cblockid+']['+hiddendayseq+']" value="TH">Thus</label>' +
-        '<label class="checkbox-inline"><input type="checkbox" name="fri['+cblockid+']['+hiddendayseq+']" value="F">Fri</label>' +
-        '<label class="checkbox-inline"><input type="checkbox" name="sat['+cblockid+']['+hiddendayseq+']" value="SA">Sat</label>' +
-        
-        '</div>' +
-      '</div>' +
-    '</div>' +
-    
-    '<br>' +
-    '<br>' +
-    '<div class="sessionwrapper">' +
-    ' <div class="col-md-4">' +
-    '   <div class="form-group">' +
-    '     <label class="control-label col-sm-4 label-name" for="email">From<span class="starspan wg"></span></label>' +
-    '     <div class="col-sm-7" id="ccont">' +
-    '     <input type="time" class="form-control input-sm timepicker" id="" name="fromtime['+cblockid+']['+dblockid+'][]"  value="">' +
-    '     </div>' +
-    '   </div>' +
-    ' </div>' +
-    ' <div class="col-md-4">' +
-    '   <div class="form-group">' +
-    '     <label class="control-label col-sm-4 label-name" for="email">To<span class="starspan wg"></span></label>' +
-    '     <div class="col-sm-7" id="cema">' +
-    '     <input type="time" class="form-control input-sm timepicker" id="" name="totime['+cblockid+']['+dblockid+'][]" value="">' +
-    '     </div>' +
-    '   </div>' +
-    ' </div>' +
-    '</div>' +
-    
-    '<button type="button" class="btn btn-info btn-xs addsession" name="" data-clinicblock-id="'+cblockid+'" data-dayblock-id="'+dblockid+'">Add More Session</button>';
-    
-    
-    $(this).parent().find(".timmingwrapper").append(code);
+  var toastHtml = '<div id="' + toastId + '" style="pointer-events: auto; background: #ffffff; color: #1e293b; border-left: 4px solid ' + bg + '; padding: 12px 18px; border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 600; min-width: 280px; transition: all 0.3s ease;">' +
+    '<i class="fa ' + icon + '" style="color: ' + bg + '; font-size: 16px;"></i>' +
+    '<span style="flex-grow: 1;">' + message + '</span>' +
+    '<i class="fa fa-times" onclick="$(\'#' + toastId + '\').remove();" style="cursor: pointer; color: #94a3b8; font-size: 12px;"></i>' +
+  '</div>';
+  
+  $('#toast-container').append(toastHtml);
+  setTimeout(function(){
+    $('#' + toastId).fadeOut(400, function(){ $(this).remove(); });
+  }, 4000);
+}
+
+function updateBookingBulkState() {
+  var checkedBoxes = $('.booking-checkbox:checked');
+  var count = checkedBoxes.length;
+  var total = $('.booking-checkbox').length;
+
+  $('#booking-selected-count').text(count);
+  $('#bulk-booking-count').text(count);
+
+  if (count > 0) {
+    $('#bulk-delete-booking-btn').fadeIn(200);
+  } else {
+    $('#bulk-delete-booking-btn').fadeOut(200);
+  }
+
+  if (count > 0 && count === total) {
+    $('#select-all-bookings').prop('checked', true).prop('indeterminate', false);
+  } else if (count > 0 && count < total) {
+    $('#select-all-bookings').prop('checked', false).prop('indeterminate', true);
+  } else {
+    $('#select-all-bookings').prop('checked', false).prop('indeterminate', false);
+  }
+}
+
+$(document).ready(function(){
+  $(document).on('change', '#select-all-bookings', function(){
+    var isChecked = $(this).prop('checked');
+    $('.booking-checkbox').prop('checked', isChecked);
+    updateBookingBulkState();
   });
-$("#addclinic").click(function(){
-var cblockid = $(this).attr('data-clinicblock-id');
-cblockid=  parseInt(cblockid)+1;
-$(this).attr('data-clinicblock-id',cblockid);
-var dblockid = $(this).attr('data-dayblock-id');
-var code = '<br><hr style="border-top-color:blue;"><br>'+
-'<div class="row" style="margin-top:5px;">'+
-'<div class="col-md-12">'+
-  ' <div class="form-group">'+
-  '   <label class="control-label col-sm-2 label-name" for="email">Type<span class="starspan">*</span></label>'+
-  '   <div class="col-sm-7">'+
-  '    <label class="radio-inline"> <input type="radio" class="objective" data-objectiveid="'+cblockid+'"  id="objectiveself" name="objective['+cblockid+']" value="H" >Hospital</label>'+
-  '    <label class="radio-inline"> <input type="radio" class="objective" data-objectiveid="'+cblockid+'"  id="objectivewage" name="objective['+cblockid+']" value="C">Clinic</label>'+
-  '   </div>'+
-  ' </div>'+
-  '</div>'+
-  '<br><br>'+
-  '<div class="col-md-4">'+
-  ' <div class="form-group">'+
-  '   <label class="control-label col-sm-4 label-name" for="email" style="white-space: nowrap;">Clinic/Hospital<span class="starspan wg"></span></label>'+
-  '   <div class="col-sm-7" id="cemp">'+
-  '   <select class="form-control input-sm" id="clinic" name="clinic['+cblockid+']" >'+
-  '   </select>'+
-  '   </div>'+
-  ' </div>'+
-  '</div>'+
-  '<div class="col-md-4">'+
-  ' <div class="form-group">'+
-  '   <label class="control-label col-sm-4 label-name" for="email">Fee<span class="starspan wg"></span></label>'+
-  '   <div class="col-sm-7" id="cadd">'+
-  '   <input type="text" class="form-control input-sm" id="fee" name="fee[]" value="">'+
-  '   </div>'+
-  ' </div>'+
-  '</div>'+
-  '<br>     <br>'+
-  '<div class="timmingwrapper">'+
-    '<div class="col-md-8">' +
-      '<div class="form-group">' +
-       ' <label class="control-label col-sm-4 label-name" for="email">Select Day<span class="starspan wg"></span></label>' +
-        '<div class="col-sm-7" id="cadd">' +
-        '<label class="checkbox-inline"><input type="checkbox" name="sun['+cblockid+'][]" value="S">Sun</label>' +
-        '<label class="checkbox-inline"><input type="checkbox" name="mon['+cblockid+'][]" value="M">Mon</label>' +
-        '<label class="checkbox-inline"><input type="checkbox" name="tue['+cblockid+'][]" value="T">Tue</label>' +
-        '<label class="checkbox-inline"><input type="checkbox" name="wed['+cblockid+'][]" value="W">Wed</label>' +
-        '<label class="checkbox-inline"><input type="checkbox" name="thu['+cblockid+'][]" value="TH">Thus</label>'+
-        '<label class="checkbox-inline"><input type="checkbox" name="fri['+cblockid+'][]" value="F">Fri</label>' +
-        '<label class="checkbox-inline"><input type="checkbox" name="sat['+cblockid+'][]" value="SA">Sat</label>' +
-        '</div>' +
-      '</div>' +
-    '</div>' +
-    '<br>' +
-    '<br>' +
-    '<div class="sessionwrapper">' +
-    ' <div class="col-md-4">' +
-    '   <div class="form-group">' +
-    '     <label class="control-label col-sm-4 label-name" for="email">From<span class="starspan wg"></span></label>' +
-    '     <div class="col-sm-7" id="ccont">' +
-    '     <input type="time" class="form-control input-sm timepicker" id="" name="fromtime['+cblockid+']['+dblockid+'][]"  value="">' +
-    '     </div>' +
-    '   </div>' +
-    ' </div>' +
-    ' <div class="col-md-4">' +
-    '   <div class="form-group">' +
-    '     <label class="control-label col-sm-4 label-name" for="email">To<span class="starspan wg"></span></label>' +
-    '     <div class="col-sm-7" id="cema">' +
-    '     <input type="time" class="form-control input-sm timepicker" id="" name="totime['+cblockid+']['+dblockid+'][]" value="">' +
-    '     </div>' +
-    '   </div>' +
-    ' </div>' +
-    '</div>' +
-    '<button type="button" class="btn btn-info btn-xs addsession" name="" data-clinicblock-id="'+cblockid+'" data-dayblock-id="'+dblockid+'">Add More Session</button>'+
-    '</div>'+
-    '<button type="button" class="btn btn-info btn-xs addtiming" name=""  data-clinicblock-id="'+cblockid+'"   data-dayblock-id="'+dblockid+'" >Add Timing For Remaining Day</button>'+
-    '</div>';
-    $(".practicewrapper").append(code);
-  }); 
-  $(document).on('change','.objective',function(){
-    var oid = $(this).attr('data-objectiveid');
-    var type= $("input[name='objective["+oid+"]']:checked").val();
-    var uri='<?=base_url();?>doctor/doctorreg/getobjectivelist';
+
+  $(document).on('change', '.booking-checkbox', function(){
+    updateBookingBulkState();
+  });
+
+  $(document).on('click', '#bulk-delete-booking-btn', function(){
+    if ($('.booking-checkbox:checked').length === 0) return;
+    $('#bulkDeleteBookingModal').modal('show');
+  });
+
+  $('#confirm-bulk-delete-booking-btn').click(function(){
+    var selectedIds = [];
+    $('.booking-checkbox:checked').each(function(){
+      selectedIds.push($(this).val());
+    });
+
+    if (selectedIds.length === 0) return;
+
+    var $btn = $(this);
+    $btn.prop('disabled', true).text('Deleting...');
+
     $.ajax({
-     type:"post", 
-     url: uri,
-     //dataType: 'json',
-     data:{type:type},
-     success: function(result){
-      $("select[name='clinic["+oid+"]']").html(result);
-     }
+      type: "POST",
+      url: '<?=base_url('doctor/path_appointment/bulk_delete_booking')?>',
+      dataType: 'json',
+      data: { ids: selectedIds, is_ajax: 1 },
+      success: function(res){
+        $btn.prop('disabled', false).text('Yes, Delete Selected');
+        $('#bulkDeleteBookingModal').modal('hide');
+
+        selectedIds.forEach(function(id){
+          $('#row-' + id).fadeOut(400, function(){
+            $(this).remove();
+            if ($('#booking-table tbody tr').length === 0) {
+              $('#booking-table tbody').html('<tr><td colspan="9" style="text-align: center; padding: 40px 20px; color: #94a3b8;"><i class="fa fa-flask fa-3x" style="margin-bottom: 10px; display: block; opacity: 0.5;"></i><p style="font-size: 14px; font-weight: 500; margin: 0;">No lab test bookings found.</p></td></tr>');
+            }
+          });
+        });
+
+        updateBookingBulkState();
+        showToast(res.message || 'Selected bookings deleted.', 'success');
+      },
+      error: function(){
+        $btn.prop('disabled', false).text('Yes, Delete Selected');
+        showToast('Error deleting bookings.', 'danger');
+      }
+    });
+  });
+
+  // Delete Single Booking
+  var activeDeleteBookingId = null;
+  $(document).on('click', '.delete-booking-btn', function(e){
+    e.preventDefault();
+    activeDeleteBookingId = $(this).data('id');
+    var name = $(this).data('name') || 'this booking';
+    $('#delete-booking-name').text('"' + name + '"');
+    $('#deleteBookingModal').modal('show');
+  });
+
+  $('#confirm-delete-booking-btn').click(function(){
+    if(!activeDeleteBookingId) return;
+    var $btn = $(this);
+    $btn.prop('disabled', true).text('Deleting...');
+
+    $.ajax({
+      type: "POST",
+      url: '<?=base_url('doctor/path_appointment/delete_booking')?>',
+      dataType: 'json',
+      data: { id: activeDeleteBookingId, is_ajax: 1 },
+      success: function(res){
+        $btn.prop('disabled', false).text('Yes, Delete');
+        $('#deleteBookingModal').modal('hide');
+        $('#row-' + activeDeleteBookingId).fadeOut(400, function(){
+          $(this).remove();
+          if ($('#booking-table tbody tr').length === 0) {
+            $('#booking-table tbody').html('<tr><td colspan="9" style="text-align: center; padding: 40px 20px; color: #94a3b8;"><i class="fa fa-flask fa-3x" style="margin-bottom: 10px; display: block; opacity: 0.5;"></i><p style="font-size: 14px; font-weight: 500; margin: 0;">No lab test bookings found.</p></td></tr>');
+          }
+          updateBookingBulkState();
+        });
+        showToast(res.message || 'Pathology booking deleted successfully.', 'success');
+        activeDeleteBookingId = null;
+      },
+      error: function(){
+        $btn.prop('disabled', false).text('Yes, Delete');
+        window.location.href = '<?=base_url('doctor/path_appointment/delete_booking/')?>' + activeDeleteBookingId;
+      }
     });
   });
 });
-$('.timepicker').Zebra_DatePicker({
-format: 'H:i'
-});
-</script> 
-<?php $this->load->view('footer');?>
-  
+</script>

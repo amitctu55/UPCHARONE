@@ -293,15 +293,19 @@ small photos close--*/
         <div class="box-form">
             <div class="col-sm-3">
                 <div class="input-group shadow">
-                    <span class="input-group-addon"><i class="fa fa-map-marker" aria-hidden="true"></i></span>
-                    <input type="text" class="form-control ui-autocomplete-input" name="location" placeholder="Location" id="hintcity" autocomplete="off">
-                    <input type="hidden" class="form-control" name="city" id="city">
+                    <span class="input-group-addon"><i class="fa fa-map-marker"></i></span>
+                    <select class="form-control" name="city">
+                        <option value="">All Locations / Cities</option>
+                        <?php if (!empty($cities)) { foreach($cities as $c){ ?>
+                        <option value='<?=$c->id;?>' <?=(isset($_GET['city']) && $_GET['city'] == $c->id) ? 'selected' : '';?>><?=$c->name;?></option>
+                        <?php } } ?>
+                    </select>
                 </div>
             </div>
             <div class="col-sm-5">
                 <div class="input-group shadow">
                     <span class="input-group-addon"><i class="fa fa-search"></i></span>
-                    <input type="text" id="hint" class="form-control ui-autocomplete-input" name="keyword" placeholder="Search Hospitals/Doctors/Clinics etc" autocomplete="off">
+                    <input type="text" id="hint" class="form-control ui-autocomplete-input" name="keyword" value="<?=@$_GET['keyword'];?>" placeholder="Search Hospitals/Doctors/Clinics etc" autocomplete="off">
                 </div>
             </div>
             <div class="col-sm-3">
@@ -310,7 +314,7 @@ small photos close--*/
                     <select class="form-control" name="spl">
                         <option value="">-Specialization-</option>
                         <?php foreach($specialization as $s){ ?>
-                        <option value='<?=$s->id;?>'><?=$s->name;?></option>
+                        <option value='<?=$s->id;?>' <?=(isset($_GET['spl']) && $_GET['spl'] == $s->id) ? 'selected' : '';?>><?=$s->name;?></option>
                         <?php } ?>               
                     </select>
                 </div>   
@@ -362,144 +366,231 @@ small photos close--*/
                     </div>
                 </div>
             </div>
-			<div class="col-sm-9 BackHeight">
-                <div class="col-sm-12">
-                    <?php foreach($doctors as $d){ ?>
-                    <div class="col-lg-12 box_sh_bg">
-                        <div class="col-sm-3 text-center paddl0" id="mobledoctor"><img class="docimg" src="<?=admin_url();?>public/assets/upload/<?=($d->drimage)? $d->drimage : 'dummydr.jpg';?>" alt="<?=$d->fname.' '.$d->lname;?>">
-                            <ul class="add_list">
-                                <div class="row">
-                                    <li class="col-md-6">
-                                        <i class="fas fa-thumbs-up colorwhite"></i><br>
-                                        <span><b>93%</b></span></li>
-                                        <li class="col-md-6"><i class="fa fa-money colorwhite"></i><br>
-                                        <span><?=@$pract->fee;?></span>
-                                    </li>
-                                </div>
-                            </ul>
-                        </div>
-                        <div class="col-sm-6">
-                            <div class="doc_nam">
-                                <span><?=$d->fname.' '.$d->lname;?></span>
-                                <ul>
-                                    <li><?php $quastring='';
-										$qu=$this->db->get_where('dr_qualifications',array('user_id'=>$d->id));
-										foreach(@$qu->result() as $q)
-											$quastring.=getQualificationName($q->qualification_id).', ';
-										echo $quastring=rtrim($quastring,', ');
-										?>
-									</li>
-                                    <li><b><?=$d->exp;?> Years Experience</b></li>
-                                    <li><?php $splstring=''; $sp=$this->db->get_where('dr_specialization',array('user_id'=>$d->id))->result();
-										foreach($sp as $s)
-											$splstring.=getSpecilizationName($s->specialization_id).', ';
-										echo $splstring=rtrim($splstring,', ');
-										/* <?php } */ ?>
-									</li>
-                                </ul>
+			<div class="col-sm-9">
+                <div class="col-sm-12" style="padding: 0;">
+                    <?php if (!empty($doctors)) { foreach($doctors as $d){ 
+                        $quastring = '';
+                        $qu = $this->db->get_where('dr_qualifications', array('user_id' => $d->id));
+                        if ($qu && $qu->num_rows() > 0) {
+                            foreach($qu->result() as $q) {
+                                $quastring .= getQualificationName($q->qualification_id).', ';
+                            }
+                            $quastring = rtrim($quastring, ', ');
+                        }
+
+                        $practdata = $this->db->get_where('dr_practice', array('user_id' => $d->id, 'status' => '1'));
+                        $practcount = $practdata->num_rows(); 
+                        $pract = $practdata->row(); 
+                        $institution_table = '';
+                        if(@$pract->type == 'C') $institution_table = 'clinic';
+                        else if(@$pract->type == 'H') $institution_table = 'hospital';
+                        $institution = null;
+                        if($institution_table){
+                            $institutiondata = $this->db->get_where($institution_table, array('id' => @$pract->institution_id, 'status' => '1'));
+                            $institution = @$institutiondata->row();
+                        }
+
+                        $specList = $this->db->get_where('dr_specialization', array('user_id' => $d->id))->result();
+                        $drImg = ($d->drimage && file_exists('admin1947/public/assets/upload/'.$d->drimage)) 
+                                 ? admin_url().'public/assets/upload/'.$d->drimage 
+                                 : admin_url().'public/assets/upload/dummydr.jpg';
+                        $drPrefix = (strcasecmp(substr($d->fname, 0, 2), 'Dr') != 0) ? 'Dr. ' : '';
+                        $fee = (!empty($pract->fee)) ? $pract->fee : '500';
+                        $clinicName = (!empty($institution->name)) ? $institution->name : 'Upchar Partner Clinic';
+                        $clinicAddress = (!empty($institution->address)) ? $institution->address : (getCityName($d->city) ?: 'Varanasi, India');
+                    ?>
+                    <!-- 3-Column Modern Doctor Profile Card -->
+                    <div class="doctor-card">
+                        <!-- Column 1: Profile & Trust -->
+                        <div class="doc-col-left">
+                            <div class="avatar-wrapper">
+                                <img src="<?=$drImg;?>" alt="<?=$drPrefix.$d->fname.' '.$d->lname;?>" class="doc-avatar" loading="lazy">
                             </div>
-						    <p><?=$d->short_about;?></p>
-	                        <?php $practdata=$this->db->get_where('dr_practice',array('user_id'=>$d->id,'status'=>'1'));
-							$practcount=$practdata->num_rows(); 
-							$pract=$practdata->row(); 
-							if(@$pract->type=='C')
-								$institution_table='clinic';
-							else if(@$pract->type=='H')
-								$institution_table='hospital';
-							if($institution_table){
-							$institutiondata=$this->db->get_where(@$institution_table, array('id'=>@$pract->institution_id,'status'=>'1'));
-							$institutioncount=@$institutiondata->num_rows();
-							$institution=@$institutiondata->row();	?>
-                            <div class="col-md- hosp_name">
-                                <p><b>services</b></p>
-                                <span><a href="#"><?=@$institution->name;?></a> <?php if($practcount > 1){ echo 'and '.($practcount-1).' more places'; } ?> </span>
-                                <ul> <?php foreach($gallery as $p) { ?>
-                                    <li class="smallImg">
-									   <a href="<?=admin_url();?>public/assets/upload/<?=($p->image)? $p->image : 'dummydr.jpg';?>" target="_blank"><img src="<?=admin_url();?>public/assets/upload/<?=($p->image)? $p->image : 'dummydr.jpg';?>" alt=""></a>
-									</li>
-									<?php } ?>                         
-							    </ul>
-                            </div>
-						    <?php } ?>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="text-center">
-                            	<i class="fa fa-clock-o timeicon" aria-hidden="true"></i>
-                                <p style="color:#295771;font-weight: bold;"> 30 mins or less wait time assured</p>
-                            </div>
-                            <a href="#" class="btn boxbtn">Contact Hospital</a>
-                            <a href="<?=base_url();?>doctor/<?=$d->id;?>" class="btn boxbtn">View Profile</a> 
-                            <a href="#" class="btn boxbtn getappointment" data-upchar-did='<?=$d->id;?>' data-toggle="modal" data-target="#myModal">Book Appointment</a>
-                        </div>
-			            <li class="col-md-12" style="text-align:left;">
-                            <i class="fa fa-map-marker" style="color:#9bc03c;"></i>
-                            <span style="font-weight:bold;"><?=@$institution->address;?></span>
-                        </li>			
-                        <div class="col-sm-12 padd0" >
-                            <ul class="doc_servic">
-						        <?php 
-						         $inst_service=$this->db->select('master_services.name')->join('master_services','master_services.id=instition_services.services_id')->get_where('instition_services',array('institution_id'=>@$pract->institution_id,'institution_type'=>@$pract->type))->result();
-    							foreach($inst_service as $is){
-    							?>
-                                    <li><?=$is->name;?></li>
-    								<?php } ?>
-                                   <!-- <li>Open Prostatectomy</li>
-                                    <li>Ureteroscopy (URS)</li>
-                                    <li>Urologic Oncology</li>-->
-                            </ul>
-                            <div class="col-sm-3 padd0">
-                                <ul class="doc_servic">
-                                </ul>
-                            </div>
-                            <div class="col-sm-3 padd0">
-                                <ul class="doc_servic">
-                                </ul>
+                            <div class="trust-badges">
+                                <span class="badge-rating"><i class="fa fa-thumbs-up"></i> 93%</span>
+                                <span class="badge-fee">₹<?=$fee;?></span>
                             </div>
                         </div>
-                        <div class="col-sm-12" id="MoreShow">
+
+                        <!-- Column 2: Layered Details (Name, Spec, Experience, Clinic) -->
+                        <div class="doc-col-mid">
+                            <div class="doc-header">
+                                <h3 class="doc-name">
+                                    <a href="<?=base_url();?>doctor/<?=$d->id;?>"><?=$drPrefix.$d->fname.' '.$d->lname;?></a>
+                                </h3>
+                                <?php if (!empty($quastring)) { ?>
+                                <span class="doc-qualifications"><?=$quastring;?></span>
+                                <?php } ?>
+                            </div>
+                            
+                            <div class="doc-spec-tags">
+                                <span class="spec-pill" style="background: #E8F0FE; color: #1A73E8; border: 1px solid #D2E3FC; font-weight: 600;">
+                                    <i class="fa fa-video-camera"></i> Video Consult
+                                </span>
+                                <?php if (!empty($specList)) { 
+                                    foreach($specList as $sp) {
+                                        $sname = getSpecilizationName($sp->specialization_id);
+                                        if ($sname) { ?>
+                                            <span class="spec-pill"><?=$sname;?></span>
+                                        <?php }
+                                    }
+                                } else { ?>
+                                    <span class="spec-pill">General Physician</span>
+                                <?php } ?>
+                            </div>
+
+                            <div class="doc-meta-info">
+                                <?php if ($d->exp > 0) { ?>
+                                <p class="meta-item exp-item">
+                                    <i class="fa fa-briefcase"></i> <strong><?=$d->exp;?> Years</strong> Experience
+                                </p>
+                                <?php } ?>
+                                <p class="meta-item clinic-item">
+                                    <i class="fa fa-hospital-o"></i> <strong><?=$clinicName;?></strong>
+                                    <?php if($practcount > 1){ echo '<span class="text-muted" style="font-size: 0.8rem;"> (+'.($practcount-1).' more places)</span>'; } ?>
+                                </p>
+                                <p class="meta-item location-item">
+                                    <i class="fa fa-map-marker"></i> <?=$clinicAddress;?>
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Column 3: Booking Actions & Assurance -->
+                        <div class="doc-col-right">
+                            <div class="wait-time-badge">
+                                <i class="fa fa-clock-o"></i> 30 mins or less wait time assured
+                            </div>
+                            <div class="action-buttons">
+                                <a href="<?=base_url();?>doctor/<?=$d->id;?>" class="btn btn-outline">View Profile</a>
+                                <a href="tel:8448440603" class="btn btn-secondary">Contact Hospital</a>
+                                <a href="#" class="btn btn-primary-cta getappointment" data-upchar-did="<?=$d->id;?>" data-toggle="modal" data-target="#myModal">Book Appointment</a>
+                            </div>
                         </div>
                     </div>
-                    <?php } ?>            
+                    <?php } } else { ?>
+                    <div class="doctor-card text-center" style="display: block; padding: 40px;">
+                        <h4 style="color: #64748b; margin-bottom: 8px;">No doctors found matching your criteria.</h4>
+                        <p style="color: #94a3b8;">Try changing your location or specialization filter.</p>
+                    </div>
+                    <?php } ?>
+
+                    <?php 
+                    $curr_city = isset($_GET['city']) ? $_GET['city'] : '';
+                    $curr_keyword = isset($_GET['keyword']) ? $_GET['keyword'] : '';
+                    $curr_spl = isset($_GET['spl']) ? $_GET['spl'] : '';
+                    $curr_per_page = isset($per_page_param) ? $per_page_param : '10';
+                    $c_page = isset($current_page) ? $current_page : 1;
+                    $t_pages = isset($total_pages) ? $total_pages : 1;
+                    $t_docs = isset($total_doctors) ? $total_doctors : (isset($doctors) ? count($doctors) : 0);
+                    $p_size = isset($per_page) ? $per_page : 10;
+
+                    if (!function_exists('buildPageUrl')) {
+                        function buildPageUrl($p, $city, $kw, $spl, $pp) {
+                            return base_url('search').'?city='.urlencode($city).'&keyword='.urlencode($kw).'&spl='.urlencode($spl).'&per_page='.urlencode($pp).'&page='.$p;
+                        }
+                    }
+                    ?>
+
+                    <?php if ($t_docs > 0) { ?>
+                    <!-- Pagination Toolbar -->
+                    <div class="pagination-toolbar">
+                        <div class="pagination-info">
+                            Showing <strong><?=($c_page - 1) * $p_size + 1;?></strong> - <strong><?=min($c_page * $p_size, $t_docs);?></strong> of <strong><?=$t_docs;?></strong> verified doctors
+                        </div>
+
+                        <div class="pagination-controls">
+                            <!-- Previous Page -->
+                            <a href="<?=buildPageUrl($c_page - 1, $curr_city, $curr_keyword, $curr_spl, $curr_per_page);?>" class="page-btn <?=($c_page <= 1) ? 'disabled' : '';?>" title="Previous Page">
+                                <i class="fa fa-chevron-left"></i>
+                            </a>
+
+                            <!-- Page Numbers -->
+                            <?php 
+                            $start_p = max(1, $c_page - 2);
+                            $end_p = min($t_pages, $c_page + 2);
+                            if ($start_p > 1) {
+                                echo '<a href="'.buildPageUrl(1, $curr_city, $curr_keyword, $curr_spl, $curr_per_page).'" class="page-btn">1</a>';
+                                if ($start_p > 2) echo '<span class="page-btn disabled">...</span>';
+                            }
+                            for ($p = $start_p; $p <= $end_p; $p++) {
+                                $activeClass = ($p == $c_page) ? 'active' : '';
+                                echo '<a href="'.buildPageUrl($p, $curr_city, $curr_keyword, $curr_spl, $curr_per_page).'" class="page-btn '.$activeClass.'">'.$p.'</a>';
+                            }
+                            if ($end_p < $t_pages) {
+                                if ($end_p < $t_pages - 1) echo '<span class="page-btn disabled">...</span>';
+                                echo '<a href="'.buildPageUrl($t_pages, $curr_city, $curr_keyword, $curr_spl, $curr_per_page).'" class="page-btn">'.$t_pages.'</a>';
+                            }
+                            ?>
+
+                            <!-- Next Page -->
+                            <a href="<?=buildPageUrl($c_page + 1, $curr_city, $curr_keyword, $curr_spl, $curr_per_page);?>" class="page-btn <?=($c_page >= $t_pages) ? 'disabled' : '';?>" title="Next Page">
+                                <i class="fa fa-chevron-right"></i>
+                            </a>
+                        </div>
+
+                        <div class="per-page-wrapper">
+                            <label for="perPageSelect" style="margin: 0; font-weight: 500; color: #64748B;">Per Page:</label>
+                            <select id="perPageSelect" class="per-page-select" onchange="location = this.value;">
+                                <option value="<?=buildPageUrl(1, $curr_city, $curr_keyword, $curr_spl, '10');?>" <?=($curr_per_page == '10') ? 'selected' : '';?>>10</option>
+                                <option value="<?=buildPageUrl(1, $curr_city, $curr_keyword, $curr_spl, '20');?>" <?=($curr_per_page == '20') ? 'selected' : '';?>>20</option>
+                                <option value="<?=buildPageUrl(1, $curr_city, $curr_keyword, $curr_spl, '50');?>" <?=($curr_per_page == '50') ? 'selected' : '';?>>50</option>
+                                <option value="<?=buildPageUrl(1, $curr_city, $curr_keyword, $curr_spl, 'all');?>" <?=($curr_per_page == 'all') ? 'selected' : '';?>>All</option>
+                            </select>
+                        </div>
+                    </div>
+                    <?php } ?>
                 </div>
-                <div class="col-md-12">
-                    <?php 	foreach($hospital as $institution) {   	?>                 
-	                <div class="col-md-12 box_sh_bg">                                   
-                		<div class="col-sm-3 text-center">                                        
-                		    <img class="docimg" src="<?=admin_url();?>public/assets/upload/<?=($institution->drimage)? $institution->drimage : 'dummyhospital.jpg';?>" align="center">
-                		</div>                                    
-	                    <div class="col-sm-6 doc-info">                                        
-	                        <span class="docName"><?=$institution->name;?></h5>
-	   		                    <ul class="add_list">  
-                            		<div class="col-md-4">
-                            		    <li><a href="#" class="colorwhite"><i class="fas fa-thumbs-up colorwhite"></i><br>99% </a> </li>
-                            		</div>
-	                                <div class="col-md-4">
-	                                    <li><a href="#" class="colorwhite"><i class="fa fa-inr" ></i><br> 500 Fee</a></li>
-	                                </div>
-                            		<div class="col-md-4">
-                            		    <li><a href="#" class="colorwhite"><i class="fa fa-calendar-check-o" ></i><br> MON-SUN 24/7 Service</a></li>
-                            		</div>
-                            		<div class="col-md-6">
-                            		   	<li><a href="#" class="colorwhite"><i class="fa fa-clock-o" ></i><br> 12:00 AM-11:59 PM</a></li>
-                            		</div>
-                            		<li class="col-md-6"><a href="https://upcharrnews.blogspot.com" class="colorwhite"><i class="far fa-comments colorwhite"></i><br> Give Your Feedback</a></li> 
-                            		<li class="col-md-12"><a href="#" class="colorwhite" style=""><i class="fas fa-map-marker-alt colorwhite"></i><br> <?=$institution->address;?></a></li>
-	                            </ul>                                   
-	                    </div> 
-                		<div class="col-md-3"> 		    
-                		    <div class="label label-default small-btn-hospital">Crowns and Bridges F</div>
-                		    <div class="label label-default small-btn-hospital">Metalic Crowns</div>
-                		    <div class="label label-default small-btn-hospital">Crowns and Bridges F</div>
-                		    <div class="btn btn-block bg-back book-btn">Call-844-844-0603</div>
-                		    <br>
-                		    <a href="<?=base_url();?>hospital/<?=$institution->id;?>" class="btn btn-block bg-back book-btn">View Profile  </a > 
-                		</div>
-                		<div class="col-sm-12 float-right">                                 
-                            <p> <a class="lastViewBtn" href="https://www.facebook.com/upcharhealth/">Like facebook page and you feedback of upchar</a></p> 
-                		</div>
-	                </div>	 
+
+                <?php if (!empty($hospital)) { ?>
+                <div class="col-sm-12" style="padding: 0; margin-top: 10px;">
+                    <h4 style="font-weight: 700; color: #05668d; margin-bottom: 16px;"><i class="fa fa-hospital-o"></i> Healthcare Facilities & Hospitals</h4>
+                    <?php foreach($hospital as $institution) { 
+                        $hImg = ($institution->drimage && file_exists('admin1947/public/assets/upload/'.$institution->drimage)) 
+                                ? admin_url().'public/assets/upload/'.$institution->drimage 
+                                : admin_url().'public/assets/upload/dummyhospital.jpg';
+                    ?>                 
+                    <div class="hospital-card">
+                        <div class="doc-col-left">
+                            <div class="avatar-wrapper">
+                                <img src="<?=$hImg;?>" alt="<?=$institution->name;?>" class="doc-avatar" loading="lazy">
+                            </div>
+                            <div class="trust-badges">
+                                <span class="badge-rating"><i class="fa fa-thumbs-up"></i> 99%</span>
+                                <span class="badge-fee">₹500 Fee</span>
+                            </div>
+                        </div>
+
+                        <div class="doc-col-mid">
+                            <div class="doc-header">
+                                <h3 class="doc-name">
+                                    <a href="<?=base_url();?>hospital/<?=$institution->id;?>"><?=$institution->name;?></a>
+                                </h3>
+                                <span class="doc-qualifications"><i class="fa fa-hospital-o"></i> Verified Hospital & Clinical Center</span>
+                            </div>
+                            <div class="doc-spec-tags">
+                                <span class="spec-pill">24/7 Emergency</span>
+                                <span class="spec-pill">Inpatient / Outpatient</span>
+                                <span class="spec-pill">Multi-Specialty</span>
+                            </div>
+                            <div class="doc-meta-info">
+                                <p class="meta-item"><i class="fa fa-clock-o"></i> <strong>24/7 Service</strong> (Mon - Sun)</p>
+                                <p class="meta-item"><i class="fa fa-map-marker"></i> <?=$institution->address ?: 'India';?></p>
+                            </div>
+                        </div>
+
+                        <div class="doc-col-right">
+                            <div class="wait-time-badge">
+                                <i class="fa fa-phone"></i> Helpline: 844-844-0603
+                            </div>
+                            <div class="action-buttons">
+                                <a href="<?=base_url();?>hospital/<?=$institution->id;?>" class="btn btn-outline">View Hospital Profile</a>
+                                <a href="tel:8448440603" class="btn btn-primary-cta">Call Hospital</a>
+                            </div>
+                        </div>
+                    </div>	 
                     <?php } ?>
                 </div> 
+                <?php } ?>
             </div>
         </div>
     </section>

@@ -22,58 +22,61 @@ public function updateprofile(){
 		
 	    $userid =$this->session->userdata('userid');
 		$uploadimage=$_FILES['file']['name'];
-		$extsign = pathinfo($_FILES['file']['name'],PATHINFO_EXTENSION);
+		$extsign = strtolower(pathinfo($_FILES['file']['name'], PATHINFO_EXTENSION));
+		$allowed_exts = array('jpg', 'jpeg', 'png', 'webp');
 		
-		if($uploadimage != '') 
+		if (!empty($uploadimage)) 
 		{	
-			$rname=rand(1111111,999999999);
-			$date=date('Ymd');
-			$uploadimage='pic_'.$rname.$date.'.'.$extsign;
-			$config['upload_path']          = $_SERVER['DOCUMENT_ROOT'].'/admin1947/public/assets/upload/';
-					$config['allowed_types'] = 'jpg|png|jpeg|JPG|PNG|JPEG';
-					$config['max_size']             = 0;
-					$config['quality'] = '50%';
-					$config['file_name']  = $uploadimage;
-					$this->load->library('upload', $config);
-					
-					if (!$this->upload->do_upload('file'))
-					{
-						$error = $this->upload->display_errors();
-					 $flashmsg='<div class="alert alert-danger">
-						  <strong>Failed!</strong>'.$error.'
-						</div>';
-						$this->session->set_flashdata('flashmsg',$flashmsg);
-						redirect('profile');
-						exit();
-						
-					}else{
-						$udata=array('IMAGE'=>$uploadimage);
-						$this->db->where('userid',$userid)->update('userlogin',$udata);
-					}
+			if (!in_array($extsign, $allowed_exts)) {
+				$flashmsg = '<div class="alert alert-danger"><strong>Invalid File Type!</strong> Only JPG, PNG, and WEBP images are allowed.</div>';
+				$this->session->set_flashdata('flashmsg', $flashmsg);
+				redirect('updateprofile');
+				return;
+			}
+
+			$rname = rand(1111111,999999999);
+			$date  = date('Ymd');
+			$uploadimage = 'pic_'.$rname.$date.'.'.$extsign;
+			$upload_dir = FCPATH . 'admin1947/public/assets/upload/';
+			
+			if (!is_dir($upload_dir)) {
+				@mkdir($upload_dir, 0755, true);
+			}
+
+			$config['upload_path']   = $upload_dir;
+			$config['allowed_types'] = 'jpg|jpeg|png|webp';
+			$config['max_size']      = 5120; // 5MB max limit
+			$config['file_name']     = $uploadimage;
+			$this->load->library('upload', $config);
+			
+			if (!$this->upload->do_upload('file'))
+			{
+				$error = $this->upload->display_errors();
+				$flashmsg='<div class="alert alert-danger"><strong>Upload Failed!</strong> '.$error.'</div>';
+				$this->session->set_flashdata('flashmsg',$flashmsg);
+				redirect('updateprofile');
+				return;
+			} else {
+				$udata = array('IMAGE' => $uploadimage);
+				$this->db->where('userid', $userid)->update('userlogin', $udata);
+				return $uploadimage;
+			}
 		}
-		redirect('index.php');	
+		redirect('profile');	
 	}
 
 
 function change_password($id)
 	{
-	  
-     $query = $this->db->where(['USERID'=>$id])
-                    ->get('userlogin');
-       
-        return $query->row();
-   
-	    
+		$query = $this->db->where(['USERID'=>$id])->get('userlogin');
+		return $query->row();
 	}
 
   public function updatePassword($new_password, $id)
   {
-       $data = array(
-      'PASSWORD'=> $new_password
-      );
-      return $this->db->where('USERID', $id)
-                      ->update('userlogin', $data); 
-      
+      $hash = (strlen($new_password) == 60 && strpos($new_password, '$2y$') === 0) ? $new_password : password_hash($new_password, PASSWORD_BCRYPT);
+      $data = array('PASSWORD' => $hash);
+      return $this->db->where('USERID', $id)->update('userlogin', $data); 
   }
 
    public function c_count()

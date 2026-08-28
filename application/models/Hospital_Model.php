@@ -64,7 +64,7 @@ class Hospital_Model extends CI_Model
 		$this->db->select('SQL_CALC_FOUND_ROWS appointment_id,appointment_date,from_timing,to_timing,appointment_name as patient_name,appointment_mobile,fee,amount,doctor_id,institute_id,institution_type,appointment.status,payment_status,appointment_status,profile_dr.fname,profile_dr.lname',FALSE);
 		$this->db->join('profile_dr','profile_dr.id=appointment.doctor_id');
 		//$this->db->join('hospital','hospital.uid=appointment.institute_id');
-		$result = $this->db->get_where('appointment', array('appointment_id'))->result();
+		$result = $this->db->get('appointment')->result();
 		return $result;
 	}
 	

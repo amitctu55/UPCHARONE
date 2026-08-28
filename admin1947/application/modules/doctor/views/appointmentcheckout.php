@@ -1,207 +1,156 @@
-<head>
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<div class="content-wrapper">
+  <!-- Content Header & Breadcrumbs -->
+  <section class="content-header" style="padding: 20px 20px 10px;">
+    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+      <div>
+        <h1 style="font-size: 22px; font-weight: 700; color: #1e293b; margin: 0;">Appointment Confirmation &amp; Settlement</h1>
+        <small style="color: #64748b; font-size: 13px;">Review booking invoice details and confirm consultation order</small>
+      </div>
+      <ol class="breadcrumb" style="position: static; float: none; margin: 0; background: transparent; padding: 0;">
+        <li><a href="<?=base_url('masters/dashboard')?>" style="color: #00a896;"><i class="fa fa-dashboard"></i> Dashboard</a></li>
+        <li><a href="<?=base_url('doctor/appointment/doctorappointment')?>" style="color: #64748b;">Appointments</a></li>
+        <li class="active" style="color: #1e293b; font-weight: 600;">Checkout Confirmation</li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- Main content -->
+  <section class="content" style="padding: 15px 20px;">
+    <div class="container-fluid" style="padding: 0;">
+      
+      <?php 
+      $appointment_data = $this->db->get_where('appointment', array('appointment_id' => $AppointmentCheckout))->row(); 
+      ?>
+
+      <div class="row">
+        <div class="col-md-8 col-md-offset-2 col-sm-12">
+          
+          <div class="master-card" style="background: #ffffff; border-radius: 14px; border: 1px solid #e2e8f0; box-shadow: 0 10px 30px rgba(0,0,0,0.06); overflow: hidden; margin-bottom: 30px;">
+            
+            <!-- Card Header -->
+            <div style="background: linear-gradient(135deg, #043d5b 0%, #008f80 60%, #00a896 100%); padding: 24px 28px; color: #ffffff;">
+              <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                <div>
+                  <span class="badge" style="background: rgba(255,255,255,0.2); font-size: 11px; padding: 4px 10px; margin-bottom: 6px;">
+                    <i class="fa fa-file-text-o"></i> Order Reference: <?=$gatewayData['Order_Id'];?>
+                  </span>
+                  <h3 style="margin: 0; font-size: 20px; font-weight: 800; color: #ffffff;">Consultation Booking Summary</h3>
+                </div>
+                <div style="text-align: right;">
+                  <div style="font-size: 12px; color: rgba(255,255,255,0.85);">Appointment Token</div>
+                  <div style="font-size: 22px; font-weight: 800; font-family: monospace; color: #ffffff;">#<?=$AppointmentCheckout;?></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Card Body -->
+            <div style="padding: 28px;">
+              
+              <!-- Patient & Visit Details Grid -->
+              <div class="row" style="margin-bottom: 24px;">
+                <div class="col-md-6 col-sm-6" style="margin-bottom: 16px;">
+                  <div style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">
+                    Patient Information
+                  </div>
+                  <div style="font-size: 16px; font-weight: 800; color: #0f172a; text-transform: capitalize;">
+                    <?=$gatewayData['billing_cust_name'];?>
+                  </div>
+                  <div style="font-size: 13px; color: #475569; margin-top: 4px;">
+                    <div><i class="fa fa-phone text-aqua" style="color: #00a896;"></i> <?=$appointment_data->appointment_mobile;?></div>
+                    <?php if(!empty($appointment_data->appointment_email)): ?>
+                      <div><i class="fa fa-envelope text-aqua" style="color: #00a896;"></i> <?=$appointment_data->appointment_email;?></div>
+                    <?php endif; ?>
+                  </div>
+                </div>
+
+                <div class="col-md-6 col-sm-6" style="margin-bottom: 16px;">
+                  <div style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">
+                    Doctor &amp; Facility
+                  </div>
+                  <div style="font-size: 15px; font-weight: 800; color: #00a896;">
+                    Dr. <?=getDoctorName($appointment_data->doctor_id);?>
+                  </div>
+                  <div style="font-size: 13px; color: #475569; margin-top: 4px;">
+                    <div><i class="fa fa-hospital-o" style="color: #00a896;"></i> <?=getInstituteName($appointment_data->institute_id, $appointment_data->institution_type);?></div>
+                    <div><i class="fa fa-calendar text-muted"></i> <?=date('d M Y', strtotime($appointment_data->appointment_date));?> (<?=$appointment_data->from_timing;?> - <?=$appointment_data->to_timing;?>)</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Itemized Invoice Table -->
+              <div class="table-responsive" style="border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 24px;">
+                <table class="table" style="margin: 0; font-size: 13.5px;">
+                  <thead>
+                    <tr style="background: #f8fafc; color: #475569; font-weight: 700;">
+                      <th style="padding: 12px 16px;">Service Description</th>
+                      <th style="padding: 12px 16px; text-align: center;">Session Slot</th>
+                      <th style="padding: 12px 16px; text-align: right;">Fee Amount</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td style="padding: 14px 16px;">
+                        <strong>Doctor OPD Consultation Fee</strong>
+                        <div style="font-size: 12px; color: #64748b; margin-top: 2px;">
+                          Dr. <?=getDoctorName($appointment_data->doctor_id);?> at <?=getInstituteName($appointment_data->institute_id, $appointment_data->institution_type);?>
+                        </div>
+                      </td>
+                      <td style="padding: 14px 16px; text-align: center; color: #334155;">
+                        <span class="badge" style="background: #e0f2fe; color: #0369a1; font-size: 11.5px; padding: 4px 8px;">
+                          <?=$appointment_data->from_timing;?> - <?=$appointment_data->to_timing;?>
+                        </span>
+                      </td>
+                      <td style="padding: 14px 16px; text-align: right; font-weight: 700; color: #0f172a;">
+                        Rs. <?=number_format(floatval($appointment_data->fee), 2);?>
+                      </td>
+                    </tr>
+                    <tr style="background: #f8fafc; border-top: 2px solid #e2e8f0;">
+                      <td colspan="2" style="padding: 14px 16px; text-align: right; font-weight: 800; font-size: 15px; color: #0f172a;">
+                        Total Payable at Counter:
+                      </td>
+                      <td style="padding: 14px 16px; text-align: right; font-weight: 800; font-size: 17px; color: #00a896;">
+                        Rs. <?=number_format(floatval($gatewayData['Amount']), 2);?>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <!-- Settlement Notice -->
+              <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 12px 16px; margin-bottom: 24px; display: flex; align-items: center; gap: 10px; font-size: 12.5px; color: #166534;">
+                <i class="fa fa-info-circle fa-lg" style="color: #10b981;"></i>
+                <span>Clicking <strong>Confirm &amp; Finalize Booking</strong> will send SMS &amp; Email confirmations to the patient and record the appointment in the doctor's active consultation list.</span>
+              </div>
+
+              <!-- Action CTAs -->
+              <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+                <a href="<?=base_url('doctor/appointment/addappointment');?>" class="btn btn-default" style="font-weight: 600; padding: 10px 20px; border-radius: 8px; color: #64748b;">
+                  <i class="fa fa-arrow-left"></i> Back / Modify
+                </a>
+
+                <div style="display: flex; gap: 10px;">
+                  <button type="button" id="confirmCocBtn" class="btn btn-primary" style="background: #00a896; border-color: #00a896; font-weight: 700; font-size: 14px; padding: 10px 26px; border-radius: 8px; box-shadow: 0 4px 14px rgba(0, 168, 150, 0.3);">
+                    <i class="fa fa-check-circle"></i> Confirm &amp; Finalize Booking (Pay on Counter)
+                  </button>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </section>
+</div>
+
 <script>
 $(document).ready(function(){
-  $(".buttonsforpayment").click(function(){
-    //$(".paymentbox").show();
-    //$(".coc").hide();
-	window.location="<?=base_url();?>paysecure/securePay";
-  });
-  
-  $(".buttonsforcoc").click(function(){
-   //$(".paymentbox").hide();
-    //$(".coc").show();
-	window.location="<?=base_url();?>doctor/appointment/processordercod_admin";
+  $('#confirmCocBtn').on('click', function(){
+    var btn = $(this);
+    btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Finalizing Booking...');
+    window.location = "<?=base_url();?>doctor/appointment/processordercod_admin";
   });
 });
-</script>    
-<style>
-  .label-name{
-	  text-align:left!important;
-	  margin-top:-5px;
-  }
-  .starspan
-  {
-	  color:#e80909;
-	  font-size:18px;
-  }
-  .mainheadlinerow
-  {
-	  padding:5px;margin-top:10px;margin-bottom:10px;
-  }
-  .mainheadline
-  {
-	  background:#3c8dbc;margin-top:10px;margin-bottom:10px;color:#fff;padding:9px;font-weight:600;
-  }
-  .mainheadlinefirstrow
-  {
-	  padding:5px;
-  }
-  .mainheadlinefirst
-  {
-	  background:#3c8dbc;margin-top:-15px;margin-bottom:15px;color:#fff;padding:9px;font-weight:600;
-  }
-  .othernote{
-      font-weight:600;font-size:13px;color:#d20c0c;
-  }
-  .mainhead{font-weight:600;margin-bottom:20px;}
-  .formbody{border:1px solid #d6d2d2;padding:10px;border-radius:4px;}
-  .note{font-weight:600;margin-top:10px;margin-bottom:20px;}
-  
-  #reset{background:#fff;color:#000;padding: 6px 30px;}
-  .docimg {
-    margin-bottom: 30px;
-    height: 134px;
-    border-radius: 14px;
-    box-shadow: 0px -5px 4px -1px #848181;
-    width: 122px;
-}
-  .doc_nam_inf span {
-    font-size: 12px;
-    color: #9bc03c;
-    letter-spacing: 0.8px;
-    font-size: 16px;
-    font-weight: 600;
-    font-family: 'Lato', sans-serif;
-}
-ol, ul {
-    margin: 0;
-    padding: 0;
-    border: 0;
-    font-size: 100%;
-    font: inherit;
-    vertical-align: baseline;
-}
-ul {
-    display: block;
-    list-style-type: disc;
-    margin-block-start: 1em;
-    margin-block-end: 1em;
-    margin-inline-start: 0px;
-    margin-inline-end: 0px;
-    padding-inline-start: 40px;
-}
-</style>   
-</head>
-<?php $appointment_data=$this->db->get_where('appointment',array('status'=>'0','appointment_id'=>$AppointmentCheckout))->row(); ?>
-<body class="hold-transition skin-blue sidebar-mini">
-	<div class="wrapper">
-		<!--there was sidebar -->
-		<!-- Content Wrapper. Contains page content -->
-		<div class="content-wrapper">
-			<!-- Content Header (Page header) -->
-			<!-- Main content -->
-			<section class="content">
-				<div class="careplus-main-content">
-					<!--// Main Section \\-->
-					<div class="careplus-main-section careplus-services-full">
-						<div class="container">
-							<div class="row">
-								<div class="col-md-12">
-									<div class="paymentbox">
-										<div class="row">
-											<div class="well col-xs-10 col-sm-10 col-md-10 col-xs-offset-1 col-sm-offset-1 col-md-offset-1">
-												<div class="text-center">
-													<h3 style="color:black;">Checkout / Appointment Confirmation</h3>
-												</div>
-												<div class="row" style="color:black;">
-													<div class="col-xs-6 col-sm-6 col-md-6">
-														<h6><b>Name</b></h6>
-														<address>
-															<h4 style="text-transform: capitalize;"><?=$gatewayData['billing_cust_name'];?></h4>
-														  <h6><b>Email Address</b></h6>
-														   <h6><p><em><?=$appointment_data->appointment_email;?></p></em></h6>
-														   
-															 <h6><b>Phone</b></h6>
-															<h6><p><em><?=$appointment_data->appointment_mobile;?></p></em></h6>
-														</address>
-													</div>
-													<div class="col-xs-6 col-sm-6 col-md-6 text-right">
-														<h6><b>Date</b></h6>
-														<p><em><?=$appointment_data->book_date;?></em></p>
-														<h6><b>Appointment Number</b></h6>
-														<p>
-															<em> <?=$AppointmentCheckout;?></em>
-														</p>
-													</div>
-												</div>
-												<div class="row">
-													<table class="table table-hover table-bordered" style="width: 98.7%;margin: 4px;">
-														 <thead>
-															<tr>
-																<th class="text-center">HOSPITAL</th>
-																<th class="text-center">DOCTOR</th>
-																<th class="text-center">DATE</th>
-																<th class="text-center">Time</th>
-															</tr>
-														</thead>
-														<tbody>
-														   <tr>
-																<td class="text-center"><h6><?=getInstituteName($appointment_data->institute_id,$appointment_data->institution_type);?></h6></td>
-																<td class="text-center" style="text-transform:capitalize;"> <?=getDoctorName($appointment_data->doctor_id);?> </td>
-																<td class="text-center"><?=$appointment_data->appointment_date;?></td>
-																<td class="text-center"><?=$appointment_data->from_timing;?> - <?=$appointment_data->to_timing;?></td>
-															</tr>
-															<tr>
-																<td>   </td>
-																<td>   </td>
-																<td class="text-right">
-																<p>
-																	<strong>Subtotal</strong>
-																</p></td>
-																<td class="text-center">
-																
-																<p>
-																	<strong>Rs <?=$appointment_data->fee;?></strong>
-																</p></td>
-															</tr>
-															<tr>
-																<td colspan=2 style="font-weight:bold;text-align: center;"> Note<br>If You have a valid Coupon You can apply on next (Payment Page) to get discount   </td>
-																
-																<td class="text-right"><h4><strong>Total</strong></h4></td>
-																<td class="text-center"><h4><strong style="color:green;">Rs <?=$gatewayData['Amount'];?></strong></h4></td>
-															</tr>
-														</tbody>
-													</table>
-												</div>
-												<div class="text-right">
-													<button type="button" class="btn btn-primary btn- buttonsforcoc">
-														Pay On Counter</span>
-													</button>
-													<!--<button type="button" class="btn btn-success btn-  buttonsforpayment">
-														Pay Now Online</span>
-													</button>-->
-												</div>
-											</div>
-										</div>
-									</div> 
-								</div>
-							</div>
-						</div>
-					</div>
-				</div>
-				<!--// Main Section \\-->
-			</section>
-		</div>
-	</div>
-</body>
-<script> 
-$(document).ready(function(){
-  $(".closeBTN").click(function(){
-    $(".sidenav").animate({left: '-242px'});
-     $(".closeBTN").hide();
-      $(".closeBTN2").show();
-  });
-});
-
-$(document).ready(function(){
-  $(".closeBTN2").click(function(){
-    $(".sidenav").animate({left: '0px'});
-     $(".closeBTN2").hide();
-      $(".closeBTN").show();
-  });
-});
-</script>        
-        
-    
-         
+</script>

@@ -1,182 +1,67 @@
-<!DOCTYPE html>
-<html>
-
- <style>
-  .tabledata{
-	  border:1px solid #fff!important;
-	  font-weight:600;
-  }
-  .tableheaddata{
-	  border:1px solid #fff!important;
-	  background:#605CA8;
-	  color:#fff;
-  }
-  .error valid{
-	  color:green!important;
-  }
-  .tabledataactive{
-	  color:green;
-  }
-  .tabledatainactive{
-	  color:red;
-  }
-   .formdiv{
-      border:1px solid #d2cbcb;padding:25px; border-bottom-left-radius: 4px;; border-bottom-right-radius: 4px;
-  }
-
-
-  #reset{background:#fff;color:#000;padding: 6px 30px;}
-  
-  @media only screen and (min-width: 1350px) and (max-width: 1442px) {
-    #mydata_wrapper {
-        max-width:85%!important;
-		margin-left:7%!important;
-    }
-	
-  }
-  @media only screen and (min-width: 1300px) and (max-width: 1349px) {
-    #mydata_wrapper {
-        max-width:85%!important;
-		margin-left:3%!important;
-    }
-	#formdiv{
-		margin-left:-55px;
-	}
-  }
-  @media only screen and (min-width: 1200px) and (max-width: 1299px) {
-    #mydata_wrapper {
-        max-width:78%;
-		margin-left:3%!important;
-    }
-	#formdiv{
-		margin-left:-85px;
-	}
-  }
-  @media only screen and (min-width: 1065px) and (max-width: 1199px) {
-    #mydata_wrapper {
-        max-width:80%;
-		margin-left:3%!important;
-    }
-	#formdiv{
-		margin-left:-85px;
-	}
-  }
-  
-  @media only screen and (min-width: 1000px) and (max-width: 1064px) {
-    #mydata_wrapper {
-        max-width:75%;
-		margin-left:2%!important;
-    }
-	#formdiv{
-		margin-left:-105px;
-	}
-  }
-  </style>
-<body class="hold-transition skin-blue sidebar-mini">
-<div class="wrapper">
-
-	<!--there was sidebar -->
-	
-  <!-- Content Wrapper. Contains page content -->
-  <div class="content-wrapper">
-    <!-- Content Header (Page header) -->
-    <section class="content-header">
-      <h1>
-        Gallery Upload
-        <small></small>
-      </h1>
-      <ol class="breadcrumb">
-        <li><a href="#"><i class="fa fa-dashboard"></i> Master</a></li>
-        <li class="active">Gallery</li>
-      </ol>
-    </section>
-
-    <!-- Main content -->
-    <section class="content">
-      
-		 <link rel="stylesheet" href="https://jqueryvalidation.org/files/demo/site-demos.css">
-<div class="container bg-3 ">  
-<br>  
-  <br>
-  <div class="row text">
-    
-	<div class='row'>
-	
-	<div class="form-group col-md-3">
-	  
+<div class="content-wrapper">
+  <!-- Content Header & Breadcrumbs -->
+  <section class="content-header" style="padding: 20px 20px 10px;">
+    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+      <div>
+        <h1 style="font-size: 22px; font-weight: 700; color: #1E293B; margin: 0 0 4px 0; font-family: 'Inter', sans-serif;">
+          Admin Media & Gallery Upload
+        </h1>
+        <p style="margin: 0; color: #64748B; font-size: 13px;">Upload institutional photos, event banners, and clinical media assets</p>
+      </div>
+      <div style="display: flex; gap: 10px; align-items: center;">
+        <span style="font-size: 13px; color: #64748B;">Platform Media Hub</span>
+      </div>
     </div>
-    
-	
-	<div class="form-group col-md-6" id="formdiv">
-	<?=$this->session->flashdata('flashmsg');?>
-	<form action="<?=base_url()?>doctor/clinicreg/insert" method="post" id="myform"  enctype="multipart/form-data">
-	<div class="formheader">
-		Gallery Master
-	</div>
-	<div class="formdiv">
-		<div class="form-group">
-		  <label for="text">Shot Description:</label>
-		  <input type="text" class="form-control" id="religion" placeholder="Enter Shot Description" name="shot" data-validation="required"
-		 data-validation-error-msg="This Field is required">
-		 
-		  <!--<p style="color:#ef0909;font-weight:600;">Please insert value in filled</p>-->
-		</div>
+  </section>
 
-<div class="form-group">
-		  <label for="text">Long Description:</label>
-		  <input type="text" class="form-control" id="religion" placeholder="Enter Long Description" name="long" data-validation="required"
-		 data-validation-error-msg="This Field is required">
-		 
-		  <!--<p style="color:#ef0909;font-weight:600;">Please insert value in filled</p>-->
-		</div>
-       
-	
+  <!-- Main content -->
+  <section class="content" style="padding: 10px 20px 30px;">
+    <?=$this->session->flashdata('flashmsg');?>
 
-		<div class="form-group">
-				  <label  for="email" >Image </label>
-				  
-					<input type="file" class="form-control input-sm" id="uploadimage" name="uploadimage" >
-				
-				</div>
-		<button type="submit" id="submit" class="btn btn-info" name="submit">Add</button>
-		<button type="reset"  id="reset" class="btn btn-info">Reset</button>
-		<hr>
-		<span style="text-align:center">Note: Please Don't insert duplicate value</span>
-	</form>
-	</div>
+    <div style="max-width: 750px; margin: 0 auto; background: #FFFFFF; border-radius: 12px; border: 1px solid #E2E8F0; box-shadow: 0 1px 3px rgba(0,0,0,0.05); overflow: hidden;">
+      <div style="padding: 18px 24px; border-bottom: 1px solid #F1F5F9; background: #F8FAFC;">
+        <h3 style="margin: 0; font-size: 15px; font-weight: 700; color: #0F172A; text-transform: uppercase; letter-spacing: 0.5px;">
+          <i class="fa fa-picture-o" style="color: #0d9488; margin-right: 8px;"></i> Upload Media Item
+        </h3>
+      </div>
+
+      <form action="<?=base_url()?>doctor/clinicreg/insert" method="post" id="myform" enctype="multipart/form-data" style="padding: 24px;">
+        <div style="display: flex; flex-direction: column; gap: 18px;">
+          
+          <div>
+            <label style="display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 6px;">
+              Short Title / Caption <span style="color: #EF4444;">*</span>
+            </label>
+            <input type="text" class="form-control" id="religion" placeholder="e.g., Annual Medical Conference 2026" name="shot" data-validation="required" data-validation-error-msg="Short title is required" style="height: 42px; border-radius: 8px; border: 1px solid #CBD5E1; font-size: 14px; padding: 8px 14px;">
+          </div>
+
+          <div>
+            <label style="display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 6px;">
+              Long Description <span style="color: #EF4444;">*</span>
+            </label>
+            <textarea class="form-control" placeholder="Provide background context and detailed description..." name="long" rows="4" data-validation="required" data-validation-error-msg="Description is required" style="border-radius: 8px; border: 1px solid #CBD5E1; font-size: 14px; padding: 10px 14px;"></textarea>
+          </div>
+
+          <div>
+            <label style="display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 6px;">
+              Image File <span style="color: #EF4444;">*</span>
+            </label>
+            <input type="file" class="form-control" id="uploadimage" name="uploadimage" required style="height: 42px; padding: 6px 12px; border-radius: 8px; border: 1px solid #CBD5E1;">
+          </div>
+
+          <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 10px;">
+            <button type="reset" id="reset" class="btn" style="background: #F1F5F9; color: #475569; font-weight: 600; padding: 10px 20px; border-radius: 8px; border: 1px solid #CBD5E1;">Reset</button>
+            <button type="submit" id="submit" name="submit" class="btn" style="background: #0d9488; color: #FFFFFF; font-weight: 600; padding: 10px 28px; border-radius: 8px; border: none; box-shadow: 0 2px 4px rgba(13,148,136,0.3);">
+              <i class="fa fa-upload" style="margin-right: 6px;"></i> Upload to Gallery
+            </button>
+          </div>
+        </div>
+      </form>
     </div>
-    
-	
-	<div class="form-group col-md-2">
-	  
-    </div>
-    
-	</div>
-	
-	
-	
-</div></div><br>
+  </section>
+</div>
+
 <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
 <script src="//cdnjs.cloudflare.com/ajax/libs/jquery-form-validator/2.3.26/jquery.form-validator.min.js"></script>
-
-
-
-    </section>
-    <!-- /.content -->
-  </div>
-  
-  
-  <!-- /.content-wrapper -->
-  <?php $this->load->view('footer');?>
-
- 
-  <!-- /.control-sidebar -->
-  <!-- Add the sidebar's background. This div must be placed
-       immediately after the control sidebar -->
-  <div class="control-sidebar-bg"></div>
-</div>
-<!-- ./wrapper -->
-
-
-</body>
-</html>
+<script> $.validate({}); </script>
+<?=$this->load->view('inc/footer');?>

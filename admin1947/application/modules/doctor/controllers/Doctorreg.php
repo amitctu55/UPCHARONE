@@ -138,4 +138,67 @@ class Doctorreg extends CI_Controller
 		}				
 	}
 
+	public function toggle_verification($id = null)
+	{
+		$did = $this->input->post('did') ? $this->input->post('did') : ($id ? $id : $this->uri->segment(4));
+		$row = $this->db->select('verified, user_id')->get_where('profile_dr', array('id' => $did))->row();
+		$current = $row ? $row->verified : '0';
+		$new = ($current == '1') ? '0' : '1';
+		$this->db->set('verified', $new)->where('id', $did)->update('profile_dr');
+		if($this->input->is_ajax_request() || $this->input->post('did')) {
+			echo json_encode(array('status' => $new));
+			return;
+		}
+		redirect(base_url('doctor/doctorview'));
+	}
+
+	public function change_approval($id = null)
+	{
+		$did = $this->input->post('did') ? $this->input->post('did') : ($id ? $id : $this->uri->segment(4));
+		$row = $this->db->select('approved, user_id')->get_where('profile_dr', array('id' => $did))->row();
+		$current = $row ? $row->approved : '0';
+		$new = ($current == '1') ? '0' : '1';
+		$this->db->set('approved', $new)->where('id', $did)->update('profile_dr');
+		if ($row && !empty($row->user_id)) {
+			$this->db->set('APPROVED', $new)->where('USERID', $row->user_id)->update('doctorlogin');
+		}
+		if($this->input->is_ajax_request() || $this->input->post('did')) {
+			echo json_encode(array('status' => $new));
+			return;
+		}
+		redirect(base_url('doctor/doctorview'));
+	}
+
+	public function verify($id = null)
+	{
+		$this->toggle_verification($id);
+	}
+
+	public function approve($id = null)
+	{
+		$this->change_approval($id);
+	}
+
+	public function deletedoctor($id = null)
+	{
+		$doc_id = $id ? $id : ($this->input->post('id') ? $this->input->post('id') : $this->uri->segment(4));
+		$is_ajax = $this->input->is_ajax_request() || $this->input->post('is_ajax');
+		$this->load->model('doctorregmodel');
+		if ($doc_id) {
+			$this->doctorregmodel->deletedoctor($doc_id);
+		}
+		if($is_ajax) {
+			echo json_encode(array('status' => 1, 'message' => 'Doctor deleted successfully.'));
+			return;
+		}
+		$this->session->set_flashdata('flashmsg', "<div class='alert alert-success'><strong>Success!</strong> Doctor record has been deleted successfully.</div>");
+		redirect(base_url('doctor/doctorview'));
+	}
+
+	public function doctordelete($id = null)
+	{
+		$this->deletedoctor($id);
+	}
+
 }
+

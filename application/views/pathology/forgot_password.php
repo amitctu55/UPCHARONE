@@ -46,7 +46,7 @@
                               <div class="col-sm-4 col-md-offset-4 borders" id="designforform">
                           <div class="box-header"><h2>Forgot Password</h2></div>
                             <div class="label_name">                 
-                                <p style="color:black;">Provide us the email id/ mobile of your Upcharr account and we will send you an otp with instructions to reset your password.</p>
+                                					<p class="description">Provide us the email id/ mobile of your Upchar One Place of Healthcare account and we will send you an otp with which you can reset your password.</p>
                                    <hr><h6 style="width: 226px;padding: 1px 23px;color: white;background: #ed3237;">Enter Email Or Mobile</h6>
                                   <input value="" type="" name="mobile" class="form-control" Placeholder='Enter Registered Email or Mobile' required>
       <button type="submit" class="btn  btn-lg common-btn practo-btn" style="margin-top: 10px!important;border:none;color: white;background: #ed3237;">Submit

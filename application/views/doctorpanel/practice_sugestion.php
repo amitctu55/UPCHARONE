@@ -1,126 +1,184 @@
 <?php include ("assets/includes/header.php"); ?>
 <?php include ("assets/includes/leftmenu.php"); ?>
-	
-	
-        <div class="pag_cstm">
 
-            <div class="row">
-                <div class="col-lg-12">
-                    <div class="pag_cstm_panel">
-                        <div class="pag_cstm_panel_panel_ontent p-t-0">
-						<form action='<?=base_url();?>linkpractice' method='post'>
-                            <div class="row paddb40">
-                                <h4 class="PageTitle">Matching profiles</h4>
-							<div class="col-sm-12 processsstep2">
-							
-<p>Select your best matching profile</p>
-							</div>
-							 <div class="col-sm-4 padding0 paddmo">
-                               
-						<?php foreach($suggestedclinic as $clinic){ ?>
-                                    <div class="col-sm-12 processsstep2 paddri0 paddmo">
+<style>
+:root {
+    --upchar-teal: #00a896;
+    --upchar-teal-dark: #008f80;
+    --upchar-navy: #043d5b;
+    --upchar-slate: #0f172a;
+    --upchar-gray: #64748b;
+    --upchar-border: #e2e8f0;
+}
 
-                                        <div class="col-sm-12 col-xs-12 docto_list">
-                                            <div class="col-sm-2 col-xs-2 padding0">
-                                                <img src="assets/images/doctorclicniclogo/lofh2.jpg" class="img-responsive" />
-                                            </div>
-                                            <div class="col-sm-10 col-xs-10">
-                                                <h3><?=$clinic->name;?></h3>
-                                                <p><?=$clinic->address;?></p>
-                                               <!-- <p>Dr. Sugandha Gupta & <a href="#">1 more doctors</a> </p>-->
-                                            </div>
+.match-card {
+    background: #ffffff;
+    border-radius: 14px;
+    border: 1px solid var(--upchar-border);
+    padding: 20px;
+    margin-bottom: 16px;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    cursor: pointer;
+}
 
-                                            <div class="border2">
-                                                <div class="col-lg-6 col-xs-6">
-                                                    <div class="btn-group mrlt" data-toggle="buttons">
-                                                        <label class="btn active3">
-                                                           	<a href="#" class="trigger_popup_fricc"> <input type="radio" name="hospclinicid" value="C-<?=$clinic->id;?>" checked="" >
-														<i class="fa fa-circle-o fa-2x"></i><i class="fa fa-dot-circle-o fa-2x"></i><span>  I own a clinic</span></a> 
-                                                        </label>
-                                                    </div>
-                                                </div>
-                                                <div class="borders1" style="display: none;">
-                                                    <div class="btn-group mrl4" data-toggle="buttons">
-                                                          <label class="btn active3">
-                                                           	<a href="#" class="trigger_popup_fricc"> <input type="radio" name="gender1" checked="">
-														<i class="fa fa-circle-o fa-2x"></i><i class="fa fa-dot-circle-o fa-2x"></i><span>  I own a clinic</span></a> 
-                                                        </label>
-                                                    </div>
-                                                </div>
+.match-card:hover, .match-card.selected {
+    border-color: var(--upchar-teal);
+    background: #f0fdfa;
+    box-shadow: 0 4px 14px rgba(0, 168, 150, 0.12);
+}
 
-                                                <div class="col-lg-6 col-xs-6">
-                                                    <a href="#" class="check_profile">Check Profile</a>
-                                                </div>
-                                            </div>
-                                        </div>
+.match-icon-circle {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+}
 
+.btn-link-cstm {
+    background: var(--upchar-teal);
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 14px;
+    border-radius: 8px;
+    padding: 11px 28px;
+    border: none;
+    box-shadow: 0 4px 12px rgba(0, 168, 150, 0.25);
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.btn-link-cstm:hover {
+    background: var(--upchar-teal-dark);
+    color: #ffffff;
+}
+</style>
+
+<div class="pag_cstm" style="padding: 24px; background: #f8fafc; min-height: 88vh;">
+    <div class="row">
+        <div class="col-lg-12">
+
+            <!-- Title Header -->
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; margin-bottom: 20px; gap: 12px;">
+                <div>
+                    <h2 style="font-size: 22px; font-weight: 800; color: #0f172a; margin: 0 0 4px 0;">
+                        <i class="fa fa-building-o text-aqua"></i> Matching Establishments Found
+                    </h2>
+                    <p style="color: #64748b; font-size: 13.5px; margin: 0;">
+                        We found existing profiles in our healthcare directory matching your search. Select yours to claim and link, or create a new entry.
+                    </p>
+                </div>
+                <div>
+                    <a href="<?=base_url('addpractice');?>" class="btn btn-default" style="font-weight: 700; border-radius: 8px;">
+                        <i class="fa fa-arrow-left"></i> Change Details
+                    </a>
+                </div>
+            </div>
+
+            <form action="<?=base_url('linkpractice');?>" method="post">
+                <input type="hidden" name="<?=$this->security->get_csrf_token_name();?>" value="<?=$this->security->get_csrf_hash();?>">
+                <input type="hidden" name="fee" value="<?=isset($post_data['fee']) ? intval($post_data['fee']) : 500;?>">
+
+                <div class="row">
+                    <!-- Left: Matching Items List -->
+                    <div class="col-md-7 col-12">
+                        <div style="background: #ffffff; border-radius: 16px; border: 1px solid var(--upchar-border); padding: 24px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03); margin-bottom: 20px;">
+                            
+                            <h4 style="font-size: 14px; font-weight: 800; color: #334155; text-transform: uppercase; margin: 0 0 16px 0; letter-spacing: 0.5px;">
+                                Select Matching Clinic or Hospital:
+                            </h4>
+
+                            <!-- Clinics -->
+                            <?php if(!empty($suggestedclinic)): ?>
+                                <?php foreach($suggestedclinic as $clinic): ?>
+                                <label class="match-card">
+                                    <input type="radio" name="hospclinicid" value="C-<?=$clinic->id;?>" checked style="margin-top: 14px;">
+                                    <div class="match-icon-circle" style="background: #e0f2fe; color: #0284c7;">
+                                        <i class="fa fa-hospital-o"></i>
                                     </div>
-									
-							<?php } ?>
-
-
-						<?php foreach($suggestedhospital as $clinic){ ?>
-                                    <div class="col-sm-6 processsstep2 paddri0 paddmo">
-
-                                        <div class="col-sm-12 col-xs-12 docto_list">
-                                            <div class="col-sm-2 col-xs-2 padding0">
-                                                <img src="assets/images/doctorclicniclogo/lofh2.jpg" class="img-responsive" />
-                                            </div>
-                                            <div class="col-sm-10 col-xs-10">
-                                                <h3><?=$clinic->name;?></h3>
-                                                <p><?=$clinic->address;?></p>
-                                               <!-- <p>Dr. Sugandha Gupta & <a href="#">1 more doctors</a> </p>-->
-                                            </div>
-
-                                            <div class="border2">
-                                                <div class="col-lg-6 col-xs-6">
-                                                    <div class="btn-group mrlt" data-toggle="buttons">
-                                                        <label class="btn active3">
-                                                           	<a href="#" class="trigger_popup_fricc"> <input type="radio" name="hospclinicid" value="H-<?=$clinic->id;?>" checked="" >
-														<i class="fa fa-circle-o fa-2x"></i><i class="fa fa-dot-circle-o fa-2x"></i><span>  I own a clinic</span></a> 
-                                                        </label>
-                                                    </div>
-                                                </div>
-                                                <div class="borders1" style="display: none;">
-                                                    <div class="btn-group mrl4" data-toggle="buttons">
-                                                          <label class="btn active3">
-                                                           	<a href="#" class="trigger_popup_fricc"> <input type="radio" name="gender1" checked="">
-														<i class="fa fa-circle-o fa-2x"></i><i class="fa fa-dot-circle-o fa-2x"></i><span>  I own a clinic</span></a> 
-                                                        </label>
-                                                    </div>
-                                                </div>
-
-                                                <div class="col-lg-6 col-xs-6">
-                                                    <a href="#" class="check_profile">Check Profile</a>
-                                                </div>
-                                            </div>
+                                    <div style="flex: 1;">
+                                        <div style="font-size: 15px; font-weight: 800; color: #0f172a;">
+                                            <?=htmlspecialchars($clinic->name);?>
                                         </div>
-
+                                        <div style="font-size: 12.5px; color: #64748b; margin-top: 3px;">
+                                            <i class="fa fa-map-marker text-danger"></i> <?=htmlspecialchars($clinic->address ?: 'Address on file');?>
+                                        </div>
+                                        <span class="label label-primary" style="font-size: 10.5px; margin-top: 6px; display: inline-block;">Private Clinic</span>
                                     </div>
-									
-							<?php } ?>
+                                </label>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
 
-									
+                            <!-- Hospitals -->
+                            <?php if(!empty($suggestedhospital)): ?>
+                                <?php foreach($suggestedhospital as $hosp): ?>
+                                <label class="match-card">
+                                    <input type="radio" name="hospclinicid" value="H-<?=$hosp->id;?>" style="margin-top: 14px;">
+                                    <div class="match-icon-circle" style="background: #ecfdf5; color: #059669;">
+                                        <i class="fa fa-building"></i>
+                                    </div>
+                                    <div style="flex: 1;">
+                                        <div style="font-size: 15px; font-weight: 800; color: #0f172a;">
+                                            <?=htmlspecialchars($hosp->name);?>
+                                        </div>
+                                        <div style="font-size: 12.5px; color: #64748b; margin-top: 3px;">
+                                            <i class="fa fa-map-marker text-danger"></i> <?=htmlspecialchars($hosp->address ?: 'Address on file');?>
+                                        </div>
+                                        <span class="label label-success" style="font-size: 10.5px; margin-top: 6px; display: inline-block;">Hospital / IPD</span>
+                                    </div>
+                                </label>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
 
-                                   
-									<div class="col-sm-12 col-xs-6 click_step2"> 
-  <a class="backiocn" href="<?=base_url();?>profile_step3"><i class="fa fa-long-arrow-left" aria-hidden="true"></i>Back</a>
-  	  <button class="continue2" name='submit' type='submit'>Next</button>
- </div>
-								  
-                                </div>
-                            <div class="col-sm-1"></div>                                
-                                
-<div class="col-sm-4 hoslist_he">
-<p>
-We may already have your profile with patient feedbacks & reviews. If you see a match in suggested results, you can gain its control and update any information</p>
-</div>
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px; padding-top: 16px; border-top: 1px solid #f1f5f9;">
+                                <a href="<?=base_url('addpractice');?>" class="btn btn-default" style="font-weight: 600; border-radius: 8px;">
+                                    Cancel
+                                </a>
+                                <button type="submit" name="submit" class="btn-link-cstm">
+                                    <i class="fa fa-check"></i> Link Selected Establishment
+                                </button>
                             </div>
-							</form>
+
+                        </div>
+                    </div>
+
+                    <!-- Right: Force New Creation Box -->
+                    <div class="col-md-5 col-12">
+                        <div style="background: #ffffff; border: 1px solid var(--upchar-border); border-radius: 16px; padding: 24px; box-shadow: 0 2px 10px rgba(0,0,0,0.03); margin-bottom: 20px;">
+                            <h4 style="font-size: 15px; font-weight: 800; color: #0f172a; margin: 0 0 10px 0;">
+                                Not listed above?
+                            </h4>
+                            <p style="font-size: 13px; color: #64748b; line-height: 1.6; margin-bottom: 16px;">
+                                If none of the suggested profiles belong to your chamber, you can bypass and register this establishment as a brand new private practice location.
+                            </p>
+
+                            <form action="<?=base_url('addpractice');?>" method="post">
+                                <input type="hidden" name="<?=$this->security->get_csrf_token_name();?>" value="<?=$this->security->get_csrf_hash();?>">
+                                <input type="hidden" name="force_new" value="1">
+                                <input type="hidden" name="clinicname" value="<?=htmlspecialchars(@$post_data['clinicname']);?>">
+                                <input type="hidden" name="cliniccity" value="<?=htmlspecialchars(@$post_data['cliniccity']);?>">
+                                <input type="hidden" name="cliniclocality" value="<?=htmlspecialchars(@$post_data['cliniclocality']);?>">
+                                <input type="hidden" name="address" value="<?=htmlspecialchars(@$post_data['address']);?>">
+                                <input type="hidden" name="fee" value="<?=htmlspecialchars(@$post_data['fee']);?>">
+                                <input type="hidden" name="practicetype" value="<?=htmlspecialchars(@$post_data['practicetype'] ?: 'C');?>">
+
+                                <button type="submit" name="submit" class="btn btn-warning btn-block" style="font-weight: 700; border-radius: 8px; padding: 10px;">
+                                    <i class="fa fa-plus-circle"></i> Create as New Practice Chamber
+                                </button>
+                            </form>
                         </div>
                     </div>
                 </div>
-            </div>
-        </div>
+            </form>
 
-        <?php include ("assets/includes/footer.php"); ?>
+        </div>
+    </div>
+</div>
+
+<?php include ("assets/includes/footer.php"); ?>

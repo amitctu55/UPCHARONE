@@ -21,6 +21,9 @@ class Clinicreg extends CI_Controller
 		$config['limit']	    =  ( $pagesize > 0 ) ? $pagesize : 10;	
 		$offset                 =  ( $this->input->get_post('per_page') > 0 ) ? $this->input->get_post('per_page') : 0;	
 		$base_url               =  current_url_query_string(array('filter'=>'result'),array('per_page'));
+		$data['approved_count'] = $this->db->where('approved', '1')->where('verified', '1')->where('status !=', '2')->count_all_results('hospital');
+		$data['pending_count']  = $this->db->group_start()->where('approved', '0')->or_where('verified', '0')->group_end()->where('status !=', '2')->count_all_results('hospital');
+		$data['total_count']    = $this->db->where('status !=', '2')->count_all_results('hospital');
 		$data['hospital'] 		=  $this->doctorregmodel->get_hospital($config['limit'],$offset);
 		$config['total_rows']   =  get_found_rows();
 		$data['heading_title'] 	=  'Hospital List';
@@ -123,6 +126,9 @@ class Clinicreg extends CI_Controller
 		$config['limit']	    =  ( $pagesize > 0 ) ? $pagesize : 10;	
 		$offset                 =  ( $this->input->get_post('per_page') > 0 ) ? $this->input->get_post('per_page') : 0;	
 		$base_url               =  current_url_query_string(array('filter'=>'result'),array('per_page'));
+		$data['approved_count'] = $this->db->where('approved', '1')->where('verified', '1')->where('status !=', '2')->count_all_results('clinic');
+		$data['pending_count']  = $this->db->group_start()->where('approved', '0')->or_where('verified', '0')->group_end()->where('status !=', '2')->count_all_results('clinic');
+		$data['total_count']    = $this->db->where('status !=', '2')->count_all_results('clinic');
 		$data['clinic'] 		=  $this->doctorregmodel->get_clinic($config['limit'],$offset);
 		$config['total_rows']   =  get_found_rows();
 		$data['heading_title'] 	=  'Clinic List';
@@ -265,115 +271,101 @@ class Clinicreg extends CI_Controller
 	
 	/***************************************/
 	
-	public function updatehospital()
+	public function updatehospital($id = 0)
 	{
-		$id			=	$this->uri->segment(4);
-		$hospital	= 	$this->db->get_where('hospital',array('id'=>$id))->row();
-		if(is_object($hospital) && !empty($hospital))
-		{
+		if (!$id) {
+			$id = $this->uri->segment(4);
+		}
+		$hospital = $this->db->get_where('hospital', array('id' => $id))->row();
+		if (!is_object($hospital) || empty($hospital)) {
+			redirect('doctor/clinicreg/viewhospital');
+			return;
+		}
+		
+		$hospital_login = $this->db->get_where('hospitallogin', array('USERID' => $hospital->uid))->row();
+		if (!is_object($hospital_login) || empty($hospital_login)) {
+			$hospital_login = (object)[
+				'TYPE' => '1',
+				'MOBILE' => $hospital->mobile,
+				'EMAIL' => $hospital->email,
+				'USERID' => $hospital->uid
+			];
+		}
+		$data['hospital']       = $hospital;
+		$data['hospital_login'] = $hospital_login;
+		$data['heading_title']  = 'Hospital Update';
+		$data['module']         = 'Hospital';
+		
+		$this->form_validation->set_rules('type','Hospital Type','trim|required|max_length[30]');
+		$this->form_validation->set_rules('name','Name','trim|required|max_length[155]');
+		$this->form_validation->set_rules('website','Website','trim|max_length[100]');
+		$this->form_validation->set_rules('city','City','trim|required|max_length[30]');
+		$this->form_validation->set_rules('location','Location','trim|max_length[30]');
+		$this->form_validation->set_rules('address','Address','trim|max_length[255]');
+		$this->form_validation->set_rules('about','About','trim|max_length[500]');
+		
+		if ($this->form_validation->run() == TRUE) {
+			$config['upload_path']   = './public/assets/upload/';
+			$config['allowed_types'] = 'jpg|png|jpeg|JPG|PNG|JPEG';
+			$config['max_size']      = 2048;
+			$config['quality']       = '60%';
+			$typename                = 'hospital';
+			$uploadimage             = $hospital->drimage;
+			$unlink_image            = array('source_file' => $hospital->drimage);
 			
-			$hospital_login	= $this->db->get_where('hospitallogin',array('USERID'=>$hospital->uid))->row();
-			if(is_object($hospital_login) && !empty($hospital_login))
-			{
-				$data['hospital']		= $hospital;
-				$data['hospital_login']	= $hospital_login;
-				$data['heading_title'] 	= 'Hospital Update';
-				$data['module'] 		= 'Hospital';
-				
-				//$this->form_validation->set_rules('objective','Type','trim|required|max_length[30]');
-				$this->form_validation->set_rules('type','Hospital Type','trim|required|max_length[30]');
-				$this->form_validation->set_rules('name','Name','trim|required|max_length[155]');
-				$this->form_validation->set_rules('website','Website','trim|max_length[100]');
-				$this->form_validation->set_rules('city','City','trim|required|max_length[30]');
-				$this->form_validation->set_rules('location','Location','trim|max_length[30]');
-				$this->form_validation->set_rules('address','Address','trim|max_length[255]');
-				//$this->form_validation->set_rules('mobile','Mobile No',"trim|required|max_length[255]|is_unique[hospitallogin.MOBILE='".$this->db->escape_str($this->input->post('mobile'))."' AND USERID!='".$hospital_login->USERID."']");
-				//$this->form_validation->set_rules('email','Email',"trim|required|max_length[255]|is_unique[hospitallogin.EMAIL='".$this->db->escape_str($this->input->post('email'))."' AND status!='2']");
-				$this->form_validation->set_rules('about','About','trim|max_length[500]');
-				$this->form_validation->set_rules('tags','Tags','trim|max_length[30]');
-				$this->form_validation->set_rules('services','Services','trim|required|max_length[30]');
-				$this->form_validation->set_rules('package','Package','trim|required|max_length[255]');
-				if($this->form_validation->run()==TRUE)
-				{	//echo "<pre>"; print_r($_POST); die;
-					$config['upload_path']          = './public/assets/upload/';
-					$config['allowed_types'] 		= 'jpg|png|jpeg|JPG|PNG|JPEG';
-					$config['max_size']             = 2048;
-					$config['quality'] 				= '60%';
-					$typename 						= 'hospital';
-					$uploadimage		= $hospital->drimage;
-					$unlink_image 		= array('source_file'=>$hospital->drimage);
-					if($_FILES['uploadimage']['name']) 
-					{	
-						$uploadimage=$_FILES['uploadimage']['name'];
-						$extsign = pathinfo($_FILES['uploadimage']['name'],PATHINFO_EXTENSION);
-						$rname=rand(1111111,999999999);
-						$date=date('Y-m-d');
-						$uploadimage=$typename.'_profile_pic_'.$rname.$date.'.'.$extsign;
-						$config['file_name']  			= $uploadimage;
-						//echo "<pre>"; print_r($config['file_name']); die;
-						$this->load->library('upload', $config);
-						$this->upload->do_upload('uploadimage');
-						removeImage($unlink_image);
-					}	
-					$uploadimage2		= $hospital->id_proof;
-					$unlink_image2 		= array('source_file'=>$hospital->id_proof);
-					if($_FILES['idproof']['name']) 
-					{
-						$uploadimage2=$_FILES['idproof']['name'];
-						$extsign2 = pathinfo($_FILES['idproof']['name'],PATHINFO_EXTENSION);
-						$rname=rand(1111111,999999999);
-						$date=date('Y-m-d');
-						$uploadimage2=$typename.'_id_proof_'.$rname.$date.'.'.$extsign2;
-						$config['file_name']  = $uploadimage2;
-						$this->load->library('upload', $config);
-						$this->upload->do_upload('idproof');
-						removeImage($unlink_image2);
-					}
-					
-					$uploadimage3		= $hospital->med_reg_proof;
-					$unlink_image3 		= array('source_file'=>$hospital->med_reg_proof);
-					if($_FILES['regproof']['name']) 
-					{
-						$uploadimage3=$_FILES['regproof']['name'];
-						$extsign3 = pathinfo($_FILES['regproof']['name'],PATHINFO_EXTENSION);
-						
-						$rname=rand(1111111,999999999);
-						$date=date('Y-m-d');
-						$uploadimage3	=$typename.'_reg_proof_'.$rname.$date.'.'.$extsign3;
-						
-						$config['file_name']  = $uploadimage3;
-						$this->load->library('upload', $config);
-						$this->upload->do_upload('regproof');
-						removeImage($unlink_image3);
-					}
-					if($this->doctorregmodel->updatehospital($uploadimage,$uploadimage2,$uploadimage3,$id,$hospital->uid)) 
-					{
-						$msg="<div class='alert alert-success'><strong>Success!</strong> Data Updated Successfully</div>";
-						$this->session->set_flashdata('flashmsg',$msg);
-						redirect(base_url().'doctor/clinicreg/updatehospital/'.$id);
-					
-					}
-					else
-					{
-						$msg="<div class='alert alert-danger'><strong>Failed!</strong> Something went wrong. Please try again.</div>";
-						$this->session->set_flashdata('flashmsg',$msg);
-						redirect(base_url().'doctor/clinicreg/updatehospital/'.$id);
-					}
-					
-				}
+			if (!empty($_FILES['uploadimage']['name'])) {	
+				$uploadimage = $_FILES['uploadimage']['name'];
+				$extsign = pathinfo($_FILES['uploadimage']['name'], PATHINFO_EXTENSION);
+				$rname = rand(1111111, 999999999);
+				$date = date('Y-m-d');
+				$uploadimage = $typename . '_profile_pic_' . $rname . $date . '.' . $extsign;
+				$config['file_name'] = $uploadimage;
+				$this->load->library('upload', $config);
+				$this->upload->do_upload('uploadimage');
+				removeImage($unlink_image);
+			}	
+			$uploadimage2 = $hospital->id_proof;
+			$unlink_image2 = array('source_file' => $hospital->id_proof);
+			if (!empty($_FILES['idproof']['name'])) {
+				$uploadimage2 = $_FILES['idproof']['name'];
+				$extsign2 = pathinfo($_FILES['idproof']['name'], PATHINFO_EXTENSION);
+				$rname = rand(1111111, 999999999);
+				$date = date('Y-m-d');
+				$uploadimage2 = $typename . '_id_proof_' . $rname . $date . '.' . $extsign2;
+				$config['file_name'] = $uploadimage2;
+				$this->load->library('upload', $config);
+				$this->upload->do_upload('idproof');
+				removeImage($unlink_image2);
 			}
-			else
-			{
-				redirect('doctor/clinicreg/viewhospital','');
+			
+			$uploadimage3 = $hospital->med_reg_proof;
+			$unlink_image3 = array('source_file' => $hospital->med_reg_proof);
+			if (!empty($_FILES['regproof']['name'])) {
+				$uploadimage3 = $_FILES['regproof']['name'];
+				$extsign3 = pathinfo($_FILES['regproof']['name'], PATHINFO_EXTENSION);
+				$rname = rand(1111111, 999999999);
+				$date = date('Y-m-d');
+				$uploadimage3 = $typename . '_reg_proof_' . $rname . $date . '.' . $extsign3;
+				$config['file_name'] = $uploadimage3;
+				$this->load->library('upload', $config);
+				$this->upload->do_upload('regproof');
+				removeImage($unlink_image3);
+			}
+			
+			if ($this->doctorregmodel->updatehospital($uploadimage, $uploadimage2, $uploadimage3, $id, $hospital->uid)) {
+				$msg = "<div class='alert alert-success'><strong>Success!</strong> Hospital Updated Successfully</div>";
+				$this->session->set_flashdata('flashmsg', $msg);
+				redirect(base_url('doctor/clinicreg/viewhospital'));
+			} else {
+				$msg = "<div class='alert alert-danger'><strong>Failed!</strong> Something went wrong. Please try again.</div>";
+				$this->session->set_flashdata('flashmsg', $msg);
+				redirect(base_url('doctor/clinicreg/updatehospital/' . $id));
 			}
 		}
-		else
-		{
-			redirect('doctor/clinicreg/viewhospital','');
-		}
+		
 		$this->load->view('inc/topheaderlink');
 		$this->load->view('inc/topheader');
-		$this->load->view('updatehospital',$data);
+		$this->load->view('updatehospital', $data);
 		$this->load->view('sidebar');
 		$this->load->view('inc/headersetting');
 		$this->load->view('inc/footerlink');
@@ -474,60 +466,101 @@ class Clinicreg extends CI_Controller
         redirect(base_url().'doctor/clinicreg/viewgallery');
     } */
 	
-	public function clinicapprove()
+	public function clinicapprove($id = null)
 	{
-		$did=$this->input->post('did');
-		$current=$this->db->select('approved')->get_where('clinic',array('id'=>$did))->row()->approved;
-		if($current=='1'){
-			$this->db->set('approved','0')->where(array('id'=>$did))->update('clinic');
-			$response=array('status'=>'0');
-		}else if($current=='0'){
-			$this->db->set('approved','1')->where(array('id'=>$did))->update('clinic');
-			$response=array('status'=>'1');
-		}
-		echo json_encode($response);
+		$this->approve($id);
 	}
 	 
-	public function clinicverify()
+	public function clinicverify($id = null)
 	{
-		$did=$this->input->post('did');
-		$current=$this->db->select('verified')->get_where('clinic',array('id'=>$did))->row()->verified;
-		if($current=='1'){
-			$this->db->set('verified','0')->where(array('id'=>$did))->update('clinic');
-			$response=array('status'=>'0');
-		}else if($current=='0'){
-			$this->db->set('verified','1')->where(array('id'=>$did))->update('clinic');
-			$response=array('status'=>'1');
+		$this->verify($id);
+	}
+	public function verify($id = null)
+	{
+		$did = $this->input->post('did') ? $this->input->post('did') : ($id ? $id : $this->uri->segment(4));
+		$row = $this->db->select('verified')->get_where('clinic', array('id' => $did))->row();
+		$current = $row ? $row->verified : '0';
+		if ($current == '1') {
+			$this->db->set('verified', '0')->where(array('id' => $did))->update('clinic');
+			$status = '0';
+			$msg = 'Clinic verification status updated to Unverified.';
+		} else {
+			$this->db->set('verified', '1')->where(array('id' => $did))->update('clinic');
+			$status = '1';
+			$msg = 'Clinic has been Verified successfully.';
 		}
-		echo json_encode($response);
+		if ($this->input->is_ajax_request() || $this->input->post('did')) {
+			echo json_encode(array('status' => $status, 'message' => $msg));
+			return;
+		}
+		$this->session->set_flashdata('flashmsg', "<div class='alert alert-success'>$msg</div>");
+		redirect(base_url('doctor/clinicreg/viewclinic'));
+	}
+
+	public function approve($id = null)
+	{
+		$did = $this->input->post('did') ? $this->input->post('did') : ($id ? $id : $this->uri->segment(4));
+		$row = $this->db->select('approved')->get_where('clinic', array('id' => $did))->row();
+		$current = $row ? $row->approved : '0';
+		if ($current == '1') {
+			$this->db->set('approved', '0')->where(array('id' => $did))->update('clinic');
+			$status = '0';
+			$msg = 'Clinic approval status updated to Pending.';
+		} else {
+			$this->db->set('approved', '1')->where(array('id' => $did))->update('clinic');
+			$status = '1';
+			$msg = 'Clinic has been Approved successfully.';
+		}
+		if ($this->input->is_ajax_request() || $this->input->post('did')) {
+			echo json_encode(array('status' => $status, 'message' => $msg));
+			return;
+		}
+		$this->session->set_flashdata('flashmsg', "<div class='alert alert-success'>$msg</div>");
+		redirect(base_url('doctor/clinicreg/viewclinic'));
 	}
 	 
-	public function hospitalapprove()
+	public function hospitalapprove($id = null)
 	{
-		$did=$this->input->post('did');
-		$current=$this->db->select('approved')->get_where('hospital',array('id'=>$did))->row()->approved;
-		if($current=='1'){
-			$this->db->set('approved','0')->where(array('id'=>$did))->update('hospital');
-			$response=array('status'=>'0');
-		}else if($current=='0'){
-			$this->db->set('approved','1')->where(array('id'=>$did))->update('hospital');
-			$response=array('status'=>'1');
+		$did = $this->input->post('did') ? $this->input->post('did') : ($id ? $id : $this->uri->segment(4));
+		$row = $this->db->select('approved')->get_where('hospital', array('id' => $did))->row();
+		$current = $row ? $row->approved : '0';
+		if ($current == '1') {
+			$this->db->set('approved', '0')->where(array('id' => $did))->update('hospital');
+			$status = '0';
+			$msg = 'Hospital approval status updated to Pending.';
+		} else {
+			$this->db->set('approved', '1')->where(array('id' => $did))->update('hospital');
+			$status = '1';
+			$msg = 'Hospital has been Approved successfully.';
 		}
-		echo json_encode($response);
+		if ($this->input->is_ajax_request() || $this->input->post('did')) {
+			echo json_encode(array('status' => $status, 'message' => $msg));
+			return;
+		}
+		$this->session->set_flashdata('flashmsg', "<div class='alert alert-success'>$msg</div>");
+		redirect(base_url('doctor/clinicreg/viewhospital'));
 	}
 	 
-	public function hospitalverify()
+	public function hospitalverify($id = null)
 	{
-		$did=$this->input->post('did');
-		$current=$this->db->select('verified')->get_where('hospital',array('id'=>$did))->row()->verified;
-		if($current=='1'){
-			$this->db->set('verified','0')->where(array('id'=>$did))->update('hospital');
-			$response=array('status'=>'0');
-		}else if($current=='0'){
-			$this->db->set('verified','1')->where(array('id'=>$did))->update('hospital');
-			$response=array('status'=>'1');
+		$did = $this->input->post('did') ? $this->input->post('did') : ($id ? $id : $this->uri->segment(4));
+		$row = $this->db->select('verified')->get_where('hospital', array('id' => $did))->row();
+		$current = $row ? $row->verified : '0';
+		if ($current == '1') {
+			$this->db->set('verified', '0')->where(array('id' => $did))->update('hospital');
+			$status = '0';
+			$msg = 'Hospital verification status updated to Unverified.';
+		} else {
+			$this->db->set('verified', '1')->where(array('id' => $did))->update('hospital');
+			$status = '1';
+			$msg = 'Hospital has been Verified successfully.';
 		}
-		echo json_encode($response);
+		if ($this->input->is_ajax_request() || $this->input->post('did')) {
+			echo json_encode(array('status' => $status, 'message' => $msg));
+			return;
+		}
+		$this->session->set_flashdata('flashmsg', "<div class='alert alert-success'>$msg</div>");
+		redirect(base_url('doctor/clinicreg/viewhospital'));
 	}
 	 
 	 
@@ -536,13 +569,14 @@ class Clinicreg extends CI_Controller
 		$data['clinic']=$this->db->get_where('clinic',array('id'=>$id))->row();
 		$data['module']='clinic';
 		
-		if($_POST['submit']){
-				         $this->load->model('doctorregmodel');
-                 $this->doctorregmodel->updateclinic($id);
-         
-				    $msg="<div class='alert alert-success'><strong>Success!</strong> Data Added Successfully</div>";
-							$this->session->set_flashdata('flashmsg',$msg);
-				     }
+		if(isset($_POST['submit'])){
+			$this->load->model('doctorregmodel');
+			$this->doctorregmodel->updateclinic($id);
+	 
+			$msg="<div class='alert alert-success'><strong>Success!</strong> Clinic Updated Successfully</div>";
+			$this->session->set_flashdata('flashmsg',$msg);
+			redirect(base_url('doctor/clinicreg/viewclinic'));
+		}
 		
 		$this->load->view('inc/topheaderlink');
 		$this->load->view('inc/topheader');
@@ -586,21 +620,134 @@ class Clinicreg extends CI_Controller
 	}
 
 	
-	public function delete_clinic()
-    {
-        $id=$this->uri->segment(4);
-        $this->load->model('doctorregmodel');
-        $this->doctorregmodel->clinic_delete($id);
-        redirect(base_url().'doctor/clinicreg/viewclinic');   
-    }  
+	public function delete_clinic($id = null)
+	{
+		if ($this->input->post('ids') && is_array($this->input->post('ids'))) {
+			$this->bulk_delete_clinic();
+			return;
+		}
+
+		$del_id = $id ? $id : ($this->input->post('id') ? $this->input->post('id') : ($this->input->post('did') ? $this->input->post('did') : ($this->input->get('id') ? $this->input->get('id') : $this->uri->segment(4))));
+		if ($del_id) {
+			$this->load->model('doctorregmodel');
+			$this->doctorregmodel->clinic_delete($del_id);
+			$msg = "Clinic record deleted successfully.";
+			if ($this->input->is_ajax_request() || $this->input->post('is_ajax') || $this->input->post('id') || $this->input->post('did')) {
+				echo json_encode(array('status' => 1, 'message' => $msg));
+				return;
+			}
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-success'><strong>Success!</strong> $msg</div>");
+		}
+		redirect(base_url('doctor/clinicreg/viewclinic'));   
+	}
+
+	public function bulk_delete_clinic()
+	{
+		$ids = $this->input->post('ids');
+		if (!empty($ids) && is_array($ids)) {
+			$this->load->model('doctorregmodel');
+			$deleted_count = 0;
+			foreach ($ids as $cid) {
+				$cid = (int)$cid;
+				if ($cid > 0) {
+					$this->doctorregmodel->clinic_delete($cid);
+					$deleted_count++;
+				}
+			}
+			$msg = "$deleted_count clinic record(s) deleted successfully.";
+			if ($this->input->is_ajax_request() || $this->input->post('is_ajax')) {
+				echo json_encode(array('status' => 1, 'count' => $deleted_count, 'message' => $msg));
+				return;
+			}
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-success'><strong>Success!</strong> $msg</div>");
+		} else {
+			if ($this->input->is_ajax_request() || $this->input->post('is_ajax')) {
+				echo json_encode(array('status' => 0, 'message' => 'No clinics selected for deletion.'));
+				return;
+			}
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-warning'>No clinics selected for deletion.</div>");
+		}
+		redirect(base_url('doctor/clinicreg/viewclinic'));
+	}
 	
-	public function deletehospital()
-    {
-        $id=$this->uri->segment(4);
-        $this->load->model('doctorregmodel');
-        $this->doctorregmodel->hospitaldelete($id);
-        redirect(base_url().'doctor/clinicreg/viewhospital');   
-    }  
+	public function deletehospital($id = null)
+	{
+		if ($this->input->post('ids') && is_array($this->input->post('ids'))) {
+			$this->bulk_delete_hospital();
+			return;
+		}
+
+		$del_id = $id ? $id : ($this->input->post('id') ? $this->input->post('id') : ($this->input->post('did') ? $this->input->post('did') : ($this->input->get('id') ? $this->input->get('id') : $this->uri->segment(4))));
+		if ($del_id) {
+			$this->load->model('doctorregmodel');
+			$this->doctorregmodel->hospitaldelete($del_id);
+			$msg = "Hospital record deleted successfully.";
+			if ($this->input->is_ajax_request() || $this->input->post('is_ajax') || $this->input->post('id') || $this->input->post('did')) {
+				echo json_encode(array('status' => 1, 'message' => $msg));
+				return;
+			}
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-success'><strong>Success!</strong> $msg</div>");
+		}
+		redirect(base_url('doctor/clinicreg/viewhospital'));   
+	}
+
+	public function bulk_delete_hospital()
+	{
+		$ids = $this->input->post('ids');
+		if (!empty($ids) && is_array($ids)) {
+			$this->load->model('doctorregmodel');
+			$deleted_count = 0;
+			foreach ($ids as $hid) {
+				$hid = (int)$hid;
+				if ($hid > 0) {
+					$this->doctorregmodel->hospitaldelete($hid);
+					$deleted_count++;
+				}
+			}
+			$msg = "$deleted_count hospital record(s) deleted successfully.";
+			if ($this->input->is_ajax_request() || $this->input->post('is_ajax')) {
+				echo json_encode(array('status' => 1, 'count' => $deleted_count, 'message' => $msg));
+				return;
+			}
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-success'><strong>Success!</strong> $msg</div>");
+		} else {
+			if ($this->input->is_ajax_request() || $this->input->post('is_ajax')) {
+				echo json_encode(array('status' => 0, 'message' => 'No hospitals selected for deletion.'));
+				return;
+			}
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-warning'>No hospitals selected for deletion.</div>");
+		}
+		redirect(base_url('doctor/clinicreg/viewhospital'));
+	}
+
+	public function bulk_delete_gallery()
+	{
+		$ids = $this->input->post('ids');
+		if (!empty($ids) && is_array($ids)) {
+			$this->load->model('doctorregmodel');
+			$deleted_count = 0;
+			foreach ($ids as $gid) {
+				$gid = (int)$gid;
+				if ($gid > 0) {
+					$this->doctorregmodel->gallerydelete($gid);
+					$deleted_count++;
+				}
+			}
+			$msg = "$deleted_count gallery item(s) deleted successfully.";
+			if ($this->input->is_ajax_request() || $this->input->post('is_ajax')) {
+				echo json_encode(array('status' => 1, 'count' => $deleted_count, 'message' => $msg));
+				return;
+			}
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-success'><strong>Success!</strong> $msg</div>");
+		} else {
+			if ($this->input->is_ajax_request() || $this->input->post('is_ajax')) {
+				echo json_encode(array('status' => 0, 'message' => 'No gallery items selected for deletion.'));
+				return;
+			}
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-warning'>No items selected.</div>");
+		}
+		redirect(base_url('doctor/clinicreg/viewgallery'));
+	}  
 	
 	public function insert()
 	{

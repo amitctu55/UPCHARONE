@@ -21,7 +21,7 @@ class Azad_lib {
     {
         $this->CI =& get_instance();
 
-        $this->CI->load->helper('url');
+        $this->CI->load->helper(['url', 'settings']);
         $this->CI->config->item('base_url');
         $this->CI->load->database();
         
@@ -29,15 +29,14 @@ class Azad_lib {
 	
 	public function sendMail_admin($to,$subject,$body,$variables=array(),$attachment='')
 	{ 
-
-		//mail($to,$subject,$body);
-		//$setting = $this->CI->db->get_where('setting_smtp',array('id','1'))->row();	
 		$setting = new stdClass();
-		$setting->smtpserver ='mail.upcharr.com';
-		$setting->smtpport ='465';
-		$setting->smtpuser ='upcharr@upcharr.com';
-		$setting->smtppass ='swati@123';//'admin123456';
-		$setting->fromemail ='upcharr@upcharr.com';
+		$setting->smtpserver = get_system_setting('smtp_host', 'mail.upchar.info');
+		$setting->smtpport = get_system_setting('smtp_port', '465');
+		$setting->smtpuser = get_system_setting('smtp_username', 'support@upchar.info');
+		$setting->smtppass = get_system_setting('smtp_password', 'Abc@28010');
+		$setting->fromemail = get_system_setting('email_from_address', 'support@upchar.info');
+		$setting->fromname = get_system_setting('email_from_name', 'Upchar Healthcare');
+
 		if(strlen($body) < 30)
 		$templateid=$body;
 		$templatefile='templates/'.@$templateid.'.html';
@@ -52,50 +51,45 @@ class Azad_lib {
 			$body=$templatedata;
 		}	
 		$config = array(
-						'protocol' => 'smtp',
-						//'smtp_host' => 'ssl://'.$setting->smtpserver,
-						'smtp_host' => $setting->smtpserver,
-						'smtp_port' => $setting->smtpport,
-						'smtp_user' => $setting->smtpuser,
-						'smtp_pass' => $setting->smtppass ,
-						'smtp_crypto'=> 'ssl',
-						'charset'=>'utf-8',
-						'crlf' => "\r\n",
-						'newline' => "\r\n",
-						//'protocol' => 'mail',
-						'mailtype' => 'html'
-						);  
-		//print_r($config);
-		$this->CI->load->library('email',$config);
+			'protocol'    => 'smtp',
+			'smtp_host'   => $setting->smtpserver,
+			'smtp_port'   => $setting->smtpport,
+			'smtp_user'   => $setting->smtpuser,
+			'smtp_pass'   => $setting->smtppass,
+			'smtp_crypto' => ($setting->smtpport == '465') ? 'ssl' : 'tls',
+			'charset'     => 'utf-8',
+			'crlf'        => "\r\n",
+			'newline'     => "\r\n",
+			'mailtype'    => 'html'
+		);  
+
+		$this->CI->load->library('email');
 		$this->CI->email->initialize($config);
-		//$this->CI->email->set_newline("\r\n"); 
-		$this->CI->email->from($setting->fromemail, 'Upchar Medical Solution');
+		$this->CI->email->set_newline("\r\n"); 
+		$this->CI->email->from($setting->fromemail, $setting->fromname);
 		$this->CI->email->to($to);
 		$this->CI->email->subject($subject);
 		$this->CI->email->message($body);
-		$res=$this->CI->email->send();
-		 //echo $this->CI->email->print_debugger();
-		if($res)
-			return true;
-		else
-			return false;
-
+		if(!empty($attachment) && file_exists($attachment)) {
+			$this->CI->email->attach($attachment);
+		}
+		$res = @$this->CI->email->send();
+		return $res ? true : false;
 	}	
 	
 	public function sendMail($to,$subject,$body,$variables=array(),$attachment='')
 	{ 
+		$setting = new stdClass();
+		$setting->smtpserver = get_system_setting('smtp_host', 'mail.upchar.info');
+		$setting->smtpport = get_system_setting('smtp_port', '465');
+		$setting->smtpuser = get_system_setting('smtp_username', 'support@upchar.info');
+		$setting->smtppass = get_system_setting('smtp_password', 'Abc@28010');
+		$setting->fromemail = get_system_setting('email_from_address', 'support@upchar.info');
+		$setting->fromname = get_system_setting('email_from_name', 'Upchar Healthcare');
 
-		mail($to,$subject,$body);
-		 //$setting = $this->CI->db->get_where('setting_smtp',array('id','1'))->row();	
-			
-		$setting->smtpserver ='noc1-us.cpanelurl.com';
-		$setting->smtpport ='465';
-		$setting->smtpuser ='info@upcharr.com';
-		$setting->smtppass ='}A^(B{OVJ=KY';
-		$setting->fromemail ='info@upcharr.com';
 		if(strlen($body) < 30)
 		$templateid=$body;
-		$templatefile='public/assets/templates/'.$templateid.'.html';
+		$templatefile='public/assets/templates/'.@$templateid.'.html';
 		if (file_exists($templatefile)) 
 		{
 			$templatedata = file_get_contents($templatefile);
@@ -106,30 +100,30 @@ class Azad_lib {
 			$body=$templatedata;
 		}	
 		$config = array(
-						'protocol' => 'smtp',
-						'smtp_host' => 'ssl://'.$setting->smtpserver,
-						'smtp_port' => $setting->smtpport,
-						'smtp_user' => $setting->smtpuser,
-						'smtp_pass' => $setting->smtppass ,
-						'smtp_crypto'=> 'ssl',
-						'charset'=>'utf-8',
-						'newline' => "\r\n",
-						'protocol' => 'mail',
-						'mailtype' => 'html'
-						);  
-		print_r($config);
-		$this->CI->load->library('email',$config);
+			'protocol'    => 'smtp',
+			'smtp_host'   => $setting->smtpserver,
+			'smtp_port'   => $setting->smtpport,
+			'smtp_user'   => $setting->smtpuser,
+			'smtp_pass'   => $setting->smtppass,
+			'smtp_crypto' => ($setting->smtpport == '465') ? 'ssl' : 'tls',
+			'charset'     => 'utf-8',
+			'crlf'        => "\r\n",
+			'newline'     => "\r\n",
+			'mailtype'    => 'html'
+		);  
+
+		$this->CI->load->library('email');
+		$this->CI->email->initialize($config);
 		$this->CI->email->set_newline("\r\n"); 
-		$this->CI->email->from($setting->fromemail, 'Upchar Medical Solution');
+		$this->CI->email->from($setting->fromemail, $setting->fromname);
 		$this->CI->email->to($to);	 
 		$this->CI->email->subject($subject);
 		$this->CI->email->message($body);
-		$res=$this->CI->email->send();
-		echo $this->CI->email->print_debugger();
-		if($res)
-			return true;
-		else
-			return false;
+		if(!empty($attachment) && file_exists($attachment)) {
+			$this->CI->email->attach($attachment);
+		}
+		$res = @$this->CI->email->send();
+		return $res ? true : false;
 	}	
 	
 	public function sendSms($usermobile,$variables,$templateid)

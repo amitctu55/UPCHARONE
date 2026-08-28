@@ -109,9 +109,9 @@ if( ! function_exists('getMeta'))
 									
 		}else
 		{			
-				  return array("meta_title"=>"Welcome to Upchaar",
-				  "meta_keyword"=>"Welcome to Upchaar",
-				   "meta_description"=>"Welcome to Upchaar",
+				  return array("meta_title"=>"Upchar One Place of Healthcare",
+				  "meta_keyword"=>"Upchar One Place of Healthcare, Doctor Appointment, Hospitals, Pathology, Diagnostic Labs",
+				   "meta_description"=>"Upchar One Place of Healthcare - Find and book appointments with verified doctors, hospitals, clinics, and pathology labs.",
 				   'dynamic_meta'=>TRUE 
 				);
 		}

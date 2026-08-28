@@ -1,240 +1,157 @@
-<!DOCTYPE html>
-<html>
-    <style>
-    .tabledata{
-      border:1px solid #fff!important;
-      font-weight:600;
-    }
-    .BoxBody{
-        height:713px;
-        overflow:scroll;
-    }
-    .tableheaddata{
-      border:1px solid #fff!important;
-      background:#605CA8;
-      color:#fff;
-    }
-    .error valid{
-      color:green!important;
-    }
-    .tabledataactive{
-      color:green;
-    }
-    .tabledatainactive{
-      color:red;
-    }
-     table.dataTable tbody tr {
-      background-color: #e5e4f1;
-  }
-  </style>
+<div class="content-wrapper">
+  <!-- Content Header & Breadcrumbs -->
+  <section class="content-header" style="padding: 20px 20px 10px;">
+    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+      <div>
+        <h1 style="font-size: 22px; font-weight: 700; color: #1e293b; margin: 0;">Doctor Consultation Appointments</h1>
+        <small style="color: #64748b; font-size: 13px;">View and manage scheduled patient consultation bookings for selected doctor</small>
+      </div>
+      <ol class="breadcrumb" style="position: static; float: none; margin: 0; background: transparent; padding: 0;">
+        <li><a href="<?=base_url('masters/dashboard')?>" style="color: #00a896;"><i class="fa fa-dashboard"></i> Dashboard</a></li>
+        <li><a href="<?=base_url('doctor/appointment/doctorwise')?>" style="color: #64748b;">Doctor Wise</a></li>
+        <li class="active" style="color: #1e293b; font-weight: 600;">Patient Bookings</li>
+      </ol>
+    </div>
+  </section>
 
-   <style>
-  .label-name{
-    text-align:left!important;
-    margin-top:-5px;
-  }
-  .starspan
-  {
-    color:#e80909;
-    font-size:18px;
-  }
-  .mainheadlinerow
-  {
-    padding:5px;margin-top:10px;margin-bottom:10px;
-  }
-  .mainheadline
-  {
-    background:#605ca8;margin-top:10px;margin-bottom:10px;color:#fff;padding:9px;font-weight:600;
-  }
-  .mainheadlinefirstrow
-  {
-    padding:5px;
-  }
-  .mainheadlinefirst
-  {
-    background:#605ca8;margin-top:-15px;margin-bottom:15px;color:#fff;padding:9px;font-weight:600;
-  }
-  .mainhead{font-weight:600;margin-bottom:20px;}
-  .formbody{border:1px solid #d6d2d2;padding:10px;border-radius:4px;}
-  .note{font-weight:600;margin-top:10px;margin-bottom:20px;}
-  #submit{background:#605ca8;padding: 6px 30px;}
-  #reset{background:#fff;color:#000;padding: 6px 30px;}
-  </style>
-   <style>
-  
-  .label-name{
-    text-align:left!important;
-    margin-top:-5px;
-  }
-  .starspan
-  {
-    color:#e80909;
-    font-size:18px;
-  }
-  .mainheadlinerow
-  {
-    padding:5px;margin-top:10px;margin-bottom:10px;
-  }
-  .mainheadline
-  {
-    background:#3c8dbc;margin-top:10px;margin-bottom:10px;color:#fff;padding:9px;font-weight:600;
-  }
-  .mainheadlinefirstrow
-  {
-    padding:5px;
-  }
-  .mainheadlinefirst
-  {
-    background:#3c8dbc;margin-top:-15px;margin-bottom:15px;color:#fff;padding:9px;font-weight:600;
-  }
-  .othernote{
-      font-weight:600;font-size:13px;color:#d20c0c;
-  }
-  .mainhead{font-weight:600;margin-bottom:20px;}
-  .formbody{border:1px solid #d6d2d2;padding:10px;border-radius:4px;}
-  .note{font-weight:600;margin-top:10px;margin-bottom:20px;}
-  
-  #reset{background:#fff;color:#000;padding: 6px 30px;}
-  </style>
-  <link rel="stylesheet" href="https://jqueryvalidation.org/files/demo/site-demos.css">
-  <link rel="stylesheet" href="<?=base_url();?>public/assets/dist/css/metallic/zebra_datepicker.min.css" type="text/css">
-<body class="hold-transition skin-blue sidebar-mini">
-  <div class="wrapper">
-    <div class="content-wrapper">
-      <section class="content">
-        <div class="container bg-3">  
-          <div class="row text-">
-            <?php $doctor_id   = $this->uri->segment(4); ?>
-            <form class="form-horizontal formbody" id='mainform' action="<?=base_url()?>doctor/appointment/patient/<?php echo $doctor_id;?>" method="get" enctype="multipart/form-data">
-              <div class="row mainheadlinefirstrow">
-                <div class="col-md-12 mainheadlinefirst">Patient Filter</div>
-              </div>
-              <div class="row">
-                <div class="col-md-12">
-                  <div class="form-group">
-                    <label class="control-label col-sm-1 label-name" for="email">Name</label>
-                    <div class="col-sm-3">
-                      <input type="text" class="form-control input-sm"  name="paient_name" value="<?php echo $this->input->get_post('paient_name');?>">
-                    </div>
-                    <label class="control-label col-sm-1 label-name" for="email">Phone</label>
-                    <div class="col-sm-3">
-                      <input type="text" class="form-control input-sm"  name="paient_phone" value="<?php echo $this->input->get_post('paient_phone');?>">
-                    </div>
-                    <label class="control-label col-sm-1 label-name" for="email">Email</label>
-                    <div class="col-sm-3">
-                      <input type="text" class="form-control input-sm"  name="paient_email" value="<?php echo $this->input->get_post('paient_email');?>">
-                    </div>
-                    <label class="control-label col-sm-1 label-name" for="email">Payment Mode</label>
-                    <div class="col-sm-3">
-                      <select class="form-control input-sm"  name="payment_mode">
-                        <option value="">Select</option>
-                        <option value="ONLINE" <?php if($this->input->get_post('payment_mode')=='ONLINE'){ echo "selected";}?>>ON LINE</option>
-                        <option value="COC" <?php if($this->input->get_post('payment_mode')=='COC'){ echo "selected";}?>>OFF LINE</option>
-                      </select>
-                    </div>
-                    <label class="control-label col-sm-1 label-name" for="email">Date From</label>
-                    <div class="col-sm-3">
-                      <input type="text" class="form-control datepicker"  name="date_from" value="<?php echo $this->input->get_post('date_from');?>" onkeypress="return isNumber(event)" data-validation="required"
-                      data-validation-error-msg="This Field is required">
-                    </div>
-                    <label class="control-label col-sm-1 label-name" for="email">Date To</label>
-                    <div class="col-sm-3">
-                      <input type="text" class="form-control datepicker"  name="date_to" value="<?php echo $this->input->get_post('date_to');?>" onkeypress="return isNumber(event)" data-validation="required"
-                      data-validation-error-msg="This Field is required">
-                    </div>
-                    <label class="control-label col-sm-1 label-name" for="email">Session From</label>
-                    <div class="col-sm-3">
-                      <select name="session_from" class="form-control">
-                        <option value="">Select</option>
-                        <?php 
-                        $current = date("Y");
-                        for($i=2018; $i<=$current; $i++){?>
-                        <option value="<?php echo $i.'-01-01';?>" <?php if($this->input->get_post('session_from')==$i){ echo "selected"; }?>><?php echo $i;?></option>
-                        <?php } ?>
-                      </select>
-                    </div>
-                    <label class="control-label col-sm-1 label-name" for="email">Session To</label>
-                    <div class="col-sm-3">
-                      <select name="session_to" class="form-control">
-                        <option value="">Select</option>
-                        <?php 
-                        $current = date("Y");
-                        for($i=2018; $i<=$current; $i++){?>
-                        <option value="<?php echo $i.'-12-31';?>" <?php if($this->input->get_post('session_to')==$i){ echo "selected"; }?>><?php echo $i;?></option>
-                        <?php } ?>
-                      </select>
-                    </div>
-                    <label class="control-label col-sm-1 label-name" for="email"></label>
-                    <div class="col-sm-3">
-                      <input type="submit" class="btn btn-info" id="submit" name="submit" value='Search' />
-                      <?php 
-                      if( $this->input->get_post('paient_name')!='' ||  $this->input->get_post('paient_email')!='' ||  $this->input->get_post('paient_phone')!='' ||  $this->input->get_post('payment_mode')!='' ||  $this->input->get_post('date_from')!='' ||  $this->input->get_post('date_to')!='' ||  $this->input->get_post('session_from')!='' ||  $this->input->get_post('session_to')!=''  )
-                        { 
-                          echo anchor("doctor/appointment/patient/".$doctor_id."",'<span>Clear Search</span>');    
-                        } 
-                      ?>
-                    </div>
-                  </div>
-                </div>
-            </div>
-          </form>
+  <!-- Main content -->
+  <section class="content" style="padding: 15px 20px;">
+    <div class="container-fluid" style="padding: 0;">
+      
+      <!-- Flash Alert Messages -->
+      <?php if($this->session->flashdata('flashmsg')): ?>
+        <div style="margin-bottom: 15px;">
           <?=$this->session->flashdata('flashmsg');?>
-          <h4 style="font-weight:600;margin-bottom:20px;">Appointment List</h4>
-          <table class="table table-hover table-bordered table-bordered" id='example' style="border:none;">
-            <thead>
-              <tr>
-                <th class="tableheaddata">Appointment ID</th>
-                <th class="tableheaddata">Patient Name</th>
-                <th class="tableheaddata">Mobile</th>
-                <th class="tableheaddata">Email</th>
-                <th class="tableheaddata">Appointment Date</th>
-                <th class="tableheaddata">Payment Mode</th>
-              </tr>
-            </thead>
-            <tbody id="tviewtablebody">
-              <?php 
-              foreach($appointment as $p)
-              {  ?>
-              <tr>
-                <td ><?=$p->appointment_id; ?></td>
-                <td><?=$p->appointment_name ; ?></td>
-                <td><?=$p->appointment_mobile;?></td>
-                <td><?=$p->appointment_email;?></td>
-                <td><?=$p->appointment_date;?></td>
-                <td><?php 
-                if($p->payment_mode=='COC'){ echo "OFF LINE"; }else if($p->payment_mode=='ONLINE'){ echo "ON LINE"; } else{ echo "NA";}?></td>
-              </tr>
-              <?php } ?>
-            </tbody>
-            <tfoot>
-              <tr>
-                <th class="tableheaddata">Appointment ID</th>
-                <th class="tableheaddata">Patient Name</th>       
-                <th class="tableheaddata">Mobile</th>
-                <th class="tableheaddata">Email</th>  
-                <th class="tableheaddata">Appointment Date</th>
-                <th class="tableheaddata">Payment Mode</th>
-              </tr>
-            </tfoot>
-          </table>
+        </div>
+      <?php endif; ?>
+
+      <div class="master-card" style="background: #ffffff; border-radius: 10px; border: 1px solid #e2e8f0; box-shadow: 0 2px 10px rgba(0,0,0,0.04); overflow: hidden;">
+        
+        <!-- Header -->
+        <div class="master-card-header" style="padding: 16px 20px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; background: #ffffff;">
+          <h3 class="master-card-title" style="font-size: 16px; font-weight: 700; color: #0f172a; margin: 0; display: flex; align-items: center; gap: 8px;">
+            <i class="fa fa-calendar-check-o" style="color: #00a896;"></i>
+            <span>Patient Consultation Appointments</span>
+          </h3>
+          <div style="display: flex; gap: 8px; align-items: center;">
+            <span class="badge" style="background: #e0f2fe; color: #0369a1; font-size: 12px; font-weight: 700; padding: 5px 10px; border-radius: 12px;">
+              Total: <?=count($appointment);?> Bookings
+            </span>
+            <a href="<?=base_url('doctor/appointment/doctorwise')?>" class="btn btn-sm btn-default" style="font-weight: 600; border-radius: 6px;">
+              &larr; Back to Doctor List
+            </a>
+          </div>
+        </div>
+
+        <div class="master-card-body" style="padding: 20px;">
+          
+          <!-- Modern Data Table -->
+          <div class="table-responsive" style="border-radius: 8px; border: 1px solid #e2e8f0;">
+            <table class="table table-hover table-striped" id="patient-app-table" style="margin: 0;">
+              <thead>
+                <tr style="background: #f8fafc;">
+                  <th style="width: 60px; text-align: center;">#ID</th>
+                  <th>Patient Details</th>
+                  <th>Appointment Date &amp; Slot</th>
+                  <th>Contact Info</th>
+                  <th>Hospital / Facility</th>
+                  <th>Consulting Doctor</th>
+                  <th style="width: 100px; text-align: center;">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                <?php if(!empty($appointment)): foreach($appointment as $p): 
+                  $aid = $p->appointment_id ?? ($p->id ?? 0);
+                  $pname = $p->appointment_name ?: 'Patient';
+                  $adate = $p->appointment_date ?: '';
+                  $time = ($p->from_timing && $p->to_timing) ? ($p->from_timing . ' - ' . $p->to_timing) : '';
+                  $mobile = $p->appointment_mobile ?: '';
+                  $email = $p->appointment_email ?: '';
+                  $hname = $p->hospital_name ?: 'General Hospital';
+                  $drName = trim(($p->dr_fname ?? '') . ' ' . ($p->dr_lname ?? ''));
+                  $drDisplay = (stripos($drName, 'Dr.') === 0 || stripos($drName, 'Dr ') === 0) ? $drName : ($drName ? 'Dr. ' . $drName : 'Doctor');
+                ?>
+                  <tr>
+                    <td style="text-align: center; font-weight: 700; color: #64748b; vertical-align: middle;"><?=$aid;?></td>
+                    
+                    <!-- Patient Name & Age -->
+                    <td style="vertical-align: middle;">
+                      <strong style="color: #0f172a; font-size: 13.5px; display: block;"><?=html_escape($pname);?></strong>
+                      <?php if(!empty($p->age)): ?>
+                        <span style="font-size: 11.5px; color: #64748b;">Age: <?=$p->age;?> Yrs</span>
+                      <?php endif; ?>
+                    </td>
+
+                    <!-- Scheduled Date & Time -->
+                    <td style="vertical-align: middle;">
+                      <span class="label label-info" style="background: #e0f2fe !important; color: #0369a1 !important; border: 1px solid #bae6fd; font-size: 11.5px;">
+                        <i class="fa fa-calendar"></i> <?=(function_exists('formatedate') ? formatedate($adate) : $adate);?> <?=$time ? '('.$time.')' : '';?>
+                      </span>
+                    </td>
+
+                    <!-- Contact -->
+                    <td style="vertical-align: middle;">
+                      <?php if($mobile): ?>
+                        <div style="font-size: 12.5px; color: #334155;"><i class="fa fa-phone" style="color: #00a896;"></i> <?=html_escape($mobile);?></div>
+                      <?php endif; ?>
+                      <?php if($email): ?>
+                        <div style="font-size: 12px; color: #64748b;"><i class="fa fa-envelope-o" style="color: #64748b;"></i> <?=html_escape($email);?></div>
+                      <?php endif; ?>
+                    </td>
+
+                    <!-- Hospital -->
+                    <td style="vertical-align: middle;">
+                      <span class="label label-default" style="background: #f1f5f9 !important; color: #475569 !important; border: 1px solid #e2e8f0; font-size: 11.5px;">
+                        <i class="fa fa-hospital-o"></i> <?=html_escape($hname);?>
+                      </span>
+                    </td>
+
+                    <!-- Doctor -->
+                    <td style="vertical-align: middle;">
+                      <strong style="color: #00a896; font-size: 13px;"><i class="fa fa-user-md"></i> <?=html_escape($drDisplay);?></strong>
+                    </td>
+
+                    <!-- Status -->
+                    <td style="text-align: center; vertical-align: middle;">
+                      <span class="badge" style="background: #dcfce7; color: #15803d; font-size: 11px; font-weight: 700; padding: 4px 8px; border-radius: 6px;">
+                        <i class="fa fa-check-circle"></i> Confirmed
+                      </span>
+                    </td>
+                  </tr>
+                <?php endforeach; else: ?>
+                  <tr>
+                    <td colspan="7" style="text-align: center; padding: 40px 20px; color: #94a3b8;">
+                      <i class="fa fa-calendar-times-o fa-3x" style="margin-bottom: 10px; display: block; opacity: 0.5;"></i>
+                      <p style="font-size: 14px; font-weight: 500; margin: 0;">No consultation bookings found for this doctor.</p>
+                    </td>
+                  </tr>
+                <?php endif; ?>
+              </tbody>
+            </table>
+          </div>
+
         </div>
       </div>
-    </section>
-  </div>
+
+    </div>
+  </section>
 </div>
-</body>
-</html>
-<script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
-<script type="text/javascript">  
+
+<script>
 $(document).ready(function() {
-    $('#example').DataTable();
-} );
-</script> 
-  <!-- /.content-wrapper -->
-<?php $this->load->view('footer');?>
-
- 
-  
-
-
-
+    if ($.fn.DataTable.isDataTable('#patient-app-table')) {
+        $('#patient-app-table').DataTable().destroy();
+    }
+    $('#patient-app-table').DataTable({
+        "order": [[ 0, "desc" ]],
+        "pageLength": 15,
+        "language": {
+            "search": "Filter in table:",
+            "paginate": {
+                "previous": "&larr; Prev",
+                "next": "Next &rarr;"
+            }
+        }
+    });
+});
+</script>

@@ -1,139 +1,131 @@
-<head>
-    <style>
-        .colorwhite{color:white;}
+<?php $this->load->view("includes/header.php"); ?>
 
-
-    </style>
-</head>
-
-<!-- Mirrored from eyecix.com/html/careplus/team-list.html by --->
-<?php $this->load->view("includes/header_new.php"); ?>
-
-<!--
-    <div class="careplus-subheader">
-   
-        <div class="careplus-breadcrumb">
-            <div class="container">
-                <div class="row">
-                    <div class="col-md-12">
-                        <ul>
-                            <li><a href="<?=base_url();?>">Homepage</a></li>
-                            <li>Pathology Sign Up</li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-        </div>
+<div class="auth-wrapper">
+  <div class="auth-card">
+    
+    <!-- Segmented Tab Switcher -->
+    <div class="auth-tabs">
+      <a href="<?=base_url('pathlab-login');?>" class="auth-tab-btn">Login</a>
+      <a href="<?=base_url('pathlab-signup');?>" class="auth-tab-btn active">Sign up</a>
     </div>
--->
-    <section id="doctor_list">
-        
-         <div class="container">
-            <div class="row">
 
-                   <div class="col-sm-6 col-md-offset-3 box_sh_bg1">
-
-    <h3 class="formHeading">SIGN UP FOR PATHOLOGY</h3>
-<ul class="dis_inli1">
-    <li class="cwhi1"><a href="<?=base_url('pathlab-login');?>">Login</a></li>
-    <li ><a class="actives" href="<?=base_url('pathlab-signup');?>">Sign up</a></li>
-   
-  </ul>
-
-
-                      
-
-<div class="col-sm-12 borders">
-    <form  id='pathregistrationform' action='<?=base_url();?>Pathlabuser/register' method='post'>
-                            <div class="label_name">
-                   
-                                <h6 class="logintitle">Full Name</h6>
-                                  <input value="" type="text" name="name" class="form-control" required>
-								   <h6 class="logintitle">E-Mail</h6>
-                                  <input value="" type="email" name="email" class="form-control" required >
-                                  <h6 class="logintitle">Mobile Number</h6>
-                                  <input value="" type="text" name="mobile" class="form-control" onkeypress="return isNumber(event)"  required>
-
-                                   <h6 class="logintitle">Password</h6>
-                                  <input placeholder="Password" type="Password" id='password' pattern="(?=.*\d)(?=.*[a-z]).{6,}" name="password" class="form-control" required>
-                                  <i onclick="myFunction()" class="fa fa-eye" style="font-size:24px;float:right;margin: -29px 4%;"></i>
-                                  <div class="registrationFormAlert" id="divPasswordValidationResult">
-                                  </div>
-                                  <div class="forget-pasword">
-                                      
-    
+    <!-- Pathology Registration Form -->
+    <form class="auth-form" id="pathregistrationform" action="<?=base_url();?>Pathlabuser/register" method="POST">
+      <div class="form-group">
+        <label for="name">Lab / Administrator Name <span class="required">*</span></label>
+        <input type="text" id="name" name="name" class="form-control" placeholder="e.g. Upchar Diagnostic Center" required>
       </div>
-      <button type="submit" class="btn  btn-lg common-btn practo-btn"> Register
-       </button>
-     
-         </div>  
-         </form>
-                                
-                           
 
-                        </div>
-
-
-
-    
+      <div class="form-group">
+        <label for="email">E-Mail Address <span class="required">*</span></label>
+        <input type="email" id="email" name="email" class="form-control" placeholder="lab@example.com" required>
       </div>
-                      </div>
-                       </div>
-    </section>
 
+      <div class="form-group">
+        <label for="mobile">Mobile Number <span class="required">*</span></label>
+        <input type="tel" id="mobile" name="mobile" class="form-control" placeholder="+91 9876543210" onkeypress="return isNumber(event)" maxlength="10" required>
+      </div>
 
-  
+      <div class="form-group">
+        <label for="password">Password <span class="required">*</span></label>
+        <div class="password-input-wrapper">
+          <input type="password" id="password" name="password" class="form-control" placeholder="••••••••" pattern="(?=.*\d)(?=.*[a-z]).{6,}" required>
+          <button type="button" class="toggle-password-btn" onclick="togglePasswordVisibility()" aria-label="Toggle password visibility">
+            <i class="fa fa-eye" id="togglePasswordIcon"></i>
+          </button>
+        </div>
+      </div>
 
+      <div class="form-group checkbox-group">
+        <input type="checkbox" id="terms" required>
+        <label for="terms" style="margin-bottom: 0; font-weight: normal; cursor: pointer;">
+          I agree to the <a href="<?=base_url('tnc');?>" class="link-primary" target="_blank">Terms & Conditions</a>
+        </label>
+      </div>
 
-    <?php $this->load->view('includes/footer.php'); ?>
-	<script>	
-	$('#pathregistrationform').submit(function(e) {		
-		e.preventDefault(e);		
-		/* $('button[type=submit], input[type=submit]').prop('disabled',true); */		
-		var myform=$(this);		
-		$.ajax({			
-			type: "POST",			
-			url: myform.attr('action'),			
-			data: myform.serialize(),			
-			success: function( response ) {			
-				response = JSON.parse(response);				
-				if(response.status=='success'){					
-					window.location="<?=base_url();?>pathlab-verifymobile";				
-				}				
-				else if(response.status=='failed'){					
-					alert(response.msg);									
-				}else{					
-					alert('opps'+response.msg);				
-				}				
-				console.log( response );			
-			}		
-		});			
-	});
-	</script>
-	<script>
-      
-function validatePassword() {
-    var password = $("#password").val();
-    
+      <button type="submit" class="btn-submit" id="sub_button">Register Pathology Lab</button>
+    </form>
 
-    if (password.match(/^(?=.*\d)(?=.*[a-z]).{6,}/))
-        $("#divPasswordValidationResult").html("password is correct");
-    else
-         $("#divPasswordValidationResult").html("please enter alpha numeric");
-   
-}
+  </div>
+</div>
 
-$(document).ready(function () {
-   $("#password").keyup(validatePassword);
-});      
-    </script>
-    <script>
-function myFunction() {
-  var x = document.getElementById("password");
-  if (x.type === "password") {
-    x.type = "text";
+<?php $this->load->view('includes/footer.php'); ?>
+
+<script>
+function togglePasswordVisibility() {
+  var pwd = document.getElementById("password");
+  var icon = document.getElementById("togglePasswordIcon");
+  if (pwd.type === "password") {
+    pwd.type = "text";
+    icon.classList.remove("fa-eye");
+    icon.classList.add("fa-eye-slash");
   } else {
-    x.type = "password";
+    pwd.type = "password";
+    icon.classList.remove("fa-eye-slash");
+    icon.classList.add("fa-eye");
   }
 }
+
+function isNumber(evt) {
+    evt = (evt) ? evt : window.event;
+    var charCode = (evt.which) ? evt.which : evt.keyCode;
+    if (charCode > 31 && (charCode < 48 || charCode > 57)) {
+        return false;
+    }
+    return true;
+}
+
+$(document).ready(function() {
+  $('#pathregistrationform').submit(function(e) {		
+    e.preventDefault();		
+    var myform = $(this);	
+    var email = $('#email').val();
+    var mobile = $('#mobile').val();
+    var name = $('#name').val();
+    var password = $('#password').val();
+    
+    if(!email || email.indexOf('@') === -1) {
+      alert('Please Enter a Valid Email Address');
+      return false;
+    }
+    if(!mobile || mobile.length !== 10) {
+      alert('Please Enter a Valid 10-Digit Mobile Number');
+      return false;
+    }
+    if(!name || name.length < 3) {
+      alert('Please Enter a Valid Name');
+      return false;
+    }
+    if(!password || password.length < 6) {
+      alert('Please Enter at least 6 characters (including a number and a letter)');
+      return false;
+    }
+    
+    $('#sub_button').prop('disabled', true).text('Registering...');
+
+    $.ajax({			
+      type: "POST",			
+      url: myform.attr('action'),			
+      data: myform.serialize(),			
+      success: function(response) {			
+        try {
+          response = JSON.parse(response);
+        } catch(e) {}
+        if(response.status === 'success') {					
+          window.location = "<?=base_url();?>pathlab-verifymobile";				
+        } else if(response.status === 'failed') {					
+          alert(response.msg);
+          $('#sub_button').prop('disabled', false).text('Register Pathology Lab');
+        } else {					
+          alert(response.msg || 'Registration submitted');
+          $('#sub_button').prop('disabled', false).text('Register Pathology Lab');
+        }		
+      },
+      error: function() {
+        alert('An error occurred during registration. Please try again.');
+        $('#sub_button').prop('disabled', false).text('Register Pathology Lab');
+      }		
+    });	
+  });
+});
 </script>

@@ -331,12 +331,18 @@ class Pathtest_model extends CI_Model
 						'unit_id'					=>$this->input->post('unit_id'),
 						'description'				=>$this->input->post('description'),
 						'status'					=>$this->input->post('status'),
-						'creat_date'				=>date('Y-m-d h:i:s'),
-						'created_by'				=>getUserId(),
+						'creat_date'				=>date('Y-m-d h:i:s')
 					);
-		$this->db->where('parameter_id',$parameter_id);
-		$this->db->update('path_parameter',$data);
-		return $parameter_id;
+		$this->db->where('parameter_id', $unit_id);
+		$this->db->update('path_parameter', $data);
+		return $unit_id;
+	}
+
+	public function test_delete($id)
+	{
+		$this->db->where('test_id', $id)->delete('path_test_parameter');
+		$this->db->where('test_id', $id)->delete('pathtest');
+		return true;
 	}
 	
 }

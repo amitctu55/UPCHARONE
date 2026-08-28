@@ -111,12 +111,12 @@ class Pathuser_Model extends CI_Model {
     public function login($email,$password){
 		$this -> db -> select(' * ');
         $this -> db -> from('pathlogin');
-        $this -> db -> where('EMAIL', $email);        $this -> db -> or_where('MOBILE', $email);
+        $this -> db -> where("(EMAIL = ".$this->db->escape($email)." OR MOBILE = ".$this->db->escape($email).")");
         $this -> db -> where('PASSWORD', $password);
         $this -> db -> where('STATUS', '1');
         $this -> db -> where('APPROVED', '1');
         $this -> db -> limit(1);
-        $query = $this -> db -> get();//echo  $this->db->last_query();
+        $query = $this -> db -> get();
 		if($query -> num_rows() > 0)
         {			
 			$row = $query->row();

@@ -1,130 +1,190 @@
 <?php include ("assets/includes/header_pathlab.php"); ?>
 <?php include ("assets/includes/leftmenu_pathlab.php"); ?>
+
 <style>
-.docimg {
-	margin-bottom: 30px;
-	height: 134px;
-	border-radius: 14px;
-	box-shadow: 0px -5px 4px -1px #848181;
-	width: 122px;
+.pathlab-card {
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.06);
+    border: 1px solid #e2e8f0;
+    margin-bottom: 25px;
+    overflow: hidden;
 }
-.doc_nam_inf ul li {
-	font-size: 13px;
-	/*color: #868686;
-	 letter-spacing: 0.8px; */
-	list-style: none;
-	line-height: 20px;
+.pathlab-card-header {
+    background: linear-gradient(135deg, #1d2a44 0%, #295771 100%);
+    color: #ffffff;
+    padding: 16px 22px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
-.right_box {
-	padding: 13px 0px;
-	margin-top: 10px;
-	margin-bottom: 10px;
-	border-bottom: 1px solid #e8e8e8;
+.pathlab-card-title {
+    font-size: 16px;
+    font-weight: 700;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
-								
-.right_box img {
-border-radius: 8px;
+.pathlab-card-body {
+    padding: 24px;
 }
-.doc_nam_inf span {
-	font-size: 12px;
-	color: #9bc03c;
-	letter-spacing: 0.8px;
-	font-size: 16px;
-	font-weight: 600;
-	font-family: 'Lato', sans-serif;
+.path-form-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #334155;
+    margin-bottom: 6px;
+    display: block;
 }
-.doc_nam_inf ul {
-	margin-top: 4px;
+.path-form-control {
+    width: 100%;
+    height: 40px;
+    border-radius: 8px;
+    border: 1px solid #cbd5e1;
+    padding: 8px 14px;
+    font-size: 13.5px;
+    color: #1e293b;
+    transition: all 0.2s ease;
+    background: #ffffff;
+}
+.path-form-control:focus {
+    border-color: #00a896;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(0, 168, 150, 0.15);
+}
+.path-form-control[readonly] {
+    background: #f8fafc;
+    color: #64748b;
 }
 </style>
-<div class="pag_cstm">
+
+<div class="pag_cstm" style="padding: 22px 25px; background: #f8fafc; min-height: 85vh;">
     <div class="row">
-		<div class="col-lg-12">
-            <div class="pag_cstm_panel" style="background:#295771;">
-                <div class="pag_cstm_panel_panel_ontent p-t-0">
-					<div class="row paddb40">
-						<h4 class="colorwhite" style="font-weight:bold;padding:4px 17px">Test Details</h4>
-                        <?php echo form_open_multipart(current_url_query_string(), 'class="form-horizontal form-label-left" id="form"');?>
-						<div class="col-sm-12 ">
-							<?=$this->session->flashdata('flashmsg');?>
-						</div>
-						<div class="col-sm-6 ">
-							<div class="col-sm-12" style="padding: 0px;">
-								<label class="colorwhite">Category</label> <label style="color:red;"> *</label>
-								<input type="text" readonly id='category_name' readonly name="category_name" class="form-control2" value="<?php echo set_value('category_name',$package['category_name']); ?>"  >
-								<span style="color:red;"><?php echo form_error('category_name');?></span>
-							</div>
-							<div class="col-sm-12" style="padding: 0px;">
-								<label class="colorwhite">Test Name</label> <label style="color:red;"> *</label>
-								<input type="text" id='test_name' name="test_name" readonly class="form-control2" value="<?php echo set_value('test_name',$package['test_name']); ?>"  >
-								<span style="color:red;"><?php echo form_error('test_name');?></span>
-							</div>
-							<div class="col-sm-12" style="padding: 0px;">
-								<label class="colorwhite">Short Name</label> <label style="color:red;"> *</label>
-								<input type="text" id='short_name' name="short_name" readonly class="form-control2" value="<?php echo set_value('short_name',$package['short_name']); ?>"  >
-								<span style="color:red;"><?php echo form_error('short_name');?></span>
-							</div>
-							<div class="col-sm-12" style="padding: 0px;">
-								<label class="colorwhite">Test Type</label> <label style="color:red;"> *</label>
-								<input type="text" id='test_type' name="test_type" readonly class="form-control2" value="<?php echo set_value('test_type',$package['test_type']); ?>"  >
-								<span style="color:red;"><?php echo form_error('test_type');?></span>
-							</div>
-							<div class="col-sm-12" style="padding: 0px;">
-								<label class="colorwhite">Sub Category</label> <label style="color:red;"> *</label>
-								<input type="text" id='sub_category' name="sub_category" readonly class="form-control2" value="<?php echo set_value('sub_category',$package['sub_category']); ?>"  >
-								<span style="color:red;"><?php echo form_error('sub_category');?></span>
-							</div>
-							<div class="col-sm-12" style="padding: 0px;">
-								<label class="colorwhite">Method</label>
-								<input type="text" id='method' name="method" readonly class="form-control2" value="<?php echo set_value('method',$package['method']); ?>"  >
-								<span style="color:red;"><?php echo form_error('method');?></span>
-							</div>
-						</div>
-						<div class="col-sm-6 ">
-							<div class="col-sm-12 padding0"  >
-								<label class="colorwhite">Report Day</label>
-								<input type="text" id='report_day' name="report_day" readonly class="form-control2" value="<?php echo set_value('report_day',$package['report_day']); ?>"  >
-								<span style="color:red;"><?php echo form_error('report_day');?></span>
-							</div>
-							<div class="col-sm-12 padding0"  >
-								<label class="colorwhite">Charge Category</label> <label style="color:red;"> *</label>
-								<input type="text" id='charge_category' readonly name="charge_category" class="form-control2" value="<?php echo set_value('charge_category',$package['charge_category']); ?>"  >
-								<span style="color:red;"><?php echo form_error('charge_category');?></span>
-							</div>
-							<div class="col-sm-12 padding0"  >
-								<label class="colorwhite">Code</label> <label style="color:red;"> *</label>
-								<input type="text" id='code' name="code" readonly class="form-control2" value="<?php echo set_value('code',$package['code']); ?>"  >
-								<span style="color:red;"><?php echo form_error('code');?></span>
-							</div>
-							<hr>
-							<div class="col-sm-12 padding0">                    
-								<label class="colorwhite">Standard Charge</label> <label style="color:red;"> *</label>
-								<input type="text" name="amount"  id='amount' readonly  value="<?php echo set_value('amount',$package['amount']); ?>" class="form-control">	
-								<span style="color:red;"><?php echo form_error('amount');?></span>
-							</div>
-							<div class="col-sm-12 padding0">                    
-								<label class="colorwhite">Your Price</label> <label style="color:red;"> *</label>
-								<input type="text" name="lab_price"  id='lab_price'  value="<?php echo set_value('lab_price',$package['lab_price']); ?>" class="form-control">	
-								<span style="color:red;"><?php echo form_error('lab_price');?></span>
-							</div>
-							<div class="col-sm-12 padding0"  >
-								<label class="colorwhite">Premium Status</label>
-								<select name="status" class="form-control">
-									<option value='1' <?php if(set_value('status',$package['status'])=='1'){ echo "selected"; } ?>>Active</option>
-									<option value='0' <?php if(set_value('status',$package['status'])=='0'){ echo "selected"; } ?>>Inactive</option>
-								</select>
-								<span style="color:red;"><?php echo form_error('status');?></span>
-							</div>
-							<div class="col-lg-12  mrt20" style="padding: 0px;"> 
-								<button type="submit"  id='app_conf_submit' class="continue2  btn-lg common-btn con_done">Update Test </button>
-							</div>  
-						</div>
-						<div class="col-sm-6"></div>	
-						<?php echo form_close(); ?> 
-                    </div>  
-				</div>  
-			</div>
-		</div>
-	</div>
+        <div class="col-lg-12">
+            
+            <!-- Page Header -->
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 20px;">
+                <div>
+                    <h2 style="font-size: 22px; font-weight: 700; color: #1e293b; margin: 0 0 4px 0;">
+                        <i class="fa fa-pencil" style="color: #00a896;"></i> Edit Diagnostic Test Pricing & SLA
+                    </h2>
+                    <p style="color: #64748b; font-size: 13px; margin: 0;">Update lab rate, active visibility status, and turnaround days for this test.</p>
+                </div>
+                <div>
+                    <a href="<?=base_url('pathlabpanel/pathtest');?>" class="btn btn-default" style="background: #ffffff; border: 1px solid #cbd5e1; color: #334155; font-weight: 600; border-radius: 8px; padding: 8px 18px;">
+                        <i class="fa fa-arrow-left"></i> Back to Test List
+                    </a>
+                </div>
+            </div>
+
+            <!-- Flash Alert Messages -->
+            <?=$this->session->flashdata('flashmsg');?>
+            <?php if(validation_errors()): ?>
+                <div class="alert alert-danger" style="border-radius: 8px; font-size: 13px;">
+                    <button type="button" class="close" data-dismiss="alert">&times;</button>
+                    <strong><i class="fa fa-exclamation-triangle"></i> Please check the required fields:</strong>
+                    <?=validation_errors();?>
+                </div>
+            <?php endif; ?>
+
+            <div class="pathlab-card">
+                <div class="pathlab-card-header">
+                    <h3 class="pathlab-card-title">
+                        <i class="fa fa-flask"></i> <?=htmlspecialchars($package['test_name']);?> (#<?=htmlspecialchars($package['short_name']);?>)
+                    </h3>
+                </div>
+                <div class="pathlab-card-body">
+                    <?php echo form_open_multipart(current_url_query_string(), 'id="edittest_form"'); ?>
+                        
+                        <div class="row">
+                            <!-- Left Column -->
+                            <div class="col-md-6">
+                                <div class="form-group" style="margin-bottom: 16px;">
+                                    <label class="path-form-label">Diagnostic Test Full Name</label>
+                                    <input type="text" readonly name="test_name" class="path-form-control" value="<?=set_value('test_name', $package['test_name']);?>">
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-sm-6 form-group" style="margin-bottom: 16px;">
+                                        <label class="path-form-label">Category</label>
+                                        <input type="text" readonly name="category_name" class="path-form-control" value="<?=set_value('category_name', $package['category_name']);?>">
+                                    </div>
+                                    <div class="col-sm-6 form-group" style="margin-bottom: 16px;">
+                                        <label class="path-form-label">Short Code</label>
+                                        <input type="text" readonly name="short_name" class="path-form-control" value="<?=set_value('short_name', $package['short_name']);?>">
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-sm-6 form-group" style="margin-bottom: 16px;">
+                                        <label class="path-form-label">Test Type</label>
+                                        <input type="text" readonly name="test_type" class="path-form-control" value="<?=set_value('test_type', $package['test_type']);?>">
+                                    </div>
+                                    <div class="col-sm-6 form-group" style="margin-bottom: 16px;">
+                                        <label class="path-form-label">Sub Category</label>
+                                        <input type="text" readonly name="sub_category" class="path-form-control" value="<?=set_value('sub_category', $package['sub_category']);?>">
+                                    </div>
+                                </div>
+
+                                <div class="form-group" style="margin-bottom: 16px;">
+                                    <label class="path-form-label">Testing Methodology</label>
+                                    <input type="text" readonly name="method" class="path-form-control" value="<?=set_value('method', $package['method']);?>">
+                                </div>
+                            </div>
+
+                            <!-- Right Column -->
+                            <div class="col-md-6">
+                                <div class="row">
+                                    <div class="col-sm-6 form-group" style="margin-bottom: 16px;">
+                                        <label class="path-form-label">Report Turnaround (Days)</label>
+                                        <input type="text" name="report_day" class="path-form-control" value="<?=set_value('report_day', $package['report_day']);?>">
+                                    </div>
+                                    <div class="col-sm-6 form-group" style="margin-bottom: 16px;">
+                                        <label class="path-form-label">Charge Category</label>
+                                        <input type="text" readonly name="charge_category" class="path-form-control" value="<?=set_value('charge_category', $package['charge_category']);?>">
+                                    </div>
+                                </div>
+
+                                <div class="form-group" style="margin-bottom: 16px;">
+                                    <label class="path-form-label">Billing Test Code</label>
+                                    <input type="text" readonly name="code" class="path-form-control" value="<?=set_value('code', $package['code']);?>">
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-sm-6 form-group" style="margin-bottom: 16px;">
+                                        <label class="path-form-label">Standard Portal MRP (₹)</label>
+                                        <input type="text" readonly name="amount" class="path-form-control" value="<?=set_value('amount', $package['amount']);?>">
+                                    </div>
+                                    <div class="col-sm-6 form-group" style="margin-bottom: 16px;">
+                                        <label class="path-form-label">Your Lab Price (₹) <span style="color: #ef4444;">*</span></label>
+                                        <input type="number" step="0.01" name="lab_price" class="path-form-control" value="<?=set_value('lab_price', $package['lab_price']);?>" required>
+                                    </div>
+                                </div>
+
+                                <div class="form-group" style="margin-bottom: 16px;">
+                                    <label class="path-form-label">Catalog Status <span style="color: #ef4444;">*</span></label>
+                                    <select name="status" class="path-form-control" required>
+                                        <option value="1" <?=set_value('status', $package['status'])=='1'?'selected':'';?>>Active (Available for booking)</option>
+                                        <option value="0" <?=set_value('status', $package['status'])=='0'?'selected':'';?>>Inactive (Hidden from search)</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style="display: flex; justify-content: flex-end; gap: 12px; border-top: 1px solid #f1f5f9; padding-top: 18px; margin-top: 10px;">
+                            <a href="<?=base_url('pathlabpanel/pathtest');?>" class="btn btn-default" style="border-radius: 8px; font-weight: 600; padding: 9px 22px;">
+                                Cancel
+                            </a>
+                            <button type="submit" name="submit" value="update" class="btn btn-primary" style="background: #00a896; border-color: #00a896; font-weight: 700; border-radius: 8px; padding: 9px 28px;">
+                                <i class="fa fa-save"></i> Save Updates
+                            </button>
+                        </div>
+                    <?php echo form_close(); ?>
+                </div>
+            </div>
+
+        </div>
+    </div>
 </div>
+
 <?php include ("assets/includes/footer_hospital.php"); ?>

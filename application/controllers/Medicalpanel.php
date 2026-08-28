@@ -82,6 +82,15 @@ class Medicalpanel extends CI_Controller {
 	
 	public function login()
 	{
+		if ($this->session->userdata('userid')) {
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-info'>You are logged in as a Patient. Please logout to access Medical Partner Login.</div>");
+			redirect('myappointments');
+			return;
+		}
+		if ($this->session->userdata('meduserid')) {
+			redirect('medicalpanel/milestone');
+			return;
+		}
 		$this->load->view('medicalpanel/login');
 	}
 	

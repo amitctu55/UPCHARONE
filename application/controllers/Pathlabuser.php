@@ -88,7 +88,7 @@ class Pathlabuser extends CI_Controller {
         $this -> db -> where('USERID', $userid);       
         $this -> db -> limit(1);
         $mobile = $this -> db -> get()->row('MOBILE');
-        $login = $this->Pathlabuser_Model->resendotp($mobile);
+        $login = $this->Pathuser_Model->resendotp($mobile);
 		if($login=='SUCCESS'){
 			$response=array('status'=>'success','msg'=>'OTP Sent Successfully');
 		}else {

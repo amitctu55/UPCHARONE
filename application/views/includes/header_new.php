@@ -78,7 +78,7 @@ $this->session->set_userdata('last_page', current_url());
     <link href="<?=base_url();?>css/color.css" rel="stylesheet">
     <!--<link href="<?=base_url();?>css/style.css" rel="stylesheet">-->
     <link href="<?=base_url();?>css/responsive.css" rel="stylesheet">
-    
+    <link href="<?=base_url();?>public/css/landing_modern.css" rel="stylesheet">
     
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.1/css/all.css" integrity="sha384-gfdkjb5BdAXd+lj+gudLWI+BXq4IuLW5IT+brZEZsLFm++aCMlF1V92rMkPaX4PP" crossorigin="anonymous">
 
@@ -377,92 +377,133 @@ color: #fff;}
 <div class="container">
 <div class="row">
 
-                        <aside class="col-md-3 logocont"><a href="<?=base_url();?>" class="careplus-logo"><img id="upchar_logo" src="<?=base_url();?>images/Final_logo23.png" alt=""></a></aside>
+                        <aside class="col-md-3 logocont"><a href="<?=base_url();?>" class="careplus-logo"><img id="upchar_logo" src="<?=base_url();?>images/Final_logo23.png" alt="Upchar Logo"></a></aside>
 
                         <aside class="col-md-9" id="HeadMobile">
-                                  <h2 class="sitename"><b>UPCHAR</b></h2>
-                                  <h6 class="slogan">one place of your healthcare</h6>
-                            
-                        </aside>
+                          <nav class="navbar">
+                            <ul class="nav navbar-nav navbar-right">
+                              <li>
+                                <a href="<?=base_url();?>">
+                                  <span class="glyphicon glyphicon-home iconEffect"></span> Home
+                                </a>
+                              </li>
 
+                              <!-- 1. Our Partners (4-Category Dropdown: Hospital, Doctor, Pathology, Pharmacy) -->
+                              <li class="dropdown partner-dropdown-container">
+                                <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
+                                  <i class="fas fa-handshake iconEffect"></i> Our Partners <span class="caret"></span>
+                                </a>
+                                <div class="partner-menu-box">
+                                  <div class="partner-menu-header">
+                                    <h5><i class="fas fa-hospital-user" style="color: #00A896;"></i> Our Partner Network</h5>
+                                    <span>Verified Healthcare Providers</span>
+                                  </div>
+                                  <div class="partner-grid">
+                                    <a href="<?=base_url('hospitals');?>" class="partner-card-link">
+                                      <div class="partner-card-icon"><i class="fas fa-hospital"></i></div>
+                                      <div class="partner-card-text">
+                                        <h6>Hospital</h6>
+                                        <p>Browse network hospitals & clinics</p>
+                                      </div>
+                                    </a>
+                                    <a href="<?=base_url('doctors');?>" class="partner-card-link">
+                                      <div class="partner-card-icon"><i class="fas fa-user-md"></i></div>
+                                      <div class="partner-card-text">
+                                        <h6>Doctor</h6>
+                                        <p>Certified specialists & surgeons</p>
+                                      </div>
+                                    </a>
+                                    <a href="<?=base_url('mytest');?>" class="partner-card-link">
+                                      <div class="partner-card-icon"><i class="fas fa-flask"></i></div>
+                                      <div class="partner-card-text">
+                                        <h6>Pathology</h6>
+                                        <p>Diagnostic labs & sample testing</p>
+                                      </div>
+                                    </a>
+                                    <a href="<?=base_url('medical-signup');?>" class="partner-card-link">
+                                      <div class="partner-card-icon"><i class="fas fa-pills"></i></div>
+                                      <div class="partner-card-text">
+                                        <h6>Pharmacy</h6>
+                                        <p>Verified chemist & medical stores</p>
+                                      </div>
+                                    </a>
+                                  </div>
+                                </div>
+                              </li>
 
+                              <!-- 2. Become Partner / Login (4 Portal Categories) -->
+                              <li class="dropdown partner-dropdown-container">
+                                <a class="dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">
+                                  <i class="fas fa-user-plus iconEffect"></i> Become Partner / Login <span class="caret"></span>
+                                </a>
+                                <div class="partner-menu-box">
+                                  <div class="partner-menu-header">
+                                    <h5><i class="fas fa-shield-alt" style="color: #00A896;"></i> Partner Access Portal</h5>
+                                    <span>Onboarding & Account Login</span>
+                                  </div>
+                                  <div class="partner-grid">
+                                    <div class="partner-login-card">
+                                      <div class="partner-card-icon"><i class="fas fa-user-md"></i></div>
+                                      <div class="partner-card-text">
+                                        <h6>Doctor Portal</h6>
+                                        <div class="partner-card-actions">
+                                          <a href="<?=base_url('doctor-aindex');?>" class="partner-btn-login"><i class="fas fa-sign-in-alt"></i> Login</a>
+                                          <a href="<?=base_url('doctor-signup');?>" class="partner-btn-join"><i class="fas fa-plus"></i> Join</a>
+                                        </div>
+                                      </div>
+                                    </div>
+                                    <div class="partner-login-card">
+                                      <div class="partner-card-icon"><i class="fas fa-hospital"></i></div>
+                                      <div class="partner-card-text">
+                                        <h6>Hospital Portal</h6>
+                                        <div class="partner-card-actions">
+                                          <a href="<?=base_url('hospital-aindex');?>" class="partner-btn-login"><i class="fas fa-sign-in-alt"></i> Login</a>
+                                          <a href="<?=base_url('hospital-signup');?>" class="partner-btn-join"><i class="fas fa-plus"></i> Join</a>
+                                        </div>
+                                      </div>
+                                    </div>
+                                    <div class="partner-login-card">
+                                      <div class="partner-card-icon"><i class="fas fa-flask"></i></div>
+                                      <div class="partner-card-text">
+                                        <h6>Pathology Lab</h6>
+                                        <div class="partner-card-actions">
+                                          <a href="<?=base_url('pathlab-login');?>" class="partner-btn-login"><i class="fas fa-sign-in-alt"></i> Login</a>
+                                          <a href="<?=base_url('pathlab-signup');?>" class="partner-btn-join"><i class="fas fa-plus"></i> Join</a>
+                                        </div>
+                                      </div>
+                                    </div>
+                                    <div class="partner-login-card">
+                                      <div class="partner-card-icon"><i class="fas fa-pills"></i></div>
+                                      <div class="partner-card-text">
+                                        <h6>Pharmacy Store</h6>
+                                        <div class="partner-card-actions">
+                                          <a href="<?=base_url('medical-login');?>" class="partner-btn-login"><i class="fas fa-sign-in-alt"></i> Login</a>
+                                          <a href="<?=base_url('medical-signup');?>" class="partner-btn-join"><i class="fas fa-plus"></i> Join</a>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              </li>
 
-<nav class="navbar">
-
-    
-    <ul class="nav navbar-nav navbar-right">
-        
-        <?php if ($this->session->userdata('userid')==''){ ?>
-   <li><a href="<?=base_url();?>"><i class="fas fa-home iconEffect"></i> Home</a></li>
-   
-  <li class="showPartners" data-target="#madicine"><a href="<?=base_url();?>"> <i class="fas fa-thumbs-up iconEffect"></i> Upchar Partner</a></li>
-
-          <li>
-              <a class="dropdown-toggle" data-toggle="dropdown" href="#"><i class="fas fa-handshake iconEffect"></i> Partner Login <span class="caret"></span></a>
-        <ul class="dropdown-menu innerList" style="background: none;">
-          <li> <a href="<?=base_url();?>hospital-aindex">Hospital</a></li>
-          <li> <a href="<?=base_url();?>pathlab-login">Pathology</a></li>
-         <!-- <li><a href="<?=base_url();?>pathdoctor-login">Pathdoctor</a></li>
-          <li><a href="<?=base_url();?>medical-login">Medicine</a></li>-->
-           <li><a href="<?=base_url();?>doctor-aindex">Doctor</a></li>
-        </ul>
-      </li>
-  
-
- 
-
-  <li>
-  <a href="https://upcharrnews.blogspot.com/" target="_blank"><i class="fas fa-newspaper iconEffect"></i> Blog</a>
-  </li>
-      <li>
-          <a href="<?=base_url('login');?>"><i class="fa fa-sign-in iconEffect" aria-hidden="true"></i> Login / <i class="fas fa-user-plus iconEffect"></i> Sign Up </a>
-          </li>
-
-	<?php }else{ ?>
-	
-	
-	
-	<?php $profileimg=$this->db->select('IMAGE')->from('userlogin')->where('USERID',$this->session->userdata('userid'))->get()->row()->IMAGE;
-                                            if(!$profileimg)
-                                                $profileimg=base_url()."/assets/images/user.jpg";
-                                            else
-                                                $profileimg=admin_url()."public/assets/upload/".$profileimg;
-
-
-                                            ?>
-
-			<div class="dropdown" id="user-header" style="width:189px;display: inline-block;padding: 2px;border-radius: 2px 12px;background: #043d5b;">
-                            <a href="#" data-toggle="dropdown" data-hover="dropdown" data-close-others="true">
-                                <img id="userprofileimages" src="<?=$profileimg;?>" alt="user image">
-                                <span class="username" style="color:white;font-weight:bold;"><?=$this->session->userdata('username')?> <i class="fa fa-chevron-down" style="border: 2px solid #043d5b;padding: 15px 7px;background: #043d5b;color: white;" aria-hidden="true"></i></span>
-                            </a>
-                            <ul class="dropdown-menu" style="background:#043d5b;">
-                                <!--<li class="name_mo"> <img src="assets/images/user.jpg" alt="user image"  style='width:42px;'>
-                                    <p>Swati                                        <br/>9990179859</p>
-                                </li>-->
-                                <li><a href="<?=base_url();?>Home/profile"><span class="UserMenu">My Profile</span></a></li>
-                                <li><a href="<?=base_url();?>Home/mytest"><span class="UserMenu">Lab Tests</span></a></li>
-             //<!--                   <li><a href="#"><span class="UserMenu">My Medicine Order</span></a></li>
-                                <li><a href="#"><span class="UserMenu">My Online Consultation</span></a></li>
-                                <li><a href="#"><span class="UserMenu">My Feedback</span></a></li>
-                                <li><a href="#"><span class="UserMenu">My Articles</span></a></li>
-                                <li><a href="#"><span class="UserMenu">My Payments</span></a></li>
- Header \\-->                          <li><a href="#"><span class="UserMenu">View Update Profile</span></a></li>
-								  <li><a href="<?=base_url();?>Home/change_password"><span class="UserMenu">Change Password</span></a></li>
-                                <li><a href="#"><span class="UserMenu">Setting</span></a></li>
-                                <li><a href="<?=base_url();?>User/logout"><span class="UserMenu">Logout</span></a></li>
+                              <?php if ($this->session->userdata('userid')==''){ ?>
+                              <li>
+                                <a href="https://upcharrnews.blogspot.com/" target="_blank"><i class="fas fa-newspaper iconEffect"></i> Blog</a>
+                              </li>
+                              <li>
+                                <a href="<?=base_url('login');?>" class="nav-login-btn"><span class="glyphicon glyphicon-log-in iconEffect"></span> Patient Login</a>
+                              </li>
+                              <?php } else { ?>
+                              <li>
+                                <a href="<?=base_url('myappointments');?>"><i class="fas fa-calendar-alt iconEffect"></i> My Appointments</a>
+                              </li>
+                              <li>
+                                <a href="<?=base_url('Home/logout');?>" class="nav-logout-btn"><span class="glyphicon glyphicon-log-out iconEffect"></span> Logout</a>
+                              </li>
+                              <?php } ?>
                             </ul>
-
-                      </div>
-
-	<?php } ?>
-    </ul>
-  
-</nav>
-
-
-
-                    </div>
+                          </nav>
+                        </aside>
 
 </div>
 </header>

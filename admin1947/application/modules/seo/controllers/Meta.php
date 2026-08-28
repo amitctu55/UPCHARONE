@@ -6,7 +6,7 @@ class Meta extends CI_Controller
 		 parent::__construct();
 		 date_default_timezone_set("Asia/Kolkata");
 		 $date=date('Y-m-d h:i:s');
-		 $this->load->helper(array('query_string_helper','dbquery_helper','admin_helper'));
+		 $this->load->helper(array('query_string_helper','dbquery_helper','admin_helper','text'));
 		 $this->load->model('meta_model');
 	}
 	

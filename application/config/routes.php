@@ -53,6 +53,12 @@ $route['default_controller'] 			= 'home';
 $route['404_override'] 					= '';
 $route['translate_uri_dashes'] 			= FALSE;
 
+$route['contactus'] 					= 'home/contactus';
+$route['hospitals'] 					= 'home/hospitals';
+$route['hospitallist'] 					= 'home/hospitallist';
+$route['doctors'] 						= 'home/doctors';
+$route['doctor/(:num)'] 				= 'home/doctor/$1';
+$route['hospital/(:num)'] 				= 'home/hospital/$1';
 $route['pathlab-login'] 				= 'pathlabpanel/login';
 $route['pathlab-signup'] 				= 'pathlabpanel/signup';
 $route['pathlab-verifymobile'] 			= 'pathlabpanel/verifymobile';
@@ -179,12 +185,29 @@ $route['news/:any'] 					= 'home/news_details/$1';
 $route['tnc'] 							= 'home/tnc';
 $route['profile']						= 'home/profile';
 $route['updateprofile']					= 'home/updateprofile';
-$route['mytest'] 						= 'home/mytest';
+$route['mytest'] 						= 'mytest/index';
+$route['mytest/add_to_cart'] 			= 'mytest/add_to_cart';
+$route['mytest/remove_from_cart'] 		= 'mytest/remove_from_cart';
+$route['mytest/clear_cart'] 			= 'mytest/clear_cart';
+$route['mytest/get_cart'] 				= 'mytest/get_cart';
+$route['mytest/checkout'] 				= 'mytest/checkout';
+$route['mytest/process_payment'] 		= 'mytest/process_payment';
+$route['mytest/order_success/(:num)'] 	= 'mytest/order_success/$1';
+$route['mytest/(:any)'] 				= 'mytest/$1';
+$route['diagnostic'] 					= 'mytest/index';
+$route['pathlabview'] 					= 'pathology/index';
+$route['pathlabview/(:any)'] 			= 'pathology/$1';
+$route['pathology'] 					= 'pathology/index';
+$route['pathology/(:any)'] 				= 'pathology/$1';
 $route['bed-availability'] 				= 'home/bed_availability';
 
 $route['privacy'] 						= 'home/privacy';
 $route['refund_cancellation'] 			= 'home/refund_cancellation';
 $route['myappointents'] 				= 'home/manageappointment';
+$route['myappointments'] 				= 'home/manageappointment';
+$route['change_password'] 				= 'home/change_password';
+$route['logout'] 						= 'home/logout';
 $route['processorder'] 					= 'paysecure/processorder';
 $route['processordercod'] 				= 'paysecure/processordercod';
+
 

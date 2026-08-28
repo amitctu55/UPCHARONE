@@ -1,305 +1,342 @@
-<?php 
-$this->load->view('inc/topheaderlink');
-$this->load->view('inc/topheader');
-?>
-<!DOCTYPE html>
-<html>
-  <style>
-  .label-name{
-	  text-align:left!important;
-	  margin-top:-5px;
-  }
-  .starspan
-  {
-	  color:#e80909;
-	  font-size:18px;
-  }
-  .mainheadlinerow
-  {
-	  padding:5px;margin-top:10px;margin-bottom:10px;
-  }
-  .mainheadline
-  {
-	  background:#3c8dbc;margin-top:10px;margin-bottom:10px;color:#fff;padding:9px;font-weight:600;
-  }
-  .mainheadlinefirstrow
-  {
-	  padding:5px;
-  }
-  .mainheadlinefirst
-  {
-	  background:#3c8dbc;margin-top:-15px;margin-bottom:15px;color:#fff;padding:9px;font-weight:600;
-  }
-  .othernote{
-      font-weight:600;font-size:13px;color:#d20c0c;
-  }
-  .mainhead{font-weight:600;margin-bottom:20px;}
-  .formbody{border:1px solid #d6d2d2;padding:10px;border-radius:4px;}
-  .note{font-weight:600;margin-top:10px;margin-bottom:20px;}
-  
-  #reset{background:#fff;color:#000;padding: 6px 30px;}
-  .docimg {
-    margin-bottom: 30px;
-    height: 134px;
-    border-radius: 14px;
-    box-shadow: 0px -5px 4px -1px #848181;
-    width: 122px;
-}
-  .doc_nam_inf span {
-    font-size: 12px;
-    color: #9bc03c;
-    letter-spacing: 0.8px;
-    font-size: 16px;
-    font-weight: 600;
-    font-family: 'Lato', sans-serif;
-}
-ol, ul {
-    margin: 0;
-    padding: 0;
-    border: 0;
-    font-size: 100%;
-    font: inherit;
-    vertical-align: baseline;
-}
-ul {
-    display: block;
-    list-style-type: disc;
-    margin-block-start: 1em;
-    margin-block-end: 1em;
-    margin-inline-start: 0px;
-    margin-inline-end: 0px;
-    padding-inline-start: 40px;
-}
-  </style>
-<body class="hold-transition skin-blue sidebar-mini">
-	<div class="wrapper">
-		<!--there was sidebar -->
-		<!-- Content Wrapper. Contains page content -->
-		<div class="content-wrapper">
-			<!-- Content Header (Page header) -->
-			<!-- Main content -->
-			<section class="content">
-				<link rel="stylesheet" href="https://jqueryvalidation.org/files/demo/site-demos.css">
-				<link rel="stylesheet" href="<?=base_url();?>public/assets/dist/css/metallic/zebra_datepicker.min.css" type="text/css">
-				<div class="container bg-3 ">  
-					<div class="row text-">
-						<div class="container">
-							<h4 class="mainhead">Book Test</h4>
-							<?=$this->session->flashdata('flashmsg');?>
-							<?php echo form_open("doctor/path_appointment/book_test",'class="form-horizontal formbody" id="search_form" method="get"');  ?>
-							<div class="row mainheadlinefirstrow">
-								<div class="col-md-12 mainheadlinefirst">Pathology Details</div>
-							</div>
-							<div class="row">
-								<div class="col-md-12">
-									<div class="form-group">
-										<label class="control-label col-sm-2 label-name" for="email">City Name<span class="starspan"></span></label>
-										<div class="col-sm-3">
-											<select class="form-control" id="city_name" name="city_name" >
-												<option value="">Select</option>
-												<?php $city = $this->path_appointmentmodel->get_city(array('status'=>'1'));
-												if(is_array($city) && !empty($city)){
-												foreach($city as $list){
-												?>
-												<option value="<?php echo $list['id'];?>" <?php if($this->input->get_post('city_name')==$list['id']){ echo "selected";}?>  ><?php echo $list['name'];?></option>
-												<?php } } ?>
-											</select>
-										</div>
-										<label class="control-label col-sm-2 label-name" for="email">Pathology Name<span class="starspan"></span></label>
-										<div class="col-sm-3">
-											<select class="form-control" id="pathlab_id" name="pathlab_id" >
-												<option value="">Select</option>
-												<?php  
-												$pathlab_list  	=  $this->path_appointmentmodel->pathlab_list(array('city'=>$this->input->get_post('city_name'))); 
-												if(is_array($pathlab_list) && !empty($pathlab_list)){
-												foreach($pathlab_list as $val){
-												?>
-												<option value="<?php echo $val['id'] ?>" <?php if($val['id']==$this->input->get_post('pathlab_id')){ echo "selected"; }?>><?php echo $val['name']?></option>
-												<?php }} ?>
-											</select>
-										</div>
-										<div class="col-sm-2">
-											<a  onclick="$('#search_form').submit();" style="padding-top:1px" class="button2 btn-lg btn btn-info" ><span> Search </span></a>
-											<?php 
-											 if($this->input->get_post('city_name')!='' || $this->input->get_post('pathlab_id')!='')
-											  { 
-												echo anchor("doctor/path_appointment/book_test/",'<span>Clear Search</span>');    
-											  } 
-											?>
-										</div>
-									</div>
-								</div>
-							</div>
-							<?php echo form_close();?>
-							<?php echo form_open_multipart(current_url_query_string(), 'class="form-horizontal formbody" id="form"');?>
-							<div class="row mainheadlinefirstrow">
-								<div class="col-md-12 mainheadlinefirst">Test's Details</div>
-							</div>
-							<div class="table-responsive">
-								<table class="table table-hover table-bordered table-bordered" id='example' style="border:none;">
-									<thead>
-										<tr>
-											<th><input type="checkbox" style="width:30px;" name="checkall" id="checkall"  onClick="check_uncheck_checkbox(this.checked);"/></th>
-											<th class="tableheaddata">Test Name</th>
-											<th class="tableheaddata">Test Short Name</th>
-											<th class="tableheaddata">Test Type</th>
-											<th class="tableheaddata">Method</th>
-											<th class="tableheaddata">Code</th>
-											<th class="tableheaddata">Amount</th>
-										</tr>
-									</thead>
-									<?php $test_arr_id = $this->input->post('arr_ids');
-									if(is_array($path_test) && !empty($path_test))
-									{
-									foreach($path_test as $val)
-									{
-									?>
-									<tbody>
-										<tr>
-											<td><input style="width:45px;" type="checkbox" name="arr_ids[]" <?php if(is_array($test_arr_id) && !empty($test_arr_id)){ if(in_array($val['test_id'], $test_arr_id)){ echo "checked";}} ?> value="<?php echo $val['test_id'];?>" id="check-all" class="flat"></td>
-											<td class="tableheaddata"><?php echo $val['test_name']?></td>
-											<td class="tableheaddata"><?php echo $val['short_name'];?></td>
-											<td class="tableheaddata"><?php echo $val['test_type'];?></td>
-											<td class="tableheaddata"><?php echo $val['method']?></td>
-											<td class="tableheaddata"><?php echo $val['code']?></td>
-											<td class="tableheaddata"><?php echo $val['amount']?></td>
-										</tr>
-									</tbody>
-									<?php 
-									}
-									}
-									?>
-									<tfoot>
-									  <tr>
-										<th><input type="checkbox" style="width:30px;" name="checkall" id="checkall"  onClick="check_uncheck_checkbox(this.checked);"/></th>
-										<th class="tableheaddata">Test Name</th>
-										<th class="tableheaddata">Test Short Name</th>
-										<th class="tableheaddata">Test Type</th>
-										<th class="tableheaddata">Method</th>
-										<th class="tableheaddata">Code</th>
-										<th class="tableheaddata">Amount</th>
-									  </tr>
-									</tfoot>
-								</table>
-							</div>
-							<div class="row">
-								<div class="col-md-6">
-									<span style="color:red;"><?php echo form_error('arr_ids[]');?></span>
-								</div>
-								<div class="col-md-6">
-									<div class="pagination"><?php //echo $page_links; ?></div>
-								</div>
-							</div>
-							<!--Basic Details-->
-							<div class="row mainheadlinefirstrow">
-								<div class="col-md-12 mainheadlinefirst">Patient's Details</div>
-							</div>
-							<div class="row">
-								<div class="col-md-12">
-									<div class="form-group">
-										<label class="control-label col-sm-2 label-name" for="email">Pathology<span class="starspan">*</span></label>
-										<div class="col-sm-4">
-											<input type="text" name="pathlab_id"  id='pathlab_id' class="form-control" readonly value="<?php echo $this->input->get('pathlab_id');?>" placeholder="Pathology Name">
-											<span style="color:red;"><?php echo form_error('pathlab_id');?></span>
-										</div>
-										<label class="control-label col-sm-2 label-name" for="email">Name<span class="starspan">*</span></label>
-										<div class="col-sm-4">
-											<input type="text" name="patient_name"  id='patient_name' class="form-control" value="<?php echo set_value('patient_name');?>" placeholder="Patient Name">
-											<span style="color:red;"><?php echo form_error('patient_name');?></span>
-										</div>
-									</div>
-									<div class="form-group">
-										<label class="control-label col-sm-2 label-name" for="email">Mobile<span class="starspan">*</span></label>
-										<div class="col-sm-4">
-											<input type="text" id='patient_mobile' name="patient_mobile" class="form-control" value="<?php echo set_value('patient_mobile');?>"  placeholder="Mobile Number" >
-											<span style="color:red;"><?php echo form_error('patient_mobile');?></span>
-										</div>
-										<label class="control-label col-sm-2 label-name" for="email">Email<span class="starspan"></span></label>
-										<div class="col-sm-4">
-											<input type="text" name="patient_email" class="form-control"  placeholder="Email Id">
-											<span style="color:red;"><?php echo form_error('patient_email');?></span>
-										</div>
-									</div>
-								</div>
-							</div>
-							<div class="row">
-								<div class="col-md-12">
-									<div class="form-group">        
-										<div class="col-sm-9">
-											<input type="submit" class="btn btn-info" id="submit" name="submit" value='Add' />
-											<button type="reset" class="btn btn-info" id="reset" name="reset">Reset</button>
-										</div>
-									</div>
-								</div>
-							</div>
-							<?php echo form_close();?>
-						</div>
-					</div>
-				</div>
-			</section>
-			<!-- /.content -->
-		</div>
-		<!-- /.content-wrapper -->
-		<?=$this->load->view('inc/footer');?>
-		<div class="control-sidebar-bg"></div>
-	</div>
-<!-- ./wrapper -->
-</body>
-</html>
-<script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
-<script type="text/javascript">
-	$(document).ready(function() {
-	$('#example').DataTable();
-	} );
-</script> 
-<script>
+<div class="content-wrapper">
+  <!-- Content Header & Breadcrumbs -->
+  <section class="content-header" style="padding: 20px 20px 10px;">
+    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+      <div>
+        <h1 style="font-size: 22px; font-weight: 700; color: #1E293B; margin: 0 0 4px 0; font-family: 'Inter', sans-serif;">
+          Book Diagnostic Lab Test
+        </h1>
+        <p style="margin: 0; color: #64748B; font-size: 13px;">Create new pathology appointments, sample collection requests, and calculate test pricing</p>
+      </div>
+      <div style="display: flex; gap: 10px; align-items: center;">
+        <a href="<?=base_url('doctor/path_appointment')?>" class="btn btn-sm btn-default" style="background: #F1F5F9; color: #334155; font-weight: 600; padding: 8px 16px; border-radius: 6px; border: 1px solid #CBD5E1; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; font-size: 13px;">
+          <i class="fa fa-arrow-left"></i> Back to Bookings List
+        </a>
+      </div>
+    </div>
+  </section>
 
-$(function() {
-    $('#city_name').change( function() 
-	{
-        var val = $(this).val();
-        //alert(val);
-        if (val!='') 
-        {
-			$.ajax({
-               url: '<?php echo base_url();?>doctor/path_appointment/get_pathlab_by_city_id/',
-               dataType: 'html',
-               data: { city_id : val },
-               success: function(data) {
-                   $('#pathlab_id').html( data );
-               }
-            });
+  <!-- Main content -->
+  <section class="content" style="padding: 15px 20px 40px;">
+    <div class="container-fluid" style="padding: 0;">
+
+      <!-- Flash Alert Messages -->
+      <?php if($this->session->flashdata('flashmsg')): ?>
+        <div style="margin-bottom: 15px;">
+          <?=$this->session->flashdata('flashmsg');?>
+        </div>
+      <?php endif; ?>
+
+      <?php if(validation_errors()): ?>
+        <div class="alert alert-danger" style="border-radius: 8px; font-size: 13px;">
+          <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+          <strong><i class="fa fa-exclamation-triangle"></i> Please check the following:</strong>
+          <?=validation_errors();?>
+        </div>
+      <?php endif; ?>
+
+      <!-- STEP 1: Select City & Diagnostic Lab -->
+      <div class="master-card" style="margin-bottom: 20px;">
+        <div class="master-card-header">
+          <h3 class="master-card-title">
+            <i class="fa fa-hospital-o" style="color: #00a896;"></i>
+            <span>Step 1: Select Pathology Laboratory & Location</span>
+          </h3>
+        </div>
+
+        <div class="master-card-body" style="padding: 20px;">
+          <form action="<?=base_url('doctor/path_appointment/book_test')?>" method="get" id="lab_select_form">
+            <div class="row">
+              <div class="col-md-4 col-sm-6 form-group">
+                <label style="font-weight: 600; font-size: 13px; color: #334155; margin-bottom: 6px;">
+                  1. City Coverage <span style="color: #ef4444;">*</span>
+                </label>
+                <select class="form-control" id="city_name" name="city_name" style="border-radius: 6px; height: 38px;">
+                  <option value="">-- Choose City --</option>
+                  <?php 
+                  $cityList = $this->path_appointmentmodel->get_city(array('status'=>'1'));
+                  if(is_array($cityList) && !empty($cityList)):
+                    foreach($cityList as $list):
+                  ?>
+                    <option value="<?=$list['id'];?>" <?=$this->input->get_post('city_name')==$list['id']?'selected':'';?>><?=$list['name'];?></option>
+                  <?php endforeach; endif; ?>
+                </select>
+              </div>
+
+              <div class="col-md-5 col-sm-6 form-group">
+                <label style="font-weight: 600; font-size: 13px; color: #334155; margin-bottom: 6px;">
+                  2. Pathology Laboratory <span style="color: #ef4444;">*</span>
+                </label>
+                <select class="form-control" id="pathlab_select" name="pathlab_id" style="border-radius: 6px; height: 38px;">
+                  <option value="">-- Choose Lab --</option>
+                  <?php  
+                  $selectedCity = $this->input->get_post('city_name');
+                  $pathlabFilter = !empty($selectedCity) ? array('city' => $selectedCity) : array();
+                  $pathlab_list = $this->path_appointmentmodel->pathlab_list($pathlabFilter); 
+                  if(is_array($pathlab_list) && !empty($pathlab_list)):
+                    foreach($pathlab_list as $val):
+                  ?>
+                    <option value="<?=$val['id'];?>" <?=$val['id']==$this->input->get_post('pathlab_id')?'selected':'';?>><?=$val['name'];?></option>
+                  <?php endforeach; endif; ?>
+                </select>
+              </div>
+
+              <div class="col-md-3 col-sm-12 form-group" style="display: flex; align-items: flex-end; gap: 8px;">
+                <button type="submit" class="btn btn-primary" style="height: 38px; background: #00a896; border-color: #00a896; font-weight: 600; border-radius: 6px; width: 100%;">
+                  <i class="fa fa-filter"></i> Load Lab Tests
+                </button>
+                <?php if($this->input->get_post('city_name') || $this->input->get_post('pathlab_id')): ?>
+                  <a href="<?=base_url('doctor/path_appointment/book_test')?>" class="btn btn-default" style="height: 38px; border-radius: 6px; font-weight: 600;" title="Clear Filter">
+                    <i class="fa fa-times text-danger"></i>
+                  </a>
+                <?php endif; ?>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- MAIN BOOKING FORM -->
+      <?=form_open_multipart(current_url_query_string(), 'id="booking_form"');?>
+        <input type="hidden" name="pathlab_id" value="<?=$this->input->get('pathlab_id');?>">
+
+        <!-- STEP 2: Test Selection & Live Calculator -->
+        <div class="master-card" style="margin-bottom: 20px;">
+          <div class="master-card-header" style="display: flex; justify-content: space-between; align-items: center;">
+            <h3 class="master-card-title">
+              <i class="fa fa-flask" style="color: #00a896;"></i>
+              <span>Step 2: Select Prescribed Diagnostic Tests</span>
+            </h3>
+            <div style="background: #e0f2fe; color: #0284c7; padding: 6px 14px; border-radius: 20px; font-weight: 700; font-size: 13px; border: 1px solid #bae6fd;">
+              Selected Total: <span style="color: #0f766e; font-size: 15px;">₹<span id="live-total-cost">0.00</span></span> (<span id="live-selected-count">0</span> Tests)
+            </div>
+          </div>
+
+          <div class="master-card-body" style="padding: 20px;">
+            <?php if(!empty($this->input->get('pathlab_id'))): ?>
+              <div class="table-responsive" style="border-radius: 8px; border: 1px solid #e2e8f0;">
+                <table class="table table-hover table-striped" id="test-picker-table" style="margin: 0;">
+                  <thead>
+                    <tr>
+                      <th style="width: 40px; text-align: center;">
+                        <input type="checkbox" id="select-all-test-items" style="cursor: pointer; width: 16px; height: 16px; accent-color: #00a896;">
+                      </th>
+                      <th>Diagnostic Test Name</th>
+                      <th>Short Code</th>
+                      <th>Method / Technology</th>
+                      <th>Sample Type</th>
+                      <th style="width: 120px; text-align: right;">Lab Price (₹)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <?php 
+                    $selectedTestIds = (array)$this->input->post('arr_ids');
+                    if(is_array($path_test) && !empty($path_test)):
+                      foreach($path_test as $val):
+                        $tid = $val['test_id'];
+                        $isChecked = in_array($tid, $selectedTestIds);
+                        $amount = floatval($val['amount']);
+                    ?>
+                      <tr id="test-row-<?=$tid;?>" style="<?=$isChecked ? 'background: #f0fdfa;' : '';?>">
+                        <td style="text-align: center; vertical-align: middle;">
+                          <input type="checkbox" name="arr_ids[]" value="<?=$tid;?>" data-amount="<?=$amount;?>" class="test-item-checkbox" <?=$isChecked ? 'checked' : '';?> style="cursor: pointer; width: 16px; height: 16px; accent-color: #00a896;">
+                        </td>
+                        <td style="vertical-align: middle;">
+                          <strong style="color: #1e293b; font-size: 13.5px;"><?=htmlspecialchars($val['test_name']);?></strong>
+                        </td>
+                        <td style="vertical-align: middle;">
+                          <span class="label label-default" style="background-color: #f1f5f9 !important; color: #475569 !important; border: 1px solid #e2e8f0; font-size: 11.5px;">
+                            <?=htmlspecialchars($val['short_name']);?>
+                          </span>
+                        </td>
+                        <td style="vertical-align: middle; color: #64748b; font-size: 12.5px;">
+                          <?=htmlspecialchars($val['method'] ? $val['method'] : 'Standard Clinical Automated');?>
+                        </td>
+                        <td style="vertical-align: middle;">
+                          <span class="label label-info" style="background-color: #e0f2fe !important; color: #0284c7 !important; border: 1px solid #bae6fd; font-size: 11px;">
+                            <i class="fa fa-tint"></i> Blood / Serum
+                          </span>
+                        </td>
+                        <td style="text-align: right; vertical-align: middle; font-weight: 700; color: #00a896; font-size: 14px;">
+                          ₹<?=number_format($amount, 2);?>
+                        </td>
+                      </tr>
+                    <?php endforeach; else: ?>
+                      <tr>
+                        <td colspan="6" style="text-align: center; padding: 40px 20px; color: #94a3b8;">
+                          <i class="fa fa-flask fa-3x" style="margin-bottom: 10px; display: block; opacity: 0.5;"></i>
+                          <p style="font-size: 14px; font-weight: 500; margin: 0;">No active tests assigned to this laboratory. Please select another lab or assign tests in Master.</p>
+                        </td>
+                      </tr>
+                    <?php endif; ?>
+                  </tbody>
+                </table>
+              </div>
+            <?php else: ?>
+              <div style="text-align: center; padding: 40px 20px; background: #f8fafc; border-radius: 8px; border: 1px dashed #cbd5e1;">
+                <i class="fa fa-hospital-o fa-3x" style="color: #94a3b8; margin-bottom: 10px;"></i>
+                <h4 style="font-size: 16px; font-weight: 600; color: #334155; margin: 0 0 6px;">Select a Pathology Laboratory Above</h4>
+                <p style="font-size: 13px; color: #64748b; margin: 0;">Choose a City and Pathology Lab in Step 1 to load available tests and prices.</p>
+              </div>
+            <?php endif; ?>
+          </div>
+        </div>
+
+        <!-- STEP 3: Patient Information & Collection Preferences -->
+        <div class="master-card" style="margin-bottom: 25px;">
+          <div class="master-card-header">
+            <h3 class="master-card-title">
+              <i class="fa fa-user" style="color: #00a896;"></i>
+              <span>Step 3: Patient Information & Sample Collection Preferences</span>
+            </h3>
+          </div>
+
+          <div class="master-card-body" style="padding: 20px;">
+            <div class="row">
+              <div class="col-md-4 col-sm-6 form-group">
+                <label style="font-weight: 600; font-size: 13px; color: #334155; margin-bottom: 6px;">
+                  Patient Full Name <span style="color: #ef4444;">*</span>
+                </label>
+                <input type="text" name="patient_name" id="patient_name" class="form-control" value="<?=set_value('patient_name');?>" placeholder="e.g. Ramesh Kumar" required style="border-radius: 6px; height: 38px;">
+              </div>
+
+              <div class="col-md-4 col-sm-6 form-group">
+                <label style="font-weight: 600; font-size: 13px; color: #334155; margin-bottom: 6px;">
+                  Patient Mobile Number <span style="color: #ef4444;">*</span>
+                </label>
+                <input type="text" name="patient_mobile" id="patient_mobile" class="form-control" value="<?=set_value('patient_mobile');?>" placeholder="10-digit mobile number" required maxlength="12" style="border-radius: 6px; height: 38px;">
+              </div>
+
+              <div class="col-md-4 col-sm-12 form-group">
+                <label style="font-weight: 600; font-size: 13px; color: #334155; margin-bottom: 6px;">
+                  Patient Email (Optional)
+                </label>
+                <input type="email" name="patient_email" id="patient_email" class="form-control" value="<?=set_value('patient_email');?>" placeholder="patient@example.com" style="border-radius: 6px; height: 38px;">
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-4 col-sm-6 form-group">
+                <label style="font-weight: 600; font-size: 13px; color: #334155; margin-bottom: 6px;">
+                  Sample Collection Preference
+                </label>
+                <select class="form-control" name="collection_type" style="border-radius: 6px; height: 38px;">
+                  <option value="Home Pickup">🏠 Home Sample Collection (Free / Pickup)</option>
+                  <option value="Lab Visit">🏥 Walk-in Diagnostic Center Visit</option>
+                </select>
+              </div>
+
+              <div class="col-md-4 col-sm-6 form-group">
+                <label style="font-weight: 600; font-size: 13px; color: #334155; margin-bottom: 6px;">
+                  Preferred Appointment Date
+                </label>
+                <input type="date" name="preferred_date" class="form-control" value="<?=date('Y-m-d');?>" min="<?=date('Y-m-d');?>" style="border-radius: 6px; height: 38px;">
+              </div>
+
+              <div class="col-md-4 col-sm-12 form-group">
+                <label style="font-weight: 600; font-size: 13px; color: #334155; margin-bottom: 6px;">
+                  Fasting / Clinical Instruction
+                </label>
+                <select class="form-control" name="fasting_status" style="border-radius: 6px; height: 38px;">
+                  <option value="Fasting Required (10-12 hrs)">Fasting Required (10-12 hrs, e.g., FBS, Lipid)</option>
+                  <option value="Non-Fasting (Random)">Non-Fasting (Anytime / Random)</option>
+                  <option value="Post Prandial (2 hrs after meal)">Post Prandial (PP - 2 hrs after meal)</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 15px; border-top: 1px solid #f1f5f9; padding-top: 16px;">
+              <button type="reset" class="btn btn-default" style="border-radius: 6px; font-weight: 600; padding: 8px 20px;">
+                <i class="fa fa-refresh"></i> Reset
+              </button>
+              <button type="submit" name="submit" value="Add" class="btn btn-primary" style="background: #00a896; border-color: #00a896; font-weight: 600; padding: 8px 28px; border-radius: 6px; font-size: 14px;">
+                <i class="fa fa-check-circle"></i> Confirm & Book Lab Order
+              </button>
+            </div>
+          </div>
+        </div>
+      <?=form_close();?>
+
+    </div>
+  </section>
+</div>
+
+<script>
+function calculateTestTotal() {
+  var total = 0;
+  var count = 0;
+  $('.test-item-checkbox:checked').each(function(){
+    var amt = parseFloat($(this).data('amount')) || 0;
+    total += amt;
+    count++;
+    $(this).closest('tr').css('background', '#f0fdfa');
+  });
+
+  $('.test-item-checkbox:not(:checked)').each(function(){
+    $(this).closest('tr').css('background', '');
+  });
+
+  $('#live-total-cost').text(total.toFixed(2));
+  $('#live-selected-count').text(count);
+
+  var totalBoxes = $('.test-item-checkbox').length;
+  if (count > 0 && count === totalBoxes) {
+    $('#select-all-test-items').prop('checked', true).prop('indeterminate', false);
+  } else if (count > 0 && count < totalBoxes) {
+    $('#select-all-test-items').prop('checked', false).prop('indeterminate', true);
+  } else {
+    $('#select-all-test-items').prop('checked', false).prop('indeterminate', false);
+  }
+}
+
+$(document).ready(function(){
+  calculateTestTotal();
+
+  $(document).on('change', '.test-item-checkbox', function(){
+    calculateTestTotal();
+  });
+
+  $(document).on('change', '#select-all-test-items', function(){
+    var isChecked = $(this).prop('checked');
+    $('.test-item-checkbox').prop('checked', isChecked);
+    calculateTestTotal();
+  });
+
+  // Dynamic Lab loading on city change
+  $('#city_name').change(function(){
+    var cityId = $(this).val();
+    if (cityId != '') {
+      $.ajax({
+        url: '<?=base_url('doctor/path_appointment/get_pathlab_by_city_id')?>',
+        type: 'GET',
+        data: { city_id: cityId },
+        success: function(data){
+          $('#pathlab_select').html(data);
         }
-		else 
-        {
-		   $("#pathlab_id").empty();
-        }
-    });
+      });
+    } else {
+      $('#pathlab_select').html('<option value="">-- Choose Lab --</option>');
+    }
+  });
+
+  // Client Validation on submit
+  $('#booking_form').submit(function(e){
+    var selectedTests = $('.test-item-checkbox:checked').length;
+    var labId = $('input[name="pathlab_id"]').val();
+
+    if (!labId) {
+      alert('Please choose a pathology lab in Step 1 first.');
+      e.preventDefault();
+      return false;
+    }
+
+    if (selectedTests === 0) {
+      alert('Please select at least one diagnostic test to book.');
+      e.preventDefault();
+      return false;
+    }
+    return true;
+  });
 });
 </script>
-<script>
-$(function() {
-    $('#pathlab_id').change( function() 
-	{
-        var val 	= $(this).val();
-        if (val!='') 
-        {
-            $('#doctor_name').val('');
-            $.ajax({
-				url: '<?php echo base_url();?>doctor/appointment/get_hospital_by_locality_id/',
-				dataType: 'html',
-				data:{"city_id": city_id},
-				success: function(data) {
-                $('#hospital_name').html(data);
-               }
-            });
-        }
-    });
-}); 
-</script>
-<?php 
-$this->load->view('sidebar');
-$this->load->view('inc/headersetting');
-$this->load->view('inc/footerlink');
-$this->load->view('inc/table_footer');
-?>

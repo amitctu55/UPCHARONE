@@ -1,69 +1,107 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 
-class Login extends CI_Controller 
-{
-	function __construct() 
-	{
-		 parent::__construct();
-		 date_default_timezone_set("Asia/Kolkata");
-		 $date=date('Y-m-d h:i:s');
-	}
-	 
-	public function index()
-	{	
-		$this->load->view('inc/topheaderlink');
-		$this->load->view('mlogin');
-	}
-	
-	public function login()
-	{
-		$usn=$this->input->post('name');
-		$pwd=md5($this->input->post('password'));
-		
-		 $this->db->select('*')
-	          ->from('login')
-	          ->where('username', $usn)
-	          ->where('password', $pwd)
-	          ->where('status', '1');
-		
-		
-	 	$count = $this->db->count_all_results();
-		
-		if($count=='1')
-		{
-			$this->db->where('username', $usn);
-			$this->db->where('password', $pwd);
-			$query = $this->db->get('login')->row();
-			$data=array('adminuserid'=>$query->id,'username'=>$query->username,'pwd'=>$query->password,'code'=>$query->role,'institution_id'=>$query->id);
-			//print_r($data); die;
-			$this->session->set_userdata($data);
-			redirect(base_url().'masters/dashboard');
-			/*switch($query->role){
-				case 'A': 	redirect(base_url().'masters/dashboard');
-							break;
-				case 'C': 	redirect(base_url().'ccenter/dashboard');
-							break;
-				case 'SC': 	redirect(base_url().'sccenter/dashboard');
-							break;
-				case 'AG': 	redirect(base_url().'agency/dashboard');
-							break;
-				case 'NMU':	redirect(base_url().'nmu/dashboard');
-							break;
-				case 'MIN':	redirect(base_url().'dipp/dashboard');
-							break;
-				default:	redirect(base_url().'login');
-							
-			}*/
-			
-		}
-		else{
-			$msg="<p style='color:#f71212;font-weight:600;'>Invalid Username or Password </p>";
-			$this->session->set_flashdata('flashmsg',$msg);
-			redirect(base_url().'login');
-		}
+class Login extends CI_Controller {
 
-	}
-	
-	
+    public function __construct() {
+        parent::__construct();
+        date_default_timezone_set("Asia/Kolkata");
+    }
+
+    /**
+     * Main Login Page & Form Handler
+     */
+    public function index() {
+        // If already authenticated, redirect to dashboard
+        if ($this->session->userdata('adminuserid') || $this->session->userdata('userid')) {
+            redirect(base_url('masters/dashboard'));
+            return;
+        }
+
+        // If POST request received on index, process authentication
+        if ($this->input->server('REQUEST_METHOD') === 'POST' || $this->input->post('name')) {
+            $this->process_login();
+            return;
+        }
+
+        // Render login view
+        $this->load->view('inc/topheaderlink');
+        $this->load->view('mlogin');
+    }
+
+    /**
+     * Auth alias methods for /login/auth, /login/login, and /login/login/login
+     */
+    public function auth() {
+        if ($this->input->server('REQUEST_METHOD') === 'POST' || $this->input->post('name')) {
+            $this->process_login();
+        } else {
+            $this->index();
+        }
+    }
+
+    public function login() {
+        if ($this->input->server('REQUEST_METHOD') === 'POST' || $this->input->post('name')) {
+            $this->process_login();
+        } else {
+            $this->index();
+        }
+    }
+
+    /**
+     * Core Login Authentication Processor
+     */
+    protected function process_login() {
+        $username = trim($this->input->post('name', TRUE));
+        $password_plain = $this->input->post('password');
+
+        if (empty($username) || empty($password_plain)) {
+            $msg = "<div class='alert alert-danger' style='border-radius:6px;'><i class='fa fa-exclamation-triangle'></i> Please enter both username and password.</div>";
+            $this->session->set_flashdata('flashmsg', $msg);
+            redirect(base_url('login'));
+            return;
+        }
+
+        $password_hash = md5($password_plain);
+
+        $this->db->select('*')
+                 ->from('login')
+                 ->where('username', $username)
+                 ->where('password', $password_hash)
+                 ->where('status', '1');
+
+        $query = $this->db->get()->row();
+
+        if (!empty($query)) {
+            $session_data = array(
+                'adminuserid'    => $query->id,
+                'userid'         => $query->id,
+                'username'       => $query->username,
+                'name'           => $query->name ?? $query->username,
+                'pwd'            => $query->password,
+                'code'           => $query->role,
+                'institution_id' => $query->id,
+                'logged_in'      => TRUE
+            );
+
+            $this->session->set_userdata($session_data);
+            redirect(base_url('masters/dashboard'));
+        } else {
+            $msg = "<div class='alert alert-danger' style='border-radius:6px;'><i class='fa fa-exclamation-circle'></i> Invalid Username or Password. Please try again.</div>";
+            $this->session->set_flashdata('flashmsg', $msg);
+            redirect(base_url('login'));
+        }
+    }
+
+    /**
+     * Admin Signout
+     */
+    public function logout() {
+        $this->session->sess_destroy();
+        redirect(base_url('login'));
+    }
+
+    public function signout() {
+        $this->logout();
+    }
 }

@@ -291,7 +291,7 @@ class User_Model extends CI_Model {
 		$this->db->select('profile_dr.fname,profile_dr.email as dr_email,hospital.name,appointment.*');
 		$this->db->join('profile_dr','profile_dr.id=appointment.doctor_id');
 		$this->db->join('hospital','hospital.uid=appointment.institute_id');
-		$result = $this->db->get_where('appointment', array('appointment_id'))->row_array();
+		$result = $this->db->get('appointment')->row_array();
 		return $result;
 	}
 	

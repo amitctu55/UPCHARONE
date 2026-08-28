@@ -1,316 +1,185 @@
-<!DOCTYPE html>
-<html>
+<div class="content-wrapper">
+  <!-- Content Header & Breadcrumbs -->
+  <section class="content-header" style="padding: 20px 20px 10px;">
+    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+      <div>
+        <h1 style="font-size: 22px; font-weight: 700; color: #1e293b; margin: 0;">Admin Users & Staff</h1>
+        <small style="color: #64748b; font-size: 13px;">Manage administrator accounts, staff roles, and access credentials</small>
+      </div>
+      <ol class="breadcrumb" style="position: static; float: none; margin: 0; background: transparent; padding: 0;">
+        <li><a href="<?=base_url('masters/dashboard')?>" style="color: #00a896;"><i class="fa fa-dashboard"></i> Dashboard</a></li>
+        <li><a href="<?=base_url('users/users/usercreate')?>" style="color: #64748b;">Staff</a></li>
+        <li class="active" style="color: #1e293b; font-weight: 600;">Users</li>
+      </ol>
+    </div>
+  </section>
 
-  <style>
-  .tabledata{border:1px solid #fff!important; font-weight:600; }
-  .tableheaddata{border:1px solid #fff!important;background:#605CA8;color:#fff;}
-  .label-name{ text-align:left!important; }
-  .starspan  {  color:#e80909; font-size:18px; }
-  .mainheadlinerow { padding:5px;margin-top:10px;margin-bottom:10px; }
-  .mainheadline  { background:#605CA8;margin-top:10px;margin-bottom:10px;color:#fff;padding:9px;font-weight:600; }
-  .mainheadlinefirstrow { padding:5px; }
-  .mainheadlinefirst {background:#3c8dbc;margin-top:-15px;margin-bottom:15px;color:#fff;padding:9px;font-weight:600; }
-  .mainhead{ font-weight:600;margin-bottom:20px; }
-  .formbody{ border:1px solid #d6d2d2;padding:10px;border-radius:4px; }
-  .note{ font-weight:600;font-size:17px;margin-top:10px;margin-bottom:20px;}
-  .othernote{  font-weight:600;font-size:13px;color:#d20c0c;}
- 
-  #reset{background:#fff;color:#000;padding: 6px 30px;}
-  </style>
+  <!-- Main content -->
+  <section class="content" style="padding: 15px 20px;">
+    <div class="container-fluid" style="padding: 0;">
+      
+      <!-- Flash Alert Messages -->
+      <?php if($this->session->flashdata('flashmsg')): ?>
+        <div style="margin-bottom: 15px;">
+          <?=$this->session->flashdata('flashmsg');?>
+        </div>
+      <?php endif; ?>
 
-<body class="hold-transition skin-blue sidebar-mini">
-	<div class="wrapper">	
-  		<div class="content-wrapper">
-    		<!-- Content Header (Page header) -->
-    		<section class="content-header">
-      			<ol class="breadcrumb">
-        			<li><a href="#"><i class="fa fa-dashboard"></i> Users</a></li>
-        			<li class="active">User Create</li>
-  				</ol>
-    		</section>
-    		<!-- Main content -->
-    		<section class="content">
-				<link rel="stylesheet" href="https://jqueryvalidation.org/files/demo/site-demos.css">
-  				<link rel="stylesheet" href="<?=base_url();?>public/assets/dist/css/metallic/zebra_datepicker.min.css" type="text/css">
-				<div class="container bg-3 ">
-  					<div class="row text-">
-						<div class="container">
-							<?=$this->session->flashdata('flashmsg');?>
-							<h4 class="mainhead">Create/Edit User</h2>				<br>
-	  						<form class="form-horizontal formbody" action="<?=base_url()?>users/usercreate/create" method="post" enctype="multipart/form-data">
-								<div class="row mainheadlinefirstrow">
-									<div class="col-md-12 mainheadlinefirst">User Details</div>
-								</div>
-								<div class="row">
-	    							<div class="col-md-6">
-										<div class="form-group">
-										  	<label class="control-label col-sm-4 label-name" for="email">Name<span class="starspan">*</span></label>
-										  	<div class="col-sm-7">
-												<input type="text" class="form-control" id="username" name="username" data-validation="required"
-									 			data-validation-error-msg="This Field is required">
-												<input type="hidden" id="eid" name="eid">
-										  	</div>
-										</div>
-										<div class="form-group">
-										  	<label class="control-label col-sm-4 label-name" for="email">Mobile No.<span class="starspan">*</span></label>
-										  	<div class="col-sm-7">
-												<input type="text" class="form-control" id="usermobile" name="usermobile" data-validation="required,number" data-validation-allowing="range[6000000000;9999999999]" data-validation-error-msg="Enter 10 digit valid no." onkeypress="return isNumber(event)">
-										  	</div>
-										</div>
-										<div class="form-group">
-										  	<label class="control-label col-sm-4 label-name" for="email">Date of Birth</label>
-										  	<div class="col-sm-7">
-												<input type="text" class="form-control datepicker" id="userdob" name="userdob" onkeypress="return isNumber(event)" data-validation="required"
-									 			data-validation-error-msg="This Field is required">
-										  	</div>
-										</div>
-										<div class="form-group">
-										  	<label class="control-label col-sm-4 label-name" for="email">Active:</label>
-										  	<div class="col-sm-7">
-												<label class="radio-inline"><input type="radio" class="activeradio" id="activeyes" name="activeradio" value="1" checked>Yes</label>
-												<label class="radio-inline"><input type="radio" class="activeradio" id="activeno" name="activeradio" value="0">No</label>
-										  	</div>
-										</div>
-										<div class="form-group">
-										  	<label class="control-label col-sm-4 label-name" for="email">Reset password </label>
-										  	<div class="col-sm-7">
-												<label class="radio-inline"><input type="radio" id="resetyes" name="resetradio" onchange="resetyesradio(this)" checked>Yes</label>
-												<label class="radio-inline"><input type="radio" id="resetno" name="resetradio" onchange="resetnoradio(this)">No</label>
-												<div id="resetpwddiv" style="margin-top:35px;">
-													<input id="resetpassword" type="text" class="form-control" data-validation="required"
-													data-validation-error-msg="This Field is required" name="resetpassword" placeholder="Enter Password" style="margin-top:40px;">
-												</div>
-										  	</div>
-										</div>
-									</div>
-		 							<div class="col-md-6">
-										<div class="form-group">
-											<div class="col-sm-1"></div>
-									  		<label class="control-label col-sm-4 label-name" for="email">Address<span class="starspan">*</span></label>
-									  		<div class="col-sm-7">
-												<input id="useraddress" type="text" class="form-control" data-validation="required"
-									 				data-validation-error-msg="This Field is required" name="useraddress">
-									  		</div>
-										</div>
-										<div class="form-group">
-											<div class="col-sm-1"></div>
-										  	<label class="control-label col-sm-4 label-name" for="email">Email<span class="starspan">*</span></label>
-										  	<div class="col-sm-7">
-												<input type="text" class="form-control" id="useremail" name="useremail" data-validation="required"
-									 			data-validation-error-msg="This Field is required">
-										  	</div>
-										</div>
-										<div class="form-group">
-											<div class="col-sm-1"></div>
-										  	<label class="control-label col-sm-4 label-name" for="email">Role</label>
-										  	<div class="col-sm-7">
-												<select class="form-control" id="userrole" data-validation="required"
-												data-validation-error-msg="This Field is required" name="userrole">
-												<option value="">Select Role</option>
-												<?php $role = $this->db->get_where('rolewise',array('isStatus'=>'1'))->result_array(); 
-											  	if(is_array($role) && !empty($role)) {
-											  	foreach($role as $ro) {  
-											  	?>
-											  	<option value="<?php echo $ro['level_id'];?>"> <?php echo $ro['level_name'];?></option>
-											  	<?php } } ?>
-												</select>
-										  	</div>
-										</div>
-										<div class="form-group">
-											<div class="col-sm-1"></div>
-									  		<label class="control-label col-sm-4 label-name" for="email">User ID </label>
-									  		<div class="col-sm-7">
-												<input type="text" id="userid" name="userid" class="form-control" data-validation="required"
-													data-validation-error-msg="This Field is required">
-									  		</div>
-										</div>
-										<div class="form-group">
-											<div class="col-sm-1"></div>
-										  	<div class="col-sm-7">
-												<input type="hidden" id="usercode" name="usercode" class="form-control" data-validation="required"
-												data-validation-error-msg="This Field is required">
-										  	</div>
-										</div>
-									</div>
-								</div>
-								<div class="row">
-									<div class="col-md-12">
-										<div class="form-group">
-										  	<div class="col-sm-9">
-												<button type="submit" class="btn btn-info" id="submit" name="submit">Submit</button>
-												<a href="<?=base_url();?>users/usercreate" class="btn btn-info" id="reset">Reset</a>
-										  	</div>
-										</div>
-									</div>
-								</div>
-	  						</form>
-						</div>	<br><br><br>
-				  	</div>
-				</div><br>
-				<div class="container">
-					<table class="table table-bordered" id='mydata' style="border:none;">
-					    <thead>
-					      	<tr>
-						        <th class="tableheaddata">ID</th>
-						        <th class="tableheaddata">Name</th>
-						        <th class="tableheaddata">Address</th>
-						        <th class="tableheaddata">Mobile No.</th>
-						        <th class="tableheaddata">Email</th>
-						        <th class="tableheaddata">DOB</th>
-						        <th class="tableheaddata">User ID</th>
-						        <th class="tableheaddata">Role</th>
-								<th class="tableheaddata">Active</th>
-						        <th class="tableheaddata">Select</th>
-						        <th class="tableheaddata">Delete</th>
-					      	</tr>
-					    </thead>
-					    <tbody id="tablebody">   </tbody>
-  					</table>
-				</div>
- 
-<script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
-<script src="https://code.jquery.com/jquery-3.2.1.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
-<script type="text/javascript" src="<?=base_url();?>public/assets/dist/js/zebra_datepicker.min.js"></script>
-<script type="text/javascript" src="<?=base_url();?>public/assets/dist/js/examples.js"></script>
-<script src="//cdnjs.cloudflare.com/ajax/libs/jquery-form-validator/2.3.26/jquery.form-validator.min.js"></script>
-<script> $.validate({  }); </script>
+      <div class="row">
+        <!-- LEFT: Add / Edit User Form (5 Cols) -->
+        <div class="col-lg-5 col-md-6">
+          <div class="master-card master-sticky-form">
+            <div class="master-card-header">
+              <h3 class="master-card-title">
+                <i class="fa fa-user-plus" style="color: #00a896;"></i>
+                <span id="user-form-title">Create Admin User</span>
+              </h3>
+            </div>
 
-<script>
-$(document).ready(function(){
+            <form action="<?=base_url('users/usercreate/create')?>" method="post" id="user-admin-form" class="master-card-body">
+              <input type="hidden" id="eid" name="eid" value="">
 
-    $("body").on('click','.delete',function(){
-		var c=confirm('Are you sure to delete');
-		if(c)
-		{
-			var uid=$(this).attr('data-uid');
-			var uri='<?=base_url()?>users/usercreate/delete/'+uid
-			$.ajax({
-			 type:"post",
-			 url: uri,
-			 success: function(result){
-			   if(result=='Y')
-			   {
-				    location.reload();
+              <div class="form-group" style="margin-bottom: 15px;">
+                <label for="username" style="font-weight: 600; font-size: 13px; color: #334155;">Full Name <span style="color: #ef4444;">*</span></label>
+                <input type="text" class="form-control" id="username" name="username" placeholder="e.g. John Doe" required style="border-radius: 8px; height: 38px;">
+              </div>
 
-			   }
-			 }
+              <div class="form-group" style="margin-bottom: 15px;">
+                <label for="usermobile" style="font-weight: 600; font-size: 13px; color: #334155;">Mobile Number <span style="color: #ef4444;">*</span></label>
+                <input type="text" class="form-control" id="usermobile" name="usermobile" placeholder="10-digit mobile" maxlength="10" required style="border-radius: 8px; height: 38px;">
+              </div>
 
-			});
-		}
+              <div class="form-group" style="margin-bottom: 15px;">
+                <label for="useremail" style="font-weight: 600; font-size: 13px; color: #334155;">Email Address <span style="color: #ef4444;">*</span></label>
+                <input type="email" class="form-control" id="useremail" name="useremail" placeholder="admin@upchar.com" required style="border-radius: 8px; height: 38px;">
+              </div>
 
-    });
-});
-</script>
+              <div class="form-group" style="margin-bottom: 15px;">
+                <label for="userdob" style="font-weight: 600; font-size: 13px; color: #334155;">Date of Birth</label>
+                <input type="date" class="form-control" id="userdob" name="userdob" style="border-radius: 8px; height: 38px;">
+              </div>
 
-<script>
-$(document).ready(function(){
+              <div class="form-group" style="margin-bottom: 15px;">
+                <label for="useraddress" style="font-weight: 600; font-size: 13px; color: #334155;">Address</label>
+                <input type="text" class="form-control" id="useraddress" name="useraddress" placeholder="Physical location / department" style="border-radius: 8px; height: 38px;">
+              </div>
 
-    $("body").on('click','.select',function(){
+              <div class="form-group" style="margin-bottom: 15px;">
+                <label for="resetpassword" style="font-weight: 600; font-size: 13px; color: #334155;">Login Password <span style="color: #ef4444;">*</span></label>
+                <input type="password" class="form-control" id="resetpassword" name="resetpassword" placeholder="Account password" style="border-radius: 8px; height: 38px;">
+              </div>
 
-			var uid=$(this).attr('data-uid');
-			var uri='<?=base_url()?>users/usercreate/fetch';
-			$.ajax({
-			 type:"post",
-			 url: uri,
-			 dataType:'json',
-			 data:{uid:uid},
-			 success: function(result){
-			 	
-				var eid=result['id'];
-				var name=result['name'];
-				var address=result['address'];
-				var mobile=result['mobile'];
-				var email=result['email'];
-				var role=result['role'];
-				var dob=result['dob'];
-				var userid=result['userid'];
-				var active=result['active'];
-				$("#eid").val(eid);
-				$("#username").val(name);
-				$("#useraddress").val(address);
-				$("#usermobile").val(mobile);
-				$("#useremail").val(email);
-				$("#userdob").val(dob);
-				$("#userrole").val(role);
-				$("#userid").val(userid);
+              <div style="display: flex; gap: 10px; justify-content: flex-end; border-top: 1px solid #e2e8f0; padding-top: 16px;">
+                <button type="reset" id="user-reset-btn" class="btn btn-default" style="border-radius: 8px; font-weight: 600; padding: 8px 18px;">
+                  <i class="fa fa-refresh"></i> Reset
+                </button>
+                <button type="submit" class="btn btn-primary" style="background: #00a896; border-color: #00a896; border-radius: 8px; font-weight: 600; padding: 8px 22px;">
+                  <i class="fa fa-check"></i> Save User
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
 
-				if(active == 1){
-					$('#activeyes.activeradio').prop('checked', true);
-				}
-				else if(active == 0){
-					$('#activeno.activeradio').prop('checked', true);
-				}
-			 }
-			});
-			$("#submit").html('Update');
-			$('#resetno').prop('checked', true);
-			$("#resetpwddiv").html('');
-    });
-    $("#reset").click(function()
-    {
-			$("#eid").val('');
-			$("#submit").html('Add');
-    });
-});
-</script>
+        <!-- RIGHT: Users List Table (7 Cols) -->
+        <div class="col-lg-7 col-md-6">
+          <div class="master-card">
+            <div class="master-card-header">
+              <h3 class="master-card-title">
+                <i class="fa fa-users" style="color: #00a896;"></i>
+                <span>Admin Staff Directory</span>
+              </h3>
+            </div>
 
+            <div class="master-card-body" style="padding: 16px 20px;">
+              <div class="table-responsive" style="border-radius: 8px; border: 1px solid #e2e8f0;">
+                <table class="table table-hover table-striped" style="margin: 0;">
+                  <thead>
+                    <tr>
+                      <th style="width: 50px; text-align: center;">#ID</th>
+                      <th>Staff Name</th>
+                      <th>Contact Info</th>
+                      <th style="width: 100px; text-align: center;">Status</th>
+                      <th style="width: 100px; text-align: center;">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <?php 
+                    $staffUsers = $this->db->get_where('login', array('status!='=>'2'))->result_array();
+                    if(!empty($staffUsers)): foreach($staffUsers as $val): 
+                      $isActive = ($val['status'] == 1);
+                    ?>
+                      <tr id="row-<?=$val['id'];?>">
+                        <td style="text-align: center; font-weight: 600; color: #64748b;"><?=$val['id'];?></td>
+                        <td>
+                          <strong style="color: #1e293b; font-size: 13.5px;"><?=$val['username'];?></strong>
+                        </td>
+                        <td>
+                          <div style="font-size: 12.5px; color: #334155;"><?=$val['email'];?></div>
+                          <div style="font-size: 12px; color: #64748b;"><?=$val['mobile'];?></div>
+                        </td>
+                        <td style="text-align: center;">
+                          <span class="badge-pill-status <?=$isActive ? 'badge-status-active' : 'badge-status-inactive';?>">
+                            <i class="fa fa-circle" style="font-size: 6px;"></i>
+                            <span><?=$isActive ? 'Active' : 'Inactive';?></span>
+                          </span>
+                        </td>
+                        <td style="text-align: center;">
+                          <a href="javascript:void(0);" class="btn-icon-action btn-action-edit edit-user-btn" data-id="<?=$val['id'];?>" data-name="<?=$val['username'];?>" data-mobile="<?=$val['mobile'];?>" data-email="<?=$val['email'];?>" data-address="<?=$val['address'];?>" title="Edit User">
+                            <i class="fa fa-pencil"></i>
+                          </a>
+                          <a href="<?=base_url('users/usercreate/delete/'.$val['id']);?>" onclick="return confirm('Are you sure you want to delete this user?');" class="btn-icon-action btn-action-delete" title="Delete User">
+                            <i class="fa fa-trash-o"></i>
+                          </a>
+                        </td>
+                      </tr>
+                    <?php endforeach; else: ?>
+                      <tr>
+                        <td colspan="5" style="text-align: center; padding: 40px 20px; color: #94a3b8;">
+                          <i class="fa fa-users fa-3x" style="margin-bottom: 10px; display: block; opacity: 0.5;"></i>
+                          <p style="font-size: 14px; font-weight: 500; margin: 0;">No admin staff records found.</p>
+                        </td>
+                      </tr>
+                    <?php endif; ?>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
-<script>
-		function isNumber(evt) {
-    evt = (evt) ? evt : window.event;
-    var charCode = (evt.which) ? evt.which : evt.keyCode;
-    if (charCode > 31 && (charCode < 48 || charCode > 57)) {
-        return false;
-    }
-    return true;
-}
-	</script>
-
-<script>
- function resetyesradio(checkboxElem) {
-  if (checkboxElem.checked) {
-    $("#resetpwddiv").html('<input id="resetpassword" type="text" class="form-control" data-validation="required" data-validation-error-msg="This Field is required" name="resetpassword" placeholder="Enter Password">');
-  }
-}
-
- function resetnoradio(checkboxElem) {
-  if (checkboxElem.checked) {
-    $("#resetpwddiv").html('');
-  }
-}
-</script>
-
-<script>
-$(document).ready(function(){
-		var uri='<?=base_url()?>users/usercreate/gettable';
-
-			$.ajax({
-			 type:"post",
-			 url: uri,
-			 success: function(result){
-				$('#tablebody').html(result);
-			 }
-			});
-
-});
-</script>
-
-    </section>
-    <!-- /.content -->
-  </div>
-
-
-  <!-- /.content-wrapper -->
- <?php $this->load->view('footer');?>
-
-
-  <!-- /.control-sidebar -->
-  <!-- Add the sidebar's background. This div must be placed
-       immediately after the control sidebar -->
-  <div class="control-sidebar-bg"></div>
+    </div>
+  </section>
 </div>
-<!-- ./wrapper -->
 
+<script>
+$(document).ready(function(){
+  $('.edit-user-btn').click(function(){
+    var id = $(this).data('id');
+    var name = $(this).data('name');
+    var mobile = $(this).data('mobile');
+    var email = $(this).data('email');
+    var address = $(this).data('address');
 
-</body>
-</html>
+    $('#eid').val(id);
+    $('#username').val(name).focus();
+    $('#usermobile').val(mobile);
+    $('#useremail').val(email);
+    $('#useraddress').val(address);
+    $('#user-form-title').text('Edit Admin User');
+
+    $('html, body').animate({ scrollTop: $('#user-admin-form').offset().top - 100 }, 300);
+  });
+
+  $('#user-reset-btn').click(function(){
+    $('#eid').val('');
+    $('#username').val('');
+    $('#usermobile').val('');
+    $('#useremail').val('');
+    $('#useraddress').val('');
+    $('#resetpassword').val('');
+    $('#user-form-title').text('Create Admin User');
+  });
+});
+</script>

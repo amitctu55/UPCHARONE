@@ -70,5 +70,11 @@ class Pathlabregmodel extends CI_Model{
 
        }
 
-      
+	public function deletepathlab($id)
+	{
+		$this->db->where('id', $id);
+		$this->db->delete('pathlab');
+		return ($this->db->affected_rows() > 0) ? true : false;
 	}
+
+}

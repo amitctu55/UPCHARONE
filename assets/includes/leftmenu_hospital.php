@@ -27,8 +27,11 @@
           <li><a href="<?=base_url();?>hospitalpanel/managenews"><i class="fa fa-image" aria-hidden="true"></i><span>News List</span> </a></li>
         </ul>
       </li>
+	  <li ><a href="<?=base_url();?>hospitalpanel/bed_matrix"><i class="fa fa-bed" aria-hidden="true"></i><span>Bed Matrix (Live IPD)</span> </a></li>
+	  <li ><a href="<?=base_url();?>hospitalpanel/admissions"><i class="fa fa-user-plus" aria-hidden="true"></i><span>Inpatient Admissions</span> </a></li>
+	  <li ><a href="<?=base_url();?>hospitalpanel/earnings"><i class="fa fa-line-chart" aria-hidden="true"></i><span>Revenue &amp; Payouts</span> </a></li>
 	  <li ><a href="<?=base_url();?>hospitalpanel/package"><i class="fa fa-calendar" aria-hidden="true"></i><span>Package Appointment</span> </a></li>
-	  <li ><a href="<?=base_url();?>hospitalpanel/bed"><i class="fa fa-calendar" aria-hidden="true"></i><span>Manage Bed</span> </a></li>
+	  <li ><a href="<?=base_url();?>hospitalpanel/bed"><i class="fa fa-calendar" aria-hidden="true"></i><span>Manage Bed Setup</span> </a></li>
     </ul>
   </div>
 </div>

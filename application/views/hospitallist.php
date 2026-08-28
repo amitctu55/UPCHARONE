@@ -1,391 +1,172 @@
-<head>
-    <link rel="icon" href="images/logo.png" type="image/gif" sizes="16x16">
+<?php include ('includes/header.php'); ?>
 
-    <style>
-    .bg-back:hover{
-    background: #1c3a4a;
-}
-::-webkit-scrollbar {
-  width: 10px;
-}
-
-/* Track */
-::-webkit-scrollbar-track {
-  background: #295771; 
-}
- 
-/* Handle */
-::-webkit-scrollbar-thumb {
-  background: #9bc03c; 
-}
-
-/* Handle on hover */
-::-webkit-scrollbar-thumb:hover {
-  background: white; 
-}
-
-.Links {
-    background: #9bc03c;
-    color: white;
-    font-weight: bold;
-    padding: 4px 18px;
-    border-radius: 23px;
-}
-.rightsmallicons {
-    color: white;
-    border-radius: 23px;
-    font-size: 18px !important;
-    margin-right: 9px;
-}
-.doc-info-details li:first-child {
-    border-radius: 12px 0px 0px 0px;
-}
-.BackHeight{
-    height:465px;
-    overflow-y:scroll;
-}
-.sliderImg {
-    width: 86%;
-    box-shadow: 0px -3px 7px #9c9898;
-    height: 253px;
-    border-radius: 173px;
-}
-.BtnAds {
-    background: white;
-    color: #9bc03c;
-    border-radius: 23px;
-    font-size: 29px !important;
-    position: relative;
-    margin: 10px 0px;
-}
-.advrtzmnt {
-    background: #ffffff;
-    margin-top: 24px;
-    border-radius: 8px;
-    padding: 20px 12px;
-}
-.doc-info-details li:last-child {
-    border-radius: 0px 0px 12px 0px;
-}
-.doc-info{
-    padding:9px;
-}
-.doc-info-details{margin-top:12px;}
-.doc-info-details li {
-    background: #9bc03c;
-    text-align: center;
-    color: white;
-    margin-bottom: 1px;
-    text-transform: capitalize;
- 
-}
-.doc-info-details li a{
-    color:white;
-}
-    .doc-info-details li:hover{
-        font-size: 15px;
-        transition: 0.3s;
-
-    }
-.hospitaltagname {
-   
-    color: #9bc03c;
-    border-radius: 53px;
-    text-transform: capitalize;
-    font-size: 14px;
-    font-family: verdana;
-    font-weight: bold;
-}  
-
-.hospitaltagname2 {
-    border-radius: 23px;
-    margin: 6px;
-   
-    color: #9bc03c;
-    font-weight: bold;
-}
-.label-tag {
-    padding: 5px 16px !important;
-    border-radius: 61px !important;
-    margin: 0px !important;
-    line-height: 32px !important;
-    transition: 0.6s !important;
-    cursor: pointer;
-    border: 1px solid #295771;
-    color: #295771 !important;
-    font-size: 10px !important;
-}
-
-.label-tag:hover {
-    background: #295771 !important;
-    color: white !important;
-}
-
-.secondmenuicon{
-    font-size:31px;
-    color:white;
-    display:none !important;
-    
-}
-
-.hospitalbox{
-            background:white;
-            margin:3px;
-        }
-.imghospital {
-    width: 100%;
-    box-shadow: 0px -3px 7px #9c9898;
-    height: 253px;
-}
-
-#searchBTN {
-    width: 100%;
-    margin-top: 0px;
-    box-shadow: 0px -4px 6px #244c63;
-    padding: 12px;
-    border: none;
-    background-color: #9bc03c;
-    color: white;
-    margin-top: 11px;
-}
-.label-default {
-    background-color: #295771;
-    padding: 8px 8px;
-}
-.bg-back {
-    background: #8daf35;
-    color: white;
-    border-radius: 20px !important;
-    transition: 0.3s;
-    font-weight: bold !important;
-    width: 156px !important;
-    float: right;
-}
-
-@media screen and (max-width: 786px) {
-#sidebartab{position:absolute;z-index:432;margin:5px 0px; width: 263px;}
-.careplus-main-content {
-    padding: 0px 0px 60px 0px;
-}
-.mobilesearchicons{
-    width:46px;
-}
-
-#sidebartab{position:absolute;z-index:432;margin:5px 0px; width: 263px;transition:0.3s;display:none;}
-
-
-#searchBTN {
-    width: 100%;
-    margin-top: 0px;
-    box-shadow: 0px -4px 6px #244c63;
-    padding: 12px;
-    border: none;
-    background-color: #043d5b;
-    color: white;
-    margin-top: 11px;
-    margin-bottom: 0px;
-}
-.menutab {
-    background: #ffffff;
-    margin-bottom: 3px;
-}
-.nav > li > a {
-    color: black !important;
-}
-.nav > li > a:hover, .nav > li > a:focus {
-    text-decoration: none;
-    background-color: #295771;
-    border-radius:0px 0px;
-    color: white !important;
-}
-
-.secondmenuicon {
-    font-size: 31px !important;
-    color: white ;
-    display: block !important;
-    width: 41px;
-    padding: 6px ;
-    margin: 7px;
-    cursor: pointer;
-    background: #22495f !important;
-}
-
-.mobileimage{
-    text-align: center;
-}
-
-}
-
-    </style>
-</head>
-
-<?php include("sidebar.php");?>
-        <!--// Header \\-->
-       <?php include ('includes/header_new.php'); ?>
-        <!--// Header \\-->
-
-  
-<form action='<?=base_url();?>search' method='GET'>
-                <div class="box-form">
-                      
-      
-                    <div class="col-sm-3">
-                        <div class="input-group shadow">
-                            <span class="input-group-addon"><i class="fa fa-map-marker" aria-hidden="true"></i></span>
-                            <input type="text" class="form-control ui-autocomplete-input" name="location" placeholder="Location" id="hintcity" autocomplete="off">
-                            <input type="hidden" class="form-control" name="city" id="city">
-                        </div>
+<!-- Floating Search & Filter Bar -->
+<div class="container" style="margin-top: 24px;">
+    <form action='<?=base_url();?>search' method='GET'>
+        <div class="box-form">
+            <div class="row" style="margin: 0;">
+                <div class="col-md-3 col-sm-6" style="padding: 6px;">
+                    <div class="input-group">
+                        <span class="input-group-addon"><i class="fas fa-map-marker-alt"></i></span>
+                        <select class="form-control" name="city" id="searchCitySelect" title="Select Location">
+                            <option value="">All Locations / Cities</option>
+                            <?php if (!empty($cities)) { foreach($cities as $c){ ?>
+                            <option value='<?=$c->id;?>' <?=(isset($_GET['city']) && $_GET['city'] == $c->id) ? 'selected' : '';?>><?=$c->name;?></option>
+                            <?php } } ?>
+                        </select>
                     </div>
-                    <div class="col-sm-5">
-                        <div class="input-group shadow">
-                            <span class="input-group-addon"><i class="fa fa-search"></i></span>
-                            <input type="text" id="hint" class="form-control ui-autocomplete-input" name="keyword" placeholder="Search Hospitals/Doctors/Clinics etc" autocomplete="off">
-                        </div>
-                        
-                    </div>
-                    <div class="col-sm-3">
-                        <div class="input-group shadow">
-                            <span class="input-group-addon"><i class="fa fa-user-md"></i></span>
-                            <select class="form-control" name="spl">
-              <option value="">-Specialization-</option>
-                                              <?php foreach($specialization as $s){ ?>
-                                <option value='<?=$s->id;?>'><?=$s->name;?></option>
-                            <?php } ?>
-                                               
-                            </select>
-                        </div>
-                        
-                    </div>
-                    <div class="col-sm-1">
-<button class="careplus-booking-btn careplus-bgcolor-two" id="searchBTN"><i class="fa fa-search" aria-hidden="true"></i></button>
-                        </div>
-                    <div class="clearfix"></div>
                 </div>
-                </form>
-       
-		<!--// Main Banner \\-->
-
-
-
-<div class="container">
-
-
-  <div class="row">
-  <div class="col-xs-3 text-center advrtzmnt">
-
-  <div id="myCarousel" class="carousel slide" data-ride="carousel">
-    <!-- Wrapper for slides -->
-    <div class="carousel-inner">
-
-      <div class="item active">
-        <div class="col-md-12 text-center">
-        <img class="sliderImg" src="<?=admin_url();?>public/assets/upload/<?=($institution->drimage)? $institution->drimage : 'dummyhospital.jpg';?>" width="200" align="center">
+                <div class="col-md-5 col-sm-6" style="padding: 6px;">
+                    <div class="input-group">
+                        <span class="input-group-addon"><i class="fas fa-search"></i></span>
+                        <input type="text" id="hint" class="form-control ui-autocomplete-input" name="keyword" value="<?=@$_GET['keyword'];?>" placeholder="Search Hospitals, Clinics, Treatments, Facilities..." autocomplete="off">
+                    </div>       
+                </div>
+                <div class="col-md-3 col-sm-8" style="padding: 6px;">
+                    <div class="input-group">
+                        <span class="input-group-addon"><i class="fas fa-user-md"></i></span>
+                        <select class="form-control" name="spl" title="Select Specialization">
+                            <option value="">All Specializations</option>
+                            <?php if (!empty($specialization)) { foreach($specialization as $s){ ?>
+                            <option value='<?=$s->id;?>' <?=(isset($_GET['spl']) && $_GET['spl'] == $s->id) ? 'selected' : '';?>><?=$s->name;?></option>
+                            <?php } } ?>                   
+                        </select>
+                    </div> 
+                </div>
+                <div class="col-md-1 col-sm-4" style="padding: 6px;">
+                    <button type="submit" id="searchBTN" title="Search"><i class="fas fa-search" aria-hidden="true"></i></button>
+                </div>
+            </div>
         </div>
-         <div class="col-md-12 text-center">
-            <span class="hospitaltagname"><i class="fa fa-hospital-o" aria-hidden="true"></i> <?=$institution->name;?></span>                                        
-		 <p class="hospitaltagname2">Welcome to Invoation Of Upchar</p>
-         </div>
-         
-         
-        <div class="col-md-12 text-center">
-           <a href="<?=base_url();?>hospital/<?=$institution->id;?>" class="btn btn-block bg-back book-btn">SHOW DETAILS</a >
+    </form>
+</div>
+
+<!-- Hospitals Directory Listing -->
+<section class="section-wrapper" style="padding: 10px 0 60px;">
+    <div class="container">
+        <div class="row">
+            <!-- Sidebar: Quick Assistance & Filters -->
+            <div class="col-md-3 col-sm-4">
+                <div class="modern-partner-card" style="text-align: left; padding: 24px 20px; margin-bottom: 24px;">
+                    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+                        <div class="modern-partner-icon" style="margin: 0; width: 48px; height: 48px; font-size: 20px;">
+                            <i class="fas fa-ambulance"></i>
+                        </div>
+                        <div>
+                            <h5 style="margin: 0; font-size: 16px; font-weight: 700; color: #0F172A;">24/7 Emergency</h5>
+                            <span style="font-size: 12px; color: #64748B;">Immediate Care Support</span>
+                        </div>
+                    </div>
+                    <p style="font-size: 13px; color: #475569; margin-bottom: 16px; line-height: 1.5;">
+                        Need urgent medical care or emergency bed allocation? Call our dedicated patient assistance desk.
+                    </p>
+                    <a href="tel:8448440603" class="btn btn-primary-cta" style="width: 100%; justify-content: center; display: flex; align-items: center; gap: 8px;">
+                        <i class="fas fa-phone-alt"></i> 844-844-0603
+                    </a>
+                </div>
+
+                <div class="modern-partner-card" style="text-align: left; padding: 24px 20px;">
+                    <h5 style="margin: 0 0 12px; font-size: 15px; font-weight: 700; color: #0F172A;">
+                        <i class="fas fa-shield-alt" style="color: #00A896; margin-right: 6px;"></i> Upchar Assurance
+                    </h5>
+                    <ul style="padding-left: 0; list-style: none; margin: 0; font-size: 13px; color: #64748B; display: flex; flex-direction: column; gap: 10px;">
+                        <li style="display: flex; align-items: center; gap: 8px;">
+                            <i class="fas fa-check-circle" style="color: #16A34A;"></i> 100% NABH/Govt Accredited
+                        </li>
+                        <li style="display: flex; align-items: center; gap: 8px;">
+                            <i class="fas fa-check-circle" style="color: #16A34A;"></i> Direct Hospital Admission Desk
+                        </li>
+                        <li style="display: flex; align-items: center; gap: 8px;">
+                            <i class="fas fa-check-circle" style="color: #16A34A;"></i> Cashless Insurance Assistance
+                        </li>
+                        <li style="display: flex; align-items: center; gap: 8px;">
+                            <i class="fas fa-check-circle" style="color: #16A34A;"></i> Zero Booking Charges
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Main Listing: Hospital Cards -->
+            <div class="col-md-9 col-sm-8">
+                <div style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
+                    <h3 style="font-size: 22px; font-weight: 800; color: #0F172A; margin: 0;">
+                        Verified Hospitals & Clinics <span style="font-size: 15px; font-weight: 500; color: #64748B;">(<?=count($hospital);?> Facilities Available)</span>
+                    </h3>
+                </div>
+
+                <?php if (!empty($hospital)) { foreach($hospital as $institution) { 
+                    $hImg = ($institution->drimage && file_exists('admin1947/public/assets/upload/'.$institution->drimage)) 
+                            ? admin_url().'public/assets/upload/'.$institution->drimage 
+                            : admin_url().'public/assets/upload/dummyhospital.jpg';
+                    $cityText = ($institution->city) ? getCityName($institution->city) : 'Varanasi';
+                    $addressText = (!empty($institution->address)) ? $institution->address : $cityText.', Uttar Pradesh, India';
+                ?>
+                <!-- Modern Hospital Profile Card -->
+                <div class="hospital-card" style="margin-bottom: 24px;">
+                    <!-- Column 1: Hospital Thumbnail & Trust Badge -->
+                    <div class="doc-col-left">
+                        <div class="avatar-wrapper">
+                            <img src="<?=$hImg;?>" alt="<?=$institution->name;?>" class="doc-avatar" style="border-radius: 12px; width: 90px; height: 90px;" loading="lazy">
+                        </div>
+                        <div class="trust-badges">
+                            <span class="badge-rating"><i class="fas fa-thumbs-up"></i> 99%</span>
+                            <span class="badge-fee">₹500 Entry</span>
+                        </div>
+                    </div>
+
+                    <!-- Column 2: Details & Services -->
+                    <div class="doc-col-mid">
+                        <div class="doc-header">
+                            <h3 class="doc-name">
+                                <a href="<?=base_url();?>hospital/<?=$institution->id;?>"><?=$institution->name;?></a>
+                            </h3>
+                            <span class="doc-qualifications" style="color: #00A896; font-weight: 600;">
+                                <i class="fas fa-hospital-alt"></i> Multi-Specialty Hospital & Research Center
+                            </span>
+                        </div>
+
+                        <div class="doc-spec-tags">
+                            <span class="spec-pill"><i class="fas fa-ambulance"></i> 24/7 Emergency</span>
+                            <span class="spec-pill"><i class="fas fa-procedures"></i> Inpatient / ICU</span>
+                            <span class="spec-pill"><i class="fas fa-flask"></i> Diagnostic Pathology</span>
+                        </div>
+
+                        <div class="doc-meta-info">
+                            <p class="meta-item">
+                                <i class="fas fa-clock"></i> <strong>Open 24 Hours</strong> (Mon - Sun)
+                            </p>
+                            <p class="meta-item">
+                                <i class="fas fa-map-marker-alt"></i> <?=$addressText;?>
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Column 3: Actions & Phone -->
+                    <div class="doc-col-right">
+                        <div class="wait-time-badge" style="background: #F0FDF4; color: #16A34A; border-color: #DCFCE7;">
+                            <i class="fas fa-check-circle"></i> Verified Network Partner
+                        </div>
+                        <div class="action-buttons">
+                            <a href="<?=base_url();?>hospital/<?=$institution->id;?>" class="btn btn-outline">
+                                View Profile
+                            </a>
+                            <a href="tel:8448440603" class="btn btn-primary-cta">
+                                <i class="fas fa-phone-alt"></i> Call Hospital
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <?php } } else { ?>
+                <div class="doctor-card text-center" style="display: block; padding: 50px 20px;">
+                    <i class="fas fa-hospital-alt" style="font-size: 40px; color: #CBD5E1; margin-bottom: 16px;"></i>
+                    <h4 style="color: #64748B; margin-bottom: 8px;">No hospitals found matching your criteria.</h4>
+                    <p style="color: #94A3B8; margin-bottom: 20px;">Try adjusting your location or specialization filter above.</p>
+                    <a href="<?=base_url('hospitals');?>" class="btn btn-secondary" style="display: inline-block; width: auto; padding: 8px 24px;">View All Hospitals</a>
+                </div>
+                <?php } ?>
+            </div>
         </div>
-      </div>
-      <?php foreach($hospital as $institution){ ?>
-            <div class="item">
-        <div class="col-md-12 text-center">
-        <img class="imghospital" src="<?=admin_url();?>public/assets/upload/<?=($institution->drimage)? $institution->drimage : 'dummyhospital.jpg';?>" width="200" align="center">
-        </div>
-        <div class="col-md-12 text-center">
-         <span class="hospitaltagname"><i class="fa fa-hospital-o" aria-hidden="true"></i> <?=$institution->name;?></span>                                        
-		 <p class="hospitaltagname2">1 Dentist, 1 Implantologist</p>
-         </div>
-         
-        <div class="col-md-12 text-center">
-           <a href="<?=base_url();?>hospital/<?=$institution->id;?>" class="btn btn-block bg-back book-btn">SHOW DETAILS</a >
-        </div>
-        
-  
-        
-      </div>
-      
-   <?php } ?>
-    
-  
-            <a href="#myCarousel" data-slide="prev">
-      <i class="fa fa-arrow-circle-left BtnAds" aria-hidden="true"></i>
-      
-    </a>
-    <a href="#myCarousel" data-slide="next">
-      <i class="fa fa-arrow-circle-right BtnAds" aria-hidden="true"></i>
-    </a>   
-    
     </div>
-  </div>
-</div>
+</section>
 
-    <div class="col-sm-9 BackHeight">
-             <?php foreach($hospital as $institution){ ?>
-		<div class="col-xs-12 box_sh_bg hospitalbox">
-		 
-		 <div class="col-sm-3 text-center mobileimage">                                        
-		 <img class="imghospital" src="<?=admin_url();?>public/assets/upload/<?=($institution->drimage)? $institution->drimage : 'dummyhospital.jpg';?>" width="200" align="center">
-		 </div>
-
-		 <div class="col-sm-9 doc-info">                                        
-		 <span class="hospitaltagname"><i class="fa fa-hospital-o" aria-hidden="true"></i> <?=$institution->name;?></span>                                        
-		 <!--//<p class="hospitaltagname2">1 Dentist, 1 Implantologist</p> <!--//<h6>1 Dentist, 1 Implantologist</h6>      Header \\--> 
-		 
-		 <a href="#" class="Links">Doctors</a>
-		 <a href="#" class="Links">Hospital</a>		                                      
-		 <a href="#" class="Links">pathology</a>
-		 <a href="#" class="Links">others</a>		 
-		 
-		 	 <ul class="col-sm-12 doc-info-details">                                            
-		 <li class="col-sm-4"><a href="#"><i class="fa fa-thumbs-o-up rightsmallicons"></i> 99% (1311 votes)</a></li>
-		 
-		 <li class="col-sm-4"><a href="#"><i class="fa fa-inr rightsmallicons" ></i> 500 Fee</a></li>
-		 <li class="col-sm-4"><a href="#"><i class="fa fa-calendar-check-o rightsmallicons" ></i> MON-SAT  MON-SUN 24/7 call +091-8448440603</a></li>
-		 <li class="col-sm-4"><a href="#"><i class="fa fa-clock-o rightsmallicons" ></i> 9:00 AM-8:05 PM</a></li>
-		 <li class="col-sm-8"><a href="#"><i class="fa fa-commenting-o rightsmallicons"></i> 155 Feedback for 5 Doctors</a></li>
-		 <li class="col-sm-12"><a href="#"><i class="fa fa-map-marker rightsmallicons"></i> <?=$institution->address;?></a></li>
-		 </ul>
-		 <div class="col-md-12">
-		 	 <a href="<?=base_url();?>hospital/<?=$institution->id;?>" class="btn btn-block bg-back book-btn">SHOW DETAILS</a >
-		 <!--	  <a class="btn btn-block bg-back" style="margin-top: 8px;" href="#">view</a>-->
-		 </div>
-		 
-		 </div> 
-
-		 </div>
-	           <?php } ?> 
-    </div>
-   
-  </div>
-</div>
-    
-    
-
-	<div class="container-fluid">
-	    		<div class="col-xs-12">
-         
-	           
-	</div>
-</div>
-        <!--// Footer \\-->
-        <?php include ('includes/footer.php'); ?>
-        
-        
-        
-         
-     <script> 
-$(document).ready(function(){
-  $(".secondmenuicon").click(function(){
-    $("#sidebartab").slideToggle("slow");
-  });
-  
-  
-});
-
-
-</script>
+<?php include ('includes/footer.php'); ?>

@@ -9,7 +9,6 @@ class Pathology extends CI_Controller
 		 $date=date('Y-m-d h:i:s');
 		 $this->load->helper(array('query_string_helper','dbquery_helper','admin_helper'));
 		 $this->load->model(array('doctor/pathology_model','masters/managementmodel'));
-		 $this->load->library('Pdf');
 	}
 	
 	public function index()
@@ -64,12 +63,51 @@ class Pathology extends CI_Controller
 		$this->load->view('inc/table_footer');
 	}
 	
-	public function assign_test_delete()
+	public function assign_test_delete($id = null)
     {
-		$id=$this->input->get('id');
-		$this->pathology_model->assign_test_delete($id);
-		$msg="<div class='alert alert-success'><strong>Success!</strong> Unit Deleted Successfully </div>";
-		$this->session->set_flashdata('flashmsg',$msg);
-		redirect(base_url().'doctor/pathology/index');
+		if ($this->input->post('ids') && is_array($this->input->post('ids'))) {
+			$this->bulk_delete();
+			return;
+		}
+
+		$del_id = $id ? $id : ($this->input->post('id') ? $this->input->post('id') : ($this->input->get('id') ? $this->input->get('id') : $this->uri->segment(4)));
+		if ($del_id) {
+			$this->pathology_model->assign_test_delete($del_id);
+			$msg = "Assigned test deleted successfully.";
+			if ($this->input->is_ajax_request() || $this->input->post('is_ajax') || $this->input->post('id')) {
+				echo json_encode(array('status' => 1, 'message' => $msg));
+				return;
+			}
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-success'>$msg</div>");
+		}
+		redirect(base_url('doctor/pathology/index'));
     }
+
+	public function bulk_delete()
+	{
+		$ids = $this->input->post('ids');
+		if (!empty($ids) && is_array($ids)) {
+			$deleted_count = 0;
+			foreach ($ids as $aid) {
+				$aid = (int)$aid;
+				if ($aid > 0) {
+					$this->pathology_model->assign_test_delete($aid);
+					$deleted_count++;
+				}
+			}
+			$msg = "$deleted_count assigned test(s) deleted successfully.";
+			if ($this->input->is_ajax_request() || $this->input->post('is_ajax')) {
+				echo json_encode(array('status' => 1, 'count' => $deleted_count, 'message' => $msg));
+				return;
+			}
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-success'>$msg</div>");
+		} else {
+			if ($this->input->is_ajax_request() || $this->input->post('is_ajax')) {
+				echo json_encode(array('status' => 0, 'message' => 'No tests selected.'));
+				return;
+			}
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-warning'>No tests selected.</div>");
+		}
+		redirect(base_url('doctor/pathology/index'));
+	}
 }

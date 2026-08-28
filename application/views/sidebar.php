@@ -135,24 +135,15 @@
                                 <h6 class="username" style="color:white;font-weight:bold;"><?=$this->session->userdata('username')?> <i class="fa fa-chevron-down" style="padding:6px 6px;background: #9bc03c;color: white;border-radius: 53px;width: 30px;" aria-hidden="true"></i></h6>
                             </a>
                            
-                            <ul class="dropdown-menu">
-                                <!--<li class="name_mo"> <img src="assets/images/user.jpg" alt="user image"  style='width:42px;'>
-                                    <p>Swati                                        <br/>9990179859</p>
-                                </li>-->
-                                <li><a href="<?=base_url();?>Home/profile"><span class="UserMenu">My Profile</span></a></li>
-                                <li><a href="#"><span class="UserMenu">My Tests</span></a></li>
-                                <li><a href="#"><span class="UserMenu">My Medicine Order</span></a></li>
-                                <li><a href="#"><span class="UserMenu">My Online Consultation</span></a></li>
-                                <li><a href="#"><span class="UserMenu">My Feedback</span></a></li>
-
-                                <li><a href="#"><span class="UserMenu">My Articles</span></a></li>
-                                <li><a href="#"><span class="UserMenu">My Payments</span></a></li>
-
-                                <li><a href="#"><span class="UserMenu">View Update Profile</span></a></li>
-								  <li><a href="<?=base_url();?>Home/change_password"><span class="UserMenu">Change Password</span></a></li>
-                                <li><a href="#"><span class="UserMenu">Setting</span></a></li>
-                                <li><a href="<?=base_url();?>User/logout"><span class="UserMenu">Logout</span></a></li>
-                            </ul>
+                             <ul class="dropdown-menu">
+                                <li><a href="<?=base_url('profile');?>"><span class="UserMenu">My Profile</span></a></li>
+                                <li><a href="<?=base_url('mytest');?>"><span class="UserMenu">My Tests</span></a></li>
+                                <li><a href="<?=base_url('mytest');?>"><span class="UserMenu">My Medicine Order</span></a></li>
+                                <li><a href="<?=base_url('doctors');?>"><span class="UserMenu">My Online Consultation</span></a></li>
+                                <li><a href="<?=base_url('updateprofile');?>"><span class="UserMenu">View / Update Profile</span></a></li>
+                                <li><a href="<?=base_url('change_password');?>"><span class="UserMenu">Change Password</span></a></li>
+                                <li><a href="<?=base_url('logout');?>"><span class="UserMenu">Logout</span></a></li>
+                             </ul>
 
                       </div>
 
@@ -162,16 +153,12 @@
    <div class="sidebar">
             <div class="sidebar-inner">
           <ul class="nav nav-sidebar">
-              <li class="menutab"><a href="<?=base_url();?>myappointents"><i class="fa fa-calendar" aria-hidden="true" style="font-size: 24px;"></i><span style="padding: 9px 19px;font-weight:bold;">Appointment History</span> </a> </li>
-            <li class="menutab"><a href="index.php"><i class="icon-home" style="font-size: 24px;"></i><span style="padding: 9px 19px;font-weight:bold;">Dashboard</span></a></li>
-            <li class="menutab"><a href="#"><i class="fa fa-medkit" style="font-size: 24px;"></i><span style="padding: 9px 19px;font-weight:bold;">Medicine Pathology</span> </a></li>
-		<!--	 <li class="menutab"><a href="#"><i class="fa fa-user-md" style="font-size: 24px;"></i><span style="padding: 9px 19px;font-weight:bold;">Doctor History</span> </a> </li>
-            <li class="menutab"><a href="#"><i class="fa fa-hospital-o" style="font-size: 24px;"></i><span style="padding: 9px 19px;font-weight:bold;">Hospital History</span> </a></li> -->
-            <li class="menutab"><a href="<?=base_url();?>Home/profile"><i class="fa fa-user-md" aria-hidden="true" style="font-size: 24px;"></i><span style="padding: 9px 19px;font-weight:bold;">Profile</span> </a> </li>
-            <li class="menutab"><a href="<?=base_url();?>hospitallist"><i class="fa fa-hospital-o" aria-hidden="true" style="font-size: 24px;"></i><span style="padding: 9px 19px;font-weight:bold;">Hospital List</span> </a> </li>
-            <li class="menutab"><a href="<?=base_url();?>doctors"><i class="fa fa-user-md" aria-hidden="true" style="font-size: 24px;"></i><span style="padding: 9px 19px;font-weight:bold;">Doctor List</span> </a> </li>
-
-           
+              <li class="menutab"><a href="<?=base_url('myappointments');?>"><i class="fa fa-calendar" aria-hidden="true" style="font-size: 24px;"></i><span style="padding: 9px 19px;font-weight:bold;">Appointment History</span> </a> </li>
+            <li class="menutab"><a href="<?=base_url();?>"><i class="icon-home" style="font-size: 24px;"></i><span style="padding: 9px 19px;font-weight:bold;">Dashboard</span></a></li>
+            <li class="menutab"><a href="<?=base_url('mytest');?>"><i class="fa fa-medkit" style="font-size: 24px;"></i><span style="padding: 9px 19px;font-weight:bold;">Medicine &amp; Pathology</span> </a></li>
+            <li class="menutab"><a href="<?=base_url('profile');?>"><i class="fa fa-user-md" aria-hidden="true" style="font-size: 24px;"></i><span style="padding: 9px 19px;font-weight:bold;">Profile</span> </a> </li>
+            <li class="menutab"><a href="<?=base_url('hospitallist');?>"><i class="fa fa-hospital-o" aria-hidden="true" style="font-size: 24px;"></i><span style="padding: 9px 19px;font-weight:bold;">Hospital List</span> </a> </li>
+            <li class="menutab"><a href="<?=base_url('doctors');?>"><i class="fa fa-user-md" aria-hidden="true" style="font-size: 24px;"></i><span style="padding: 9px 19px;font-weight:bold;">Doctor List</span> </a> </li>
           </ul>
         </div>
         </div>

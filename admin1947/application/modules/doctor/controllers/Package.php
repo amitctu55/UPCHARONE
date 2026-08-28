@@ -18,6 +18,7 @@ class Package extends CI_Controller
 		$offset                 =  ( $this->input->get_post('per_page') > 0 ) ? $this->input->get_post('per_page') : 0;	
 		$base_url               =  current_url_query_string(array('filter'=>'result'),array('per_page'));
 		$data['result'] 		=  $this->package_model->get_package($config['limit'],$offset);
+		$data['packagelist']	=  $data['result'];
 		$config['total_rows']   =  get_found_rows();
 		$data['heading_title'] 	=  'Package List';
 		$data['module'] 		=  'Package';
@@ -33,6 +34,76 @@ class Package extends CI_Controller
 		$this->load->view('inc/headersetting');
 		$this->load->view('inc/footerlink');
 		$this->load->view('inc/table_footer');
+	}
+
+	public function approve($id = null)
+	{
+		$pid = $this->input->post('did') ? $this->input->post('did') : ($this->input->post('id') ? $this->input->post('id') : ($id ? $id : $this->uri->segment(4)));
+		$row = $this->db->select('approved')->get_where('package', array('package_id' => $pid))->row();
+		$current = $row ? $row->approved : '0';
+		if ($current == '1') {
+			$this->db->set('approved', '0')->where(array('package_id' => $pid))->update('package');
+			$status = '0';
+			$msg = 'Package approval status set to Pending.';
+		} else {
+			$this->db->set('approved', '1')->where(array('package_id' => $pid))->update('package');
+			$status = '1';
+			$msg = 'Package has been Approved.';
+		}
+		if ($this->input->is_ajax_request() || $this->input->post('did') || $this->input->post('id')) {
+			echo json_encode(array('status' => $status, 'message' => $msg));
+			return;
+		}
+		$this->session->set_flashdata('flashmsg', "<div class='alert alert-success'>$msg</div>");
+		redirect(base_url('doctor/package'));
+	}
+
+	public function delete($id = null)
+	{
+		if ($this->input->post('ids') && is_array($this->input->post('ids'))) {
+			$this->bulk_delete();
+			return;
+		}
+
+		$del_id = $id ? $id : ($this->input->post('id') ? $this->input->post('id') : $this->uri->segment(4));
+		if ($del_id) {
+			$this->db->where('package_id', $del_id)->delete('package');
+			$msg = "Package deleted successfully.";
+			if ($this->input->is_ajax_request() || $this->input->post('is_ajax') || $this->input->post('id')) {
+				echo json_encode(array('status' => 1, 'message' => $msg));
+				return;
+			}
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-success'>$msg</div>");
+		}
+		redirect(base_url('doctor/package'));
+	}
+
+	public function bulk_delete()
+	{
+		$ids = $this->input->post('ids');
+		if (!empty($ids) && is_array($ids)) {
+			$deleted_count = 0;
+			foreach ($ids as $pid) {
+				$pid = (int)$pid;
+				if ($pid > 0) {
+					$this->db->where('package_id', $pid)->delete('package');
+					$deleted_count++;
+				}
+			}
+			$msg = "$deleted_count package(s) deleted successfully.";
+			if ($this->input->is_ajax_request() || $this->input->post('is_ajax')) {
+				echo json_encode(array('status' => 1, 'count' => $deleted_count, 'message' => $msg));
+				return;
+			}
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-success'>$msg</div>");
+		} else {
+			if ($this->input->is_ajax_request() || $this->input->post('is_ajax')) {
+				echo json_encode(array('status' => 0, 'message' => 'No packages selected.'));
+				return;
+			}
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-warning'>No packages selected.</div>");
+		}
+		redirect(base_url('doctor/package'));
 	}
 	
 	public function add()

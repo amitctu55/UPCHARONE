@@ -8,17 +8,30 @@ class Pathlabpanel extends CI_Controller
 		parent::__construct();
 		date_default_timezone_set("Asia/Kolkata");
 		$this->load->model('Pathlab_Model');
+		$this->load->model('Financial_Model');
 		$this->load->helper(array('query_string_helper','dbquery_helper','admin_helper'));
-		if(!$this->session->userdata('pathuserid'))
+		$pathuserid = $this->session->userdata('pathuserid');
+		$page = $this->uri->segment('1');
+		$excep_array = array('pathlab-login','pathlab-signup','pathlab-verifymobile','pathlab-forgotpassword','pathlab-verifymobileforgot');
+
+		if (!$pathuserid)
 		{
-			$page=$this->uri->segment('1');
-			$excep_array=array('pathlab-login','pathlab-signup','pathlab-verifymobile','pathlab-forgotpassword','pathlab-verifymobileforgot');
-			if (!in_array($page, $excep_array))
-			redirect('pathlab-login');
+			if (!in_array($page, $excep_array)) {
+				redirect('pathlab-login');
+			}
 		}
 		else
 		{
-			$this->did= $this->db->where('id',$this->session->userdata('pathuserid'))->get('pathlab')->row()->id;
+			$row = $this->db->where('id', $pathuserid)->get('pathlab')->row();
+			if ($row && isset($row->id)) {
+				$this->did = $row->id;
+			} else {
+				$this->did = null;
+				if (!in_array($page, $excep_array)) {
+					$this->session->unset_userdata('pathuserid');
+					redirect('pathlab-login');
+				}
+			}
 		}
 	}
 	
@@ -30,30 +43,48 @@ class Pathlabpanel extends CI_Controller
 	
 	public function dashboard()
 	{
-		//if profile createdview main dash board 
-		//if not and if at 0
-		$userid =$this->did;
+		$userid = $this->did;
 		
+		// Doctor Appointments Metrics
+		$this->db->where('institute_id', $userid);   
+		$this->db->where('institution_type', 'P');   
+		$this->db->where('appointment_date', date('Y-m-d'));   
+		$data['todayappointment'] = $this->db->get('appointment')->num_rows();
+		 
+		$this->db->where('institute_id', $userid);   
+		$this->db->where('institution_type', 'P');    
+		$data['totalappointment'] = $this->db->get('appointment')->num_rows();
 		
-         $this -> db -> where('institute_id', $userid);   
-        $this -> db -> where('institution_type', 'P');   
-		 $this -> db -> where('appointment_date', date('Y-m-d'));   
-        $query = $this -> db -> get('appointment');
-		$data['todayappointment']=$query -> num_rows();
-         
-        $this -> db -> where('institute_id', $userid);   
-        $this -> db -> where('institution_type', 'P');    
-        $query = $this -> db -> get('appointment');
-		$data['totalappointment']=$query -> num_rows();
+		$query = $this->db->select('profile_dr.*,dr_practice.status as p_status')->join('profile_dr','profile_dr.id=dr_practice.user_id')->get_where('dr_practice',array('institution_id'=>$this->did,'type'=>'P'));	
+		$data['totaldoctor'] = $query->num_rows();
+
+		// Diagnostic Pathology Metrics
+		$data['total_tests'] = $this->db->where('path_lab_id', $userid)->count_all_results('path_lab_test');
+		$data['today_bookings'] = $this->db->where(array('pathlab_id' => $userid, 'book_date' => date('Y-m-d')))->count_all_results('path_book');
+		$data['total_bookings'] = $this->db->where('pathlab_id', $userid)->count_all_results('path_book');
 		
-		
-		$query =$this->db->select('profile_dr.*,dr_practice.status as p_status')->join('profile_dr','profile_dr.id=dr_practice.user_id')->get_where('dr_practice',array('institution_id'=>$this->did,'type'=>'P'));	
-		$data['totaldoctor']=$query -> num_rows();
-		$this->load->view('pathlabpanel/milestone',$data);
-		
+		$revQuery = $this->db->select_sum('total_amount')->where('pathlab_id', $userid)->get('path_book')->row();
+		$data['total_revenue'] = floatval(@$revQuery->total_amount);
+
+		// Recent 5 Diagnostic Test Bookings
+		$data['recent_bookings'] = $this->db->order_by('booking_id', 'desc')->limit(5)->get_where('path_book', array('pathlab_id' => $userid))->result_array();
+
+		// Lab Profile Summary
+		$data['lab_profile'] = $this->db->get_where('pathlab', array('id' => $userid))->row();
+
+		$this->load->view('pathlabpanel/milestone', $data);
 	}
 	public function login()
 	{
+		if ($this->session->userdata('userid')) {
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-info'>You are logged in as a Patient. Please logout to access Pathology Partner Login.</div>");
+			redirect('myappointments');
+			return;
+		}
+		if ($this->session->userdata('pathuserid')) {
+			redirect('pathlabpanel/milestone');
+			return;
+		}
 		$this->load->view('pathlabpanel/login');
 	}
 	
@@ -1006,7 +1037,7 @@ thank you for being a part of Upchar.";
 	{
 		$userid 				=  $this->did;
 		$pagesize               =  (int) $this->input->get_post('pagesize');
-		$config['limit']	    =  ( $pagesize > 0 ) ? $pagesize : 2;	
+		$config['limit']	    =  ( $pagesize > 0 ) ? $pagesize : 100;	
 		$offset                 =  ( $this->input->get_post('per_page') > 0 ) ? $this->input->get_post('per_page') : 0;	
 		$base_url               =  current_url_query_string(array('filter'=>'result'),array('per_page'));
 		$param					=	array('pathlab_id'=>$userid);
@@ -1093,4 +1124,63 @@ thank you for being a part of Upchar.";
 		$this->load->view('pathlabpanel/booking_details',$data);
 	}
 	
+	public function report()
+	{
+		$userid = $this->did;
+		$data['total_tests'] = $this->db->where('path_lab_id', $userid)->count_all_results('path_lab_test');
+		$data['total_bookings'] = $this->db->where('pathlab_id', $userid)->count_all_results('path_book');
+		$data['today_bookings'] = $this->db->where(array('pathlab_id' => $userid, 'book_date' => date('Y-m-d')))->count_all_results('path_book');
+		
+		$revQuery = $this->db->select_sum('total_amount')->where('pathlab_id', $userid)->get('path_book')->row();
+		$data['total_revenue'] = floatval(@$revQuery->total_amount);
+
+		$data['recent_reports'] = $this->db->order_by('booking_id', 'desc')->limit(20)->get_where('path_book', array('pathlab_id' => $userid))->result_array();
+		$this->load->view('pathlabpanel/report', $data);
+	}
+
+	public function payments()
+	{
+		$userid = $this->did;
+		$data['total_bookings'] = $this->db->where('pathlab_id', $userid)->count_all_results('path_book');
+		$revQuery = $this->db->select_sum('total_amount')->where('pathlab_id', $userid)->get('path_book')->row();
+		$data['total_revenue'] = floatval(@$revQuery->total_amount);
+		
+		$data['earnings'] = $this->Financial_Model->get_pathlab_earnings($userid);
+		$data['ledger'] = $this->Financial_Model->get_ledger_history('PATHLAB', $userid, 50);
+		$data['payment_records'] = $this->db->order_by('booking_id', 'desc')->limit(30)->get_where('path_book', array('pathlab_id' => $userid))->result_array();
+		$this->load->view('pathlabpanel/payments', $data);
+	}
+
+	public function update_order_stage()
+	{
+		$booking_id = intval($this->input->get_post('booking_id'));
+		$new_status = trim($this->input->get_post('status', TRUE));
+		$pathlab_id = $this->did;
+
+		$booking = $this->db->get_where('path_book', array('booking_id' => $booking_id, 'pathlab_id' => $pathlab_id))->row();
+		if ($booking) {
+			$this->db->where('booking_id', $booking_id)->update('path_book', array('status' => $new_status));
+			if ($new_status == 'COMPLETED' || $new_status == 'REPORT_ISSUED') {
+				// Release escrow if order exists
+				$order = $this->db->where(array('ITEM_TYPE' => 'P', 'ITEM_ID' => $booking_id))->get('sm_order')->row();
+				if ($order) {
+					$this->Financial_Model->release_escrow($order->ORDER_ID);
+				}
+			}
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-success'>Order #$booking_id stage updated to $new_status!</div>");
+		}
+		redirect('pathlabpanel/booking_details/'.$booking_id);
+	}
+
+	public function settings()
+	{
+		$userid = $this->did;
+		$data['lab'] = $this->db->get_where('pathlab', array('id' => $userid))->row();
+		$this->load->view('pathlabpanel/settings', $data);
+	}
+
+	public function changepassword()
+	{
+		$this->change_password();
+	}
 }

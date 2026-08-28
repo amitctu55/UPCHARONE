@@ -1,186 +1,150 @@
-<!DOCTYPE html>
-<html>
-	<style>
-  	.label-name{text-align:left!important; margin-top:-5px; }
-  	.starspan{ color:#e80909; font-size:18px; }
-  	.mainheadlinerow{ padding:5px;margin-top:10px;margin-bottom:10px; }
-  	.mainheadline{background:#605ca8;margin-top:10px;margin-bottom:10px;color:#fff;padding:9px;font-weight:600;}
-  	.mainheadlinefirstrow{ padding:5px; }
-  	.mainheadlinefirst{background:#605ca8;margin-top:-15px;margin-bottom:15px;color:#fff;padding:9px;font-weight:600;}
-  	.othernote{ font-weight:600;font-size:13px;color:#d20c0c;}
-  	.mainhead{font-weight:600;margin-bottom:20px;}
-  	.formbody{border:1px solid #d6d2d2;padding:10px;border-radius:4px;}
-  	.note{font-weight:600;margin-top:10px;margin-bottom:20px;}
-  	#submit{background:#605ca8;padding: 6px 30px;}
-  	#reset{background:#fff;color:#000;padding: 6px 30px;}
-	</style>
-	<body class="hold-transition skin-blue sidebar-mini">
-		<div class="wrapper">
-  			<div class="content-wrapper">
-    			<section class="content-header">   </section>
-    			<section class="content">
-					<div class="container bg-3 ">  
-	  					<div class="row text-">
-							<div class="container">
-								<?=$this->session->flashdata('flashmsg');?>
-								<h4 class="mainhead">News Management</h4>
-		  						<form class="form-horizontal formbody" id='mainform' action=""  method="post" enctype="multipart/form-data">
-									<div class="row mainheadlinefirstrow">
-										<div class="col-md-12 mainheadlinefirst">Basic Details</div>
-									</div>
-									<div class="row">
-										<div class="col-md-12">
-											<div class="form-group">
-											  <label class="control-label col-sm-2 label-name" for="email"> Title<span class="starspan">*</span></label>
-											  <div class="col-sm-7">
-												<input type="text" class="form-control input-sm" id="t_fname" name="name" data-validation="required"
-												data-validation-error-msg="This Field is required" value="<?=$news->title;?>">
-											  </div>
-											</div>
-										</div>
-										<div class="col-md-12">
-											<div class="form-group">
-											  	<label class="control-label col-sm-2 label-name" for="email"> Detail<span class="starspan">*</span></label>
-											  	<div class="col-sm-7">
-													<textarea class="form-control input-sm" id="description" name="description" data-validation="required"  data-validation-error-msg="This Field is required" ><?=$news->description;?></textarea>
-											  	</div>
-											</div>
-										</div>
-										<?php if($news->hospital_id !='') { ?>
-										<div class="col-md-12">
-											<div class="form-group">
-											  <label class="control-label col-sm-2 label-name" for="email"> Hospital<span class="starspan">*</span></label>
-											  <div class="col-sm-7">
-												<input type="text" readonly="readonly" class="form-control input-sm" id="t_fname" name="hospital_id" data-validation="required"
-												data-validation-error-msg="This Field is required" value="<?=$news->name;?>">
-											  </div>
-											</div>
-										</div>
-										<?php } ?>
-										<?php if($news->doctor_id !='') { ?>
-										<div class="col-md-12">
-											<div class="form-group">
-											  <label class="control-label col-sm-2 label-name" for="email"> Doctor<span class="starspan">*</span></label>
-											  <div class="col-sm-7">
-												<input type="text" readonly="readonly" class="form-control input-sm" id="t_fname" name="doctor_id" data-validation="required"
-												data-validation-error-msg="This Field is required" value="<?=$news->fname;?>">
-											  </div>
-											</div>
-										</div>
-										<?php } ?>
-										<div class="col-md-12">
-											<div class="form-group">
-												<label class="control-label col-sm-2 label-name" for="email"> Type<span class="starspan">*</span></label>
-												<div class="col-sm-7">
-													<select name="type" id="type" onchange="mytype()" class="form-control input-sm">
-													<option value="">Select</option>
-													<option value="1" <?php if(set_value('type',$news->type)=='1'){ echo "selected";}?>>Image</option>
-													<option value="2" <?php if(set_value('type',$news->type)=='2'){ echo "selected";}?>>Video</option>	
-													</select>
-												</div>
-											</div>
-										</div>
-										<div class="col-md-12">
-											<div class="form-group" id="image" <?php if($news->type!='1'){ ?> style="display: none;" <?php } ?>>
-												<label class="control-label col-sm-2 label-name" for="email"> Image<span class="starspan">*</span></label>
-												<div class="col-sm-7">
-													<input type="file" name="uploadimage" id="uploadimage" class="form-control"  />
-													<div class="container">
-														<?php	$product_path = "public/assets/upload/".$news->image;
-														if($news->image !='') { ?>
-							  							<a data-toggle="modal" data-target="#myModal<?php echo $news->id;?>">View Image</a>
-													  	<!-- The Modal -->
-													  	<div class="modal" id="myModal<?php echo $news->id;?>">
-													    	<div class="modal-dialog">
-													      		<div class="modal-content">
-													        		<!-- Modal Header -->
-													        		<div class="modal-header">
-													          			<button type="button" class="close" data-dismiss="modal">&times;</button>
-													        		</div>
-													        		<!-- Modal body -->
-													        		<div class="modal-body">
-													          			<img src="<?php echo base_url().$product_path;?>" style="width:100%;height:auto;"  />
-													        		</div>
-													      		</div>
-													    	</div>
-													  	</div>
-													  	<?php }else{echo 'No Image';}?>	
-													</div>
-												</div>
-											</div>
-										</div>
-										<div class="col-md-12">
-											<div class="form-group" id="video" <?php if($news->type!='2'){ ?> style="display: none;" <?php } ?>>
-												<label class="control-label col-sm-2 label-name" for="email"> Video<span class="starspan">*</span></label>
-												<div class="col-sm-7">
-													<input type="text" name="video_url" id="video_url"  placeholder="Video Url" class="form-control input-sm" value="<?php echo set_value('video_url',$news->video_url);?>" maxlength="100" />
-												</div>
-											</div>  
-										</div>
-									</div>
-									<div class="row mainheadlinerow">
-										<div class="col-md-12 mainheadline">News Status</div>
-									</div>
-									<div class="row">
-										<div class="col-md-8">
-											<div class="form-group">
-											  	<div class="radio"><label><input type="radio" name="status" value='1' <?php if($news->status=='1'){ echo "checked";}?>>Active</label></div>
-											  	<div class="radio"><label><input type="radio" name="status" value='0' <?php if($news->status=='0'){ echo "checked";}?>>Inactive</label></div>
-											</div>
-										</div>
-									</div>
-									<div class="row">
-										<div class="col-md-8">
-											<div class="form-group">
-											  	<div class="radio"><label><input type="radio" name="approved" value='1' <?php if($news->approved=='1'){ echo "checked";}?>>Approved</label></div>
-											  	<div class="radio"><label><input type="radio" name="approved" value='0' <?php if($news->approved=='0'){ echo "checked";}?>>Not Approved</label></div>
-											</div>
-										</div>
-									</div>
-									<div class="row">
-										<div class="col-md-12">
-											<div class="form-group">        
-											  	<div class="col-sm-9">
-													<input type="submit" class="btn btn-info" id="submit" name="submit" value='Update' />
-													<button type="reset" class="btn btn-info" id="reset" name="reset">Reset</button>
-											  	</div>
-											</div>
-										</div>
-									</div>
-								</form>
-							</div><br><br><br>
-	  					</div>
-					</div><br>
-				</section>
-  			</div>
-  			<div class="control-sidebar-bg"></div>
-		</div>
-	</body>
-</html>
+<div class="content-wrapper">
+  <!-- Content Header & Breadcrumbs -->
+  <section class="content-header" style="padding: 20px 20px 10px;">
+    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+      <div>
+        <h1 style="font-size: 22px; font-weight: 700; color: #1E293B; margin: 0 0 4px 0; font-family: 'Inter', sans-serif;">
+          Edit News Article
+        </h1>
+        <p style="margin: 0; color: #64748B; font-size: 13px;">Update existing news post details, media attachments, and moderation status</p>
+      </div>
+      <div style="display: flex; gap: 10px; align-items: center;">
+        <a href="<?=base_url()?>doctor/newsreg/viewnews" class="btn" style="background: #F1F5F9; color: #334155; font-weight: 600; padding: 8px 16px; border-radius: 8px; border: 1px solid #CBD5E1; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; font-size: 13px;">
+          <i class="fa fa-arrow-left"></i> Back to News Directory
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main content -->
+  <section class="content" style="padding: 10px 20px 30px;">
+    <?=$this->session->flashdata('flashmsg');?>
+
+    <div style="max-width: 900px; margin: 0 auto; background: #FFFFFF; border-radius: 12px; border: 1px solid #E2E8F0; box-shadow: 0 1px 3px rgba(0,0,0,0.05); overflow: hidden;">
+      <div style="padding: 18px 24px; border-bottom: 1px solid #F1F5F9; background: #F8FAFC;">
+        <h3 style="margin: 0; font-size: 15px; font-weight: 700; color: #0F172A; text-transform: uppercase; letter-spacing: 0.5px;">
+          <i class="fa fa-pencil-square-o" style="color: #0d9488; margin-right: 8px;"></i> Update Article Details
+        </h3>
+      </div>
+
+      <form id="mainform" action="" method="post" enctype="multipart/form-data" style="padding: 24px;">
+        <div style="display: grid; grid-template-columns: 1fr; gap: 20px;">
+          
+          <div>
+            <label style="display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 6px;">
+              News Title <span style="color: #EF4444;">*</span>
+            </label>
+            <input type="text" class="form-control" id="t_fname" name="name" data-validation="required" data-validation-error-msg="Title is required" value="<?=$news->title;?>" style="height: 42px; border-radius: 8px; border: 1px solid #CBD5E1; font-size: 14px; padding: 8px 14px;">
+          </div>
+
+          <div>
+            <label style="display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 6px;">
+              Full Description / Article Details <span style="color: #EF4444;">*</span>
+            </label>
+            <textarea class="form-control" id="description" name="description" data-validation="required" data-validation-error-msg="Content is required" rows="6" style="border-radius: 8px; border: 1px solid #CBD5E1; font-size: 14px; padding: 12px 14px;"><?=$news->description;?></textarea>
+          </div>
+
+          <?php if(!empty($news->hospital_id)) { ?>
+          <div>
+            <label style="display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 6px;">Associated Hospital</label>
+            <input type="text" readonly class="form-control" value="<?=$news->name;?>" style="height: 42px; background: #F8FAFC; border-radius: 8px; border: 1px solid #CBD5E1; font-size: 14px;">
+          </div>
+          <?php } ?>
+
+          <?php if(!empty($news->doctor_id)) { ?>
+          <div>
+            <label style="display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 6px;">Authoring Doctor</label>
+            <input type="text" readonly class="form-control" value="<?=$news->fname;?>" style="height: 42px; background: #F8FAFC; border-radius: 8px; border: 1px solid #CBD5E1; font-size: 14px;">
+          </div>
+          <?php } ?>
+
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">
+            <div>
+              <label style="display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 6px;">
+                Media Type <span style="color: #EF4444;">*</span>
+              </label>
+              <select name="type" class="form-control" id="type" onchange="mytype()" style="height: 42px; border-radius: 8px; border: 1px solid #CBD5E1; font-size: 14px;">
+                <option value="">-- Select Type --</option>
+                <option value="1" <?php if(set_value('type',$news->type)=='1'){ echo "selected";}?>>Image Article</option>
+                <option value="2" <?php if(set_value('type',$news->type)=='2'){ echo "selected";}?>>Video Article</option>
+              </select>
+            </div>
+
+            <div id="image" <?php if($news->type!='1'){ ?> style="display: none;" <?php } ?>>
+              <label style="display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 6px;">
+                Change Featured Image
+              </label>
+              <input type="file" class="form-control" id="uploadimage" name="uploadimage" style="height: 42px; padding: 6px 12px; border-radius: 8px; border: 1px solid #CBD5E1;">
+              <?php if(!empty($news->image)) { ?>
+                <div style="margin-top: 8px; font-size: 12px;">
+                  <a href="<?=base_url()?>public/assets/upload/<?=$news->image?>" target="_blank" style="color: #0d9488; font-weight: 600; text-decoration: underline;">
+                    <i class="fa fa-image"></i> View current uploaded image
+                  </a>
+                </div>
+              <?php } ?>
+            </div>
+
+            <div id="video" <?php if($news->type!='2'){ ?> style="display: none;" <?php } ?>>
+              <label style="display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 6px;">
+                YouTube / Video URL
+              </label>
+              <input type="text" name="video_url" id="video_url" placeholder="https://www.youtube.com/watch?v=..." class="form-control" value="<?php echo set_value('video_url',$news->video_url);?>" maxlength="100" style="height: 42px; border-radius: 8px; border: 1px solid #CBD5E1; font-size: 14px;">
+            </div>
+          </div>
+
+          <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px; padding: 18px; display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px;">
+            <div>
+              <label style="display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 8px;">Publish Status</label>
+              <div style="display: flex; gap: 16px; align-items: center;">
+                <label style="display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 500; color: #0F172A; cursor: pointer; margin: 0;">
+                  <input type="radio" name="status" value="1" <?php if($news->status=='1'){ echo "checked";}?> style="accent-color: #0d9488;"> Active
+                </label>
+                <label style="display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 500; color: #64748B; cursor: pointer; margin: 0;">
+                  <input type="radio" name="status" value="0" <?php if($news->status=='0'){ echo "checked";}?> style="accent-color: #0d9488;"> Inactive
+                </label>
+              </div>
+            </div>
+
+            <div>
+              <label style="display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 8px;">Moderation Approval</label>
+              <div style="display: flex; gap: 16px; align-items: center;">
+                <label style="display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 500; color: #0F172A; cursor: pointer; margin: 0;">
+                  <input type="radio" name="approved" value="1" <?php if($news->approved=='1'){ echo "checked";}?> style="accent-color: #0d9488;"> Approved
+                </label>
+                <label style="display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 500; color: #64748B; cursor: pointer; margin: 0;">
+                  <input type="radio" name="approved" value="0" <?php if($news->approved=='0'){ echo "checked";}?> style="accent-color: #0d9488;"> Pending / Unapproved
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 10px;">
+            <button type="submit" name="submit" value="Update" class="btn" style="background: #0d9488; color: #FFFFFF; font-weight: 600; padding: 10px 28px; border-radius: 8px; border: none; box-shadow: 0 2px 4px rgba(13,148,136,0.3);">
+              <i class="fa fa-save" style="margin-right: 6px;"></i> Update News
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </section>
+</div>
+
 <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
 <script src="//cdnjs.cloudflare.com/ajax/libs/jquery-form-validator/2.3.26/jquery.form-validator.min.js"></script>
-<script>  $.validate({  }); </script>
-<?=$this->load->view('inc/footer');?>	
 <script>
-	function mytype() 
-	{
-	  var type = document.getElementById('type').value;		
-	  if(type==1)
-	  {
-		 document.getElementById("image").style.display = "block";
-		 document.getElementById("video").style.display = "none";;
-	  }
-	  else if(type==2)
-	  {
-		 
-		  document.getElementById("video").style.display = "block";
-		  document.getElementById("image").style.display = "none";;
-	  }
-	  else
-	  {
-		 document.getElementById("image").style.display = "none";
-		 document.getElementById("video").style.display = "none";
-	  }	  
-	}
+  $.validate({});
+  function mytype() {
+    var type = document.getElementById('type').value;
+    if(type == "1") {
+      document.getElementById("image").style.display = "block";
+      document.getElementById("video").style.display = "none";
+    } else if(type == "2") {
+      document.getElementById("video").style.display = "block";
+      document.getElementById("image").style.display = "none";
+    } else {
+      document.getElementById("image").style.display = "none";
+      document.getElementById("video").style.display = "none";
+    }
+  }
 </script>
-
+<?=$this->load->view('inc/footer');?>

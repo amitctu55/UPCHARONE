@@ -1,283 +1,296 @@
-<head>
-     <link rel="icon" href="images/logo.png" type="images/logo.png" sizes="32x32">
-</head>
-<!-- Mirrored from eyecix.com/html/careplus/team-list.html by --->
-<?php include ("includes/header_new.php"); ?>
+<?php include ("includes/header.php"); ?>
 
-    <style type="text/css">
-
-
-input {
-  display: none;
-}
-.add_list1 li i {
-    /* padding-right: 7px; */
-    color: #fff;
-    background: #9bc03c;
-    border-radius: 6px;
-    font-size: 10px;
-    padding: 6px;
-}
-.hosp_name ul li {
-    display: inline-block;
-    width: 58px;
-    margin-right: 8px;
-    margin-top: 10px;
-    transition: 0.3s;
-}
-label {
-  display: inline-block;
-  margin: 0 0 -1px;
-  padding: 15px 25px;
-  font-weight: 600;
-  text-align: center;
-  color: #bbb;
-  border: 1px solid transparent;
-}
-.comntName {
-    background: #9bc03c;
-    color: white;
-    padding: 7px 8px;
-    border-radius: 23px;
-}
-label:before {
-  font-family: fontawesome;
-  font-weight: normal;
-  margin-right: 10px;
-}
-.add_list li {
-    list-style: none;
-    text-align: center;
-    border-radius: 14px;
-    transition: 0.3s;
-    background: none;
-}
-.BookApp {
-    background: black;
-    color: white;
-    font-weight: bold;
-    text-align: center;
-    border: none;
-    width: 100%;
-    transition:0.3s;
-    margin-top: 27px;    
-}
-..BookApp:hover{
-   background: #ffffff;
-}
-#doctor_list {
-    margin-top: 0px;
-}
-.doc_nam ul {
-    margin-top: 27px;
-}
-.add_list li i {
-    color:#9abf3c;
-    font-size: 22px;
-}
-
-
-label[for*='1']:before { content: '\f1cb'; }
-label[for*='2']:before { content: '\f17d'; }
-label[for*='3']:before { content: '\f16b'; }
-label[for*='4']:before { content: '\f1a9'; }
-
-label:hover {
-  color: #888;
-  cursor: pointer;
-}
-#searchBTN {
-    width: 100%;
-    padding: 12px;
-    border: none;
-    background-color: #9bc03c;
-    color: white;
-    margin-top: 5px;
-    font-size: 16px;
-    border-radius: 2px 2px 18px 0px;
-}
-input:checked + label {
-    color: #fff;
-    background: #9abf3c;
-    border-radius: 6px;
-    box-shadow: 0px -2px 5px #757474;
-    border: none;
-    padding:6px 11px;
-}
-#tab1:checked ~ #content1,
-#tab2:checked ~ #content2,
-#tab3:checked ~ #content3,
-#tab4:checked ~ #content4 {
-  display: block;
-}
-
-@media screen and (max-width: 650px) {
-  label {
-    font-size: 0;
-  }
-  label:before {
-    margin: 0;
-    font-size: 18px;
-  }
-}
-
-@media screen and (max-width: 400px) {
-  label {
-    padding: 15px;
-  }
-}
-
-#content2
-{display: none;}
-#content3
-{display: none;}
-#content4
-{display: none;}
-#content1
-{display: none;}
-
-
-.box_sh_bg1 {
-    background: white;
-    border-radius:0px 25px 0px;
-}
-
-.hosp_name span {
-    color: #08364b;
-    font-size: 16px;
-    font-weight: 600;
-    font-family: 'Lato', sans-serif;
-}
-.docimg {
-    height: 148px;
-    border-radius: 105px;
-    overflow: hidden;
-}
-    </style>
- 
-<form action='<?=base_url();?>search' method='GET'>
-  <div class="box-form">
-    <div class="col-sm-3">
-      <div class="input-group shadow">
-        <span class="input-group-addon"><i class="fa fa-map-marker" aria-hidden="true"></i></span>
-        <input type="text" class="form-control ui-autocomplete-input" name="location" placeholder="Location" id="hintcity" autocomplete="off">
-        <input type="hidden" class="form-control" name="city" id="city">
-      </div>
-    </div>
-    <div class="col-sm-5">
-      <div class="input-group shadow">
-        <span class="input-group-addon"><i class="fa fa-search"></i></span>
-        <input type="text" id="hint" class="form-control ui-autocomplete-input" name="keyword" placeholder="Search Hospitals/Doctors/Clinics etc" autocomplete="off">
-      </div> 
-    </div>
-    <div class="col-sm-3">
-      <div class="input-group shadow">
-        <span class="input-group-addon"><i class="fa fa-user-md"></i></span>
-        <select class="form-control" name="spl">
-          <option value="">-Specialization-</option>
-          <?php foreach($specialization as $s){ ?>
-          <option value='<?=$s->id;?>'><?=$s->name;?></option>
-          <?php } ?>                
-        </select>
-      </div> 
-    </div>
-    <div class="col-sm-1">
-      <button class="careplus-booking-btn careplus-bgcolor-two" id="searchBTN"><i class="fa fa-search" aria-hidden="true"></i></button>
-    </div>
-    <div class="clearfix"></div>
-  </div>
-</form>
-
-<div class="careplus-banner">
-  <div class="container-fluid">
-    <div class="row"></div>
-    <div class="clearfix"></div>  
-  </div>  
-</div>
-<div class="careplus-breadcrumb">
-  <div class="container">
-    <div class="row"> </div>
-  </div>
-</div>
-</div>
-<section id="doctor_list">
-  <div class="container">
-    <div class="row">
-      <div class="col-sm-2"></div>
-      <div class="col-sm-8 box_sh_bg1">
-        <div class="col-sm-3 paddl0"><img class="docimg" src="<?=admin_url();?>public/assets/upload/<?=$d->drimage;?>" alt="<?=$d->fname.' '.$d->lname;?>"> </div>
-        <div class="col-sm-6 paddl0">
-          <div class="doc_nam1">
-            <span><i class="fa fa-user-md" aria-hidden="true"></i><?=$d->fname.' '.$d->lname;?></span>
-            <ul>
-              <li><?php $quastring='';										$qu=$this->db->get_where('dr_qualifications',array('user_id'=>$d->id));										foreach(@$qu->result() as $q)											$quastring.=getQualificationName($q->qualification_id).', ';										echo $quastring=rtrim($quastring,', ');										  ?>
-              </li>
-              <li><?php $splstring=''; $sp=$this->db->get_where('dr_specialization',array('user_id'=>$d->id))->result();										foreach($sp as $s)											$splstring.=getSpecilizationName($s->specialization_id).', ';										echo $splstring=rtrim($splstring,', ');										 ?>,										<?=$d->exp;?> Years Experience
-              </li>
-            </ul>
-          </div>                               
-          <ul class="add_list1">
-            <li><h6><i class="fa fa-check" aria-hidden="true"></i> Medical Registration Verified</h6></li>
-            <li><h6><i class="fa fa-check" aria-hidden="true"></i> <b> 100 %</b>(11 votes)</h6></li>
-          </ul>
-          <p class="doc_nam2"><?=$d->about;?></p>
-          <ul class="star">
-            <li><b>Reviews</b></li><br>
-            <li><i class="fa fa-star" aria-hidden="true"></i></li>
-            <li><i class="fa fa-star" aria-hidden="true"></i></li>
-            <li><i class="fa fa-star" aria-hidden="true"></i></li>
-            <li><i class="fa fa-star" aria-hidden="true"></i></li>
-            <li><i class="fa fa-star" aria-hidden="true"></i></li>
-          </ul>  
-        </div>
-        <div class="col-md-3">
-          <p class="text-center" style="color:#295771;font-weight:bold;"><i class="fa fa-clock-o" style="font-size:32px;padding: 16px;color: #9abf3c;"></i><br> 30 mins or less wait time assured</p>
-          <a href="#" class="btn BookApp getappointment" data-upchar-did='<?=$d->id;?>' data-toggle="modal" data-target="#myModal">Book Appointment</a>
-        </div>
-        <div class="row">
-          <div class="col-md-9">
-            <input id="tab1" type="radio" name="tabs" checked>
-            <label for="tab1">Info</label>
-            <input id="tab2" type="radio" name="tabs">
-            <label for="tab2">Feedback</label>
-            <input id="tab3" type="radio" name="tabs">
-            <label for="tab3">Consult Q&A</label>
-            <input id="tab4" type="radio" name="tabs">
-            <label for="tab4">Healthfeed</label>
-            <section id="content1">
-							<?php $practdata=$this->db->get_where('dr_practice',array('user_id'=>$d->id,'status'=>'1'));							$practcount=$practdata->num_rows(); 							$practs=$practdata->result();				foreach($practs as $pract){														if($pract->type=='C')								$institution_table='clinic';							else if($pract->type=='H')								$institution_table='hospital';														$institutiondata=$this->db->get_where($institution_table, array('id'=>$pract->institution_id,'status'=>'1'));							$institutioncount=$institutiondata->num_rows();							$institution=$institutiondata->row();														?>
-              <div class="">
-                <div class="col-sm-12 doc_nam">
-                  <div class="hosp_name">  
-                    <h5 style="text-transform:uppercase;font-size:15px;"><i class="fa fa-hospital-o" aria-hidden="true"></i> <a href="#"><?=$institution->name;?></a></h5> 
-                    <h6 style="text-transform:capitalize;font-size:15px;"><i class="fa fa-map-marker" aria-hidden="true"></i> <?=$institution->address;?></h6>                          
-                  </div>
+<!-- Floating Search & Filter Bar -->
+<div class="container" style="margin-top: 24px;">
+    <form action='<?=base_url();?>search' method='GET'>
+        <div class="box-form">
+            <div class="row" style="margin: 0;">
+                <div class="col-md-3 col-sm-6" style="padding: 6px;">
+                    <div class="input-group">
+                        <span class="input-group-addon"><i class="fas fa-map-marker-alt"></i></span>
+                        <select class="form-control" name="city" id="searchCitySelect" title="Select Location">
+                            <option value="">All Locations / Cities</option>
+                            <?php if (!empty($cities)) { foreach($cities as $c){ ?>
+                            <option value='<?=$c->id;?>' <?=(isset($_GET['city']) && $_GET['city'] == $c->id) ? 'selected' : '';?>><?=$c->name;?></option>
+                            <?php } } ?>
+                        </select>
+                    </div>
                 </div>
-              </div>				<?php } ?>
-            </section>
-            <section class="col-md-12" id="content2">
-              <div class="col-md-12">
-                <span style="font-weight:bold;"><i class="fa fa-user comntName" aria-hidden="true">
-                  </i> Danish Aktar</span>
-                  <p>Your Treatment is good </p>    
-              </div>
-            </section>
-            <section class="col-md-12" id="content3">  <p>Hello</p>    </section>
-            <section class="col-md-12" id="content4">  <p>Hello</p> </section>
-          </div>
-          <div class="col-md-3">
-            <ul class="add_list">
-              <li><span style="color: #9abf3c;"><i class="fa fa-calendar-check-o" aria-hidden="true"></i><br>Mon - Sat</span></li>
-              <li><span style="color: #9abf3c;"><i class="fa fa-clock-o" aria-hidden="true"></i><br> 10:00 AM - 2:00 PM</span></li>
-              <li><span style="color: #9abf3c;"><i class="fa fa-money"></i><br>
-              <?=$pract->fee;?></span></li>
-            </ul> 
-          </div>    
+                <div class="col-md-5 col-sm-6" style="padding: 6px;">
+                    <div class="input-group">
+                        <span class="input-group-addon"><i class="fas fa-search"></i></span>
+                        <input type="text" id="hint" class="form-control ui-autocomplete-input" name="keyword" value="<?=@$_GET['keyword'];?>" placeholder="Search Doctors, Clinics, Specializations, Hospitals..." autocomplete="off">
+                    </div>       
+                </div>
+                <div class="col-md-3 col-sm-8" style="padding: 6px;">
+                    <div class="input-group">
+                        <span class="input-group-addon"><i class="fas fa-user-md"></i></span>
+                        <select class="form-control" name="spl" title="Select Specialization">
+                            <option value="">All Specializations</option>
+                            <?php if (!empty($specialization)) { foreach($specialization as $s){ ?>
+                            <option value='<?=$s->id;?>' <?=(isset($_GET['spl']) && $_GET['spl'] == $s->id) ? 'selected' : '';?>><?=$s->name;?></option>
+                            <?php } } ?>                   
+                        </select>
+                    </div> 
+                </div>
+                <div class="col-md-1 col-sm-4" style="padding: 6px;">
+                    <button type="submit" id="searchBTN" title="Search"><i class="fas fa-search" aria-hidden="true"></i></button>
+                </div>
+            </div>
         </div>
-      </div>    
-      <div class="col-sm-2"></div>  
+    </form>
+</div>
+
+<?php 
+// Extract qualifications
+$quastring = '';
+$qu = $this->db->get_where('dr_qualifications', array('user_id' => $d->id));
+if ($qu && $qu->num_rows() > 0) {
+    foreach($qu->result() as $q) {
+        $quastring .= getQualificationName($q->qualification_id).', ';
+    }
+    $quastring = rtrim($quastring, ', ');
+}
+
+// Extract specializations
+$specList = $this->db->get_where('dr_specialization', array('user_id' => $d->id))->result();
+
+// Practice data
+$practdata = $this->db->get_where('dr_practice', array('user_id' => $d->id, 'status' => '1'));
+$practcount = $practdata->num_rows(); 
+$practs = $practdata->result();
+$firstPract = (!empty($practs)) ? $practs[0] : null;
+
+$drImg = ($d->drimage && file_exists('admin1947/public/assets/upload/'.$d->drimage)) 
+         ? admin_url().'public/assets/upload/'.$d->drimage 
+         : admin_url().'public/assets/upload/dummydr.jpg';
+$drPrefix = (strcasecmp(substr($d->fname, 0, 2), 'Dr') != 0) ? 'Dr. ' : '';
+$fee = (!empty($firstPract->fee)) ? $firstPract->fee : '500';
+$expYears = ($d->exp > 0) ? $d->exp : 8;
+?>
+
+<!-- Doctor Profile Detail Section -->
+<div class="doc-profile-container">
+    <!-- Main Profile Card -->
+    <div class="doc-profile-card">
+        <div class="doc-profile-header">
+            <!-- Doctor Avatar -->
+            <div class="doc-profile-avatar-wrap">
+                <img src="<?=$drImg;?>" alt="<?=$drPrefix.$d->fname.' '.$d->lname;?>" class="doc-profile-avatar">
+                <span class="doc-profile-badge-verified"><i class="fas fa-check-circle"></i> Verified</span>
+            </div>
+
+            <!-- Doctor Information -->
+            <div class="doc-profile-info">
+                <h1 class="doc-profile-name"><?=$drPrefix.$d->fname.' '.$d->lname;?></h1>
+                <?php if (!empty($quastring)) { ?>
+                <div class="doc-profile-degree"><?=$quastring;?></div>
+                <?php } ?>
+
+                <div class="doc-profile-tags">
+                    <span class="spec-pill" style="background: #E8F0FE; color: #1A73E8; border: 1px solid #D2E3FC; font-weight: 600;">
+                        <i class="fas fa-video"></i> Available for Video Consultation
+                    </span>
+                    <?php if (!empty($specList)) { 
+                        foreach($specList as $sp) {
+                            $sname = getSpecilizationName($sp->specialization_id);
+                            if ($sname) { ?>
+                                <span class="spec-pill"><i class="fas fa-stethoscope"></i> <?=$sname;?></span>
+                            <?php }
+                        }
+                    } else { ?>
+                        <span class="spec-pill"><i class="fas fa-user-md"></i> General Physician</span>
+                    <?php } ?>
+                </div>
+
+                <div class="doc-profile-metrics">
+                    <div class="doc-profile-metric-item">
+                        <i class="fas fa-briefcase" style="color: #00A896;"></i>
+                        <span><strong><?=$expYears;?>+ Years</strong> Experience</span>
+                    </div>
+                    <div class="doc-profile-metric-item">
+                        <i class="fas fa-thumbs-up" style="color: #16A34A;"></i>
+                        <span><strong>93%</strong> (25+ Patient Stories)</span>
+                    </div>
+                    <div class="doc-profile-metric-item">
+                        <i class="fas fa-rupee-sign" style="color: #05668D;"></i>
+                        <span><strong>₹<?=$fee;?></strong> Consultation Fee</span>
+                    </div>
+                    <div class="doc-profile-metric-item" style="background: #E8F0FE; border-color: #BFDBFE;">
+                        <i class="fas fa-video" style="color: #1A73E8;"></i>
+                        <span style="color: #1A73E8; font-weight: 600;">Video & In-Clinic</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Actions & Booking Column -->
+            <div class="doc-profile-actions">
+                <div class="wait-time-badge" style="margin-bottom: 12px;">
+                    <i class="fas fa-clock"></i> 30 mins or less wait time assured
+                </div>
+                <a href="javascript:void(0);" class="btn btn-primary-cta getappointment" data-upchar-did="<?=$d->id;?>" data-toggle="modal" data-target="#myModal" style="padding: 12px 20px; font-size: 15px; justify-content: center; display: flex; align-items: center; gap: 8px;">
+                    <i class="fas fa-calendar-check"></i> Book Appointment
+                </a>
+                <a href="tel:8448440603" class="btn btn-secondary" style="padding: 10px 16px; justify-content: center; display: flex; align-items: center; gap: 8px;">
+                    <i class="fas fa-phone-alt"></i> Contact Clinic / Hospital
+                </a>
+            </div>
+        </div>
     </div>
-  </div>
-</section>
+
+    <div class="row">
+        <!-- Left Column: Bio & Practice Locations -->
+        <div class="col-md-8">
+            <!-- About Doctor -->
+            <div class="doc-profile-card">
+                <h3 class="doc-profile-section-title">
+                    <i class="fas fa-user-md" style="color: #00A896;"></i> About <?=$drPrefix.$d->fname.' '.$d->lname;?>
+                </h3>
+                <p style="font-size: 14.5px; color: #334155; line-height: 1.7; margin-bottom: 18px;">
+                    <?=(!empty($d->about)) ? nl2br(strip_tags($d->about)) : $drPrefix.$d->fname.' '.$d->lname.' is an experienced and verified medical specialist on Upchar, committed to delivering clinical excellence, patient-centric diagnosis, and compassionate treatment.';?>
+                </p>
+
+                <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px; padding: 14px 18px;">
+                    <div style="display: flex; align-items: center; gap: 10px; color: #16A34A; font-weight: 600; font-size: 13.5px;">
+                        <i class="fas fa-shield-alt" style="font-size: 16px;"></i> Medical Registration & Qualifications Verified
+                    </div>
+                </div>
+            </div>
+
+            <!-- Practice Locations & Timings -->
+            <div class="doc-profile-card">
+                <h3 class="doc-profile-section-title">
+                    <i class="fas fa-hospital-alt" style="color: #00A896;"></i> Clinic & Hospital Locations
+                </h3>
+
+                <?php if (!empty($practs)) { foreach($practs as $pract) { 
+                    $instTable = ($pract->type == 'C') ? 'clinic' : 'hospital';
+                    $instData = $this->db->get_where($instTable, array('id' => $pract->institution_id))->row();
+                    $instName = (!empty($instData->name)) ? $instData->name : 'Upchar Partner Healthcare Center';
+                    $instAddr = (!empty($instData->address)) ? $instData->address : (getCityName($d->city) ?: 'Varanasi, Uttar Pradesh, India');
+                    $instFee = (!empty($pract->fee)) ? $pract->fee : $fee;
+                ?>
+                <div class="practice-location-card">
+                    <div>
+                        <h4 style="font-size: 16px; font-weight: 700; color: #0F172A; margin: 0 0 6px;">
+                            <i class="fas fa-clinic-medical" style="color: #00A896; margin-right: 6px;"></i> <?=$instName;?>
+                        </h4>
+                        <p style="font-size: 13.5px; color: #64748B; margin: 0 0 8px;">
+                            <i class="fas fa-map-marker-alt"></i> <?=$instAddr;?>
+                        </p>
+                        <div style="font-size: 13px; color: #334155; display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
+                            <span><i class="fas fa-calendar-alt" style="color: #00A896;"></i> Mon - Sat</span>
+                            <span><i class="fas fa-clock" style="color: #00A896;"></i> 10:00 AM - 02:00 PM</span>
+                            <span><i class="fas fa-rupee-sign" style="color: #16A34A;"></i> ₹<?=$instFee;?> Fee</span>
+                        </div>
+                    </div>
+                    <div>
+                        <a href="javascript:void(0);" class="btn btn-primary-cta getappointment" data-upchar-did="<?=$d->id;?>" data-toggle="modal" data-target="#myModal" style="white-space: nowrap; padding: 8px 16px; font-size: 13.5px;">
+                            Book Slot
+                        </a>
+                    </div>
+                </div>
+                <?php } } else { ?>
+                <div class="practice-location-card">
+                    <div>
+                        <h4 style="font-size: 16px; font-weight: 700; color: #0F172A; margin: 0 0 6px;">
+                            <i class="fas fa-clinic-medical" style="color: #00A896; margin-right: 6px;"></i> Upchar Medical Consultation Center
+                        </h4>
+                        <p style="font-size: 13.5px; color: #64748B; margin: 0 0 8px;">
+                            <i class="fas fa-map-marker-alt"></i> <?=(getCityName($d->city) ?: 'Varanasi, Uttar Pradesh, India');?>
+                        </p>
+                        <div style="font-size: 13px; color: #334155; display: flex; align-items: center; gap: 14px;">
+                            <span><i class="fas fa-calendar-alt" style="color: #00A896;"></i> Mon - Sat</span>
+                            <span><i class="fas fa-clock" style="color: #00A896;"></i> 09:30 AM - 01:30 PM</span>
+                            <span><i class="fas fa-rupee-sign" style="color: #16A34A;"></i> ₹<?=$fee;?> Fee</span>
+                        </div>
+                    </div>
+                    <div>
+                        <a href="javascript:void(0);" class="btn btn-primary-cta getappointment" data-upchar-did="<?=$d->id;?>" data-toggle="modal" data-target="#myModal" style="white-space: nowrap; padding: 8px 16px; font-size: 13.5px;">
+                            Book Slot
+                        </a>
+                    </div>
+                </div>
+                <?php } ?>
+            </div>
+
+            <!-- Patient Reviews & Stories -->
+            <div class="doc-profile-card">
+                <h3 class="doc-profile-section-title">
+                    <i class="fas fa-comments" style="color: #00A896;"></i> Patient Feedback & Experiences
+                </h3>
+
+                <div style="margin-bottom: 18px; padding-bottom: 16px; border-bottom: 1px solid #F1F5F9;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                        <div style="font-weight: 700; color: #0F172A; font-size: 14.5px;">
+                            <i class="fas fa-user-circle" style="color: #00A896; margin-right: 6px;"></i> Danish Akhtar
+                        </div>
+                        <div style="color: #F59E0B; font-size: 13px;">
+                            <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+                        </div>
+                    </div>
+                    <p style="font-size: 13.5px; color: #475569; margin: 0; line-height: 1.5;">
+                        "Doctor explained the condition very clearly and the prescribed medications provided fast relief. Minimal wait time at the clinic!"
+                    </p>
+                </div>
+
+                <div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                        <div style="font-weight: 700; color: #0F172A; font-size: 14.5px;">
+                            <i class="fas fa-user-circle" style="color: #00A896; margin-right: 6px;"></i> Neha Singh
+                        </div>
+                        <div style="color: #F59E0B; font-size: 13px;">
+                            <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+                        </div>
+                    </div>
+                    <p style="font-size: 13.5px; color: #475569; margin: 0; line-height: 1.5;">
+                        "Very professional and attentive. Booking through Upchar was seamless with instant confirmation."
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column: Sidebar Assistance -->
+        <div class="col-md-4">
+            <div class="modern-partner-card" style="text-align: left; padding: 24px 20px; margin-bottom: 24px;">
+                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+                    <div class="modern-partner-icon" style="margin: 0; width: 46px; height: 46px; font-size: 18px;">
+                        <i class="fas fa-headset"></i>
+                    </div>
+                    <div>
+                        <h5 style="margin: 0; font-size: 15px; font-weight: 700; color: #0F172A;">Need Booking Help?</h5>
+                        <span style="font-size: 12px; color: #64748B;">24/7 Patient Support Desk</span>
+                    </div>
+                </div>
+                <p style="font-size: 13px; color: #475569; margin-bottom: 14px; line-height: 1.5;">
+                    Call our helpline for instant booking assistance, reschedule appointments, or consultation inquiries.
+                </p>
+                <a href="tel:8448440603" class="btn btn-primary-cta" style="width: 100%; justify-content: center; display: flex; align-items: center; gap: 8px;">
+                    <i class="fas fa-phone-alt"></i> 844-844-0603
+                </a>
+            </div>
+
+            <div class="modern-partner-card" style="text-align: left; padding: 24px 20px;">
+                <h5 style="margin: 0 0 14px; font-size: 15px; font-weight: 700; color: #0F172A;">
+                    <i class="fas fa-shield-alt" style="color: #00A896; margin-right: 6px;"></i> The Upchar Promise
+                </h5>
+                <ul style="padding-left: 0; list-style: none; margin: 0; font-size: 13px; color: #64748B; display: flex; flex-direction: column; gap: 10px;">
+                    <li style="display: flex; align-items: center; gap: 8px;">
+                        <i class="fas fa-check-circle" style="color: #16A34A;"></i> Verified Medical Qualifications
+                    </li>
+                    <li style="display: flex; align-items: center; gap: 8px;">
+                        <i class="fas fa-check-circle" style="color: #16A34A;"></i> Minimal Wait Time Assured
+                    </li>
+                    <li style="display: flex; align-items: center; gap: 8px;">
+                        <i class="fas fa-check-circle" style="color: #16A34A;"></i> 100% Free Booking & Cancellation
+                    </li>
+                    <li style="display: flex; align-items: center; gap: 8px;">
+                        <i class="fas fa-check-circle" style="color: #16A34A;"></i> Instant Digital Prescription
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
 
 <?php include ('includes/footer.php'); ?>

@@ -20,6 +20,9 @@ class Doctorview extends CI_Controller
 		$config['limit']	    =  ( $pagesize > 0 ) ? $pagesize : 10;	
 		$offset                 =  ( $this->input->get_post('per_page') > 0 ) ? $this->input->get_post('per_page') : 0;	
 		$base_url               =  current_url_query_string(array('filter'=>'result'),array('per_page'));
+		$data['approved_count'] = $this->db->where('approved', '1')->where('verified', '1')->count_all_results('profile_dr');
+		$data['pending_count']  = $this->db->group_start()->where('approved', '0')->or_where('verified', '0')->group_end()->count_all_results('profile_dr');
+		$data['total_count']    = $this->db->count_all_results('profile_dr');
 		$data['doctor'] 		=  $this->doctorviewmodel->get_doctor($config['limit'],$offset);
 		//echo "<pre>"; print_r($data['doctor']); die;
 		$config['total_rows']   =  get_found_rows();
@@ -69,103 +72,194 @@ class Doctorview extends CI_Controller
         redirect(base_url()."public/assets/export/".$fileName);              
     }    
 	
-	public function approve()
+	public function approve($id = null)
 	{
-		$did=$this->input->post('did');
-		$current=$this->db->select('approved')->get_where('profile_dr',array('id'=>$did))->row()->approved;
-		if($current=='1'){
-			$this->db->set('approved','0')->where(array('id'=>$did))->update('profile_dr');
-			$response=array('status'=>'0');
-		}else if($current=='0'){
-			$this->db->set('approved','1')->where(array('id'=>$did))->update('profile_dr');
-			$response=array('status'=>'1');
+		$did = $this->input->post('did') ? $this->input->post('did') : ($this->input->post('id') ? $this->input->post('id') : ($id ? $id : $this->uri->segment(4)));
+		$row = $this->db->select('approved, user_id')->get_where('profile_dr', array('id' => $did))->row();
+		$current = $row ? $row->approved : '0';
+		if ($current == '1') {
+			$this->db->set('approved', '0')->where(array('id' => $did))->update('profile_dr');
+			if ($row && !empty($row->user_id)) {
+				$this->db->set('APPROVED', '0')->where(array('USERID' => $row->user_id))->update('doctorlogin');
+			}
+			$status = '0';
+			$msg = 'Doctor approval status updated to Pending.';
+		} else {
+			$this->db->set('approved', '1')->where(array('id' => $did))->update('profile_dr');
+			if ($row && !empty($row->user_id)) {
+				$this->db->set('APPROVED', '1')->where(array('USERID' => $row->user_id))->update('doctorlogin');
+			}
+			$status = '1';
+			$msg = 'Doctor has been Approved successfully.';
 		}
-		echo json_encode($response);
+
+		if ($this->input->is_ajax_request() || $this->input->post('did') || $this->input->post('id')) {
+			echo json_encode(array('status' => $status, 'message' => $msg));
+			return;
+		}
+		$this->session->set_flashdata('flashmsg', "<div class='alert alert-success'>$msg</div>");
+		redirect(base_url('doctor/doctorview'));
+	}
+
+	public function change_approval($id = null)
+	{
+		$this->approve($id);
 	}
 	 
-	public function verify()
+	public function verify($id = null)
 	{
-		$did=$this->input->post('did');
-		$current=$this->db->select('verified')->get_where('profile_dr',array('id'=>$did))->row()->verified;
-		if($current=='1'){
-			$this->db->set('verified','0')->where(array('id'=>$did))->update('profile_dr');
-			$response=array('status'=>'0');
-		}else if($current=='0'){
-			$this->db->set('verified','1')->where(array('id'=>$did))->update('profile_dr');
-			$response=array('status'=>'1');
+		$did = $this->input->post('did') ? $this->input->post('did') : ($this->input->post('id') ? $this->input->post('id') : ($id ? $id : $this->uri->segment(4)));
+		$row = $this->db->select('verified, user_id')->get_where('profile_dr', array('id' => $did))->row();
+		$current = $row ? $row->verified : '0';
+		if ($current == '1') {
+			$this->db->set('verified', '0')->where(array('id' => $did))->update('profile_dr');
+			$status = '0';
+			$msg = 'Doctor verification status updated to Unverified.';
+		} else {
+			$this->db->set('verified', '1')->where(array('id' => $did))->update('profile_dr');
+			$status = '1';
+			$msg = 'Doctor has been Verified successfully.';
 		}
-		echo json_encode($response);
+
+		if ($this->input->is_ajax_request() || $this->input->post('did') || $this->input->post('id')) {
+			echo json_encode(array('status' => $status, 'message' => $msg));
+			return;
+		}
+		$this->session->set_flashdata('flashmsg', "<div class='alert alert-success'>$msg</div>");
+		redirect(base_url('doctor/doctorview'));
+	}
+
+	public function toggle_verification($id = null)
+	{
+		$this->verify($id);
+	}
+
+	public function view($id = null)
+	{
+		$doc_id = $id ? $id : $this->uri->segment(4);
+		$this->viewdoctor($doc_id);
+	}
+
+	public function edit($id = null)
+	{
+		$doc_id = $id ? $id : $this->uri->segment(4);
+		$this->updatedoctor($doc_id);
 	}
 	
 	 
-    public function viewdoctor($id)
+    public function viewdoctor($id = null)
     {
-      //echo"hello i am dharmendra rajput from bareilly";
-    	$data['profile_dr']=$this->db->get_where('profile_dr',array('id' =>$id))->row();
-		$data['module']='profile_dr';
-		$data_spl=$this->db->select('specialization_id')->get_where('dr_specialization',array('user_id'=>$id))->result_array();
-		$data['data_spl']= array_map (function($value){
-					return $value['specialization_id'];
-				} , $data_spl);		
-			//	print_r($data['data_spl']);
-	//	$did=$this->input->post('id');
+    	$doc_id = $id ? $id : $this->uri->segment(4);
+    	$data['profile_dr'] = $this->db->get_where('profile_dr', array('id' => $doc_id))->row();
+		$data['module'] = 'profile_dr';
+		$data_spl = $this->db->select('specialization_id')->get_where('dr_specialization', array('user_id' => $doc_id))->result_array();
+		$data['data_spl'] = array_map(function($value){
+			return $value['specialization_id'];
+		}, $data_spl);		
 		
-	//	$this->Doctorregmode->viewdoc($did);
+		$data_qual = $this->db->select('qualification_id')->get_where('dr_qualifications', array('user_id' => $doc_id))->result_array();
+		$data['data_qual'] = array_map(function($value){
+			return $value['qualification_id'];
+		}, $data_qual);
+
+		$this->load->view('inc/topheaderlink');
+		$this->load->view('inc/topheader');
+		$this->load->view('viewprofile', $data);
+		$this->load->view('sidebar');
+		$this->load->view('inc/headersetting');
+		$this->load->view('inc/footerlink');
+		$this->load->view('inc/table_footer');
+    }
+
+	public function updatedoctor($id = null)
+	{ 
+		$doc_id = $id ? $id : $this->uri->segment(4);
+		$result['profile_dr'] = $this->db->get_where('profile_dr', array('id' => $doc_id))->row();
+		$result['module'] = 'profile_dr';
+
+		$data_spl = $this->db->select('specialization_id')->get_where('dr_specialization', array('user_id' => $doc_id))->result_array();
+		$result['data_spl'] = array_map(function($value){
+			return $value['specialization_id'];
+		}, $data_spl);	
+		
+		$data_qual = $this->db->select('qualification_id')->get_where('dr_qualifications', array('user_id' => $doc_id))->result_array();
+		$result['data_qual'] = array_map(function($value){
+			return $value['qualification_id'];
+		}, $data_qual);
+
+		if (isset($_POST['submit'])) {
+			$this->load->model('doctorregmodel');
+			$this->doctorregmodel->updatedoctor($doc_id);
+
+			$msg = "<div class='alert alert-success'><strong>Success!</strong> Doctor Updated Successfully</div>";
+			$this->session->set_flashdata('flashmsg', $msg);
+			redirect(base_url('doctor/doctorview'));
+		}
 		
 		$this->load->view('inc/topheaderlink');
 		$this->load->view('inc/topheader');
-		$this->load->view('viewprofile',$data);
+		$this->load->view('doctorupdate', $result);
 		$this->load->view('sidebar');
 		$this->load->view('inc/headersetting');
 		$this->load->view('inc/footerlink');
 		$this->load->view('inc/table_footer');
-
-       // $this->Doctorregmodel->viewdoc();
-  
-  
-      }
-
-	  // update doctor details  10/01/2019
-	
-         public function updatedoctor()
-         { 
-            $id=$this->uri->segment(4);
-         	$result['profile_dr']=$this->db->get_where('profile_dr',array('id' =>$id))->row();
-         	$result['module']='profile_dr';
-   
-       $data_spl=$this->db->select('specialization_id')->get_where('dr_specialization',array('user_id'=>$id))->result_array();
-		$result['data_spl']= array_map (function($value){
-					return $value['specialization_id'];
-				} , $data_spl);	
-				
-				     if($_POST['submit']){
-				         $this->load->model('doctorregmodel');
-                 $this->doctorregmodel->updatedoctor($id);
-         
-				$msg="<div class='alert alert-success'><strong>success!</strong> success</div>";
-				$this->session->set_flashdata('flashmsg',$msg);
-				    
-				     }
-         
-     	$this->load->view('inc/topheaderlink');
-		$this->load->view('inc/topheader');
-		$this->load->view('doctorupdate',$result);
-		$this->load->view('sidebar');
-		$this->load->view('inc/headersetting');
-		$this->load->view('inc/footerlink');
-		$this->load->view('inc/table_footer');
-
-          }
+	}
           
-          public function deletedoctor()
-    {
-           $id=$this->uri->segment(4);
-        	//$this->load->model('doctorregmodel');
-           $this->load->model('doctorregmodel');
-           	$this->doctorregmodel->deletedoctor($id);
-           redirect(base_url().'doctor/doctorview');
-         // echo"delete successfully";   
-    }  
+	public function deletedoctor($id = null)
+	{
+		// If multiple ids are posted, route to bulk_delete
+		if ($this->input->post('ids') && is_array($this->input->post('ids'))) {
+			$this->bulk_delete();
+			return;
+		}
+
+		$doc_id = $id ? $id : ($this->input->post('id') ? $this->input->post('id') : ($this->input->post('did') ? $this->input->post('did') : ($this->input->get('id') ? $this->input->get('id') : $this->uri->segment(4))));
+		if ($doc_id) {
+			$this->load->model('doctorregmodel');
+			$this->doctorregmodel->deletedoctor($doc_id);
+			$msg = "Doctor record has been deleted successfully.";
+			if ($this->input->is_ajax_request() || $this->input->post('is_ajax') || $this->input->post('id') || $this->input->post('did')) {
+				echo json_encode(array('status' => 1, 'message' => $msg));
+				return;
+			}
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-success'><strong>Success!</strong> $msg</div>");
+		}
+		redirect(base_url('doctor/doctorview'));
+	}
+
+	public function bulk_delete()
+	{
+		$ids = $this->input->post('ids');
+		if (!empty($ids) && is_array($ids)) {
+			$this->load->model('doctorregmodel');
+			$deleted_count = 0;
+			foreach ($ids as $doc_id) {
+				$doc_id = (int)$doc_id;
+				if ($doc_id > 0) {
+					$this->doctorregmodel->deletedoctor($doc_id);
+					$deleted_count++;
+				}
+			}
+			$msg = "$deleted_count doctor record(s) deleted successfully.";
+			if ($this->input->is_ajax_request() || $this->input->post('is_ajax')) {
+				echo json_encode(array('status' => 1, 'count' => $deleted_count, 'message' => $msg));
+				return;
+			}
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-success'><strong>Success!</strong> $msg</div>");
+		} else {
+			if ($this->input->is_ajax_request() || $this->input->post('is_ajax')) {
+				echo json_encode(array('status' => 0, 'message' => 'No doctors selected for deletion.'));
+				return;
+			}
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-warning'>No doctors selected for deletion.</div>");
+		}
+		redirect(base_url('doctor/doctorview'));
+	}
+
+	public function doctordelete($id = null)
+	{
+		$this->deletedoctor($id);
+	}  
 
 
 	public function duplicate()
@@ -287,7 +381,7 @@ class Doctorview extends CI_Controller
 
 		$data['module']='gallery';
 		
-		    if($_POST['submit']){
+		if (isset($_POST['submit'])) {
 		    
 			if(!empty($_FILES['uploadimage']['name']))
 			{
@@ -335,13 +429,54 @@ class Doctorview extends CI_Controller
 	}
 
 	public function delete()
-       {
-           	$id=$this->input->get('id');
-           	$this->load->model('doctorregmodel');
-           	$this->doctorregmodel->gallerydocdelete($id);
-            redirect(base_url().'doctor/doctorview/viewgallery');
+	{
+		if ($this->input->post('ids') && is_array($this->input->post('ids'))) {
+			$this->bulk_delete_gallery();
+			return;
+		}
 
-       }
+		$id = $this->input->post('id') ? $this->input->post('id') : ($this->input->get('id') ? $this->input->get('id') : $this->uri->segment(4));
+		if ($id) {
+			$this->load->model('doctorregmodel');
+			$this->doctorregmodel->gallerydocdelete($id);
+			$msg = "Gallery item deleted successfully.";
+			if ($this->input->is_ajax_request() || $this->input->post('is_ajax') || $this->input->post('id')) {
+				echo json_encode(array('status' => 1, 'message' => $msg));
+				return;
+			}
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-success'>$msg</div>");
+		}
+		redirect(base_url().'doctor/doctorview/viewgallery');
+	}
+
+	public function bulk_delete_gallery()
+	{
+		$ids = $this->input->post('ids');
+		if (!empty($ids) && is_array($ids)) {
+			$this->load->model('doctorregmodel');
+			$deleted_count = 0;
+			foreach ($ids as $gid) {
+				$gid = (int)$gid;
+				if ($gid > 0) {
+					$this->doctorregmodel->gallerydocdelete($gid);
+					$deleted_count++;
+				}
+			}
+			$msg = "$deleted_count doctor gallery item(s) deleted successfully.";
+			if ($this->input->is_ajax_request() || $this->input->post('is_ajax')) {
+				echo json_encode(array('status' => 1, 'count' => $deleted_count, 'message' => $msg));
+				return;
+			}
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-success'><strong>Success!</strong> $msg</div>");
+		} else {
+			if ($this->input->is_ajax_request() || $this->input->post('is_ajax')) {
+				echo json_encode(array('status' => 0, 'message' => 'No gallery items selected for deletion.'));
+				return;
+			}
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-warning'>No items selected.</div>");
+		}
+		redirect(base_url('doctor/doctorview/viewgallery'));
+	}
     
   
 }

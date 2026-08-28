@@ -13,6 +13,7 @@
     	<li ><a href="<?=base_url();?>manageownclinic"><i class="fa fa-hospital-o" aria-hidden="true"></i><span>Manage Own Clinic</span> </a></li>
     	<li ><a href="<?=base_url();?>managepractice"><i class="fa fa-medkit" aria-hidden="true"></i><span>Manage Practice</span> </a></li>
     	<li ><a href="<?=base_url();?>manageappointment"><i class="fa fa-calendar" aria-hidden="true"></i><span>Manage Appointment</span> </a></li>
+    	<li ><a href="<?=base_url();?>doctorpanel/earnings"><i class="fa fa-line-chart" aria-hidden="true"></i><span>Earnings &amp; Payouts</span> </a></li>
       <li class="nav-parent">
         <a href="#"><i class="fa fa-building" aria-hidden="true"></i><span>Gallery Management</span><span class="fa arrow"></span></a>
         <ul class="children collapse">

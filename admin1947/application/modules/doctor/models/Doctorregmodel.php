@@ -370,20 +370,58 @@ class Doctorregmodel extends CI_Model
 						'email'			=>$email,
 						'about'			=>$about,
 						'subscription'	=>$package,
-						'approved'		=>'1',
-						'verified'		=>'1',
 						'status'		=>$status,
 						'creat_date'	=>$date,
 						'created_by'	=>getUserId(),
 						'source'		=>'A'
 					);
-		$this->db->where('id');
-		$this->db->update('profile_dr',$data);
-		
-			//$data=array('fname'=>$fname,'lname'=>$lname,'gender'=>$gender,'city'=>$city,'regd_no'=>$regno,'regd_council'=>$council,'regd_year'=>$year,'exp'=>$exp,'achievement'=>$achievement,'mobile'=>$mobile,'email'=>$email,'about'=>$about,'subscription'=>$package,'approved'=>'1','verified'=>'1','status'=>$status,'creat_date'=>$date,'created_by'=>getUserId(),'source'=>'A');
-				//$this->db->where('id');
-				//$this->db->update('profile_dr',$data);    
-	
+		$this->db->where('id', $id);
+		$this->db->update('profile_dr', $data);
+
+		// Sync with doctorlogin table
+		$row = $this->db->get_where('profile_dr', array('id' => $id))->row();
+		if ($row && !empty($row->user_id)) {
+			$login_data = array(
+				'FNAME'  => $fname,
+				'LNAME'  => $lname,
+				'EMAIL'  => $email,
+				'MOBILE' => $mobile,
+				'GENDER' => $gender
+			);
+			$this->db->where('USERID', $row->user_id)->update('doctorlogin', $login_data);
+		}
+
+		// Update Qualifications if provided
+		$qualification = $this->input->post('qualification');
+		if (is_array($qualification)) {
+			$this->db->where('user_id', $id)->delete('dr_qualifications');
+			$qualdata = array();
+			foreach ($qualification as $q) {
+				if (!empty($q)) {
+					$qualdata[] = array('user_id' => $id, 'qualification_id' => $q);
+				}
+			}
+			if (!empty($qualdata)) {
+				$this->db->insert_batch('dr_qualifications', $qualdata);
+			}
+		}
+
+		// Update Specializations if provided
+		$specialisation = $this->input->post('specialisation');
+		if (is_array($specialisation)) {
+			$this->db->where('user_id', $id)->delete('dr_specialization');
+			$spldata = array();
+			foreach ($specialisation as $s) {
+				if (!empty($s)) {
+					$spldata[] = array('user_id' => $id, 'specialization_id' => $s);
+				}
+			}
+			if (!empty($spldata)) {
+				$this->db->insert_batch('dr_specialization', $spldata);
+			}
+		}
+
+		return true;
 	}
 		
 	public function get_doctor_fee_time($limit='10',$offset='0',$param=array())
@@ -454,99 +492,158 @@ class Doctorregmodel extends CI_Model
 		return $result;
 	}
 	
-	public function get_hospital($limit='10',$offset='0',$param=array())
+	public function get_hospital($limit = 10, $offset = 0, $param = array())
 	{	
 		$id				= @$param['id'];
 		$keyword 		= $this->db->escape_str($this->input->get('keyword',TRUE));
 		$type 			= $this->db->escape_str($this->input->get('type',TRUE));
 		$subscription 	= $this->db->escape_str($this->input->get('subscription',TRUE));
+		$status_filter 	= $this->db->escape_str($this->input->get('status_filter',TRUE));
 	
-		if($id!='')
+		if($id != '')
 		{
-			$this->db->where("id",$id);
+			$this->db->where("hospital.id", $id);
 		}
-		if($keyword!='')
+		if($keyword != '')
 		{
-			$this->db->where("(name LIKE '%".$keyword."%' )");
+			$this->db->where("(hospital.name LIKE '%".$keyword."%' OR hospital.email LIKE '%".$keyword."%' OR hospital.mobile LIKE '%".$keyword."%')");
 		}
-		if($type!='')
+		if($type != '')
 		{
-			$this->db->where("TYPE",$type);
+			$this->db->where("hospitallogin.TYPE", $type);
 		}
-		if($subscription!='')
+		if($subscription != '')
 		{
-			$this->db->where("subscription",$subscription);
+			$this->db->where("hospital.subscription", $subscription);
 		}
-		$this->db->order_by('id','desc');
-		$this->db->limit($limit,$offset);
-		$this->db->select('SQL_CALC_FOUND_ROWS hospital.*,hospitallogin.TYPE',FALSE);
-		$this->db->join('hospitallogin','hospitallogin.USERID = hospital.uid','left');
+		if($status_filter == 'approved' || $status_filter == 'registered')
+		{
+			$this->db->where("hospital.approved", "1");
+			$this->db->where("hospital.verified", "1");
+		}
+		elseif($status_filter == 'pending' || $status_filter == 'pending_verification')
+		{
+			$this->db->where("(hospital.approved = '0' OR hospital.verified = '0')");
+		}
+		elseif($status_filter == 'verified')
+		{
+			$this->db->where("hospital.verified", "1");
+		}
+		elseif($status_filter == 'unverified')
+		{
+			$this->db->where("hospital.verified", "0");
+		}
+		elseif($status_filter == 'pending_approval')
+		{
+			$this->db->where("hospital.approved", "0");
+		}
+		$this->db->where("hospital.status !=", "2");
+		$this->db->order_by('hospital.id', 'desc');
+		$this->db->limit($limit, $offset);
+		$this->db->select('SQL_CALC_FOUND_ROWS hospital.*, hospitallogin.TYPE', FALSE);
+		$this->db->join('hospitallogin', 'hospitallogin.USERID = hospital.uid', 'left');
 		$result = $this->db->get('hospital')->result_array();
 		
-		//echo "<pre>"; print_r($result); die;
-		$result = ($limit=='1') ? @$result[0]: $result;	
+		$result = ($limit == 1) ? @$result[0] : $result;	
 		return $result;
 	}
 	
-	public function get_hospital_list($param=array())
+	public function get_hospital_list($param = array())
 	{	
-		$id			= @$param['id'];
-		$keyword 	= $this->db->escape_str($this->input->get('keyword',TRUE));
-		$type 		= $this->db->escape_str($this->input->get('type',TRUE));
+		$id				= @$param['id'];
+		$keyword 		= $this->db->escape_str($this->input->get('keyword',TRUE));
+		$type 			= $this->db->escape_str($this->input->get('type',TRUE));
+		$status_filter 	= $this->db->escape_str($this->input->get('status_filter',TRUE));
 	
-		if($id!='')
+		if($id != '')
 		{
-			$this->db->where("id",$id);
+			$this->db->where("hospital.id", $id);
 		}
 		
-		if($keyword!='')
+		if($keyword != '')
 		{
-			$this->db->where("(name LIKE '%".$keyword."%' )");
+			$this->db->where("(hospital.name LIKE '%".$keyword."%' OR hospital.email LIKE '%".$keyword."%' OR hospital.mobile LIKE '%".$keyword."%')");
 		}
-		if($type!='')
+		if($type != '')
 		{
-			$this->db->where("TYPE",$type);
+			$this->db->where("hospitallogin.TYPE", $type);
 		}
-		$this->db->order_by('id','desc');
-		//$this->db->limit($limit,$offset);
-		$this->db->select('SQL_CALC_FOUND_ROWS hospital.*,hospitallogin.TYPE',FALSE);
-		$this->db->join('hospitallogin','hospitallogin.USERID = hospital.uid','left');
+		if($status_filter == 'approved' || $status_filter == 'registered')
+		{
+			$this->db->where("hospital.approved", "1");
+			$this->db->where("hospital.verified", "1");
+		}
+		elseif($status_filter == 'pending' || $status_filter == 'pending_verification')
+		{
+			$this->db->where("(hospital.approved = '0' OR hospital.verified = '0')");
+		}
+		elseif($status_filter == 'verified')
+		{
+			$this->db->where("hospital.verified", "1");
+		}
+		elseif($status_filter == 'unverified')
+		{
+			$this->db->where("hospital.verified", "0");
+		}
+		elseif($status_filter == 'pending_approval')
+		{
+			$this->db->where("hospital.approved", "0");
+		}
+		$this->db->where("hospital.status !=", "2");
+		$this->db->order_by('hospital.id', 'desc');
+		$this->db->select('SQL_CALC_FOUND_ROWS hospital.*, hospitallogin.TYPE', FALSE);
+		$this->db->join('hospitallogin', 'hospitallogin.USERID = hospital.uid', 'left');
 		$result = $this->db->get('hospital')->result_array();
-		//$result = ($limit=='1') ? @$result[0]: $result;	
 		return $result;
 	}
 	
-	public function get_clinic($limit='10',$offset='0',$param=array())
+	public function get_clinic($limit = 10, $offset = 0, $param = array())
 	{	
-		$id			= @$param['id'];
-		$keyword 	= $this->db->escape_str($this->input->get('keyword',TRUE));
-		$type 		= $this->db->escape_str($this->input->get('type',TRUE));
+		$id				= @$param['id'];
+		$keyword 		= $this->db->escape_str($this->input->get('keyword',TRUE));
+		$status_filter 	= $this->db->escape_str($this->input->get('status_filter',TRUE));
 	
-		if($id!='')
+		if($id != '')
 		{
-			$this->db->where("id",$id);
+			$this->db->where("clinic.id", $id);
 		}
 		
-		if($keyword!='')
+		if($keyword != '')
 		{
-			$this->db->where("(name LIKE '%".$keyword."%' )");
+			$this->db->where("(clinic.name LIKE '%".$keyword."%' OR clinic.email LIKE '%".$keyword."%' OR clinic.mobile LIKE '%".$keyword."%')");
 		}
-		if($type!='')
+		if($status_filter == 'approved' || $status_filter == 'registered')
 		{
-			$this->db->where("TYPE",$type);
+			$this->db->where("clinic.approved", "1");
+			$this->db->where("clinic.verified", "1");
 		}
-		$this->db->order_by('id','desc');
-		$this->db->limit($limit,$offset);
-		$this->db->select('SQL_CALC_FOUND_ROWS clinic.*',FALSE);
-		//$this->db->join('hospitallogin','hospitallogin.USERID = hospital.uid','left');
+		elseif($status_filter == 'pending' || $status_filter == 'pending_verification')
+		{
+			$this->db->where("(clinic.approved = '0' OR clinic.verified = '0')");
+		}
+		elseif($status_filter == 'verified')
+		{
+			$this->db->where("clinic.verified", "1");
+		}
+		elseif($status_filter == 'unverified')
+		{
+			$this->db->where("clinic.verified", "0");
+		}
+		elseif($status_filter == 'pending_approval')
+		{
+			$this->db->where("clinic.approved", "0");
+		}
+		$this->db->where("clinic.status !=", "2");
+		$this->db->order_by('clinic.id', 'desc');
+		$this->db->limit($limit, $offset);
+		$this->db->select('SQL_CALC_FOUND_ROWS clinic.*', FALSE);
 		$result = $this->db->get('clinic')->result_array();
 		
-		//echo "<pre>"; print_r($result); die;
-		$result = ($limit=='1') ? @$result[0]: $result;	
+		$result = ($limit == 1) ? @$result[0] : $result;	
 		return $result;
 	}
 
-    public function updatehospital($drimage='',$idproof='',$regproof='',$id,$user_id)
+    public function updatehospital($drimage='',$idproof='',$regproof='',$id='',$user_id='')
     {	
 		$date			=	date('Y-m-d h:i:s');
 		$type			=	$this->input->post('type');
@@ -724,38 +821,73 @@ class Doctorregmodel extends CI_Model
  
     public function deletedoctor($id)
     {
-        //$this->db->query("delete from profile_dr where id='".$id."'");
+        $row = $this->db->get_where('profile_dr', array('id' => $id))->row();
+        if ($row) {
+            if (!empty($row->user_id)) {
+                $this->db->where('USERID', $row->user_id)->delete('doctorlogin');
+            }
+            $this->db->where('user_id', $id)->delete('dr_qualifications');
+            $this->db->where('user_id', $id)->delete('dr_specialization');
 
-      //  $this->db->join("profile_dr", "doctorlogin.USERID = profile_dr.user_id")->where("profile_dr.user_id",$id)->delete("doctorlogin");
-      
-          return $this->db->query("
-             DELETE t1.*, t2.*
-              FROM profile_dr t1, doctorlogin t2 
-               WHERE t1.user_id = t2.USERID 
-                    AND t1.id = '".$id."'");
+            $practices = $this->db->select('id')->get_where('dr_practice', array('user_id' => $id))->result_array();
+            if (!empty($practices)) {
+                $practice_ids = array();
+                foreach ($practices as $p) {
+                    $practice_ids[] = $p['id'];
+                }
+                if (!empty($practice_ids)) {
+                    $timings = $this->db->select('id')->where_in('practice_id', $practice_ids)->get('timing')->result_array();
+                    if (!empty($timings)) {
+                        $timing_ids = array();
+                        foreach ($timings as $t) {
+                            $timing_ids[] = $t['id'];
+                        }
+                        if (!empty($timing_ids)) {
+                            $this->db->where_in('timing_id', $timing_ids)->delete('timing_session');
+                        }
+                    }
+                    $this->db->where_in('practice_id', $practice_ids)->delete('timing');
+                }
+            }
+            $this->db->where('user_id', $id)->delete('timing');
+            $this->db->where('user_id', $id)->delete('dr_practice');
+            $this->db->where('user_id', $id)->delete('doctorgallery');
+            $this->db->where('id', $id)->delete('profile_dr');
+        }
+        return true;
+    }
 
+    public function doctordelete($id)
+    {
+        return $this->deletedoctor($id);
     }
      
      
     public function hospitaldelete($id)
     {
-        return $this->db->query("
-        DELETE t1.*, t2.*
-        FROM hospital t1 , hospitallogin t2
-        WHERE t1.uid = t2.USERID
-        AND t1.id = '".$id."'
-        "); 
+		$row = $this->db->get_where('hospital', array('id' => $id))->row();
+		if ($row) {
+			if (!empty($row->uid)) {
+				$this->db->where('USERID', $row->uid)->delete('hospitallogin');
+			}
+			$this->db->where(array('institution_id' => $id, 'type' => 'H'))->delete('dr_practice');
+			$this->db->where('uid', $id)->delete('hospitalgallery');
+			$this->db->where('id', $id)->delete('hospital');
+		}
+		return true;
     }
 	
 	public function clinic_delete($id)
     {
-		return $this->db->query("delete from clinic where id='".$id."'");
-        /*return $this->db->query("
-        DELETE t1.*, t2.*
-        FROM clinic t1 , hospitallogin t2
-        WHERE t1.uid = t2.USERID
-        AND t1.id = '".$id."'
-        "); */
+		$row = $this->db->get_where('clinic', array('id' => $id))->row();
+		if ($row) {
+			if (!empty($row->uid)) {
+				$this->db->where('USERID', $row->uid)->delete('hospitallogin');
+			}
+			$this->db->where(array('institution_id' => $id, 'type' => 'C'))->delete('dr_practice');
+			$this->db->where('id', $id)->delete('clinic');
+		}
+		return true;
     }
 
 	public function calculate()
@@ -780,5 +912,5 @@ class Doctorregmodel extends CI_Model
 		$data=array('short_description'=>$short,'long_description'=>$long,'page'=>$page,'image'=>$image,'status'=>$active,'creat_date'=>$date);
 		$query=$this->db->insert('advertisement',$data);
 		return $query;
-	}  
+	}
 }

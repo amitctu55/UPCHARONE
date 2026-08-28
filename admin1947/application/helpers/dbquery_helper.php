@@ -189,7 +189,7 @@ if ( ! function_exists('echo_sql'))
 
 if ( ! function_exists('cms_page_content')){
 	
-	function cms_page_content($tbl="tbl_cms_pages",$pageId)
+	function cms_page_content($pageId,$tbl="tbl_cms_pages")
 	{
 		$CI = CI();	
 		

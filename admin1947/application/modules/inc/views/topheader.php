@@ -1,11 +1,10 @@
 <header class="main-header">
     <!-- Logo -->
-    <a href="#" class="logo">
+    <a href="<?=base_url('masters/dashboard');?>" class="logo" style="background-color: #00A896 !important;">
       <!-- mini logo for sidebar mini 50x50 pixels -->
-      <span class="logo-mini"><b>Upcharr</b> Admin</span>
+      <span class="logo-mini"><b>Upchar</b></span>
       <!-- logo for regular state and mobile devices -->
-     <span class="logo-lg"><b></b> Upcharr</span>
-     <!-- <span class="logo-lg"><img src="http://fddi.tk/public/assets/fddilogo.png" class="img-responsive" style="height: 45px; margin: auto;margin-top: 4px;"></span>-->
+     <span class="logo-lg" style="font-size: 14px; font-weight: 700; letter-spacing: 0.2px;">Upchar One Place of Healthcare</span>
     </a>
     <!-- Header Navbar: style can be found in header.less -->
     <nav class="navbar navbar-static-top">

@@ -9,13 +9,15 @@ class Doctorpanel extends CI_Controller
 		 parent::__construct();
 		 date_default_timezone_set("Asia/Kolkata");
 		 $this->load->model('Doctor_Model');
+		 $this->load->model('Financial_Model');
 		 if(!$this->session->userdata('druserid')){
 			 $page=$this->uri->segment('1');
 			 $excep_array=array('doctor-aindex','doctor-login','doctor-signup','doctor-verifymobile','doctor-forgotpassword','doctor-verifymobileforgot');
 			 if (!in_array($page, $excep_array))
 				redirect('doctor-login');
 		 }else{
-			 $this->did=$this->db->where('user_id',$this->session->userdata('druserid'))->get('profile_dr')->row()->id;
+			 $row = $this->db->where('user_id',$this->session->userdata('druserid'))->get('profile_dr')->row();
+			 $this->did = ($row && isset($row->id)) ? $row->id : null;
 		 }
 		 
 	}
@@ -27,35 +29,46 @@ class Doctorpanel extends CI_Controller
 	}
 	
 	public function dashboard()
-	
-	
-	
 	{
-		$userid =$this->did;
-		
-		
-        $this -> db -> where('doctor_id', $userid);   
-        $this -> db -> where('status', '1');   
-		$this -> db -> where('appointment_date', date('Y-m-d'));   
-        $query = $this -> db -> get('appointment');
-		$data['todayappointment']=$query -> num_rows();
-         
-        $this -> db -> where('doctor_id', $userid);   
-        $this -> db -> where('status', '1');    
-        $query = $this -> db -> get('appointment');
-		$data['totalappointment']=$query -> num_rows();
-		
-		
-	//	$query =$this->db->select('profile_dr.*,dr_practice.status as p_status')->join('profile_dr','profile_dr.id=dr_practice.user_id')->get_where('dr_practice',array('institution_id'=>$this->did,'type'=>'H'));	
-	//	$data['totaldoctor']=$query -> num_rows();
-		$this->load->view('doctorpanel/dashboard',$data);
-		
+		$userid = $this->did;
+		$data['doctor'] = $this->db->get_where('profile_dr', array('id' => $userid))->row();
+		if (!$data['doctor'] && $this->session->userdata('druserid')) {
+			$data['doctor'] = $this->db->get_where('profile_dr', array('user_id' => $this->session->userdata('druserid')))->row();
+		}
+
+		// Appointments stats
+		$data['todayappointment'] = $this->db->where(array('doctor_id' => $userid, 'appointment_date' => date('Y-m-d'), 'status' => '1'))->count_all_results('appointment');
+		$data['totalappointment'] = $this->db->where(array('doctor_id' => $userid, 'status' => '1'))->count_all_results('appointment');
+		$data['completed_appointments'] = $this->db->where(array('doctor_id' => $userid, 'status' => '2'))->count_all_results('appointment');
+
+		// Financials
+		$data['earnings'] = $this->Financial_Model->get_doctor_earnings($userid);
+
+		// Associated practices & hospitals
+		$data['total_clinics'] = $this->db->where(array('user_id' => $userid, 'type' => 'C'))->count_all_results('dr_practice');
+		$data['total_hospitals'] = $this->db->where(array('user_id' => $userid, 'type' => 'H'))->count_all_results('dr_practice');
+
+		// Recent appointments
+		$data['recent_appointments'] = $this->db->select('appointment.*, userlogin.FNAME as user_fname, userlogin.LNAME as user_lname, userlogin.MOBILE as user_mobile')
+			->from('appointment')
+			->join('userlogin', 'userlogin.USERID = appointment.user_id', 'left')
+			->where('appointment.doctor_id', $userid)
+			->order_by('appointment.appointment_date', 'DESC')
+			->order_by('appointment.appointment_id', 'DESC')
+			->limit(10)
+			->get()
+			->result();
+
+		$this->load->view('doctorpanel/dashboard', $data);
 	}
 	
 	public function updateprofile()
 	{
-	
-	$this->load->view('doctorpanel/milestone');    
+		$data['data'] = $this->db->get_where('profile_dr', array('id' => $this->did))->row();
+		if (!$data['data'] && $this->session->userdata('druserid')) {
+			$data['data'] = $this->db->get_where('profile_dr', array('user_id' => $this->session->userdata('druserid')))->row();
+		}
+		$this->load->view('doctorpanel/milestone', $data);    
 	}
 	
 	public function managedoctor()
@@ -68,13 +81,29 @@ class Doctorpanel extends CI_Controller
 	
 	public function aindex()
 	{
-	    
-	    $this->load->view('doctorpanel/aindex');
-	    
+		if ($this->session->userdata('userid')) {
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-info'>You are logged in as a Patient. Please logout to access Doctor Partner Login.</div>");
+			redirect('myappointments');
+			return;
+		}
+		if ($this->session->userdata('docuserid')) {
+			redirect('doctorpanel/milestone');
+			return;
+		}
+		$this->load->view('doctorpanel/login');
 	}
 	
 	public function login()
 	{
+		if ($this->session->userdata('userid')) {
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-info'>You are logged in as a Patient. Please logout to access Doctor Partner Login.</div>");
+			redirect('myappointments');
+			return;
+		}
+		if ($this->session->userdata('docuserid')) {
+			redirect('doctorpanel/milestone');
+			return;
+		}
 		$this->load->view('doctorpanel/login');
 	}
 	
@@ -341,52 +370,109 @@ class Doctorpanel extends CI_Controller
 	
 	public function managepractice()
 	{
-		if(isset($_POST['submit']))
-		$this->Doctor_Model->profile_step2();
-		$data['clinic']=$this->db->select('clinic.*,dr_practice.id as practice_id,dr_practice.status as practice_status,fee as practicefee')->join('clinic','clinic.id=dr_practice.institution_id')->get_where('dr_practice',array('user_id'=>$this->did,'type'=>'C'))->result();	
-		$data['hospital']=$this->db->select('hospital.*,dr_practice.id as practice_id,dr_practice.status as practice_status,fee as practicefee')->join('hospital','hospital.id=dr_practice.institution_id')->get_where('dr_practice',array('user_id'=>$this->did,'type'=>'H'))->result();	
-		if( $this->input->post('status_action')!='')
-		{	
-			$this->Doctor_Model->update_status('dr_practice','id');			
+		$userid = $this->did;
+
+		if ($this->input->post('update_fee')) {
+			$practice_id = intval($this->input->post('practice_id'));
+			$new_fee = intval($this->input->post('fee'));
+			if ($practice_id > 0) {
+				$this->db->where('id', $practice_id)->where('user_id', $userid)->update('dr_practice', array('fee' => $new_fee));
+				$this->session->set_flashdata('flashmsg', "<div class='alert alert-success'>Consultation fee updated successfully.</div>");
+				redirect('managepractice');
+				return;
+			}
 		}
-		$this->load->view('doctorpanel/managepractice',$data);
+
+		if ($this->input->post('status_action') != '') {
+			$this->Doctor_Model->update_status('dr_practice', 'id');
+		}
+
+		$data['clinic'] = $this->db->select('clinic.*, dr_practice.id as practice_id, dr_practice.status as practice_status, dr_practice.fee as practicefee')
+			->join('clinic', 'clinic.id=dr_practice.institution_id')
+			->get_where('dr_practice', array('dr_practice.user_id' => $userid, 'dr_practice.type' => 'C'))
+			->result();
+
+		$data['hospital'] = $this->db->select('hospital.*, dr_practice.id as practice_id, dr_practice.status as practice_status, dr_practice.fee as practicefee')
+			->join('hospital', 'hospital.id=dr_practice.institution_id')
+			->get_where('dr_practice', array('dr_practice.user_id' => $userid, 'dr_practice.type' => 'H'))
+			->result();
+
+		$this->load->view('doctorpanel/managepractice', $data);
+	}
+
+	public function delete_practice($id = null)
+	{
+		$userid = $this->did;
+		$id = intval($id ?: $this->input->get('id'));
+		if ($id) {
+			$this->db->where('id', $id)->where('user_id', $userid)->delete('dr_practice');
+			$this->db->where('practice_id', $id)->where('user_id', $userid)->delete('timing');
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-success'>Practice location removed from your profile successfully.</div>");
+		}
+		redirect('managepractice');
 	}
 	
 	public function manageappointment()
 	{
-		$userid =$this->did;
-        $this -> db -> select('appointment_id,appointment_date,from_timing,to_timing,appointment_name as patient_name, fee,amount,doctor_id,institute_id,institution_type,status,payment_status');   
-        $this -> db -> order_by('appointment_id');   
-        $this -> db -> where('doctor_id', $userid);
-		$this -> db -> where('status !=', '0');   		
-		if(isset($_GET['d']) && $_GET['d']!='')
-        $this -> db -> where('appointment_date', $_GET['d']);   
-        $query = $this -> db -> get('appointment');
-		if($query -> num_rows() > 0)
-        {
-			$results=$query->result();
-			foreach($results as $row){
-				if($row->institution_type=='C')
-					$table='clinic';
-				else if($row->institution_type=='H')
-					$table='hospital';
-				
-				$this -> db -> where('id', $row->institute_id);   
-				$institute = $this -> db -> get($table)->row();
-				
-				$dataarray[]=array('appointment'=>$row,'institute'=>$institute);
-			}
-			
-		}else{
-			$dataarray=array();
+		$userid = $this->did;
+		$date_filter = $this->input->get('d', TRUE);
+		$status_filter = $this->input->get('status', TRUE);
+		$search_query = $this->input->get('q', TRUE);
+
+		// Stats
+		$data['today_count'] = $this->db->where(array('doctor_id' => $userid, 'appointment_date' => date('Y-m-d'), 'status !=' => '0'))->count_all_results('appointment');
+		$data['total_count'] = $this->db->where(array('doctor_id' => $userid, 'status !=' => '0'))->count_all_results('appointment');
+		$data['completed_count'] = $this->db->where(array('doctor_id' => $userid, 'status' => '2'))->count_all_results('appointment');
+		$data['pending_count'] = $this->db->where(array('doctor_id' => $userid, 'status' => '1'))->count_all_results('appointment');
+
+		// Query appointments
+		$this->db->select('appointment.*, userlogin.FNAME as user_fname, userlogin.LNAME as user_lname, userlogin.MOBILE as user_mobile, userlogin.EMAIL as user_email');
+		$this->db->from('appointment');
+		$this->db->join('userlogin', 'userlogin.USERID = appointment.user_id', 'left');
+		$this->db->where('appointment.doctor_id', $userid);
+
+		if (!empty($date_filter)) {
+			$this->db->where('appointment.appointment_date', $date_filter);
 		}
-		
-		
-		$data['appointments']=$dataarray;
-		
-		
-		
-		$this->load->view('doctorpanel/manageappointment',$data);
+		if ($status_filter !== null && $status_filter !== '' && $status_filter !== 'ALL') {
+			$this->db->where('appointment.status', $status_filter);
+		} else {
+			$this->db->where('appointment.status !=', '0');
+		}
+		if (!empty($search_query)) {
+			$this->db->group_start();
+			$this->db->like('appointment.appointment_name', $search_query);
+			$this->db->or_like('appointment.patient_name', $search_query);
+			$this->db->or_like('appointment.patient_mobile', $search_query);
+			$this->db->or_like('userlogin.FNAME', $search_query);
+			$this->db->or_like('userlogin.MOBILE', $search_query);
+			$this->db->or_like('appointment.appointment_id', $search_query);
+			$this->db->group_end();
+		}
+
+		$this->db->order_by('appointment.appointment_date', 'DESC');
+		$this->db->order_by('appointment.appointment_id', 'DESC');
+		$query = $this->db->get();
+
+		$dataarray = array();
+		if ($query->num_rows() > 0) {
+			$results = $query->result();
+			foreach ($results as $row) {
+				$table = ($row->institution_type == 'H') ? 'hospital' : 'clinic';
+				$institute = null;
+				if (!empty($row->institute_id)) {
+					$institute = $this->db->get_where($table, array('id' => $row->institute_id))->row();
+				}
+				$dataarray[] = array('appointment' => $row, 'institute' => $institute);
+			}
+		}
+
+		$data['appointments'] = $dataarray;
+		$data['selected_date'] = $date_filter;
+		$data['selected_status'] = $status_filter ?: 'ALL';
+		$data['search_query'] = $search_query;
+
+		$this->load->view('doctorpanel/manageappointment', $data);
 	}
 	
 	
@@ -775,7 +861,7 @@ public function gallery()
 	       $this->load->view('doctorpanel/gallery');
         }
 
-        public function managegallery()
+	public function managegallery()
 	{ 	
 		$id = $this->did= $this->db->where('user_id',$this->session->userdata('druserid'))->get('profile_dr')->row()->id;
 		$data['gallery']=$this->db->get_where('doctorgallery',array('user_id'=>$id))->result_array();	
@@ -783,93 +869,400 @@ public function gallery()
 		$this->load->view('doctorpanel/managegallery',$data);
 	}
 
-	   public function datetime()
-	   {
-	       $this->load->view('doctorpanel/datetime');
-	   }
-       
-       
-       public function upcharhospital()
-       {
-           $this->load->view('doctorpanel/upcharhospital');
-       }
+	public function datetime()
+	{
+		$userid = $this->did;
 
-       public function managenews()
-{
+		// Handle Form Submission (Add or Update Timing)
+		if ($this->input->post('submit')) {
+			$practice_id = intval($this->input->post('practice_id'));
+			$days = (array)$this->input->post('days');
+			$timing_id = intval($this->input->post('timing_id'));
 
-    if(isset($_POST['submit']))
-			$uploadimage='';
-		
-        $uploadimage=$_FILES['uploadimage']['name'];
-		$extsign = pathinfo($_FILES['uploadimage']['name'],PATHINFO_EXTENSION);
-       
-				if($this->input->post('type')==1) { 
-					if($uploadimage != '') 
-				{	
-					$rname=rand(1111111,999999999);
-					$date=date('Y-m-d');
-					$uploadimage=$typename.'_profile_pic_'.$rname.$date.'.'.$extsign;
-					
-					$config['upload_path']          = './admin1947/public/assets/upload/';
-					$config['allowed_types'] 		= 	'jpg|png|jpeg|JPG|PNG|JPEG';
-					$config['max_size']             = 2048;
-					$config['quality'] 				= '60%';
-					$config['file_name']  			= $uploadimage;
-					$this->load->library('upload', $config);
-					
-					if ( ! $this->upload->do_upload('uploadimage'))
-					{
-						$error = $this->upload->display_errors();
-						$flashmsg='<div class="alert alert-danger">
-						  <strong>Failed!</strong>'.$error.'
-						</div>';
-						$this->session->set_flashdata('flashmsg',$flashmsg);
-						redirect(base_url().'doctorpanel/managenews');
-						exit();
+			$timing_data = array(
+				'user_type'   => 'D',
+				'user_id'     => $userid,
+				'practice_id' => $practice_id,
+				'M'           => in_array('M', $days) ? 1 : 0,
+				'T'           => in_array('T', $days) ? 1 : 0,
+				'W'           => in_array('W', $days) ? 1 : 0,
+				'TH'          => in_array('TH', $days) ? 1 : 0,
+				'F'           => in_array('F', $days) ? 1 : 0,
+				'SA'          => in_array('SA', $days) ? 1 : 0,
+				'S'           => in_array('S', $days) ? 1 : 0,
+				'status'      => '1'
+			);
+
+			if ($timing_id > 0) {
+				$this->db->where('id', $timing_id)->where('user_id', $userid)->update('timing', $timing_data);
+				$current_timing_id = $timing_id;
+				$this->db->where('timing_id', $current_timing_id)->delete('timing_session');
+			} else {
+				$this->db->insert('timing', $timing_data);
+				$current_timing_id = $this->db->insert_id();
+			}
+
+			// Morning Session
+			$morning_from = $this->input->post('morning_from', TRUE);
+			$morning_to = $this->input->post('morning_to', TRUE);
+			$morning_max = intval($this->input->post('morning_max')) ?: 10;
+			if (!empty($morning_from) && !empty($morning_to)) {
+				$this->db->insert('timing_session', array(
+					'timing_id'   => $current_timing_id,
+					'from_timing' => $morning_from,
+					'to_timing'   => $morning_to,
+					'max_patient' => $morning_max,
+					'status'      => 1
+				));
+			}
+
+			// Evening Session
+			$evening_from = $this->input->post('evening_from', TRUE);
+			$evening_to = $this->input->post('evening_to', TRUE);
+			$evening_max = intval($this->input->post('evening_max')) ?: 10;
+			if (!empty($evening_from) && !empty($evening_to)) {
+				$this->db->insert('timing_session', array(
+					'timing_id'   => $current_timing_id,
+					'from_timing' => $evening_from,
+					'to_timing'   => $evening_to,
+					'max_patient' => $evening_max,
+					'status'      => 1
+				));
+			}
+
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-success'><strong>Success!</strong> Schedule timings and slot availability saved successfully.</div>");
+			redirect('doctorpanel/datetime');
+			return;
+		}
+
+		// Fetch Doctor's Practice Locations
+		$practices = $this->db->where('user_id', $userid)->where('status', '1')->get('dr_practice')->result();
+		$practice_list = array();
+		foreach ($practices as $p) {
+			$table = ($p->type == 'H') ? 'hospital' : 'clinic';
+			$inst = $this->db->get_where($table, array('id' => $p->institution_id))->row();
+			$practice_list[] = array(
+				'practice_id'   => $p->id,
+				'type'          => $p->type,
+				'name'          => $inst ? $inst->name : ($p->type == 'H' ? 'Visiting Hospital' : 'Private Clinic'),
+				'address'       => $inst ? $inst->address : '',
+				'fee'           => $p->fee
+			);
+		}
+		$data['practices'] = $practice_list;
+
+		// Fetch Existing Schedules
+		$timings = $this->db->where('user_id', $userid)->where('user_type', 'D')->get('timing')->result();
+		$schedules = array();
+		foreach ($timings as $t) {
+			$sessions = $this->db->where('timing_id', $t->id)->get('timing_session')->result();
+			$inst_name = 'General Practice';
+			$inst_address = '';
+			if ($t->practice_id > 0) {
+				$pr = $this->db->get_where('dr_practice', array('id' => $t->practice_id))->row();
+				if ($pr) {
+					$table = ($pr->type == 'H') ? 'hospital' : 'clinic';
+					$inst = $this->db->get_where($table, array('id' => $pr->institution_id))->row();
+					if ($inst) {
+						$inst_name = $inst->name;
+						$inst_address = $inst->address;
 					}
-
-
-					if($this->Doctor_Model->add_news($uploadimage)) 
-						{
-							$msg="<div class='alert alert-success'><strong>Success!</strong> Data Added Successfully</div>";
-							$this->session->set_flashdata('flashmsg',$msg);
-							
-						
-						}
-						else{
-							$msg="<div class='alert alert-danger'><strong>Failed!</strong> Something went wrong. Please try again.</div>";
-							$this->session->set_flashdata('flashmsg',$msg);
-						}
-						
-						}
-					}
-					else if($this->input->post('type')==2)
-				{
-					if($this->Doctor_Model->add_news())
-						{
-							$msg="<div class='alert alert-success'><strong>Success!</strong> Data Added Successfully</div>";
-							$this->session->set_flashdata('flashmsg',$msg);
-							
-						
-						}
-						else{
-							$msg="<div class='alert alert-danger'><strong>Failed!</strong> Something went wrong. Please try again.</div>";
-							$this->session->set_flashdata('flashmsg',$msg);
-						}
 				}
+			}
+			$schedules[] = array(
+				'timing'       => $t,
+				'sessions'     => $sessions,
+				'inst_name'    => $inst_name,
+				'inst_address' => $inst_address
+			);
+		}
+		$data['schedules'] = $schedules;
 
-					
-                    
-	       $this->load->view('doctorpanel/news');
-}
-
-public function news()
-	{ 	
-		$id = $this->did= $this->db->where('user_id',$this->session->userdata('druserid'))->get('profile_dr')->row()->id;
-		$data['news']=$this->db->get_where('news',array('doctor_id'=>$id))->result_array();	
-		//echo "<pre>";print_r($data['news']);die;
-
-		$this->load->view('hospitalpanel/managenews',$data);
+		$this->load->view('doctorpanel/datetime', $data);
 	}
 
-	 }
+	public function delete_timing($id = null)
+	{
+		$userid = $this->did;
+		$id = intval($id ?: $this->input->get('id'));
+		if ($id) {
+			$this->db->where('id', $id)->where('user_id', $userid)->delete('timing');
+			$this->db->where('timing_id', $id)->delete('timing_session');
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-success'>Schedule timing removed successfully.</div>");
+		}
+		redirect('doctorpanel/datetime');
+	}
+
+	public function upcharhospital()
+	{
+		$userid = $this->did;
+
+		// Handle Affiliation Action
+		if ($this->input->post('affiliate_hospital')) {
+			$hospital_id = intval($this->input->post('hospital_id'));
+			$fee = intval($this->input->post('fee')) ?: 500;
+			
+			if ($hospital_id > 0) {
+				$chk = $this->db->where(array('user_id' => $userid, 'institution_id' => $hospital_id, 'type' => 'H'))->get('dr_practice')->row();
+				if ($chk) {
+					$this->db->where('id', $chk->id)->update('dr_practice', array('status' => '1', 'fee' => $fee));
+				} else {
+					$this->db->insert('dr_practice', array(
+						'user_id'        => $userid,
+						'institution_id' => $hospital_id,
+						'type'           => 'H',
+						'fee'            => $fee,
+						'status'         => '1'
+					));
+				}
+				$this->session->set_flashdata('flashmsg', "<div class='alert alert-success'><strong>Success!</strong> Affiliated hospital linked to your visiting practice profile.</div>");
+				redirect('doctorpanel/upcharhospital');
+				return;
+			}
+		}
+
+		// Doctor's Currently Affiliated Hospitals
+		$data['affiliated_hospitals'] = $this->db->select('hospital.*, dr_practice.id as practice_id, dr_practice.fee as practice_fee, dr_practice.status as practice_status')
+			->join('hospital', 'hospital.id = dr_practice.institution_id')
+			->get_where('dr_practice', array('dr_practice.user_id' => $userid, 'dr_practice.type' => 'H'))
+			->result();
+
+		$affiliated_ids = array();
+		foreach ($data['affiliated_hospitals'] as $ah) {
+			$affiliated_ids[] = $ah->id;
+		}
+		$data['affiliated_ids'] = $affiliated_ids;
+
+		// Partner Hospitals Directory with Pagination
+		$city_filter = $this->input->get('city', TRUE);
+		$search_query = $this->input->get('q', TRUE);
+		$page = max(1, intval($this->input->get('page')));
+		$per_page = 12;
+		$offset = ($page - 1) * $per_page;
+
+		// Count Total
+		$this->db->where('status', '1');
+		if (!empty($city_filter)) {
+			$this->db->where('city', $city_filter);
+		}
+		if (!empty($search_query)) {
+			$this->db->group_start();
+			$this->db->like('name', $search_query);
+			$this->db->or_like('address', $search_query);
+			$this->db->group_end();
+		}
+		$total_rows = $this->db->count_all_results('hospital');
+
+		// Fetch Records for Current Page
+		$this->db->where('status', '1');
+		if (!empty($city_filter)) {
+			$this->db->where('city', $city_filter);
+		}
+		if (!empty($search_query)) {
+			$this->db->group_start();
+			$this->db->like('name', $search_query);
+			$this->db->or_like('address', $search_query);
+			$this->db->group_end();
+		}
+		$this->db->order_by('name', 'ASC');
+		$this->db->limit($per_page, $offset);
+		$data['partner_hospitals'] = $this->db->get('hospital')->result();
+
+		$data['cities'] = $this->db->order_by('name', 'ASC')->get_where('master_city', array('status' => '1'))->result();
+		$data['selected_city'] = $city_filter;
+		$data['search_query'] = $search_query;
+		$data['total_hospitals'] = $total_rows;
+		$data['current_page'] = $page;
+		$data['per_page'] = $per_page;
+		$data['total_pages'] = max(1, ceil($total_rows / $per_page));
+
+		$this->load->view('doctorpanel/upcharhospital', $data);
+	}
+
+	public function managenews()
+	{
+		$userid = $this->did;
+		$data['news'] = $this->db->order_by('id', 'DESC')->get_where('news', array('doctor_id' => $userid))->result_array();
+		if (empty($data['news'])) {
+			// Show general news if none authored yet
+			$data['all_news'] = $this->db->order_by('id', 'DESC')->limit(10)->get('news')->result_array();
+		}
+		$this->load->view('doctorpanel/managenews', $data);
+	}
+
+	public function news()
+	{
+		$userid = $this->did;
+
+		if ($this->input->post('submit')) {
+			$title = trim($this->input->post('name', TRUE) ?: $this->input->post('title', TRUE));
+			$description = trim($this->input->post('description', TRUE));
+			$type = $this->input->post('type') ?: '1';
+			$video_url = trim($this->input->post('video_url', TRUE));
+			$uploadimage = '';
+
+			if (!empty($video_url)) {
+				// Convert standard youtube watch url to embed url if needed
+				if (strpos($video_url, 'watch?v=') !== false) {
+					$video_url = str_replace('watch?v=', 'embed/', $video_url);
+				}
+			}
+
+			if ($type == '1' && !empty($_FILES['uploadimage']['name'])) {
+				$extsign = pathinfo($_FILES['uploadimage']['name'], PATHINFO_EXTENSION);
+				$rname = rand(1111111, 999999999);
+				$uploadimage = 'doc_news_' . $rname . '_' . date('Y-m-d') . '.' . $extsign;
+
+				$upload_path = './admin1947/public/assets/upload/';
+				if (!is_dir($upload_path)) {
+					@mkdir($upload_path, 0777, true);
+				}
+
+				$config['upload_path']   = $upload_path;
+				$config['allowed_types'] = 'jpg|png|jpeg|JPG|PNG|JPEG|webp|WEBP';
+				$config['max_size']      = 5120;
+				$config['file_name']     = $uploadimage;
+				$this->load->library('upload', $config);
+
+				if (!$this->upload->do_upload('uploadimage')) {
+					$error = $this->upload->display_errors('', '');
+					$this->session->set_flashdata('flashmsg', '<div class="alert alert-danger"><strong>Upload Error:</strong> ' . $error . '</div>');
+					redirect('doctorpanel/news');
+					return;
+				}
+			}
+
+			$data_insert = array(
+				'title'       => $title,
+				'description' => $description,
+				'type'        => $type,
+				'image'       => $uploadimage,
+				'video_url'   => $video_url,
+				'doctor_id'   => $userid,
+				'approved'    => '1',
+				'status'      => '1',
+				'creat_date'  => date('Y-m-d H:i:s')
+			);
+
+			$this->db->insert('news', $data_insert);
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-success'><strong>Success!</strong> Medical article / news published successfully.</div>");
+			redirect('doctorpanel/managenews');
+			return;
+		}
+
+		$this->load->view('doctorpanel/news');
+	}
+
+	public function delete_news($id = null)
+	{
+		$userid = $this->did;
+		$id = intval($id ?: $this->input->get('id'));
+		if ($id) {
+			$this->db->where('id', $id)->where('doctor_id', $userid)->delete('news');
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-success'>Article removed successfully.</div>");
+		}
+		redirect('doctorpanel/managenews');
+	}
+
+	public function earnings()
+	{
+		$doctor_id = $this->did;
+
+		if ($this->input->post('save_bank_details')) {
+			$bdata = array(
+				'bank_name'      => trim($this->input->post('bank_name', TRUE)),
+				'account_no'     => trim($this->input->post('account_no', TRUE)),
+				'ifsc'           => strtoupper(trim($this->input->post('ifsc', TRUE))),
+				'account_holder' => trim($this->input->post('account_holder', TRUE)),
+				'upi_id'         => trim($this->input->post('upi_id', TRUE))
+			);
+			$this->db->where('id', $doctor_id)->update('profile_dr', $bdata);
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-success'><strong>Success!</strong> Bank account and payout settlement details updated successfully.</div>");
+			redirect('doctorpanel/earnings?tab=payment');
+			return;
+		}
+
+		$data['earnings'] = $this->Financial_Model->get_doctor_earnings($doctor_id);
+		$data['ledger'] = $this->Financial_Model->get_ledger_history('DOCTOR', $doctor_id, 50);
+		$data['doctor'] = $this->db->get_where('profile_dr', array('id' => $doctor_id))->row();
+		$data['active_tab'] = $this->input->get('tab', TRUE) ?: 'overview';
+		$this->load->view('doctorpanel/earnings', $data);
+	}
+
+	public function complete_appointment()
+	{
+		$aid = intval($this->input->get_post('aid'));
+		$appointment = $this->db->get_where('appointment', array('appointment_id' => $aid, 'doctor_id' => $this->did))->row();
+		
+		if ($appointment) {
+			$this->db->where('appointment_id', $aid)->update('appointment', array('status' => '2')); // 2 = Completed
+			
+			// Find associated sm_order and release escrow
+			$order = $this->db->where(array('ITEM_TYPE' => 'A', 'ITEM_ID' => $aid))->get('sm_order')->row();
+			if ($order) {
+				$this->Financial_Model->release_escrow($order->ORDER_ID);
+			}
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-success'>Appointment marked completed and consultation fee queued for payout!</div>");
+		}
+		redirect('doctorpanel/manageappointment');
+	}
+
+	public function prescription()
+	{
+		$aid = intval($this->uri->segment(3) ?: $this->input->get_post('aid'));
+		$appointment = $this->db->get_where('appointment', array('appointment_id' => $aid, 'doctor_id' => $this->did))->row();
+		
+		if (!$appointment) {
+			redirect('doctorpanel/manageappointment');
+			return;
+		}
+
+		if ($this->input->post('submit_prescription')) {
+			$symptoms    = trim($this->input->post('symptoms', TRUE));
+			$vitals      = trim($this->input->post('vitals', TRUE));
+			$diagnosis   = trim($this->input->post('diagnosis', TRUE));
+			$plan        = trim($this->input->post('treatment_plan', TRUE));
+			$followup    = trim($this->input->post('followup_date', TRUE));
+			$meds_raw    = $this->input->post('medications'); // array
+			$tests_raw   = $this->input->post('lab_tests'); // array
+
+			$medications_json = is_array($meds_raw) ? json_encode(array_values(array_filter($meds_raw))) : json_encode(array());
+			$tests_json = is_array($tests_raw) ? json_encode(array_values(array_filter($tests_raw))) : json_encode(array());
+
+			$rx_data = array(
+				'appointment_id'        => $aid,
+				'patient_id'            => $appointment->user_id,
+				'doctor_id'             => $this->did,
+				'hospital_id'           => ($appointment->institution_type == 'H') ? $appointment->institute_id : null,
+				'symptoms_subjective'   => $symptoms,
+				'examination_objective' => $vitals,
+				'diagnosis_assessment'  => $diagnosis ?: 'General Clinical Evaluation',
+				'treatment_plan'        => $plan ?: 'Standard care plan',
+				'medications_json'      => $medications_json,
+				'lab_tests_recommended' => $tests_json,
+				'followup_date'         => !empty($followup) ? $followup : null,
+				'created_at'            => date('Y-m-d H:i:s')
+			);
+
+			$this->db->insert('prescriptions', $rx_data);
+			
+			// Mark appointment as completed
+			$this->db->where('appointment_id', $aid)->update('appointment', array('status' => '2'));
+			
+			// Release escrow in financial ledger
+			$order = $this->db->where(array('ITEM_TYPE' => 'A', 'ITEM_ID' => $aid))->get('sm_order')->row();
+			if ($order) {
+				$this->Financial_Model->release_escrow($order->ORDER_ID);
+			}
+
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-success'>Digital E-Prescription issued successfully!</div>");
+			redirect('doctorpanel/manageappointment');
+			return;
+		}
+
+		$data['appointment'] = $appointment;
+		$data['patient'] = $this->db->get_where('userlogin', array('userid' => $appointment->user_id))->row();
+		$data['existing_rx'] = $this->db->get_where('prescriptions', array('appointment_id' => $aid))->row();
+		$this->load->view('doctorpanel/prescription', $data);
+	}
+}

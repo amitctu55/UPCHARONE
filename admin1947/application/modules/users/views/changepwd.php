@@ -1,167 +1,103 @@
-<!DOCTYPE html>
-<html>
-
-  <style>
-  
-  .formbody {
-    border: 1px solid #a9a9a9;
-    padding: 40px;
-    border-radius: 4px;
-    background: #3c8dbc;
-    color: white;
-}
-  #submit {
-    background: #ffffff;
-    padding: 6px 30px;
-    border: 1px solid white;
-    border-radius: 23px;
-    color: #3c8dbc;
-    font-weight: bold;
-}
-  </style>
-  
-<body class="hold-transition skin-blue sidebar-mini">
-<div class="wrapper">
-
-	<!--there was sidebar -->
-	
-  <!-- Content Wrapper. Contains page content -->
-  <div class="content-wrapper">
-    <!-- Content Header (Page header) -->
-    <section class="content-header">
-      
-      <ol class="breadcrumb">
-        <li><a href="#"><i class="fa fa-dashboard"></i> Users</a></li>
-        <li class="active">Change password</li>
+<div class="content-wrapper">
+  <!-- Content Header & Breadcrumbs -->
+  <section class="content-header" style="padding: 20px 20px 10px;">
+    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+      <div>
+        <h1 style="font-size: 22px; font-weight: 700; color: #1e293b; margin: 0;">Change Account Password</h1>
+        <small style="color: #64748b; font-size: 13px;">Update your administrative login password credentials</small>
+      </div>
+      <ol class="breadcrumb" style="position: static; float: none; margin: 0; background: transparent; padding: 0;">
+        <li><a href="<?=base_url('masters/dashboard')?>" style="color: #00a896;"><i class="fa fa-dashboard"></i> Dashboard</a></li>
+        <li><a href="<?=base_url('users/changepassword')?>" style="color: #64748b;">Account</a></li>
+        <li class="active" style="color: #1e293b; font-weight: 600;">Change Password</li>
       </ol>
-    </section>
+    </div>
+  </section>
 
-    <!-- Main content -->
-    <section class="content">
+  <!-- Main content -->
+  <section class="content" style="padding: 15px 20px;">
+    <div class="container-fluid" style="padding: 0;">
       
-		<link rel="stylesheet" href="https://jqueryvalidation.org/files/demo/site-demos.css">
-  <link rel="stylesheet" href="<?=base_url();?>public/assets/dist/css/metallic/zebra_datepicker.min.css" type="text/css">
-  
-<div class="container bg-3 ">  
+      <!-- Flash Alert Messages -->
+      <?php if($this->session->flashdata('flashmsg')): ?>
+        <div style="margin-bottom: 15px;">
+          <?=$this->session->flashdata('flashmsg');?>
+        </div>
+      <?php endif; ?>
 
-  <div class="row text-">
-    
-	<div class="container">
-<br>
+      <div class="master-card" style="max-width: 520px; margin: 20px auto 40px;">
+        <div class="master-card-header" style="background: #f8fafc;">
+          <h3 class="master-card-title">
+            <i class="fa fa-key" style="color: #00a896;"></i>
+            <span>Update Password</span>
+          </h3>
+        </div>
 
-	
-	 <div class="row">
-	 <div class="col-md-offset-3 col-md-6 formbody">
-		<h3 style="margin-top:-15px;margin-bottom:20px;font-weight:600;text-align:center;">Change Password</h3>
-		<form class="form-horizontal" method="post" id="changeform">
-			  <div class="form-group">
-				<label for="email">Old Password:</label>
-				<input type="password" class="form-control" id="old" data-validation="required"
-		 data-validation-error-msg="This Field is required">
-			  </div>
-			  <div class="form-group">
-				<label for="pwd">New Password:</label>
-				<input type="password" class="form-control" id="pwd" data-validation="required"
-		 data-validation-error-msg="This Field is required">
-			  </div>
-			   <div class="form-group">
-				<label for="pwd">Confirm Password:</label>
-				<input type="password" class="form-control" id="cpwd" data-validation="required"
-		 data-validation-error-msg="This Field is required">
-			  </div>
-			  
-			   <div class="form-group">
-				<p style="color:#dc0909;font-weight:600;font-size:15px;" id="err"></p>
-			   </div>
-			  <div class="form-group">
-				<input type="submit" class="btn btn-info" value="Change Password" id="submit" name="submit">
-			  </div>
-		</form>
-	</div>
-	</div>
-	</div>
-	
-	<br>
-	<br>
-	<br>
-	
-	
-	
-  </div>
-</div><br>
+        <div class="master-card-body" style="padding: 24px;">
+          <form class="form-horizontal" method="post" id="changeform">
+            <div class="form-group" style="margin-bottom: 18px;">
+              <label for="old" style="font-weight: 600; font-size: 13px; color: #334155; margin-bottom: 6px;">Current Password <span style="color: #ef4444;">*</span></label>
+              <input type="password" class="form-control" id="old" placeholder="Enter current password" required style="border-radius: 8px; height: 40px;">
+            </div>
 
+            <div class="form-group" style="margin-bottom: 18px;">
+              <label for="pwd" style="font-weight: 600; font-size: 13px; color: #334155; margin-bottom: 6px;">New Password <span style="color: #ef4444;">*</span></label>
+              <input type="password" class="form-control" id="pwd" placeholder="Enter new strong password" required style="border-radius: 8px; height: 40px;">
+            </div>
 
-<script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+            <div class="form-group" style="margin-bottom: 18px;">
+              <label for="cpwd" style="font-weight: 600; font-size: 13px; color: #334155; margin-bottom: 6px;">Confirm New Password <span style="color: #ef4444;">*</span></label>
+              <input type="password" class="form-control" id="cpwd" placeholder="Re-type new password" required style="border-radius: 8px; height: 40px;">
+            </div>
 
-<script src="https://code.jquery.com/jquery-3.2.1.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
-        <script type="text/javascript" src="<?=base_url();?>public/assets/dist/js/zebra_datepicker.min.js"></script>
-        <script type="text/javascript" src="<?=base_url();?>public/assets/dist/js/examples.js"></script>
-		<script src="//cdnjs.cloudflare.com/ajax/libs/jquery-form-validator/2.3.26/jquery.form-validator.min.js"></script>
-<script>
-  $.validate({
-   
-  });
-</script>
+            <div id="err" style="color: #ef4444; font-size: 13px; font-weight: 600; margin-bottom: 15px;"></div>
 
-<script>
-		$(document).ready(function(){
-			$('#changeform').on('submit', function(e){
-				e.preventDefault();
-				var old=$.trim($('#old').val());
-				var pwd=$.trim($('#pwd').val());
-				var cpwd=$.trim($('#cpwd').val());
-				
-				var uri = base_url+'users/changepassword/change';
-				if(pwd.length < 8)
-				{
-					$('#err').html('New Password length should minimum 8 characters.');
-					return false;
-				}
-				else if(pwd != cpwd)
-				{
-					$('#err').html('New and Confirm Password not matched');
-					return false;
-				}
-				else{
-					$.ajax({
-						type:'post',
-						url:uri,
-						data:{pwd:pwd,old:old},
-						success:function(result)
-						{
-							if(result=='Y')
-							{
-								alert('Password changed successfully');
-								location.reload();
-								
-							}
-							else{
-								$('#err').html(result);
-							}
-						}
-					});
-				}
-			});
-		});
-	</script>
+            <div style="display: flex; gap: 10px; justify-content: flex-end; border-top: 1px solid #e2e8f0; padding-top: 18px;">
+              <button type="reset" class="btn btn-default" style="border-radius: 8px; font-weight: 600; padding: 8px 20px;">
+                <i class="fa fa-refresh"></i> Reset
+              </button>
+              <button type="submit" class="btn btn-primary" id="submit" name="submit" style="background: #00a896; border-color: #00a896; border-radius: 8px; font-weight: 600; padding: 8px 24px;">
+                <i class="fa fa-check"></i> Update Password
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
 
-
-    </section>
-    <!-- /.content -->
-  </div>
-  
-  
-  <!-- /.content-wrapper -->
-  <?php $this->load->view('footer');?>
-
- 
-  <!-- /.control-sidebar -->
-  <!-- Add the sidebar's background. This div must be placed
-       immediately after the control sidebar -->
-  <div class="control-sidebar-bg"></div>
+    </div>
+  </section>
 </div>
-<!-- ./wrapper -->
 
+<script>
+$(document).ready(function(){
+  $('#changeform').submit(function(e){
+    e.preventDefault();
+    var old = $('#old').val();
+    var pwd = $('#pwd').val();
+    var cpwd = $('#cpwd').val();
+    var uri = '<?=base_url()?>users/changepassword/change';
 
-</body>
-</html>
+    if(pwd != cpwd) {
+      $('#err').text('New Password and Confirm Password do not match!');
+      return false;
+    }
+
+    $.ajax({
+      type: "POST",
+      url: uri,
+      data: { old: old, pwd: pwd },
+      success: function(res) {
+        if(res.trim() == '1' || res.indexOf('1') !== -1) {
+          alert('Password successfully changed!');
+          location.reload();
+        } else {
+          $('#err').text('Invalid current password! Please verify and try again.');
+        }
+      },
+      error: function(){
+        $('#err').text('Error updating password. Please try again.');
+      }
+    });
+  });
+});
+</script>

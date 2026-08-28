@@ -197,7 +197,7 @@ if ( ! function_exists('getInstituteName'))
 if ( ! function_exists('admin_url'))
 {
 	function admin_url(){
-		return 'https://www.upcharr.com/admin1947/';
+		return base_url().'admin1947/';
 	}
 }
 
@@ -243,15 +243,14 @@ if(!function_exists('sendsms'))
 		//$response = file_get_contents( $api_url);
 		// Step 1
 		$cSession = curl_init(); 
-		// Step 2
-		curl_setopt($cSession,CURLOPT_URL,$api_url);
-		curl_setopt($cSession,CURLOPT_RETURNTRANSFER,true);
-		curl_setopt($cSession,CURLOPT_HEADER, false); 
-		// Step 3
-		$result=curl_exec($cSession);
-		// Step 4
+		curl_setopt($cSession, CURLOPT_URL, $api_url);
+		curl_setopt($cSession, CURLOPT_RETURNTRANSFER, true);
+		curl_setopt($cSession, CURLOPT_HEADER, false); 
+		curl_setopt($cSession, CURLOPT_CONNECTTIMEOUT, 3);
+		curl_setopt($cSession, CURLOPT_TIMEOUT, 4);
+		curl_setopt($cSession, CURLOPT_SSL_VERIFYPEER, false);
+		$result = curl_exec($cSession);
 		curl_close($cSession);
-		// Step 5
 		return $result;
 				//return  $response;
 	}	

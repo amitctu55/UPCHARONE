@@ -8,6 +8,7 @@ class Pathlabreg extends CI_Controller
 		date_default_timezone_set("Asia/Kolkata");
 		$date=date('Y-m-d h:i:s');
 		$this->load->model('Pathlabregmodel');
+		$this->load->helper(array('query_string_helper','dbquery_helper','admin_helper','text'));
 	}
 	 
 	public function index()
@@ -123,72 +124,111 @@ class Pathlabreg extends CI_Controller
 	}
 	
           
-          public function viewpathology()
+	public function viewpathology()
 	{
-		$data['pathlab']=$this->db->get_where('pathlab')->result();
-		$data['module']='pathlab';
-		//print_r($data);
-		
-		
+		$keyword       = $this->db->escape_str($this->input->get('keyword', TRUE));
+		$status_filter = $this->db->escape_str($this->input->get('status_filter', TRUE));
+
+		if ($keyword != '') {
+			$this->db->where("(pathlab.name LIKE '%".$keyword."%' OR pathlab.email LIKE '%".$keyword."%' OR pathlab.mobile LIKE '%".$keyword."%')");
+		}
+		if ($status_filter == 'approved' || $status_filter == 'registered') {
+			$this->db->where('pathlab.approved', '1');
+			$this->db->where('pathlab.verified', '1');
+		} elseif ($status_filter == 'pending' || $status_filter == 'pending_verification') {
+			$this->db->where("(pathlab.approved = '0' OR pathlab.verified = '0')");
+		} elseif ($status_filter == 'verified') {
+			$this->db->where('pathlab.verified', '1');
+		} elseif ($status_filter == 'unverified') {
+			$this->db->where('pathlab.verified', '0');
+		} elseif ($status_filter == 'pending_approval') {
+			$this->db->where('pathlab.approved', '0');
+		}
+		$this->db->where('pathlab.status !=', '2');
+		$this->db->order_by('pathlab.id', 'desc');
+		$data['pathlab'] = $this->db->get('pathlab')->result();
+		$data['module']  = 'pathlab';
+
+		$data['approved_count'] = $this->db->where('approved', '1')->where('verified', '1')->where('status !=', '2')->count_all_results('pathlab');
+		$data['pending_count']  = $this->db->group_start()->where('approved', '0')->or_where('verified', '0')->group_end()->where('status !=', '2')->count_all_results('pathlab');
+		$data['total_count']    = $this->db->where('status !=', '2')->count_all_results('pathlab');
+
 		$this->load->view('inc/topheaderlink');
 		$this->load->view('inc/topheader');
-		$this->load->view('pathlabview',$data);
+		$this->load->view('pathlabview', $data);
 		$this->load->view('sidebar');
 		$this->load->view('inc/headersetting');
 		$this->load->view('inc/footerlink');
 		$this->load->view('inc/table_footer');
-		
 	}
 
 
-      public function pathlabapprove()
+	public function pathlabapprove($id = null)
 	{
-		$did=$this->input->post('did');
-		$current=$this->db->select('approved')->get_where('pathlab',array('id'=>$did))->row()->approved;
-		if($current=='1'){
-			$this->db->set('approved','0')->where(array('id'=>$did))->update('pathlab');
-			$response=array('status'=>'0');
-		}else if($current=='0'){
-			$this->db->set('approved','1')->where(array('id'=>$did))->update('pathlab');
-			$response=array('status'=>'1');
+		$did = $this->input->post('did') ? $this->input->post('did') : ($id ? $id : $this->uri->segment(4));
+		$row = $this->db->select('approved')->get_where('pathlab', array('id' => $did))->row();
+		$current = $row ? $row->approved : '0';
+		if ($current == '1') {
+			$this->db->set('approved', '0')->where(array('id' => $did))->update('pathlab');
+			$status = '0';
+			$msg = 'Pathology Lab approval status updated to Pending.';
+		} else {
+			$this->db->set('approved', '1')->where(array('id' => $did))->update('pathlab');
+			$status = '1';
+			$msg = 'Pathology Lab has been Approved successfully.';
 		}
-		echo json_encode($response);
+		if ($this->input->is_ajax_request() || $this->input->post('did')) {
+			echo json_encode(array('status' => $status, 'message' => $msg));
+			return;
+		}
+		$this->session->set_flashdata('flashmsg', "<div class='alert alert-success'>$msg</div>");
+		redirect(base_url('doctor/pathlabreg/viewpathology'));
 	}
 	 
-	public function pathlabverify()
+	public function pathlabverify($id = null)
 	{
-		$did=$this->input->post('did');
-		$current=$this->db->select('verified')->get_where('pathlab',array('id'=>$did))->row()->verified;
-		if($current=='1'){
-			$this->db->set('verified','0')->where(array('id'=>$did))->update('pathlab');
-			$response=array('status'=>'0');
-		}else if($current=='0'){
-			$this->db->set('verified','1')->where(array('id'=>$did))->update('pathlab');
-			$response=array('status'=>'1');
+		$did = $this->input->post('did') ? $this->input->post('did') : ($id ? $id : $this->uri->segment(4));
+		$row = $this->db->select('verified')->get_where('pathlab', array('id' => $did))->row();
+		$current = $row ? $row->verified : '0';
+		if ($current == '1') {
+			$this->db->set('verified', '0')->where(array('id' => $did))->update('pathlab');
+			$status = '0';
+			$msg = 'Pathology Lab verification status updated to Unverified.';
+		} else {
+			$this->db->set('verified', '1')->where(array('id' => $did))->update('pathlab');
+			$status = '1';
+			$msg = 'Pathology Lab has been Verified successfully.';
 		}
-		echo json_encode($response);
+		if ($this->input->is_ajax_request() || $this->input->post('did')) {
+			echo json_encode(array('status' => $status, 'message' => $msg));
+			return;
+		}
+		$this->session->set_flashdata('flashmsg', "<div class='alert alert-success'>$msg</div>");
+		redirect(base_url('doctor/pathlabreg/viewpathology'));
 	}
 	 
 	
 	
 	 public function pathlabview($id)
-	      {
+	 {
+		$pathlab = $this->db->get_where('pathlab', array('id' => $id))->row();
+		if (!$pathlab) {
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-danger'>Pathology Lab not found!</div>");
+			redirect(base_url('doctor/pathlabreg/viewpathology'));
+			return;
+		}
 
-		$data['pathlab']=$this->db->get_where('pathlab',array('id'=>$id))->row();
-		$data['module']='pathlab';
-	
-         // print_r($data);
+		$data['pathlab'] = $pathlab;
+		$data['module']  = 'pathlab';
+		$data['tests']   = $this->db->get_where('path_lab_test', array('path_lab_id' => $id))->result();
 
- 
 		$this->load->view('inc/topheaderlink');
 		$this->load->view('inc/topheader');
-		$this->load->view('viewpathlab',$data);
+		$this->load->view('pathlabview_profile', $data);
 		$this->load->view('sidebar');
 		$this->load->view('inc/headersetting');
 		$this->load->view('inc/footerlink');
 		$this->load->view('inc/table_footer');
-	
-      
 	}
 
 
@@ -200,13 +240,14 @@ class Pathlabreg extends CI_Controller
 	
 
 
-          if($_POST['submit']){
-				         $this->load->model('pathlabregmodel');
-                 $this->pathlabregmodel->updatepathlab($id);
-         
-				    $msg="<div class='alert alert-success'><strong>Success!</strong> Data Added Successfully</div>";
-							$this->session->set_flashdata('flashmsg',$msg);
-				     }
+		if (isset($_POST['submit'])) {
+			$this->load->model('pathlabregmodel');
+			$this->pathlabregmodel->updatepathlab($id);
+
+			$msg = "<div class='alert alert-success'><strong>Success!</strong> Pathology Lab Updated Successfully</div>";
+			$this->session->set_flashdata('flashmsg', $msg);
+			redirect(base_url('doctor/pathlabreg/viewpathology'));
+		}
 
 
          // print_r($data);
@@ -223,5 +264,52 @@ class Pathlabreg extends CI_Controller
       
 	}
 
+	public function deletepathlab($id = null)
+	{
+		if ($this->input->post('ids') && is_array($this->input->post('ids'))) {
+			$this->bulk_delete_pathlab();
+			return;
+		}
 
+		$del_id = $id ? $id : ($this->input->post('id') ? $this->input->post('id') : ($this->input->get('id') ? $this->input->get('id') : $this->uri->segment(4)));
+		if ($del_id) {
+			$this->Pathlabregmodel->deletepathlab($del_id);
+			$msg = "Pathology Lab record deleted successfully.";
+			if ($this->input->is_ajax_request() || $this->input->post('is_ajax') || $this->input->post('id')) {
+				echo json_encode(array('status' => 1, 'message' => $msg));
+				return;
+			}
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-success'><strong>Success!</strong> $msg</div>");
+		}
+		redirect(base_url('doctor/pathlabreg/viewpathology'));
 	}
+
+	public function bulk_delete_pathlab()
+	{
+		$ids = $this->input->post('ids');
+		if (!empty($ids) && is_array($ids)) {
+			$deleted_count = 0;
+			foreach ($ids as $lid) {
+				$lid = (int)$lid;
+				if ($lid > 0) {
+					$this->Pathlabregmodel->deletepathlab($lid);
+					$deleted_count++;
+				}
+			}
+			$msg = "$deleted_count pathology lab record(s) deleted successfully.";
+			if ($this->input->is_ajax_request() || $this->input->post('is_ajax')) {
+				echo json_encode(array('status' => 1, 'count' => $deleted_count, 'message' => $msg));
+				return;
+			}
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-success'><strong>Success!</strong> $msg</div>");
+		} else {
+			if ($this->input->is_ajax_request() || $this->input->post('is_ajax')) {
+				echo json_encode(array('status' => 0, 'message' => 'No pathlabs selected.'));
+				return;
+			}
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-warning'>No labs selected.</div>");
+		}
+		redirect(base_url('doctor/pathlabreg/viewpathology'));
+	}
+
+}

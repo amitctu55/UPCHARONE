@@ -1,213 +1,149 @@
-<!DOCTYPE html>
-<html>
-  <style>
-  .tabledata{
-    border:1px solid #fff!important;
-    font-weight:600;
-  }
-  .tableheaddata{
-    border:1px solid #fff!important;
-    background:#605CA8;
-    color:#fff;
-  }
-  .error valid{
-    color:green!important;
-  }
-  .tabledataactive{
-    color:green;
-  }
-  .tabledatainactive{
-    color:red;
-  }
-   table.dataTable tbody tr {
-    background-color: #e5e4f1;
+<div class="content-wrapper">
+  <!-- Content Header & Breadcrumbs -->
+  <section class="content-header" style="padding: 20px 20px 10px;">
+    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+      <div>
+        <h1 style="font-size: 22px; font-weight: 700; color: #1E293B; margin: 0 0 4px 0; font-family: 'Inter', sans-serif;">
+          Upcoming Appointments
+        </h1>
+        <p style="margin: 0; color: #64748B; font-size: 13px;">View and filter scheduled future patient consultations across hospitals and clinics</p>
+      </div>
+      <div style="display: flex; gap: 10px; align-items: center;">
+        <a href="<?=base_url()?>doctor/appointment/todayappointment" class="btn" style="background: #F1F5F9; color: #334155; font-weight: 600; padding: 8px 16px; border-radius: 8px; border: 1px solid #CBD5E1; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; font-size: 13px;">
+          <i class="fa fa-calendar-check-o"></i> Today's Schedule
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main content -->
+  <section class="content" style="padding: 10px 20px 30px;">
+    <!-- Filter Card -->
+    <div style="background: #FFFFFF; border-radius: 12px; border: 1px solid #E2E8F0; box-shadow: 0 1px 3px rgba(0,0,0,0.05); padding: 20px; margin-bottom: 20px;">
+      <?php echo form_open("doctor/appointment/upcomming/", 'id="search_form" method="get"'); ?>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; align-items: flex-end;">
+          <div>
+            <label style="display: block; font-size: 12px; font-weight: 600; color: #475569; margin-bottom: 4px;">Records Per Page</label>
+            <div><?php echo display_record_per_page();?></div>
+          </div>
+          <div>
+            <label style="display: block; font-size: 12px; font-weight: 600; color: #475569; margin-bottom: 4px;">Hospital Name</label>
+            <input type="text" class="form-control" name="hospital_name" value="<?php echo $this->input->get_post('hospital_name');?>" placeholder="Filter hospital..." style="height: 38px; border-radius: 8px; border: 1px solid #CBD5E1; font-size: 13px;">
+          </div>
+          <div>
+            <label style="display: block; font-size: 12px; font-weight: 600; color: #475569; margin-bottom: 4px;">Doctor Name</label>
+            <input type="text" class="form-control" name="doctor_name" value="<?php echo $this->input->get_post('doctor_name');?>" placeholder="Filter doctor..." style="height: 38px; border-radius: 8px; border: 1px solid #CBD5E1; font-size: 13px;">
+          </div>
+          <div>
+            <label style="display: block; font-size: 12px; font-weight: 600; color: #475569; margin-bottom: 4px;">Patient Name</label>
+            <input type="text" class="form-control" name="paient_name" value="<?php echo $this->input->get_post('paient_name');?>" placeholder="Filter patient..." style="height: 38px; border-radius: 8px; border: 1px solid #CBD5E1; font-size: 13px;">
+          </div>
+          <div>
+            <label style="display: block; font-size: 12px; font-weight: 600; color: #475569; margin-bottom: 4px;">Patient Phone</label>
+            <input type="text" class="form-control" name="paient_phone" value="<?php echo $this->input->get_post('paient_phone');?>" placeholder="Phone number..." style="height: 38px; border-radius: 8px; border: 1px solid #CBD5E1; font-size: 13px;">
+          </div>
+          <div>
+            <label style="display: block; font-size: 12px; font-weight: 600; color: #475569; margin-bottom: 4px;">Patient Email</label>
+            <input type="text" class="form-control" name="paient_email" value="<?php echo $this->input->get_post('paient_email');?>" placeholder="Email..." style="height: 38px; border-radius: 8px; border: 1px solid #CBD5E1; font-size: 13px;">
+          </div>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px;">
+          <a href="<?=base_url();?>doctor/appointment/upcomming" class="btn" style="background: #F1F5F9; color: #64748B; font-weight: 600; padding: 8px 16px; border-radius: 8px; border: 1px solid #CBD5E1; font-size: 13px; text-decoration: none;">
+            Clear Filters
+          </a>
+          <button type="submit" class="btn" style="background: #0d9488; color: #FFFFFF; font-weight: 600; padding: 8px 20px; border-radius: 8px; border: none; font-size: 13px; box-shadow: 0 2px 4px rgba(13,148,136,0.25);">
+            <i class="fa fa-search" style="margin-right: 4px;"></i> Search Schedule
+          </button>
+        </div>
+      <?php echo form_close();?>
+    </div>
+
+    <?=$this->session->flashdata('flashmsg');?>
+
+    <!-- Data Table Card -->
+    <div style="background: #FFFFFF; border-radius: 12px; border: 1px solid #E2E8F0; box-shadow: 0 1px 3px rgba(0,0,0,0.05); overflow: hidden;">
+      <?php $att=array('class'=>'form-horizontal form-label-left','name'=>'myform');
+      echo form_open_multipart("doctor/appointment/upcomming", $att);?>
+        <div class="table-responsive">
+          <table class="table table-hover" style="margin: 0; border-collapse: separate; border-spacing: 0;">
+            <thead>
+              <tr style="background: #F8FAFC; border-bottom: 1px solid #E2E8F0;">
+                <th style="width: 40px; padding: 14px 16px; text-align: center;">
+                  <input type="checkbox" name="checkall" id="checkall" onClick="check_uncheck_checkbox(this.checked);" style="accent-color: #0d9488;">
+                </th>
+                <th style="padding: 14px 16px; font-size: 12px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.5px;">Schedule Date & Time</th>
+                <th style="padding: 14px 16px; font-size: 12px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.5px;">Patient Info</th>
+                <th style="padding: 14px 16px; font-size: 12px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.5px;">Doctor</th>
+                <th style="padding: 14px 16px; font-size: 12px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.5px;">Hospital / Clinic</th>
+                <th style="padding: 14px 16px; font-size: 12px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.5px;">Fee</th>
+                <th style="padding: 14px 16px; font-size: 12px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.5px; text-align: right;">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <?php 
+              if(!empty($data)) {
+                foreach($data as $p) { ?>
+                <tr style="border-bottom: 1px solid #F1F5F9;">
+                  <td style="padding: 14px 16px; text-align: center;">
+                    <input type="checkbox" name="arr_ids[]" value="<?php echo $p->id;?>" style="accent-color: #0d9488;">
+                  </td>
+                  <td style="padding: 14px 16px;">
+                    <div style="font-weight: 700; color: #0F172A; font-size: 13px;">
+                      <i class="fa fa-calendar" style="color: #0d9488; margin-right: 6px;"></i> <?=$p->apdate;?>
+                    </div>
+                    <div style="font-size: 12px; color: #64748B; margin-top: 2px;">
+                      <i class="fa fa-clock-o" style="margin-right: 4px;"></i> <?=$p->aptime;?>
+                    </div>
+                  </td>
+                  <td style="padding: 14px 16px;">
+                    <div style="font-weight: 600; color: #0F172A; font-size: 14px;"><?=$p->pname;?></div>
+                    <div style="font-size: 12px; color: #64748B; margin-top: 2px;">
+                      <i class="fa fa-phone" style="margin-right: 4px;"></i> <?=$p->pmobile;?>
+                    </div>
+                  </td>
+                  <td style="padding: 14px 16px; font-weight: 600; color: #334155; font-size: 13px;">
+                    Dr. <?=$p->dname;?>
+                  </td>
+                  <td style="padding: 14px 16px; font-size: 13px; color: #475569;">
+                    <?=$p->hname;?>
+                  </td>
+                  <td style="padding: 14px 16px; font-weight: 700; color: #0d9488; font-size: 14px;">
+                    ₹<?=$p->fee;?>
+                  </td>
+                  <td style="padding: 14px 16px; text-align: right;">
+                    <a href="<?=base_url()?>doctor/appointment/delete_upcomming/<?=$p->id;?>" onclick="return confirm('Are you sure you want to remove this appointment?');" class="btn btn-sm" style="background: #FEE2E2; color: #B91C1C; border: 1px solid #FECACA; border-radius: 6px; padding: 5px 10px; font-size: 12px; font-weight: 600;">
+                      <i class="fa fa-trash"></i> Cancel
+                    </a>
+                  </td>
+                </tr>
+              <?php } } else { ?>
+                <tr>
+                  <td colspan="7" style="text-align: center; padding: 32px; color: #94A3B8; font-size: 14px;">
+                    No upcoming appointments scheduled.
+                  </td>
+                </tr>
+              <?php } ?>
+            </tbody>
+          </table>
+        </div>
+
+        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; padding: 16px 20px; border-top: 1px solid #F1F5F9; gap: 12px;">
+          <div>
+            <input name="status_action" type="submit" value="Delete Selected" class="btn btn-danger btn-sm" style="border-radius: 6px; font-weight: 600; padding: 6px 14px;" onClick="return confirm('Are you sure you want to delete selected items?');">
+          </div>
+          <div class="pagination" style="margin: 0;">
+            <?php echo $page_links; ?>
+          </div>
+        </div>
+      <?php echo form_close();?>
+    </div>
+  </section>
+</div>
+
+<script type="text/javascript">       
+function check_uncheck_checkbox(isChecked) {
+  $('input[name="arr_ids[]"]').each(function() { this.checked = isChecked; });
 }
-  </style>
-   <style>
-  .label-name{
-    text-align:left!important;
-    margin-top:-5px;
-  }
-  .starspan
-  {
-    color:#e80909;
-    font-size:18px;
-  }
-  .mainheadlinerow
-  {
-    padding:5px;margin-top:10px;margin-bottom:10px;
-  }
-  .mainheadline
-  {
-    background:#605ca8;margin-top:10px;margin-bottom:10px;color:#fff;padding:9px;font-weight:600;
-  }
-  .mainheadlinefirstrow
-  {
-    padding:5px;
-  }
-  .mainheadlinefirst
-  {
-    background:#605ca8;margin-top:-15px;margin-bottom:15px;color:#fff;padding:9px;font-weight:600;
-  }
-  .mainhead{font-weight:600;margin-bottom:20px;}
-  .formbody{border:1px solid #d6d2d2;padding:10px;border-radius:4px;}
-  .note{font-weight:600;margin-top:10px;margin-bottom:20px;}
-  #submit{background:#605ca8;padding: 6px 30px;}
-  #reset{background:#fff;color:#000;padding: 6px 30px;}
-  </style>
-<body class="hold-transition skin-blue sidebar-mini">
-	<div class="wrapper">
-		<!--there was sidebar -->
-		<!-- Content Wrapper. Contains page content -->
-		<div class="content-wrapper">
-			<!-- Content Header (Page header) -->
-			<!-- Main content -->
-			<section class="content">
-				<link rel="stylesheet" href="https://jqueryvalidation.org/files/demo/site-demos.css">
-				<link rel="stylesheet" href="<?=base_url();?>public/assets/dist/css/metallic/zebra_datepicker.min.css" type="text/css">
-				<div class="container bg-3 ">  
-					<!--<form class="form-horizontal formbody" id='mainform' action="<?=base_url()?>doctor/appointment/upcomming" method="get" enctype="multipart/form-data">-->
-					<?php echo form_open("doctor/appointment/upcomming/",'class="form-horizontal formbody" id="search_form" method="get"');  ?>
-					<div class="row mainheadlinefirstrow">
-						<div class="col-md-12 mainheadlinefirst">Basic Filter
-							<a  href="<?php echo base_url();?>doctor/appointment/addappointment" class="btn btn-info" style="float:right;" id="submit" >Add Appointment</a>
-						</div>
-					</div>
-					<div class="row">
-						<div class="col-md-12">
-							<div class="form-group">
-								<label class="control-label col-sm-1 label-name" for="email">Records Per Page</label> 
-								<div class="col-sm-3"><?php echo display_record_per_page();?></div>
-							  <label class="control-label col-sm-1 label-name" for="email">Hospital Name</label>
-							  <div class="col-sm-3">
-								<input type="text" class="form-control input-sm" name="hospital_name" value="<?php echo $this->input->get_post('hospital_name');?>">
-							  </div>
-							  <label class="control-label col-sm-1 label-name" for="email">Doctor Name</label>
-							  <div class="col-sm-3">
-								<input type="text" class="form-control input-sm"  name="doctor_name" value="<?php echo $this->input->get_post('doctor_name');?>">
-							  </div>
-							</div>
-							<div class="form-group">
-							  <label class="control-label col-sm-1 label-name" for="email">Paient Name</label>
-							  <div class="col-sm-3">
-								<input type="text" class="form-control input-sm"  name="paient_name" value="<?php echo $this->input->get_post('paient_name');?>">
-							  </div>
-							  <label class="control-label col-sm-1 label-name" for="email">Patient Phone</label>
-							  <div class="col-sm-3">
-								<input type="text" class="form-control input-sm"  name="paient_phone" value="<?php echo $this->input->get_post('paient_phone');?>">
-							  </div>
-							  <label class="control-label col-sm-1 label-name" for="email">Patient Email</label>
-							  <div class="col-sm-3">
-								<input type="text" class="form-control input-sm"  name="paient_email" value="<?php echo $this->input->get_post('paient_email');?>">
-							  </div>
-							</div>
-							<div class="form-group">
-							  <label class="control-label col-sm-1 label-name" for="email">Appointment. Id</label>
-							  <div class="col-sm-3">
-								<input type="text" class="form-control input-sm"  name="appointment_id" value="<?php echo $this->input->get_post('appointment_id');?>">
-							  </div>
-							  <label class="control-label col-sm-1 label-name" for="email">Date From</label>
-							  <div class="col-sm-3">
-								<input type="text" class="form-control datepicker"  name="date_from" value="<?php echo $this->input->get_post('date_from');?>" onkeypress="return isNumber(event)" data-validation="required"
-								data-validation-error-msg="This Field is required">
-							  </div>
-							  <label class="control-label col-sm-1 label-name" for="email">Date To</label>
-							  <div class="col-sm-3">
-								<input type="text" class="form-control datepicker"  name="date_to" value="<?php echo $this->input->get_post('date_to');?>" onkeypress="return isNumber(event)" data-validation="required"
-								data-validation-error-msg="This Field is required">
-							  </div>
-							</div>
-							<div class="form-group">
-							  <label class="control-label col-sm-1 label-name" for="email"></label>
-							  <div class="col-sm-3">
-								 <a  onclick="$('#search_form').submit();" style="padding-top:1px" class="btn btn-info"><span> Search </span></a>
-								 <?php 
-								 if( $this->input->get_post('hospital_name')!=''||  $this->input->get_post('paient_name')!='' ||  $this->input->get_post('paient_email')!='' ||  $this->input->get_post('paient_phone')!='' ||  $this->input->get_post('appointment_id')!='' ||  $this->input->get_post('date_from')!='' ||  $this->input->get_post('date_to')!='' ||  $this->input->get_post('time_from')!='' ||  $this->input->get_post('time_to')!='' ||  $this->input->get_post('doctor_name')!='' )
-								  { 
-									echo anchor("doctor/appointment/upcomming/",'<span>Clear Search</span>');    
-								  } 
-								?>
-							  </div>
-							</div>
-						</div>
-					</div>
-					<?php echo form_close();?>
-					<div class="row">
-						<div class="col-sm-12">
-							<h4 style="font-weight:600;margin-bottom:20px;"><?php echo $heading_title;?></h2>
-						</div>
-					</div>
-					<div class="table-responsive">
-						<table class="table table-hover table-bordered table-bordered" id='example'>
-							<thead>
-								<tr>
-									<th class="tableheaddata">ID</th>
-									<th class="tableheaddata">Date</th>
-									<th class="tableheaddata">Name</th>
-									<th class="tableheaddata">Email</th>
-									<th class="tableheaddata">Mobile</th>
-									<th class="tableheaddata">Hospital Name</th>
-									<th class="tableheaddata">Doctor Name</th>
-									<th class="tableheaddata">Payment Status</th>
-									<th class="tableheaddata">Appointment Status</th>
-									<th class="tableheaddata">View Profile</th>
-								</tr>
-							</thead>
-							<tbody id="tviewtablebody">
-								<?php 
-								if(is_array($data) && !empty($data)){
-								foreach($data as $p)
-								{
-									echo"<tr>";
-									echo"<td>".$p->appointment_id."</td>";
-									echo"<td>".$p->appointment_date."</td>";
-									echo"<td>".$p->appointment_name."</td>";
-									echo"<td>".$p->appointment_email."</td>";
-									echo"<td>".$p->appointment_mobile."</td>";
-									echo "<td>".$p->name."</td>";
-									echo "<td>".$p->fname."</td>"; ?>
-									<td><span style="color:red;"> <?php echo $p->payment_status ?> </span></td>
-									<td><?php if($p->appointment_status=='0'){ echo '<span style="color:red;">Pending</span>'; } else{ echo '<span style="color:green;">Done</span>'; } ?></td>
-									<?php echo "<td><a href='data?appointment_id=".$p->appointment_id."' style=color:red;>View Profile</a></td>";
-									echo"</tr>";
-								}
-								}else{
-								?>
-								<td colspan="10"><center>No Record Found!</center></td>
-								<?php }?>
-							</tbody>
-							<tfoot>
-								<tr>
-									<th class="tableheaddata">ID</th>
-									<th class="tableheaddata">Date</th>
-									<th class="tableheaddata">Name</th>
-									<th class="tableheaddata">Email</th>
-									<th class="tableheaddata">Mobile</th>
-									<th class="tableheaddata">Hospital Name</th>
-									<th class="tableheaddata">Doctor Name</th>
-									<th class="tableheaddata">Payment Status</th>
-									<th class="tableheaddata">Appointment Status</th>
-									<th class="tableheaddata">View Profile</th>
-								</tr>
-							</tfoot>
-						</table>
-					</div>
-					<div class="row">
-						<div class="col-md-6">
-							<!--<input name="status_action" type="submit" class="button2 btn-sm btn btn-danger" id="Delete" value="Delete" onclick="return validcheckstatus('arr_ids[]','delete','Record');"/>-->
-						</div>
-						<div class="col-md-6">
-							<div class="pagination"><?php echo $page_links; ?></div>
-						</div>
-					</div>
-				</div>
-			</section>
-		</div><br>
-		<script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
-		<!-- /.content -->
-	</div>
-<?php $this->load->view('footer');?>
-<div class="control-sidebar-bg"></div>
-<!-- ./wrapper -->
-</body>
-</html>
+</script>
+<?=$this->load->view('inc/footer');?>

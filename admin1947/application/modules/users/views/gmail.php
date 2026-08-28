@@ -1,137 +1,92 @@
-<!DOCTYPE html>
-<html>
+<div class="content-wrapper">
+  <!-- Content Header & Breadcrumbs -->
+  <section class="content-header" style="padding: 20px 20px 10px;">
+    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+      <div>
+        <h1 style="font-size: 22px; font-weight: 700; color: #1E293B; margin: 0 0 4px 0; font-family: 'Inter', sans-serif;">
+          Google Social Auth Registrations
+        </h1>
+        <p style="margin: 0; color: #64748B; font-size: 13px;">Patients and mobile app users logged in via Google OAuth integration</p>
+      </div>
+      <div style="display: flex; gap: 10px; align-items: center;">
+        <a href="<?=base_url()?>users/userlogincreate/app_download_users" class="btn" style="background: #F1F5F9; color: #334155; font-weight: 600; padding: 8px 16px; border-radius: 8px; border: 1px solid #CBD5E1; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; font-size: 13px;">
+          <i class="fa fa-globe"></i> Direct Users
+        </a>
+        <a href="<?=base_url()?>users/userlogincreate/facebook_users" class="btn" style="background: #F1F5F9; color: #334155; font-weight: 600; padding: 8px 16px; border-radius: 8px; border: 1px solid #CBD5E1; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; font-size: 13px;">
+          <i class="fa fa-facebook" style="color: #1877F2;"></i> Facebook Users
+        </a>
+      </div>
+    </div>
+  </section>
 
-  <style>
-  .tabledata{
-	  border:1px solid #fff!important;
-	  font-weight:600;
-  }
+  <!-- Main content -->
+  <section class="content" style="padding: 10px 20px 30px;">
+    <?=$this->session->flashdata('flashmsg');?>
 
-  .label-name{
-	  text-align:left!important;
-  }
-  .starspan
-  {
-	  color:#e80909;
-	  font-size:18px;
-  }
-  .mainheadlinerow
-  {
-	  padding:5px;margin-top:10px;margin-bottom:10px;
-  }
-  .mainheadline
-  {
-	  background:#605CA8;margin-top:10px;margin-bottom:10px;color:#fff;padding:9px;font-weight:600;
-  }
-  .mainheadlinefirstrow
-  {
-	  padding:5px;
-  }
-  .mainheadlinefirst
-  {
-	  background:#605CA8;margin-top:-15px;margin-bottom:15px;color:#fff;padding:9px;font-weight:600;
-  }
-  .mainhead{
-      font-weight:600;margin-bottom:20px;
-  }
-  .formbody{
-      border:1px solid #d6d2d2;padding:10px;border-radius:4px;
-  }
-  .note{
-      font-weight:600;font-size:17px;margin-top:10px;margin-bottom:20px;
-  }
-  .othernote{
-      font-weight:600;font-size:13px;color:#d20c0c;
-  }
-  #submit{background:#605ca8;padding: 6px 30px;}
-  #reset{background:#fff;color:#000;padding: 6px 30px;}
-  </style>
-  
-<body class="hold-transition skin-blue sidebar-mini">
-<div class="wrapper">
+    <!-- Table Card -->
+    <div style="background: #FFFFFF; border-radius: 12px; border: 1px solid #E2E8F0; box-shadow: 0 1px 3px rgba(0,0,0,0.05); overflow: hidden;">
+      <div style="padding: 16px 20px; border-bottom: 1px solid #F1F5F9; background: #F8FAFC;">
+        <h3 style="margin: 0; font-size: 15px; font-weight: 700; color: #0F172A; text-transform: uppercase; letter-spacing: 0.5px;">
+          <i class="fa fa-google" style="color: #EA4335; margin-right: 8px;"></i> Google Auth Users
+        </h3>
+      </div>
 
-	<!--there was sidebar -->
-	
-  <!-- Content Wrapper. Contains page content -->
-  <div class="content-wrapper">
-    <!-- Content Header (Page header) -->
-    
-    <!-- Main content -->
-    <section class="content">
-      
-		<link rel="stylesheet" href="https://jqueryvalidation.org/files/demo/site-demos.css">
-  <link rel="stylesheet" href="<?=base_url();?>public/assets/dist/css/metallic/zebra_datepicker.min.css" type="text/css">
-  
-
-
-<div class="container">
-	
-	<table class="table table-bordered" id='example' style="border:none;margin-top: 32px;">
-    <thead>
-      <tr>
-        <th class="tableheaddata">User Id</th>
-        <th class="tableheaddata">Name</th>
-        
-        <th class="tableheaddata">Guid</th>
-        <th class="tableheaddata">Email</th>
-        <th class="tableheaddata">DOB</th>
-        
-		
-      </tr>
-    </thead>
-     <tbody id="tviewtablebody">
-	
-<?php 
-   foreach($userlogin as $p)
-   {
-
-  echo"<tr>";
-  echo"<td>".$p->USERID."</td>";
-  echo"<td>".$p->FNAME."</td>";
-  echo"<td>".$p->GUID."</td>";
-  echo"<td>".$p->EMAIL."</td>";
-  echo"<td>".$p->DOB."</td>";
-
-echo"</tr>";
-  
-
-   }
-  ?>
-     </tbody>
-  </table>
+      <div class="table-responsive" style="padding: 16px;">
+        <table class="table table-hover" id="example" style="width: 100%; border-collapse: separate; border-spacing: 0;">
+          <thead>
+            <tr style="background: #F8FAFC; border-bottom: 1px solid #E2E8F0;">
+              <th style="padding: 12px 16px; font-size: 12px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.5px; width: 80px;">User ID</th>
+              <th style="padding: 12px 16px; font-size: 12px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.5px;">Full Name</th>
+              <th style="padding: 12px 16px; font-size: 12px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.5px;">Google UID (GUID)</th>
+              <th style="padding: 12px 16px; font-size: 12px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.5px;">Email Address</th>
+              <th style="padding: 12px 16px; font-size: 12px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.5px;">Date of Birth</th>
+            </tr>
+          </thead>
+          <tbody>
+            <?php 
+            if(!empty($userlogin)) {
+              foreach($userlogin as $p) { ?>
+              <tr style="border-bottom: 1px solid #F1F5F9;">
+                <td style="padding: 12px 16px; font-weight: 600; color: #64748B; font-size: 13px;">
+                  #<?=$p->USERID;?>
+                </td>
+                <td style="padding: 12px 16px; font-weight: 600; color: #0F172A; font-size: 14px;">
+                  <?=$p->FNAME;?>
+                </td>
+                <td style="padding: 12px 16px; font-size: 12px; color: #64748B; font-family: monospace;">
+                  <?=$p->GUID;?>
+                </td>
+                <td style="padding: 12px 16px; font-size: 13px; color: #475569;">
+                  <?=$p->EMAIL;?>
+                </td>
+                <td style="padding: 12px 16px; font-size: 13px; color: #64748B;">
+                  <?=$p->DOB;?>
+                </td>
+              </tr>
+            <?php } } else { ?>
+              <tr>
+                <td colspan="5" style="text-align: center; padding: 32px; color: #94A3B8; font-size: 14px;">
+                  No Google Auth registrations found.
+                </td>
+              </tr>
+            <?php } ?>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
 </div>
 
 <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
-
-<script src="https://code.jquery.com/jquery-3.2.1.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
-        <script type="text/javascript" src="<?=base_url();?>public/assets/dist/js/zebra_datepicker.min.js"></script>
-        <script type="text/javascript" src="<?=base_url();?>public/assets/dist/js/examples.js"></script>
-		<script src="//cdnjs.cloudflare.com/ajax/libs/jquery-form-validator/2.3.26/jquery.form-validator.min.js"></script>
-		
-		<script type="text/javascript">
-    
+<script type="text/javascript">
 $(document).ready(function() {
-    $('#example').DataTable();
-} );
-
-  </script> 
-
-    </section>
-    <!-- /.content -->
-  </div>
-  
-  
-  <!-- /.content-wrapper -->
- <?php $this->load->view('footer');?>
-
- 
-  <!-- /.control-sidebar -->
-  <!-- Add the sidebar's background. This div must be placed
-       immediately after the control sidebar -->
-  <div class="control-sidebar-bg"></div>
-</div>
-<!-- ./wrapper -->
-
-
-</body>
-</html>
+  if ($.fn.DataTable.isDataTable('#example')) {
+    $('#example').DataTable().destroy();
+  }
+  $('#example').DataTable({
+    pageLength: 25,
+    responsive: true
+  });
+});
+</script>
+<?=$this->load->view('inc/footer');?>

@@ -8,6 +8,7 @@ class Paysecure extends CI_Controller {
 	{
 	parent::__construct();
 		$this->load->model('User_Model');
+		$this->load->model('Financial_Model');
 	//$this->load->library('Sm_lib');
 	/* 	if(isset($_POST['merchant_id']) && isset($_POST['mlousr']) ){
 
@@ -126,7 +127,7 @@ class Paysecure extends CI_Controller {
 	{	
 	$this->output->set_header("HTTP/1.0 200 OK");
 	$this->output->set_header("HTTP/1.1 200 OK");
-	$this->output->set_header('Last-Modified: '.gmdate('D, d M Y H:i:s', $last_update).' GMT');
+	$this->output->set_header('Last-Modified: '.gmdate('D, d M Y H:i:s', time()).' GMT');
 	$this->output->set_header("Expires: Mon, 26 Jul 1997 05:00:00 GMT");
 	$this->output->set_header("Cache-Control: no-store, no-cache, must-revalidate");
 	$this->output->set_header("Cache-Control: post-check=0, pre-check=0");
@@ -134,10 +135,9 @@ class Paysecure extends CI_Controller {
 	$this->output->set_header("Expires: Mon, 26 Jul 1997 05:00:00 GMT");
 
 	$data=$this->session->userdata('SecurePay');
-	$oid=$this->session->userdata('SecurePay')['Order_Id'];
+	$oid=isset($data['Order_Id']) ? $data['Order_Id'] : '';
 	$this->db->where('orderid',$oid);
 	$c1=$this->db->count_all_results('sm_checkout');
-	echo "<pre>"; print_r($c1); die;
 
 	$count=$c1;
 
@@ -183,6 +183,12 @@ class Paysecure extends CI_Controller {
 		$updateuserdata=array('checkout_id'=>'0','payment_status'=>'UNPAID','payment_mode'=>'COC','status'=>'1');
 		$this->db->where('appointment_id',$aid);
 		$this->db->update('appointment',$updateuserdata);
+
+		// Record in Double-Entry Financial Ledger (Escrow)
+		$payee_id = (!empty($appointment_data->doctor_id)) ? $appointment_data->doctor_id : ((!empty($appointment_data->institute_id)) ? $appointment_data->institute_id : 1);
+		$payee_type = (!empty($appointment_data->doctor_id)) ? 'DOCTOR' : 'HOSPITAL';
+		$patient_uid = (!empty($appointment_data->user_id)) ? $appointment_data->user_id : $this->session->userdata('userid');
+		$this->Financial_Model->record_transaction($OrderId, 'PATIENT', $patient_uid, $payee_type, $payee_id, $ordertotal, 'COD');
 			
 		$user	=	$this->User_Model->get_appointment_details($aid);
 		$this->load->library('azad_lib');
@@ -248,6 +254,12 @@ class Paysecure extends CI_Controller {
 		$updateuserdata=array('checkout_id'=>'0','payment_status'=>'UNPAID','payment_mode'=>'COC','status'=>'1');
 		$this->db->where('appointment_id',$aid);
 		$this->db->update('appointment',$updateuserdata);
+
+		// Record in Double-Entry Financial Ledger (Escrow)
+		$payee_id = (!empty($appointment_data->doctor_id)) ? $appointment_data->doctor_id : ((!empty($appointment_data->institute_id)) ? $appointment_data->institute_id : 1);
+		$payee_type = (!empty($appointment_data->doctor_id)) ? 'DOCTOR' : 'HOSPITAL';
+		$patient_uid = (!empty($appointment_data->user_id)) ? $appointment_data->user_id : $this->session->userdata('userid');
+		$this->Financial_Model->record_transaction($OrderId, 'PATIENT', $patient_uid, $payee_type, $payee_id, $ordertotal, 'COD_HOSPITAL');
 			
 		$user	=	$this->User_Model->get_appointment_details($aid);
 		$this->load->library('azad_lib');
@@ -443,6 +455,12 @@ class Paysecure extends CI_Controller {
 		$updateuserdata=array('checkout_id'=>$checkout_id,'payment_status'=>'DONE','payment_mode'=>'ONLINE','status'=>'1','pay_date'=>$date);
 		$this->db->where('appointment_id',$aid);
 		$this->db->update('appointment',$updateuserdata);
+
+		// Record in Double-Entry Financial Ledger (Escrow)
+		$payee_id = (!empty($appointment_data->doctor_id)) ? $appointment_data->doctor_id : ((!empty($appointment_data->institute_id)) ? $appointment_data->institute_id : 1);
+		$payee_type = (!empty($appointment_data->doctor_id)) ? 'DOCTOR' : 'HOSPITAL';
+		$patient_uid = (!empty($appointment_data->user_id)) ? $appointment_data->user_id : $this->session->userdata('userid');
+		$this->Financial_Model->record_transaction($OrderId, 'PATIENT', $patient_uid, $payee_type, $payee_id, $ordertotal, $TrakingId);
 
           $this->load->library('azad_lib');
 			$body="Thank You  <BR>   Email: info@upcharr.com  ";

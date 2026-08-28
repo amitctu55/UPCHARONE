@@ -1,148 +1,81 @@
-<?php //echo "<pre>"; print_r($clinic); die;?>
-<!DOCTYPE html>
-<html>
-  <style>
-  .label-name{
-	  text-align:left!important;
-	  margin-top:-5px;
-  }
-  .starspan
-  {
-	  color:#e80909;
-	  font-size:18px;
-  }
-  .mainheadlinerow
-  {
-	  padding:5px;margin-top:10px;margin-bottom:10px;
-  }
-  .mainheadline
-  {
-	  background:#3c8dbc;margin-top:10px;margin-bottom:10px;color:#fff;padding:9px;font-weight:600;
-  }
-  .mainheadlinefirstrow
-  {
-	  padding:5px;
-  }
-  .mainheadlinefirst
-  {
-	  background:#3c8dbc;margin-top:-15px;margin-bottom:15px;color:#fff;padding:9px;font-weight:600;
-  }
-  .othernote{
-      font-weight:600;font-size:13px;color:#d20c0c;
-  }
-  .mainhead{font-weight:600;margin-bottom:20px;}
-  .formbody{border:1px solid #d6d2d2;padding:10px;border-radius:4px;}
-  .note{font-weight:600;margin-top:10px;margin-bottom:20px;}
-  
-  #reset{background:#fff;color:#000;padding: 6px 30px;}
-  .docimg {
-    margin-bottom: 30px;
-    height: 134px;
-    border-radius: 14px;
-    box-shadow: 0px -5px 4px -1px #848181;
-    width: 122px;
-}
-  .doc_nam_inf span {
-    font-size: 12px;
-    color: #9bc03c;
-    letter-spacing: 0.8px;
-    font-size: 16px;
-    font-weight: 600;
-    font-family: 'Lato', sans-serif;
-}
-ol, ul {
-    margin: 0;
-    padding: 0;
-    border: 0;
-    font-size: 100%;
-    font: inherit;
-    vertical-align: baseline;
-}
-ul {
-    display: block;
-    list-style-type: disc;
-    margin-block-start: 1em;
-    margin-block-end: 1em;
-    margin-inline-start: 0px;
-    margin-inline-end: 0px;
-    padding-inline-start: 40px;
-}
-  </style>
-<body class="hold-transition skin-blue sidebar-mini">
-	<div class="wrapper">
-		<!--there was sidebar -->
-		<!-- Content Wrapper. Contains page content -->
-		<div class="content-wrapper">
-			<!-- Content Header (Page header) -->
-			<!-- Main content -->
-			<section class="content">
-				<link rel="stylesheet" href="https://jqueryvalidation.org/files/demo/site-demos.css">
-				<link rel="stylesheet" href="<?=base_url();?>public/assets/dist/css/metallic/zebra_datepicker.min.css" type="text/css">
-				<div class="container bg-3 ">  
-					<div class="row text-">
-						<div class="container">
-							<h4 class="mainhead">Add Meta</h4>
-							<?=$this->session->flashdata('flashmsg');?>
-							<form class="form-horizontal formbody" id='app_conf_form' action="<?=base_url()?>seo/meta/add"  method="POST">
-								<!--Basic Details-->
-								<div class="row mainheadlinefirstrow">
-									<div class="col-md-12 mainheadlinefirst">Meta's Details</div>
-								</div>
-								<div class="row">
-									<div class="col-md-8">
-										<div class="form-group">
-											<label class="control-label col-sm-4 label-name" for="email">Page Url<span class="starspan">*</span></label>
-											<div class="col-sm-4">
-												<input type="text"  class="form-control" value='https://www.upcharr.com' readonly  placeholder="Page Url">
-											</div>
-											<div class="col-sm-4">
-												<input type="text" id='page_url' name="page_url" class="form-control" value='<?php echo set_value('page_url');?>'  placeholder="Page Url">
-												<span style="color:red;"><?php echo form_error('page_url');?></span>
-											</div>
-										</div>
-										<div class="form-group">
-											<label class="control-label col-sm-4 label-name" for="email">Meta Title<span class="starspan">*</span></label>
-											<div class="col-sm-8">
-												<input type="text" name="meta_title"  id='meta_title' class="form-control" value='<?php echo set_value('meta_title');?>' placeholder="Meta Title">
-												<span style="color:red;"><?php echo form_error('meta_title');?></span>
-											</div>
-										</div>
-										<div class="form-group">
-											<label class="control-label col-sm-4 label-name" for="email">Meta Description<span class="starspan">*</span></label>
-											<div class="col-sm-8">
-												<input type="text" name="meta_description" class="form-control" value='<?php echo set_value('meta_description');?>'  placeholder="Meta Description">
-												<span style="color:red;"><?php echo form_error('meta_description');?></span>
-											</div>
-										</div>
-										<div class="form-group">
-											<label class="control-label col-sm-4 label-name" for="email">Meta Keyword<span class="starspan">*</span></label>
-											<div class="col-sm-8">
-												<input type="text" name="meta_keyword" class="form-control" value='<?php echo set_value('meta_keyword');?>' placeholder="Meta Keyword">
-												<span style="color:red;"><?php echo form_error('meta_keyword');?></span>
-											</div>
-										</div>
-									</div>
-								</div>
-								<div class="row">
-									<div class="col-md-12">
-										<div class="form-group">        
-											<div class="col-sm-9">
-												<button type="submit"  id='app_conf_submit' class="continue2  btn-lg common-btn con_done">Add</button>
-											</div>
-										</div>
-									</div>
-								</div>
-							</form>
-						</div>
-					</div>
-				</div>
-			</section>
-			<!-- /.content -->
-		</div>
-		<!-- /.content-wrapper -->
-		<?=$this->load->view('inc/footer');?>
-		<div class="control-sidebar-bg"></div>
-	</div>
-<!-- ./wrapper -->
-</body>
-</html>
+<div class="content-wrapper">
+  <!-- Content Header & Breadcrumbs -->
+  <section class="content-header" style="padding: 20px 20px 10px;">
+    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+      <div>
+        <h1 style="font-size: 22px; font-weight: 700; color: #1E293B; margin: 0 0 4px 0; font-family: 'Inter', sans-serif;">
+          Add SEO Meta Tag
+        </h1>
+        <p style="margin: 0; color: #64748B; font-size: 13px;">Define custom search engine title, meta description, and keywords for a platform URL</p>
+      </div>
+      <div style="display: flex; gap: 10px; align-items: center;">
+        <a href="<?=base_url();?>seo/meta/index" class="btn" style="background: #F1F5F9; color: #334155; font-weight: 600; padding: 8px 16px; border-radius: 8px; border: 1px solid #CBD5E1; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; font-size: 13px;">
+          <i class="fa fa-arrow-left"></i> Back to SEO List
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main content -->
+  <section class="content" style="padding: 10px 20px 30px;">
+    <?=$this->session->flashdata('flashmsg');?>
+
+    <div style="max-width: 850px; margin: 0 auto; background: #FFFFFF; border-radius: 12px; border: 1px solid #E2E8F0; box-shadow: 0 1px 3px rgba(0,0,0,0.05); overflow: hidden;">
+      <div style="padding: 18px 24px; border-bottom: 1px solid #F1F5F9; background: #F8FAFC;">
+        <h3 style="margin: 0; font-size: 15px; font-weight: 700; color: #0F172A; text-transform: uppercase; letter-spacing: 0.5px;">
+          <i class="fa fa-tags" style="color: #0d9488; margin-right: 8px;"></i> Meta Tag Information
+        </h3>
+      </div>
+
+      <form id="app_conf_form" action="<?=base_url()?>seo/meta/add" method="POST" style="padding: 24px;">
+        <div style="display: flex; flex-direction: column; gap: 20px;">
+          
+          <div>
+            <label style="display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 6px;">
+              Target Page URL Slug <span style="color: #EF4444;">*</span>
+            </label>
+            <div style="display: flex; align-items: center; border-radius: 8px; border: 1px solid #CBD5E1; overflow: hidden; height: 42px;">
+              <span style="background: #F8FAFC; border-right: 1px solid #E2E8F0; padding: 0 14px; color: #64748B; font-size: 13px; font-family: monospace; line-height: 42px;">
+                https://www.upcharr.com/
+              </span>
+              <input type="text" id="page_url" name="page_url" class="form-control" value="<?php echo set_value('page_url');?>" placeholder="doctors/delhi/cardiologist" style="border: none; box-shadow: none; height: 100%; font-size: 14px; padding: 0 14px;">
+            </div>
+            <span style="color: #EF4444; font-size: 12px;"><?php echo form_error('page_url');?></span>
+          </div>
+
+          <div>
+            <label style="display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 6px;">
+              Meta Title Tag <span style="color: #EF4444;">*</span>
+            </label>
+            <input type="text" name="meta_title" id="meta_title" class="form-control" value="<?php echo set_value('meta_title');?>" placeholder="Best Cardiologists in Delhi | Book Online Consultation - Upchar" style="height: 42px; border-radius: 8px; border: 1px solid #CBD5E1; font-size: 14px; padding: 8px 14px;">
+            <span style="color: #EF4444; font-size: 12px;"><?php echo form_error('meta_title');?></span>
+          </div>
+
+          <div>
+            <label style="display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 6px;">
+              Meta Description Tag <span style="color: #EF4444;">*</span>
+            </label>
+            <textarea name="meta_description" rows="3" class="form-control" placeholder="Search top cardiologists and heart specialists in Delhi..." style="border-radius: 8px; border: 1px solid #CBD5E1; font-size: 14px; padding: 10px 14px;"><?php echo set_value('meta_description');?></textarea>
+            <span style="color: #EF4444; font-size: 12px;"><?php echo form_error('meta_description');?></span>
+          </div>
+
+          <div>
+            <label style="display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 6px;">
+              Meta Keywords (Comma separated) <span style="color: #EF4444;">*</span>
+            </label>
+            <textarea name="meta_keyword" rows="2" class="form-control" placeholder="cardiologist, heart doctor delhi, upchar hospital..." style="border-radius: 8px; border: 1px solid #CBD5E1; font-size: 14px; padding: 10px 14px;"><?php echo set_value('meta_keyword');?></textarea>
+            <span style="color: #EF4444; font-size: 12px;"><?php echo form_error('meta_keyword');?></span>
+          </div>
+
+          <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 10px;">
+            <button type="submit" id="app_conf_submit" class="btn" style="background: #0d9488; color: #FFFFFF; font-weight: 600; padding: 10px 28px; border-radius: 8px; border: none; box-shadow: 0 2px 4px rgba(13,148,136,0.3);">
+              <i class="fa fa-plus" style="margin-right: 6px;"></i> Save Meta Tag
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </section>
+</div>
+
+<?=$this->load->view('inc/footer');?>

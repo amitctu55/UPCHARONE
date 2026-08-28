@@ -1,217 +1,131 @@
-<head>
-     <link rel="icon" href="images/logo.png" type="images/logo.png" sizes="32x32">
-    <style>
-        .colorwhite{color:white;}
+<?php include ("includes/header.php"); ?>
 
-.box_backgroundimage {
-    background-image: url(images/banner-1.jpg);
-    border-radius: 0px 37px;
-    margin-top: 12px;
-}
-
-.loginimage {
-    height: 135px;
-
-}
-
-.titlelogin{
-  color: white;
-}
-.logincat {
-    background: #295771;
-    color: white;
-    padding: 13px 16px;
-    font-weight: bold;
-    border-radius: 15px 15px 15px 0px;
-    margin-top: 12px;
-}
-
-    </style>
-</head>
-
-<!-- Mirrored from eyecix.com/html/careplus/team-list.html by --->
-<?php include ("includes/header_new.php"); ?>
-
-
- 
+<div class="auth-wrapper">
+  <div class="auth-card">
     
-    
-
-    <section id="doctor_list">
-        
-         <div class="container">
-            <div class="row">
-  <div class="col-md-12 box_backgroundimage">
-              <div class="col-md-1"></div>
-<div class="col-sm-6">
-  <div style="margin-top: 67px;">
-  <img class="loginimage" src="images/Upchar_footer.png">
-  
-  <hr style="box-shadow: 0px -2px 3px #295771;border-top:1px solid #295771;">
-</div>
-<h1>Better Advice<br> & Better Solution</h1>
-  <h5>Upchar Provides You Whole Medical Services Online.</h5>
-<div class="col-md-12" style="margin-top: 23px">
-  <a href="#" class="logincat">Doctor</a>
-  <a href="#" class="logincat">Hospital</a>
-  <a href="#" class="logincat">Pathology</a>
-  <a href="#" class="logincat">Medicine</a>
-</div>
-</div>
-
-                 <div class="col-sm-4 box_sh_bg1">
-
-    <h4 class="formHeading">CREATE AN ACCOUNT</h4>
-<ul class="dis_inli1">
-    <li class="cwhi1"><a href="<?=base_url('login');?>">Login</a></li>
-    <li class="actives1"><a href="<?=base_url('signup');?>">Sign up</a></li>
-   
-  </ul>
-
-
-                      
-
-<div class="col-sm-12 borders"><form id='registrationform' action='<?=base_url();?>User/register' method='post' >
-                            <div class="label_name">
-                   
-                                 <h6 class="logintitle">Full Name</h6>
-                                  <input value="" type="text" name="name" id='name' class="form-control" required>
-								  <h6 class="logintitle">E-Mail</h6>
-                                  <input value="" type="email" name="email" id='email' class="form-control" >
-                                   <h6 class="logintitle">Mobile Number</h6>
-                                  <input value="" type="text" name="mobile" id='mobile' class="form-control"  onkeypress="return isNumber(event)" required>
-
-                                   <h6 class="logintitle">Password</h6>
-                                  <input placeholder="Password" type="Password" id='password' name="password"  pattern="(?=.*\d)(?=.*[a-z]).{6,}" class="form-control" required>
-                                <i onclick="myFunction()" class="fa fa-eye" style="font-size:24px;float:right;margin: -29px 4%;"></i>
-                                 <div class="registrationFormAlert" id="divPasswordValidationResult">
-                                </div>
-                                  <div class="forget-pasword">
-                                      
-    
-      </div>
-      <div class="form-group" style="margin-top: 15px;">
-    <div class="form-check">
-      <input class="form-check-input" type="checkbox" value="" id="invalidCheck" required>
-      <label class="form-check-label" for="invalidCheck" style="display:inline;">
-      <h6 style="color:#295771;display:inline;"> Agree to <a style="color:#295771;text-decoration: underline;" href="<?=base_url();?>tnc">Terms & Conditions</a></h6>
-      </label>
-      <div class="invalid-feedback">
-        <span style="color:white;transition:0.3s;background:red;font-size: 10px; padding: 2px 17px; border-radius: 0px 12px;">You must agree before submitting.</span>
-      </div>
+    <!-- Segmented Tab Switcher -->
+    <div class="auth-tabs">
+      <a href="<?=base_url('login');?>" class="auth-tab-btn">Login</a>
+      <a href="<?=base_url('signup');?>" class="auth-tab-btn active">Sign up</a>
     </div>
+
+    <!-- Patient Registration Form -->
+    <form class="auth-form" id="registrationform" action="<?=base_url();?>User/register" method="POST">
+      <div class="form-group">
+        <label for="name">Full Name <span class="required">*</span></label>
+        <input type="text" id="name" name="name" class="form-control" placeholder="e.g. John Doe" required>
+      </div>
+
+      <div class="form-group">
+        <label for="email">E-Mail Address</label>
+        <input type="email" id="email" name="email" class="form-control" placeholder="john@example.com">
+      </div>
+
+      <div class="form-group">
+        <label for="mobile">Mobile Number <span class="required">*</span></label>
+        <input type="tel" id="mobile" name="mobile" class="form-control" placeholder="+91 9876543210" onkeypress="return isNumber(event)" maxlength="10" required>
+      </div>
+
+      <div class="form-group">
+        <label for="password">Password <span class="required">*</span></label>
+        <div class="password-input-wrapper">
+          <input type="password" id="password" name="password" class="form-control" placeholder="••••••••" pattern="(?=.*\d)(?=.*[a-z]).{6,}" required>
+          <button type="button" class="toggle-password-btn" onclick="togglePasswordVisibility()" aria-label="Toggle password visibility">
+            <i class="fa fa-eye" id="togglePasswordIcon"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="form-group checkbox-group">
+        <input type="checkbox" id="terms" required>
+        <label for="terms" style="margin-bottom: 0; font-weight: normal; cursor: pointer;">
+          I agree to the <a href="<?=base_url('tnc');?>" class="link-primary" target="_blank">Terms & Conditions</a>
+        </label>
+      </div>
+
+      <button type="submit" class="btn-submit" id="sub_button">Create Account</button>
+    </form>
+
   </div>
-      <button type="submit" class="btn  btn-lg common-btn practo-btn" id="sub_button" disabled> Register
-       </button>
-     
-         </div>                 </form>
-           <div class="hr-container">
-          <hr class="hr-inline" align="left">
-          <span class="hr-text"> or </span>
-          <hr class="hr-inline" align="right">
-      </div>
-                                
-                              <div style="">
-          <a href="<?=base_url();?>Fbauth" class="btn  btn-lg connect-facebook-btn" id="facebookbtn">
-              <span class="facebookIcon">
-<i class="fa fa-facebook" aria-hidden="true"></i> Connect with Facebook
-              </span>
-          
-         </a>
-		 
-		 <a href="<?=base_url();?>Google" class="btn  btn-lg connect-facebook-goole">
-              <span class="google">
-              <i class="fa fa-google-plus" aria-hidden="true"></i> Connect with Google+
-              </span>
-           
-         </a>
-		 
-
-      </div>
-
-                        </div>
-
-
-
-    
-      </div>
-      <div class="col-md-1"></div>
 </div>
-                      </div>
-                       </div>
-    </section>
 
-
-  
-
-
-    <?php include ('includes/footer.php'); ?>
-    <script>
-(function() {
-'use strict';
-window.addEventListener('load', function() {
-// Fetch all the forms we want to apply custom Bootstrap validation styles to
-var forms = document.getElementsByClassName('#registrationform');
-// Loop over them and prevent submission
-var validation = Array.prototype.filter.call(forms, function(form) {
-form.addEventListener('submit', function(event) {
-if (form.checkValidity() === false) {
-event.preventDefault();
-event.stopPropagation();
-}
-form.classList.add('was-validated');
-}, false);
-});
-}, false);
-})();
-</script>
-<style>
-h1.hidden {
-  display: none;
-}
-</style>
+<?php include ("includes/footer.php"); ?>
 
 <script>
-    $(function () {
-        $("#invalidCheck").click(function () {
-            if ($(this).is(":checked")) {
-                $(".invalid-feedback").hide();
-                 $('#sub_button').removeAttr('disabled'); //enable input
-            } else {
-               
-                $(".invalid-feedback").show();
-                  $('#sub_button').attr('disabled', true); //disable input
-            }
-        });
-    });
-    
-</script>
- <script>
-function myFunction() {
-  var x = document.getElementById("password");
-  if (x.type === "password") {
-    x.type = "text";
+function togglePasswordVisibility() {
+  var pwd = document.getElementById("password");
+  var icon = document.getElementById("togglePasswordIcon");
+  if (pwd.type === "password") {
+    pwd.type = "text";
+    icon.classList.remove("fa-eye");
+    icon.classList.add("fa-eye-slash");
   } else {
-    x.type = "password";
+    pwd.type = "password";
+    icon.classList.remove("fa-eye-slash");
+    icon.classList.add("fa-eye");
   }
 }
-</script>
 
-
- <script>
-      
-function validatePassword() {
-    var password = $("#password").val();
-    
-
-    if (password.match(/^(?=.*\d)(?=.*[a-z]).{6,}/))
-        $("#divPasswordValidationResult").html("password is correct");
-    else
-         $("#divPasswordValidationResult").html("please enter alpha numeric");
-   
+function isNumber(evt) {
+    evt = (evt) ? evt : window.event;
+    var charCode = (evt.which) ? evt.which : evt.keyCode;
+    if (charCode > 31 && (charCode < 48 || charCode > 57)) {
+        return false;
+    }
+    return true;
 }
 
-$(document).ready(function () {
-   $("#password").keyup(validatePassword);
-});      
-    </script>
+$(document).ready(function() {
+  $('#registrationform').submit(function(e) {		
+    e.preventDefault();		
+    var myform = $(this);	
+    var email = $('#email').val();
+    var mobile = $('#mobile').val();
+    var name = $('#name').val();
+    var password = $('#password').val();
+    
+    if(email && email.indexOf('@') === -1) {
+      alert('Please Enter a Valid Email Address');
+      return false;
+    }
+    if(!mobile || mobile.length !== 10) {
+      alert('Please Enter a Valid 10-Digit Mobile Number');
+      return false;
+    }
+    if(!name || name.length < 3) {
+      alert('Please Enter a Valid Name');
+      return false;
+    }
+    if(!password || password.length < 6) {
+      alert('Please Enter at least 6 characters (including a number and a letter)');
+      return false;
+    }
+    
+    $('#sub_button').prop('disabled', true).text('Registering...');
+
+    $.ajax({			
+      type: "POST",			
+      url: myform.attr('action'),			
+      data: myform.serialize(),			
+      success: function(response) {			
+        try {
+          response = JSON.parse(response);
+        } catch(e) {}
+        if(response.status === 'success') {					
+          window.location = "<?=base_url();?>verifymobile";				
+        } else if(response.status === 'failed') {					
+          alert(response.msg);
+          $('#sub_button').prop('disabled', false).text('Create Account');
+        } else {					
+          alert(response.msg || 'Registration submitted');
+          $('#sub_button').prop('disabled', false).text('Create Account');
+        }		
+      },
+      error: function() {
+        alert('An error occurred during registration. Please try again.');
+        $('#sub_button').prop('disabled', false).text('Create Account');
+      }		
+    });	
+  });
+});
+</script>

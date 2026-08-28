@@ -50,7 +50,7 @@ class Doctor_Model extends CI_Model
 		redirect($_SERVER['HTTP_REFERER'], '');
 	}
 	
-	public function safe_update($table,$data=array(),$where,$debug=FALSE)
+	public function safe_update($table, $data = array(), $where = array(), $debug = FALSE)
 	{	 
 		if($table!="" && is_array($data) && !empty($data) && $where!="" )
 		{
@@ -293,63 +293,140 @@ class Doctor_Model extends CI_Model
 	}
 	
 	public function addpractice(){
-		$clinicname=$this->input->post('clinicname');
-		$cliniccity=$this->input->post('cliniccity');
-		$cliniclocality=$this->input->post('cliniclocality');
-		//search cilinic & suggest if any else save
-		$this->db->like('name',$clinicname);
-		//$this->db->where('city',$cliniccity);
-		//$this->db->where('location',$cliniclocality);
-		$clinic = $this->db->get('clinic');
-		$suggestedclinic=$clinic->result();
-		
-		$this->db->like('name',$clinicname);
-		//$this->db->where('city',$cliniccity);
-		//$this->db->where('location',$cliniclocality);
-		$hosp = $this->db->get('hospital');
-		$suggestedhospital=$hosp->result();
-		
-		$countguggestedclinic=$clinic->num_rows();
-		$countguggestedhospital=$hosp->num_rows();
-		if($countguggestedclinic + $countguggestedhospital){
-			return array('C'=>$suggestedclinic,'H'=>$suggestedhospital);
-		}else{
-			//insert or update on hinnden clinic id value
-			//$this->db->where('user_id',$this->did)->update('profile_dr',$udata);
+		$clinicname = trim($this->input->post('clinicname', TRUE));
+		$cliniccity = intval($this->input->post('cliniccity'));
+		$cliniclocality = trim($this->input->post('cliniclocality', TRUE));
+		$address = trim($this->input->post('address', TRUE));
+		$fee = intval($this->input->post('fee')) ?: 500;
+		$type = $this->input->post('practicetype') ?: 'C';
+		$force_new = $this->input->post('force_new');
+
+		if (!$force_new && !empty($clinicname)) {
+			// Search clinic & hospital suggestions
+			$this->db->like('name', $clinicname);
+			if ($cliniccity) {
+				$this->db->where('city', $cliniccity);
+			}
+			$clinic = $this->db->get('clinic');
+			$suggestedclinic = $clinic->result();
 			
-			//$udata=array('name'=>$clinicname,'city'=>$cliniccity,'location'=>$cliniclocality);
-			//$this->db->insert('clinic',$udata);
-			//$clinicid = $this->db->insert_id();
-			//$udata2=array('clinic_id'=>$clinicid,'did'=>$this->did,'status'=>'P','date'=>date('Y-m-d H:i:s'));
-			//$this->db->insert('clinic_claimed',$udata2);
+			$this->db->like('name', $clinicname);
+			if ($cliniccity) {
+				$this->db->where('city', $cliniccity);
+			}
+			$hosp = $this->db->get('hospital');
+			$suggestedhospital = $hosp->result();
 			
-			//redirect('progress_profile2');
+			$countguggestedclinic = $clinic->num_rows();
+			$countguggestedhospital = $hosp->num_rows();
+			if ($countguggestedclinic + $countguggestedhospital > 0) {
+				return array('C' => $suggestedclinic, 'H' => $suggestedhospital, 'post_data' => $this->input->post());
+			}
+		}
+
+		// Insert new clinic / practice
+		if (!empty($clinicname)) {
+			if ($type == 'C') {
+				$udata = array(
+					'name'       => $clinicname,
+					'city'       => $cliniccity,
+					'location'   => $cliniclocality,
+					'address'    => $address ?: ($clinicname . ', ' . $cliniclocality),
+					'drid'       => $this->did,
+					'approved'   => '1',
+					'verified'   => '1',
+					'status'     => '1',
+					'creat_date' => date('Y-m-d H:i:s')
+				);
+				$this->db->insert('clinic', $udata);
+				$clinicid = $this->db->insert_id();
+
+				// Claimed record
+				$this->db->insert('clinic_claimed', array(
+					'clinic_id' => $clinicid,
+					'did'       => $this->did,
+					'status'    => 'A',
+					'date'      => date('Y-m-d H:i:s')
+				));
+
+				// Link to dr_practice
+				$this->db->insert('dr_practice', array(
+					'institution_id' => $clinicid,
+					'user_id'        => $this->did,
+					'type'           => 'C',
+					'fee'            => $fee,
+					'status'         => '1'
+				));
+			} else {
+				// Hospital type
+				$udata = array(
+					'name'       => $clinicname,
+					'city'       => $cliniccity,
+					'location'   => $cliniclocality,
+					'address'    => $address ?: ($clinicname . ', ' . $cliniclocality),
+					'status'     => '1'
+				);
+				$this->db->insert('hospital', $udata);
+				$hospitalid = $this->db->insert_id();
+
+				// Link to dr_practice
+				$this->db->insert('dr_practice', array(
+					'institution_id' => $hospitalid,
+					'user_id'        => $this->did,
+					'type'           => 'H',
+					'fee'            => $fee,
+					'status'         => '1'
+				));
+			}
+
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-success'><strong>Success!</strong> Practice chamber created and linked successfully.</div>");
+			redirect('managepractice');
 			return array();
 		}
-		
-		
+		return array();
 	}
 	
 	public function linkpractice(){
-		$hospclinicid=$this->input->post('hospclinicid');
-		$exp=explode('-',$hospclinicid);
-		$type=$exp[0];
-		$institution_id=$exp[1];
-		$result=$this->db->where(array('type'=>$type,'institution_id'=>$institution_id,'user_id'=>$this->did))->get('dr_practice');
-		$count=$result->num_rows();
-		if($count){
-			$practiceid=$result->row()->id;
-		}else{
-			$udata=array('institution_id'=>$institution_id,'user_id'=>$this->did,'type'=>$type);
-			$this->db->insert('dr_practice',$udata);
-			$practiceid=$this->db->insert_id();
+		$hospclinicid = $this->input->post('hospclinicid');
+		$fee = intval($this->input->post('fee')) ?: 500;
+		$exp = explode('-', $hospclinicid);
+		$type = isset($exp[0]) ? $exp[0] : 'C';
+		$institution_id = isset($exp[1]) ? intval($exp[1]) : 0;
+
+		if ($institution_id > 0) {
+			$result = $this->db->where(array('type' => $type, 'institution_id' => $institution_id, 'user_id' => $this->did))->get('dr_practice');
+			if ($result->num_rows() > 0) {
+				$practiceid = $result->row()->id;
+				$this->db->where('id', $practiceid)->update('dr_practice', array('status' => '1', 'fee' => $fee));
+			} else {
+				$udata = array(
+					'institution_id' => $institution_id,
+					'user_id'        => $this->did,
+					'type'           => $type,
+					'fee'            => $fee,
+					'status'         => '1'
+				);
+				$this->db->insert('dr_practice', $udata);
+				$practiceid = $this->db->insert_id();
+			}
+
+			if ($type == 'C') {
+				$chk = $this->db->get_where('clinic_claimed', array('clinic_id' => $institution_id, 'did' => $this->did))->row();
+				if (!$chk) {
+					$this->db->insert('clinic_claimed', array(
+						'clinic_id' => $institution_id,
+						'did'       => $this->did,
+						'status'    => 'P',
+						'date'      => date('Y-m-d H:i:s')
+					));
+				}
+			}
+
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-success'><strong>Success!</strong> Practice linked to your doctor profile successfully.</div>");
+			redirect('managepractice');
+			return;
 		}
-		//$udata=array('clinic_type'=>$this->input->post('practicetype'));
-		//$this->db->where('user_id',$this->did)->update('profile_dr',$udata);
-		//if already ret id else add and ret id
-		
-		redirect('profile_consultant_fee/'.mybase64_encode($practiceid));
-		
+		redirect('managepractice');
 	}
 	
 	public function profile_consultant_fee(){

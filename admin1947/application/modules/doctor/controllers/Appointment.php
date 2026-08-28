@@ -13,7 +13,11 @@ class Appointment extends CI_Controller
 		 $date=date('Y-m-d h:i:s');
 		 $this->load->helper(array('query_string_helper','dbquery_helper','admin_helper'));
 		 $this->load->model('appointmentmodel');
-		 $this->load->library('Pdf');
+	}
+
+	public function index()
+	{
+		$this->todayappointment();
 	}
  
 	public function create()
@@ -86,12 +90,16 @@ class Appointment extends CI_Controller
 	
 	public function doctorappointment()
 	{
-	 	
-       $data['data']=$this->db->select('profile_dr.*,hospital.*,appointment.*')->join('profile_dr','profile_dr.id=appointment.doctor_id')->join('hospital','hospital.uid=appointment.institute_id')->get_where('appointment',array('doctor_id'))->result();	
+		$data['data'] = $this->db->select('appointment.*, profile_dr.fname as dr_fname, profile_dr.lname as dr_lname, profile_dr.mobile as dr_mobile, hospital.name as hospital_name')
+			->join('profile_dr', 'profile_dr.id = appointment.doctor_id', 'left')
+			->join('hospital', '(hospital.uid = appointment.institute_id OR hospital.id = appointment.institute_id)', 'left')
+			->order_by('appointment.appointment_id', 'DESC')
+			->get('appointment')
+			->result();
 
-        $this->load->view('inc/topheaderlink');
+		$this->load->view('inc/topheaderlink');
 		$this->load->view('inc/topheader');
-		$this->load->view('doctorappointment',$data);
+		$this->load->view('doctorappointment', $data);
 		$this->load->view('sidebar');
 		$this->load->view('inc/headersetting');
 		$this->load->view('inc/footerlink');
@@ -100,54 +108,50 @@ class Appointment extends CI_Controller
      
 	public function app_conf_hospital_institute()
 	{
-		$id=$_GET['doctor'];
-		$date=$_GET['date'];
-		$time=$_GET['time'];
-		//$day_no = date('N',strtotime($date));
-		//$day=array('1'=>'M','2'=>'T','3'=>'W','4'=>'TH','5'=>'F','6'=>'SA','7'=>'S');
-		$data=$this->db->get_where('timing_session',array('id'=>$time))->row();
-		//echo "<pre>"; print_r($data); die;
-		if(is_object($data) && !empty($data))
-		{
-			$timing_id=$data->timing_id;
-			$max_opd=$data->max_patient;
-			$consultation_fee = $data->consultation_fee; 
-			$booked=$this->db->where(array('time_id'=>$time,'appointment_date'=>$date,'status'=>'1'))->count_all_results('appointment');
-			$opd=$max_opd-$booked;
-			$opd=($opd)? $opd: 'Not Available';
-			$data=$this->db->get_where('timing',array('id'=>$timing_id))->row();
-			$pid=$data->practice_id;
-			$data=$this->db->get_where('dr_practice',array('id'=>$pid))->row();
-			$did=$data->user_id;
-			$type=$data->type;
-			if($type=='H')
-				$type='hospital';
-			else
-				$type='clinic';
-			$institution_id=$data->institution_id;
-			if($consultation_fee=='0')
-			{
-				$fee=$data->fee;
-			}
-			else
-			{
-				$fee= $consultation_fee;
-			}
-			$institution=$this->db->get_where($type,array('id'=>$institution_id))->row();
-			//echo "<pre>"; print_r($institution);
-			echo $content = '<div class="col-md-6">
-				<img class="docimg" src="'.base_url().'public/assets/upload/'.$institution->drimage.'" style="width: 116px;
-			height: 100px;" alt="">
-			</div>
-			<div class="col-md-6">
-				<div class="doc_nam_inf">
-					<span>'.@$institution->name.'</span>
-					<ul>
-						<li>'.@$institution->address.'</li>
-						<li> Fee: Rs. '.$fee.'</li>
-						<li> Available Number of OPD: '.$opd.'</li>
+		$id = $this->input->get_post('doctor');
+		$date = $this->input->get_post('date');
+		$time = $this->input->get_post('time');
 
-					</ul>
+		$ts = $this->db->get_where('timing_session', array('id' => $time))->row();
+		if (is_object($ts) && !empty($ts))
+		{
+			$timing_id = $ts->timing_id;
+			$max_opd = intval($ts->max_patient ?: 10);
+			$consultation_fee = $ts->consultation_fee; 
+			$booked = $this->db->where(array('time_id' => $time, 'appointment_date' => $date, 'status' => '1'))->count_all_results('appointment');
+			$opd = max(0, $max_opd - $booked);
+			
+			$t_row = $this->db->get_where('timing', array('id' => $timing_id))->row();
+			$pid = $t_row ? $t_row->practice_id : 0;
+			$p_row = $pid ? $this->db->get_where('dr_practice', array('id' => $pid))->row() : null;
+			if (!$p_row && !empty($id)) {
+				$p_row = $this->db->get_where('dr_practice', array('user_id' => $id, 'status' => '1'))->row();
+			}
+
+			$type = ($p_row && $p_row->type == 'H') ? 'hospital' : 'clinic';
+			$institution_id = $p_row ? $p_row->institution_id : 0;
+			$fee = (!empty($consultation_fee) && $consultation_fee != '0') ? $consultation_fee : ($p_row ? $p_row->fee : 0);
+
+			$institution = $institution_id ? $this->db->get_where($type, array('id' => $institution_id))->row() : null;
+			if (!$institution && $type == 'hospital' && $institution_id) {
+				$institution = $this->db->get_where('hospital', array('uid' => $institution_id))->row();
+			}
+
+			$inst_name = $institution ? $institution->name : 'Consultation Facility Chamber';
+			$inst_address = $institution ? $institution->address : 'Consultation Clinic';
+			$inst_image = ($institution && !empty($institution->drimage)) ? base_url().'public/assets/upload/'.$institution->drimage : base_url().'assets/images/dentist.png';
+
+			echo '<div style="display: flex; gap: 14px; align-items: center; background: #f0fdfa; border: 1px solid #99f6e4; border-radius: 10px; padding: 14px 16px; margin-top: 10px;">
+				<div style="width: 54px; height: 54px; border-radius: 8px; overflow: hidden; background: #ffffff; flex-shrink: 0; border: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: center;">
+					<img src="'.$inst_image.'" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.src=\''.base_url().'assets/images/dentist.png\';">
+				</div>
+				<div style="flex-grow: 1;">
+					<h5 style="font-size: 14px; font-weight: 800; color: #0f172a; margin: 0 0 3px 0;">'.htmlspecialchars($inst_name).'</h5>
+					<p style="font-size: 12px; color: #64748b; margin: 0 0 5px 0;"><i class="fa fa-map-marker" style="color:#00a896;"></i> '.htmlspecialchars($inst_address).'</p>
+					<div style="display: flex; gap: 8px; flex-wrap: wrap; font-size: 12px;">
+						<span style="background: #ffffff; border: 1px solid #ccfbf1; padding: 2px 8px; border-radius: 6px; font-weight: 700; color: #0f172a;"><i class="fa fa-inr" style="color:#00a896;"></i> Fee: Rs. '.number_format(floatval($fee), 2).'</span>
+						<span style="background: '.($opd > 0 ? '#dcfce7' : '#fee2e2').'; color: '.($opd > 0 ? '#15803d' : '#991b1b').'; padding: 2px 8px; border-radius: 6px; font-weight: 700;">Available Slots: '.$opd.' / '.$max_opd.'</span>
+					</div>
 				</div>
 			</div>';
 		}
@@ -160,44 +164,45 @@ class Appointment extends CI_Controller
 		$this->session->set_userdata('app_otp',$otp);
 		$msg="Your One Time Password is $otp
 		WWW.UPCHARR.COM";
-			sendsms($msg,$mobile);
-			echo 'OK';
+		sendsms($msg,$mobile);
+		echo 'OK';
 	}
 	
 	public function app_conf_hospital_doctor()
 	{
-		$id=$_GET['doctor'];
-		if($id!='')
+		$id = $this->input->get_post('doctor');
+		if (!empty($id))
 		{
-			$data=$this->db->get_where('profile_dr',array('id'=>$id))->row();
-			//echo "<pre>"; print_r($data);
-			$drimg=($data->drimage)? $data->drimage :'dummydr.jpg';
-			$content = '<div class="col-md-6">
-			<img class="docimg" src="'.base_url().'public/assets/upload/'.$drimg.'" style="width: 116px; height: 100px;"alt="">
-			</div>
+			$data = $this->db->get_where('profile_dr', array('id' => $id))->row();
+			if ($data)
+			{
+				$drimg = (!empty($data->drimage)) ? base_url().'public/assets/upload/'.$data->drimage : base_url().'assets/images/user.jpg';
+				
+				$quastring = '';
+				$qu = $this->db->get_where('dr_qualifications', array('user_id' => $data->id))->result();
+				foreach ($qu as $q) {
+					$quastring .= getQualificationName($q->qualification_id) . ', ';
+				}
+				$quastring = rtrim($quastring, ', ');
 
-			<div class="col-md-6">
-			<div class="doc_nam_inf" >';
+				$splstring = '';
+				$sp = $this->db->get_where('dr_specialization', array('user_id' => $data->id))->result();
+				foreach ($sp as $s) {
+					$splstring .= getSpecilizationName($s->specialization_id) . ', ';
+				}
+				$splstring = rtrim($splstring, ', ');
 
-			$content.= ' <span >'.$data->fname.' '.$data->lname.'</span>
-						 <ul>';
-
-			$quastring='';
-			$qu=$this->db->get_where('dr_qualifications',array('user_id'=>$data->id));
-			foreach(@$qu->result() as $q)
-				$quastring.=getQualificationName($q->qualification_id).', ';
-			$quastring=rtrim($quastring,', ');
-			$content.= '<li>'.$quastring .'</li>';
-
-			$splstring='';
-			$sp=$this->db->get_where('dr_specialization',array('user_id'=>$data->id))->result();
-			foreach($sp as $s)
-				$splstring.=getSpecilizationName($s->specialization_id).', ';
-			$splstring=rtrim($splstring,', ');
-			$content.= '<li><b>'.$splstring.'</b></li>';
-
-			echo  $content.= '</ul></div>
-							</div>';
+				echo '<div style="display: flex; gap: 14px; align-items: center; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 14px 16px; margin-top: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.03);">
+					<div style="width: 56px; height: 56px; border-radius: 50%; overflow: hidden; background: #f8fafc; flex-shrink: 0; border: 2px solid #00a896;">
+						<img src="'.$drimg.'" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.src=\''.base_url().'assets/images/user.jpg\';">
+					</div>
+					<div>
+						<h5 style="font-size: 14px; font-weight: 800; color: #0f172a; margin: 0 0 3px 0;">Dr. '.htmlspecialchars($data->fname . ' ' . $data->lname).'</h5>
+						<p style="font-size: 12px; color: #00a896; font-weight: 600; margin: 0 0 2px 0;">'.htmlspecialchars($splstring ?: 'General Practitioner').'</p>
+						<p style="font-size: 11.5px; color: #64748b; margin: 0;">'.htmlspecialchars($quastring ?: 'MBBS').'</p>
+					</div>
+				</div>';
+			}
 		}
 	}
 	
@@ -352,38 +357,63 @@ class Appointment extends CI_Controller
 			$userid=$this->session->userdata('userid');
 		}
 		
-		$data=$this->db->get_where('timing_session',array('id'=>$time))->row();
-		$timing_id=$data->timing_id;
-		$max_opd=$data->max_patient;
-		$consultation_fee=$data->consultation_fee;
-		$from_timing=$data->from_timing;
-		$to_timing=$data->to_timing;
-		$data=$this->db->get_where('timing',array('id'=>$timing_id))->row();
-		$pid=$data->practice_id;
-		$data=$this->db->get_where('dr_practice',array('id'=>$pid))->row();
-		$did=$data->user_id;
-		$type=$data->type;
-		$booked=$this->db->where(array('time_id'=>$time,'appointment_date'=>$date,'status'=>'1'))->count_all_results('appointment');
-		$opd=$max_opd-$booked;
-		
-		if($opd <1)
-		{
-			echo 'Not Available';die;
+		$ts_row = $this->db->get_where('timing_session', array('id' => $time))->row();
+		if (!$ts_row) {
+			echo 'Not Available'; die;
 		}
-		
-		$institution_id	=	$data->institution_id;
-		if($consultation_fee=='0')
-		{
-			$fee	=	$data->fee;
+
+		$timing_id = $ts_row->timing_id;
+		$max_opd = intval($ts_row->max_patient ?: 10);
+		$consultation_fee = $ts_row->consultation_fee;
+		$from_timing = $ts_row->from_timing;
+		$to_timing = $ts_row->to_timing;
+
+		$t_row = $this->db->get_where('timing', array('id' => $timing_id))->row();
+		$pid = $t_row ? $t_row->practice_id : 0;
+		$p_row = $pid ? $this->db->get_where('dr_practice', array('id' => $pid))->row() : null;
+		if (!$p_row && !empty($doctor)) {
+			$p_row = $this->db->get_where('dr_practice', array('user_id' => $doctor, 'status' => '1'))->row();
 		}
-		else
-		{
-			$fee	=  $consultation_fee;
+
+		$booked = $this->db->where(array('time_id' => $time, 'appointment_date' => $date, 'status' => '1'))->count_all_results('appointment');
+		$opd = $max_opd - $booked;
+		if ($opd < 1) {
+			echo 'Not Available'; die;
 		}
-		
-		$idata		=	array('appointment_date'=>$date,'time_id'=>$time,'to_timing'=>$to_timing,'from_timing'=>$from_timing,'date_id'=>$timing_id,'practice_id'=>$pid,'appointment_name'=>$name,'appointment_mobile'=>$mobile,'appointment_email'=>$email,'age'=>$age,'doctor_id'=>$doctor,'institute_id'=>$institution_id,'institution_type'=>$type,'fee'=>$fee,'amount'=>$fee,'user_id'=>$userid,'payment_mode'=>'NA','payment_status'=>'NA','status'=>'0');
-		$this->db->insert('appointment',$idata);
-		$aid=$this->db->insert_id();
+
+		$institution_type = ($p_row && $p_row->type == 'H') ? 'H' : 'C';
+		$institution_id = $p_row ? intval($p_row->institution_id) : 0;
+		if (!$institution_id && !empty($doctor)) {
+			$clinic_row = $this->db->get_where('clinic', array('drid' => $doctor))->row();
+			if ($clinic_row) $institution_id = intval($clinic_row->id);
+		}
+
+		$fee = (!empty($consultation_fee) && $consultation_fee != '0') ? floatval($consultation_fee) : ($p_row ? floatval($p_row->fee) : 100.00);
+		$pid = $p_row ? intval($p_row->id) : 0;
+
+		$idata = array(
+			'appointment_date'   => $date,
+			'time_id'            => $time,
+			'to_timing'          => $to_timing,
+			'from_timing'        => $from_timing,
+			'date_id'            => $timing_id,
+			'practice_id'        => $pid,
+			'appointment_name'   => $name,
+			'appointment_mobile' => $mobile,
+			'appointment_email'  => $email ?: '',
+			'age'                => $age ?: 0,
+			'doctor_id'          => $doctor,
+			'institute_id'       => $institution_id,
+			'institution_type'   => $institution_type,
+			'fee'                => $fee,
+			'amount'             => $fee,
+			'user_id'            => $userid,
+			'payment_mode'       => 'NA',
+			'payment_status'     => 'NA',
+			'status'             => '0'
+		);
+		$this->db->insert('appointment', $idata);
+		$aid = $this->db->insert_id();
 		
 		$price=$taxable=$disc=$tax=0.0;
 		$price=$fee;
@@ -445,10 +475,11 @@ class Appointment extends CI_Controller
 			$delivery_city = '$cust->city';
 			$delivery_zip = '111111';
 			$delivery_cust_notes= "";
-			$Merchant_Param="";
-			$merchant_param1='';//$uid;
+			$Merchant_Id = defined('CC_MERID') ? base64_decode(CC_MERID) : '';
+			$Merchant_Param = "";
+			$merchant_param1 = '';
 
-			$gatewayData= compact('Merchant_Id','Order_Id','Amount','Redirect_Url','cancel_Url',
+			$gatewayData = compact('Merchant_Id','Order_Id','Amount','Redirect_Url','cancel_Url',
 							'billing_cust_name','billing_cust_address','billing_city','billing_cust_state',
 							'billing_zip','billing_cust_tel','billing_cust_email','delivery_cust_name',
 							'delivery_cust_address','delivery_city','delivery_cust_state','delivery_zip',
@@ -553,13 +584,52 @@ class Appointment extends CI_Controller
 	}
 	
 	
-    public function delete()
+    public function delete($id = null)
     {
-           	$id=$this->input->get('appointment_id');
-           	$this->load->model('doctorregmodel');
-           	$this->doctorregmodel->deleterecord($id);
-            redirect(base_url().'doctor/appointment/doctorappointment');
+        if ($this->input->post('ids') && is_array($this->input->post('ids'))) {
+            $this->bulk_delete();
+            return;
+        }
 
+        $del_id = $id ? $id : ($this->input->post('id') ? $this->input->post('id') : ($this->input->get('appointment_id') ? $this->input->get('appointment_id') : $this->uri->segment(4)));
+        if ($del_id) {
+            $this->db->where('appointment_id', $del_id)->delete('appointment');
+            $msg = "Appointment deleted successfully.";
+            if ($this->input->is_ajax_request() || $this->input->post('is_ajax') || $this->input->post('id')) {
+                echo json_encode(array('status' => 1, 'message' => $msg));
+                return;
+            }
+            $this->session->set_flashdata('flashmsg', "<div class='alert alert-success'><strong>Success!</strong> $msg</div>");
+        }
+        redirect(base_url('doctor/appointment/doctorappointment'));
+    }
+
+    public function bulk_delete()
+    {
+        $ids = $this->input->post('ids');
+        if (!empty($ids) && is_array($ids)) {
+            $deleted_count = 0;
+            foreach ($ids as $aid) {
+                $aid = (int)$aid;
+                if ($aid > 0) {
+                    $this->db->where('appointment_id', $aid)->delete('appointment');
+                    $deleted_count++;
+                }
+            }
+            $msg = "$deleted_count appointment(s) deleted successfully.";
+            if ($this->input->is_ajax_request() || $this->input->post('is_ajax')) {
+                echo json_encode(array('status' => 1, 'count' => $deleted_count, 'message' => $msg));
+                return;
+            }
+            $this->session->set_flashdata('flashmsg', "<div class='alert alert-success'><strong>Success!</strong> $msg</div>");
+        } else {
+            if ($this->input->is_ajax_request() || $this->input->post('is_ajax')) {
+                echo json_encode(array('status' => 0, 'message' => 'No appointments selected.'));
+                return;
+            }
+            $this->session->set_flashdata('flashmsg', "<div class='alert alert-warning'>No appointments selected.</div>");
+        }
+        redirect(base_url('doctor/appointment/doctorappointment'));
     }
 
     public function data()
@@ -583,7 +653,7 @@ class Appointment extends CI_Controller
   	public function hospitalappointment()
   	{
 
-       	$data['data'] = $this->db->get_where('hospital',array('uid'))->result();
+       	$data['data'] = $this->db->get('hospital')->result();
   	   	$this->load->view('inc/topheaderlink');
 		$this->load->view('inc/topheader');
 		$this->load->view('hospitalappointment',$data);
@@ -642,6 +712,21 @@ class Appointment extends CI_Controller
 		$this->load->view('inc/footerlink');
 		$this->load->view('inc/table_footer');
     }
+
+	public function delete_upcomming($id = null)
+	{
+		$del_id = $id ? $id : ($this->input->post('id') ? $this->input->post('id') : $this->uri->segment(4));
+		if ($del_id) {
+			$this->db->where('appointment_id', $del_id)->delete('appointment');
+			$msg = "Upcoming appointment cancelled successfully.";
+			if ($this->input->is_ajax_request() || $this->input->post('is_ajax')) {
+				echo json_encode(array('status' => 1, 'message' => $msg));
+				return;
+			}
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-success'>$msg</div>");
+		}
+		redirect(base_url('doctor/appointment/upcomming'));
+	}
 
     public function user()
 	{	
@@ -789,13 +874,52 @@ class Appointment extends CI_Controller
         redirect(base_url()."public/assets/export/".$fileName);              
     }    
 	
-	public function deletehistory()
+	public function deletehistory($id = null)
     {
-              
-        $id=$this->input->get('appointment_id');
-        $this->load->model('doctorregmodel');
-        $this->doctorregmodel->deletehistory($id);
-        redirect(base_url().'doctor/appointment/user');
+        if ($this->input->post('ids') && is_array($this->input->post('ids'))) {
+            $this->bulk_delete_history();
+            return;
+        }
+
+        $del_id = $id ? $id : ($this->input->post('id') ? $this->input->post('id') : ($this->input->get('appointment_id') ? $this->input->get('appointment_id') : $this->uri->segment(4)));
+        if ($del_id) {
+            $this->db->where('appointment_id', $del_id)->delete('appointment');
+            $msg = "Appointment record deleted successfully.";
+            if ($this->input->is_ajax_request() || $this->input->post('is_ajax') || $this->input->post('id')) {
+                echo json_encode(array('status' => 1, 'message' => $msg));
+                return;
+            }
+            $this->session->set_flashdata('flashmsg', "<div class='alert alert-success'><strong>Success!</strong> $msg</div>");
+        }
+        redirect(base_url('doctor/appointment/user'));
+    }
+
+    public function bulk_delete_history()
+    {
+        $ids = $this->input->post('ids');
+        if (!empty($ids) && is_array($ids)) {
+            $deleted_count = 0;
+            foreach ($ids as $aid) {
+                $aid = (int)$aid;
+                if ($aid > 0) {
+                    $this->db->where('appointment_id', $aid)->delete('appointment');
+                    $deleted_count++;
+                }
+            }
+            $msg = "$deleted_count appointment record(s) deleted successfully.";
+            if ($this->input->is_ajax_request() || $this->input->post('is_ajax')) {
+                echo json_encode(array('status' => 1, 'count' => $deleted_count, 'message' => $msg));
+                return;
+            }
+            $this->session->set_flashdata('flashmsg', "<div class='alert alert-success'><strong>Success!</strong> $msg</div>");
+        } else {
+            if ($this->input->is_ajax_request() || $this->input->post('is_ajax')) {
+                echo json_encode(array('status' => 0, 'message' => 'No appointment records selected.'));
+                return;
+            }
+            $this->session->set_flashdata('flashmsg', "<div class='alert alert-warning'>No records selected.</div>");
+        }
+        redirect(base_url('doctor/appointment/user'));
     }
 	
 	
@@ -892,6 +1016,65 @@ class Appointment extends CI_Controller
 		$this->load->view('inc/table_footer');
     }
 
+	/**
+	 * AJAX endpoint: Update payment status for a single appointment.
+	 * POST params: appointment_id, payment_status, payment_mode, transaction_id, admin_notes
+	 * Returns JSON: { status, message, summary: { total_volume, total_received, total_pending, facility_count } }
+	 */
+	public function update_payment_status()
+	{
+		// Must be an AJAX / JSON request
+		if (!$this->input->is_ajax_request() && !$this->input->post('is_ajax')) {
+			show_404();
+			return;
+		}
+
+		$appointment_id = (int) $this->input->post('appointment_id');
+		$payment_status = trim($this->input->post('payment_status'));
+		$payment_mode   = trim($this->input->post('payment_mode'));
+		$transaction_id = trim($this->input->post('transaction_id'));
+		$admin_notes    = trim($this->input->post('admin_notes'));
+
+		// Basic validation
+		if ($appointment_id <= 0) {
+			echo json_encode(array('status' => 0, 'message' => 'Invalid appointment ID.'));
+			return;
+		}
+
+		$allowed_statuses = array('UNPAID', 'DONE', 'CANCELLED', 'REFUNDED');
+		if (!in_array(strtoupper($payment_status), $allowed_statuses)) {
+			echo json_encode(array('status' => 0, 'message' => 'Invalid payment status value.'));
+			return;
+		}
+
+		// Online/UPI/Card payments must supply a transaction reference
+		$online_modes = array('ONLINE', 'UPI', 'CARD');
+		if (in_array(strtoupper($payment_mode), $online_modes) && empty($transaction_id)) {
+			echo json_encode(array('status' => 0, 'message' => 'Transaction / Reference ID is required for online settlements.'));
+			return;
+		}
+
+		$update_data = array(
+			'payment_status' => strtoupper($payment_status),
+			'payment_mode'   => strtoupper($payment_mode),
+			'transaction_id' => $transaction_id,
+			'admin_notes'    => $admin_notes,
+		);
+
+		$result = $this->appointmentmodel->update_payment_status($appointment_id, $update_data);
+
+		if ($result) {
+			$summary = $this->appointmentmodel->get_account_summary();
+			echo json_encode(array(
+				'status'  => 1,
+				'message' => 'Payment status updated successfully.',
+				'summary' => $summary,
+			));
+		} else {
+			echo json_encode(array('status' => 0, 'message' => 'Failed to update payment status. Please try again.'));
+		}
+	}
+
    public function doctordata()
    {
    		$data['city']  		=  $this->appointmentmodel->get_city(array('status'=>'1'));
@@ -917,7 +1100,7 @@ class Appointment extends CI_Controller
                 
     public function totalamount()
     {   
-       	$data['data']= $this->db->get_where('account',array('id'))->result();   
+       	$data['data']= $this->db->get('account')->result();   
        	$this->load->view('inc/topheaderlink');
        	$this->load->view('inc/topheader');
        	$this->load->view('totalamount',$data);

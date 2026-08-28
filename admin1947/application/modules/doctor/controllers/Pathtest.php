@@ -8,9 +8,8 @@ class Pathtest extends CI_Controller
 		 parent::__construct();
 		 date_default_timezone_set("Asia/Kolkata");
 		 $date=date('Y-m-d h:i:s');
-		 $this->load->helper(array('query_string_helper','dbquery_helper','admin_helper'));
+		 $this->load->helper(array('query_string_helper','dbquery_helper','admin_helper','text'));
 		 $this->load->model(array('pathtest_model','masters/managementmodel'));
-		 $this->load->library('Pdf');
 	}
 	
 	public function category()
@@ -32,14 +31,53 @@ class Pathtest extends CI_Controller
 		$this->load->view('inc/table_footer');
 	}
 	
-	public function category_delete()
-    {
-		$id=$this->input->get('category_id');
-		$this->pathtest_model->deleterecord($id);
-		$msg="<div class='alert alert-success'><strong>Success!</strong> Category Deleted Successfully </div>";
-		$this->session->set_flashdata('flashmsg',$msg);
-		redirect(base_url().'doctor/pathtest/category');
-    }
+	public function category_delete($id = null)
+	{
+		if ($this->input->post('ids') && is_array($this->input->post('ids'))) {
+			$this->bulk_delete_category();
+			return;
+		}
+
+		$cat_id = $id ? $id : ($this->input->post('id') ? $this->input->post('id') : ($this->input->get('category_id') ? $this->input->get('category_id') : $this->uri->segment(4)));
+		if ($cat_id) {
+			$this->pathtest_model->deleterecord($cat_id);
+			$msg = "Category deleted successfully.";
+			if ($this->input->is_ajax_request() || $this->input->post('is_ajax') || $this->input->post('id')) {
+				echo json_encode(array('status' => 1, 'message' => $msg));
+				return;
+			}
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-success'><strong>Success!</strong> $msg</div>");
+		}
+		redirect(base_url('doctor/pathtest/category'));
+	}
+
+	public function bulk_delete_category()
+	{
+		$ids = $this->input->post('ids');
+		if (!empty($ids) && is_array($ids)) {
+			$deleted_count = 0;
+			foreach ($ids as $cid) {
+				$cid = (int)$cid;
+				if ($cid > 0) {
+					$this->pathtest_model->deleterecord($cid);
+					$deleted_count++;
+				}
+			}
+			$msg = "$deleted_count category record(s) deleted successfully.";
+			if ($this->input->is_ajax_request() || $this->input->post('is_ajax')) {
+				echo json_encode(array('status' => 1, 'count' => $deleted_count, 'message' => $msg));
+				return;
+			}
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-success'><strong>Success!</strong> $msg</div>");
+		} else {
+			if ($this->input->is_ajax_request() || $this->input->post('is_ajax')) {
+				echo json_encode(array('status' => 0, 'message' => 'No categories selected.'));
+				return;
+			}
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-warning'>No categories selected.</div>");
+		}
+		redirect(base_url('doctor/pathtest/category'));
+	}
 	
 	public function addcategory()
 	{
@@ -283,14 +321,101 @@ class Pathtest extends CI_Controller
 		$this->load->view('inc/table_footer');
 	}
 	
-	public function unit_delete()
-    {
-		$id=$this->input->get('unit_id');
-		$this->pathtest_model->unitrecord($id);
-		$msg="<div class='alert alert-success'><strong>Success!</strong> Unit Deleted Successfully </div>";
-		$this->session->set_flashdata('flashmsg',$msg);
-		redirect(base_url().'doctor/pathtest/unit');
-    }
+	public function delete_test($id = null)
+	{
+		if ($this->input->post('ids') && is_array($this->input->post('ids'))) {
+			$this->bulk_delete_test();
+			return;
+		}
+
+		$test_id = $id ? $id : ($this->input->post('id') ? $this->input->post('id') : ($this->input->get('test_id') ? $this->input->get('test_id') : $this->uri->segment(4)));
+		if ($test_id) {
+			$this->pathtest_model->test_delete($test_id);
+			$msg = "Pathology Test deleted successfully.";
+			if ($this->input->is_ajax_request() || $this->input->post('is_ajax') || $this->input->post('id')) {
+				echo json_encode(array('status' => 1, 'message' => $msg));
+				return;
+			}
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-success'><strong>Success!</strong> $msg</div>");
+		}
+		redirect(base_url('doctor/pathtest/index'));
+	}
+
+	public function bulk_delete_test()
+	{
+		$ids = $this->input->post('ids');
+		if (!empty($ids) && is_array($ids)) {
+			$deleted_count = 0;
+			foreach ($ids as $tid) {
+				$tid = (int)$tid;
+				if ($tid > 0) {
+					$this->pathtest_model->test_delete($tid);
+					$deleted_count++;
+				}
+			}
+			$msg = "$deleted_count test record(s) deleted successfully.";
+			if ($this->input->is_ajax_request() || $this->input->post('is_ajax')) {
+				echo json_encode(array('status' => 1, 'count' => $deleted_count, 'message' => $msg));
+				return;
+			}
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-success'><strong>Success!</strong> $msg</div>");
+		} else {
+			if ($this->input->is_ajax_request() || $this->input->post('is_ajax')) {
+				echo json_encode(array('status' => 0, 'message' => 'No tests selected.'));
+				return;
+			}
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-warning'>No tests selected.</div>");
+		}
+		redirect(base_url('doctor/pathtest/index'));
+	}
+
+	public function unit_delete($id = null)
+	{
+		if ($this->input->post('ids') && is_array($this->input->post('ids'))) {
+			$this->bulk_delete_unit();
+			return;
+		}
+
+		$uid = $id ? $id : ($this->input->post('id') ? $this->input->post('id') : ($this->input->get('unit_id') ? $this->input->get('unit_id') : $this->uri->segment(4)));
+		if ($uid) {
+			$this->pathtest_model->unitrecord($uid);
+			$msg = "Unit deleted successfully.";
+			if ($this->input->is_ajax_request() || $this->input->post('is_ajax') || $this->input->post('id')) {
+				echo json_encode(array('status' => 1, 'message' => $msg));
+				return;
+			}
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-success'><strong>Success!</strong> $msg</div>");
+		}
+		redirect(base_url('doctor/pathtest/unit'));
+	}
+
+	public function bulk_delete_unit()
+	{
+		$ids = $this->input->post('ids');
+		if (!empty($ids) && is_array($ids)) {
+			$deleted_count = 0;
+			foreach ($ids as $uid) {
+				$uid = (int)$uid;
+				if ($uid > 0) {
+					$this->pathtest_model->unitrecord($uid);
+					$deleted_count++;
+				}
+			}
+			$msg = "$deleted_count unit(s) deleted successfully.";
+			if ($this->input->is_ajax_request() || $this->input->post('is_ajax')) {
+				echo json_encode(array('status' => 1, 'count' => $deleted_count, 'message' => $msg));
+				return;
+			}
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-success'><strong>Success!</strong> $msg</div>");
+		} else {
+			if ($this->input->is_ajax_request() || $this->input->post('is_ajax')) {
+				echo json_encode(array('status' => 0, 'message' => 'No units selected.'));
+				return;
+			}
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-warning'>No units selected.</div>");
+		}
+		redirect(base_url('doctor/pathtest/unit'));
+	}
 	
 	public function addunit()
 	{
@@ -364,14 +489,53 @@ class Pathtest extends CI_Controller
 		$this->load->view('inc/table_footer');
 	}
 	
-	public function parameter_delete()
-    {
-		$id=$this->input->get('parameter_id');
-		$this->pathtest_model->parameterrecord($id);
-		$msg="<div class='alert alert-success'><strong>Success!</strong> Parameter Deleted Successfully </div>";
-		$this->session->set_flashdata('flashmsg',$msg);
-		redirect(base_url().'doctor/pathtest/parameter');
-    }
+	public function parameter_delete($id = null)
+	{
+		if ($this->input->post('ids') && is_array($this->input->post('ids'))) {
+			$this->bulk_delete_parameter();
+			return;
+		}
+
+		$pid = $id ? $id : ($this->input->post('id') ? $this->input->post('id') : ($this->input->get('parameter_id') ? $this->input->get('parameter_id') : $this->uri->segment(4)));
+		if ($pid) {
+			$this->pathtest_model->parameterrecord($pid);
+			$msg = "Parameter deleted successfully.";
+			if ($this->input->is_ajax_request() || $this->input->post('is_ajax') || $this->input->post('id')) {
+				echo json_encode(array('status' => 1, 'message' => $msg));
+				return;
+			}
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-success'><strong>Success!</strong> $msg</div>");
+		}
+		redirect(base_url('doctor/pathtest/parameter'));
+	}
+
+	public function bulk_delete_parameter()
+	{
+		$ids = $this->input->post('ids');
+		if (!empty($ids) && is_array($ids)) {
+			$deleted_count = 0;
+			foreach ($ids as $pid) {
+				$pid = (int)$pid;
+				if ($pid > 0) {
+					$this->pathtest_model->parameterrecord($pid);
+					$deleted_count++;
+				}
+			}
+			$msg = "$deleted_count parameter(s) deleted successfully.";
+			if ($this->input->is_ajax_request() || $this->input->post('is_ajax')) {
+				echo json_encode(array('status' => 1, 'count' => $deleted_count, 'message' => $msg));
+				return;
+			}
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-success'><strong>Success!</strong> $msg</div>");
+		} else {
+			if ($this->input->is_ajax_request() || $this->input->post('is_ajax')) {
+				echo json_encode(array('status' => 0, 'message' => 'No parameters selected.'));
+				return;
+			}
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-warning'>No parameters selected.</div>");
+		}
+		redirect(base_url('doctor/pathtest/parameter'));
+	}
 	
 	public function addparameter()
 	{

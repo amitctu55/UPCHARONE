@@ -39,7 +39,7 @@
                                 <div class="col-sm-5 hoslist_he">
                                     <p>2.5M patients are looking for a doctor on Upchar Verify your credential and reach out to them</p>
 									
-									<div class="text-center"><img src="<?=base_url();?>admin1947/public/assets/upload/<?=$src;?>" class="img-responsive img-rounded" alt='No Profile Image'>
+									<div class="text-center"><img src="<?=base_url();?>admin1947/public/assets/upload/<?=($src && file_exists('admin1947/public/assets/upload/'.$src)) ? $src : 'dummydr.jpg';?>" class="img-responsive img-rounded" alt='Profile Image' style="max-height: 220px; margin: auto;">
 									</div>
                                 </div>
 								<form>

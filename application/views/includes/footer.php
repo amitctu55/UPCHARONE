@@ -4,84 +4,109 @@ $userlogin=$this->Userlogin_Model->c_count();
 <head>
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.1/css/all.css" integrity="sha384-gfdkjb5BdAXd+lj+gudLWI+BXq4IuLW5IT+brZEZsLFm++aCMlF1V92rMkPaX4PP" crossorigin="anonymous">
 </head>
-<footer id="careplus-footer" class="careplus-footer-one">
-    <span class="careplus-footer-transparent"></span>
-	<!--// Footer Widget \\-->
-	<div class="careplus-footer-widget">
+<!-- Universal Modern Healthcare Footer (#1D2A44) -->
+<footer class="upchar-footer">
+	<div class="footer-top">
 		<div class="container">
 			<div class="row">
-				<!--// Widget Contact Info \\-->
-				<aside class="col-md-4 widget widget_contact_info">
-					<a href="<?=base_url();?>" class="footer-logo"><img src="<?=base_url();?>images/Upchar_footer.png" alt="" style="height: 100px;margin-bottom:0px;"></a>
-					<p>Workboat Media Private Limited (“UPCHAR”) is the author and publisher of the internet resource <a href="https://www.upcharr.com" target='_blank' style="text-decoration: none;
-					color: #008CBA;"> https://www.upcharr.com</a> and the mobile application ‘Upchar’ (together, “Website”). Upchar owns and operates the services provided through the Website..<br>
-					<a href="<?=base_url();?>aboutus" class="careplus-readmore-btn">read more <span></span></a>   </p>
-				</aside>
-				<!--// Widget Contact Info \\-->
-				<!--// Widget Useful Link \\-->
-				<aside class="col-md-4 widget widget_useful_link">
-					<h2 class="careplus-footer-title">Useful Links</h2>
-					<ul id="mobilefooter">
-						<li><a href="<?=base_url();?>aboutus">About Us</a></li>
-						<li><a href="<?=base_url();?>Home/services">Our services</a></li>
-						<li><a href="<?=base_url();?>refund_cancellation">Refund & Cancellation</a></li>
-						<li><a href="<?=base_url();?>Home/career">Careers</a></li>
-						<li><a href="<?=base_url();?>privacy">Privacy Policy</a></li>
-						<li><a href="<?=base_url();?>Home/contactus">Contact Us</a></li>
-						<li><a href="<?=base_url();?>tnc">Term And condition</a></li>
-						<li><a href="<?=base_url();?>Upchar_Patient.apk">Download App</a></li>
-						<li><a href="#" target='_blank'>Workboat Media Pvt Ltd</a></li>
+				<!-- Column 1: Company Info -->
+				<div class="col-lg-4 col-md-4 col-sm-12 footer-col">
+					<a href="<?=base_url();?>" class="footer-logo">
+						<img src="<?=base_url('images/Upchar_footer.png');?>" alt="Upchar Healthcare" class="footer-brand-logo">
+					</a>
+					<p class="footer-about-text">
+						Workboat Media Private Limited (“UPCHAR”) is India’s trusted digital healthcare network connecting patients with verified specialist doctors, accredited hospitals, live bed tracking, diagnostic labs, and 24/7 emergency support.
+					</p>
+					<div class="footer-badge-pill">
+						<i class="fas fa-shield-alt"></i> Verified Healthcare Network
+					</div>
+				</div>
+
+				<!-- Column 2: Quick Links -->
+				<div class="col-lg-2 col-md-2 col-sm-6 footer-col">
+					<h4 class="footer-title">Quick Links</h4>
+					<ul class="footer-links-list">
+						<li><a href="<?=base_url();?>"><i class="fas fa-chevron-right"></i> Home</a></li>
+						<li><a href="<?=base_url('doctors');?>"><i class="fas fa-chevron-right"></i> Find Doctors</a></li>
+						<li><a href="<?=base_url('hospitals');?>"><i class="fas fa-chevron-right"></i> Hospitals & Clinics</a></li>
+						<li><a href="<?=base_url('doctors');?>"><i class="fas fa-chevron-right"></i> Video Consult</a></li>
+						<li><a href="<?=base_url('aboutus');?>"><i class="fas fa-chevron-right"></i> About Us</a></li>
+						<li><a href="<?=base_url('Home/services');?>"><i class="fas fa-chevron-right"></i> Our Services</a></li>
+						<li><a href="https://upcharrnews.blogspot.com/" target="_blank"><i class="fas fa-chevron-right"></i> Health Blog</a></li>
 					</ul>
-				</aside>
-				<aside class="col-md-4 widget widget_contact_info" >
-					<h2 class="careplus-footer-title">Contact Us</h2>
-					<ul>
-						<li>
-							<h6>Call Us At:</h6>
-							<span>Customer care NO - 844-844-0603</span>
-						</li>
-						<li>
-							<h6>Mail Us At:</h6>
-							<a href="mailto:info@upcharr.com">hello@upcharr.com - info@upcharr.com</a>
-						</li>
-						<li>
-							<h6>Our Location:</h6>
-							<span>N8/251 A-1-11 Newada Sundarpur B.H.U to D.L.W Street,varanasi,Uttar pradesh 221005 </span>
-						</li>
+				</div>
+
+				<!-- Column 3: Legal & Trust -->
+				<div class="col-lg-3 col-md-3 col-sm-6 footer-col">
+					<h4 class="footer-title">Legal & Trust</h4>
+					<ul class="footer-links-list">
+						<li><a href="<?=base_url('privacy');?>"><i class="fas fa-chevron-right"></i> Privacy Policy</a></li>
+						<li><a href="<?=base_url('tnc');?>"><i class="fas fa-chevron-right"></i> Terms & Conditions</a></li>
+						<li><a href="<?=base_url('refund_cancellation');?>"><i class="fas fa-chevron-right"></i> Refund Policy</a></li>
+						<li><a href="<?=base_url('doctor-signup');?>"><i class="fas fa-chevron-right"></i> Doctor Onboarding</a></li>
+						<li><a href="<?=base_url('hospital-signup');?>"><i class="fas fa-chevron-right"></i> Hospital Registration</a></li>
+						<li><a href="<?=base_url('Home/career');?>"><i class="fas fa-chevron-right"></i> Careers & Jobs</a></li>
+						<li><a href="<?=base_url('Upchar_Patient.apk');?>"><i class="fas fa-download"></i> Download App</a></li>
 					</ul>
-				</aside>
-				<!--// Widget Newsletter \\-->
-			</div>
-		</div>
-	</div>
-	<!--// Footer Widget \\-->
-	<!--// Copy Right \\-->
-	<div class="careplus-copyright">
-		<div class="container">
-			<div class="row">
-				<div class="col-md-12">
-					<p>Upchar <i class="fa fa-copyright"></i> 2019, All Right Reserved  </p>
-					<a href="#" class="careplus-back-top"><i class="fa fa-angle-up"></i></a>
-					<ul class="careplus-footer-social">
-						<li><a href ="#">
-							<h5 style="margin-right: 281px;
-								background: white;
-								padding: 3px 34px;
-								border-radius: 34pc;
-								color: black;;"> Views <?php echo $userlogin;?>
-							</h5>
+				</div>
+
+				<!-- Column 4: Contact & Help -->
+				<div class="col-lg-3 col-md-3 col-sm-12 footer-col">
+					<h4 class="footer-title">Contact & Help</h4>
+					<ul class="footer-contact-list">
+						<li class="footer-contact-item">
+							<div class="footer-contact-icon"><i class="fas fa-phone-alt"></i></div>
+							<div class="footer-contact-info">
+								<h6>24/7 Helpline</h6>
+								<p><a href="tel:8448440603">844-844-0603</a></p>
+							</div>
 						</li>
-						<li><a href="https://www.facebook.com/Upchar-online-Medical-solution-2187443094907268/?__tn__=kC-R&eid=ARDE9OXjTMIV4M7qlTFvSeN_jXXgDb1ZMzAfbesehXye06-TPEb2zP6-V8gqb__crERRdMn_Quqod_pL&hc_ref=ARQBi9NRQDujn9jDDz0Q4mWg06mQ_iD_XcCTuEyXwZ-e3Vq-q-769KIvpe1ie3rUrr0&__xts__%5B0%5D=68.ARDRzHqnWmt3fGAyBanIFx6lk0MLXmWnCbqdsE7vdw-oMqsZt6WR97juTtgAnO1uxFD0nMrYXQJ9_fe-A11H1XEe6Agc5R2Kkph8u3cj1g3wAwOJwQ9UCtRpQJtW1N3bThb9E7ruKNoqW-C-KCB6cge-5wzaoHuhzpFchHWhf-8zAZxJKzt2zc5ivrL_7KrBTcdxcGIYKBpUDt1yMusdWop9PMH0mRlknIFlHUejyZ3V4gdpKQ5rL7uLAjKifXeO_CEj_kdSDmWeOTGXR76MwDlaRznc-A3Fn72G/" target="_blank"><i class="fab fa-facebook-square"></i></a></li>
-						<li><a href="https://twitter.com/amitkum35423465" target="_blank" ><i class="fab fa-twitter-square"></i></a></li>
-						<li><a href="https://pk.linkedin.com/" target="_blank"><i class="fab fa-linkedin"></i></a></li>
-						<li><a href="https://plus.google.com/104908238854277970882/" target="_blank"><i class="fab fa-google-plus-square"></i></a></li>
+						<li class="footer-contact-item">
+							<div class="footer-contact-icon"><i class="fas fa-envelope"></i></div>
+							<div class="footer-contact-info">
+								<h6>Support Email</h6>
+								<p><a href="mailto:hello@upchar.info">hello@upchar.info</a></p>
+							</div>
+						</li>
+						<li class="footer-contact-item">
+							<div class="footer-contact-icon"><i class="fas fa-map-marker-alt"></i></div>
+							<div class="footer-contact-info">
+								<h6>Registered Office</h6>
+								<p>N8/251 A-1-11 Newada, Sundarpur, BHU to DLW Road, Varanasi, UP 221005</p>
+							</div>
+						</li>
 					</ul>
 				</div>
 			</div>
 		</div>
 	</div>
-	<!--// Copy Right \\-->
+
+	<!-- Copyright & Socials Bar -->
+	<div class="footer-bottom">
+		<div class="container">
+			<div class="footer-bottom-flex">
+				<p class="footer-copyright">
+					&copy; <?=date('Y');?> <strong>Upchar One Place of Healthcare</strong>. All Rights Reserved.
+				</p>
+				<ul class="footer-social-list">
+					<li>
+						<span style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); border-radius: 9999px; padding: 4px 12px; font-size: 11.5px; color: #94A3B8; margin-right: 6px;">
+							<i class="fas fa-eye" style="color: #00A896; margin-right: 4px;"></i> Visits: <strong><?=$userlogin;?></strong>
+						</span>
+					</li>
+					<li><a href="https://www.facebook.com/Upchar-online-Medical-solution-2187443094907268/" target="_blank" class="footer-social-link" title="Facebook"><i class="fab fa-facebook-f"></i></a></li>
+					<li><a href="https://twitter.com/amitkum35423465" target="_blank" class="footer-social-link" title="Twitter"><i class="fab fa-twitter"></i></a></li>
+					<li><a href="https://linkedin.com/" target="_blank" class="footer-social-link" title="LinkedIn"><i class="fab fa-linkedin-in"></i></a></li>
+				</ul>
+			</div>
+		</div>
+	</div>
 </footer>
+
+<!-- Floating Back-to-Top Button -->
+<a href="javascript:void(0);" id="backToTopBtn" class="back-to-top-btn" title="Back to top">
+	<i class="fas fa-arrow-up"></i>
+</a>
 <!--// Footer \\-->
 <div class="clearfix"></div>
 <!--// Main Wrapper \\-->
@@ -98,94 +123,124 @@ $userlogin=$this->Userlogin_Model->c_count();
 		</div>
     </div>
 </div>
-<div id="conmermation"/>
-    <div class="modal fade" id="myModal">
-		<div class="modal-dialog modal-lg">
-			<div class="modal-content">
-				<!-- Modal Header -->
-				<div class="modal-header">
-					<button type="button" class="close" data-dismiss="modal">&times;</button>
+<!-- Top-level Book Appointment Modal (Direct Scope of <body>) -->
+<div class="modal fade" id="myModal" role="dialog" tabindex="-1" aria-labelledby="myModalLabel" aria-hidden="true">
+	<div class="modal-dialog" role="document">
+		<div class="modal-content">
+			<!-- Modal Header -->
+			<div class="modal-header">
+				<div>
+					<h4 class="modal-header-title" id="myModalLabel"><i class="fas fa-calendar-check"></i> Book Appointment</h4>
+					<p class="modal-header-subtitle"><i class="fas fa-shield-alt"></i> Verified Consultation &bull; Zero Booking Charges</p>
 				</div>
-				<div class="modal-body">
-					<div class="col-sm-6 borders confer">
-						<form method='post' action='<?=base_url();?>home/bookappointment' id='app_conf_form'>
-							<div class="careplus-fancy-titles">
-							  <h2>Confirm Appointment</h2>
-							  <input value="" type="text" id="app_conf_pop_doctorid" style="display:none;" name="app_doctor" class="form-control">
-							</div>
-							<div class="label_name">
-								<label>Choose your Date</label>
-								<!-- <input  type="text" placeholder="click to show Datepicker" class="form-control" id="example1" >-->
-								<select class="form-control" name='app_date' id='app_conf_pop_date' required></select>
-								<label>Select Time<span>*</span></label>
-								<select class="form-control" name='app_time' id='app_conf_pop_time' required></select>
-								<label>Patient/Visitor Name<span>*</span></label>
-								<input value="<?=@$userdata['name'];?>" type="text" name="app_name" id='app_conf_name' class="form-control" required>
-								<label style="color:black;">Mobile Number<span>*</span></label>
-								<input value="<?=@$userdata['mobile'];?>" type="text" name="app_mobile" id='app_conf_mobile' class="form-control" onkeypress="return isNumber(event)"  required>
-								<label style="color:black;">E-mail Id</label>
-								<input value="<?=@$userdata['email'];?>" type="email" name="app_email" class="form-control" >
-								<?php if($this->session->userdata('userid')==''){ ?>
-								<div style='display:none;' id='app_conf_otp'>
-									<label style="color:black;">Send OTP<span>*</span></label>
-									<input value="" type="text" name="app_otp" class="form-control" required>
-								</div>
-								<?php } ?>
-								<?php if($this->session->userdata('userid')==''){ ?>
-								<p style=" margin-top: 10px;">You will receive an SMS with a verification code on this number</p>
-								<p>By booking the appointment, you agree to Upchar's <a href="#">Terms and Conditions.</a></p>
-								<button type="button" id='app_conf_otp_submit' class="btn  btn-lg common-btn con_done">Send OTP    </button>
-								<button type="submit" style='display:none;' id='app_conf_submit' class="btn  btn-lg common-btn con_done">Verify & Book Appointment </button>
-								<?php }else{ ?>
-								<p style=" margin-top: 6px;">By booking the appointment, you agree to Upchar's <a href="#">Terms and Conditions.</a></p>
-								<button type="submit" id='app_conf_submit' class="btn  btn-lg common-btn con_done">Book Appointment </button>
-								<?php } ?>
-							</div>
-						</form>
-					</div>
-					<div class="col-sm-6 right_box" id='app_conf_pop_doctor'>
-						<div class="col-md-4">
-							<img src="extra-images/team-list-img1.jpg" alt="">
-						</div>
-						<div class="col-md-8">
-							<div class="doc_nam_inf" >
-								<span>Loading...</span>
-								<ul>
-									<li>Loading... </li>
-									<li>Loading... </li>
-									<li><b>Loading...</b></li>
-								</ul>
-							</div>
-						</div>
-					</div>
-					<div class="col-sm-6 right_box" id='app_conf_pop_institute'>
-						<div class="col-md-4">
-							<img src="images/dentist.png" alt="">
-						</div>  
-						<div class="col-md-8">
-							<div class="doc_nam_inf">
-								<span>Dr. Birendra Kumar Pawar</span>
-								<ul>
-									<li>579, Pocket C/8 , Sector-8 , Madhuban Chowk, Metro Pillar No. 373, Delhi </li>
-								</ul>
-							</div>
-						</div>
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close">&times;</button>
+			</div>
+
+			<div class="modal-body">
+				<!-- Consultation Mode Switcher -->
+				<div class="consult-type-switcher">
+					<button type="button" class="consult-type-btn active" data-type="in_clinic">
+						<i class="fas fa-clinic-medical"></i> In-Person Visit
+					</button>
+					<button type="button" class="consult-type-btn" data-type="video_consult">
+						<i class="fas fa-video"></i> Video Consultation
+					</button>
+				</div>
+
+				<!-- Doctor & Clinic Mini Preview -->
+				<div class="modal-doc-summary-card" id="app_conf_pop_doctor" style="margin-bottom: 10px;">
+					<div class="text-center" style="padding: 12px; color: #64748B;">
+						<i class="fas fa-spinner fa-spin" style="font-size: 20px; color: #00A896; margin-bottom: 4px;"></i>
+						<p style="margin: 0; font-size: 12.5px;">Loading doctor details...</p>
 					</div>
 				</div>
-				<!-- Modal footer -->
-				<div class="modal-footer"></div>
+
+				<div class="modal-doc-summary-card" id="app_conf_pop_institute" style="margin-bottom: 12px;">
+					<div class="text-center" style="padding: 8px; color: #64748B;">
+						<p style="margin: 0; font-size: 12px;"><i class="fas fa-map-marker-alt" style="color: #00A896;"></i> Select date & time to view facility</p>
+					</div>
+				</div>
+
+				<form method="post" action="<?=base_url();?>home/bookappointment" id="app_conf_form">
+					<input type="hidden" name="consultation_type" id="app_consult_type" value="in_clinic">
+					<input value="" type="hidden" id="app_conf_pop_doctorid" name="app_doctor">
+
+					<div class="consult-form-box">
+						<div class="row">
+							<div class="col-xs-6" style="padding-right: 6px;">
+								<label><i class="fas fa-calendar-day" style="color: #00A896;"></i> Date <span style="color: #EF4444;">*</span></label>
+								<select class="form-control" name="app_date" id="app_conf_pop_date" required></select>
+							</div>
+							<div class="col-xs-6" style="padding-left: 6px;">
+								<label><i class="fas fa-clock" style="color: #00A896;"></i> Time Slot <span style="color: #EF4444;">*</span></label>
+								<select class="form-control" name="app_time" id="app_conf_pop_time" required></select>
+							</div>
+						</div>
+
+						<label><i class="fas fa-user" style="color: #00A896;"></i> Patient Name <span style="color: #EF4444;">*</span></label>
+						<input value="<?=@$userdata['name'];?>" type="text" name="app_name" id="app_conf_name" class="form-control" placeholder="Enter patient's full name" required>
+
+						<label><i class="fas fa-phone-alt" style="color: #00A896;"></i> Mobile Number <span style="color: #EF4444;">*</span></label>
+						<input value="<?=@$userdata['mobile'];?>" type="tel" name="app_mobile" id="app_conf_mobile" class="form-control" placeholder="10-digit mobile number" onkeypress="return isNumber(event)" maxlength="10" required>
+
+						<label><i class="fas fa-envelope" style="color: #00A896;"></i> Email Address (Optional)</label>
+						<input value="<?=@$userdata['email'];?>" type="email" name="app_email" id="app_conf_email" class="form-control" placeholder="For instant digital prescription & receipt">
+
+						<?php if($this->session->userdata('userid')==''){ ?>
+						<div style="display:none;" id="app_conf_otp">
+							<label><i class="fas fa-key" style="color: #00A896;"></i> Verification OTP <span style="color: #EF4444;">*</span></label>
+							<input value="" type="text" name="app_otp" class="form-control" placeholder="Enter 4-digit OTP" required>
+						</div>
+						<?php } ?>
+
+						<!-- Dynamic Guidance Text Box -->
+						<div id="mode_guidance_box" style="background: #F0FDF4; border: 1px solid #DCFCE7; border-radius: 10px; padding: 10px 12px; margin-bottom: 14px; font-size: 12px; color: #166534; line-height: 1.4;">
+							<i class="fas fa-clinic-medical" style="color: #16A34A; margin-right: 6px;"></i>
+							<strong>In-Person Visit:</strong> Confirmed direct appointment at clinic. Minimal wait time assured.
+						</div>
+
+						<div>
+							<?php if($this->session->userdata('userid')==''){ ?>
+							<button type="button" id="app_conf_otp_submit" class="btn btn-primary-cta" style="width: 100%; justify-content: center; padding: 12px; font-size: 14.5px; border-radius: 8px;">
+								<i class="fas fa-paper-plane"></i> Send Verification OTP
+							</button>
+							<button type="submit" style="display:none; width: 100%; justify-content: center; padding: 12px; font-size: 14.5px; border-radius: 8px;" id="app_conf_submit" class="btn btn-primary-cta">
+								<i class="fas fa-check-circle"></i> Verify & Confirm Appointment
+							</button>
+							<?php } else { ?>
+							<button type="submit" id="app_conf_submit" class="btn btn-primary-cta" style="width: 100%; justify-content: center; padding: 12px; font-size: 14.5px; border-radius: 8px;">
+								<i class="fas fa-check-circle"></i> Confirm & Book Appointment
+							</button>
+							<?php } ?>
+						</div>
+						<p style="font-size: 11px; color: #94A3B8; margin-top: 8px; text-align: center; margin-bottom: 0;">
+							By booking, you agree to Upchar's <a href="<?=base_url('tnc');?>" style="color: #00A896;">Terms of Service</a> & <a href="<?=base_url('privacy');?>" style="color: #00A896;">Privacy Policy</a>.
+						</p>
+					</div>
+				</form>
 			</div>
 		</div>
-    </div>
+	</div>
 </div>
 <script type="text/javascript">
 	// When the document is ready
 	$(document).ready(function () {
-
 		$('#example1').datepicker({
 			format: "dd/mm/yyyy"
 		});
 
+		$('#backToTopBtn').on('click', function(e) {
+			e.preventDefault();
+			$('html, body').animate({scrollTop: 0}, 400);
+		});
+
+		$(window).on('scroll', function() {
+			if ($(this).scrollTop() > 300) {
+				$('#backToTopBtn').css('display', 'flex').fadeIn(200);
+			} else {
+				$('#backToTopBtn').fadeOut(200);
+			}
+		});
 	});
 </script>
 <script>
@@ -427,122 +482,182 @@ function isNumber(evt)
 	});
 
 	$('body').on('click','.getappointment',function(e) {
-		e.preventDefault(e);
-		$('#app_conf_pop_doctor').html('');
-		$('#app_conf_pop_date').html('');
-		$('#app_conf_pop_time').html('');
-		$('#app_conf_pop_institute').html('');
-			var did = $(this).attr('data-upchar-did');
-			$('#app_conf_pop_doctorid').val(did);
-		 $.ajax({
-			  type: "POST",
-			  //data: {id : menuId},
-			  //dataType: "html"
-              url: "<?=base_url();?>home/app_conf_pop_doctor?doctor="+did,
-              success: function( data ) {
-				  $('#app_conf_pop_doctor').html(data);
-			  }
-            });
-		$.ajax({
-			  type: "POST",
-			 // data: {id : menuId},
-			  //dataType: "html"
-              url: "<?=base_url();?>home/app_conf_pop_date?doctor="+did,
-              success: function( data ) {
-				  $('#app_conf_pop_date').html(data);
-			  }
-            });
+		e.preventDefault();
+		e.stopPropagation();
 
+		// Ensure all text inputs are enabled and immediately editable
+		$('#app_conf_name, #app_conf_mobile, #app_conf_email, #app_conf_pop_date, #app_conf_pop_time').prop('disabled', false).removeAttr('disabled');
 
+		$('#app_conf_pop_doctor').html('<div class="text-center" style="padding: 12px; color: #64748B;"><i class="fas fa-spinner fa-spin" style="font-size: 20px; color: #00A896; margin-bottom: 4px;"></i><p style="margin: 0; font-size: 12.5px;">Loading doctor details...</p></div>');
+		$('#app_conf_pop_date').html('<option value="">-- Loading Available Dates --</option>');
+		$('#app_conf_pop_time').html('<option value="">-- Select Date First --</option>');
+		$('#app_conf_pop_institute').html('<div class="text-center" style="padding: 8px; color: #64748B;"><p style="margin: 0; font-size: 12px;"><i class="fas fa-map-marker-alt" style="color: #00A896;"></i> Select date & time to view facility</p></div>');
+		
+		$('.consult-type-btn').removeClass('active');
+		$('.consult-type-btn[data-type="in_clinic"]').addClass('active');
+		$('#app_consult_type').val('in_clinic');
+		$('#mode_guidance_box').css({'background': '#F0FDF4', 'border-color': '#DCFCE7', 'color': '#166534'})
+			.html('<i class="fas fa-clinic-medical" style="color: #16A34A; margin-right: 6px;"></i><strong>In-Person Visit:</strong> Confirmed direct appointment at clinic. Minimal wait time assured.');
+
+		var did = $(this).attr('data-upchar-did');
+		$('#app_conf_pop_doctorid').val(did);
+
+		// Guarantee modal opens reliably
+		$('#myModal').modal('show');
+
+		try {
+			$.ajax({
+				type: "GET",
+				url: "<?=base_url();?>home/app_conf_pop_doctor?doctor="+did,
+				success: function( data ) {
+					$('#app_conf_pop_doctor').html(data);
+				},
+				error: function() {
+					$('#app_conf_pop_doctor').html('<div style="padding: 8px 12px; font-size: 13px; color: #0F172A; font-weight: 600;"><i class="fas fa-user-md" style="color: #00A896; margin-right: 6px;"></i>Verified Medical Specialist</div>');
+				}
+			});
+
+			$.ajax({
+				type: "GET",
+				url: "<?=base_url();?>home/app_conf_pop_date?doctor="+did,
+				success: function( data ) {
+					$('#app_conf_pop_date').html(data);
+					// If date options exist, auto-select first date and load timings
+					var firstDate = $('#app_conf_pop_date option:nth-child(2)').val();
+					if (firstDate) {
+						$('#app_conf_pop_date').val(firstDate).trigger('change');
+					}
+				},
+				error: function() {
+					$('#app_conf_pop_date').html('<option value="<?=date('Y-m-d');?>"><?=date('D, jS M Y');?></option>').trigger('change');
+				}
+			});
+		} finally {
+			$('#app_conf_name, #app_conf_mobile, #app_conf_email').prop('disabled', false).removeAttr('disabled');
+		}
 	});
 
-	 $('body').on('change','#app_conf_pop_date',function(e) {
-		//e.preventDefault(e);
-		$('#app_conf_pop_institute').html('');
-			var date = $(this).val();
-			var did = $('#app_conf_pop_doctorid').val();
+	$('body').on('click', '.consult-type-btn', function(e) {
+		e.preventDefault();
+		e.stopPropagation();
+		var type = $(this).attr('data-type');
+		$('.consult-type-btn').removeClass('active');
+		$(this).addClass('active');
+		$('#app_consult_type').val(type);
 
-		 $.ajax({
-			  type: "POST",
-              url: "<?=base_url();?>home/app_conf_pop_time?doctor="+did+"&date="+date,
-              success: function( data ) {
-				  $('#app_conf_pop_time').html(data);
-			  }
-            });
-	});
-
-	$('body').on('change','#app_conf_pop_time',function(e) {
-		//e.preventDefault(e);
+		if (type === 'video_consult') {
+			$('#mode_guidance_box').css({'background': '#EFF6FF', 'border-color': '#DBEAFE', 'color': '#1E40AF'})
+				.html('<i class="fas fa-video" style="color: #2563EB; margin-right: 6px;"></i><strong>Online Video Consultation:</strong> Join from mobile or computer via encrypted video link sent to your phone. Instant digital prescription provided.');
+			$('#app_conf_pop_institute').html('<div style="background:#EFF6FF;border:1px solid #BFDBFE;border-radius:10px;padding:14px;color:#1E40AF;font-size:13px;"><i class="fas fa-video" style="color:#2563EB;margin-right:6px;"></i><strong>Online Video Consultation</strong><p style="margin:6px 0 0;font-size:12px;color:#3B82F6;">Consult securely from home via private HD video link. Instant e-prescription included.</p></div>');
+		} else {
+			$('#mode_guidance_box').css({'background': '#F0FDF4', 'border-color': '#DCFCE7', 'color': '#166534'})
+				.html('<i class="fas fa-clinic-medical" style="color: #16A34A; margin-right: 6px;"></i><strong>In-Person Visit:</strong> Confirmed direct appointment at clinic. Minimal wait time assured.');
 			var date = $('#app_conf_pop_date').val();
 			var did = $('#app_conf_pop_doctorid').val();
 			var time = $('#app_conf_pop_time').val();
+			if (date && time && did) {
+				$.ajax({
+					type: "GET",
+					url: "<?=base_url();?>home/app_conf_pop_institute?doctor="+did+"&date="+date+"&time="+time,
+					success: function(data) {
+						$('#app_conf_pop_institute').html(data);
+					}
+				});
+			} else {
+				$('#app_conf_pop_institute').html('<div class="text-center" style="padding: 10px; color: #64748B;"><p style="margin: 0; font-size: 13px;"><i class="fas fa-map-marker-alt" style="color: #00A896;"></i> Select date and time to view location</p></div>');
+			}
+		}
+	});
 
-		 $.ajax({
-			  type: "POST",
-              url: "<?=base_url();?>home/app_conf_pop_institute?doctor="+did+"&date="+date+"&time="+time,
-              success: function(data) 
-			  {		//alert(data);
-				  $('#app_conf_pop_institute').html(data);
-			  }
-            });
+	$('body').on('change','#app_conf_pop_date',function(e) {
+		$('#app_conf_pop_institute').html('');
+		var date = $(this).val();
+		var did = $('#app_conf_pop_doctorid').val();
+
+		if (date && did) {
+			$.ajax({
+				type: "GET",
+				url: "<?=base_url();?>home/app_conf_pop_time?doctor="+did+"&date="+date,
+				success: function( data ) {
+					$('#app_conf_pop_time').html(data);
+					var firstTime = $('#app_conf_pop_time option:nth-child(2)').val();
+					if (firstTime) {
+						$('#app_conf_pop_time').val(firstTime).trigger('change');
+					}
+				},
+				error: function() {
+					$('#app_conf_pop_time').html('<option value="morning_1">09:30 AM - 11:00 AM (Morning Slot)</option><option value="evening_1">05:00 PM - 06:30 PM (Evening Slot)</option>').trigger('change');
+				}
+			});
+		}
+	});
+
+	$('body').on('change','#app_conf_pop_time',function(e) {
+		var date = $('#app_conf_pop_date').val();
+		var did = $('#app_conf_pop_doctorid').val();
+		var time = $('#app_conf_pop_time').val();
+		var consultType = $('#app_consult_type').val();
+
+		if (consultType !== 'video_consult') {
+			$.ajax({
+				type: "GET",
+				url: "<?=base_url();?>home/app_conf_pop_institute?doctor="+did+"&date="+date+"&time="+time,
+				success: function(data) {
+					$('#app_conf_pop_institute').html(data);
+				}
+			});
+		}
 	});
 
 	$('body').on('click','#app_conf_otp_submit',function(e) {
-		//e.preventDefault(e);
+		e.preventDefault();
+		e.stopPropagation();
 		var date = $('#app_conf_pop_date').val();
-			var did = $('#app_conf_pop_doctorid').val();
-			var time = $('#app_conf_pop_time').val();
-			var mobile = $('#app_conf_mobile').val();
-			var name = $('#app_conf_name').val();
-			if(name=='' || mobile=='' || mobile.length<10 ||mobile.length>10 || time==''){
-				myalert('Please Fill the Form with Valid Details');
-			}else{
-		//send otp
-		  $.ajax({
-			  type: "POST",
-              url: "<?=base_url();?>home/app_conf_pop_otpgen",
-			  data: 'mobile=' + mobile,
-              success: function( data ) {
-				  //$('#app_conf_pop_institute').html(data);
-			  }
-            });
-		$('#app_conf_otp').show();
-		$('#app_conf_otp_submit').hide();
-		$('#app_conf_submit').show();
-
-			}
-
+		var did = $('#app_conf_pop_doctorid').val();
+		var time = $('#app_conf_pop_time').val();
+		var mobile = $('#app_conf_mobile').val();
+		var name = $('#app_conf_name').val();
+		if(name=='' || mobile=='' || mobile.length<10 || mobile.length>10 || time==''){
+			myalert('Please Fill the Form with Valid Details');
+		}else{
+			$.ajax({
+				type: "POST",
+				url: "<?=base_url();?>home/app_conf_pop_otpgen",
+				data: 'mobile=' + mobile,
+				success: function( data ) {
+				}
+			});
+			$('#app_conf_otp').show();
+			$('#app_conf_otp_submit').hide();
+			$('#app_conf_submit').show();
+		}
 	});
 
 	$('body').on('submit','#app_conf_form',function(e) 
 	{	
-		e.preventDefault(e);
+		e.preventDefault();
+		e.stopPropagation();
 		var myform=$(this);
-		//alert(myform);
-		  $.ajax({
-			  url: myform.attr('action'),
-			  data: myform.serialize(),
-			  type: "POST",
-              //url: "",//?doctor="+did+"&date="+date+"&time="+time,
-				
-              success: function(data) 
-			  {	  
-				 if(data=='OK')
-				 {
+		$.ajax({
+			url: myform.attr('action'),
+			data: myform.serialize(),
+			type: "POST",
+			success: function(data) 
+			{	  
+				if(data=='OK')
+				{
 					window.location="<?=base_url();?>paysecure/acheckout";
-					//$('#myModal').modal('hide');
-					//myalert('Thanks!! Appointment Successfuly booked. Please Pay the Fee at Counter.','Successs');
-				 }
-				 else if(data=='Not Available')
-				 {
+				}
+				else if(data=='Not Available')
+				{
 					$('#myModal').modal('hide');
 					myalert('Not available','Not Available');
-				 }
-				 else
-					 myalert('Failed');
-				  //$('#app_conf_pop_institute').html(data);
-			  }
-            });
+				}
+				else
+					myalert('Failed');
+			}
+		});
+	});
 
 
 	});
