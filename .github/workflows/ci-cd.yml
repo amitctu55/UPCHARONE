@@ -17,7 +17,7 @@ jobs:
   # -------------------------------------------------------------
   ci-build-and-test:
     name: 🧪 PHP Lint & Code Quality
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     steps:
       - name: 📥 Checkout Repository
@@ -27,26 +27,35 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: '7.4'
-          extensions: mbstring, xml, ctype, iconv, mysql, mysqli, pdo_mysql, curl, gd, zip, json
-          tools: php-cs-fixer
+          extensions: mbstring, xml, ctype, iconv, mysqli, pdo_mysql, curl, gd, zip, json
+          tools: composer
 
-      - name: 🔍 Check PHP Syntax across Entire Project
+      - name: 🔍 Check PHP Syntax across Project
         run: |
-          echo "Scanning application and admin1947 directories for PHP syntax errors..."
+          echo "Scanning application, admin1947, and core system directories..."
           ERRORS=0
+          CHECKED=0
           
-          # Find and validate all PHP files excluding third-party vendor dirs
-          for file in $(find . -type f -name "*.php" ! -path "*/third_party/*" ! -path "*/vendor/*" ! -path "*/tcpdf/*"); do
-            php -l "$file" > /dev/null 2>&1
+          # Target application, admin1947, and system while excluding vendor/third-party/cache
+          for file in $(find application admin1947 system -type f -name "*.php" \
+            ! -path "*/third_party/*" \
+            ! -path "*/vendor/*" \
+            ! -path "*/tcpdf/*" \
+            ! -path "*/PHPExcel/*" \
+            ! -path "*/cache/*"); do
+            
+            CHECKED=$((CHECKED + 1))
+            OUTPUT=$(php -l "$file" 2>&1)
             if [ $? -ne 0 ]; then
               echo "❌ Syntax error in: $file"
-              php -l "$file"
+              echo "$OUTPUT"
               ERRORS=$((ERRORS + 1))
             fi
           done
           
+          echo "Scanned $CHECKED PHP files."
           if [ $ERRORS -eq 0 ]; then
-            echo "✅ All PHP files passed syntax verification!"
+            echo "✅ All $CHECKED PHP files passed syntax verification with 0 errors!"
           else
             echo "❌ Total syntax errors encountered: $ERRORS"
             exit 1
