@@ -55,9 +55,9 @@ jobs:
       - name: 📥 Checkout Repository
         uses: actions/checkout@v4
 
-      # Deployment via SSH / Rsync (Enable by adding SSH_HOST, SSH_USER, SSH_KEY, SSH_PORT to GitHub Secrets)
+      # Deployment via SSH / Rsync (Triggers when SSH_HOST secret is configured)
       - name: 🌐 Deploy via SSH / Rsync
-        if: "${{ env.SSH_HOST != '' }}"
+        if: "${{ secrets.SSH_HOST != '' }}"
         env:
           SSH_HOST: ${{ secrets.SSH_HOST }}
           SSH_USER: ${{ secrets.SSH_USER }}
@@ -83,9 +83,9 @@ jobs:
           
           echo "✅ SSH deployment completed successfully."
 
-      # Optional FTP Deployment fallback (Enable by adding FTP_SERVER, FTP_USERNAME, FTP_PASSWORD to GitHub Secrets)
+      # Optional FTP Deployment fallback (Triggers when FTP_SERVER secret is configured and SSH_HOST is not)
       - name: 📤 Deploy via FTP (Optional fallback)
-        if: "${{ env.FTP_SERVER != '' && env.SSH_HOST == '' }}"
+        if: "${{ secrets.FTP_SERVER != '' && secrets.SSH_HOST == '' }}"
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
           server: ${{ secrets.FTP_SERVER }}
