@@ -83,15 +83,16 @@ jobs:
           
           echo "✅ SSH deployment completed successfully."
 
-      # Optional FTP Deployment fallback (Triggers when FTP_SERVER secret is configured and SSH_HOST is not)
-      - name: 📤 Deploy via FTP (Optional fallback)
-        if: "${{ secrets.FTP_SERVER != '' && secrets.SSH_HOST == '' }}"
+      # FTP Deployment to web.cloudonfire.com (Triggers when FTP_PASSWORD secret is configured)
+      - name: 📤 Deploy via FTP to Live Server
+        if: "${{ secrets.FTP_PASSWORD != '' }}"
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
-          server: ${{ secrets.FTP_SERVER }}
-          username: ${{ secrets.FTP_USERNAME }}
+          server: ${{ secrets.FTP_SERVER || 'web.cloudonfire.com' }}
+          username: ${{ secrets.FTP_USERNAME || 'amit_upchar.info' }}
           password: ${{ secrets.FTP_PASSWORD }}
-          server-dir: ${{ secrets.FTP_SERVER_DIR || '/public_html/' }}
+          port: ${{ secrets.FTP_PORT || 21 }}
+          server-dir: ${{ secrets.FTP_SERVER_DIR || '/' }}
           exclude: |
             **/.git*
             **/.git*/**
@@ -99,5 +100,6 @@ jobs:
             **/*.sql
             **/error_log
             **/push-error.txt
+            **/tests/**
             **/application/cache/**
             **/admin1947/application/cache/**
