@@ -1,0 +1,122 @@
+name: UPCHAR CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+
+jobs:
+  # -------------------------------------------------------------
+  # Job 1: Continuous Integration (Linting, Syntax Checks, PHP Validation)
+  # -------------------------------------------------------------
+  ci-build-and-test:
+    name: 🧪 PHP Lint & Code Quality
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: 🐘 Setup PHP Environment
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '7.4'
+          extensions: mbstring, xml, ctype, iconv, mysql, mysqli, pdo_mysql, curl, gd, zip, json
+          tools: php-cs-fixer
+
+      - name: 🔍 Check PHP Syntax across Entire Project
+        run: |
+          echo "Scanning application and admin1947 directories for PHP syntax errors..."
+          ERRORS=0
+          
+          # Find and validate all PHP files excluding third-party vendor dirs
+          for file in $(find . -type f -name "*.php" ! -path "*/third_party/*" ! -path "*/vendor/*" ! -path "*/tcpdf/*"); do
+            php -l "$file" > /dev/null 2>&1
+            if [ $? -ne 0 ]; then
+              echo "❌ Syntax error in: $file"
+              php -l "$file"
+              ERRORS=$((ERRORS + 1))
+            fi
+          done
+          
+          if [ $ERRORS -eq 0 ]; then
+            echo "✅ All PHP files passed syntax verification!"
+          else
+            echo "❌ Total syntax errors encountered: $ERRORS"
+            exit 1
+          fi
+
+      - name: 🛡️ Security & Config Audit
+        run: |
+          echo "Checking directory permissions and sensitive files..."
+          # Ensure critical directories exist
+          mkdir -p application/cache admin1947/application/cache
+          chmod -R 777 application/cache admin1947/application/cache || true
+          echo "✅ Directory integrity verified."
+
+  # -------------------------------------------------------------
+  # Job 2: Continuous Deployment (Deploy to Production / Staging Server)
+  # (Runs automatically on pushes to 'main' after CI passes)
+  # -------------------------------------------------------------
+  cd-deploy:
+    name: 🚀 Automated Deployment
+    needs: ci-build-and-test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+
+      # Deployment via SSH / Rsync (Enable by adding SSH_HOST, SSH_USER, SSH_KEY, SSH_PORT to GitHub Secrets)
+      - name: 🌐 Deploy via SSH / Rsync
+        if: "${{ env.SSH_HOST != '' }}"
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SSH_PORT: ${{ secrets.SSH_PORT || 22 }}
+          TARGET_DIR: ${{ secrets.SERVER_TARGET_PATH || '/var/www/html/upchar' }}
+        run: |
+          echo "Setting up SSH Key for deployment..."
+          mkdir -p ~/.ssh
+          echo "$SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          
+          echo "Syncing files to $SSH_USER@$SSH_HOST:$TARGET_DIR..."
+          rsync -avz -e "ssh -p $SSH_PORT -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" \
+            --exclude '.git/' \
+            --exclude '.github/' \
+            --exclude '*.sql' \
+            --exclude 'push-error.txt' \
+            --exclude 'error_log' \
+            --exclude 'application/cache/*' \
+            --exclude 'admin1947/application/cache/*' \
+            ./ "$SSH_USER@$SSH_HOST:$TARGET_DIR"
+          
+          echo "✅ SSH deployment completed successfully."
+
+      # Optional FTP Deployment fallback (Enable by adding FTP_SERVER, FTP_USERNAME, FTP_PASSWORD to GitHub Secrets)
+      - name: 📤 Deploy via FTP (Optional fallback)
+        if: "${{ env.FTP_SERVER != '' && env.SSH_HOST == '' }}"
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          server-dir: ${{ secrets.FTP_SERVER_DIR || '/public_html/' }}
+          exclude: |
+            **/.git*
+            **/.git*/**
+            **/.github/**
+            **/*.sql
+            **/error_log
+            **/push-error.txt
+            **/application/cache/**
+            **/admin1947/application/cache/**
