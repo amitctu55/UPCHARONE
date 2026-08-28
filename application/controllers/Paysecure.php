@@ -55,11 +55,14 @@ class Paysecure extends CI_Controller {
 
 	public function acheckout()
 	{
+		$this->load->model('Wallet_model');
 		$gatewayData=$this->session->userdata('SecurePay');
-		//echo "<pre>"; print_r($gatewayData); die;
 		$AppointmentCheckout=$this->session->userdata('AppointmentCheckout');
 		if(isset($gatewayData) && count($gatewayData))
 		{
+			$userId = $this->session->userdata('USERID') ?: $this->session->userdata('userid') ?: $this->session->userdata('WEB_UID') ?: $this->session->userdata('user_id');
+			$user_points = $userId ? $this->Wallet_model->get_balance($userId) : 0.00;
+			$data['user_points'] = $user_points;
 			$data['gatewayData']=$gatewayData;
 			$data['AppointmentCheckout']=$AppointmentCheckout;
 			$this->load->view('secure/appointmentcheckout',$data);
@@ -67,8 +70,84 @@ class Paysecure extends CI_Controller {
 		{
 			echo '403 UnAuthorized Access!!';
 		}
+	}
 
+	public function pay_via_points()
+	{
+		$this->load->model('Wallet_model');
+		$gatewayData = $this->session->userdata('SecurePay');
+		$appointmentId = $this->session->userdata('AppointmentCheckout');
 
+		if (!$gatewayData || !$appointmentId) {
+			$this->session->set_flashdata('flashmsg', '<div class="alert alert-danger">Checkout session expired.</div>');
+			redirect(base_url('login'));
+			return;
+		}
+
+		$amount = floatval($gatewayData['Amount']);
+		$userId = $this->session->userdata('USERID') ?: $this->session->userdata('userid') ?: $this->session->userdata('WEB_UID') ?: $this->session->userdata('user_id');
+
+		if (!$userId) {
+			$appRow = $this->db->get_where('appointment', array('appointment_id' => $appointmentId))->row_array();
+			if ($appRow && !empty($appRow['appointment_mobile'])) {
+				$usr = $this->db->get_where('userlogin', array('MOBILE' => $appRow['appointment_mobile']))->row_array();
+				if ($usr) {
+					$userId = $usr['USERID'];
+				}
+			}
+		}
+
+		if (!$userId) {
+			$this->session->set_flashdata('flashmsg', '<div class="alert alert-warning">Please login to pay with Upchar Points.</div>');
+			redirect(base_url('login'));
+			return;
+		}
+
+		$pointsNeeded = $this->Wallet_model->money_to_points($amount);
+		$userBalance = $this->Wallet_model->get_balance($userId);
+
+		if ($userBalance < $pointsNeeded) {
+			$this->session->set_flashdata('flashmsg', '<div class="alert alert-danger">Insufficient Upchar Points balance (Required: ' . $pointsNeeded . ', Available: ' . $userBalance . ').</div>');
+			redirect(base_url('paysecure/acheckout'));
+			return;
+		}
+
+		// Debit Points
+		$desc = 'Payment for Doctor Appointment #' . $appointmentId;
+		$txn_ref = $this->Wallet_model->debit_points($userId, $pointsNeeded, 'APPOINTMENT_PAYMENT', $appointmentId, $desc);
+
+		if ($txn_ref) {
+			// Update Appointment record
+			$updateData = array(
+				'payment_status'     => 'PAID',
+				'payment_mode'       => 'UPCHAR_POINTS',
+				'ref_no'             => $txn_ref,
+				'pay_date'           => date('Y-m-d H:i:s'),
+				'appointment_status' => '1',
+				'user_id'            => $userId
+			);
+			$this->db->where('appointment_id', $appointmentId);
+			$this->db->update('appointment', $updateData);
+
+			// Award Cashback Points
+			$cashbackPct = floatval($this->Wallet_model->get_setting('cashback_percentage', 5.00));
+			if ($cashbackPct > 0) {
+				$cashbackPoints = round(($amount * ($cashbackPct / 100)), 2);
+				if ($cashbackPoints > 0) {
+					$this->Wallet_model->credit_points($userId, $cashbackPoints, 'APPOINTMENT_CASHBACK', $appointmentId, 'Cashback reward for Appointment #' . $appointmentId, 'WALLET');
+				}
+			}
+
+			// Clear session checkout data
+			$this->session->unset_userdata('SecurePay');
+			$this->session->unset_userdata('AppointmentCheckout');
+
+			$this->session->set_flashdata('flashmsg', '<div class="alert alert-success"><strong>Payment Successful!</strong> Paid ₹' . $amount . ' using ' . $pointsNeeded . ' Upchar Points. Appointment #' . $appointmentId . ' Confirmed!</div>');
+			redirect(base_url('myappointents'));
+		} else {
+			$this->session->set_flashdata('flashmsg', '<div class="alert alert-danger">Wallet payment transaction failed. Please try again.</div>');
+			redirect(base_url('paysecure/acheckout'));
+		}
 	}
 	public function acheckout_hospital()
 	{	

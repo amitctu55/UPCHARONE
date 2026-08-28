@@ -90,6 +90,16 @@ $pageurl3 = $this->uri->segment(3);
         </ul>
       </li>
 
+      <!-- Upchar Points & Wallet -->
+      <li class="<?php if($pageurl1=='masters' && $pageurl2=='walletadmin'){ ?>active<?php }?>">
+        <a href="<?=base_url('masters/walletadmin');?>">
+          <i class="fa fa-star" style="color: #f59e0b;"></i> <span>Upchar Points Wallet</span>
+          <span class="pull-right-container">
+            <small class="label pull-right bg-green">Active</small>
+          </span>
+        </a>
+      </li>
+
       <!-- Master Sections with Dropdowns -->
       <?php if(!empty($section)){
         for($i=0; $i<count($section); $i++){ 

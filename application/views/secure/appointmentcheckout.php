@@ -352,21 +352,49 @@ $(document).ready(function(){
                             </p></td>
                         </tr>
                         <tr>
-                            <td colspan=2 style="font-weight:bold;text-align: center;"> Note<br>If You have a valid Coupon You can apply on next (Payment Page) to get discount   </td>
+                            <td colspan="4" style="background: #f0fdfa; border: 1px solid #ccfbf1; padding: 15px; border-radius: 8px;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                                    <div>
+                                        <h5 style="margin: 0 0 4px; font-weight: 800; color: #065f46;">
+                                            <i class="fa fa-star" style="color: #f59e0b;"></i> Upchar Points Wallet
+                                        </h5>
+                                        <span style="font-size: 13px; color: #047857;">
+                                            Available Balance: <strong><?=number_format(@$user_points, 2);?> Upchar Points (₹<?=number_format(@$user_points, 2);?>)</strong>
+                                        </span>
+                                    </div>
+                                    <?php if(floatval(@$user_points) >= floatval($gatewayData['Amount'])): ?>
+                                        <a href="<?=base_url();?>paysecure/pay_via_points" class="btn" style="background: #00a896; color: #ffffff; font-weight: 700; padding: 10px 20px; border-radius: 6px; text-decoration: none; box-shadow: 0 4px 10px rgba(0,168,150,0.3);">
+                                            <i class="fa fa-bolt"></i> 1-Click Pay with Points (<?=floatval($gatewayData['Amount']);?> Pts)
+                                        </a>
+                                    <?php else: ?>
+                                        <a href="<?=base_url();?>wallet" target="_blank" style="font-size: 12.5px; color: #0284c7; font-weight: 600; text-decoration: underline;">
+                                            <i class="fa fa-plus-circle"></i> Add More Points in Wallet
+                                        </a>
+                                    <?php endif; ?>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan=2 style="font-weight:bold;text-align: center; color: #64748b;"> Note<br>If You have a valid Coupon You can apply on next (Payment Page) to get discount </td>
                             
-                            <td class="text-right"><h4><strong>Total</strong></h4></td>
-                            <td class="text-center"><h4><strong style="color:green;">Rs <?=$gatewayData['Amount'];?></strong></h4></td>
+                            <td class="text-right"><h4><strong>Total Payable</strong></h4></td>
+                            <td class="text-center"><h4><strong style="color:#00a896; font-size: 22px;">Rs <?=$gatewayData['Amount'];?></strong></h4></td>
                         </tr>
                     </tbody>
                 </table>
                 </div>
                 
-				<div class="text-right">
-                <button type="button" class="btn btn-primary btn- buttonsforcoc">
-                   Pay On Counter</span>
+				<div class="text-right" style="margin-top: 15px; display: flex; justify-content: flex-end; gap: 10px; flex-wrap: wrap;">
+                <?php if(floatval(@$user_points) >= floatval($gatewayData['Amount'])): ?>
+                <a href="<?=base_url();?>paysecure/pay_via_points" class="btn btn-success" style="background: #00a896; border-color: #00a896; font-weight: 700; padding: 12px 24px;">
+                    <i class="fa fa-bolt"></i> Pay via Upchar Points
+                </a>
+                <?php endif; ?>
+                <button type="button" class="btn btn-primary buttonsforcoc" style="font-weight: 700; padding: 12px 20px;">
+                    <i class="fa fa-hospital-o"></i> Pay On Counter
                 </button>
-                <button type="button" class="btn btn-success btn-  buttonsforpayment">
-                    Pay Now Online</span>
+                <button type="button" class="btn btn-success buttonsforpayment" style="background: #043d5b; border-color: #043d5b; font-weight: 700; padding: 12px 20px;">
+                    <i class="fa fa-credit-card"></i> Pay Online Gateway
                 </button>
                 </div>
 				</td>
