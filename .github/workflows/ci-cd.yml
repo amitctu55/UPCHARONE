@@ -36,7 +36,6 @@ jobs:
       - name: 🛡️ Security & Config Audit
         run: |
           echo "Checking directory permissions and sensitive files..."
-          # Ensure critical directories exist
           mkdir -p application/cache admin1947/application/cache
           chmod -R 777 application/cache admin1947/application/cache || true
           echo "✅ Directory integrity verified."
@@ -50,20 +49,25 @@ jobs:
     needs: ci-build-and-test
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    env:
+      FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
+      FTP_SERVER: ${{ secrets.FTP_SERVER || 'web.cloudonfire.com' }}
+      FTP_USERNAME: ${{ secrets.FTP_USERNAME || 'amit_upchar.info' }}
+      FTP_PORT: ${{ secrets.FTP_PORT || 21 }}
+      FTP_SERVER_DIR: ${{ secrets.FTP_SERVER_DIR || '/' }}
+      SSH_HOST: ${{ secrets.SSH_HOST }}
+      SSH_USER: ${{ secrets.SSH_USER }}
+      SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+      SSH_PORT: ${{ secrets.SSH_PORT || 22 }}
+      TARGET_DIR: ${{ secrets.SERVER_TARGET_PATH || '/var/www/html/upchar' }}
 
     steps:
       - name: 📥 Checkout Repository
         uses: actions/checkout@v4
 
-      # Deployment via SSH / Rsync (Triggers when SSH_HOST secret is configured)
+      # Deployment via SSH / Rsync (Triggers when SSH_HOST is configured)
       - name: 🌐 Deploy via SSH / Rsync
-        if: "${{ secrets.SSH_HOST != '' }}"
-        env:
-          SSH_HOST: ${{ secrets.SSH_HOST }}
-          SSH_USER: ${{ secrets.SSH_USER }}
-          SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-          SSH_PORT: ${{ secrets.SSH_PORT || 22 }}
-          TARGET_DIR: ${{ secrets.SERVER_TARGET_PATH || '/var/www/html/upchar' }}
+        if: env.SSH_HOST != ''
         run: |
           echo "Setting up SSH Key for deployment..."
           mkdir -p ~/.ssh
@@ -77,22 +81,23 @@ jobs:
             --exclude '*.sql' \
             --exclude 'push-error.txt' \
             --exclude 'error_log' \
+            --exclude 'tests/' \
             --exclude 'application/cache/*' \
             --exclude 'admin1947/application/cache/*' \
             ./ "$SSH_USER@$SSH_HOST:$TARGET_DIR"
           
           echo "✅ SSH deployment completed successfully."
 
-      # FTP Deployment to web.cloudonfire.com (Triggers when FTP_PASSWORD secret is configured)
+      # FTP Deployment to web.cloudonfire.com (Triggers when FTP_PASSWORD is configured and SSH_HOST is not)
       - name: 📤 Deploy via FTP to Live Server
-        if: "${{ secrets.FTP_PASSWORD != '' }}"
+        if: env.FTP_PASSWORD != '' && env.SSH_HOST == ''
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
-          server: ${{ secrets.FTP_SERVER || 'web.cloudonfire.com' }}
-          username: ${{ secrets.FTP_USERNAME || 'amit_upchar.info' }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          port: ${{ secrets.FTP_PORT || 21 }}
-          server-dir: ${{ secrets.FTP_SERVER_DIR || '/' }}
+          server: ${{ env.FTP_SERVER }}
+          username: ${{ env.FTP_USERNAME }}
+          password: ${{ env.FTP_PASSWORD }}
+          port: ${{ env.FTP_PORT }}
+          server-dir: ${{ env.FTP_SERVER_DIR }}
           exclude: |
             **/.git*
             **/.git*/**
