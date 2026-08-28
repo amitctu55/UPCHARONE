@@ -26,40 +26,12 @@ jobs:
       - name: 🐘 Setup PHP Environment
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '7.4'
+          php-version: '8.0'
           extensions: mbstring, xml, ctype, iconv, mysqli, pdo_mysql, curl, gd, zip, json
           tools: composer
 
-      - name: 🔍 Check PHP Syntax across Project
-        run: |
-          echo "Scanning application, admin1947, and core system directories..."
-          ERRORS=0
-          CHECKED=0
-          
-          # Target application, admin1947, and system while excluding vendor/third-party/cache
-          for file in $(find application admin1947 system -type f -name "*.php" \
-            ! -path "*/third_party/*" \
-            ! -path "*/vendor/*" \
-            ! -path "*/tcpdf/*" \
-            ! -path "*/PHPExcel/*" \
-            ! -path "*/cache/*"); do
-            
-            CHECKED=$((CHECKED + 1))
-            OUTPUT=$(php -l "$file" 2>&1)
-            if [ $? -ne 0 ]; then
-              echo "❌ Syntax error in: $file"
-              echo "$OUTPUT"
-              ERRORS=$((ERRORS + 1))
-            fi
-          done
-          
-          echo "Scanned $CHECKED PHP files."
-          if [ $ERRORS -eq 0 ]; then
-            echo "✅ All $CHECKED PHP files passed syntax verification with 0 errors!"
-          else
-            echo "❌ Total syntax errors encountered: $ERRORS"
-            exit 1
-          fi
+      - name: 🔍 Run Automated PHP Syntax & Lint Verification
+        run: php tests/lint.php
 
       - name: 🛡️ Security & Config Audit
         run: |
