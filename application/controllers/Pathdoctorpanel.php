@@ -28,7 +28,35 @@ class Pathdoctorpanel extends CI_Controller {
 			 if (!in_array($page, $excep_array))
 				redirect('pathdoctor-login');
 		 }else{
-			 $this->did=$this->db->where('user_id',$this->session->userdata('druserid'))->get('pathdoctor')->row()->id;
+			 $druserid = $this->session->userdata('druserid');
+			 $row = $this->db->where('user_id', $druserid)->or_where('id', $druserid)->get('pathdoctor')->row();
+			 $pathDocLog = $this->db->where('USERID', $druserid)->get('pathdoctorlogin')->row();
+
+			 $is_verified = true;
+			 if ($pathDocLog && $pathDocLog->APPROVED == '0') {
+				 $is_verified = false;
+			 }
+			 if ($row) {
+				 $this->did = $row->id;
+				 if ((isset($row->verification_status) && $row->verification_status !== 'verified') ||
+					 (isset($row->approved) && $row->approved == '0') ||
+					 (isset($row->status) && $row->status == '0') ||
+					 (isset($row->is_active) && (int)$row->is_active === 0)) {
+					 $is_verified = false;
+				 }
+			 } else {
+				 $this->did = null;
+				 $is_verified = false;
+			 }
+
+			 if (!$is_verified) {
+				 $this->session->unset_userdata('druserid');
+				 $this->session->unset_userdata('druseremail');
+				 $this->session->unset_userdata('drusername');
+				 $this->session->set_flashdata('flashmsg', "<div class='alert alert-danger' style='margin: 15px 0; border-radius: 8px;'><i class='fa fa-ban'></i> Your pathologist account is pending verification and approval by the administrator. Access denied.</div>");
+				 redirect('pathdoctor-login');
+				 return;
+			 }
 		 }
 		 
 	}

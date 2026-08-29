@@ -5,9 +5,10 @@ class Pathdoctor_Model extends CI_Model {
    function __construct() {
 		 //parent::__construct();
 		 if($this->session->userdata('druserid')){
-			 $this->did= $this->db->where('user_id',$this->session->userdata('druserid'))->get('pathdoctor')->row()->id;
+			 $druserid = $this->session->userdata('druserid');
+			 $drRow = $this->db->where('user_id', $druserid)->or_where('id', $druserid)->get('pathdoctor')->row();
+			 $this->did = ($drRow && isset($drRow->id)) ? $drRow->id : $druserid;
 		 }
-		 
 	}
    
 	public function profile_step11(){

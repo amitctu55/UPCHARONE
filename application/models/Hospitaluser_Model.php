@@ -149,12 +149,39 @@ class Hospitaluser_Model extends CI_Model
 
 		if ($query->num_rows() > 0) {			
 			$row = $query->row();
+
+			// 1. Check account verification status
+			$hosp = $this->db->where('uid', $row->USERID)->or_where('id', $row->USERID)->get('hospital')->row();
+			$is_verified = true;
+
+			if ($row->APPROVED == '0') {
+				$is_verified = false;
+			}
+			if ($hosp) {
+				if (isset($hosp->verification_status) && $hosp->verification_status !== 'verified') {
+					$is_verified = false;
+				}
+				if (isset($hosp->approved) && $hosp->approved == '0') {
+					$is_verified = false;
+				}
+				if (isset($hosp->status) && $hosp->status == '0') {
+					$is_verified = false;
+				}
+				if (isset($hosp->is_active) && (int)$hosp->is_active === 0) {
+					$is_verified = false;
+				}
+			}
+
+			if (!$is_verified) {
+				return 'UNVERIFIED';
+			}
+
 			if ($row->STATUS == 1) {
 				$this->session->set_userdata('hosuserid', $row->USERID);
 				$this->session->set_userdata('hosuseremail', $row->EMAIL);				           
 				$this->session->set_userdata('hosusername', $row->FNAME);
 				
-				$hname = $this->db->where('uid', $row->USERID)->or_where('id', $row->USERID)->get('hospital')->row('name');
+				$hname = ($hosp && isset($hosp->name)) ? $hosp->name : $row->FNAME;
 				$this->session->set_userdata('hospitalname', $hname);
 				if (!empty($row->CART)) {
 					$cartArray = unserialize($row->CART);

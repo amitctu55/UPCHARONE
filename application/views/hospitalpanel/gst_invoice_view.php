@@ -214,7 +214,7 @@
 
     <div class="invoice-top-actions">
         <a href="<?=base_url('hospitalpanel/earnings#invoices');?>" class="btn-action">
-            <i class="fa fa-arrow-left"></i> Back to Revenue Portal
+            <i class="fa fa-arrow-left"></i> Back to Earnings Dashboard
         </a>
         <button onclick="window.print();" class="btn-action print">
             <i class="fa fa-print"></i> Print / Save as PDF
@@ -249,8 +249,8 @@
                 <div class="party-details">
                     Facility ID: #<?=$invoice->facility_id;?><br>
                     GSTIN / UIN: <?=($invoice->facility_gstin ?: 'Unregistered / Exempt');?><br>
-                    Address: <?=($hospital->address ?? 'On-file with Upchar Platform');?><br>
-                    Contact: <?=($hospital->mobile ?? 'N/A');?>
+                    Address: <?=($facility->address ?? 'On-file with Upchar Platform');?><br>
+                    Contact: <?=($facility->mobile ?? 'N/A');?>
                 </div>
             </div>
             <div class="party-card">

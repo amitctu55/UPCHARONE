@@ -142,38 +142,74 @@ class Doctoruser_Model extends CI_Model {
 	}
 	 
     public function login($email,$password){ 
-		$this -> db -> select(' * ');
-        $this -> db -> from('doctorlogin');
-        $this -> db -> where('EMAIL', $email);        $this -> db -> or_where('MOBILE', $email);
-        $this -> db -> where('PASSWORD', $password);
-       // $this -> db -> where('STATUS', '1');
-        $this -> db -> where('APPROVED', '1');
-        $this -> db -> limit(1);
-        $query = $this -> db -> get();//echo  $this->db->last_query();
-		if($query -> num_rows() > 0)
+		$email = trim($email);
+		$cleanMobile = preg_replace('/[^0-9]/', '', $email);
+		if (strlen($cleanMobile) > 10) $cleanMobile = substr($cleanMobile, -10);
+
+		$this->db->select('*')->from('doctorlogin');
+		$this->db->group_start();
+		$this->db->where('EMAIL', $email);
+		$this->db->or_where('MOBILE', $email);
+		if (!empty($cleanMobile) && strlen($cleanMobile) >= 10) {
+			$this->db->or_where('MOBILE', $cleanMobile);
+		}
+		$this->db->group_end();
+		$this->db->where('PASSWORD', $password);
+		$this->db->limit(1);
+		$query = $this->db->get();
+
+		if($query->num_rows() > 0)
         {			
 			$row = $query->row();
+
+			// 1. Check account verification status
+			$doc = $this->db->where('user_id', $row->USERID)->or_where('id', $row->USERID)->get('profile_dr')->row();
+			$is_verified = true;
+
+			if ($row->APPROVED == '0') {
+				$is_verified = false;
+			}
+			if ($doc) {
+				if (isset($doc->verification_status) && $doc->verification_status !== 'verified') {
+					$is_verified = false;
+				}
+				if (isset($doc->approved) && $doc->approved == '0') {
+					$is_verified = false;
+				}
+				if (isset($doc->status) && $doc->status == '0') {
+					$is_verified = false;
+				}
+				if (isset($doc->is_active) && (int)$doc->is_active === 0) {
+					$is_verified = false;
+				}
+			}
+
+			if (!$is_verified) {
+				return 'UNVERIFIED';
+			}
+
             if($row->STATUS==1){
                 $this->session->set_userdata('druserid', $row->USERID);
                 $this->session->set_userdata('druseremail', $row->EMAIL);				           
 				$this->session->set_userdata('drusername', $row->FNAME);
 				$this->session->set_userdata('druserlname', $row->LNAME);
            
-			if($row->CART!=''){
-				$cartArray = unserialize($row->CART);
-				$this->cart->insert($cartArray);
-			}
-			$this->load->model('Cart_Model');
-			$this->Cart_Model->update_cart_db();
-			return 'SUCCESS';
+				if(!empty($row->CART)){
+					$cartArray = unserialize($row->CART);
+					if (is_array($cartArray)) {
+						$this->cart->insert($cartArray);
+					}
+				}
+				$this->load->model('Cart_Model');
+				$this->Cart_Model->update_cart_db();
+				return 'SUCCESS';
 			}
 			else if($row->STATUS==0){
 				$otp=rand(100000,999999);
 				$this->db->where('USERID',$row->USERID)->set('OTP',$otp)->update('doctorlogin');
 				$this->session->set_userdata('drsignupuserid', $row->USERID);
-				$msg="Wecome to Upchar medical solutions. Your otp is $otp
-thank you for being a part of Upchar.";
-			sendsms($msg,$row->MOBILE);
+				$msg="Welcome to Upchar medical solutions. Your otp is $otp\nThank you for being a part of Upchar.";
+				@sendsms($msg,$row->MOBILE);
 				return 'OTP';
 			}
 			else if($row->STATUS==2){

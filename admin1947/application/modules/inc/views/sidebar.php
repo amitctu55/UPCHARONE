@@ -55,6 +55,8 @@ $pageurl3 = $this->uri->segment(3);
             </span>
           <?php endif; ?>
         </a>
+      </li>
+
       <!-- Revenue & Commission Module with Sublinks -->
       <li class="treeview <?php if($pageurl1=='admin_revenue'){ ?> active menu-open <?php }?>">
         <a href="<?=base_url('admin_revenue');?>">
@@ -234,15 +236,164 @@ $pageurl3 = $this->uri->segment(3);
 </aside>
 
 <style>
-@media (min-width: 1200px) and (max-width: 1400px){
-  .main-sidebar, .logo {
-    width: 180px;
+/* =========================================================
+   AdminLTE Windows & Cross-Device Responsive Sidebar Styles
+   ========================================================= */
+
+.main-sidebar {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background-color: #222d32 !important;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.25) transparent;
+}
+
+.main-sidebar .sidebar {
+  padding-bottom: 60px !important;
+}
+
+/* Windows WebKit Smooth Scrollbar */
+.main-sidebar::-webkit-scrollbar {
+  width: 6px;
+}
+.main-sidebar::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.15);
+}
+.main-sidebar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.25);
+  border-radius: 4px;
+}
+.main-sidebar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.45);
+}
+
+/* Ensure Submenus & Dropdowns Expand Inline Inside Scroll Container */
+.sidebar-menu .treeview-menu {
+  padding-left: 5px;
+  background: #1a2226 !important;
+}
+
+.sidebar-menu > li > a {
+  padding: 11px 16px 11px 15px;
+  font-size: 13px;
+  font-weight: 500;
+}
+.sidebar-menu .treeview-menu > li > a {
+  padding: 8px 10px 8px 18px;
+  font-size: 12.5px;
+}
+.sidebar-menu .header {
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  padding: 12px 15px 8px;
+  color: #94a3b8 !important;
+}
+
+/* ---------------------------------------------------------
+   DESKTOP & TABLET LANDSCAPE (Screen width >= 768px)
+   --------------------------------------------------------- */
+@media (min-width: 768px) {
+  .main-sidebar {
+    position: fixed !important;
+    top: 50px !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    height: calc(100vh - 50px) !important;
+    max-height: calc(100vh - 50px) !important;
+    width: 230px !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    padding-top: 0 !important;
+    z-index: 820 !important;
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.08);
   }
-  .content-wrapper, .main-footer {
-    margin-left: 180px;
+
+  .content-wrapper {
+    margin-left: 230px !important;
+    padding-top: 50px !important;
+    min-height: 100vh !important;
   }
-  .container {
-    width: 1120px;
+
+  .main-header {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    z-index: 830 !important;
+  }
+  .main-header .navbar {
+    margin-left: 230px !important;
+  }
+  .main-header .logo {
+    width: 230px !important;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    z-index: 840 !important;
+  }
+
+  /* Desktop Mini-Sidebar Collapsed Mode */
+  body.sidebar-collapse .main-sidebar {
+    width: 50px !important;
+    overflow: visible !important;
+  }
+  body.sidebar-collapse .content-wrapper,
+  body.sidebar-collapse .main-header .navbar {
+    margin-left: 50px !important;
+  }
+  body.sidebar-collapse .main-header .logo {
+    width: 50px !important;
+  }
+}
+
+/* ---------------------------------------------------------
+   MOBILE SCREENS & SMALL TABLETS (Screen width <= 767px)
+   --------------------------------------------------------- */
+@media (max-width: 767px) {
+  .main-sidebar {
+    position: fixed !important;
+    top: 50px !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    width: 230px !important;
+    height: calc(100vh - 50px) !important;
+    max-height: calc(100vh - 50px) !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    padding-top: 0 !important;
+    z-index: 850 !important;
+    transform: translate(-230px, 0) !important;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  }
+
+  /* When mobile drawer is toggled open */
+  body.sidebar-open .main-sidebar {
+    transform: translate(0, 0) !important;
+    box-shadow: 6px 0 25px rgba(0, 0, 0, 0.4) !important;
+  }
+
+  .content-wrapper {
+    margin-left: 0 !important;
+    padding-top: 50px !important;
+    width: 100% !important;
+    min-height: 100vh !important;
+  }
+
+  .main-header {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    z-index: 830 !important;
+  }
+  .main-header .navbar {
+    margin-left: 0 !important;
+  }
+  .main-header .logo {
+    display: none !important; /* Mini logo inside navbar */
   }
 }
 </style>

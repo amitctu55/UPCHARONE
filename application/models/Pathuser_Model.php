@@ -109,37 +109,73 @@ class Pathuser_Model extends CI_Model {
 	}
 	 
     public function login($email,$password){
-		$this -> db -> select(' * ');
-        $this -> db -> from('pathlogin');
-        $this -> db -> where("(EMAIL = ".$this->db->escape($email)." OR MOBILE = ".$this->db->escape($email).")");
-        $this -> db -> where('PASSWORD', $password);
-        $this -> db -> where('STATUS', '1');
-        $this -> db -> where('APPROVED', '1');
-        $this -> db -> limit(1);
-        $query = $this -> db -> get();
-		if($query -> num_rows() > 0)
+		$email = trim($email);
+		$cleanMobile = preg_replace('/[^0-9]/', '', $email);
+		if (strlen($cleanMobile) > 10) $cleanMobile = substr($cleanMobile, -10);
+
+		$this->db->select('*')->from('pathlogin');
+		$this->db->group_start();
+		$this->db->where('EMAIL', $email);
+		$this->db->or_where('MOBILE', $email);
+		if (!empty($cleanMobile) && strlen($cleanMobile) >= 10) {
+			$this->db->or_where('MOBILE', $cleanMobile);
+		}
+		$this->db->group_end();
+		$this->db->where('PASSWORD', $password);
+		$this->db->limit(1);
+		$query = $this->db->get();
+
+		if($query->num_rows() > 0)
         {			
 			$row = $query->row();
+
+			// 1. Check account verification status
+			$pathlab = $this->db->where('uid', $row->USERID)->or_where('id', $row->USERID)->get('pathlab')->row();
+			$is_verified = true;
+
+			if ($row->APPROVED == '0') {
+				$is_verified = false;
+			}
+			if ($pathlab) {
+				if (isset($pathlab->verification_status) && $pathlab->verification_status !== 'verified') {
+					$is_verified = false;
+				}
+				if (isset($pathlab->approved) && $pathlab->approved == '0') {
+					$is_verified = false;
+				}
+				if (isset($pathlab->status) && $pathlab->status == '0') {
+					$is_verified = false;
+				}
+				if (isset($pathlab->is_active) && (int)$pathlab->is_active === 0) {
+					$is_verified = false;
+				}
+			}
+
+			if (!$is_verified) {
+				return 'UNVERIFIED';
+			}
+
             if($row->STATUS==1){
                 $this->session->set_userdata('pathuserid', $row->USERID);
                 $this->session->set_userdata('pathuseremail', $row->EMAIL);				           
 				$this->session->set_userdata('pathusername', $row->FNAME);
            
-			if($row->CART!=''){
-				$cartArray = unserialize($row->CART);
-				$this->cart->insert($cartArray);
-			}
-			$this->load->model('Cart_Model');
-			$this->Cart_Model->update_cart_db();
-			return 'SUCCESS';
+				if(!empty($row->CART)){
+					$cartArray = unserialize($row->CART);
+					if (is_array($cartArray)) {
+						$this->cart->insert($cartArray);
+					}
+				}
+				$this->load->model('Cart_Model');
+				$this->Cart_Model->update_cart_db();
+				return 'SUCCESS';
 			}
 			else if($row->STATUS==0){
 				$otp=rand(100000,999999);
 				$this->db->where('USERID',$row->USERID)->set('OTP',$otp)->update('pathlogin');
 				$this->session->set_userdata('pathsignupuserid', $row->USERID);
-				$msg="Wecome to Upchar medical solutions. Your otp is $otp
-thank you for being a part of Upchar.";
-			sendsms($msg,$row->MOBILE);
+				$msg="Welcome to Upchar medical solutions. Your otp is $otp\nThank you for being a part of Upchar.";
+				@sendsms($msg,$row->MOBILE);
 				return 'OTP';
 			}
 			else if($row->STATUS==2){

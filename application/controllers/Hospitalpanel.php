@@ -1908,53 +1908,48 @@ class Hospitalpanel extends CI_Controller
 	public function earnings()
 	{
 		$hospital_id = $this->did;
-		$period      = $this->input->get_post('period');
-		$month       = $this->input->get_post('month');
-		$year        = $this->input->get_post('year');
-		$date_from   = $this->input->get_post('date_from');
-		$date_to     = $this->input->get_post('date_to');
-		$status      = $this->input->get_post('status');
-		$search      = $this->input->get_post('search');
+		$hosuid      = $this->session->userdata('hosuserid');
+		
+		// 1. Fetch Hospital Record
+		$hospital = $this->db->where('id', $hospital_id)->or_where('uid', $hosuid)->get('hospital')->row();
+		$data['hospital'] = $hospital;
+		$facility_id = ($hospital && isset($hospital->id)) ? $hospital->id : $hospital_id;
 
+		// 2. Fetch Filters
 		$filters = array(
-			'month'  => $month,
-			'year'   => $year,
-			'status' => $status,
-			'search' => $search
+			'date'           => trim($this->input->get('date') ?: ''),
+			'month'          => trim($this->input->get('month') ?: ''),
+			'year'           => trim($this->input->get('year') ?: ''),
+			'status'         => trim($this->input->get('status') ?: 'all'),
+			'payment_status' => trim($this->input->get('payment_status') ?: 'all'),
+			'service_type'   => trim($this->input->get('service_type') ?: 'all'),
+			'search'         => trim($this->input->get('search') ?: '')
 		);
+		$data['filters'] = $filters;
 
-		if ($period === 'today') {
-			$filters['date'] = date('Y-m-d');
-		} elseif ($period === 'this_month') {
-			$filters['month'] = date('m');
-			$filters['year']  = date('Y');
-		} elseif ($period === 'last_month') {
-			$filters['month'] = date('m', strtotime('-1 month'));
-			$filters['year']  = date('Y', strtotime('-1 month'));
-		} elseif ($period === 'this_year') {
-			$filters['year']  = date('Y');
-		}
+		// 3. Platform Settings & Commission Rate
+		$commInfo = $this->Financial_Model->get_facility_commission_rate('hospital', $facility_id);
+		$data['custom_rate'] = (float)($commInfo->rate ?? 10.00);
+		$data['is_custom']   = $commInfo->is_custom ?? 0;
+		$data['comm_notes']  = $commInfo->notes ?? '';
+		$data['settings']    = $this->Financial_Model->get_platform_settings();
 
-		if (!empty($date_from)) {
-			$filters['date_from'] = $date_from;
-		}
-		if (!empty($date_to)) {
-			$filters['date_to'] = $date_to;
-		}
+		// 4. Financial Summary Metrics
+		$summary = $this->Financial_Model->get_facility_financial_summary('hospital', $facility_id, $filters);
+		$data['summary'] = $summary;
+		$data['metrics'] = $summary;
 
-		// Fetch financial transactions and summary from Financial_Model
-		$summary = $this->Financial_Model->get_facility_financial_summary('hospital', $hospital_id, $filters);
-		$transactions = $this->Financial_Model->get_facility_transactions('hospital', $hospital_id, $filters);
-		$custom_rate = $this->Financial_Model->get_facility_commission_rate('hospital', $hospital_id);
-		$invoices = $this->Financial_Model->get_facility_invoices('hospital', $hospital_id);
-		$settings = $this->Financial_Model->get_platform_settings();
+		// 5. Transactions
+		$all_txns = $this->Financial_Model->get_facility_transactions('hospital', $facility_id, $filters);
+		$data['transactions'] = $all_txns;
+		$data['total_rows']   = count($all_txns);
 
-		$data['summary']               = $summary;
-		$data['transactions']          = $transactions;
-		$data['invoices']              = $invoices;
-		$data['custom_rate']           = $custom_rate;
-		$data['platform_settings']     = $settings;
-		$data['hospital']              = $this->db->get_where('hospital', array('id' => $hospital_id))->row();
+		// 6. GST Invoices for Hospital
+		$data['invoices'] = $this->db->where('facility_type', 'hospital')
+			->where('facility_id', $facility_id)
+			->order_by('invoice_id', 'DESC')
+			->get('gst_invoices')
+			->result();
 
 		$this->load->view('hospitalpanel/earnings', $data);
 	}
@@ -1962,49 +1957,24 @@ class Hospitalpanel extends CI_Controller
 	public function export_earnings()
 	{
 		$hospital_id = $this->did;
-		$format      = $this->input->get_post('format') ? strtolower($this->input->get_post('format')) : 'excel';
-		$period      = $this->input->get_post('period');
-		$month       = $this->input->get_post('month');
-		$year        = $this->input->get_post('year');
-		$date_from   = $this->input->get_post('date_from');
-		$date_to     = $this->input->get_post('date_to');
-		$status      = $this->input->get_post('status');
-		$search      = $this->input->get_post('search');
+		$hosuid      = $this->session->userdata('hosuserid');
+		$hospital    = $this->db->where('id', $hospital_id)->or_where('uid', $hosuid)->get('hospital')->row();
+		$facility_id = ($hospital && isset($hospital->id)) ? $hospital->id : $hospital_id;
+		$hospName    = $hospital ? $hospital->name : 'Hospital';
 
 		$filters = array(
-			'month'  => $month,
-			'year'   => $year,
-			'status' => $status,
-			'search' => $search
+			'date'           => trim($this->input->get('date') ?: ''),
+			'month'          => trim($this->input->get('month') ?: ''),
+			'year'           => trim($this->input->get('year') ?: ''),
+			'status'         => trim($this->input->get('status') ?: 'all'),
+			'payment_status' => trim($this->input->get('payment_status') ?: 'all'),
+			'service_type'   => trim($this->input->get('service_type') ?: 'all'),
+			'search'         => trim($this->input->get('search') ?: '')
 		);
 
-		if ($period === 'today') {
-			$filters['date'] = date('Y-m-d');
-		} elseif ($period === 'this_month') {
-			$filters['month'] = date('m');
-			$filters['year']  = date('Y');
-		} elseif ($period === 'last_month') {
-			$filters['month'] = date('m', strtotime('-1 month'));
-			$filters['year']  = date('Y', strtotime('-1 month'));
-		} elseif ($period === 'this_year') {
-			$filters['year']  = date('Y');
-		}
+		$transactions = $this->Financial_Model->get_facility_transactions('hospital', $facility_id, $filters);
+		$summary      = $this->Financial_Model->get_facility_financial_summary('hospital', $facility_id, $filters);
 
-		$hospital = $this->db->get_where('hospital', array('id' => $hospital_id))->row();
-		$hospName = $hospital ? $hospital->name : 'Hospital';
-		$transactions = $this->Financial_Model->get_facility_transactions('hospital', $hospital_id, $filters);
-		$summary = $this->Financial_Model->get_facility_financial_summary('hospital', $hospital_id, $filters);
-
-		if ($format === 'pdf' || $format === 'print') {
-			$data['hospital']     = $hospital;
-			$data['transactions'] = $transactions;
-			$data['summary']      = $summary;
-			$data['filter_desc']  = (!empty($date_from) ? "From $date_from " : '') . (!empty($date_to) ? "To $date_to " : '') . (!empty($month) ? "Month: $month " : '') . (!empty($year) ? "Year: $year " : '');
-			$this->load->view('hospitalpanel/earnings_pdf', $data);
-			return;
-		}
-
-		// CSV / Excel Export
 		$filename = "Upchar_" . preg_replace('/[^A-Za-z0-9_]/', '_', $hospName) . "_Revenue_Statement_" . date('Ymd_His') . ".csv";
 
 		header('Content-Type: text/csv; charset=utf-8');
@@ -2032,6 +2002,7 @@ class Hospitalpanel extends CI_Controller
 			'Transaction ID',
 			'Category',
 			'Patient Name',
+			'Patient Mobile',
 			'Gross Bill Amount (INR)',
 			'Platform Fee %',
 			'Platform Fee (INR)',
@@ -2049,6 +2020,7 @@ class Hospitalpanel extends CI_Controller
 				$t->txn_code,
 				$t->category,
 				$t->patient_name ?: 'Patient',
+				$t->patient_mobile ?: '',
 				number_format((float)$t->gross_amount, 2, '.', ''),
 				$t->platform_fee_percent . '%',
 				number_format((float)$t->platform_fee_amount, 2, '.', ''),
@@ -2069,15 +2041,15 @@ class Hospitalpanel extends CI_Controller
 	public function invoice_view($invoice_id = 0)
 	{
 		$invoice_id = intval($invoice_id);
-		$invoice = $this->Financial_Model->get_invoice_by_id($invoice_id);
+		$invoice    = $this->Financial_Model->get_invoice_by_id($invoice_id);
 		if (!$invoice) {
 			$this->session->set_flashdata('flashmsg', "<div class='alert alert-danger'>GST Invoice not found!</div>");
-			redirect('hospitalpanel/earnings');
+			redirect('hospitalpanel/earnings#invoices');
 			return;
 		}
 
 		$data['invoice']  = $invoice;
-		$data['hospital'] = $this->db->get_where('hospital', array('id' => $this->did))->row();
+		$data['facility'] = $this->db->where('id', $invoice->facility_id)->get('hospital')->row();
 		$data['settings'] = $this->Financial_Model->get_platform_settings();
 		$this->load->view('hospitalpanel/gst_invoice_view', $data);
 	}
@@ -2085,10 +2057,13 @@ class Hospitalpanel extends CI_Controller
 	public function generate_monthly_invoice()
 	{
 		$hospital_id   = $this->did;
-		$billing_month = $this->input->post('billing_month') ?: date('Y-m');
+		$hosuid        = $this->session->userdata('hosuserid');
+		$hospital      = $this->db->where('id', $hospital_id)->or_where('uid', $hosuid)->get('hospital')->row();
+		$facility_id   = ($hospital && isset($hospital->id)) ? $hospital->id : $hospital_id;
+		$billing_month = $this->input->post('billing_month', TRUE) ?: date('Y-m');
 
-		$inv_id = $this->Financial_Model->generate_monthly_gst_invoice('hospital', $hospital_id, $billing_month);
-		$this->session->set_flashdata('flashmsg', "<div class='alert alert-success'>Tax Invoice for {$billing_month} generated successfully!</div>");
+		$inv_id = $this->Financial_Model->generate_monthly_gst_invoice('hospital', $facility_id, $billing_month);
+		$this->session->set_flashdata('flashmsg', "<div class='alert alert-success'><i class='fa fa-check-circle'></i> Tax Invoice for <strong>" . date('F Y', strtotime($billing_month . '-01')) . "</strong> generated successfully!</div>");
 		redirect('hospitalpanel/earnings#invoices');
 	}
 

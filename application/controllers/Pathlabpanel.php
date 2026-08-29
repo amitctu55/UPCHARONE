@@ -22,15 +22,33 @@ class Pathlabpanel extends CI_Controller
 		}
 		else
 		{
-			$row = $this->db->where('id', $pathuserid)->get('pathlab')->row();
-			if ($row && isset($row->id)) {
+			$row = $this->db->where('uid', $pathuserid)->or_where('id', $pathuserid)->get('pathlab')->row();
+			$pathLog = $this->db->where('USERID', $pathuserid)->get('pathlogin')->row();
+
+			$is_verified = true;
+			if ($pathLog && $pathLog->APPROVED == '0') {
+				$is_verified = false;
+			}
+			if ($row) {
 				$this->did = $row->id;
+				if ((isset($row->verification_status) && $row->verification_status !== 'verified') ||
+					(isset($row->approved) && $row->approved == '0') ||
+					(isset($row->status) && $row->status == '0') ||
+					(isset($row->is_active) && (int)$row->is_active === 0)) {
+					$is_verified = false;
+				}
 			} else {
 				$this->did = null;
-				if (!in_array($page, $excep_array)) {
-					$this->session->unset_userdata('pathuserid');
-					redirect('pathlab-login');
-				}
+				$is_verified = false;
+			}
+
+			if (!$is_verified && !in_array($page, $excep_array)) {
+				$this->session->unset_userdata('pathuserid');
+				$this->session->unset_userdata('pathuseremail');
+				$this->session->unset_userdata('pathusername');
+				$this->session->set_flashdata('flashmsg', "<div class='alert alert-danger' style='margin: 15px 0; border-radius: 8px;'><i class='fa fa-ban'></i> Your pathology lab account is pending verification and approval by the administrator. Access denied.</div>");
+				redirect('pathlab-login');
+				return;
 			}
 		}
 	}

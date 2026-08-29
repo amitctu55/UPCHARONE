@@ -6,7 +6,9 @@ class Hospital_Model extends CI_Model
 		//parent::__construct();
 		if($this->session->userdata('hosuserid'))
 		{	
-			$this->did = $this->db->where('uid',$this->session->userdata('hosuserid'))->get('hospital')->row()->id;
+			$hosuid = $this->session->userdata('hosuserid');
+			$hospRow = $this->db->where('uid', $hosuid)->or_where('id', $hosuid)->get('hospital')->row();
+			$this->did = ($hospRow && isset($hospRow->id)) ? $hospRow->id : $hosuid;
 		}
 	}
 	

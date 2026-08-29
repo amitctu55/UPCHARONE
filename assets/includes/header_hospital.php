@@ -60,6 +60,88 @@
     border-radius: 4px;
 }
 
+/* Sidebar Nav Item Colors & Permanent Visibility */
+.sidebar, .sidebar-inner, .nav-sidebar {
+    background: #043d5b !important;
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+.sidebar .nav-sidebar > li > a {
+    color: #e2e8f0 !important;
+    font-size: 13.5px !important;
+    font-weight: 500 !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+    padding: 12px 18px !important;
+    transition: all 0.2s ease !important;
+}
+
+.sidebar .nav-sidebar > li > a i {
+    color: #2dd4bf !important;
+    font-size: 15px !important;
+    width: 20px !important;
+    text-align: center !important;
+}
+
+.sidebar .nav-sidebar > li > a span {
+    color: #f8fafc !important;
+    font-size: 13.5px !important;
+    font-weight: 500 !important;
+    display: inline-block !important;
+    visibility: visible !important;
+}
+
+.sidebar .nav-sidebar > li:hover > a,
+.sidebar .nav-sidebar > li.active > a {
+    background: rgba(255, 255, 255, 0.12) !important;
+    color: #ffffff !important;
+    border-left: 3px solid #2dd4bf !important;
+}
+
+.sidebar .nav-sidebar > li.active > a i,
+.sidebar .nav-sidebar > li:hover > a i {
+    color: #5eead4 !important;
+}
+
+/* Submenu / Children Visibility */
+.sidebar .nav-sidebar .children {
+    background: #022b40 !important;
+    padding: 4px 0 !important;
+}
+
+.sidebar .nav-sidebar .children > li > a {
+    color: #cbd5e1 !important;
+    padding: 9px 18px 9px 42px !important;
+    font-size: 12.5px !important;
+    display: block !important;
+}
+
+.sidebar .nav-sidebar .children > li > a:hover,
+.sidebar .nav-sidebar .children > li.active > a {
+    color: #ffffff !important;
+    background: rgba(255, 255, 255, 0.08) !important;
+}
+
+/* Ensure visibility when sidebar-show or sidebar-collapsed is active */
+body.sidebar-show .sidebar,
+body.sidebar-show:not(.sidebar-hover) .sidebar,
+.sidebar-show .sidebar {
+    display: block !important;
+    visibility: visible !important;
+    left: 0 !important;
+    opacity: 1 !important;
+}
+
+body.sidebar-show .sidebar .nav-sidebar > li > a,
+body.sidebar-show .sidebar .nav-sidebar > li > a span {
+    display: flex !important;
+    visibility: visible !important;
+    color: #f8fafc !important;
+}
+
 /* 3. Main Content Container beside Sidebar and below Header */
 .main-content {
     margin-top: 60px !important;

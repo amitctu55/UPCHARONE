@@ -104,38 +104,54 @@ class User_Model extends CI_Model {
 	}
 	 
     public function login($email,$password){
-		$this -> db -> select(' * ');
-        $this -> db -> from('userlogin');
-        $this -> db -> where('EMAIL', $email);        
-		$this -> db -> or_where('MOBILE', $email);
-        $this -> db -> where('PASSWORD', $password);
-       // $this -> db -> where('STATUS', '1');
-        $this -> db -> where('APPROVED', '1');
-        $this -> db -> limit(1);
-        $query = $this -> db -> get();//echo  $this->db->last_query();
-		if($query -> num_rows() > 0)
+		$email = trim($email);
+		$cleanMobile = preg_replace('/[^0-9]/', '', $email);
+		if (strlen($cleanMobile) > 10) $cleanMobile = substr($cleanMobile, -10);
+
+		$this->db->select('*')->from('userlogin');
+		$this->db->group_start();
+		$this->db->where('EMAIL', $email);        
+		$this->db->or_where('MOBILE', $email);
+		if (!empty($cleanMobile) && strlen($cleanMobile) >= 10) {
+			$this->db->or_where('MOBILE', $cleanMobile);
+		}
+		$this->db->group_end();
+		$this->db->where('PASSWORD', $password);
+		$this->db->limit(1);
+		$query = $this->db->get();
+
+		if($query->num_rows() > 0)
         {			
 			$row = $query->row();
+
+			// If partner account, check approval
+			if (isset($row->TYPE) && in_array(strtoupper($row->TYPE), array('DOCTOR', 'HOSPITAL', 'CLINIC', 'PATHOLOGY', 'CHEMIST', 'PATHDOCTOR'))) {
+				if ($row->APPROVED == '0') {
+					return 'UNVERIFIED';
+				}
+			}
+
             if($row->STATUS==1){
                 $this->session->set_userdata('userid', $row->USERID);
                 $this->session->set_userdata('useremail', $row->EMAIL);				           
 				$this->session->set_userdata('username', $row->FNAME);
            
-			if($row->CART!=''){
-				$cartArray = unserialize($row->CART);
-				$this->cart->insert($cartArray);
-			}
-			$this->load->model('Cart_Model');
-			$this->Cart_Model->update_cart_db();
-			return 'SUCCESS';
+				if(!empty($row->CART)){
+					$cartArray = unserialize($row->CART);
+					if (is_array($cartArray)) {
+						$this->cart->insert($cartArray);
+					}
+				}
+				$this->load->model('Cart_Model');
+				$this->Cart_Model->update_cart_db();
+				return 'SUCCESS';
 			}
 			else if($row->STATUS==0){
 				$otp=rand(100000,999999);
 				$this->db->where('USERID',$row->USERID)->set('OTP',$otp)->update('userlogin');
 				$this->session->set_userdata('signupuserid', $row->USERID);
-				//$msg="Dear ".$name[0].",Thank you for registration, Verification OTP is $otp UPCHAR";
 				$msg="Your One Time Password is $otp WWW.UPCHARR.COM";
-				sendsms($msg,$row->MOBILE);
+				@sendsms($msg,$row->MOBILE);
 				return 'OTP';
 			}
 			else if($row->STATUS==2){

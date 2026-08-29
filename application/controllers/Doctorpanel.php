@@ -16,8 +16,33 @@ class Doctorpanel extends CI_Controller
 			 if (!in_array($page, $excep_array))
 				redirect('doctor-login');
 		 }else{
-			 $row = $this->db->where('user_id',$this->session->userdata('druserid'))->get('profile_dr')->row();
+			 $druserid = $this->session->userdata('druserid');
+			 $row = $this->db->where('user_id', $druserid)->or_where('id', $druserid)->get('profile_dr')->row();
 			 $this->did = ($row && isset($row->id)) ? $row->id : null;
+
+			 // Verification Check
+			 $is_verified = true;
+			 $docLog = $this->db->where('USERID', $druserid)->get('doctorlogin')->row();
+			 if ($docLog && $docLog->APPROVED == '0') {
+				 $is_verified = false;
+			 }
+			 if ($row) {
+				 if ((isset($row->verification_status) && $row->verification_status !== 'verified') ||
+					 (isset($row->approved) && $row->approved == '0') ||
+					 (isset($row->status) && $row->status == '0') ||
+					 (isset($row->is_active) && (int)$row->is_active === 0)) {
+					 $is_verified = false;
+				 }
+			 }
+
+			 if (!$is_verified) {
+				 $this->session->unset_userdata('druserid');
+				 $this->session->unset_userdata('druseremail');
+				 $this->session->unset_userdata('drusername');
+				 $this->session->set_flashdata('flashmsg', "<div class='alert alert-danger' style='margin: 15px 0; border-radius: 8px;'><i class='fa fa-ban'></i> Your doctor account is pending verification and approval by the administrator. Access denied.</div>");
+				 redirect('doctor-login');
+				 return;
+			 }
 		 }
 		 
 	}

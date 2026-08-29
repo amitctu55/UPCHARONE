@@ -23,6 +23,8 @@ class Medicaluser extends CI_Controller {
         $login = $this->Medicaluser_Model->login($email,$password);
 		if($login=='SUCCESS'){
 			$response=array('status'=>'success','msg'=>'Logged in Successfully');
+		}else if($login=='UNVERIFIED'){
+			$response=array('status'=>'failed','msg'=>'Your pharmacy/chemist account is pending verification and approval by the Administrator. You cannot login until verified.');
 		}else if($login=='OTP'){
 			$response=array('status'=>'otp','msg'=>'Please Verify Mobile no');
 		}else if($login=='BLOCKED'){

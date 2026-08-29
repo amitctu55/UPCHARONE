@@ -5,9 +5,10 @@ class Medical_Model extends CI_Model {
    function __construct() {
 		 //parent::__construct();
 		 if($this->session->userdata('medicaluserid')){
-			 $this->did= $this->db->where('user_id',$this->session->userdata('medicaluserid'))->get('profile_chem')->row()->id;
+			 $meduserid = $this->session->userdata('medicaluserid');
+			 $medRow = $this->db->where('user_id', $meduserid)->or_where('id', $meduserid)->get('profile_chem')->row();
+			 $this->did = ($medRow && isset($medRow->id)) ? $medRow->id : $meduserid;
 		 }
-		 
 	}
 	
 	
