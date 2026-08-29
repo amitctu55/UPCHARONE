@@ -14,7 +14,7 @@
 	<link href="<?=base_url();?>assets/css/style.css" rel="stylesheet">
 <style>
 /* ==========================================================================
-   HOSPITAL PANEL UNIFIED LAYOUT & DROPDOWN ALIGNMENT
+   HOSPITAL PANEL UNIFIED LAYOUT & MODERN TOPBAR
    ========================================================================== */
 
 /* 1. Header & Topbar Fixed Alignment */
@@ -25,12 +25,13 @@
     right: 0 !important;
     height: 60px !important;
     z-index: 1030 !important;
-    background: #043d5b !important;
+    background: linear-gradient(135deg, #043d5b 0%, #006d64 100%) !important;
     display: flex !important;
     align-items: center !important;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
+    justify-content: space-between !important;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.18) !important;
     margin: 0 !important;
-    padding: 0 15px !important;
+    padding: 0 20px !important;
 }
 
 /* 2. Sidebar Aligned Under Topbar */
@@ -42,8 +43,8 @@
     width: 250px !important;
     z-index: 1020 !important;
     overflow-y: auto !important;
-    background: #295771 !important;
-    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.05) !important;
+    background: #043d5b !important;
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.08) !important;
 }
 
 /* 3. Main Content Container beside Sidebar and below Header */
@@ -85,54 +86,221 @@
     position: relative !important;
 }
 
-.select2-container--open, .dropdown-menu {
-    z-index: 1050 !important;
+/* Topbar Brand & Toggle */
+.header-left-wrap {
+    display: flex;
+    align-items: center;
+    gap: 16px;
 }
 
-/* Topbar Header elements styling */
-.navbar-toggle {
-    position: relative;
-    float: right;
-    padding: 9px 10px;
-    margin: 8px 15px 8px 0;
-    background-color: transparent;
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    border-radius: 4px;
+.header-toggle-btn {
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    color: #ffffff !important;
+    padding: 7px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 15px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s ease;
+    text-decoration: none !important;
 }
 
-.navbar-nav>li>a {
-    padding: 6px 12px;
+.header-toggle-btn:hover {
+    background: rgba(255, 255, 255, 0.25);
+    color: #ffffff !important;
+}
+
+.header-hospital-title {
+    font-size: 16.5px;
+    font-weight: 800;
     color: #ffffff;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    letter-spacing: 0.2px;
+    white-space: nowrap;
 }
 
-.topmenu {
-    font-size: 14px;
+.badge-portal {
+    background: rgba(45, 212, 191, 0.2);
+    border: 1px solid #2dd4bf;
+    color: #2dd4bf;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 12px;
     text-transform: uppercase;
-    background: #ed3237;
-    font-weight: bold;
-    color: #ffffff;
-    border-radius: 4px;
-    margin-right: 3px;
+    letter-spacing: 0.5px;
 }
 
-.dropdown-menu>li>a {
-    display: block;
-    padding: 8px 18px;
-    clear: both;
-    font-weight: 500;
-    color: #0f172a;
+/* Topbar Right Actions */
+.header-right-wrap {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.btn-header-opd {
+    background: #00a896;
+    color: #ffffff !important;
+    font-weight: 700;
+    font-size: 12.5px;
+    padding: 7px 15px;
+    border-radius: 8px;
+    text-decoration: none !important;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    transition: all 0.15s ease;
+}
+
+.btn-header-opd:hover {
+    background: #008f80;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 168, 150, 0.35);
+}
+
+/* Modern Profile Dropdown */
+.profile-dropdown-container {
+    position: relative;
+}
+
+.profile-trigger-btn {
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    padding: 5px 14px 5px 6px;
+    border-radius: 30px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    text-decoration: none !important;
+    transition: all 0.15s ease;
+}
+
+.profile-trigger-btn:hover, .profile-dropdown-container.open .profile-trigger-btn {
+    background: rgba(255, 255, 255, 0.22);
+    border-color: rgba(255, 255, 255, 0.4);
+}
+
+.profile-thumb-img {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #2dd4bf;
     background: #ffffff;
-    text-decoration: none;
 }
 
-.dropdown-menu>li>a:hover {
-    background: #f1f5f9;
+.profile-trigger-text {
+    font-size: 13px;
+    font-weight: 700;
+    color: #ffffff;
+    max-width: 140px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.profile-chevron {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.7);
+    margin-left: 2px;
+}
+
+/* Dropdown Menu Card */
+.profile-dropdown-menu {
+    position: absolute;
+    top: 50px;
+    right: 0;
+    width: 250px;
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.18) !important;
+    padding: 8px 0;
+    display: none;
+    z-index: 1050 !important;
+    list-style: none;
+    margin: 0;
+}
+
+.profile-dropdown-container.open .profile-dropdown-menu,
+.profile-dropdown-container:hover .profile-dropdown-menu {
+    display: block;
+}
+
+.dropdown-user-header {
+    padding: 12px 18px;
+    border-bottom: 1px solid #f1f5f9;
+    margin-bottom: 4px;
+}
+
+.dropdown-user-header strong {
+    display: block;
+    font-size: 13.5px;
+    font-weight: 800;
+    color: #043d5b;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.dropdown-user-header span {
+    font-size: 11.5px;
+    color: #0d9488;
+    font-weight: 600;
+}
+
+.profile-menu-item {
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+    padding: 10px 18px !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    color: #334155 !important;
+    text-decoration: none !important;
+    background: transparent !important;
+    transition: all 0.15s ease !important;
+    border-radius: 0 !important;
+}
+
+.profile-menu-item i {
+    width: 18px;
+    font-size: 14px;
     color: #00a896;
+    text-align: center;
 }
 
-.mynavback {
-    background: none;
-    margin-bottom: 0;
+.profile-menu-item:hover {
+    background: #f8fafc !important;
+    color: #043d5b !important;
+    padding-left: 22px !important;
+}
+
+.profile-menu-divider {
+    height: 1px;
+    background: #f1f5f9;
+    margin: 6px 0;
+}
+
+.profile-menu-logout {
+    color: #ef4444 !important;
+}
+
+.profile-menu-logout i {
+    color: #ef4444 !important;
+}
+
+.profile-menu-logout:hover {
+    background: #fef2f2 !important;
+    color: #dc2626 !important;
 }
 
 /* Responsive Breakpoints */
@@ -148,98 +316,83 @@
         margin-left: 0 !important;
         width: 100% !important;
     }
+    .btn-header-opd {
+        display: none !important;
+    }
 }
 </style>
 </head>
 <body class="sidebar-light fixed-topbar theme-sltl bg-light-dark color-default dashboard">
-<!---------------------------------------practice_suggestion_hospital_step6 modal open--------------------------------------------->
-<div class="hover_bkgr_fricc" style="display:none;">
-    <span class="helper"></span>
-    <div>
-        <div class="prc_sugg"><p>Claim Clinic</p></div>
-		<div class="prce_suge_useranme"><p>Are you sure you want to claim profile named as "Gayatri Nursing Home Pvt. Ltd."?</p></div>
-		<div class="prce_suge"><p><b>Note:</b> Request you to provide the proof of clinic ownership to ascertain your credentials.</p></div>
-		<a href="#" class="Pra_sug">Cancel</a>
-		<a href="#" class="Pra_sug_clai">Claim Clinic</a>
-    </div>
-</div>
-<!---------------------------------------practice_suggestion_hospital_step6 modal close--------------------------------------------->
-<div class="hover_bkgr_fricc_practics" style="display:none;">
-    <span class="helper"></span>
-    <div>
-        <div class="prc_sugg"><p></p></div>
-		<div class="prce_suge_useranme"></div>
-		<div class="prce_suge"><p><b>Note:</b> Request you to provide the proof of clinic ownership to ascertain your credentials.</p></div>
-		<a href="#" class="Pra_sug">Cancel</a>
-		<a href="#" class="Pra_sug_clai">Claim Clinic</a>
-    </div>
-</div>
-<!---------------------------------------practice_start modal close--------------------------------------------->
+
 <section>
-    <!-- BEGIN SIDEBAR -->
-    <!-- END SIDEBAR -->
 	<div class="main-content">
         <!-- BEGIN TOPBAR -->
-        <div class="topbar">
-			<div class="header-left">
-				<div class="topnav">
-					<a class="menutoggle" href="#" data-toggle="sidebar-collapsed"><span class="menu__handle"><span>Menu</span></span></a>
-				</div>
+        <header class="topbar">
+			<div class="header-left-wrap">
+				<a class="header-toggle-btn menutoggle" href="#" data-toggle="sidebar-collapsed" title="Toggle Navigation Sidebar">
+                    <i class="fa fa-bars"></i>
+				</a>
+                <div class="header-hospital-title">
+                    <i class="fa fa-hospital-o" style="color: #2dd4bf;"></i>
+                    <span><?=html_escape($this->session->userdata('hospitalname') ?: 'Upchar Hospital Portal');?></span>
+                    <span class="badge-portal hidden-xs">Hospital Portal</span>
+                </div>
 			</div>
-            <h3 style="text-shadow: 0px -4px 3px black;color:white;margin-left:79px;"> <?=$this->session->userdata('hospitalname');?></h3>
+
 			<!-- header-right -->
-			<nav class="navbar mynavback">
-				<div class="container-fluid">
-					<div class="navbar-header">
-						<button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#myNavbar">
-							<span class="icon-bar" style="background:white;"></span>
-							<span class="icon-bar" style="background:white;"></span>
-							<span class="icon-bar" style="background:white;"></span>                        
-						</button>
-					</div>
-					<div class="collapse navbar-collapse" id="myNavbar">
-						<ul class="nav navbar-nav navbar-right">
-							<li>
-								<ul class="header-menu nav navbar-nav">
-									<?php 
-									$this->db->select('drimage');
-									$hosuid = $this->session->userdata('hosuserid');
-									$this->db->group_start()->where('uid', $hosuid)->or_where('id', $hosuid)->group_end();
-									$profileimg = $this->db->get('hospital')->row();
-									if($profileimg)
-									{
-										$profileimg = $profileimg->drimage;
-										$profileimg=admin_url()."public/assets/upload/".$profileimg;
-									}    
-									else
-									{
-										$profileimg=base_url()."/assets/images/user.jpg";     
-									}
-									?>
-									<li class="dropdown" id="user-header">
-										<a href="#" data-toggle="dropdown" data-hover="dropdown" data-close-others="true">
-											<img id="userimgcss" src="<?=$profileimg;?>" alt="user image">
-											<span class="username" style="color:white;"><?=$this->session->userdata('hospitalname');?><i class="fa fa-chevron-down" aria-hidden="true"></i></span>
-										</a>
-										<ul class="dropdown-menu" style="background:none;box-shadow:none;border:none;">
-											<li ><a class="menutab" href="<?=base_url();?>hospitalpanel/updateprofile">My Profile </a></li>
-											<!-- <li><a class="menutab" href="#"><span>My Medicine Order</span></a></li> -->
-											<li><a class="menutab" href="#"><span>My Online Consultation</span></a></li>
-											<li><a class="menutab" href="#"><span>My Feedback</span></a></li>
-											<li><a class="menutab" href="#"><span>My Payments</span></a></li>
-											<li ><a class="menutab" href="<?=base_url();?>hospitalpanel/updateprofile">Update Profile </a></li>
-											<li><a class="menutab" href="<?=base_url();?>hospitalpanel/change_password"><span>Change Password</span></a></li>
-											<li><a class="menutab" href="#"><span>Setting</span></a></li>
-											<li><a class="menutab" href="<?=base_url();?>hospitaluser/logout"><span>Logout</span></a></li>
-										</ul>
-									</li>
-								</ul>
-							</li>
-						</ul>
-					</div>
-				</div>
-			</nav>
-        </div>
+			<div class="header-right-wrap">
+                <a href="<?=base_url('hospitalpanel/addappointment');?>" class="btn-header-opd">
+                    <i class="fa fa-plus-circle"></i> Walk-in OPD
+                </a>
+
+                <?php 
+                $this->db->select('drimage');
+                $hosuid = $this->session->userdata('hosuserid');
+                $this->db->group_start()->where('uid', $hosuid)->or_where('id', $hosuid)->group_end();
+                $profileimg = $this->db->get('hospital')->row();
+                if($profileimg && !empty($profileimg->drimage)) {
+                    $profileimg_url = admin_url()."public/assets/upload/".$profileimg->drimage;
+                } else {
+                    $profileimg_url = base_url()."assets/images/user.jpg";     
+                }
+                $hospName = $this->session->userdata('hospitalname') ?: 'Hospital Admin';
+                ?>
+                
+                <!-- Modern Profile Dropdown -->
+                <div class="profile-dropdown-container dropdown" id="user-header">
+                    <a href="#" class="profile-trigger-btn dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <img src="<?=$profileimg_url;?>" class="profile-thumb-img" alt="Hospital Profile">
+                        <span class="profile-trigger-text hidden-xs"><?=$hospName;?></span>
+                        <i class="fa fa-chevron-down profile-chevron"></i>
+                    </a>
+                    <div class="profile-dropdown-menu dropdown-menu">
+                        <div class="dropdown-user-header">
+                            <strong><?=$hospName;?></strong>
+                            <span><i class="fa fa-check-circle"></i> Administrator</span>
+                        </div>
+                        <a class="profile-menu-item" href="<?=base_url('hospitalpanel/updateprofile');?>">
+                            <i class="fa fa-hospital-o"></i> Hospital Profile
+                        </a>
+                        <a class="profile-menu-item" href="<?=base_url('hospitalpanel/manageappointment');?>">
+                            <i class="fa fa-calendar"></i> OPD Appointments
+                        </a>
+                        <a class="profile-menu-item" href="<?=base_url('hospitalpanel/managedoctor');?>">
+                            <i class="fa fa-user-md"></i> Manage Doctors
+                        </a>
+                        <a class="profile-menu-item" href="<?=base_url('hospitalpanel/earnings');?>">
+                            <i class="fa fa-line-chart"></i> Revenue &amp; Payouts
+                        </a>
+                        <a class="profile-menu-item" href="<?=base_url('hospitalpanel/change_password');?>">
+                            <i class="fa fa-key"></i> Change Password
+                        </a>
+                        <div class="profile-menu-divider"></div>
+                        <a class="profile-menu-item profile-menu-logout" href="<?=base_url('hospitaluser/logout');?>">
+                            <i class="fa fa-sign-out"></i> Sign Out
+                        </a>
+                    </div>
+                </div>
+			</div>
+        </header>
 		<!-- END TOPBAR -->
 		<!-- BEGIN PAGE CONTENT -->
 
