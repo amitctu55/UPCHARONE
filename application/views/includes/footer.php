@@ -162,6 +162,7 @@ $userlogin=$this->Userlogin_Model->c_count();
 				</div>
 
 				<form method="post" action="<?=base_url();?>home/bookappointment" id="app_conf_form">
+					<input type="hidden" name="<?=$this->security->get_csrf_token_name();?>" value="<?=$this->security->get_csrf_hash();?>">
 					<input type="hidden" name="consultation_type" id="app_consult_type" value="in_clinic">
 					<input value="" type="hidden" id="app_conf_pop_doctorid" name="app_doctor">
 

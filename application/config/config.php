@@ -476,7 +476,9 @@ $config['csrf_exclude_uris'] = array(
 	'user/.*',
 	'pathology/.*',
 	'pathlabview/.*',
-	'mytest/.*'
+	'mytest/.*',
+	'home/bookappointment',
+	'bookappointment'
 );
 
 /*

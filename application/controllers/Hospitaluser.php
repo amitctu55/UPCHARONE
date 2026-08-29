@@ -51,31 +51,29 @@ class Hospitaluser extends CI_Controller {
 	public function verifyforgototp()
 	{
 		$userid = $this->session->userdata('hosforgotuserid');
-		$otp = ($this->input->post('otp'));
-        $login = $this->Hospitaluser_Model->verifyforgototp($userid,$otp);
-		if($login=='SUCCESS'){
-			$response=array('status'=>'success','msg'=>'Logged in Successfully');
-		}else {
-			$response=array('status'=>'failed','msg'=>'Incorrect OTP');
+		$otp = trim($this->input->post('otp'));
+        $login = $this->Hospitaluser_Model->verifyforgototp($userid, $otp);
+		if($login == 'SUCCESS'){
+			$response = array('status' => 'success', 'msg' => 'OTP Verified Successfully');
+		} else {
+			$response = array('status' => 'failed', 'msg' => 'Incorrect OTP code. Please check and try again.');
 		}
 		echo json_encode($response);
 	}
 	
-	
 	public function resendsignupotp()
 	{
 		$userid = $this->session->userdata('hossignupuserid');
-		//$otp = ($this->input->post('otp'));
-		$this -> db -> select(' MOBILE ');
-        $this -> db -> from('hospitallogin');
-        $this -> db -> where('USERID', $userid);       
-        $this -> db -> limit(1);
-        $mobile = $this -> db -> get()->row('MOBILE');
+		$this->db->select('MOBILE');
+        $this->db->from('hospitallogin');
+        $this->db->where('USERID', $userid);       
+        $this->db->limit(1);
+        $mobile = $this->db->get()->row('MOBILE');
         $login = $this->Hospitaluser_Model->resendotp($mobile);
-		if($login=='SUCCESS'){
-			$response=array('status'=>'success','msg'=>'OTP Sent Successfully');
-		}else {
-			$response=array('status'=>'failed','msg'=>'Failed to send OTP');
+		if($login == 'SUCCESS'){
+			$response = array('status' => 'success', 'msg' => 'OTP Sent Successfully');
+		} else {
+			$response = array('status' => 'failed', 'msg' => 'Failed to send OTP');
 		}
 		echo json_encode($response);
 	}
@@ -83,17 +81,19 @@ class Hospitaluser extends CI_Controller {
 	public function resendforgetotp()
 	{
 		$userid = $this->session->userdata('hosforgotuserid');
-		//$otp = ($this->input->post('otp'));
-		$this -> db -> select(' MOBILE ');
-        $this -> db -> from('hospitallogin');
-        $this -> db -> where('USERID', $userid);       
-        $this -> db -> limit(1);
-        $mobile = $this -> db -> get()->row('MOBILE');
+		$mobile = '';
+		if ($userid) {
+			$this->db->select('MOBILE');
+			$this->db->from('hospitallogin');
+			$this->db->where('USERID', $userid);       
+			$this->db->limit(1);
+			$mobile = $this->db->get()->row('MOBILE');
+		}
         $login = $this->Hospitaluser_Model->resendotp($mobile);
-		if($login=='SUCCESS'){
-			$response=array('status'=>'success','msg'=>'OTP Sent Successfully');
-		}else {
-			$response=array('status'=>'failed','msg'=>'Failed to send OTP');
+		if($login == 'SUCCESS'){
+			$response = array('status' => 'success', 'msg' => 'A fresh OTP has been sent to your mobile.');
+		} else {
+			$response = array('status' => 'failed', 'msg' => 'Failed to resend OTP. Please re-enter your mobile/email.');
 		}
 		echo json_encode($response);
 	}
@@ -101,16 +101,16 @@ class Hospitaluser extends CI_Controller {
 	public function setnewpass()
 	{
 		$userid = $this->session->userdata('hosforgotuserid');
-		//$otp = ($this->input->post('otp'));
         $login = $this->Hospitaluser_Model->changepass($userid);
-		if($login=='SUCCESS'){
-			$response=array('status'=>'success','msg'=>'Logged in Successfully');
-		}else {
-			$response=array('status'=>'failed','msg'=>'Failed');
+		if($login == 'SUCCESS'){
+			$response = array('status' => 'success', 'msg' => 'Password updated successfully! Redirecting to login...');
+		} else if ($login == 'INVALID') {
+			$response = array('status' => 'failed', 'msg' => 'Recovery session expired. Please start over.');
+		} else {
+			$response = array('status' => 'failed', 'msg' => 'Password must be at least 6 characters long.');
 		}
 		echo json_encode($response);
 	}
-	
 	
 	public function register()
     {
@@ -119,32 +119,27 @@ class Hospitaluser extends CI_Controller {
 	}
 	
 	public function forgotpass(){
-		$mobile =$this->input->post('mobile');
-		//echo "<pre>"; print_r($mobile); die;
+		$mobile = trim($this->input->post('mobile'));
 		$login = $this->Hospitaluser_Model->forgotpass($mobile);
-		if($login=='SUCCESS'){
-			$response=array('status'=>'success','msg'=>'OTP Sent To Registered Mobile and Email');
-		}else if($login=='INVALID'){
-			$response=array('status'=>'invalid','msg'=>'Invalid Mobile or Email');
-		}else if($login=='FAILED'){
-			$response=array('status'=>'failed','msg'=>'Something went wrong');
-		}else {
-			$response=array('status'=>'failed','msg'=>'Something went wrong');
+		if($login == 'SUCCESS'){
+			$response = array('status' => 'success', 'msg' => 'OTP sent to your registered mobile and email.');
+		} else if($login == 'INVALID'){
+			$response = array('status' => 'failed', 'msg' => 'No hospital found with this registered mobile number or email.');
+		} else {
+			$response = array('status' => 'failed', 'msg' => 'Account is inactive or blocked. Please contact support.');
 		}
 		echo json_encode($response);
 	}
 	
-		public function otppass(){
-		$mobile =$this->input->post('mobile');
+	public function otppass(){
+		$mobile = trim($this->input->post('mobile'));
 		$login = $this->Hospitaluser_Model->otppass($mobile);
-		if($login=='SUCCESS'){
-			$response=array('status'=>'success','msg'=>'OTP Sent To Registered Mobile and Email');
-		}else if($login=='INVALID'){
-			$response=array('status'=>'invalid','msg'=>'Invalid Mobile or Email');
-		}else if($login=='FAILED'){
-			$response=array('status'=>'failed','msg'=>'Something went wrong');
-		}else {
-			$response=array('status'=>'failed','msg'=>'Something went wrong');
+		if($login == 'SUCCESS'){
+			$response = array('status' => 'success', 'msg' => 'OTP Sent To Registered Mobile and Email');
+		} else if($login == 'INVALID'){
+			$response = array('status' => 'invalid', 'msg' => 'Invalid Mobile or Email');
+		} else {
+			$response = array('status' => 'failed', 'msg' => 'Something went wrong');
 		}
 		echo json_encode($response);
 	}

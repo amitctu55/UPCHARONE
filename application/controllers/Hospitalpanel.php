@@ -21,8 +21,9 @@ class Hospitalpanel extends CI_Controller
 		}
 		else
 		{
-			$row = $this->db->where('uid',$this->session->userdata('hosuserid'))->get('hospital')->row();
-			$this->did = ($row && isset($row->id)) ? $row->id : null;
+			$hosuserid = $this->session->userdata('hosuserid');
+			$row = $this->db->where('uid', $hosuserid)->or_where('id', $hosuserid)->get('hospital')->row();
+			$this->did = ($row && isset($row->id)) ? $row->id : $hosuserid;
 		}
 	}
 	
