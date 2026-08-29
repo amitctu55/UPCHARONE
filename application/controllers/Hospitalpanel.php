@@ -1858,9 +1858,68 @@ class Hospitalpanel extends CI_Controller
 	public function earnings()
 	{
 		$hospital_id = $this->did;
-		$data['earnings'] = $this->Financial_Model->get_hospital_earnings($hospital_id);
-		$data['ledger'] = $this->Financial_Model->get_ledger_history('HOSPITAL', $hospital_id, 50);
-		$data['hospital'] = $this->db->get_where('hospital', array('id' => $hospital_id))->row();
+
+		// 1. OPD Appointments Revenue
+		$opd_stats = $this->db->select('
+			COUNT(appointment_id) as total_opd_count,
+			COALESCE(SUM(CASE WHEN payment_status = "DONE" THEN (CASE WHEN amount > 0 THEN amount ELSE fee END) ELSE 0 END), 0) as opd_collected,
+			COALESCE(SUM(CASE WHEN payment_status != "DONE" THEN (CASE WHEN amount > 0 THEN amount ELSE fee END) ELSE 0 END), 0) as opd_pending,
+			COALESCE(SUM(CASE WHEN amount > 0 THEN amount ELSE fee END), 0) as opd_gross
+		')
+		->where('institute_id', $hospital_id)
+		->where('institution_type', 'H')
+		->where('status !=', '0')
+		->get('appointment')
+		->row();
+
+		// 2. IPD Admissions Revenue (if admissions table exists)
+		$ipd_collected = 0;
+		$ipd_pending   = 0;
+		$ipd_gross     = 0;
+		if ($this->db->table_exists('admissions')) {
+			$ipd_stats = $this->db->select('
+				COALESCE(SUM(advance_paid), 0) as ipd_paid,
+				COALESCE(SUM(total_charges - advance_paid), 0) as ipd_due,
+				COALESCE(SUM(total_charges), 0) as ipd_total
+			')
+			->where('hospital_id', $hospital_id)
+			->get('admissions')
+			->row();
+			if ($ipd_stats) {
+				$ipd_collected = (float) $ipd_stats->ipd_paid;
+				$ipd_pending   = (float) $ipd_stats->ipd_due;
+				$ipd_gross     = (float) $ipd_stats->ipd_total;
+			}
+		}
+
+		// 3. Platform Ledger Payouts
+		$platform_earnings = $this->Financial_Model->get_hospital_earnings($hospital_id);
+		$platform_settled  = $platform_earnings ? (float)$platform_earnings->settled_payout : 0;
+
+		$total_revenue    = (float)$opd_stats->opd_gross + $ipd_gross;
+		$settled_revenue  = (float)$opd_stats->opd_collected + $ipd_collected + $platform_settled;
+		$pending_revenue  = (float)$opd_stats->opd_pending + $ipd_pending;
+		$total_txns_count = (int)$opd_stats->total_opd_count;
+
+		// 4. Recent Encounters / Financial Journal Transactions
+		$transactions = $this->db->select('appointment.appointment_id as id, CONCAT("#APT-", appointment.appointment_id) as transaction_ref, "OPD Consultation" as item_type, appointment.appointment_name as patient_name, CONCAT(profile_dr.fname, " ", profile_dr.lname) as dr_name, (CASE WHEN appointment.amount > 0 THEN appointment.amount ELSE appointment.fee END) as gross_amount, 0 as platform_fee, (CASE WHEN appointment.amount > 0 THEN appointment.amount ELSE appointment.fee END) as net_payout, (CASE WHEN appointment.payment_status = "DONE" THEN "SETTLED" ELSE "HELD" END) as escrow_status, appointment.payment_mode, appointment.payment_status, appointment.appointment_date as created_at')
+			->join('profile_dr', 'profile_dr.id = appointment.doctor_id', 'left')
+			->where('appointment.institute_id', $hospital_id)
+			->where('appointment.institution_type', 'H')
+			->where('appointment.status !=', '0')
+			->order_by('appointment.appointment_id', 'DESC')
+			->limit(50)
+			->get('appointment')
+			->result();
+
+		$data['total_revenue']    = $total_revenue;
+		$data['settled_revenue']  = $settled_revenue;
+		$data['escrow_revenue']   = $pending_revenue;
+		$data['total_payouts']    = $settled_revenue;
+		$data['total_txns_count'] = $total_txns_count;
+		$data['transactions']     = $transactions;
+		$data['hospital']         = $this->db->get_where('hospital', array('id' => $hospital_id))->row();
+
 		$this->load->view('hospitalpanel/earnings', $data);
 	}
 }

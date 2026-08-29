@@ -239,13 +239,13 @@
                                         <?=html_escape($t->dr_name ?: 'General Clinic');?>
                                     </td>
                                     <td style="font-weight: 700; color: #0f172a;">
-                                        ₹<?=number_format((float)$t->amount, 2);?>
+                                        ₹<?=number_format((float)(isset($t->gross_amount) ? $t->gross_amount : (isset($t->amount) ? $t->amount : 0)), 2);?>
                                     </td>
                                     <td style="color: #ef4444; font-size: 12px;">
-                                        -₹<?=number_format((float)$t->platform_fee, 2);?>
+                                        -₹<?=number_format((float)(isset($t->platform_fee) ? $t->platform_fee : 0), 2);?>
                                     </td>
                                     <td style="font-weight: 800; color: #00a896; font-size: 13.5px;">
-                                        ₹<?=number_format((float)$t->hospital_share, 2);?>
+                                        ₹<?=number_format((float)(isset($t->net_payout) ? $t->net_payout : (isset($t->hospital_share) ? $t->hospital_share : 0)), 2);?>
                                     </td>
                                     <td>
                                         <?php if ($t->escrow_status == 'HELD'): ?>
