@@ -547,13 +547,153 @@ class Hospitalpanel extends CI_Controller
     }
 	public function addappointment()
 	{
-		if(isset($_POST['submit']))
-			$this->Hospital_Model->profile_step1();
-		
-		$data['data']=$this->db->get_where('profile_dr',array('user_id'=>$this->did))->row();
-		$data['clinic']=$this->db->select('profile_dr.*,dr_practice.status as p_status')->join('profile_dr','profile_dr.id=dr_practice.user_id')->get_where('dr_practice',array('institution_id'=>$this->did,'type'=>'H'))->result();	
-		//echo "<pre>"; print_r($this->did); die;
-		$this->load->view('hospitalpanel/addappointment',$data);
+		$userid = $this->did;
+
+		if ($this->input->server('REQUEST_METHOD') === 'POST') {
+			$doctor_id          = (int) $this->input->post('doctor_id');
+			$appointment_date   = $this->input->post('appointment_date');
+			$time_slot          = $this->input->post('time_slot');
+			$patient_name       = trim($this->input->post('patient_name'));
+			$patient_mobile     = trim($this->input->post('patient_mobile'));
+			$patient_email      = trim($this->input->post('patient_email'));
+			$patient_gender     = $this->input->post('patient_gender');
+			$patient_age        = $this->input->post('patient_age');
+			$fee                = (float) $this->input->post('fee');
+			$payment_mode       = $this->input->post('payment_mode') ? $this->input->post('payment_mode') : 'CASH';
+			$payment_status     = $this->input->post('payment_status') ? $this->input->post('payment_status') : 'DONE';
+			$appointment_status = $this->input->post('appointment_status') !== null ? $this->input->post('appointment_status') : '0';
+
+			if (empty($doctor_id) || empty($patient_name) || empty($patient_mobile)) {
+				$msg = "Please select a Doctor and provide Patient Name and valid 10-digit Mobile Number.";
+				if ($this->input->is_ajax_request()) {
+					echo json_encode(array('status' => 'error', 'msg' => $msg));
+					return;
+				}
+				$this->session->set_flashdata('flashmsg', "<div class='alert alert-danger'>$msg</div>");
+				redirect('hospitalpanel/addappointment');
+				return;
+			}
+
+			// Ensure user exists in userlogin
+			$user_row = $this->db->where('MOBILE', $patient_mobile)->get('userlogin')->row();
+			if (!$user_row) {
+				$name_parts = explode(' ', ucwords($patient_name), 2);
+				$fname = $name_parts[0];
+				$lname = isset($name_parts[1]) ? $name_parts[1] : '';
+				$new_user = array(
+					'FNAME'    => $fname,
+					'LNAME'    => $lname,
+					'MOBILE'   => $patient_mobile,
+					'EMAIL'    => $patient_email,
+					'GENDER'   => (!empty($patient_gender) && in_array($patient_gender, array('M','F','O'))) ? $patient_gender : 'M',
+					'STATUS'   => '1',
+					'APPROVED' => '1',
+					'REG_DATE' => date('Y-m-d')
+				);
+				$this->db->insert('userlogin', $new_user);
+				$patient_userid = $this->db->insert_id();
+			} else {
+				$patient_userid = $user_row->USERID;
+			}
+
+			// Practice & Fee details
+			$practRow = $this->db->where(array('user_id' => $doctor_id, 'institution_id' => $userid, 'type' => 'H'))->get('dr_practice')->row();
+			$practice_id = $practRow ? $practRow->id : 0;
+			if ($fee <= 0 && $practRow && !empty($practRow->fee)) {
+				$fee = (float) $practRow->fee;
+			}
+			if ($fee <= 0) {
+				$fee = 500;
+			}
+
+			// Parse time slot
+			$from_timing = '10:00 AM';
+			$to_timing   = '01:00 PM';
+			$time_id     = 0;
+			$date_id     = 0;
+
+			if (is_numeric($time_slot)) {
+				$sessionRow = $this->db->get_where('timing_session', array('id' => $time_slot))->row();
+				if ($sessionRow) {
+					$time_id     = $sessionRow->id;
+					$date_id     = $sessionRow->timing_id;
+					$from_timing = $sessionRow->from_timing;
+					$to_timing   = $sessionRow->to_timing;
+				}
+			} elseif (!empty($time_slot)) {
+				$parts = explode('-', $time_slot);
+				$from_timing = trim($parts[0]);
+				$to_timing   = isset($parts[1]) ? trim($parts[1]) : '';
+			}
+
+			if (empty($appointment_date)) {
+				$appointment_date = date('Y-m-d');
+			}
+
+			$insert_data = array(
+				'appointment_date'    => $appointment_date,
+				'time_id'             => $time_id,
+				'date_id'             => $date_id,
+				'practice_id'         => $practice_id,
+				'from_timing'         => $from_timing,
+				'to_timing'           => $to_timing,
+				'appointment_name'    => $patient_name,
+				'appointment_mobile'  => $patient_mobile,
+				'appointment_email'   => $patient_email,
+				'age'                 => $patient_age,
+				'doctor_id'           => $doctor_id,
+				'institute_id'        => $userid,
+				'institution_type'    => 'H',
+				'fee'                 => $fee,
+				'amount'              => $fee,
+				'user_id'             => $patient_userid,
+				'payment_mode'        => $payment_mode,
+				'payment_status'      => $payment_status,
+				'appointment_status'  => $appointment_status,
+				'status'              => '1',
+				'appointment_by'      => $this->session->userdata('hosuserid'),
+				'creat_date'          => date('Y-m-d H:i:s')
+			);
+
+			$this->db->insert('appointment', $insert_data);
+			$new_aid = $this->db->insert_id();
+
+			$doc = $this->db->where('id', $doctor_id)->get('profile_dr')->row();
+			$doc_name = $doc ? prefixdr($doc->fname).' '.$doc->lname : 'Doctor';
+
+			$success_msg = "OPD Appointment #$new_aid booked successfully for $patient_name with $doc_name.";
+
+			if ($this->input->is_ajax_request()) {
+				echo json_encode(array(
+					'status'         => 'success',
+					'msg'            => $success_msg,
+					'appointment_id' => $new_aid,
+					'redirect'       => base_url('hospitalpanel/manageappointment')
+				));
+				return;
+			}
+
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-success'><strong>Success!</strong> $success_msg</div>");
+			redirect('hospitalpanel/manageappointment');
+			return;
+		}
+
+		$data['doctors'] = $this->db->select('profile_dr.*, dr_practice.fee as practice_fee, dr_practice.id as practice_id')
+			->join('dr_practice', 'dr_practice.user_id = profile_dr.id')
+			->where(array('dr_practice.institution_id' => $userid, 'dr_practice.type' => 'H'))
+			->get('profile_dr')
+			->result();
+
+		$this->load->view('hospitalpanel/addappointment', $data);
+	}
+
+	public function get_doctor_fee()
+	{
+		$drid = (int) $this->input->get_post('doctor_id');
+		$userid = $this->did;
+		$practRow = $this->db->where(array('user_id' => $drid, 'institution_id' => $userid, 'type' => 'H'))->get('dr_practice')->row();
+		$fee = ($practRow && !empty($practRow->fee)) ? $practRow->fee : 500;
+		echo json_encode(array('status' => 'success', 'fee' => $fee));
 	}
 
 
