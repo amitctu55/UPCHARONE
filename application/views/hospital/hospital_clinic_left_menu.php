@@ -1,7 +1,7 @@
 <div class="sidebar">
         <div class="logopanel">
      <div class="logopanel"> 		
-          <a href="index.php"><img src="http://localhost/swati/images/logo.png"></a>
+          <a href="<?=base_url();?>"><img src="<?=base_url('assets/images/logo.png');?>" style="max-height: 40px;"></a>
        
             </div>
         </div>
