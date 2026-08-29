@@ -6,7 +6,7 @@ class Walletadmin extends CI_Controller {
     public function __construct() {
         parent::__construct();
         date_default_timezone_set("Asia/Kolkata");
-        $this->load->model('application/models/Wallet_model', 'wallet_model');
+        $this->load->model('walletmodel');
         $this->load->helper(array('query_string_helper', 'dbquery_helper', 'admin_helper'));
 
         if (!$this->session->userdata('adminuserid') && !$this->session->userdata('userid') && !$this->session->userdata('username')) {
@@ -82,9 +82,9 @@ class Walletadmin extends CI_Controller {
         $desc = $note . " (by $adminUser)";
 
         if ($type === 'CREDIT') {
-            $res = $this->wallet_model->credit_points($userId, $points, 'MANUAL_ADMIN_CREDIT', null, $desc, 'MANUAL');
+            $res = $this->walletmodel->credit_points($userId, $points, 'MANUAL_ADMIN_CREDIT', null, $desc, 'MANUAL');
         } else {
-            $res = $this->wallet_model->debit_points($userId, $points, 'MANUAL_ADMIN_DEBIT', null, $desc);
+            $res = $this->walletmodel->debit_points($userId, $points, 'MANUAL_ADMIN_DEBIT', null, $desc);
         }
 
         if ($res) {
@@ -103,7 +103,7 @@ class Walletadmin extends CI_Controller {
         $settings = $this->input->post('settings');
         if (is_array($settings)) {
             foreach ($settings as $key => $val) {
-                $this->wallet_model->set_setting($key, trim($val));
+                $this->walletmodel->set_setting($key, trim($val));
             }
             $this->session->set_flashdata('flashmsg', '<div class="alert alert-success"><strong>Success!</strong> Points settings updated.</div>');
         }
