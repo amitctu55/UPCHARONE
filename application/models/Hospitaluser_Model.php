@@ -104,6 +104,10 @@ class Hospitaluser_Model extends CI_Model
 			return 'INVALID';
 		}
 	}
+
+	public function otppass($mobile) {
+		return $this->forgotpass($mobile);
+	}
 	 
     public function login($email,$password){
 		$this -> db -> select(' * ');
@@ -299,48 +303,6 @@ thank you for being a part of Upchar.";
 		}
 		return $response;
 	}
-	
-	
-	public function otppass($mobile)
-	{
-		$this -> db -> select(' * ');
-        $this -> db -> from('hospitallogin');
-        $this -> db -> where('EMAIL', $mobile);        
-		$this -> db -> or_where('MOBILE', $mobile);
-        //$this -> db -> where('STATUS', '1');
-       // $this -> db -> where('APPROVED', '1');
-        $this -> db -> limit(1);
-        $query = $this -> db -> get();//echo  $this->db->last_query();
-		if($query -> num_rows() > 0)
-        {			
-			$row = $query->row();
-			if($row->STATUS==0){
-                
-			
-			
-				$otp=rand(100000,999999);
-				$this->db->where('USERID',$row->USERID)->set('OTP',$otp)->update('hospitallogin');
-				$this->session->set_userdata('hosforgotuserid', $row->USERID);
-				$msg="Dear ".$row->FNAME.",
-	 OTP to change password is $otp
-	UPCHARR";
-			sendsms($msg,$row->MOBILE);
-				return 'SUCCESS';
-			}
-			else {
-				return 'FAILED';
-			}
-        }
-        else
-        {
-            return 'INVALID';
-        }
-	}
-	
-	
-	
-	
-	
 	
 	function logout(){
 		$this->cart->destroy();

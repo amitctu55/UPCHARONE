@@ -97,48 +97,50 @@
     -->
 
          <div class="container">
-            <div class="row"><form action='<?=base_url();?>Hospitaluser/otppass' method='post' id='drforgotform'>
-                         
-                              <div class="col-sm-6 col-md-offset-3 borders" id="designforform">
-                          <div class="box-header"><h4>Upchar Hospital Email / Mobile</h4></div>
-                            <div class="label_name">                 
-                               
-                                   
-                                  <input value="" type="" name="mobile" class="form-control" Placeholder='Enter Registered Email or Mobile' required>
-                                  <p style="font-size:16px;font-family:Calibri;colo:red;padding: 10px 17px; ">You will receive an OTP on your registered mobile number <br> Login First time with OTP then create your password by `Clicking` Change Password in dashboard. </p>
-     
-    <div class="row"> 
-      <button type="submit" class="btn" style="border-radius: 5px;letter-spacing: 1px;padding: 6px 41px;background: #295771;color: white;float:left;margin-left: 27px;">Login With Otp</button>
+            <div class="row">
+                <form action='<?=base_url();?>hospitaluser/otppass' method='post' id='drforgotform'>
+                    <input type="hidden" name="<?=$this->security->get_csrf_token_name();?>" value="<?=$this->security->get_csrf_hash();?>">
+                    <div class="col-sm-6 col-md-offset-3 borders" id="designforform">
+                        <div class="box-header"><h4>Upchar Hospital Email / Mobile</h4></div>
+                        <div class="label_name">                 
+                            <input value="" type="text" name="mobile" class="form-control" placeholder='Enter Registered Email or Mobile' required>
+                            <p style="font-size:14px; font-family: 'Inter', sans-serif; color: #64748b; padding: 10px 0;">
+                                You will receive an OTP on your registered mobile number.<br> Verify OTP to reset and create your new hospital portal password.
+                            </p>
 
-        <a id="forgetpassworduser" class="bottomBtns" href="<?=base_url('hospital-login');?>">Login</a>
-     </div>
-         </div>                 
-                        </div></form>
+                            <div class="row" style="margin-top: 15px;"> 
+                                <button type="submit" class="btn" style="border-radius: 5px; letter-spacing: 1px; padding: 8px 24px; background: #00a896; color: white; float: left;">Send OTP Code</button>
+                                <a id="forgetpassworduser" class="bottomBtns" href="<?=base_url('hospital-login');?>" style="background: #043d5b;">Back to Login</a>
+                            </div>
+                        </div>                 
+                    </div>
+                </form>
 						
-<form id='hsforgototpform' action='<?=base_url();?>Hospitaluser/verifyforgototp' method='post' style='display:none;'>
- <div class="col-sm-4 col-md-offset-4 borders" id="designforform">                          
- <div class="box-header"><h4 style="font-weight:bold;">Enter OTP</h4></div>                           
- <div class="label_name">                                               
-                             
- <h6>Enter OTP Number ( 6 Digit )</h6>                                  
- <input  type="text" name="otp" class="form-control" required>      
- <button type="submit" class="btn  btn-lg common-btn practo-btn" style="margin-top: 10px!important;color: white;background: #ed3237"> Submit </button>  
- </div> 
-<div class='pull-right '> <a href='#' class='pull-right drresendfotp' style="background: #295771;font-weight: bold;color: white;padding: 10px;">Resend OTP</a></div> 
-
- </div>
- </form>
- 
- <form id='hsfoegotnewpassform' action='<?=base_url();?>Hospitaluser/setnewpass' method='post' style='display:none;'>
- <div class="col-sm-4 col-md-offset-4 borders" id="designforform">                         
- <div class="box-header">Set New Password</div>                            
- <div class="label_name">                                                
- <p> </p>                                 
- <span>Create New Password</span>                                 
- <input  type="Password" name="pass" class="form-control" required>      <button type="submit" class="btn  btn-lg common-btn practo-btn" style="margin-top: 10px!important;" required> Submit </button>            
- </div>                                                                                                    
- </div>
- </form>
+                <form id='hsforgototpform' action='<?=base_url();?>hospitaluser/verifyforgototp' method='post' style='display:none;'>
+                    <input type="hidden" name="<?=$this->security->get_csrf_token_name();?>" value="<?=$this->security->get_csrf_hash();?>">
+                    <div class="col-sm-4 col-md-offset-4 borders" id="designforform">                          
+                        <div class="box-header"><h4 style="font-weight:bold;">Enter 6-Digit OTP</h4></div>                           
+                        <div class="label_name">                                               
+                            <input type="text" name="otp" class="form-control" placeholder="••••••" maxlength="6" style="text-align: center; font-size: 20px; font-weight: 700; letter-spacing: 4px;" required>      
+                            <button type="submit" class="btn btn-lg common-btn practo-btn" style="margin-top: 12px !important; color: white; background: #00a896; width: 100%;"> Verify &amp; Continue </button>  
+                        </div> 
+                        <div style="margin-top: 14px; text-align: right;"> 
+                            <a href='javascript:void(0);' class='drresendfotp' style="color: #00a896; font-weight: bold; font-size: 13px;"><i class="fa fa-refresh"></i> Resend OTP</a>
+                        </div> 
+                    </div>
+                </form>
+  
+                <form id='hsfoegotnewpassform' action='<?=base_url();?>hospitaluser/setnewpass' method='post' style='display:none;'>
+                    <input type="hidden" name="<?=$this->security->get_csrf_token_name();?>" value="<?=$this->security->get_csrf_hash();?>">
+                    <div class="col-sm-4 col-md-offset-4 borders" id="designforform">                         
+                        <div class="box-header"><h4>Set New Password</h4></div>                            
+                        <div class="label_name">                                                
+                            <label style="font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 4px;">New Password (Min 6 chars)</label>                                 
+                            <input type="password" name="pass" class="form-control" placeholder="Enter new password" minlength="6" required>      
+                            <button type="submit" class="btn btn-lg common-btn practo-btn" style="margin-top: 14px !important; background: #00a896; color: #fff; width: 100%;" required> Update Password &amp; Login </button>            
+                        </div>                                                                                                    
+                    </div>
+                </form>
     
   
     
@@ -147,93 +149,90 @@
           </div>
 
    
-	 <script>
-	
-		$('#drforgotform').submit(function(e) {		
-		e.preventDefault(e);		
-		var myform=$(this);		
+	<script>
+	$('#drforgotform').submit(function(e) {		
+		e.preventDefault();		
+		var myform = $(this);		
 		$.ajax({			
 			type: "POST",			
 			url: myform.attr('action'),			
 			data: myform.serialize(),			
-			success: function( response ) {				 
-				response = JSON.parse(response);				
-				if(response.status=='success'){
-				$('#drforgotform').hide();
-				$('#hsforgototpform').show();
-				}else{					
-					alert('oops '+response.msg);				
-				}				
-				console.log( response );			
+			success: function(response) {				 
+				try { if (typeof response === 'string') response = JSON.parse(response); } catch(e){}				
+				if (response && response.status === 'success'){
+					$('#drforgotform').hide();
+					$('#hsforgototpform').show();
+				} else {					
+					alert(response && response.msg ? response.msg : 'No registered hospital found with this email/mobile.');				
+				}			
+			},
+			error: function() {
+				alert('Connection error. Please try again.');
 			}		
 		});			
 	});		
 	
-	
 	$('#hsforgototpform').submit(function(e) {		
-		e.preventDefault(e);		
-		var myform=$(this);		
+		e.preventDefault();		
+		var myform = $(this);		
 		$.ajax({			
-		type: "POST",			
-		url: myform.attr('action'),			
-		data: myform.serialize(),			
-		success: function( response ) {				
-			response = JSON.parse(response);				
-			if(response.status=='success'){										
+			type: "POST",			
+			url: myform.attr('action'),			
+			data: myform.serialize(),			
+			success: function(response) {				
+				try { if (typeof response === 'string') response = JSON.parse(response); } catch(e){}				
+				if (response && response.status === 'success'){										
 					$('#hsforgototpform').hide();
-				$('#hsfoegotnewpassform').show();
-			}else if(response.status=='failed'){					
-				alert(response.msg);									
-			}else{
-				alert('oops '+response.msg);
+					$('#hsfoegotnewpassform').show();
+				} else {					
+					alert(response && response.msg ? response.msg : 'Incorrect OTP. Please check and try again.');									
+				}		
+			},
+			error: function() {
+				alert('Verification failed. Please try again.');
 			}
-			console.log( response );			
-		}
 		});
 	});		
 	
 	$('#hsfoegotnewpassform').submit(function(e) {		
-		e.preventDefault(e);		
-		var myform=$(this);		
+		e.preventDefault();		
+		var myform = $(this);		
 		$.ajax({			
-		type: "POST",			
-		url: myform.attr('action'),			
-		data: myform.serialize(),			
-		success: function( response ) {				
-			response = JSON.parse(response);				
-			if(response.status=='success'){										
-				window.location="<?=base_url();?>hospital-login";
-			}else if(response.status=='failed'){					
-				alert(response.msg);									
-			}else{
-				alert('oops '+response.msg);
+			type: "POST",			
+			url: myform.attr('action'),			
+			data: myform.serialize(),			
+			success: function(response) {				
+				try { if (typeof response === 'string') response = JSON.parse(response); } catch(e){}				
+				if (response && response.status === 'success'){										
+					alert(response.msg || 'Password updated successfully! Redirecting to login...');
+					window.location = "<?=base_url();?>hospital-login";
+				} else {					
+					alert(response && response.msg ? response.msg : 'Password update failed.');									
+				}		
+			},
+			error: function() {
+				alert('Password update failed. Please try again.');
 			}
-			console.log( response );			
-		}
 		});
 	});		
+
 	$('.drresendfotp').click(function(e) {		
-		e.preventDefault(e);		
-		/* $('button[type=submit], input[type=submit]').prop('disabled',true); */		
-		//var myform=$(this);		
+		e.preventDefault();		
 		$.ajax({			
-		type: "POST",			
-		url: '<?=base_url();?>hospitaluser/resendforgetotp',//myform.attr('action'),			
-		//data: myform.serialize(),			
-		success: function( response ) {				
-			response = JSON.parse(response);				
-			if(response.status=='success'){										
-				//window.location="<?=base_url();?>";
-				myalert(response.msg);
-				//window.location="<?=$this->session->userdata('last_page');?>";					
-			}else if(response.status=='failed'){					
-				myalert(response.msg);									
-			}else{
-				myalert('oops '+response.msg);
+			type: "POST",			
+			url: '<?=base_url();?>hospitaluser/resendforgetotp',
+			data: { '<?=$this->security->get_csrf_token_name();?>': '<?=$this->security->get_csrf_hash();?>' },			
+			success: function(response) {				
+				try { if (typeof response === 'string') response = JSON.parse(response); } catch(e){}				
+				if (response && response.status === 'success'){										
+					alert(response.msg || 'A fresh OTP has been sent.');
+				} else {					
+					alert(response && response.msg ? response.msg : 'Failed to resend OTP.');									
+				}		
+			},
+			error: function() {
+				alert('Could not resend OTP. Please try again.');
 			}
-			console.log( response );			
-		}
 		});
 	});		
-	
 	</script>

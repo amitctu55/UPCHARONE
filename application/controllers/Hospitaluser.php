@@ -131,17 +131,15 @@ class Hospitaluser extends CI_Controller {
 		echo json_encode($response);
 	}
 	
-		public function otppass(){
-		$mobile =$this->input->post('mobile');
+	public function otppass(){
+		$mobile = trim($this->input->post('mobile'));
 		$login = $this->Hospitaluser_Model->otppass($mobile);
-		if($login=='SUCCESS'){
-			$response=array('status'=>'success','msg'=>'OTP Sent To Registered Mobile and Email');
-		}else if($login=='INVALID'){
-			$response=array('status'=>'invalid','msg'=>'Invalid Mobile or Email');
-		}else if($login=='FAILED'){
-			$response=array('status'=>'failed','msg'=>'Something went wrong');
-		}else {
-			$response=array('status'=>'failed','msg'=>'Something went wrong');
+		if($login == 'SUCCESS'){
+			$response = array('status' => 'success', 'msg' => 'OTP Sent To Registered Mobile and Email');
+		} else if($login == 'INVALID'){
+			$response = array('status' => 'invalid', 'msg' => 'Invalid Mobile or Email');
+		} else {
+			$response = array('status' => 'failed', 'msg' => 'Something went wrong');
 		}
 		echo json_encode($response);
 	}
