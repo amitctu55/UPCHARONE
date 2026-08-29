@@ -38,6 +38,7 @@ class Hospitaluser_Model extends CI_Model
 			$cleanMobile = substr($cleanMobile, -10);
 		}
 
+		// 1. Search in hospitallogin
 		$this->db->select('*')->from('hospitallogin');
 		$this->db->group_start();
 		$this->db->where('EMAIL', $mobile);
@@ -47,10 +48,30 @@ class Hospitaluser_Model extends CI_Model
 		}
 		$this->db->group_end();
 		$this->db->limit(1);
-		$query = $this->db->get();
+		$row = $this->db->get()->row();
 
-		if ($query->num_rows() > 0) {
-			$row = $query->row();
+		// 2. If not found in hospitallogin, search hospital table
+		if (!$row) {
+			$this->db->select('*')->from('hospital');
+			$this->db->group_start();
+			$this->db->where('email', $mobile);
+			$this->db->or_where('mobile', $mobile);
+			if (!empty($cleanMobile) && strlen($cleanMobile) >= 10) {
+				$this->db->or_where('mobile', $cleanMobile);
+			}
+			$this->db->group_end();
+			$this->db->limit(1);
+			$hosp = $this->db->get()->row();
+			if ($hosp) {
+				$uid = (!empty($hosp->uid)) ? $hosp->uid : $hosp->id;
+				$row = $this->db->get_where('hospitallogin', array('USERID' => $uid))->row();
+				if (!$row) {
+					$row = $this->db->get_where('hospitallogin', array('EMAIL' => $hosp->email))->row();
+				}
+			}
+		}
+
+		if ($row) {
 			if ($row->STATUS != 2) {
 				$otp = rand(100000, 999999);
 				$this->db->where('USERID', $row->USERID)->set('OTP', $otp)->update('hospitallogin');
@@ -67,6 +88,10 @@ class Hospitaluser_Model extends CI_Model
 		} else {
 			return 'INVALID';
 		}
+	}
+
+	public function otppass($mobile) {
+		return $this->forgotpass($mobile);
 	}
 	
 	public function resendotp($mobile) {
@@ -104,92 +129,87 @@ class Hospitaluser_Model extends CI_Model
 			return 'INVALID';
 		}
 	}
-
-	public function otppass($mobile) {
-		return $this->forgotpass($mobile);
-	}
 	 
-    public function login($email,$password){
-		$this -> db -> select(' * ');
-        $this -> db -> from('hospitallogin');
-        $this -> db -> where('EMAIL', $email);
-		$this -> db -> or_where('MOBILE', $email);
-        $this -> db -> where('PASSWORD', $password);
-       // $this -> db -> where('STATUS', '1');
-        $this -> db -> where('APPROVED', '1');
-        $this -> db -> limit(1);
-        $query = $this -> db -> get();//echo  $this->db->last_query();
-		if($query -> num_rows() > 0)
-        {			
+    public function login($email, $password) {
+		$email = trim($email);
+		$cleanMobile = preg_replace('/[^0-9]/', '', $email);
+		if (strlen($cleanMobile) > 10) $cleanMobile = substr($cleanMobile, -10);
+
+		$this->db->select('*')->from('hospitallogin');
+		$this->db->group_start();
+		$this->db->where('EMAIL', $email);
+		$this->db->or_where('MOBILE', $email);
+		if (!empty($cleanMobile) && strlen($cleanMobile) >= 10) {
+			$this->db->or_where('MOBILE', $cleanMobile);
+		}
+		$this->db->group_end();
+		$this->db->where('PASSWORD', $password);
+		$this->db->limit(1);
+		$query = $this->db->get();
+
+		if ($query->num_rows() > 0) {			
 			$row = $query->row();
-            if($row->STATUS==1){
-                $this->session->set_userdata('hosuserid', $row->USERID);
-                $this->session->set_userdata('hosuseremail', $row->EMAIL);				           
+			if ($row->STATUS == 1) {
+				$this->session->set_userdata('hosuserid', $row->USERID);
+				$this->session->set_userdata('hosuseremail', $row->EMAIL);				           
 				$this->session->set_userdata('hosusername', $row->FNAME);
 				
-			$hname = $this -> db -> where('uid', $row->USERID)->get('hospital')->row('name');
-			$this->session->set_userdata('hospitalname', $hname);
-			if($row->CART!=''){
-				$cartArray = unserialize($row->CART);
-				$this->cart->insert($cartArray);
-			}
-			$this->load->model('Cart_Model');
-			$this->Cart_Model->update_cart_db();
-			return 'SUCCESS';
-			}
-			else if($row->STATUS==0){
-				$otp=rand(100000,999999);
-				$this->db->where('USERID',$row->USERID)->set('OTP',$otp)->update('hospitallogin');
+				$hname = $this->db->where('uid', $row->USERID)->or_where('id', $row->USERID)->get('hospital')->row('name');
+				$this->session->set_userdata('hospitalname', $hname);
+				if (!empty($row->CART)) {
+					$cartArray = unserialize($row->CART);
+					if (is_array($cartArray)) {
+						$this->cart->insert($cartArray);
+					}
+				}
+				$this->load->model('Cart_Model');
+				$this->Cart_Model->update_cart_db();
+				return 'SUCCESS';
+			} else if ($row->STATUS == 0) {
+				$otp = rand(100000, 999999);
+				$this->db->where('USERID', $row->USERID)->set('OTP', $otp)->update('hospitallogin');
 				$this->session->set_userdata('hossignupuserid', $row->USERID);
-				$msg="Wecome to Upchar medical solutions. Your otp is $otp
-thank you for being a part of Upchar.";
-			sendsms($msg,$row->MOBILE);
+				$msg = "Welcome to Upchar medical solutions. Your otp is $otp\nThank you for being a part of Upchar.";
+				@sendsms($msg, $row->MOBILE);
 				return 'OTP';
-			}
-			else if($row->STATUS==2){
+			} else if ($row->STATUS == 2) {
 				return 'BLOCKED';
 			}
-        }
-        else
-        {
-            return 'FAILED';
-        }
+		} else {
+			return 'FAILED';
+		}
 	}
 	 
-	public function verifysignupotp($userid,$otp){
-		$this -> db -> select(' * ');
-        $this -> db -> from('hospitallogin');
-        $this -> db -> where('USERID', $userid);        
-		$this -> db -> where('OTP', $otp);
-		$this -> db -> where('STATUS', '0');
-       // $this -> db -> where('APPROVED', '1');
-        $this -> db -> limit(1);
-        $query = $this -> db -> get();//echo  $this->db->last_query();
-		if($query -> num_rows() > 0)
-        {			
+	public function verifysignupotp($userid, $otp) {
+		$this->db->select('*')->from('hospitallogin');
+		$this->db->where('USERID', $userid);        
+		$this->db->where('OTP', $otp);
+		$this->db->where('STATUS', '0');
+		$this->db->limit(1);
+		$query = $this->db->get();
+		if ($query->num_rows() > 0) {			
 			$row = $query->row();
-            if($row->OTP==$otp){
-				$this->db->where('USERID',$userid)->set('STATUS','1')->set('OTP',null)->update('hospitallogin');//last_query();die;
-                $this->session->set_userdata('hosuserid', $row->USERID);
-                $this->session->set_userdata('hosuseremail', $row->EMAIL);				           
+			if ($row->OTP == $otp) {
+				$this->db->where('USERID', $userid)->set('STATUS', '1')->set('OTP', null)->update('hospitallogin');
+				$this->session->set_userdata('hosuserid', $row->USERID);
+				$this->session->set_userdata('hosuseremail', $row->EMAIL);				           
 				$this->session->set_userdata('hosusername', $row->FNAME);
            
-			if($row->CART!=''){
-				$cartArray = unserialize($row->CART);
-				$this->cart->insert($cartArray);
-			}
-			$this->load->model('Cart_Model');
-			$this->Cart_Model->update_cart_db();
-			return 'SUCCESS';
-			}
-			else {
+				if (!empty($row->CART)) {
+					$cartArray = unserialize($row->CART);
+					if (is_array($cartArray)) {
+						$this->cart->insert($cartArray);
+					}
+				}
+				$this->load->model('Cart_Model');
+				$this->Cart_Model->update_cart_db();
+				return 'SUCCESS';
+			} else {
 				return 'FAILED';
 			}
-        }
-        else
-        {
-            return 'FAILED';
-        }
+		} else {
+			return 'FAILED';
+		}
 	}
 	
 	public function verifyforgototp($userid, $otp) {
@@ -243,68 +263,59 @@ thank you for being a part of Upchar.";
 	
 	public function register()
 	{
-		$email=strtolower(trim($this->input->post('email')));
-		$mobile=trim($this->input->post('mobile'));
-		$type=trim($this->input->post('type'));
-		$countemail=$this->db->where('EMAIL',$email)->count_all_results('hospitallogin');
-		$countmobile=$this->db->where('MOBILE',$mobile)->count_all_results('hospitallogin');
-		if($countemail > 0  && $email!='')
-		{
-			$response=array('status'=>'failed','msg'=>'Email Id Already Registered, Reset Your Password if You Forgotten ! ');
-		}
-		else if($countmobile > 0 && $mobile!='')
-		{
-			$response=array('status'=>'failed','msg'=>'Mobile No. Already Registered, Reset Your Password if You Forgotten ! ');
-		}
-		else if($mobile!='' || $email!='')
-		{
-			$pass=md5($this->input->post('password'));
-			$fullname=$this->input->post('name');
-			$name=explode(' ',ucwords($fullname));
-			$fname=$name[0];
-			$lname=@$name[1];
-			$otp=rand(100000,999999);
-			$msg="Dear ".$name[0].", Wecome to Upcharr medical solutions. Your otp is $otp
-			thank you for being a part of Upchar.";
-			sendsms($msg,$mobile);
-			$udata=array(
-					'PASSWORD'=>$pass,
-					'FNAME'=>$fname,
-					'LNAME'=>$lname,
-					'TYPE'=>$type,
-					'STATUS'=>'0',
-					'APPROVED'=>'1',
-					'OTP'=>$otp,
-					'REG_DATE'=>date('Y-m-d'),
-					'GENDER'=>'M'
-					); 
-			if($email)
-			$udata['EMAIL']=$email;
-			if($mobile)
-			$udata['MOBILE']=$mobile;
-			if($this->db->insert('hospitallogin',$udata))
-			{   
-				$thisid = $this->db->insert_id();
-				
-				$udata=array('name'=>$fullname,'email'=>$email,'mobile'=>$mobile,'uid'=>$thisid);
-				$this->db->insert('hospital',$udata);
-			
-				
+		$email = strtolower(trim($this->input->post('email')));
+		$mobile = trim($this->input->post('mobile'));
+		$type = trim($this->input->post('type'));
+		$countemail = $this->db->where('EMAIL', $email)->count_all_results('hospitallogin');
+		$countmobile = $this->db->where('MOBILE', $mobile)->count_all_results('hospitallogin');
+		if ($countemail > 0 && $email != '') {
+			$response = array('status' => 'failed', 'msg' => 'Email ID already registered. Reset your password if you forgot it!');
+		} else if ($countmobile > 0 && $mobile != '') {
+			$response = array('status' => 'failed', 'msg' => 'Mobile number already registered. Reset your password if you forgot it!');
+		} else if ($mobile != '' || $email != '') {
+			$pass = md5($this->input->post('password'));
+			$fullname = $this->input->post('name');
+			$name = explode(' ', ucwords($fullname));
+			$fname = $name[0];
+			$lname = @$name[1];
+			$otp = rand(100000, 999999);
+			$msg = "Dear ".$name[0].", Welcome to Upchar medical solutions. Your OTP is $otp\nThank you for being a part of Upchar.";
+			@sendsms($msg, $mobile);
+			$udata = array(
+				'PASSWORD' => $pass,
+				'FNAME' => $fname,
+				'LNAME' => $lname,
+				'TYPE' => $type,
+				'STATUS' => '0',
+				'APPROVED' => '1',
+				'EMAIL' => $email,
+				'MOBILE' => $mobile,
+				'OTP' => $otp
+			);
+			$this->db->insert('hospitallogin', $udata);
+			$thisid = $this->db->insert_id();
+			if ($thisid) {
+				$udata = array(
+					'uid' => $thisid,
+					'name' => $this->input->post('name'),
+					'status' => '0',
+					'approved' => '1',
+					'email' => $email,
+					'mobile' => $mobile
+				);
+				$this->db->insert('hospital', $udata);
 				$this->session->set_userdata('hossignupuserid', $thisid);
-			
-				$response=array('status'=>'success','msg'=>'Registration Successful, Please Verify Email!');
+				$response = array('status' => 'success', 'msg' => 'Registration successful, please verify OTP!');
+			} else {
+				$response = array('status' => 'failed', 'msg' => 'Something went wrong, please retry!');
 			}
-			else
-			{
-				$response=array('status'=>'failed','msg'=>'Something Went Wrong, Please Retry! ');
-			}
-		}else{
-				$response=array('status'=>'failed','msg'=>'Please Enter atleast any one either Email id or Mobile');
+		} else {
+			$response = array('status' => 'failed', 'msg' => 'Please enter at least email ID or mobile');
 		}
 		return $response;
 	}
 	
-	function logout(){
+	function logout() {
 		$this->cart->destroy();
 		$this->session->sess_destroy();
 	}
