@@ -1783,15 +1783,21 @@ class Hospitalpanel extends CI_Controller
 
 	public function admit_patient()
 	{
-		$hospital_id = $this->did;
-		$patient_name = trim($this->input->post('patient_name', TRUE));
-		$patient_mobile = trim($this->input->post('patient_mobile', TRUE));
-		$bed_id = intval($this->input->post('bed_id'));
-		$doctor_id = intval($this->input->post('doctor_id'));
-		$reason = trim($this->input->post('reason', TRUE));
-		$deposit = floatval($this->input->post('deposit_amount'));
-		$tpa = trim($this->input->post('insurance_tpa', TRUE));
-		$claim_no = trim($this->input->post('claim_number', TRUE));
+		$hospital_id               = $this->did;
+		$patient_name              = trim($this->input->post('patient_name', TRUE));
+		$patient_mobile            = trim($this->input->post('patient_mobile', TRUE));
+		$bed_id                    = intval($this->input->post('bed_id'));
+		$doctor_id                 = intval($this->input->post('doctor_id'));
+		$admission_source          = $this->input->post('admission_source', TRUE) ?: 'SELF_ADMITTED';
+		$ambulance_vehicle_no      = trim($this->input->post('ambulance_vehicle_no', TRUE));
+		$emergency_driver_contact  = trim($this->input->post('emergency_driver_contact', TRUE));
+		$upchar_dispatch_id        = trim($this->input->post('upchar_dispatch_id', TRUE));
+		$emergency_contact_person  = trim($this->input->post('emergency_contact_person', TRUE));
+		$emergency_contact_phone   = trim($this->input->post('emergency_contact_phone', TRUE));
+		$reason                    = trim($this->input->post('reason', TRUE));
+		$deposit                   = floatval($this->input->post('deposit_amount'));
+		$tpa                       = trim($this->input->post('insurance_tpa', TRUE));
+		$claim_no                  = trim($this->input->post('claim_number', TRUE));
 
 		if (!empty($patient_mobile) && !empty($bed_id)) {
 			// Find or create userlogin record
@@ -1799,12 +1805,12 @@ class Hospitalpanel extends CI_Controller
 			if (!$user) {
 				$name_parts = explode(' ', $patient_name, 2);
 				$this->db->insert('userlogin', array(
-					'FNAME' => $name_parts[0],
-					'LNAME' => isset($name_parts[1]) ? $name_parts[1] : '',
-					'MOBILE' => $patient_mobile,
-					'STATUS' => '1',
+					'FNAME'    => $name_parts[0],
+					'LNAME'    => isset($name_parts[1]) ? $name_parts[1] : '',
+					'MOBILE'   => $patient_mobile,
+					'STATUS'   => '1',
 					'APPROVED' => '1',
-					'REG_DATE' => date('Y-m-d')
+					'REG_DATE' => date('Y-m-d H:i:s')
 				));
 				$patient_id = $this->db->insert_id();
 			} else {
@@ -1813,24 +1819,30 @@ class Hospitalpanel extends CI_Controller
 
 			$admission_no = 'IPD' . date('Ymd') . rand(100, 999);
 			$this->db->insert('hospital_admissions', array(
-				'hospital_id'            => $hospital_id,
-				'patient_id'             => $patient_id,
-				'attending_doctor_id'    => $doctor_id,
-				'bed_id'                 => $bed_id,
-				'admission_number'       => $admission_no,
-				'admission_date'         => date('Y-m-d H:i:s'),
-				'admission_reason'       => $reason,
-				'deposit_amount'         => $deposit,
-				'current_running_bill'   => $deposit,
-				'insurance_tpa_name'     => $tpa,
-				'insurance_claim_number' => $claim_no,
-				'status'                 => 'ADMITTED'
+				'hospital_id'              => $hospital_id,
+				'patient_id'               => $patient_id,
+				'attending_doctor_id'      => $doctor_id,
+				'bed_id'                   => $bed_id,
+				'admission_number'         => $admission_no,
+				'admission_date'           => date('Y-m-d H:i:s'),
+				'admission_reason'         => $reason,
+				'admission_source'         => $admission_source,
+				'ambulance_vehicle_no'     => $ambulance_vehicle_no,
+				'emergency_driver_contact' => $emergency_driver_contact,
+				'upchar_dispatch_id'       => $upchar_dispatch_id,
+				'emergency_contact_person' => $emergency_contact_person,
+				'emergency_contact_phone'  => $emergency_contact_phone,
+				'deposit_amount'           => $deposit,
+				'current_running_bill'     => $deposit,
+				'insurance_tpa_name'       => $tpa,
+				'insurance_claim_number'   => $claim_no,
+				'status'                   => 'ADMITTED'
 			));
 
 			// Update bed status to OCCUPIED
 			$this->db->where('id', $bed_id)->update('hospital_bed', array('status' => 'OCCUPIED'));
 
-			$this->session->set_flashdata('flashmsg', "<div class='alert alert-success'>Patient admitted successfully! Admission #$admission_no</div>");
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-success'>Patient admitted successfully! Admission #$admission_no (Source: ".str_replace('_', ' ', $admission_source).")</div>");
 		}
 		redirect('hospitalpanel/admissions');
 	}
