@@ -308,7 +308,12 @@
                                             <span class="badge-active"><i class="fa fa-clock-o"></i> Scheduled</span>
                                         <?php endif; ?>
                                     </td>
-                                    <td style="padding: 14px 16px; text-align: right; vertical-align: middle;">
+                                    <td style="padding: 14px 16px; text-align: right; vertical-align: middle; white-space: nowrap;">
+                                        <?php if (!empty($appt->room_id) || (isset($appt->appointment_type) && $appt->appointment_type == 'video')): ?>
+                                        <a href="<?=base_url('doctorpanel/videocall/'.($appt->room_id ?: 'upchar_consult_'.$appt->appointment_id));?>" target="_blank" class="btn btn-xs btn-primary" style="background: #2563eb; border-color: #2563eb; font-weight: 700; border-radius: 4px; padding: 4px 8px; margin-right: 4px;">
+                                            <i class="fa fa-video-camera"></i> Join Call
+                                        </a>
+                                        <?php endif; ?>
                                         <a href="<?=base_url('doctorpanel/prescription/'.$appt->appointment_id);?>" class="btn-rx-action" title="Write Rx SOAP">
                                             <i class="fa fa-stethoscope"></i> Write Rx
                                         </a>

@@ -331,49 +331,247 @@ class Home extends CI_Controller
 		}
 	}
 
+	/**
+	 * Helper: Fetch all available timing records and sessions for a doctor
+	 * Resolves direct doctor timings, practice-linked timings, and institution-linked timings
+	 */
+	private function _get_doctor_timing_info($doctor_id) {
+		$days = array('1'=>'M','2'=>'T','3'=>'W','4'=>'TH','5'=>'F','6'=>'SA','7'=>'S');
+		$dr = $this->db->get_where('profile_dr', array('id' => $doctor_id))->row();
+		if (!$dr) return null;
+
+		$practices = $this->db->get_where('dr_practice', array('user_id' => $doctor_id))->result();
+		$practiceIds = array();
+		foreach ($practices as $p) {
+			$practiceIds[] = (int)$p->id;
+		}
+
+		$timingRows = array();
+
+		// 1. Direct doctor timings
+		$t1 = $this->db->get_where('timing', array('user_type' => 'D', 'user_id' => $doctor_id, 'status' => '1'))->result();
+		foreach ($t1 as $t) {
+			$timingRows[$t->id] = $t;
+		}
+
+		// 2. Practice-linked doctor timings
+		if (!empty($practiceIds)) {
+			$this->db->where_in('practice_id', $practiceIds);
+			$t2 = $this->db->get_where('timing', array('status' => '1'))->result();
+			foreach ($t2 as $t) {
+				$timingRows[$t->id] = $t;
+			}
+		}
+
+		// 3. Institution-linked timings if no direct timings found
+		if (empty($timingRows)) {
+			foreach ($practices as $p) {
+				$instId = (int)$p->institution_id;
+				$instType = $p->type; // 'H' or 'C'
+				if ($instId > 0 && ($instType === 'H' || $instType === 'C')) {
+					$t3 = $this->db->get_where('timing', array('user_id' => $instId, 'user_type' => $instType, 'status' => '1'))->result();
+					foreach ($t3 as $t) {
+						$t->practice_id = $p->id;
+						$timingRows[$t->id] = $t;
+					}
+				}
+			}
+		}
+
+		$availableDays = array('1'=>0,'2'=>0,'3'=>0,'4'=>0,'5'=>0,'6'=>0,'7'=>0);
+		$daySlots = array('1'=>array(),'2'=>array(),'3'=>array(),'4'=>array(),'5'=>array(),'6'=>array(),'7'=>array());
+
+		foreach ($timingRows as $t) {
+			$tId = $t->id;
+			$sessions = $this->db->get_where('timing_session', array('timing_id' => $tId, 'status' => '1'))->result();
+			if (empty($sessions)) {
+				$sessions = $this->db->get_where('timing_session', array('timing_id' => $tId))->result();
+			}
+
+			if (!empty($sessions)) {
+				foreach ($days as $dayNum => $dayKey) {
+					if (!empty($t->$dayKey)) {
+						$availableDays[$dayNum] = 1;
+						foreach ($sessions as $s) {
+							$daySlots[$dayNum][$s->id] = (object) array(
+								'id' => $s->id,
+								'timing_id' => $tId,
+								'from_timing' => $s->from_timing,
+								'to_timing' => $s->to_timing,
+								'max_patient' => $s->max_patient,
+								'consultation_fee' => $s->consultation_fee,
+								'practice_id' => $t->practice_id
+							);
+						}
+					}
+				}
+			} else {
+				// Timing row exists with active days, but no specific sessions defined in timing_session
+				foreach ($days as $dayNum => $dayKey) {
+					if (!empty($t->$dayKey)) {
+						$availableDays[$dayNum] = 1;
+						$daySlots[$dayNum]['gen_'.$tId.'_1'] = (object) array(
+							'id' => 'gen_'.$tId.'_1',
+							'timing_id' => $tId,
+							'from_timing' => '10:00 AM',
+							'to_timing' => '01:00 PM',
+							'max_patient' => 30,
+							'consultation_fee' => 0,
+							'practice_id' => $t->practice_id
+						);
+						$daySlots[$dayNum]['gen_'.$tId.'_2'] = (object) array(
+							'id' => 'gen_'.$tId.'_2',
+							'timing_id' => $tId,
+							'from_timing' => '05:00 PM',
+							'to_timing' => '08:00 PM',
+							'max_patient' => 30,
+							'consultation_fee' => 0,
+							'practice_id' => $t->practice_id
+						);
+					}
+				}
+			}
+		}
+
+		// Fallback if doctor has no timings in DB at all: standard Mon-Sat slots
+		if (!in_array(1, $availableDays)) {
+			$availableDays = array('1'=>1,'2'=>1,'3'=>1,'4'=>1,'5'=>1,'6'=>1,'7'=>0);
+			foreach (array('1','2','3','4','5','6') as $dn) {
+				$daySlots[$dn]['def_m'] = (object) array(
+					'id' => 'def_m',
+					'timing_id' => 0,
+					'from_timing' => '10:00 AM',
+					'to_timing' => '01:00 PM',
+					'max_patient' => 30,
+					'consultation_fee' => 0,
+					'practice_id' => !empty($practiceIds) ? $practiceIds[0] : 0
+				);
+				$daySlots[$dn]['def_e'] = (object) array(
+					'id' => 'def_e',
+					'timing_id' => 0,
+					'from_timing' => '05:00 PM',
+					'to_timing' => '08:00 PM',
+					'max_patient' => 30,
+					'consultation_fee' => 0,
+					'practice_id' => !empty($practiceIds) ? $practiceIds[0] : 0
+				);
+			}
+		}
+
+		return array(
+			'doctor' => $dr,
+			'practices' => $practices,
+			'timingRows' => $timingRows,
+			'availableDays' => $availableDays,
+			'daySlots' => $daySlots
+		);
+	}
+
 	public function app_conf_pop_institute()
 	{
-		$id=$_GET['doctor'];
-		$date=$_GET['date'];
-		$time=$_GET['time'];
-		$data=$this->db->get_where('timing_session',array('id'=>$time))->row();
-		$timing_id=$data->timing_id;
-		$max_opd=$data->max_patient;
-		$consultation_fee = $data->consultation_fee; 
-		$booked=$this->db->where(array('time_id'=>$time,'appointment_date'=>$date,'status'=>'1'))->count_all_results('appointment');
-		$opd=$max_opd-$booked;
-		$opd=($opd)? $opd: 'Not Available';
-		$data=$this->db->get_where('timing',array('id'=>$timing_id))->row();
-		$pid=$data->practice_id;
-		$data=$this->db->get_where('dr_practice',array('id'=>$pid))->row();
-		$did=$data->user_id;
-		$type=$data->type;
-		if($type=='H')
-			$type='hospital';
-		else
-			$type='clinic';
-		$institution_id=$data->institution_id;
-		if($consultation_fee=='0')
-		{
-			$fee=$data->fee;
-		}
-		else
-		{
-			$fee= $consultation_fee;
+		$id = isset($_GET['doctor']) ? intval($_GET['doctor']) : 0;
+		$date = isset($_GET['date']) ? $_GET['date'] : date('Y-m-d');
+		$time = isset($_GET['time']) ? trim($_GET['time']) : '';
+
+		$fee = 0;
+		$max_opd = 25;
+		$booked = 0;
+		$instName = '';
+		$instAddr = '';
+		$instType = 'clinic';
+		$instId = 0;
+		$pid = 0;
+
+		$session = is_numeric($time) ? $this->db->get_where('timing_session', array('id' => $time))->row() : null;
+		
+		if ($session) {
+			$timingId = $session->timing_id;
+			$max_opd = intval($session->max_patient) ?: 25;
+			if (!empty($session->consultation_fee) && floatval($session->consultation_fee) > 0) {
+				$fee = floatval($session->consultation_fee);
+			}
+			
+			$booked = $this->db->where(array('time_id' => $time, 'appointment_date' => $date, 'status' => '1'))->count_all_results('appointment');
+
+			$timing = $this->db->get_where('timing', array('id' => $timingId))->row();
+			if ($timing) {
+				if (!empty($timing->practice_id)) {
+					$pid = $timing->practice_id;
+					$pract = $this->db->get_where('dr_practice', array('id' => $pid))->row();
+					if ($pract) {
+						$instType = ($pract->type === 'H') ? 'hospital' : 'clinic';
+						$instId = intval($pract->institution_id);
+						if ($fee <= 0 && !empty($pract->fee)) $fee = floatval($pract->fee);
+					}
+				} else if ($timing->user_type === 'H') {
+					$instType = 'hospital';
+					$instId = intval($timing->user_id);
+				} else if ($timing->user_type === 'C') {
+					$instType = 'clinic';
+					$instId = intval($timing->user_id);
+				}
+			}
+		} else if (strpos($time, 'gen_') === 0) {
+			$parts = explode('_', $time);
+			$timingId = intval($parts[1]);
+			$timing = $this->db->get_where('timing', array('id' => $timingId))->row();
+			if ($timing) {
+				if ($timing->user_type === 'H') {
+					$instType = 'hospital';
+					$instId = intval($timing->user_id);
+				} else if ($timing->user_type === 'C') {
+					$instType = 'clinic';
+					$instId = intval($timing->user_id);
+				} else if (!empty($timing->practice_id)) {
+					$pid = $timing->practice_id;
+					$pract = $this->db->get_where('dr_practice', array('id' => $pid))->row();
+					if ($pract) {
+						$instType = ($pract->type === 'H') ? 'hospital' : 'clinic';
+						$instId = intval($pract->institution_id);
+						if ($fee <= 0 && !empty($pract->fee)) $fee = floatval($pract->fee);
+					}
+				}
+			}
 		}
 
-		$institution=$this->db->get_where($type,array('id'=>$institution_id,'approved'=>'1','verified'=>'1'))->row();
+		// Fallback to doctor's active practice if institution not yet resolved
+		if (!$instId && $id > 0) {
+			$pract = $this->db->order_by('id', 'ASC')->get_where('dr_practice', array('user_id' => $id, 'status' => '1'))->row();
+			if ($pract) {
+				$pid = $pract->id;
+				$instType = ($pract->type === 'H') ? 'hospital' : 'clinic';
+				$instId = intval($pract->institution_id);
+				if ($fee <= 0 && !empty($pract->fee)) $fee = floatval($pract->fee);
+			}
+		}
 
-		$instName = (!empty($institution->name)) ? $institution->name : 'Upchar Partner Healthcare Center';
-		$instAddr = (!empty($institution->address)) ? $institution->address : 'Consultation Facility';
+		if ($instId > 0) {
+			$instTable = ($instType === 'hospital') ? 'hospital' : 'clinic';
+			$inst = $this->db->get_where($instTable, array('id' => $instId))->row();
+			if ($inst) {
+				$instName = $inst->name;
+				$instAddr = !empty($inst->address) ? $inst->address : '';
+			}
+		}
+
+		if (empty($instName)) {
+			$dr = $this->db->get_where('profile_dr', array('id' => $id))->row();
+			$cityName = ($dr && !empty($dr->city)) ? getCityName($dr->city) : 'Varanasi, India';
+			$instName = 'Upchar Partner Clinic';
+			$instAddr = $cityName;
+		}
+
+		if ($fee <= 0) $fee = 500;
+		$slotsAvailable = max(1, $max_opd - $booked);
+
 		$content = '<div style="display: flex; align-items: flex-start; gap: 10px;">
 			<i class="fas fa-hospital-alt" style="color: #00A896; font-size: 18px; margin-top: 2px; flex-shrink: 0;"></i>
 			<div style="flex: 1; font-size: 12.5px;">
-				<strong style="color: #0F172A; display: block; margin-bottom: 2px;">'.$instName.'</strong>
-				<div style="color: #64748B; margin-bottom: 4px;">'.$instAddr.'</div>
+				<strong style="color: #0F172A; display: block; margin-bottom: 2px;">'.htmlspecialchars($instName).'</strong>
+				<div style="color: #64748B; margin-bottom: 4px;">'.htmlspecialchars($instAddr).'</div>
 				<div style="display: flex; gap: 12px; font-weight: 600;">
 					<span style="color: #16A34A;"><i class="fas fa-rupee-sign"></i> ₹'.$fee.' Fee</span>
-					<span style="color: #05668D;"><i class="fas fa-user-check"></i> '.$opd.' Slots Open</span>
+					<span style="color: #05668D;"><i class="fas fa-user-check"></i> '.$slotsAvailable.' Slots Open</span>
 				</div>
 			</div>
 		</div>';
@@ -385,37 +583,25 @@ class Home extends CI_Controller
 		$id=$_GET['doctor'];
 		$date=$_GET['date'];
 		$time=$_GET['time'];
-		//$day_no = date('N',strtotime($date));
-		//$day=array('1'=>'M','2'=>'T','3'=>'W','4'=>'TH','5'=>'F','6'=>'SA','7'=>'S');
 		$data=$this->db->get_where('timing_session',array('id'=>$time))->row();
-		$timing_id=$data->timing_id;
-		$max_opd=$data->max_patient;
-		$consultation_fee = $data->consultation_fee; 
+		$timing_id=$data ? $data->timing_id : 0;
+		$max_opd=$data ? $data->max_patient : 50;
+		$consultation_fee = $data ? $data->consultation_fee : 0; 
 		$booked=$this->db->where(array('time_id'=>$time,'appointment_date'=>$date,'status'=>'1'))->count_all_results('appointment');
 		$opd=$max_opd-$booked;
 		$opd=($opd)? $opd: 'Not Available';
-		$data=$this->db->get_where('timing',array('id'=>$timing_id))->row();
-		$pid=$data->practice_id;
-		$data=$this->db->get_where('dr_practice',array('id'=>$pid))->row();
-		$did=$data->user_id;
-		$type=$data->type;
-		if($type=='H')
-			$type='hospital';
-		else
-			$type='clinic';
-		$institution_id=$data->institution_id;
-		if($consultation_fee=='0')
-		{
-			$fee=$data->fee;
-		}
-		else
-		{
-			$fee= $consultation_fee;
-		}
-		$institution=$this->db->get_where($type,array('id'=>$institution_id))->row();
-		//echo "<pre>"; print_r($institution);
+		$timing=$timing_id ? $this->db->get_where('timing',array('id'=>$timing_id))->row() : null;
+		$pid=$timing ? $timing->practice_id : 0;
+		$pract=$pid ? $this->db->get_where('dr_practice',array('id'=>$pid))->row() : null;
+		$type=$pract ? $pract->type : 'H';
+		$instTable=($type=='H') ? 'hospital' : 'clinic';
+		$institution_id=$pract ? $pract->institution_id : 0;
+		$fee = ($consultation_fee && $consultation_fee != '0') ? $consultation_fee : ($pract && !empty($pract->fee) ? $pract->fee : 500);
+
+		$institution=$institution_id ? $this->db->get_where($instTable,array('id'=>$institution_id))->row() : null;
+		$drImg = ($institution && !empty($institution->drimage)) ? base_url().'admin1947/public/assets/upload/'.$institution->drimage : admin_url().'public/assets/upload/dummyhospital.jpg';
 		echo $content = '<div class="col-md-6">
-			<img class="docimg" src="'.base_url().'admin1947/public/assets/upload/'.$institution->drimage.'" alt="">
+			<img class="docimg" src="'.$drImg.'" alt="">
 		</div>
 		<div class="col-md-6">
 			<div class="doc_nam_inf">
@@ -424,7 +610,6 @@ class Home extends CI_Controller
 					<li>'.@$institution->address.'</li>
 					<li> Fee: Rs. '.$fee.'</li>
 					<li> Available Number of OPD: '.$opd.'</li>
-
 				</ul>
 			</div>
 		</div>';
@@ -432,26 +617,9 @@ class Home extends CI_Controller
 
 	public function app_conf_pop_date(){
 		$id = isset($_GET['doctor']) ? intval($_GET['doctor']) : 0;
-		$this->db->select('timing.*');
-		$this->db->join('dr_practice','dr_practice.user_id=timing.user_id AND dr_practice.status=\'1\'');
-		$data = $this->db->get_where('timing', array('timing.user_id' => $id, 'user_type' => 'D'))->result();
+		$info = $this->_get_doctor_timing_info($id);
 		
-		$day = array('1'=>0,'2'=>0,'3'=>0,'4'=>0,'5'=>0,'6'=>0,'7'=>0);
-		foreach($data as $d){
-			if(!$day['1']) $day['1']=$d->M;
-			if(!$day['2']) $day['2']=$d->T;
-			if(!$day['3']) $day['3']=$d->W;
-			if(!$day['4']) $day['4']=$d->TH;
-			if(!$day['5']) $day['5']=$d->F;
-			if(!$day['6']) $day['6']=$d->SA;
-			if(!$day['7']) $day['7']=$d->S;
-			if(!in_array(0, $day)) break;
-		}
-
-		// Fallback: If no timings configured in database, make weekdays available
-		if (!in_array(1, $day)) {
-			$day = array('1'=>1,'2'=>1,'3'=>1,'4'=>1,'5'=>1,'6'=>1,'7'=>0);
-		}
+		$availableDays = ($info && !empty($info['availableDays'])) ? $info['availableDays'] : array('1'=>1,'2'=>1,'3'=>1,'4'=>1,'5'=>1,'6'=>1,'7'=>0);
 
 		$period = new DatePeriod(
 			 new DateTime(date('Y-m-d')),
@@ -461,7 +629,7 @@ class Home extends CI_Controller
 		echo "<option value=''>-- Select Appointment Date --</option>";
 		foreach ($period as $date) {
 			$day_no = date('N', strtotime($date->format("Y-m-d")));
-			if (!empty($day[$day_no])) {
+			if (!empty($availableDays[$day_no])) {
 				echo "<option value='".$date->format("Y-m-d")."'>".$date->format("D, jS M Y")."</option>";
 			}
 		}
@@ -471,33 +639,19 @@ class Home extends CI_Controller
 		$id = isset($_GET['doctor']) ? intval($_GET['doctor']) : 0;
 		$date = isset($_GET['date']) ? $_GET['date'] : date('Y-m-d');
 		$day_no = date('N', strtotime($date));
-		$day = array('1'=>'M','2'=>'T','3'=>'W','4'=>'TH','5'=>'F','6'=>'SA','7'=>'S');
 		
-		$this->db->select('timing.*');
-		$this->db->group_by('timing.id');
-		$this->db->join('dr_practice','dr_practice.user_id=timing.user_id AND dr_practice.status=\'1\'');
-		$data = $this->db->get_where('timing', array('timing.user_id' => $id, 'user_type' => 'D', $day[$day_no] => '1'))->result();
+		$info = $this->_get_doctor_timing_info($id);
+		$slots = ($info && !empty($info['daySlots'][$day_no])) ? $info['daySlots'][$day_no] : array();
 
 		echo "<option value=''>-- Select Time Slot --</option>";
-		$hasSlots = false;
-		if (!empty($data)) {
-			foreach ($data as $t) {
-				$data2 = $this->db->get_where('timing_session', array('timing_id' => $t->id))->result();
-				foreach ($data2 as $ts) {
-					if (!empty($ts->from_timing)) {
-						$hasSlots = true;
-						echo "<option value='".$ts->id."'>".$ts->from_timing.' - '.$ts->to_timing."</option>";
-					}
-				}
+		if (!empty($slots)) {
+			foreach ($slots as $s) {
+				$label = trim($s->from_timing . ' - ' . $s->to_timing);
+				echo "<option value='".$s->id."'>".$label."</option>";
 			}
-		}
-
-		// Fallback standard slots if doctor has no custom timing session entries
-		if (!$hasSlots) {
-			echo "<option value='morning_1'>09:30 AM - 11:00 AM (Morning Slot)</option>";
-			echo "<option value='morning_2'>11:30 AM - 01:00 PM (Midday Slot)</option>";
-			echo "<option value='evening_1'>04:30 PM - 06:00 PM (Evening Slot)</option>";
-			echo "<option value='evening_2'>06:30 PM - 08:00 PM (Late Evening Slot)</option>";
+		} else {
+			echo "<option value='def_m'>10:00 AM - 01:00 PM (Morning Slot)</option>";
+			echo "<option value='def_e'>05:00 PM - 08:00 PM (Evening Slot)</option>";
 		}
 	}
 
@@ -514,6 +668,26 @@ class Home extends CI_Controller
 		echo sendsms('Hello','9718777468');
 	}
 	
+	public function videocall($room = '')
+	{
+		$room = trim($room);
+		if (empty($room)) {
+			show_404();
+			return;
+		}
+
+		$data['room'] = $room;
+		$data['display_name'] = $this->session->userdata('username') ? 'Patient: ' . $this->session->userdata('username') : 'Upchar Patient';
+		
+		// Look up appointment for contextual info if exists
+		$appt = $this->db->get_where('appointment', array('room_id' => $room))->row();
+		if ($appt && !empty($appt->appointment_name)) {
+			$data['display_name'] = $appt->appointment_name;
+		}
+
+		$this->load->view('video_call', $data);
+	}
+
 	public function bookappointment()
 	{	
 		$mobile	=	$this->input->post('app_mobile');
@@ -524,6 +698,7 @@ class Home extends CI_Controller
 		$email	=	$this->input->post('app_email');
 		$age	=	$this->input->post('app_age');
 		$otp	=	$this->input->post('app_otp');
+		$consult_type = $this->input->post('consultation_type') ?: ($this->input->post('appointment_type') ?: 'in_clinic');
 		
 		if($this->session->userdata('userid')=='')
 		{	
@@ -575,18 +750,46 @@ class Home extends CI_Controller
 
 		$sessionRow = is_numeric($time) ? $this->db->get_where('timing_session', array('id' => $time))->row() : null;
 		$timing_id = $sessionRow ? $sessionRow->timing_id : 0;
-		$max_opd = $sessionRow ? $sessionRow->max_patient : 50;
-		$consultation_fee = $sessionRow ? $sessionRow->consultation_fee : 0;
+		$max_opd = $sessionRow ? intval($sessionRow->max_patient) : 30;
+		$consultation_fee = $sessionRow ? floatval($sessionRow->consultation_fee) : 0;
 		$from_timing = $sessionRow ? $sessionRow->from_timing : '10:00 AM';
 		$to_timing = $sessionRow ? $sessionRow->to_timing : '01:00 PM';
-		
+
+		$pid = 0;
+		$instType = 'clinic';
+		$institution_id = 0;
+
 		$timingRow = $timing_id ? $this->db->get_where('timing', array('id' => $timing_id))->row() : null;
-		$pid = $timingRow ? $timingRow->practice_id : 0;
-		$practRow = $pid ? $this->db->get_where('dr_practice', array('id' => $pid))->row() : null;
-		$did = $practRow ? $practRow->user_id : $doctor;
-		$type = $practRow ? $practRow->type : 'C';
-		$institution_id = $practRow ? $practRow->institution_id : 0;
-		$fee = ($consultation_fee && $consultation_fee != '0') ? $consultation_fee : ($practRow && !empty($practRow->fee) ? $practRow->fee : 500);
+		if ($timingRow) {
+			if (!empty($timingRow->practice_id)) {
+				$pid = $timingRow->practice_id;
+				$practRow = $this->db->get_where('dr_practice', array('id' => $pid))->row();
+				if ($practRow) {
+					$instType = ($practRow->type === 'H') ? 'hospital' : 'clinic';
+					$institution_id = (int)$practRow->institution_id;
+					if ($consultation_fee <= 0 && !empty($practRow->fee)) $consultation_fee = floatval($practRow->fee);
+				}
+			} else if ($timingRow->user_type === 'H') {
+				$instType = 'hospital';
+				$institution_id = (int)$timingRow->user_id;
+			} else if ($timingRow->user_type === 'C') {
+				$instType = 'clinic';
+				$institution_id = (int)$timingRow->user_id;
+			}
+		}
+
+		if (!$institution_id && $doctor > 0) {
+			$practRow = $this->db->order_by('id', 'ASC')->get_where('dr_practice', array('user_id' => $doctor, 'status' => '1'))->row();
+			if ($practRow) {
+				$pid = $practRow->id;
+				$instType = ($practRow->type === 'H') ? 'hospital' : 'clinic';
+				$institution_id = (int)$practRow->institution_id;
+				if ($consultation_fee <= 0 && !empty($practRow->fee)) $consultation_fee = floatval($practRow->fee);
+			}
+		}
+
+		$fee = ($consultation_fee > 0) ? $consultation_fee : 500;
+		$type = ($instType === 'hospital') ? 'H' : 'C';
 
 		$booked = is_numeric($time) ? $this->db->where(array('time_id'=>$time,'appointment_date'=>$date,'status'=>'1'))->count_all_results('appointment') : 0;
 		$opd = $max_opd - $booked;
@@ -595,7 +798,33 @@ class Home extends CI_Controller
 			echo 'Not Available';die;
 		}
 
-		$idata		=	array('appointment_date'=>$date,'time_id'=>$time,'to_timing'=>$to_timing,'from_timing'=>$from_timing,'date_id'=>$timing_id,'practice_id'=>$pid,'appointment_name'=>$name,'appointment_mobile'=>$mobile,'appointment_email'=>$email,'age'=>$age,'doctor_id'=>$doctor,'institute_id'=>$institution_id,'institution_type'=>$type,'fee'=>$fee,'amount'=>$fee,'user_id'=>$userid,'payment_mode'=>'NA','payment_status'=>'NA','status'=>'0');
+		$is_video = ($consult_type === 'video_consult' || $consult_type === 'video');
+		$app_type = $is_video ? 'video' : 'in_clinic';
+		$room_id = $is_video ? ('upchar_consult_' . bin2hex(random_bytes(8))) : null;
+
+		$idata = array(
+			'appointment_date' => $date,
+			'time_id' => $time,
+			'to_timing' => $to_timing,
+			'from_timing' => $from_timing,
+			'date_id' => $timing_id,
+			'practice_id' => $pid,
+			'appointment_name' => $name,
+			'appointment_mobile' => $mobile,
+			'appointment_email' => $email,
+			'age' => $age,
+			'doctor_id' => $doctor,
+			'institute_id' => $institution_id,
+			'institution_type' => $type,
+			'fee' => $fee,
+			'amount' => $fee,
+			'user_id' => $userid,
+			'payment_mode' => 'NA',
+			'payment_status' => 'NA',
+			'status' => '0',
+			'appointment_type' => $app_type,
+			'room_id' => $room_id
+		);
 		$this->db->insert('appointment',$idata);
 		$aid=$this->db->insert_id();
 		$price=$taxable=$disc=$tax=0.0;
