@@ -93,8 +93,9 @@ $route['hospital-login'] 				= 'hospitalpanel/login';
 $route['hospital-signup'] 				= 'hospitalpanel/signup';
 $route['hospital-verifymobile'] 		= 'hospitalpanel/verifymobile';
 $route['hospital-forgotpassword'] 		= 'hospitalpanel/forgotpassword';
-$route['hospital-verifymobileforgot'] 	= 'hospitalpanel/verifymobileforgot';
 $route['hospital-dashboard'] 			= 'hospitalpanel/dashboard';
+$route['hospitalpanel'] 				= 'hospitalpanel/dashboard';
+$route['hospitalpanel/dashboard'] 		= 'hospitalpanel/dashboard';
 $route['patient/:any']					= 'hospitalpanel/patient/$1';
 
 
