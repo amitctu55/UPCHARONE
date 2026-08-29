@@ -415,26 +415,38 @@
 
             <!-- Right Column: Interactive Encounter & Billing Management Form -->
             <div>
+                <?php $isCompleted = ($p->appointment_status == '1'); ?>
                 <div class="detail-card">
                     <div class="detail-card-header" style="background: linear-gradient(135deg, #043d5b 0%, #008f80 100%); color: #ffffff;">
                         <h3 style="color: #ffffff;"><i class="fa fa-sliders"></i> Manage Billing &amp; Visit Status</h3>
+                        <?php if($isCompleted): ?>
+                            <span style="background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.4); padding: 3px 10px; border-radius: 12px; font-size: 11.5px; font-weight: 700;">
+                                <i class="fa fa-lock"></i> Locked
+                            </span>
+                        <?php endif; ?>
                     </div>
 
                     <div class="detail-card-body">
-                        <form action="<?=base_url('hospitalpanel/patient/'.$p->appointment_id);?>" method="POST">
+                        <?php if($isCompleted): ?>
+                            <div style="background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; border-radius: 8px; padding: 12px 14px; margin-bottom: 18px; font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 8px;">
+                                <i class="fa fa-info-circle" style="font-size: 16px;"></i> This patient encounter is marked <strong>Completed</strong>. Clinical and billing fields are locked to preserve records.
+                            </div>
+                        <?php endif; ?>
+
+                        <form action="<?=base_url('hospitalpanel/patient/'.$p->appointment_id);?>" method="POST" id="encounterForm">
                             <input type="hidden" name="<?=$this->security->get_csrf_token_name();?>" value="<?=$this->security->get_csrf_hash();?>">
                             <input type="hidden" name="aid" value="<?=$p->appointment_id;?>">
 
                             <!-- Consultation Fee -->
                             <div class="form-group-field">
                                 <label>Consultation Fee (₹)</label>
-                                <input type="number" step="10" name="fee" class="form-ctrl-cstm" value="<?=$p->fee;?>" required>
+                                <input type="number" step="10" name="fee" id="feeInput" class="form-ctrl-cstm encounter-field" value="<?=$p->fee;?>" <?=$isCompleted ? 'disabled' : '';?> required>
                             </div>
 
                             <!-- Payment Method -->
                             <div class="form-group-field">
                                 <label>Payment Method</label>
-                                <select name="payment_mode" class="form-ctrl-cstm">
+                                <select name="payment_mode" id="paymentMode" class="form-ctrl-cstm encounter-field" <?=$isCompleted ? 'disabled' : '';?>>
                                     <option value="CASH" <?=$p->payment_mode == 'CASH' ? 'selected' : '';?>>Cash at Counter</option>
                                     <option value="UPI" <?=$p->payment_mode == 'UPI' ? 'selected' : '';?>>UPI / QR Code</option>
                                     <option value="CARD" <?=$p->payment_mode == 'CARD' ? 'selected' : '';?>>Debit / Credit Card</option>
@@ -446,7 +458,7 @@
                             <!-- Payment Collection Status -->
                             <div class="form-group-field">
                                 <label>Payment Collection Status</label>
-                                <select name="payment_status" class="form-ctrl-cstm">
+                                <select name="payment_status" id="paymentStatus" class="form-ctrl-cstm encounter-field" <?=$isCompleted ? 'disabled' : '';?>>
                                     <option value="DONE" <?=$p->payment_status == 'DONE' ? 'selected' : '';?>>Paid (Fee Collected)</option>
                                     <option value="UNPAID" <?=$p->payment_status == 'UNPAID' || empty($p->payment_status) ? 'selected' : '';?>>Unpaid (Payment Pending)</option>
                                 </select>
@@ -455,7 +467,7 @@
                             <!-- Visit Status -->
                             <div class="form-group-field">
                                 <label>OPD Consultation Status</label>
-                                <select name="appointment_status" class="form-ctrl-cstm">
+                                <select name="appointment_status" id="opdStatus" class="form-ctrl-cstm encounter-field" <?=$isCompleted ? 'disabled' : '';?>>
                                     <option value="0" <?=$p->appointment_status == '0' ? 'selected' : '';?>>In Queue (Waiting for Doctor)</option>
                                     <option value="1" <?=$p->appointment_status == '1' ? 'selected' : '';?>>Completed (Consultation Done)</option>
                                 </select>
@@ -463,9 +475,15 @@
 
                             <!-- Submit Button -->
                             <div style="margin-top: 24px;">
-                                <button type="submit" class="btn-update-encounter">
-                                    <i class="fa fa-save"></i> Save &amp; Update Encounter
-                                </button>
+                                <?php if(!$isCompleted): ?>
+                                    <button type="submit" id="submitEncounterBtn" class="btn-update-encounter">
+                                        <i class="fa fa-save"></i> Save &amp; Update Encounter
+                                    </button>
+                                <?php else: ?>
+                                    <button type="button" class="btn-update-encounter" style="background: #94a3b8; cursor: not-allowed; box-shadow: none;" disabled>
+                                        <i class="fa fa-lock"></i> Encounter Locked (Completed)
+                                    </button>
+                                <?php endif; ?>
                             </div>
                         </form>
                     </div>
@@ -477,7 +495,7 @@
                         <i class="fa fa-shield" style="color: #00a896;"></i> Hospital Reception Tip
                     </h4>
                     <p style="font-size: 12.5px; color: #475569; line-height: 1.5; margin: 0;">
-                        Once the patient has met the physician, set the status to <strong>Completed</strong> and ensure the payment status is marked <strong>Paid</strong> to finalize the clinical ledger.
+                        Once the patient has met the physician and the visit is marked <strong>Completed</strong>, the encounter is automatically locked to prevent unauthorized alterations.
                     </p>
                 </div>
             </div>
@@ -488,3 +506,22 @@
 </div>
 
 <?php include ("assets/includes/footer_hospital.php"); ?>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const opdSelect = document.getElementById('opdStatus');
+    const submitBtn = document.getElementById('submitEncounterBtn');
+
+    if (opdSelect && submitBtn) {
+        opdSelect.addEventListener('change', function() {
+            if (this.value === '1') {
+                submitBtn.innerHTML = '<i class="fa fa-check-circle"></i> Complete &amp; Lock Encounter';
+                submitBtn.style.background = '#059669';
+            } else {
+                submitBtn.innerHTML = '<i class="fa fa-save"></i> Save &amp; Update Encounter';
+                submitBtn.style.background = '#00a896';
+            }
+        });
+    }
+});
+</script>
