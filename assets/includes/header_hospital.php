@@ -133,7 +133,7 @@
 </head>
 <body class="sidebar-light fixed-topbar theme-sltl bg-light-dark color-default dashboard">
 <!---------------------------------------practice_suggestion_hospital_step6 modal open--------------------------------------------->
-<div class="hover_bkgr_fricc">
+<div class="hover_bkgr_fricc" style="display:none;">
     <span class="helper"></span>
     <div>
         <div class="prc_sugg"><p>Claim Clinic</p></div>
@@ -144,7 +144,7 @@
     </div>
 </div>
 <!---------------------------------------practice_suggestion_hospital_step6 modal close--------------------------------------------->
-<div class="hover_bkgr_fricc_practics">
+<div class="hover_bkgr_fricc_practics" style="display:none;">
     <span class="helper"></span>
     <div>
         <div class="prc_sugg"><p></p></div>
