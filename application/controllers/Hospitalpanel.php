@@ -321,21 +321,129 @@ class Hospitalpanel extends CI_Controller
 	
 	public function package()
 	{
-		$userid 				=  $this->did;
-		$pagesize               =  (int) $this->input->get_post('pagesize');
-		$config['limit']	    =  ( $pagesize > 0 ) ? $pagesize : 10;	
-		$offset                 =  ( $this->input->get_post('per_page') > 0 ) ? $this->input->get_post('per_page') : 0;	
-		$base_url               =  current_url_query_string(array('filter'=>'result'),array('per_page'));
-		$param					=	array('hospital_id'=>$userid);
-		$data['package'] 		=  $this->Hospital_Model->get_package($config['limit'],$offset,$param);
-		$config['total_rows']   =  get_found_rows();
-		$data['heading_title'] 	= 'Package List';
-		$data['page_links'] 	=  admin_pagination($base_url, $config['total_rows'],$config['limit'],$offset);
-		if( $this->input->post('status_action')!='')
-		{			
-			$this->Hospital_Model->update_status('package','package_id');			
+		$userid     = $this->did;
+		$keyword    = $this->input->get_post('keyword', TRUE);
+		$date_from  = $this->input->get_post('date_from', TRUE);
+		$date_to    = $this->input->get_post('date_to', TRUE);
+		$status     = $this->input->get_post('status');
+
+		$this->db->where('hospital_id', $userid);
+		if (!empty($keyword)) {
+			$this->db->like('title', $keyword);
 		}
-		$this->load->view('hospitalpanel/managepackage',$data);
+		if (!empty($date_from)) {
+			$this->db->where('creat_date >=', $date_from);
+		}
+		if (!empty($date_to)) {
+			$this->db->where('creat_date <=', $date_to);
+		}
+		if ($status !== '' && $status !== null && in_array($status, array('0', '1'))) {
+			$this->db->where('status', $status);
+		}
+
+		$data['packages']     = $this->db->order_by('package_id', 'DESC')->get('package')->result();
+		$data['total_count']  = count($data['packages']);
+		$data['active_count'] = $this->db->where(array('hospital_id' => $userid, 'status' => '1'))->count_all_results('package');
+
+		$this->load->view('hospitalpanel/managepackage', $data);
+	}
+
+	public function addpackage()
+	{
+		$userid = $this->did;
+		if ($this->input->post()) {
+			$this->form_validation->set_rules('title', 'Package Title', 'trim|required');
+			$this->form_validation->set_rules('amount', 'Package Amount', 'trim|required|numeric');
+
+			if ($this->form_validation->run() === TRUE) {
+				$image = '';
+				if (!empty($_FILES['image']['name'])) {
+					$config['upload_path']   = './admin1947/public/assets/upload/';
+					$config['allowed_types'] = 'gif|jpg|png|jpeg|webp';
+					$config['max_size']      = 5120;
+					$this->load->library('upload', $config);
+					if ($this->upload->do_upload('image')) {
+						$upload_data = $this->upload->data();
+						$image = $upload_data['file_name'];
+					}
+				}
+
+				$insert_data = array(
+					'hospital_id' => $userid,
+					'title'       => trim($this->input->post('title', TRUE)),
+					'amount'      => trim($this->input->post('amount', TRUE)),
+					'description' => trim($this->input->post('description', TRUE)),
+					'video_url'   => trim($this->input->post('video_url', TRUE)),
+					'image'       => $image,
+					'status'      => $this->input->post('status') !== null ? $this->input->post('status') : '1',
+					'approved'    => '1',
+					'creat_date'  => date('Y-m-d H:i:s')
+				);
+
+				$this->db->insert('package', $insert_data);
+				$this->session->set_flashdata('flashmsg', "<div class='alert alert-success'>Health Checkup Package created successfully!</div>");
+				redirect('hospitalpanel/package');
+			}
+		}
+		$this->load->view('hospitalpanel/addpackage');
+	}
+
+	public function editpackage($id = 0)
+	{
+		$userid = $this->did;
+		$id = intval($id);
+		$package = $this->db->get_where('package', array('package_id' => $id, 'hospital_id' => $userid))->row_array();
+
+		if (!$package) {
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-danger'>Package not found.</div>");
+			redirect('hospitalpanel/package');
+		}
+
+		if ($this->input->post()) {
+			$this->form_validation->set_rules('title', 'Package Title', 'trim|required');
+			$this->form_validation->set_rules('amount', 'Package Amount', 'trim|required|numeric');
+
+			if ($this->form_validation->run() === TRUE) {
+				$image = $package['image'];
+				if (!empty($_FILES['image']['name'])) {
+					$config['upload_path']   = './admin1947/public/assets/upload/';
+					$config['allowed_types'] = 'gif|jpg|png|jpeg|webp';
+					$config['max_size']      = 5120;
+					$this->load->library('upload', $config);
+					if ($this->upload->do_upload('image')) {
+						$upload_data = $this->upload->data();
+						$image = $upload_data['file_name'];
+					}
+				}
+
+				$update_data = array(
+					'title'       => trim($this->input->post('title', TRUE)),
+					'amount'      => trim($this->input->post('amount', TRUE)),
+					'description' => trim($this->input->post('description', TRUE)),
+					'video_url'   => trim($this->input->post('video_url', TRUE)),
+					'image'       => $image,
+					'status'      => $this->input->post('status') !== null ? $this->input->post('status') : $package['status']
+				);
+
+				$this->db->where(array('package_id' => $id, 'hospital_id' => $userid))->update('package', $update_data);
+				$this->session->set_flashdata('flashmsg', "<div class='alert alert-success'>Health Checkup Package updated successfully!</div>");
+				redirect('hospitalpanel/package');
+			}
+		}
+
+		$data['package'] = $package;
+		$this->load->view('hospitalpanel/editpackage', $data);
+	}
+
+	public function delete_package($id = 0)
+	{
+		$userid = $this->did;
+		$id = intval($id);
+		if ($id > 0) {
+			$this->db->where(array('package_id' => $id, 'hospital_id' => $userid))->delete('package');
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-success'>Package deleted successfully.</div>");
+		}
+		redirect('hospitalpanel/package');
 	}
 	
 	public function bed()
@@ -420,152 +528,7 @@ class Hospitalpanel extends CI_Controller
 		$this->load->view('hospitalpanel/editbed',$data);
 	}
 	
-	public function addpackage()
-	{
-		$this->form_validation->set_rules('title','Title',"trim|required|max_length[200]");
-		$this->form_validation->set_rules('amount','Amount',"trim|required|max_length[200]");
-		$this->form_validation->set_rules('description','Description',"required|max_length[8500]");			
-		$this->form_validation->set_rules('uploadimage','Image',"callback_file_check[image]");
-		$this->form_validation->set_rules('video_url','Video Url',"required|max_length[200]");	
-		$this->form_validation->set_rules('status','Status',"required|max_length[200]");	
-		
-		if($this->form_validation->run()===TRUE)
-		{	
-			$uploadimage=$_FILES['uploadimage']['name'];
-			$extsign = pathinfo($_FILES['uploadimage']['name'],PATHINFO_EXTENSION);
-			
-			if($uploadimage!='') 
-			{	
-				$rname 							= rand(1111111,999999999);
-				$date 							= date('Y-m-d');
-				$uploadimage 					= '_profile_pic_'.$rname.$date.'.'.$extsign;
-				$config['upload_path']          = './admin1947/public/assets/upload/';
-				$config['allowed_types'] 		= 'jpg|png|jpeg|JPG|PNG|JPEG';
-				$config['max_size']             = 2048;
-				$config['quality'] 				= '60%';
-				$config['file_name']  			= $uploadimage;
-				$this->load->library('upload', $config);
-				
-				if(! $this->upload->do_upload('uploadimage'))
-				{
-					$error = $this->upload->display_errors();
-					$flashmsg='<div class="alert alert-danger">
-					  <strong>Failed!</strong>'.$error.'
-					</div>';
-					$this->session->set_flashdata('flashmsg',$flashmsg);
-					redirect(base_url().'hospitalpanel/addpackage');
-					exit();
-				}
-				else
-				{	
-					if($this->Hospital_Model->package_insert($uploadimage)) 
-					{
-						$msg="<div class='alert alert-success'><strong>Success!</strong> Data Added Successfully</div>";
-						$this->session->set_flashdata('flashmsg',$msg);
-					}
-					else
-					{
-						$msg="<div class='alert alert-danger'><strong>Failed!</strong> Something went wrong. Please try again.</div>";
-						$this->session->set_flashdata('flashmsg',$msg);
-					}
-				}
-			}
-			else
-			{
-				
-				if($this->Hospital_Model->package_insert($drimage='')) 
-				{
-					$msg="<div class='alert alert-success'><strong>Success!</strong> Data Added Successfully</div>";
-					$this->session->set_flashdata('flashmsg',$msg);
-				}
-				else
-				{
-					$msg="<div class='alert alert-danger'><strong>Failed!</strong> Something went wrong. Please try again.</div>";
-					$this->session->set_flashdata('flashmsg',$msg);
-				}
-			}
-			redirect(base_url().'hospitalpanel/addpackage');
-		}
-		$this->load->view('hospitalpanel/addpackage');
-	}
-	
-	public function editpackage()
-	{
-		$package_id 			=  $this->uri->segment(3);
-		$userid 				=  $this->did;
-		$param					=  array('hospital_id'=>$userid,'package_id'=>$package_id);
-		$data['package'] 		=  $this->Hospital_Model->get_package(1,0,$param);
-		if(is_array($data['package']) && !empty($data['package']))
-		{
-			$this->form_validation->set_rules('title','Title',"trim|required|max_length[200]");
-			$this->form_validation->set_rules('amount','Amount',"trim|required|max_length[200]");
-			$this->form_validation->set_rules('description','Description',"required|max_length[8500]");			
-			$this->form_validation->set_rules('uploadimage','Image',"callback_file_check[image]");
-			$this->form_validation->set_rules('video_url','Video Url',"required|max_length[200]");	
-			$this->form_validation->set_rules('status','Status',"required|max_length[200]");	
-			
-			if($this->form_validation->run()===TRUE)
-			{	
-				$uploadimage	= $_FILES['uploadimage']['name'];
-				$extsign 		= pathinfo($_FILES['uploadimage']['name'],PATHINFO_EXTENSION);
-				
-				if($uploadimage!='') 
-				{	
-					$rname 							= rand(1111111,999999999);
-					$date 							= date('Y-m-d');
-					$uploadimage 					= '_profile_pic_'.$rname.$date.'.'.$extsign;
-					$config['upload_path']          = './admin1947/public/assets/upload/';
-					$config['allowed_types'] 		= 'jpg|png|jpeg|JPG|PNG|JPEG';
-					$config['max_size']             = 2048;
-					$config['quality'] 				= '60%';
-					$config['file_name']  			= $uploadimage;
-					$this->load->library('upload', $config);
-					if(! $this->upload->do_upload('uploadimage'))
-					{
-						$error = $this->upload->display_errors();
-						$flashmsg='<div class="alert alert-danger">
-						  <strong>Failed!</strong>'.$error.'
-						</div>';
-						$this->session->set_flashdata('flashmsg',$flashmsg);
-						redirect('hospitalpanel/editpackage/'.$package_id, '');
-						exit();
-					}
-					else
-					{	
-						if($this->Hospital_Model->update_package($package_id,$uploadimage)) 
-						{
-							$msg="<div class='alert alert-success'><strong>Success!</strong> Data Updated Successfully</div>";
-							$this->session->set_flashdata('flashmsg',$msg);
-						}
-						else
-						{
-							$msg="<div class='alert alert-danger'><strong>Failed!</strong> Something went wrong. Please try again.</div>";
-							$this->session->set_flashdata('flashmsg',$msg);
-						}
-					}
-				}
-				else
-				{
-					if($this->Hospital_Model->update_package($package_id,$drimage='')) 
-					{
-						$msg="<div class='alert alert-success'><strong>Success!</strong> Data Updated Successfully</div>";
-						$this->session->set_flashdata('flashmsg',$msg);
-					}
-					else
-					{
-						$msg="<div class='alert alert-danger'><strong>Failed!</strong> Something went wrong. Please try again.</div>";
-						$this->session->set_flashdata('flashmsg',$msg);
-					}
-				}
-				redirect('hospitalpanel/editpackage/'.$package_id, ''); 		
-			}
-		}
-		else
-		{
-			redirect(base_url().'hospitalpanel/package');
-		}
-		$this->load->view('hospitalpanel/editpackage',$data);
-	}
+
 	
 	public function file_check($file,$type)
 	{	
