@@ -79,8 +79,8 @@ if ($is_local) {
 	$db['default'] = array(
 		'dsn'	=> '',
 		'hostname' => '127.0.0.1',
-		'username' => 'root',
-		'password' => '',
+		'username' => 'upchar5510',
+		'password' => 'Ranu@28010',
 		'database' => 'upchar5510_db',
 		'dbdriver' => 'mysqli',
 		'dbprefix' => '',

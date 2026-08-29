@@ -23,6 +23,7 @@ admin1947/application/cache/*
 
 # Dependencies & IDE
 vendor/
+scratch/
 .vscode/
 .idea/
 .DS_Store

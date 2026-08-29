@@ -42,7 +42,7 @@ class Financial_Model extends CI_Model {
     }
 
     /**
-     * Get Effective Platform Fee Commission Rate for a Facility
+     * Get Effective Platform Fee Commission Rate for a Facility (Custom override or global default)
      */
     public function get_facility_commission_rate($facility_type, $facility_id) {
         $custom = $this->db->get_where('facility_custom_commissions', array(
@@ -67,7 +67,7 @@ class Financial_Model extends CI_Model {
     }
 
     /**
-     * Set Custom Commission Rate for Facility
+     * Set Custom Commission Rate for Facility (Acquisition Tool)
      */
     public function set_facility_custom_commission($facility_type, $facility_id, $rate, $admin_id = 1, $notes = '') {
         $facility_type = strtolower($facility_type);
@@ -207,76 +207,36 @@ class Financial_Model extends CI_Model {
     }
 
     /**
-     * Fetch Transactions for a Facility with dynamic filters
+     * Admin Dashboard High-Level Live Aggregated Revenue Metrics
      */
-    public function get_facility_transactions($facility_type, $facility_id, $filters = array()) {
-        $this->db->where('facility_type', strtolower($facility_type));
-        $this->db->where('facility_id', intval($facility_id));
-
-        if (!empty($filters['date'])) {
-            $this->db->where('DATE(created_at)', $filters['date']);
-        }
-        if (!empty($filters['month']) && !empty($filters['year'])) {
-            $this->db->where('MONTH(created_at)', intval($filters['month']));
-            $this->db->where('YEAR(created_at)', intval($filters['year']));
-        } elseif (!empty($filters['year'])) {
-            $this->db->where('YEAR(created_at)', intval($filters['year']));
-        }
-        if (!empty($filters['status']) && $filters['status'] !== 'all') {
-            if ($filters['status'] === 'processed' || $filters['status'] === 'settled') {
-                $this->db->where_in('payout_status', array('settled', 'processed'));
-            } else {
-                $this->db->where('payout_status', $filters['status']);
-            }
-        }
-        if (!empty($filters['search'])) {
-            $s = $filters['search'];
-            $this->db->group_start();
-            $this->db->like('txn_code', $s);
-            $this->db->or_like('patient_name', $s);
-            $this->db->or_like('patient_mobile', $s);
-            $this->db->or_like('category', $s);
-            $this->db->group_end();
-        }
-
-        $this->db->order_by('created_at', 'DESC');
-        return $this->db->get('financial_transactions')->result();
-    }
-
-    /**
-     * Calculate Summary Metrics for a Facility
-     */
-    public function get_facility_financial_summary($facility_type, $facility_id, $filters = array()) {
+    public function get_admin_revenue_metrics($filters = array()) {
         $this->db->select('
             COUNT(txn_id) as total_txns,
-            COALESCE(SUM(gross_amount), 0) as gross_revenue,
-            COALESCE(SUM(platform_fee_amount), 0) as total_platform_fee,
-            COALESCE(SUM(cgst_amount), 0) as total_cgst,
-            COALESCE(SUM(sgst_amount), 0) as total_sgst,
-            COALESCE(SUM(gst_amount), 0) as total_gst,
-            COALESCE(SUM(total_platform_deduction), 0) as total_deductions,
-            COALESCE(SUM(net_facility_share), 0) as net_hospital_share,
-            COALESCE(SUM(CASE WHEN payout_status IN ("settled", "processed") THEN net_facility_share ELSE 0 END), 0) as settled_payouts,
-            COALESCE(SUM(CASE WHEN payout_status IN ("pending", "queued") THEN net_facility_share ELSE 0 END), 0) as pending_payouts
+            COALESCE(SUM(CASE WHEN payment_status != "failed" THEN gross_amount ELSE 0 END), 0) as gross_platform_volume,
+            COALESCE(SUM(CASE WHEN payment_status != "failed" THEN platform_fee_amount ELSE 0 END), 0) as total_platform_fee_earned,
+            COALESCE(SUM(CASE WHEN payment_status != "failed" THEN cgst_amount ELSE 0 END), 0) as total_cgst,
+            COALESCE(SUM(CASE WHEN payment_status != "failed" THEN sgst_amount ELSE 0 END), 0) as total_sgst,
+            COALESCE(SUM(CASE WHEN payment_status != "failed" THEN gst_amount ELSE 0 END), 0) as total_gst_collected,
+            COALESCE(SUM(CASE WHEN payment_status != "failed" THEN total_platform_deduction ELSE 0 END), 0) as total_upchar_revenue,
+            COALESCE(SUM(CASE WHEN payout_status IN ("settled", "processed") THEN net_facility_share ELSE 0 END), 0) as total_payouts_settled,
+            COALESCE(SUM(CASE WHEN payout_status = "queued" THEN net_facility_share ELSE 0 END), 0) as total_payouts_queued,
+            COALESCE(SUM(CASE WHEN payout_status IN ("pending", "queued") THEN net_facility_share ELSE 0 END), 0) as total_payouts_pending
         ');
-        $this->db->where('facility_type', strtolower($facility_type));
-        $this->db->where('facility_id', intval($facility_id));
 
-        if (!empty($filters['date'])) {
-            $this->db->where('DATE(created_at)', $filters['date']);
+        if (!empty($filters['facility_type']) && $filters['facility_type'] !== 'all') {
+            $this->db->where('facility_type', strtolower($filters['facility_type']));
         }
-        if (!empty($filters['month']) && !empty($filters['year'])) {
+        if (!empty($filters['date_from'])) {
+            $this->db->where('DATE(created_at) >=', $filters['date_from']);
+        }
+        if (!empty($filters['date_to'])) {
+            $this->db->where('DATE(created_at) <=', $filters['date_to']);
+        }
+        if (!empty($filters['month'])) {
             $this->db->where('MONTH(created_at)', intval($filters['month']));
-            $this->db->where('YEAR(created_at)', intval($filters['year']));
-        } elseif (!empty($filters['year'])) {
-            $this->db->where('YEAR(created_at)', intval($filters['year']));
         }
-        if (!empty($filters['status']) && $filters['status'] !== 'all') {
-            if ($filters['status'] === 'processed' || $filters['status'] === 'settled') {
-                $this->db->where_in('payout_status', array('settled', 'processed'));
-            } else {
-                $this->db->where('payout_status', $filters['status']);
-            }
+        if (!empty($filters['year'])) {
+            $this->db->where('YEAR(created_at)', intval($filters['year']));
         }
 
         return $this->db->get('financial_transactions')->row();
@@ -322,6 +282,101 @@ class Financial_Model extends CI_Model {
     }
 
     /**
+     * Fetch Transactions with multi-criteria dynamic filter
+     */
+    public function get_all_platform_transactions($filters = array(), $limit = 100, $offset = 0) {
+        $this->_apply_transaction_filters($filters);
+
+        if ($limit > 0) {
+            $this->db->limit($limit, $offset);
+        }
+        $this->db->order_by('created_at', 'DESC');
+        return $this->db->get('financial_transactions')->result();
+    }
+
+    /**
+     * Count total transactions matching filter
+     */
+    public function count_all_platform_transactions($filters = array()) {
+        $this->_apply_transaction_filters($filters);
+        return $this->db->count_all_results('financial_transactions');
+    }
+
+    /**
+     * Private helper to apply search and filter clauses
+     */
+    private function _apply_transaction_filters($filters) {
+        if (!empty($filters['facility_type']) && $filters['facility_type'] !== 'all') {
+            $this->db->where('facility_type', strtolower($filters['facility_type']));
+        }
+        if (!empty($filters['facility_id'])) {
+            $this->db->where('facility_id', intval($filters['facility_id']));
+        }
+        if (!empty($filters['payout_status']) && $filters['payout_status'] !== 'all') {
+            if ($filters['payout_status'] === 'settled') {
+                $this->db->where_in('payout_status', array('settled', 'processed'));
+            } else {
+                $this->db->where('payout_status', $filters['payout_status']);
+            }
+        }
+        if (!empty($filters['payment_status']) && $filters['payment_status'] !== 'all') {
+            $this->db->where('payment_status', $filters['payment_status']);
+        }
+        if (!empty($filters['date_from'])) {
+            $this->db->where('DATE(created_at) >=', $filters['date_from']);
+        }
+        if (!empty($filters['date_to'])) {
+            $this->db->where('DATE(created_at) <=', $filters['date_to']);
+        }
+        if (!empty($filters['month'])) {
+            $this->db->where('MONTH(created_at)', intval($filters['month']));
+        }
+        if (!empty($filters['year'])) {
+            $this->db->where('YEAR(created_at)', intval($filters['year']));
+        }
+        if (!empty($filters['search'])) {
+            $s = trim($filters['search']);
+            $this->db->group_start();
+            $this->db->like('txn_code', $s);
+            $this->db->or_like('patient_name', $s);
+            $this->db->or_like('patient_mobile', $s);
+            $this->db->or_like('patient_email', $s);
+            $this->db->or_like('facility_name', $s);
+            $this->db->or_like('category', $s);
+            $this->db->group_end();
+        }
+    }
+
+    /**
+     * Mark Transaction as Settled
+     */
+    public function settle_transaction($txn_id) {
+        $this->db->where('txn_id', intval($txn_id));
+        return $this->db->update('financial_transactions', array(
+            'payout_status'   => 'settled',
+            'payment_status'  => 'settled',
+            'settlement_date' => date('Y-m-d H:i:s')
+        ));
+    }
+
+    /**
+     * Mark Transaction as Queued for Payout Batch
+     */
+    public function queue_payout($txn_id) {
+        $this->db->where('txn_id', intval($txn_id));
+        return $this->db->update('financial_transactions', array(
+            'payout_status' => 'queued'
+        ));
+    }
+
+    /**
+     * Fetch Single Transaction details
+     */
+    public function get_transaction_by_id($txn_id) {
+        return $this->db->get_where('financial_transactions', array('txn_id' => intval($txn_id)))->row();
+    }
+
+    /**
      * Generate Monthly GST Invoice for Platform Fees
      */
     public function generate_monthly_gst_invoice($facility_type, $facility_id, $billing_month) {
@@ -344,13 +399,12 @@ class Financial_Model extends CI_Model {
         $this->db->where('DATE_FORMAT(created_at, "%Y-%m")', $billing_month);
         $res = $this->db->get('financial_transactions')->row();
 
-        $taxable = floatval($res->taxable_value ?? 0);
-        if ($taxable <= 0) {
-            $taxable = 2500.00;
-        }
+        $settings = $this->get_platform_settings();
+        $gst_percent = floatval($settings->gst_percent);
+        $half_rate = ($gst_percent / 2) / 100;
 
-        $cgst = round($taxable * 0.09, 2);
-        $sgst = round($taxable * 0.09, 2);
+        $cgst = round($taxable * $half_rate, 2);
+        $sgst = round($taxable * $half_rate, 2);
         $igst = 0.00;
         $totalInvoice = round($taxable + $cgst + $sgst, 2);
 
@@ -382,13 +436,9 @@ class Financial_Model extends CI_Model {
         }
     }
 
-    public function get_facility_invoices($facility_type, $facility_id) {
-        $this->db->where('facility_type', strtolower($facility_type));
-        $this->db->where('facility_id', intval($facility_id));
-        $this->db->order_by('generated_at', 'DESC');
-        return $this->db->get('gst_invoices')->result();
-    }
-
+    /**
+     * Get Invoice by ID
+     */
     public function get_invoice_by_id($invoice_id) {
         return $this->db->get_where('gst_invoices', array('invoice_id' => intval($invoice_id)))->row();
     }

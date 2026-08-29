@@ -55,6 +55,36 @@ $pageurl3 = $this->uri->segment(3);
             </span>
           <?php endif; ?>
         </a>
+      <!-- Revenue & Commission Module with Sublinks -->
+      <li class="treeview <?php if($pageurl1=='admin_revenue'){ ?> active menu-open <?php }?>">
+        <a href="<?=base_url('admin_revenue');?>">
+          <i class="fa fa-line-chart" style="color: #00a896;"></i> <span>Revenue &amp; Commission</span>
+          <span class="pull-right-container">
+            <i class="fa fa-angle-left pull-right"></i>
+          </span>
+        </a>
+        <ul class="treeview-menu" <?php if($pageurl1=='admin_revenue'){ ?> style="display: block;" <?php }?>>
+          <li class="<?php if($pageurl1=='admin_revenue' && ($this->input->get('tab')=='transactions' || empty($this->input->get('tab')))){ ?>active<?php }?>">
+            <a href="<?=base_url('admin_revenue?tab=transactions#tab_transactions');?>">
+              <i class="fa fa-exchange"></i> Transactions &amp; Settlements
+            </a>
+          </li>
+          <li class="<?php if($pageurl1=='admin_revenue' && $this->input->get('tab')=='commissions'){ ?>active<?php }?>">
+            <a href="<?=base_url('admin_revenue?tab=commissions#tab_commissions');?>">
+              <i class="fa fa-percent"></i> Commission Overrides
+            </a>
+          </li>
+          <li class="<?php if($pageurl1=='admin_revenue' && $this->input->get('tab')=='invoices'){ ?>active<?php }?>">
+            <a href="<?=base_url('admin_revenue?tab=invoices#tab_invoices');?>">
+              <i class="fa fa-file-text-o"></i> Monthly GST Invoices
+            </a>
+          </li>
+          <li class="<?php if($pageurl1=='admin_revenue' && $this->input->get('tab')=='settings'){ ?>active<?php }?>">
+            <a href="<?=base_url('admin_revenue?tab=settings#tab_settings');?>">
+              <i class="fa fa-sliders"></i> Platform &amp; GST Settings
+            </a>
+          </li>
+        </ul>
       </li>
 
       <!-- System Settings Portal -->

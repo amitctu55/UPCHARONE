@@ -96,6 +96,12 @@ $route['hospital-forgotpassword'] 		= 'hospitalpanel/forgotpassword';
 $route['hospital-dashboard'] 			= 'hospitalpanel/dashboard';
 $route['hospitalpanel'] 				= 'hospitalpanel/dashboard';
 $route['hospitalpanel/dashboard'] 		= 'hospitalpanel/dashboard';
+$route['hospitalpanel/earnings'] 		= 'hospitalpanel/earnings';
+$route['hospitalpanel/export_earnings'] = 'hospitalpanel/export_earnings';
+$route['hospitalpanel/invoice_view/(:any)'] = 'hospitalpanel/invoice_view/$1';
+$route['hospitalpanel/generate_monthly_invoice'] = 'hospitalpanel/generate_monthly_invoice';
+$route['hospitalpanel/(:any)'] 			= 'hospitalpanel/$1';
+$route['hospitalpanel/(:any)/(:any)'] 	= 'hospitalpanel/$1/$2';
 $route['patient/:any']					= 'hospitalpanel/patient/$1';
 
 

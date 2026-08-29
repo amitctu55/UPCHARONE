@@ -116,25 +116,16 @@
             display: block;
         }
 
-        /* KPI Summary Strip */
+        /* Summary Strip */
         .summary-strip {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
-            gap: 14px;
+            gap: 16px;
             background: #f8fafc;
             border: 1px solid #e2e8f0;
-            border-radius: 10px;
-            padding: 16px;
-            margin-bottom: 28px;
-        }
-
-        .summary-col {
-            text-align: center;
-            border-right: 1px solid #e2e8f0;
-        }
-
-        .summary-col:last-child {
-            border-right: none;
+            border-radius: 8px;
+            padding: 16px 20px;
+            margin-bottom: 24px;
         }
 
         .summary-col span {
@@ -142,7 +133,6 @@
             font-weight: 700;
             color: #64748b;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
             display: block;
             margin-bottom: 4px;
         }
@@ -150,15 +140,14 @@
         .summary-col h3 {
             font-size: 18px;
             font-weight: 800;
-            color: #0f172a;
             margin: 0;
         }
 
-        /* Statement Table */
+        /* Transactions Table */
         .statement-table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 24px;
+            margin-bottom: 28px;
         }
 
         .statement-table th {
@@ -174,13 +163,13 @@
 
         .statement-table td {
             padding: 10px 12px;
-            border-bottom: 1px solid #e2e8f0;
-            font-size: 12px;
+            font-size: 12.5px;
             color: #334155;
+            border-bottom: 1px solid #e2e8f0;
         }
 
-        .statement-table tr:nth-child(even) td {
-            background: #f8fafc;
+        .statement-table tbody tr:nth-child(even) {
+            background: #fafafa;
         }
 
         .text-right {
@@ -188,49 +177,59 @@
         }
 
         .badge-paid {
+            background: #dcfce7;
             color: #15803d;
             font-weight: 700;
-            font-size: 11px;
+            font-size: 10.5px;
+            padding: 3px 8px;
+            border-radius: 4px;
+            display: inline-block;
         }
 
         .badge-unpaid {
-            color: #b91c1c;
+            background: #fef3c7;
+            color: #b45309;
             font-weight: 700;
-            font-size: 11px;
+            font-size: 10.5px;
+            padding: 3px 8px;
+            border-radius: 4px;
+            display: inline-block;
         }
 
-        /* Statement Footer */
+        /* Footer */
         .statement-footer {
             border-top: 1px solid #e2e8f0;
-            padding-top: 20px;
+            padding-top: 16px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            font-size: 11.5px;
+            font-size: 11px;
             color: #94a3b8;
         }
 
-        /* Print Media Rules */
         @media print {
             body {
                 background: #ffffff;
                 padding: 0;
             }
+
             .no-print-toolbar {
-                display: none !important;
+                display: none;
             }
+
             .statement-container {
                 box-shadow: none;
                 border: none;
                 padding: 0;
-                max-width: 100%;
             }
+
             .statement-table th {
                 background: #043d5b !important;
                 color: #ffffff !important;
                 -webkit-print-color-adjust: exact;
                 print-color-adjust: exact;
             }
+
             .summary-strip {
                 -webkit-print-color-adjust: exact;
                 print-color-adjust: exact;
@@ -260,7 +259,7 @@
                 <p style="margin-top: 3px;">Affiliated with Upchar Healthcare Network</p>
             </div>
             <div class="statement-title-box">
-                <h2>Financial Statement</h2>
+                <h2>Revenue Statement</h2>
                 <span><strong>Date:</strong> <?=date('d M, Y');?></span>
                 <span><strong>Generated:</strong> <?=date('h:i A');?></span>
                 <?php if(!empty($filter_desc)): ?>
@@ -277,15 +276,15 @@
             </div>
             <div class="summary-col">
                 <span>Gross Billed</span>
-                <h3 style="color: #043d5b;">₹<?=number_format((float)$total_gross, 2);?></h3>
+                <h3 style="color: #043d5b;">₹<?=number_format((float)($summary->gross_revenue ?? 0), 2);?></h3>
             </div>
             <div class="summary-col">
-                <span>Total Settled / Paid</span>
-                <h3 style="color: #15803d;">₹<?=number_format((float)$total_paid, 2);?></h3>
+                <span>Total Deductions</span>
+                <h3 style="color: #b91c1c;">-₹<?=number_format((float)($summary->total_deductions ?? 0), 2);?></h3>
             </div>
             <div class="summary-col">
-                <span>Pending Collection</span>
-                <h3 style="color: #b91c1c;">₹<?=number_format((float)$total_due, 2);?></h3>
+                <span>Net Hospital Share</span>
+                <h3 style="color: #15803d;">₹<?=number_format((float)($summary->net_hospital_share ?? 0), 2);?></h3>
             </div>
         </div>
 
@@ -293,32 +292,32 @@
         <table class="statement-table">
             <thead>
                 <tr>
-                    <th>Ref #</th>
+                    <th>Txn Code</th>
                     <th>Date</th>
+                    <th>Category</th>
                     <th>Patient Name</th>
-                    <th>Attending Doctor</th>
-                    <th>Mode</th>
                     <th class="text-right">Gross (₹)</th>
+                    <th class="text-right">Fee &amp; GST (₹)</th>
                     <th class="text-right">Net Share (₹)</th>
-                    <th class="text-right">Status</th>
+                    <th class="text-right">Payout Status</th>
                 </tr>
             </thead>
             <tbody>
                 <?php if(!empty($transactions)): ?>
                     <?php foreach($transactions as $t): ?>
                         <tr>
-                            <td style="font-family: monospace; font-weight: 700; color: #043d5b;"><?=$t->transaction_ref;?></td>
+                            <td style="font-family: monospace; font-weight: 700; color: #043d5b;"><?=$t->txn_code;?></td>
                             <td><?=date('d M Y', strtotime($t->created_at));?></td>
-                            <td style="font-weight: 600;"><?=$t->patient_name ?: 'Walk-in Patient';?></td>
-                            <td><?=$t->dr_name ?: 'General Clinic';?></td>
-                            <td><?=$t->payment_mode ?: 'CASH';?></td>
+                            <td><?=$t->category;?></td>
+                            <td style="font-weight: 600;"><?=$t->patient_name;?></td>
                             <td class="text-right" style="font-weight: 700;">₹<?=number_format((float)$t->gross_amount, 2);?></td>
-                            <td class="text-right" style="font-weight: 700; color: #00a896;">₹<?=number_format((float)$t->net_payout, 2);?></td>
+                            <td class="text-right" style="color: #ef4444;">-₹<?=number_format((float)$t->total_platform_deduction, 2);?></td>
+                            <td class="text-right" style="font-weight: 700; color: #10b981;">₹<?=number_format((float)$t->net_facility_share, 2);?></td>
                             <td class="text-right">
-                                <?php if($t->payment_status == 'DONE'): ?>
-                                    <span class="badge-paid"><i class="fa fa-check"></i> PAID</span>
+                                <?php if($t->payout_status == 'processed'): ?>
+                                    <span class="badge-paid"><i class="fa fa-check"></i> SETTLED</span>
                                 <?php else: ?>
-                                    <span class="badge-unpaid"><i class="fa fa-clock-o"></i> UNPAID</span>
+                                    <span class="badge-unpaid"><i class="fa fa-clock-o"></i> PENDING</span>
                                 <?php endif; ?>
                             </td>
                         </tr>

@@ -1914,131 +1914,47 @@ class Hospitalpanel extends CI_Controller
 		$date_from   = $this->input->get_post('date_from');
 		$date_to     = $this->input->get_post('date_to');
 		$status      = $this->input->get_post('status');
+		$search      = $this->input->get_post('search');
 
-		// Build filter query for appointments
-		$this->db->where('institute_id', $hospital_id);
-		$this->db->where('institution_type', 'H');
-		$this->db->where('status !=', '0');
+		$filters = array(
+			'month'  => $month,
+			'year'   => $year,
+			'status' => $status,
+			'search' => $search
+		);
 
-		if ($period == 'today') {
-			$this->db->where('appointment_date', date('Y-m-d'));
-		} elseif ($period == 'this_month') {
-			$this->db->where('MONTH(appointment_date)', date('m'));
-			$this->db->where('YEAR(appointment_date)', date('Y'));
-		} elseif ($period == 'last_month') {
-			$this->db->where('MONTH(appointment_date)', date('m', strtotime('-1 month')));
-			$this->db->where('YEAR(appointment_date)', date('Y', strtotime('-1 month')));
-		} elseif ($period == 'this_year') {
-			$this->db->where('YEAR(appointment_date)', date('Y'));
+		if ($period === 'today') {
+			$filters['date'] = date('Y-m-d');
+		} elseif ($period === 'this_month') {
+			$filters['month'] = date('m');
+			$filters['year']  = date('Y');
+		} elseif ($period === 'last_month') {
+			$filters['month'] = date('m', strtotime('-1 month'));
+			$filters['year']  = date('Y', strtotime('-1 month'));
+		} elseif ($period === 'this_year') {
+			$filters['year']  = date('Y');
 		}
 
-		if (!empty($month)) {
-			$this->db->where('MONTH(appointment_date)', intval($month));
-		}
-		if (!empty($year)) {
-			$this->db->where('YEAR(appointment_date)', intval($year));
-		}
 		if (!empty($date_from)) {
-			$this->db->where('appointment_date >=', $date_from);
+			$filters['date_from'] = $date_from;
 		}
 		if (!empty($date_to)) {
-			$this->db->where('appointment_date <=', $date_to);
-		}
-		if (!empty($status) && in_array($status, array('DONE', 'UNPAID'))) {
-			$this->db->where('payment_status', $status);
+			$filters['date_to'] = $date_to;
 		}
 
-		$opd_stats = $this->db->select('
-			COUNT(appointment_id) as total_opd_count,
-			COALESCE(SUM(CASE WHEN payment_status = "DONE" THEN (CASE WHEN amount > 0 THEN amount ELSE fee END) ELSE 0 END), 0) as opd_collected,
-			COALESCE(SUM(CASE WHEN payment_status != "DONE" THEN (CASE WHEN amount > 0 THEN amount ELSE fee END) ELSE 0 END), 0) as opd_pending,
-			COALESCE(SUM(CASE WHEN amount > 0 THEN amount ELSE fee END), 0) as opd_gross
-		')
-		->get('appointment')
-		->row();
+		// Fetch financial transactions and summary from Financial_Model
+		$summary = $this->Financial_Model->get_facility_financial_summary('hospital', $hospital_id, $filters);
+		$transactions = $this->Financial_Model->get_facility_transactions('hospital', $hospital_id, $filters);
+		$custom_rate = $this->Financial_Model->get_facility_commission_rate('hospital', $hospital_id);
+		$invoices = $this->Financial_Model->get_facility_invoices('hospital', $hospital_id);
+		$settings = $this->Financial_Model->get_platform_settings();
 
-		// IPD Admissions Revenue
-		$ipd_collected = 0;
-		$ipd_pending   = 0;
-		$ipd_gross     = 0;
-		if ($this->db->table_exists('admissions')) {
-			$this->db->where('hospital_id', $hospital_id);
-			if (!empty($date_from)) {
-				$this->db->where('admission_date >=', $date_from);
-			}
-			if (!empty($date_to)) {
-				$this->db->where('admission_date <=', $date_to);
-			}
-			$ipd_stats = $this->db->select('
-				COALESCE(SUM(advance_paid), 0) as ipd_paid,
-				COALESCE(SUM(total_charges - advance_paid), 0) as ipd_due,
-				COALESCE(SUM(total_charges), 0) as ipd_total
-			')
-			->get('admissions')
-			->row();
-			if ($ipd_stats) {
-				$ipd_collected = (float) $ipd_stats->ipd_paid;
-				$ipd_pending   = (float) $ipd_stats->ipd_due;
-				$ipd_gross     = (float) $ipd_stats->ipd_total;
-			}
-		}
-
-		// Platform Ledger Payouts
-		$platform_earnings = $this->Financial_Model->get_hospital_earnings($hospital_id);
-		$platform_settled  = $platform_earnings ? (float)$platform_earnings->settled_payout : 0;
-
-		$total_revenue    = (float)$opd_stats->opd_gross + $ipd_gross;
-		$settled_revenue  = (float)$opd_stats->opd_collected + $ipd_collected + $platform_settled;
-		$pending_revenue  = (float)$opd_stats->opd_pending + $ipd_pending;
-		$total_txns_count = (int)$opd_stats->total_opd_count;
-
-		// Filtered Transactions Journal
-		$this->db->select('appointment.appointment_id as id, CONCAT("#APT-", appointment.appointment_id) as transaction_ref, "OPD Consultation" as item_type, appointment.appointment_name as patient_name, CONCAT(profile_dr.fname, " ", profile_dr.lname) as dr_name, (CASE WHEN appointment.amount > 0 THEN appointment.amount ELSE appointment.fee END) as gross_amount, 0 as platform_fee, (CASE WHEN appointment.amount > 0 THEN appointment.amount ELSE appointment.fee END) as net_payout, (CASE WHEN appointment.payment_status = "DONE" THEN "SETTLED" ELSE "HELD" END) as escrow_status, appointment.payment_mode, appointment.payment_status, appointment.appointment_date as created_at')
-			->join('profile_dr', 'profile_dr.id = appointment.doctor_id', 'left')
-			->where('appointment.institute_id', $hospital_id)
-			->where('appointment.institution_type', 'H')
-			->where('appointment.status !=', '0');
-
-		if ($period == 'today') {
-			$this->db->where('appointment.appointment_date', date('Y-m-d'));
-		} elseif ($period == 'this_month') {
-			$this->db->where('MONTH(appointment.appointment_date)', date('m'));
-			$this->db->where('YEAR(appointment.appointment_date)', date('Y'));
-		} elseif ($period == 'last_month') {
-			$this->db->where('MONTH(appointment.appointment_date)', date('m', strtotime('-1 month')));
-			$this->db->where('YEAR(appointment.appointment_date)', date('Y', strtotime('-1 month')));
-		} elseif ($period == 'this_year') {
-			$this->db->where('YEAR(appointment.appointment_date)', date('Y'));
-		}
-
-		if (!empty($month)) {
-			$this->db->where('MONTH(appointment.appointment_date)', intval($month));
-		}
-		if (!empty($year)) {
-			$this->db->where('YEAR(appointment.appointment_date)', intval($year));
-		}
-		if (!empty($date_from)) {
-			$this->db->where('appointment.appointment_date >=', $date_from);
-		}
-		if (!empty($date_to)) {
-			$this->db->where('appointment.appointment_date <=', $date_to);
-		}
-		if (!empty($status) && in_array($status, array('DONE', 'UNPAID'))) {
-			$this->db->where('appointment.payment_status', $status);
-		}
-
-		$transactions = $this->db->order_by('appointment.appointment_id', 'DESC')
-			->limit(100)
-			->get('appointment')
-			->result();
-
-		$data['total_revenue']    = $total_revenue;
-		$data['settled_revenue']  = $settled_revenue;
-		$data['escrow_revenue']   = $pending_revenue;
-		$data['total_payouts']    = $settled_revenue;
-		$data['total_txns_count'] = $total_txns_count;
-		$data['transactions']     = $transactions;
-		$data['hospital']         = $this->db->get_where('hospital', array('id' => $hospital_id))->row();
+		$data['summary']               = $summary;
+		$data['transactions']          = $transactions;
+		$data['invoices']              = $invoices;
+		$data['custom_rate']           = $custom_rate;
+		$data['platform_settings']     = $settings;
+		$data['hospital']              = $this->db->get_where('hospital', array('id' => $hospital_id))->row();
 
 		$this->load->view('hospitalpanel/earnings', $data);
 	}
@@ -2053,73 +1969,43 @@ class Hospitalpanel extends CI_Controller
 		$date_from   = $this->input->get_post('date_from');
 		$date_to     = $this->input->get_post('date_to');
 		$status      = $this->input->get_post('status');
+		$search      = $this->input->get_post('search');
+
+		$filters = array(
+			'month'  => $month,
+			'year'   => $year,
+			'status' => $status,
+			'search' => $search
+		);
+
+		if ($period === 'today') {
+			$filters['date'] = date('Y-m-d');
+		} elseif ($period === 'this_month') {
+			$filters['month'] = date('m');
+			$filters['year']  = date('Y');
+		} elseif ($period === 'last_month') {
+			$filters['month'] = date('m', strtotime('-1 month'));
+			$filters['year']  = date('Y', strtotime('-1 month'));
+		} elseif ($period === 'this_year') {
+			$filters['year']  = date('Y');
+		}
 
 		$hospital = $this->db->get_where('hospital', array('id' => $hospital_id))->row();
 		$hospName = $hospital ? $hospital->name : 'Hospital';
-
-		// Query transactions with filters
-		$this->db->select('appointment.appointment_id as id, CONCAT("#APT-", appointment.appointment_id) as transaction_ref, "OPD Consultation" as item_type, appointment.appointment_name as patient_name, appointment.appointment_mobile as patient_mobile, CONCAT(profile_dr.fname, " ", profile_dr.lname) as dr_name, (CASE WHEN appointment.amount > 0 THEN appointment.amount ELSE appointment.fee END) as gross_amount, 0 as platform_fee, (CASE WHEN appointment.amount > 0 THEN appointment.amount ELSE appointment.fee END) as net_payout, (CASE WHEN appointment.payment_status = "DONE" THEN "SETTLED" ELSE "HELD" END) as escrow_status, appointment.payment_mode, appointment.payment_status, appointment.appointment_date as created_at')
-			->join('profile_dr', 'profile_dr.id = appointment.doctor_id', 'left')
-			->where('appointment.institute_id', $hospital_id)
-			->where('appointment.institution_type', 'H')
-			->where('appointment.status !=', '0');
-
-		if ($period == 'today') {
-			$this->db->where('appointment.appointment_date', date('Y-m-d'));
-		} elseif ($period == 'this_month') {
-			$this->db->where('MONTH(appointment.appointment_date)', date('m'));
-			$this->db->where('YEAR(appointment.appointment_date)', date('Y'));
-		} elseif ($period == 'last_month') {
-			$this->db->where('MONTH(appointment.appointment_date)', date('m', strtotime('-1 month')));
-			$this->db->where('YEAR(appointment.appointment_date)', date('Y', strtotime('-1 month')));
-		} elseif ($period == 'this_year') {
-			$this->db->where('YEAR(appointment.appointment_date)', date('Y'));
-		}
-
-		if (!empty($month)) {
-			$this->db->where('MONTH(appointment.appointment_date)', intval($month));
-		}
-		if (!empty($year)) {
-			$this->db->where('YEAR(appointment.appointment_date)', intval($year));
-		}
-		if (!empty($date_from)) {
-			$this->db->where('appointment.appointment_date >=', $date_from);
-		}
-		if (!empty($date_to)) {
-			$this->db->where('appointment.appointment_date <=', $date_to);
-		}
-		if (!empty($status) && in_array($status, array('DONE', 'UNPAID'))) {
-			$this->db->where('appointment.payment_status', $status);
-		}
-
-		$transactions = $this->db->order_by('appointment.appointment_id', 'DESC')->get('appointment')->result();
-
-		// Calculate Totals
-		$total_gross = 0;
-		$total_paid  = 0;
-		$total_due   = 0;
-		foreach ($transactions as $t) {
-			$total_gross += (float) $t->gross_amount;
-			if ($t->payment_status == 'DONE') {
-				$total_paid += (float) $t->gross_amount;
-			} else {
-				$total_due += (float) $t->gross_amount;
-			}
-		}
+		$transactions = $this->Financial_Model->get_facility_transactions('hospital', $hospital_id, $filters);
+		$summary = $this->Financial_Model->get_facility_financial_summary('hospital', $hospital_id, $filters);
 
 		if ($format === 'pdf' || $format === 'print') {
 			$data['hospital']     = $hospital;
 			$data['transactions'] = $transactions;
-			$data['total_gross']  = $total_gross;
-			$data['total_paid']   = $total_paid;
-			$data['total_due']    = $total_due;
+			$data['summary']      = $summary;
 			$data['filter_desc']  = (!empty($date_from) ? "From $date_from " : '') . (!empty($date_to) ? "To $date_to " : '') . (!empty($month) ? "Month: $month " : '') . (!empty($year) ? "Year: $year " : '');
 			$this->load->view('hospitalpanel/earnings_pdf', $data);
 			return;
 		}
 
 		// CSV / Excel Export
-		$filename = "Upchar_" . preg_replace('/[^A-Za-z0-9_]/', '_', $hospName) . "_Earnings_" . date('Ymd_His') . ".csv";
+		$filename = "Upchar_" . preg_replace('/[^A-Za-z0-9_]/', '_', $hospName) . "_Revenue_Statement_" . date('Ymd_His') . ".csv";
 
 		header('Content-Type: text/csv; charset=utf-8');
 		header('Content-Disposition: attachment; filename="' . $filename . '"');
@@ -2127,53 +2013,83 @@ class Hospitalpanel extends CI_Controller
 		header('Expires: 0');
 
 		$output = fopen('php://output', 'w');
-		// UTF-8 BOM for Excel compatibility
 		fprintf($output, chr(0xEF).chr(0xBB).chr(0xBF));
 
-		fputcsv($output, array("UPCHAR HEALTHCARE PLATFORM - FINANCIAL SETTLEMENT STATEMENT"));
+		fputcsv($output, array("UPCHAR HEALTHCARE PLATFORM - REVENUE & SETTLEMENT STATEMENT"));
 		fputcsv($output, array("Hospital Name:", $hospName));
 		fputcsv($output, array("Generated Date:", date('d-M-Y H:i:s')));
 		fputcsv($output, array("Total Encounters:", count($transactions)));
-		fputcsv($output, array("Total Gross Billed (INR):", number_format($total_gross, 2)));
-		fputcsv($output, array("Total Settled / Paid (INR):", number_format($total_paid, 2)));
-		fputcsv($output, array("Pending Collection (INR):", number_format($total_due, 2)));
-		fputcsv($output, array("")); // Empty row
+		fputcsv($output, array("Gross Revenue (INR):", number_format($summary->gross_revenue ?? 0, 2)));
+		fputcsv($output, array("Upchar Platform Fees (INR):", number_format($summary->total_platform_fee ?? 0, 2)));
+		fputcsv($output, array("GST on Fee (18%) (INR):", number_format($summary->total_gst ?? 0, 2)));
+		fputcsv($output, array("Total Deductions (INR):", number_format($summary->total_deductions ?? 0, 2)));
+		fputcsv($output, array("Net Hospital Payout (INR):", number_format($summary->net_hospital_share ?? 0, 2)));
+		fputcsv($output, array("Settled Payouts (INR):", number_format($summary->settled_payouts ?? 0, 2)));
+		fputcsv($output, array("Pending Payouts (INR):", number_format($summary->pending_payouts ?? 0, 2)));
+		fputcsv($output, array(""));
 
-		// Headers
 		fputcsv($output, array(
-			'Transaction Ref',
-			'Encounter Category',
+			'Transaction ID',
+			'Category',
 			'Patient Name',
-			'Patient Mobile',
-			'Attending Doctor',
-			'Gross Total (INR)',
+			'Gross Bill Amount (INR)',
+			'Platform Fee %',
 			'Platform Fee (INR)',
+			'GST 18% (INR)',
+			'Total Deduction (INR)',
 			'Net Hospital Share (INR)',
-			'Payment Method',
-			'Collection Status',
-			'Escrow Status',
-			'Date / Timestamp'
+			'Payment Status',
+			'Payout Status',
+			'Settlement Date',
+			'Created Date'
 		));
 
 		foreach ($transactions as $t) {
 			fputcsv($output, array(
-				$t->transaction_ref,
-				$t->item_type,
-				$t->patient_name ?: 'Walk-in Patient',
-				$t->patient_mobile ?: 'N/A',
-				$t->dr_name ?: 'General Clinic',
+				$t->txn_code,
+				$t->category,
+				$t->patient_name ?: 'Patient',
 				number_format((float)$t->gross_amount, 2, '.', ''),
-				number_format((float)$t->platform_fee, 2, '.', ''),
-				number_format((float)$t->net_payout, 2, '.', ''),
-				$t->payment_mode ?: 'CASH',
-				$t->payment_status == 'DONE' ? 'PAID' : 'UNPAID',
-				$t->escrow_status,
-				date('d-M-Y', strtotime($t->created_at))
+				$t->platform_fee_percent . '%',
+				number_format((float)$t->platform_fee_amount, 2, '.', ''),
+				number_format((float)$t->gst_amount, 2, '.', ''),
+				number_format((float)$t->total_platform_deduction, 2, '.', ''),
+				number_format((float)$t->net_facility_share, 2, '.', ''),
+				strtoupper($t->payment_status),
+				strtoupper($t->payout_status),
+				$t->settlement_date ? date('d-M-Y H:i', strtotime($t->settlement_date)) : 'Pending Settlement',
+				date('d-M-Y H:i', strtotime($t->created_at))
 			));
 		}
 
 		fclose($output);
 		exit();
+	}
+
+	public function invoice_view($invoice_id = 0)
+	{
+		$invoice_id = intval($invoice_id);
+		$invoice = $this->Financial_Model->get_invoice_by_id($invoice_id);
+		if (!$invoice) {
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-danger'>GST Invoice not found!</div>");
+			redirect('hospitalpanel/earnings');
+			return;
+		}
+
+		$data['invoice']  = $invoice;
+		$data['hospital'] = $this->db->get_where('hospital', array('id' => $this->did))->row();
+		$data['settings'] = $this->Financial_Model->get_platform_settings();
+		$this->load->view('hospitalpanel/gst_invoice_view', $data);
+	}
+
+	public function generate_monthly_invoice()
+	{
+		$hospital_id   = $this->did;
+		$billing_month = $this->input->post('billing_month') ?: date('Y-m');
+
+		$inv_id = $this->Financial_Model->generate_monthly_gst_invoice('hospital', $hospital_id, $billing_month);
+		$this->session->set_flashdata('flashmsg', "<div class='alert alert-success'>Tax Invoice for {$billing_month} generated successfully!</div>");
+		redirect('hospitalpanel/earnings#invoices');
 	}
 
 	// ==========================================

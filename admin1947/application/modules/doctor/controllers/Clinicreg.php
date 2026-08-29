@@ -522,16 +522,28 @@ class Clinicreg extends CI_Controller
 	public function hospitalapprove($id = null)
 	{
 		$did = $this->input->post('did') ? $this->input->post('did') : ($id ? $id : $this->uri->segment(4));
-		$row = $this->db->select('approved')->get_where('hospital', array('id' => $did))->row();
+		$row = $this->db->select('approved, verified')->get_where('hospital', array('id' => $did))->row();
 		$current = $row ? $row->approved : '0';
+		$admin_id = $this->session->userdata('adminuserid') ?: 1;
 		if ($current == '1') {
-			$this->db->set('approved', '0')->where(array('id' => $did))->update('hospital');
+			$this->db->set(array(
+				'approved'            => '0',
+				'verification_status' => 'pending',
+				'is_active'           => 0
+			))->where(array('id' => $did))->update('hospital');
 			$status = '0';
 			$msg = 'Hospital approval status updated to Pending.';
 		} else {
-			$this->db->set('approved', '1')->where(array('id' => $did))->update('hospital');
+			$this->db->set(array(
+				'approved'             => '1',
+				'verified'             => '1',
+				'verification_status'  => 'verified',
+				'is_active'            => 1,
+				'verified_at'          => date('Y-m-d H:i:s'),
+				'verified_by_admin_id' => $admin_id
+			))->where(array('id' => $did))->update('hospital');
 			$status = '1';
-			$msg = 'Hospital has been Approved successfully.';
+			$msg = 'Hospital has been Approved &amp; Verified successfully.';
 		}
 		if ($this->input->is_ajax_request() || $this->input->post('did')) {
 			echo json_encode(array('status' => $status, 'message' => $msg));
@@ -544,16 +556,28 @@ class Clinicreg extends CI_Controller
 	public function hospitalverify($id = null)
 	{
 		$did = $this->input->post('did') ? $this->input->post('did') : ($id ? $id : $this->uri->segment(4));
-		$row = $this->db->select('verified')->get_where('hospital', array('id' => $did))->row();
+		$row = $this->db->select('verified, approved')->get_where('hospital', array('id' => $did))->row();
 		$current = $row ? $row->verified : '0';
+		$admin_id = $this->session->userdata('adminuserid') ?: 1;
 		if ($current == '1') {
-			$this->db->set('verified', '0')->where(array('id' => $did))->update('hospital');
+			$this->db->set(array(
+				'verified'            => '0',
+				'verification_status' => 'pending',
+				'is_active'           => 0
+			))->where(array('id' => $did))->update('hospital');
 			$status = '0';
 			$msg = 'Hospital verification status updated to Unverified.';
 		} else {
-			$this->db->set('verified', '1')->where(array('id' => $did))->update('hospital');
+			$this->db->set(array(
+				'verified'             => '1',
+				'approved'             => '1',
+				'verification_status'  => 'verified',
+				'is_active'            => 1,
+				'verified_at'          => date('Y-m-d H:i:s'),
+				'verified_by_admin_id' => $admin_id
+			))->where(array('id' => $did))->update('hospital');
 			$status = '1';
-			$msg = 'Hospital has been Verified successfully.';
+			$msg = 'Hospital has been Verified &amp; Approved successfully.';
 		}
 		if ($this->input->is_ajax_request() || $this->input->post('did')) {
 			echo json_encode(array('status' => $status, 'message' => $msg));

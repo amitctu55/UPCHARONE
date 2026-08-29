@@ -59,5 +59,8 @@ $route['login/auth'] = 'login/auth';
 $route['login/login'] = 'login/login';
 $route['login/login/login'] = 'login/login';
 $route['logout'] = 'login/logout';
+$route['admin_revenue'] = 'admin_revenue/index';
+$route['admin_revenue/(:any)'] = 'admin_revenue/$1';
+$route['admin_revenue/(:any)/(:any)'] = 'admin_revenue/$1/$2';
 
 
