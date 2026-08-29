@@ -16,8 +16,10 @@ class Hospitalpanel extends CI_Controller
 		{	
 			$page=$this->uri->segment('1');
 			$excep_array=array('hospital-aindex','hospital-login','hospital-signup','hospital-verifymobile','hospital-forgotpassword','hospital-verifymobileforgot');
-			if (!in_array($page, $excep_array))
-			redirect('hospital-login');
+			if (!in_array($page, $excep_array)) {
+				$this->session->set_flashdata('flashmsg', "<div class='alert alert-warning' style='margin: 15px 0; border-radius: 8px;'>Please login to access your Hospital Dashboard.</div>");
+				redirect('hospital-login');
+			}
 		}
 		else
 		{
@@ -35,23 +37,29 @@ class Hospitalpanel extends CI_Controller
 	
 	public function dashboard()
 	{
-		$userid =$this->did;
-        $this -> db -> where('institute_id', $userid);   
-        $this -> db -> where('institution_type', 'H');  
-        $this -> db -> where('status', '1');   
-		$this -> db -> where('appointment_date', date('Y-m-d'));   
-        $query = $this -> db -> get('appointment');
-		$data['todayappointment']=$query -> num_rows();
+		$userid = $this->did;
+		if (!$this->session->userdata('hospitalname')) {
+			$hname = $this->db->where('uid', $this->session->userdata('hosuserid'))->or_where('id', $this->session->userdata('hosuserid'))->get('hospital')->row('name');
+			if ($hname) {
+				$this->session->set_userdata('hospitalname', $hname);
+			}
+		}
+
+        $this->db->where('institute_id', $userid);   
+        $this->db->where('institution_type', 'H');  
+        $this->db->where('status', '1');   
+		$this->db->where('appointment_date', date('Y-m-d'));   
+        $query = $this->db->get('appointment');
+		$data['todayappointment']=$query->num_rows();
          
-        $this -> db -> where('institute_id', $userid);   
-        $this -> db -> where('institution_type', 'H');   
-        $this -> db -> where('status', '1');   
-        $query = $this -> db -> get('appointment');
-		$data['totalappointment']=$query -> num_rows();
-		$query =$this->db->select('profile_dr.*,dr_practice.status as p_status')->join('profile_dr','profile_dr.id=dr_practice.user_id')->get_where('dr_practice',array('institution_id'=>$this->did,'type'=>'H'));	
-		$data['totaldoctor']=$query -> num_rows();
+        $this->db->where('institute_id', $userid);   
+        $this->db->where('institution_type', 'H');   
+        $this->db->where('status', '1');   
+        $query = $this->db->get('appointment');
+		$data['totalappointment']=$query->num_rows();
+		$query = $this->db->select('profile_dr.*,dr_practice.status as p_status')->join('profile_dr','profile_dr.id=dr_practice.user_id')->get_where('dr_practice',array('institution_id'=>$this->did,'type'=>'H'));	
+		$data['totaldoctor']=$query->num_rows();
 		$this->load->view('hospitalpanel/milestone',$data);
-		
 	}
 	
 	public function aindex()

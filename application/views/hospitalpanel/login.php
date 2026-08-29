@@ -9,8 +9,11 @@
       <a href="<?=base_url('hospital-signup');?>" class="auth-tab-btn">Sign up</a>
     </div>
 
+    <?=$this->session->flashdata('flashmsg');?>
+
     <!-- Hospital Login Form -->
     <form class="auth-form" id="hosloginform" action="<?=base_url();?>hospitaluser/login" method="POST">
+      <input type="hidden" name="<?=$this->security->get_csrf_token_name();?>" value="<?=$this->security->get_csrf_hash();?>">
       <div class="form-group">
         <label for="email">Mobile Number / Email ID <span class="required">*</span></label>
         <input type="text" id="email" name="email" class="form-control" placeholder="hospital@example.com or 10-digit mobile" required>

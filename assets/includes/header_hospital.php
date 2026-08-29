@@ -183,7 +183,8 @@
 								<ul class="header-menu nav navbar-nav">
 									<?php 
 									$this->db->select('drimage');
-									$this->db->where('id',$this->session->userdata('hosuserid'));
+									$hosuid = $this->session->userdata('hosuserid');
+									$this->db->group_start()->where('uid', $hosuid)->or_where('id', $hosuid)->group_end();
 									$profileimg = $this->db->get('hospital')->row();
 									if($profileimg)
 									{
