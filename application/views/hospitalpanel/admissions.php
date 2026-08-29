@@ -317,7 +317,7 @@
                                     <!-- Bed Allocated -->
                                     <td>
                                         <span style="background: #e0f2fe; color: #0369a1; font-weight: 700; font-size: 12px; padding: 4px 10px; border-radius: 6px;">
-                                            <i class="fa fa-bed"></i> Bed <?=html_escape($adm->bed_number);?> (<?=html_escape($adm->bed_type);?>)
+                                            <i class="fa fa-bed"></i> <?=html_escape($adm->bed_type ?: 'General Bed');?>
                                         </span>
                                     </td>
 
@@ -501,10 +501,12 @@
                         <div class="col-md-6 col-sm-12" style="margin-bottom: 14px;">
                             <label style="font-size: 12.5px; font-weight: 700; color: #334155; display: block; margin-bottom: 4px;">Select Vacant Bed <span style="color: #ef4444;">*</span></label>
                             <select class="form-ctrl-modal" name="bed_id" required>
-                                <option value="">-- Choose Vacant Inpatient Bed --</option>
+                                <option value="">-- Choose Inpatient Bed / Ward --</option>
                                 <?php if(!empty($vacant_beds)): ?>
                                     <?php foreach ($vacant_beds as $vb): ?>
-                                        <option value="<?=$vb->id;?>">Bed <?=$vb->bed_number;?> (<?=$vb->category;?>) - ₹<?=$vb->daily_charge;?>/day</option>
+                                        <option value="<?=$vb->hospital_bed_id;?>">
+                                            <?=html_escape($vb->bed_type);?> (Available: <?=max(0, (int)$vb->total_bed - (int)$vb->occupied_bed);?> / Total: <?=$vb->total_bed;?>) - ₹<?=number_format((float)$vb->amount, 2);?>/day
+                                        </option>
                                     <?php endforeach; ?>
                                 <?php endif; ?>
                             </select>
