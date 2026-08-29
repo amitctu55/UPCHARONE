@@ -1,93 +1,225 @@
-<head>
-    <style>
-        .dataTables_wrapper .dataTables_paginate .paginate_button {
-    box-sizing: border-box;
-    display: inline-block;
-    min-width: 1.5em;
-    padding: 0.5em 1em;
-    margin-left: 2px;
-    text-align: center;
-    text-decoration: none !important;
-    cursor: pointer;
-    *cursor: hand;
-    color: #333 !important;
-    border: 1px solid transparent;
-    border-radius: 2px;
-    background: white !important;
-}
-.boxDesign {
-    background: #f5f5f5;
-    color: #295771;
-    font-weight: bold;
-    border-radius: 5px;
-    margin-top:32px;
-    padding:10px;
-}
-.boxIcon {
-    background: #295771;
-    padding: 6px;
-    border-radius: 23px;
-    color: white;
-    margin-right: 6px;
-
-}
-.StatusBTN {
-    background: #10b323;
-    color: white;
-    border-radius: 23px;
-    text-align: center;
-    padding: 7px;
-}
-    </style>
-</head>
 <?php include ("assets/includes/header_hospital.php"); ?>
-    <?php include ("assets/includes/leftmenu_hospital.php"); ?>
-        <div class="pag_cstm">
-            <div class="row">
-                <div class="col-lg-12">
-                    <div class="pag_cstm_panel" style="background: #295771;">
-                        <div class="pag_cstm_panel_panel_ontent p-t-0">
-                            <div class="row paddb40">
-							    <div class="col-sm-12 processsstep2">
-    							    <a href='<?=base_url();?>hospitalpanel/news'>
-                                        <button type='submit' name='submit' style="letter-spacing: 1px;text-shadow: 3px -1px 2px #666;font-weight:900;color:white;background:#1fc61f;padding:9px 23px;border-radius: 23px;float: right;border:none;">Add News
-                                        </button>
-                                    </a>
-							        <h4>News List</h4>
-							    </div>
-                                <div class="col-sm-12 processsstep2">
-                                	<?php foreach($news as $p){ ?>
-                                        <div class="col-md-4">
-                                            <div class="col-md-12 boxDesign">
-                                            <?php if($p['video_url'] !='') { ?>
-                                               <iframe width="100%" height="150" src="<?php echo $p['video_url'];?>" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-                                            <?php } ?> 
-    								        <?php if($p['image'] !='') { ?>
-                                                <img src="<?php echo base_url();?>admin1947/public/assets/upload/<?php echo $p['image'];?>" style="height:150px;width: 100%;">
-                                            <?php } ?>
-                                            <?php if($p['title'] !='') { ?>
-                                                <h5 style="text-transform: capitalize;"><b>Title :</b><?php echo $p['title'];?> </h5>
-                                            <?php } ?>
-                                            <?php if($p['description'] !='') { ?>
-                                                <h5 style="text-transform: capitalize;"><b>Description :</b><?php echo $p['description'];?> </h5>
-                                            <?php } ?>
-    										    <h5 class="StatusBTN"><?php if($p['status'] ==A) { ?> Approved <?php } else { ?> Not Approved <?php } ?></h5>
-    							            </div>
-                                        </div>
-	                                <?php } ?>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+<?php include ("assets/includes/leftmenu_hospital.php"); ?>
+
+<style>
+:root {
+    --upchar-teal: #00a896;
+    --upchar-teal-dark: #008f80;
+    --upchar-navy: #043d5b;
+    --upchar-slate: #0f172a;
+    --upchar-gray: #64748b;
+    --upchar-light: #f8fafc;
+    --upchar-border: #e2e8f0;
+}
+
+.news-list-wrap {
+    padding: 24px 28px;
+    background: #f8fafc;
+    min-height: 88vh;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.news-list-header {
+    background: #ffffff;
+    border-radius: 12px;
+    border: 1px solid var(--upchar-border);
+    padding: 20px 24px;
+    margin-bottom: 24px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.news-list-header h1 {
+    font-size: 22px;
+    font-weight: 800;
+    color: #0f172a;
+    margin: 0 0 4px 0;
+}
+
+.news-list-header p {
+    font-size: 13.5px;
+    color: #64748b;
+    margin: 0;
+}
+
+.btn-add-news {
+    background: #00a896;
+    color: #ffffff !important;
+    font-weight: 700;
+    font-size: 13px;
+    padding: 9px 18px;
+    border-radius: 8px;
+    border: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none !important;
+    box-shadow: 0 2px 6px rgba(0, 168, 150, 0.25);
+    transition: all 0.15s ease;
+}
+
+.btn-add-news:hover {
+    background: #008f80;
+    transform: translateY(-1px);
+}
+
+/* News Cards Grid */
+.news-grid-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 22px;
+}
+
+.news-item-card {
+    background: #ffffff;
+    border-radius: 12px;
+    border: 1px solid var(--upchar-border);
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    display: flex;
+    flex-direction: column;
+    transition: all 0.2s ease;
+}
+
+.news-item-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+}
+
+.news-media-wrap {
+    height: 180px;
+    background: #043d5b;
+    overflow: hidden;
+    position: relative;
+}
+
+.news-media-wrap img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.news-card-body {
+    padding: 18px 20px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.news-card-title {
+    font-size: 15px;
+    font-weight: 800;
+    color: #043d5b;
+    margin: 0 0 8px 0;
+    line-height: 1.4;
+}
+
+.news-card-desc {
+    font-size: 13px;
+    color: #64748b;
+    line-height: 1.5;
+    margin: 0 0 16px 0;
+    flex: 1;
+}
+
+.news-card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 12px;
+    border-top: 1px solid #f1f5f9;
+}
+
+.badge-news-active {
+    background: #dcfce7;
+    color: #15803d;
+    font-weight: 700;
+    font-size: 11px;
+    padding: 3px 9px;
+    border-radius: 12px;
+}
+
+.badge-news-pending {
+    background: #fef3c7;
+    color: #b45309;
+    font-weight: 700;
+    font-size: 11px;
+    padding: 3px 9px;
+    border-radius: 12px;
+}
+</style>
+
+<div class="page-content" style="padding-top: 0;">
+    <div class="news-list-wrap">
+
+        <!-- Header -->
+        <div class="news-list-header">
+            <div>
+                <h1><i class="fa fa-newspaper-o" style="color: #00a896; margin-right: 8px;"></i> Hospital News &amp; Bulletins</h1>
+                <p>Manage all hospital press releases, health updates, and live event announcements.</p>
+            </div>
+            <div>
+                <a href="<?=base_url('hospitalpanel/news');?>" class="btn-add-news">
+                    <i class="fa fa-plus-circle"></i> Create Announcement
+                </a>
             </div>
         </div>
 
-        <?php include ("assets/includes/footer_hospital.php"); ?>
-		<link rel="stylesheet" type="text/css"  href='https://cdn.datatables.net/1.10.19/css/jquery.dataTables.min.css'>
-		<script src='https://cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js'></script>
-		<script>
-		$(document).ready(function() {
-			$('#datatable').DataTable();
-		} );
-		</script>
+        <!-- News Grid -->
+        <?php if(!empty($news)): ?>
+            <div class="news-grid-cards">
+                <?php foreach($news as $p): ?>
+                    <div class="news-item-card">
+                        <div class="news-media-wrap">
+                            <?php if(!empty($p['image'])): ?>
+                                <img src="<?=base_url('admin1947/public/assets/upload/'.$p['image']);?>" alt="<?=$p['name'];?>">
+                            <?php else: ?>
+                                <div style="display: flex; align-items: center; justify-content: center; height: 100%; color: #ffffff;">
+                                    <i class="fa fa-bullhorn" style="font-size: 48px; opacity: 0.3;"></i>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+                        
+                        <div class="news-card-body">
+                            <div>
+                                <h3 class="news-card-title"><?=html_escape($p['name']);?></h3>
+                                <p class="news-card-desc"><?=html_escape($p['description']);?></p>
+                            </div>
+                            
+                            <div class="news-card-footer">
+                                <?php if($p['status'] == 'A'): ?>
+                                    <span class="badge-news-active"><i class="fa fa-check-circle"></i> Published Live</span>
+                                <?php else: ?>
+                                    <span class="badge-news-pending"><i class="fa fa-clock-o"></i> Under Review</span>
+                                <?php endif; ?>
+
+                                <?php if(!empty($p['video_url'])): ?>
+                                    <a href="<?=$p['video_url'];?>" target="_blank" style="color: #0284c7; font-size: 12px; font-weight: 700; text-decoration: none;">
+                                        <i class="fa fa-play-circle"></i> Watch Video
+                                    </a>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+        <?php else: ?>
+            <div style="text-align: center; padding: 64px 20px; background: #ffffff; border-radius: 12px; border: 1px solid var(--upchar-border);">
+                <i class="fa fa-newspaper-o" style="font-size: 44px; color: #cbd5e1; display: block; margin-bottom: 12px;"></i>
+                <h3 style="font-size: 16px; font-weight: 700; color: #64748b; margin: 0 0 6px 0;">No Announcements Published</h3>
+                <p style="font-size: 13px; color: #94a3b8; margin: 0 0 18px 0;">Publish your hospital's latest medical camps, specialist visiting schedules, or facilities.</p>
+                <a href="<?=base_url('hospitalpanel/news');?>" class="btn-add-news">
+                    <i class="fa fa-plus-circle"></i> Publish First Announcement
+                </a>
+            </div>
+        <?php endif; ?>
+
+    </div>
+</div>
+
+<?php include ("assets/includes/footer_hospital.php"); ?>
