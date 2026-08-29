@@ -1,23 +1,35 @@
+# ----------------------------------------------------------------------
+# Security & Hardening Rules
+# ----------------------------------------------------------------------
+
+# 1. Disable Directory Browsing (Prevents listing files in uploads/assets/etc.)
+Options -Indexes
+
+# 2. Block direct web access to sensitive file extensions
+<FilesMatch "\.(sql|log|env|ini|conf|sh|bak|backup|dump|git|gitignore|yml|yaml|md|txt)$">
+    <IfModule authz_core_module>
+        Require all denied
+    </IfModule>
+    <IfModule !authz_core_module>
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+# 3. Block direct web access to hidden files and dotfiles (.git, .github, .env)
+RewriteEngine On
+RewriteRule (^|/)\.(?!well-known/) - [F,L]
+
+# 4. Block access to CodeIgniter system and application directories
+RewriteRule ^(application|system|admin1947/application|admin1947/system) - [F,L]
+
 <IfModule mod_rewrite.c>
   RewriteEngine On
-  # !IMPORTANT! Set your RewriteBase here and don't forget trailing and leading
-  #  slashes.
-  # If your page resides at
-  #  http://www.example.com/mypage/test1
-  # then use
-  # RewriteBase /mypage/test1/
-    RewriteCond %{REQUEST_FILENAME} !-f
-    RewriteCond %{REQUEST_FILENAME} !-d
-    RewriteRule ^(.*)$ index.php?/$1 [L]
+  # Route all standard requests to index.php
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteRule ^(.*)$ index.php?/$1 [L,QSA]
 </IfModule>
 
 <IfModule !mod_rewrite.c>
-  # If we don't have mod_rewrite installed, all 404's
-  # can be sent to index.php, and everything works as normal.
-  # Submitted by: ElliotHaughin
-    ErrorDocument 404 /index.php
-</IfModule>
-
-<IfModule mod_headers.c>
-    Header set Access-Control-Allow-Origin: "*"
+  ErrorDocument 404 /index.php
 </IfModule>

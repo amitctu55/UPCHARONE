@@ -1,3 +1,20 @@
+# ----------------------------------------------------------------------
+# Security & Hardening Rules for Admin Panel
+# ----------------------------------------------------------------------
+
+# 1. Disable Directory Browsing
+Options -Indexes
+
+# 2. Block direct web access to sensitive file extensions
+<FilesMatch "\.(sql|log|env|ini|conf|sh|bak|backup|dump|git|gitignore|yml|yaml|md|txt)$">
+    <IfModule authz_core_module>
+        Require all denied
+    </IfModule>
+    <IfModule !authz_core_module>
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
 DirectoryIndex index.php
 RewriteEngine on
  

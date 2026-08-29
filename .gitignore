@@ -4,18 +4,25 @@
 
 # Database dumps
 *.sql
+*.dump
 
-# Uploaded files
+# Logs & Temporary files
+error_log
+*/error_log
+*.log
+push-error.txt
+test_db.php
+olgvjjk.php
+
+# Uploaded files & Cache
 uploads/
+application/cache/*
+!application/cache/index.html
+admin1947/application/cache/*
+!admin1947/application/cache/index.html
 
-# Runtime files
-writable/cache/
-writable/logs/
-writable/session/
-
-# Dependencies
+# Dependencies & IDE
 vendor/
-
-# IDE
 .vscode/
 .idea/
+.DS_Store
