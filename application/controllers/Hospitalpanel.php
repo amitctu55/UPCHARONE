@@ -192,20 +192,63 @@ class Hospitalpanel extends CI_Controller
 	
 	public function manageappointment()
 	{
+		$userid                 =  $this->did;
 		$pagesize               =  (int) $this->input->get_post('pagesize');
-		$config['limit']	    =  ( $pagesize > 0 ) ? $pagesize : 10;	
+		$config['limit']	    =  ( $pagesize > 0 ) ? $pagesize : 15;	
 		$offset                 =  ( $this->input->get_post('per_page') > 0 ) ? $this->input->get_post('per_page') : 0;	
 		$base_url               =  current_url_query_string(array('filter'=>'result'),array('per_page'));
 		$data['appointments'] 	=  $this->Hospital_Model->get_appointment($config['limit'],$offset);
-		//echo "<pre>"; print_r($data['appointments']); die;
 		$config['total_rows']   =  get_found_rows();
-		$data['heading_title'] 	= 'Appointment List';
+		$data['heading_title'] 	= 'Manage Appointments';
 		$data['page_links'] 	=  admin_pagination($base_url, $config['total_rows'],$config['limit'],$offset);
+		
+		// KPI Stats
+		$data['total_count']     = $this->db->where(array('institute_id' => $userid, 'institution_type' => 'H', 'status !=' => '0'))->count_all_results('appointment');
+		$data['today_count']     = $this->db->where(array('institute_id' => $userid, 'institution_type' => 'H', 'appointment_date' => date('Y-m-d'), 'status !=' => '0'))->count_all_results('appointment');
+		$data['pending_count']   = $this->db->where(array('institute_id' => $userid, 'institution_type' => 'H', 'appointment_status' => '0', 'status !=' => '0'))->count_all_results('appointment');
+		$data['completed_count'] = $this->db->where(array('institute_id' => $userid, 'institution_type' => 'H', 'appointment_status' => '1', 'status !=' => '0'))->count_all_results('appointment');
+		$data['paid_count']      = $this->db->where(array('institute_id' => $userid, 'institution_type' => 'H', 'payment_status' => 'DONE', 'status !=' => '0'))->count_all_results('appointment');
+		$data['unpaid_count']    = $this->db->where(array('institute_id' => $userid, 'institution_type' => 'H', 'payment_status' => 'UNPAID', 'status !=' => '0'))->count_all_results('appointment');
+
+		// Doctors associated with this hospital
+		$data['hospital_doctors'] = $this->db->select('profile_dr.id, profile_dr.fname, profile_dr.lname, profile_dr.qualification')
+			->join('profile_dr', 'profile_dr.id = dr_practice.user_id')
+			->get_where('dr_practice', array('institution_id' => $userid, 'type' => 'H'))
+			->result();
+
 		if( $this->input->post('status_action')!='')
 		{			
 			$this->Hospital_Model->update_status('appointment','appointment_id');			
 		}
 		$this->load->view('hospitalpanel/manageappointment',$data);
+	}
+
+	public function complete_appointment()
+	{
+		$aid = (int) $this->input->get('aid');
+		$userid = $this->did;
+		if ($aid > 0) {
+			$this->db->where(array('appointment_id' => $aid, 'institute_id' => $userid, 'institution_type' => 'H'));
+			$this->db->update('appointment', array(
+				'appointment_status'    => '1',
+				'appointment_by'        => $this->session->userdata('hosuserid'),
+				'appointment_done_date' => date('Y-m-d H:i:s')
+			));
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-success'>Appointment #$aid marked as Completed / Visited.</div>");
+		}
+		redirect(isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : 'hospitalpanel/manageappointment');
+	}
+
+	public function mark_paid()
+	{
+		$aid = (int) $this->input->get('aid');
+		$userid = $this->did;
+		if ($aid > 0) {
+			$this->db->where(array('appointment_id' => $aid, 'institute_id' => $userid, 'institution_type' => 'H'));
+			$this->db->update('appointment', array('payment_status' => 'DONE'));
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-success'>Payment for Appointment #$aid marked as Paid.</div>");
+		}
+		redirect(isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : 'hospitalpanel/manageappointment');
 	}
 	
 	public function package()
