@@ -101,7 +101,7 @@ class Hospital_Model extends CI_Model
 		$this->db->order_by('appointment.appointment_date','desc');
 		$this->db->order_by('appointment.appointment_id','desc');
 		$this->db->limit($limit,$offset);
-		$this->db->select('SQL_CALC_FOUND_ROWS appointment.appointment_id, appointment.appointment_date, appointment.from_timing, appointment.to_timing, appointment.appointment_name as patient_name, appointment.appointment_mobile, appointment.fee, appointment.amount, appointment.doctor_id, appointment.institute_id, appointment.institution_type, appointment.status, appointment.payment_status, appointment.appointment_status, profile_dr.fname, profile_dr.lname, profile_dr.drimage, profile_dr.qualification', FALSE);
+		$this->db->select('SQL_CALC_FOUND_ROWS appointment.appointment_id, appointment.appointment_date, appointment.from_timing, appointment.to_timing, appointment.appointment_name as patient_name, appointment.appointment_mobile, appointment.fee, appointment.amount, appointment.doctor_id, appointment.institute_id, appointment.institution_type, appointment.status, appointment.payment_status, appointment.appointment_status, profile_dr.fname, profile_dr.lname, profile_dr.drimage', FALSE);
 		$this->db->join('profile_dr','profile_dr.id=appointment.doctor_id', 'left');
 		$result = $this->db->get('appointment')->result();
 		return $result;

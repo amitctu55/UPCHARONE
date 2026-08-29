@@ -211,7 +211,7 @@ class Hospitalpanel extends CI_Controller
 		$data['unpaid_count']    = $this->db->where(array('institute_id' => $userid, 'institution_type' => 'H', 'payment_status' => 'UNPAID', 'status !=' => '0'))->count_all_results('appointment');
 
 		// Doctors associated with this hospital
-		$data['hospital_doctors'] = $this->db->select('profile_dr.id, profile_dr.fname, profile_dr.lname, profile_dr.qualification')
+		$data['hospital_doctors'] = $this->db->select('profile_dr.id, profile_dr.fname, profile_dr.lname')
 			->join('profile_dr', 'profile_dr.id = dr_practice.user_id')
 			->get_where('dr_practice', array('institution_id' => $userid, 'type' => 'H'))
 			->result();
