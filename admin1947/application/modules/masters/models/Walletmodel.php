@@ -7,6 +7,69 @@ class Walletmodel extends CI_Model {
         parent::__construct();
         $this->load->database();
         date_default_timezone_set("Asia/Kolkata");
+        $this->_ensure_tables();
+    }
+
+    private function _ensure_tables() {
+        // user_wallet
+        $this->db->query("CREATE TABLE IF NOT EXISTS `user_wallet` (
+            `wallet_id` int(11) NOT NULL AUTO_INCREMENT,
+            `user_id` int(11) NOT NULL,
+            `points_balance` decimal(10,2) NOT NULL DEFAULT 0.00,
+            `currency_equivalent` decimal(10,2) NOT NULL DEFAULT 0.00,
+            `lifetime_earned` decimal(10,2) NOT NULL DEFAULT 0.00,
+            `lifetime_spent` decimal(10,2) NOT NULL DEFAULT 0.00,
+            `status` enum('1','2') NOT NULL DEFAULT '1',
+            `created_at` datetime NOT NULL,
+            `updated_at` datetime NOT NULL,
+            PRIMARY KEY (`wallet_id`),
+            UNIQUE KEY `uk_user_id` (`user_id`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+
+        // wallet_transactions
+        $this->db->query("CREATE TABLE IF NOT EXISTS `wallet_transactions` (
+            `transaction_id` int(11) NOT NULL AUTO_INCREMENT,
+            `txn_ref` varchar(50) NOT NULL,
+            `user_id` int(11) NOT NULL,
+            `type` enum('CREDIT','DEBIT') NOT NULL,
+            `amount_points` decimal(10,2) NOT NULL,
+            `amount_money` decimal(10,2) NOT NULL DEFAULT 0.00,
+            `balance_before` decimal(10,2) NOT NULL DEFAULT 0.00,
+            `balance_after` decimal(10,2) NOT NULL DEFAULT 0.00,
+            `source` varchar(50) NOT NULL,
+            `reference_id` varchar(50) DEFAULT NULL,
+            `payment_gateway` varchar(50) DEFAULT 'WALLET',
+            `gateway_txn_id` varchar(100) DEFAULT NULL,
+            `description` text DEFAULT NULL,
+            `status` enum('SUCCESS','PENDING','FAILED') NOT NULL DEFAULT 'SUCCESS',
+            `created_at` datetime NOT NULL,
+            PRIMARY KEY (`transaction_id`),
+            UNIQUE KEY `uk_txn_ref` (`txn_ref`),
+            KEY `idx_user_txn` (`user_id`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+
+        // points_settings
+        $this->db->query("CREATE TABLE IF NOT EXISTS `points_settings` (
+            `setting_id` int(11) NOT NULL AUTO_INCREMENT,
+            `setting_key` varchar(50) NOT NULL,
+            `setting_value` text NOT NULL,
+            `description` varchar(255) DEFAULT NULL,
+            PRIMARY KEY (`setting_id`),
+            UNIQUE KEY `uk_setting_key` (`setting_key`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+
+        // Seed default points_settings if empty
+        $c = $this->db->count_all_results('points_settings');
+        if ($c == 0) {
+            $defaults = array(
+                array('setting_key' => 'point_to_inr_ratio', 'setting_value' => '1.00', 'description' => 'Value of 1 Upchar Point in INR (e.g. 1.00 = Rs 1)'),
+                array('setting_key' => 'signup_bonus_points', 'setting_value' => '50.00', 'description' => 'Free points awarded to new users upon account registration'),
+                array('setting_key' => 'cashback_percentage', 'setting_value' => '5.00', 'description' => 'Cashback percentage in points earned on completed appointments'),
+                array('setting_key' => 'min_recharge_amount', 'setting_value' => '100.00', 'description' => 'Minimum wallet recharge amount in INR'),
+                array('setting_key' => 'max_redemption_percent', 'setting_value' => '100', 'description' => 'Maximum percentage of bill that can be paid using points (1-100%)')
+            );
+            $this->db->insert_batch('points_settings', $defaults);
+        }
     }
 
     /**

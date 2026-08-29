@@ -54,10 +54,13 @@ class Walletadmin extends CI_Controller {
         $data['keyword'] = $keyword;
         $data['active_tab'] = $tab;
 
+        $data['heading_title'] = 'Upchar Points Master';
+        $data['module'] = 'Masters';
+
         $this->load->view('inc/topheaderlink');
         $this->load->view('inc/topheader');
         $this->load->view('wallet_admin', $data);
-        $this->load->view('sidebar');
+        $this->load->view('inc/sidebar');
         $this->load->view('inc/headersetting');
         $this->load->view('inc/footerlink');
         $this->load->view('inc/table_footer');
