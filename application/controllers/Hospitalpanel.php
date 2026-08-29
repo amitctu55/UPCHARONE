@@ -10,7 +10,7 @@ class Hospitalpanel extends CI_Controller
 		$this->load->model('Hospital_Model');
 		$this->load->model('Financial_Model');
 		$this->load->library(array('Form_validation'));		
-		$this->load->helper(array('query_string_helper','dbquery_helper','admin_helper'));
+		$this->load->helper(array('query_string_helper','dbquery_helper','admin_helper','text','url','form'));
 		
 		if(!$this->session->userdata('hosuserid'))
 		{	
@@ -322,12 +322,19 @@ class Hospitalpanel extends CI_Controller
 	public function package()
 	{
 		$userid     = $this->did;
+		$hosuid     = $this->session->userdata('hosuserid');
 		$keyword    = $this->input->get_post('keyword', TRUE);
 		$date_from  = $this->input->get_post('date_from', TRUE);
 		$date_to    = $this->input->get_post('date_to', TRUE);
 		$status     = $this->input->get_post('status');
 
+		$this->db->group_start();
 		$this->db->where('hospital_id', $userid);
+		if (!empty($hosuid)) {
+			$this->db->or_where('hospital_id', $hosuid);
+		}
+		$this->db->group_end();
+
 		if (!empty($keyword)) {
 			$this->db->like('title', $keyword);
 		}
@@ -343,7 +350,7 @@ class Hospitalpanel extends CI_Controller
 
 		$data['packages']     = $this->db->order_by('package_id', 'DESC')->get('package')->result();
 		$data['total_count']  = count($data['packages']);
-		$data['active_count'] = $this->db->where(array('hospital_id' => $userid, 'status' => '1'))->count_all_results('package');
+		$data['active_count'] = $this->db->group_start()->where('hospital_id', $userid)->or_where('hospital_id', $hosuid)->group_end()->where('status', '1')->count_all_results('package');
 
 		$this->load->view('hospitalpanel/managepackage', $data);
 	}

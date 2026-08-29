@@ -355,7 +355,10 @@
 
                                     <!-- Description -->
                                     <td style="max-width: 260px; color: #475569; font-size: 12.5px; line-height: 1.4;">
-                                        <?=character_limiter(strip_tags($val->description), 90);?>
+                                        <?php 
+                                        $clean_desc = strip_tags($val->description ?? '');
+                                        echo html_escape(strlen($clean_desc) > 90 ? substr($clean_desc, 0, 90).'...' : $clean_desc);
+                                        ?>
                                     </td>
 
                                     <!-- Video Link -->
