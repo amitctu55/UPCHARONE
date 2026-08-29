@@ -81,7 +81,7 @@ if ($is_local) {
 		'hostname' => '127.0.0.1',
 		'username' => 'root',
 		'password' => '',
-		'database' => 'upchar_app',
+		'database' => 'upchar5510_db',
 		'dbdriver' => 'mysqli',
 		'dbprefix' => '',
 		'pconnect' => FALSE,
