@@ -603,15 +603,24 @@ class Hospitalpanel extends CI_Controller
 				$name_parts = explode(' ', ucwords($patient_name), 2);
 				$fname = $name_parts[0];
 				$lname = isset($name_parts[1]) ? $name_parts[1] : '';
+
+				$final_email = null;
+				if (!empty($patient_email)) {
+					$email_exists = $this->db->where('EMAIL', $patient_email)->count_all_results('userlogin');
+					if ($email_exists == 0) {
+						$final_email = $patient_email;
+					}
+				}
+
 				$new_user = array(
 					'FNAME'    => $fname,
 					'LNAME'    => $lname,
 					'MOBILE'   => $patient_mobile,
-					'EMAIL'    => $patient_email,
+					'EMAIL'    => $final_email,
 					'GENDER'   => (!empty($patient_gender) && in_array($patient_gender, array('M','F','O'))) ? $patient_gender : 'M',
 					'STATUS'   => '1',
 					'APPROVED' => '1',
-					'REG_DATE' => date('Y-m-d')
+					'REG_DATE' => date('Y-m-d H:i:s')
 				);
 				$this->db->insert('userlogin', $new_user);
 				$patient_userid = $this->db->insert_id();
