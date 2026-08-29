@@ -10,7 +10,7 @@ class Hospitalpanel extends CI_Controller
 		$this->load->model('Hospital_Model');
 		$this->load->model('Financial_Model');
 		$this->load->library(array('Form_validation'));		
-		$this->load->helper(array('query_string_helper','dbquery_helper','admin_helper','text','url','form'));
+		$this->load->helper(array('query_string_helper','dbquery_helper','admin_helper','text','url','form','verification_guard'));
 		
 		if(!$this->session->userdata('hosuserid'))
 		{	
@@ -26,7 +26,17 @@ class Hospitalpanel extends CI_Controller
 			$hosuserid = $this->session->userdata('hosuserid');
 			$row = $this->db->where('uid', $hosuserid)->or_where('id', $hosuserid)->get('hospital')->row();
 			$this->did = ($row && isset($row->id)) ? $row->id : $hosuserid;
+
+			// Module 1: Enforce Acquisition Verification Guard
+			enforce_verification_guard('hospital', $this->did, array('account_pending', 'logout', 'support', 'create_ticket', 'ticket_view', 'close_ticket'));
 		}
+	}
+	
+	public function account_pending()
+	{
+		$hosuserid = $this->session->userdata('hosuserid');
+		$data['hospital'] = $this->db->where('uid', $hosuserid)->or_where('id', $hosuserid)->get('hospital')->row();
+		$this->load->view('hospitalpanel/account_pending', $data);
 	}
 	
 	public function index()

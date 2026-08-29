@@ -43,8 +43,21 @@
     width: 250px !important;
     z-index: 1020 !important;
     overflow-y: auto !important;
+    overflow-x: hidden !important;
+    -webkit-overflow-scrolling: touch !important;
+    scrollbar-width: thin !important;
+    scrollbar-color: rgba(255, 255, 255, 0.25) transparent !important;
     background: #043d5b !important;
     box-shadow: 2px 0 10px rgba(0, 0, 0, 0.08) !important;
+}
+
+.sidebar::-webkit-scrollbar {
+    width: 5px;
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.25);
+    border-radius: 4px;
 }
 
 /* 3. Main Content Container beside Sidebar and below Header */

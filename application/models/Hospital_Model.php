@@ -496,35 +496,33 @@ thank you for being a part of Upchar.";
 			$rname=rand(1111111,999999999);
 			$date=date('Ymd');
 			$uploadimage='hospital_proof_pic_'.$rname.$date.'.'.$extsign;
-			$config['upload_path']          = $_SERVER['DOCUMENT_ROOT'].'/admin1947/public/assets/upload/';
-					$config['allowed_types'] = 'jpg|png|jpeg|JPG|PNG|JPEG';
-					$config['max_size']             = 0;
-					$config['quality'] = '50%';
-					$config['file_name']  = $uploadimage;
-					$this->load->library('upload', $config);
-					
-					if ( ! $this->upload->do_upload('images'))
-					{
-						$error = $this->upload->display_errors();
-						echo $flashmsg='<div class="alert alert-danger">
-						  <strong>Failed!</strong>'.$error.'
-						</div>';
-						$this->session->set_flashdata('flashmsg',$flashmsg);
-						redirect('hospitalpanel/profile_clinicproof');
-						exit();
-						
-					}else{
-						$udata=array('med_reg_proof'=>$uploadimage);
-						$this->db->where('id',$this->did)->update('hospital',$udata);
-					}
+			$config['upload_path']          = FCPATH . 'admin1947/public/assets/upload/';
+			$config['allowed_types']        = 'jpg|png|jpeg|JPG|PNG|JPEG';
+			$config['max_size']             = 5120;
+			$config['quality']              = '75%';
+			$config['file_name']            = $uploadimage;
+			$this->load->library('upload', $config);
+			
+			if ( ! $this->upload->do_upload('images'))
+			{
+				$error = $this->upload->display_errors();
+				$flashmsg='<div class="alert alert-danger">
+				  <strong>Failed!</strong> '.$error.'
+				</div>';
+				$this->session->set_flashdata('flashmsg',$flashmsg);
+				redirect('hospitalpanel/profile_clinicproof');
+				exit();
+				
+			}else{
+				$udata=array('med_reg_proof'=>$uploadimage);
+				$this->db->where('id',$this->did)->update('hospital',$udata);
+			}
 		}
 		
 		redirect('hospitalpanel/profile_disppic');	
 	}
 	
 	public function profile_disppic(){
-		//print_r($_FILES);
-		//print_r($_POST);
 		$uploadimage=$_FILES['images']['name'];
 		$extsign = pathinfo($_FILES['images']['name'],PATHINFO_EXTENSION);
 		
@@ -533,12 +531,12 @@ thank you for being a part of Upchar.";
 			$rname=rand(1111111,999999999);
 			$date=date('Y-m-d');
 			$uploadimage='disp_profile_pic_'.$rname.$date.'.'.$extsign;
-			$config['upload_path']          = $_SERVER['DOCUMENT_ROOT'].'/admin1947/public/assets/upload/';
-					$config['allowed_types'] = 'jpg|png|jpeg|JPG|PNG|JPEG';
-					$config['max_size']             = 0;
-					$config['quality'] = '50%';
-					$config['file_name']  = $uploadimage;
-					$this->load->library('upload', $config);
+			$config['upload_path']          = FCPATH . 'admin1947/public/assets/upload/';
+			$config['allowed_types']        = 'jpg|png|jpeg|JPG|PNG|JPEG';
+			$config['max_size']             = 5120;
+			$config['quality']              = '75%';
+			$config['file_name']            = $uploadimage;
+			$this->load->library('upload', $config);
 					
 					if ( ! $this->upload->do_upload('images'))
 					{

@@ -23,6 +23,31 @@
     <script src="<?=base_url();?>assets/js/layout.js"></script>
 
     <script>
+    $(document).ready(function () {
+        // Sidebar Sub-menu Slide Down / Up Toggle Handler
+        $('body').on('click', '.nav-sidebar li.nav-parent > a', function (e) {
+            e.preventDefault();
+            var $parent = $(this).parent('li.nav-parent');
+            var $sub = $parent.children('.children');
+            
+            if ($parent.hasClass('active') || $sub.is(':visible')) {
+                $sub.slideUp(200);
+                $parent.removeClass('active');
+                $(this).find('.arrow').removeClass('active');
+            } else {
+                $parent.siblings('.nav-parent.active').removeClass('active').children('.children').slideUp(200);
+                $parent.siblings('.nav-parent').find('.arrow').removeClass('active');
+                
+                $sub.slideDown(200);
+                $parent.addClass('active');
+                $(this).find('.arrow').addClass('active');
+            }
+        });
+
+        // Ensure active menu children are visible on load
+        $('.nav-sidebar li.nav-parent.active > .children').show();
+    });
+
     $(window).on('load', function () {
         $(".trigger_popup_fricc").click(function(){
             $('.hover_bkgr_fricc').show();

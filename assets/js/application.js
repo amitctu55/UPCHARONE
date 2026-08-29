@@ -17,7 +17,7 @@ var topbarWidth = $('.topbar').width();
 var headerLeftWidth = $('.header-left').width();
 var headerRightWidth = $('.header-right').width();
 var start = delta = end = 0;
-$(window).load(function() {
+$(window).on('load', function() {
     "use strict";
     setTimeout(function() {
         $('.loader-overlay').addClass('loaded');
@@ -491,7 +491,7 @@ function sidebarWidgets() {
     };
     /* Progress Bar  Widget */
     if ($('.sidebar-widgets .progress-chart').length) {
-        $(window).load(function() {
+        $(window).on('load', function() {
             setTimeout(function() {
                 $('.sidebar-widgets .progress-chart .stat1').progressbar();
             }, 900);
