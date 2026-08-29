@@ -455,84 +455,138 @@ class Hospitalpanel extends CI_Controller
 	
 	public function bed()
 	{
-		$userid 				=  $this->did;
-		$pagesize               =  (int) $this->input->get_post('pagesize');
-		$config['limit']	    =  ( $pagesize > 0 ) ? $pagesize : 10;	
-		$offset                 =  ( $this->input->get_post('per_page') > 0 ) ? $this->input->get_post('per_page') : 0;	
-		$base_url               =  current_url_query_string(array('filter'=>'result'),array('per_page'));
-		$param					=	array('hospital_id'=>$userid);
-		$data['result'] 		=  $this->Hospital_Model->get_bed($config['limit'],$offset,$param);
-		$config['total_rows']   =  get_found_rows();
-		$data['heading_title'] 	= 'Package List';
-		$data['page_links'] 	=  admin_pagination($base_url, $config['total_rows'],$config['limit'],$offset);
-		if( $this->input->post('status_action')!='')
-		{			
-			$this->Hospital_Model->update_status('package','package_id');			
+		$userid     = $this->did;
+		$hosuid     = $this->session->userdata('hosuserid');
+		$keyword    = $this->input->get_post('keyword', TRUE);
+		$date_from  = $this->input->get_post('date_from', TRUE);
+		$date_to    = $this->input->get_post('date_to', TRUE);
+		$status     = $this->input->get_post('status');
+
+		$this->db->group_start();
+		$this->db->where('hospital_id', $userid);
+		if (!empty($hosuid)) {
+			$this->db->or_where('hospital_id', $hosuid);
 		}
-		$this->load->view('hospitalpanel/managebed',$data);
+		$this->db->group_end();
+
+		if (!empty($keyword)) {
+			$this->db->like('bed_type', $keyword);
+		}
+		if (!empty($date_from)) {
+			$this->db->where('creat_date >=', $date_from);
+		}
+		if (!empty($date_to)) {
+			$this->db->where('creat_date <=', $date_to);
+		}
+		if ($status !== '' && $status !== null && in_array($status, array('0', '1'))) {
+			$this->db->where('status', $status);
+		}
+
+		$beds = $this->db->order_by('hospital_bed_id', 'DESC')->get('hospital_bed')->result();
+
+		$total_capacity = 0;
+		$total_occupied = 0;
+		foreach ($beds as $b) {
+			$total_capacity += (int)$b->total_bed;
+			$total_occupied += (int)$b->occupied_bed;
+		}
+
+		$data['beds']            = $beds;
+		$data['total_capacity']  = $total_capacity;
+		$data['total_occupied']  = $total_occupied;
+		$data['total_available'] = max(0, $total_capacity - $total_occupied);
+		$data['total_types']     = count($beds);
+
+		$this->load->view('hospitalpanel/managebed', $data);
 	}
 	
 	public function addbed()
 	{
-		$userid 				=  $this->did;
-		$this->form_validation->set_rules('bed_type','Bed Type',"trim|required|max_length[255]");
-		$this->form_validation->set_rules('total_bed','Total Bed','trim|required|max_length[50]');
-		$this->form_validation->set_rules('occupied_bed','Occupied Bed','trim|required|max_length[255]');
-		$this->form_validation->set_rules('amount','Amount','trim|required|max_length[10]');
-		$this->form_validation->set_rules('comment','Comment','trim|required|max_length[500]');
-		$this->form_validation->set_rules('status','Status',"required|max_length[200]");	
-		
-		if($this->form_validation->run()===TRUE)
-		{	
-			if($this->Hospital_Model->bed_insert()) 
-			{
-				$msg="<div class='alert alert-success'><strong>Success!</strong> Data Added Successfully</div>";
-				$this->session->set_flashdata('flashmsg',$msg);
+		$userid = $this->did;
+		if ($this->input->post()) {
+			$this->form_validation->set_rules('bed_type', 'Bed Type / Category', 'trim|required');
+			$this->form_validation->set_rules('total_bed', 'Total Bed Count', 'trim|required|numeric');
+			$this->form_validation->set_rules('occupied_bed', 'Occupied Bed Count', 'trim|numeric');
+			$this->form_validation->set_rules('amount', 'Daily Room Charge', 'trim|required|numeric');
+			
+			if ($this->form_validation->run() === TRUE) {
+				$insert_data = array(
+					'hospital_id'  => $userid,
+					'bed_type'     => trim($this->input->post('bed_type', TRUE)),
+					'total_bed'    => intval($this->input->post('total_bed')),
+					'occupied_bed' => intval($this->input->post('occupied_bed')),
+					'amount'       => floatval($this->input->post('amount')),
+					'comment'      => trim($this->input->post('comment', TRUE)),
+					'status'       => $this->input->post('status') !== null ? $this->input->post('status') : '1',
+					'creat_date'   => date('Y-m-d H:i:s'),
+					'created_by'   => intval($this->session->userdata('hosuserid'))
+				);
+
+				$this->db->insert('hospital_bed', $insert_data);
+				$this->session->set_flashdata('flashmsg', "<div class='alert alert-success'>Bed / Ward setup category added successfully!</div>");
+				redirect('hospitalpanel/bed');
 			}
-			else
-			{
-				$msg="<div class='alert alert-danger'><strong>Failed!</strong> Something went wrong. Please try again.</div>";
-				$this->session->set_flashdata('flashmsg',$msg);
-			}
-			redirect(base_url().'hospitalpanel/addbed');
 		}
 		$this->load->view('hospitalpanel/addbed');
 	}
 	
-	public function editbed()
+	public function editbed($id = 0)
 	{
-		$hospital_bed_id 		=  $this->uri->segment(3);
-		$userid 				=  $this->did;
-		$param					=  array('hospital_id'=>$userid,'hospital_bed_id'=>$hospital_bed_id);
-		$data['row'] 			=  $this->Hospital_Model->get_bed(1,0,$param);
-		if(is_array($data['row']) && !empty($data['row']))
-		{
-			$this->form_validation->set_rules('bed_type','Bed Type',"trim|required|max_length[200]");
-			$this->form_validation->set_rules('total_bed','Total Bed','trim|required|max_length[50]');
-			$this->form_validation->set_rules('occupied_bed','Occupied Bed','trim|required|max_length[255]');
-			$this->form_validation->set_rules('amount','Amount','trim|required|max_length[10]');
-			$this->form_validation->set_rules('comment','Comment','trim|required|max_length[500]');
-			$this->form_validation->set_rules('status','Status',"required|max_length[200]");		
-			if($this->form_validation->run()===TRUE)
-			{	
-				if($this->Hospital_Model->update_bed($hospital_bed_id)) 
-				{
-					$msg="<div class='alert alert-success'><strong>Success!</strong> Data Updated Successfully</div>";
-					$this->session->set_flashdata('flashmsg',$msg);
-				}
-				else
-				{
-					$msg="<div class='alert alert-danger'><strong>Failed!</strong> Something went wrong. Please try again.</div>";
-					$this->session->set_flashdata('flashmsg',$msg);
-				}
-				redirect('hospitalpanel/editbed/'.$hospital_bed_id, ''); 		
+		$userid = $this->did;
+		$hosuid = $this->session->userdata('hosuserid');
+		$id = intval($id);
+		
+		$bed = $this->db->where('hospital_bed_id', $id)
+			->group_start()->where('hospital_id', $userid)->or_where('hospital_id', $hosuid)->group_end()
+			->get('hospital_bed')
+			->row_array();
+
+		if (!$bed) {
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-danger'>Bed category not found.</div>");
+			redirect('hospitalpanel/bed');
+		}
+
+		if ($this->input->post()) {
+			$this->form_validation->set_rules('bed_type', 'Bed Type / Category', 'trim|required');
+			$this->form_validation->set_rules('total_bed', 'Total Bed Count', 'trim|required|numeric');
+			$this->form_validation->set_rules('occupied_bed', 'Occupied Bed Count', 'trim|numeric');
+			$this->form_validation->set_rules('amount', 'Daily Room Charge', 'trim|required|numeric');
+			
+			if ($this->form_validation->run() === TRUE) {
+				$update_data = array(
+					'bed_type'      => trim($this->input->post('bed_type', TRUE)),
+					'total_bed'     => intval($this->input->post('total_bed')),
+					'occupied_bed'  => intval($this->input->post('occupied_bed')),
+					'amount'        => floatval($this->input->post('amount')),
+					'comment'       => trim($this->input->post('comment', TRUE)),
+					'status'        => $this->input->post('status') !== null ? $this->input->post('status') : $bed['status'],
+					'modified_date' => time(),
+					'modified_by'   => date('Y-m-d H:i:s')
+				);
+
+				$this->db->where('hospital_bed_id', $id)->update('hospital_bed', $update_data);
+				$this->session->set_flashdata('flashmsg', "<div class='alert alert-success'>Bed category updated successfully!</div>");
+				redirect('hospitalpanel/bed');
 			}
 		}
-		else
-		{
-			redirect(base_url().'hospitalpanel/bed');
+
+		$data['bed'] = $bed;
+		$data['row'] = $bed;
+		$this->load->view('hospitalpanel/editbed', $data);
+	}
+
+	public function delete_bed($id = 0)
+	{
+		$userid = $this->did;
+		$hosuid = $this->session->userdata('hosuserid');
+		$id = intval($id);
+		if ($id > 0) {
+			$this->db->where('hospital_bed_id', $id)
+				->group_start()->where('hospital_id', $userid)->or_where('hospital_id', $hosuid)->group_end()
+				->delete('hospital_bed');
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-success'>Bed category deleted successfully.</div>");
 		}
-		$this->load->view('hospitalpanel/editbed',$data);
+		redirect('hospitalpanel/bed');
 	}
 	
 
