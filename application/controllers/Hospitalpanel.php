@@ -1763,20 +1763,24 @@ class Hospitalpanel extends CI_Controller
 	public function bed_matrix()
 	{
 		$hospital_id = $this->did;
-		$data['hospital'] = $this->db->get_where('hospital', array('id' => $hospital_id))->row();
-		$data['beds'] = $this->db->get_where('hospital_bed', array('hospital_id' => $hospital_id))->result();
+		$hosuid      = $this->session->userdata('hosuserid');
+		$data['hospital'] = $this->db->where('id', $hospital_id)->or_where('uid', $hosuid)->get('hospital')->row();
+		$data['beds'] = $this->db->group_start()->where('hospital_id', $hospital_id)->or_where('hospital_id', $hosuid)->group_end()->order_by('hospital_bed_id', 'DESC')->get('hospital_bed')->result();
 		
-		// Summary statistics
-		$data['total_beds'] = count($data['beds']);
-		$data['occupied_beds'] = 0;
-		$data['vacant_beds'] = 0;
-		$data['maintenance_beds'] = 0;
+		// Summary statistics across all wards
+		$total_capacity = 0;
+		$total_occupied = 0;
 		
 		foreach ($data['beds'] as $bed) {
-			if ($bed->status == 'OCCUPIED') $data['occupied_beds']++;
-			elseif ($bed->status == 'MAINTENANCE' || $bed->status == 'CLEANING') $data['maintenance_beds']++;
-			else $data['vacant_beds']++;
+			$total_capacity += (int)$bed->total_bed;
+			$total_occupied += (int)$bed->occupied_bed;
 		}
+
+		$data['total_beds']        = $total_capacity;
+		$data['occupied_beds']     = $total_occupied;
+		$data['vacant_beds']       = max(0, $total_capacity - $total_occupied);
+		$data['maintenance_beds']  = 0;
+		$data['total_types']       = count($data['beds']);
 
 		$this->load->view('hospitalpanel/bed_matrix', $data);
 	}

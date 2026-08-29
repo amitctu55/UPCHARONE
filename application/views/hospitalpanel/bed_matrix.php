@@ -46,6 +46,12 @@
     margin: 0;
 }
 
+.action-hdr-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
 .btn-primary-action {
     background: #00a896;
     color: #ffffff !important;
@@ -65,6 +71,26 @@
 .btn-primary-action:hover {
     background: #008f80;
     transform: translateY(-1px);
+}
+
+.btn-secondary-action {
+    background: #ffffff;
+    border: 1px solid var(--upchar-border);
+    color: #475569 !important;
+    font-weight: 700;
+    font-size: 13px;
+    padding: 8px 16px;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    text-decoration: none !important;
+    transition: all 0.15s ease;
+}
+
+.btn-secondary-action:hover {
+    background: #f1f5f9;
+    color: #0f172a !important;
 }
 
 /* KPI Bar */
@@ -87,7 +113,7 @@
 .kpi-bed-tile.cap { border-left-color: #3b82f6; }
 .kpi-bed-tile.vac { border-left-color: #10b981; }
 .kpi-bed-tile.occ { border-left-color: #ef4444; }
-.kpi-bed-tile.maint { border-left-color: #f59e0b; }
+.kpi-bed-tile.types { border-left-color: #8b5cf6; }
 
 .kpi-bed-title {
     font-size: 11.5px;
@@ -104,111 +130,135 @@
     color: #0f172a;
 }
 
-/* Bed Grid Container */
-.bed-matrix-panel {
+/* Ward Matrix Container */
+.ward-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 20px;
+}
+
+.ward-card {
     background: #ffffff;
     border-radius: 14px;
     border: 1px solid var(--upchar-border);
-    padding: 24px;
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: all 0.2s ease;
 }
 
-.bed-matrix-header {
+.ward-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.07);
+}
+
+.ward-card-header {
+    background: linear-gradient(135deg, #043d5b 0%, #008f80 100%);
+    padding: 16px 20px;
+    color: #ffffff;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    flex-wrap: wrap;
-    gap: 12px;
-    margin-bottom: 20px;
-    padding-bottom: 14px;
-    border-bottom: 1px solid #f1f5f9;
 }
 
-.bed-matrix-header h3 {
+.ward-title {
     font-size: 16px;
     font-weight: 800;
-    color: #043d5b;
+    color: #ffffff;
     margin: 0;
     display: flex;
     align-items: center;
     gap: 8px;
 }
 
-.bed-legend {
-    display: flex;
-    gap: 16px;
-    font-size: 12px;
-    font-weight: 600;
+.ward-card-body {
+    padding: 20px;
+    flex-grow: 1;
 }
 
-.bed-cards-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-    gap: 18px;
-}
-
-.bed-tile {
-    background: #ffffff;
-    border-radius: 10px;
-    border: 1px solid var(--upchar-border);
-    padding: 16px 18px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
-    transition: all 0.2s ease;
-    border-top: 4px solid #10b981;
-}
-
-.bed-tile:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.06);
-}
-
-.bed-tile.occupied {
-    border-top-color: #ef4444;
-    background: #fffafa;
-}
-
-.bed-tile.maintenance {
-    border-top-color: #f59e0b;
-    background: #fffdf5;
-}
-
-.bed-tile-header {
+.ward-meta-strip {
     display: flex;
     justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 12px;
+    align-items: center;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #f1f5f9;
 }
 
-.bed-name {
+.ward-rate {
+    font-size: 15px;
+    font-weight: 800;
+    color: #00a896;
+}
+
+.ward-stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 16px;
+    text-align: center;
+}
+
+.ward-stat-box {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 10px 6px;
+}
+
+.ward-stat-val {
     font-size: 16px;
     font-weight: 800;
     color: #0f172a;
 }
 
-.bed-category {
-    font-size: 12px;
+.ward-stat-lbl {
+    font-size: 11px;
     color: #64748b;
+    font-weight: 600;
     margin-top: 2px;
 }
 
-.badge-bed-status {
-    padding: 3px 8px;
-    border-radius: 12px;
-    font-size: 10.5px;
-    font-weight: 700;
+/* Visual Bed Grid */
+.bed-slots-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(36px, 1fr));
+    gap: 6px;
+    margin-top: 14px;
 }
 
-.badge-vacant { background: #dcfce7; color: #15803d; }
-.badge-occupied { background: #fee2e2; color: #991b1b; }
-.badge-maintenance { background: #fef3c7; color: #b45309; }
+.bed-slot {
+    height: 36px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+    cursor: default;
+}
 
-.bed-tile-footer {
-    padding-top: 10px;
+.bed-slot.vacant {
+    background: #dcfce7;
+    color: #15803d;
+    border: 1px solid #86efac;
+}
+
+.bed-slot.occupied {
+    background: #fee2e2;
+    color: #991b1b;
+    border: 1px solid #fca5a5;
+}
+
+.ward-card-footer {
+    padding: 14px 20px;
+    background: #f8fafc;
     border-top: 1px solid #f1f5f9;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    font-size: 12px;
 }
 </style>
 
@@ -223,10 +273,13 @@
         <!-- Page Header -->
         <div class="bed-header-card">
             <div>
-                <h1><i class="fa fa-bed" style="color: #00a896; margin-right: 8px;"></i> Live Inpatient Bed Occupancy Matrix</h1>
-                <p>Real-time monitor for ICU, General Ward, Deluxe, and Semi-Private bed capacities.</p>
+                <h1><i class="fa fa-th-large" style="color: #00a896; margin-right: 8px;"></i> Live Inpatient Bed Matrix</h1>
+                <p>Real-time occupancy monitor for ICU, General Ward, Deluxe, and Semi-Private bed capacities.</p>
             </div>
-            <div>
+            <div class="action-hdr-group">
+                <a href="<?=base_url('hospitalpanel/bed');?>" class="btn-secondary-action">
+                    <i class="fa fa-sliders"></i> Manage Bed Setup
+                </a>
                 <a href="<?=base_url('hospitalpanel/admissions');?>" class="btn-primary-action">
                     <i class="fa fa-user-plus"></i> Inpatient Admissions
                 </a>
@@ -247,58 +300,99 @@
                 <div class="kpi-bed-title">Currently Occupied</div>
                 <div class="kpi-bed-val" style="color: #ef4444;"><?=$occupied_beds;?> Beds</div>
             </div>
-            <div class="kpi-bed-tile maint">
-                <div class="kpi-bed-title">Maintenance / Sanitization</div>
-                <div class="kpi-bed-val" style="color: #f59e0b;"><?=$maintenance_beds;?> Beds</div>
+            <div class="kpi-bed-tile types">
+                <div class="kpi-bed-title">Configured Wards</div>
+                <div class="kpi-bed-val" style="color: #8b5cf6;"><?=$total_types ?? count($beds);?> Types</div>
             </div>
         </div>
 
         <!-- Visual Bed Matrix Panel -->
-        <div class="bed-matrix-panel">
-            <div class="bed-matrix-header">
-                <h3><i class="fa fa-th"></i> Hospital Bed Layout &amp; Live Occupancy</h3>
-                <div class="bed-legend">
-                    <span style="color: #10b981;"><i class="fa fa-circle"></i> Vacant</span>
-                    <span style="color: #ef4444;"><i class="fa fa-circle"></i> Occupied</span>
-                    <span style="color: #f59e0b;"><i class="fa fa-circle"></i> Maintenance</span>
-                </div>
-            </div>
+        <div class="ward-cards-grid">
+            <?php if(!empty($beds)): ?>
+                <?php foreach($beds as $b): 
+                    $tot = (int)$b->total_bed;
+                    $occ = (int)$b->occupied_bed;
+                    $avail = max(0, $tot - $occ);
+                    $pct = ($tot > 0) ? min(100, round(($occ / $tot) * 100)) : 0;
+                ?>
+                    <div class="ward-card">
+                        <div class="ward-card-header">
+                            <h3 class="ward-title">
+                                <i class="fa fa-bed"></i> <?=html_escape($b->bed_type);?>
+                            </h3>
+                            <span style="font-size: 11px; background: rgba(255,255,255,0.2); padding: 3px 8px; border-radius: 4px; font-weight: 700;">
+                                #BED-<?=$b->hospital_bed_id;?>
+                            </span>
+                        </div>
 
-            <div class="bed-cards-grid">
-                <?php if(!empty($beds)): ?>
-                    <?php foreach($beds as $b): 
-                        $status_class = ($b->status == 'OCCUPIED') ? 'occupied' : (($b->status == 'MAINTENANCE' || $b->status == 'CLEANING') ? 'maintenance' : 'vacant');
-                        $badge_class = ($status_class == 'occupied') ? 'badge-occupied' : (($status_class == 'maintenance') ? 'badge-maintenance' : 'badge-vacant');
-                    ?>
-                        <div class="bed-tile <?=$status_class;?>">
-                            <div class="bed-tile-header">
+                        <div class="ward-card-body">
+                            <div class="ward-meta-strip">
                                 <div>
-                                    <div class="bed-name"><i class="fa fa-bed" style="color: #64748b; font-size: 14px;"></i> Bed <?=html_escape($b->bed_number);?></div>
-                                    <div class="bed-category"><?=html_escape($b->category ?: 'General Ward');?></div>
+                                    <div class="ward-rate">₹<?=number_format((float)$b->amount, 2);?> <span style="font-size: 11px; color: #64748b; font-weight: normal;">/ day</span></div>
                                 </div>
-                                <span class="badge-bed-status <?=$badge_class;?>"><?=html_escape($b->status);?></span>
+                                <div>
+                                    <span style="font-size: 11px; font-weight: 700; color: <?=$pct > 80 ? '#dc2626' : '#15803d';?>">
+                                        <?=$pct;?>% Occupancy
+                                    </span>
+                                </div>
                             </div>
 
-                            <div class="bed-tile-footer">
-                                <span style="font-weight: 700; color: #0f172a;">
-                                    ₹<?=number_format((float)(@$b->daily_charge ?: 1500), 2);?> / day
-                                </span>
-                                <?php if($b->status == 'VACANT'): ?>
-                                    <a href="<?=base_url('hospitalpanel/admissions');?>" style="background: #e0f2fe; color: #0369a1; font-weight: 700; font-size: 11.5px; padding: 4px 10px; border-radius: 4px; text-decoration: none;">
-                                        Admit Here
-                                    </a>
-                                <?php endif; ?>
+                            <!-- Ward Stats Boxes -->
+                            <div class="ward-stats-grid">
+                                <div class="ward-stat-box">
+                                    <div class="ward-stat-val" style="color: #043d5b;"><?=$tot;?></div>
+                                    <div class="ward-stat-lbl">Capacity</div>
+                                </div>
+                                <div class="ward-stat-box">
+                                    <div class="ward-stat-val" style="color: #dc2626;"><?=$occ;?></div>
+                                    <div class="ward-stat-lbl">Occupied</div>
+                                </div>
+                                <div class="ward-stat-box">
+                                    <div class="ward-stat-val" style="color: #15803d;"><?=$avail;?></div>
+                                    <div class="ward-stat-lbl">Vacant</div>
+                                </div>
+                            </div>
+
+                            <?php if(!empty($b->comment)): ?>
+                                <p style="font-size: 12px; color: #64748b; margin: 0 0 10px 0; line-height: 1.4;">
+                                    <?=html_escape($b->comment);?>
+                                </p>
+                            <?php endif; ?>
+
+                            <!-- Individual Bed Slots Preview -->
+                            <div style="font-size: 11.5px; font-weight: 700; color: #475569; margin-top: 10px;">
+                                Bed Slots Overview:
+                            </div>
+                            <div class="bed-slots-grid">
+                                <?php for($i = 1; $i <= $tot; $i++): 
+                                    $is_occ = ($i <= $occ);
+                                ?>
+                                    <div class="bed-slot <?=$is_occ ? 'occupied' : 'vacant';?>" title="Bed <?=$i;?>: <?=$is_occ ? 'Occupied' : 'Vacant';?>">
+                                        B<?=$i;?>
+                                    </div>
+                                <?php endfor; ?>
                             </div>
                         </div>
-                    <?php endforeach; ?>
-                <?php else: ?>
-                    <div style="grid-column: 1 / -1; text-align: center; padding: 50px 20px; color: #94a3b8;">
-                        <i class="fa fa-bed" style="font-size: 40px; color: #cbd5e1; display: block; margin-bottom: 10px;"></i>
-                        <strong style="font-size: 15px; color: #64748b; display: block;">No Beds Configured</strong>
-                        <span>Configure hospital beds and wards in <strong>Manage Bed Setup</strong> to view the live occupancy matrix.</span>
+
+                        <div class="ward-card-footer">
+                            <span style="font-size: 11.5px; color: #64748b;">
+                                <?=$avail > 0 ? '<strong style="color: #15803d;">' . $avail . ' Beds Ready</strong>' : '<strong style="color: #dc2626;">Ward Full</strong>';?>
+                            </span>
+                            <?php if($avail > 0): ?>
+                                <a href="<?=base_url('hospitalpanel/admissions');?>" style="background: #00a896; color: #fff; font-size: 11.5px; font-weight: 700; padding: 5px 12px; border-radius: 6px; text-decoration: none;">
+                                    <i class="fa fa-user-plus"></i> Admit Inpatient
+                                </a>
+                            <?php endif; ?>
+                        </div>
                     </div>
-                <?php endif; ?>
-            </div>
+                <?php endforeach; ?>
+            <?php else: ?>
+                <div style="grid-column: 1 / -1; text-align: center; padding: 50px 20px; color: #94a3b8; background: #fff; border-radius: 14px; border: 1px solid var(--upchar-border);">
+                    <i class="fa fa-bed" style="font-size: 40px; color: #cbd5e1; display: block; margin-bottom: 10px;"></i>
+                    <strong style="font-size: 15px; color: #64748b; display: block;">No Hospital Beds Configured</strong>
+                    <span>Configure hospital beds and wards in <strong>Manage Bed Setup</strong> to view the live occupancy matrix.</span>
+                </div>
+            <?php endif; ?>
         </div>
 
     </div>
