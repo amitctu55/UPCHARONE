@@ -171,22 +171,45 @@ class Hospitalpanel extends CI_Controller
 		}
 	} 
 	public function data()
-    {
-		$userid =$this->did;
-		$id=$this->input->get('id');
+	{
+		$userid      = $this->did;
+		$id          = (int) $this->input->get_post('id');
+		$filter_date = $this->input->get_post('d');
 
-		$data['data'] =$this->db->select('hospital.*,appointment.*')->join('hospital','hospital.uid=appointment.institute_id')->get_where('appointment',array('doctor_id'=>$id,'institute_id'=>$this->did))->result();
-		//$data['hospital'] = $this->db->count_all_results('appointment');
-		//print_r($data);
-   
-        $this -> db -> where('institute_id', $userid);   
-        $this -> db -> where('institution_type', 'H');  
-        $this -> db -> where('doctor_id', $id);   
-		//$this -> db -> where('appointment_date', date('Y-m-d'));   
-        $query = $this -> db -> get('appointment');
-		$data['hospital']=$query -> num_rows();
-		$this->load->view('hospitalpanel/doctorappointment',$data);
-   }
+		$this->db->select('appointment.*, profile_dr.fname, profile_dr.lname, profile_dr.drimage, profile_dr.mobile as dr_mobile, profile_dr.email as dr_email');
+		$this->db->join('profile_dr', 'profile_dr.id = appointment.doctor_id', 'left');
+		$this->db->where('appointment.doctor_id', $id);
+		$this->db->where('appointment.institute_id', $userid);
+		$this->db->where('appointment.institution_type', 'H');
+		$this->db->where('appointment.status !=', '0');
+		if (!empty($filter_date)) {
+			$this->db->where('appointment.appointment_date', $filter_date);
+		}
+		$this->db->order_by('appointment.appointment_date', 'DESC');
+		$this->db->order_by('appointment.appointment_id', 'DESC');
+		$data['data'] = $this->db->get('appointment')->result();
+
+		$data['doctor']      = $this->db->get_where('profile_dr', array('id' => $id))->row();
+		$data['hospital']    = count($data['data']);
+		$data['doctor_id']   = $id;
+		$data['filter_date'] = $filter_date;
+
+		// Summary Stats for this doctor at this hospital
+		$data['total_paid']   = 0;
+		$data['total_unpaid'] = 0;
+		$data['total_fee']    = 0;
+		foreach ($data['data'] as $apt) {
+			$fee = (float) $apt->fee;
+			if ($apt->payment_status == 'DONE') {
+				$data['total_paid']++;
+				$data['total_fee'] += $fee;
+			} else {
+				$data['total_unpaid']++;
+			}
+		}
+
+		$this->load->view('hospitalpanel/doctorappointment', $data);
+	}
 	
 	
 	
