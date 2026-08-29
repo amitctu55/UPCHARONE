@@ -655,11 +655,12 @@ class Hospitalpanel extends CI_Controller
 
 			$insert_data = array(
 				'appointment_date'    => $appointment_date,
+				'appointment_time'    => $from_timing,
+				'from_timing'         => $from_timing,
+				'to_timing'           => $to_timing,
 				'time_id'             => $time_id,
 				'date_id'             => $date_id,
 				'practice_id'         => $practice_id,
-				'from_timing'         => $from_timing,
-				'to_timing'           => $to_timing,
 				'appointment_name'    => $patient_name,
 				'appointment_mobile'  => $patient_mobile,
 				'appointment_email'   => $patient_email,
@@ -675,7 +676,8 @@ class Hospitalpanel extends CI_Controller
 				'appointment_status'  => $appointment_status,
 				'status'              => '1',
 				'appointment_by'      => $this->session->userdata('hosuserid'),
-				'creat_date'          => date('Y-m-d H:i:s')
+				'book_date'           => date('Y-m-d H:i:s'),
+				'pay_date'            => date('Y-m-d H:i:s')
 			);
 
 			$this->db->insert('appointment', $insert_data);
@@ -706,6 +708,9 @@ class Hospitalpanel extends CI_Controller
 			->where(array('dr_practice.institution_id' => $userid, 'dr_practice.type' => 'H'))
 			->get('profile_dr')
 			->result();
+		
+		$data['clinic'] = $data['doctors'];
+		$data['data']   = $this->db->get_where('hospital', array('id' => $userid))->row();
 
 		$this->load->view('hospitalpanel/addappointment', $data);
 	}
