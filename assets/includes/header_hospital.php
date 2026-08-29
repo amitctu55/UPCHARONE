@@ -13,122 +13,142 @@
 	<link href="<?=base_url();?>assets/css/dummy.css" rel="stylesheet">
 	<link href="<?=base_url();?>assets/css/style.css" rel="stylesheet">
 <style>
+/* ==========================================================================
+   HOSPITAL PANEL UNIFIED LAYOUT & DROPDOWN ALIGNMENT
+   ========================================================================== */
+
+/* 1. Header & Topbar Fixed Alignment */
+.topbar, .header-navbar {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    height: 60px !important;
+    z-index: 1030 !important;
+    background: #043d5b !important;
+    display: flex !important;
+    align-items: center !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
+    margin: 0 !important;
+    padding: 0 15px !important;
+}
+
+/* 2. Sidebar Aligned Under Topbar */
+.sidebar {
+    position: fixed !important;
+    top: 60px !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    width: 250px !important;
+    z-index: 1020 !important;
+    overflow-y: auto !important;
+    background: #295771 !important;
+    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.05) !important;
+}
+
+/* 3. Main Content Container beside Sidebar and below Header */
+.main-content {
+    margin-top: 60px !important;
+    margin-left: 250px !important;
+    width: calc(100% - 250px) !important;
+    min-height: calc(100vh - 60px) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    background: #f8fafc !important;
+    padding: 0 !important;
+    position: relative !important;
+}
+
+.page-content, .pag_cstm {
+    flex: 1 0 auto !important;
+    padding: 0 !important;
+    min-height: calc(100vh - 120px) !important;
+}
+
+/* 4. Sticky Footer */
+.footer {
+    margin-top: auto !important;
+    padding: 15px 24px !important;
+    background: #ffffff !important;
+    border-top: 1px solid #e2e8f0 !important;
+    z-index: 1010 !important;
+}
+
+/* 5. Prevent Dropdown & Popover Window Clipping */
+.card, .panel, .filter-section, .filter-card, .table-card, .pag_cstm_panel, .detail-card, .boxBack, .opd-form-card, .adddoc-form-card {
+    overflow: visible !important;
+}
+
+.table-responsive {
+    overflow-x: auto !important;
+    overflow-y: visible !important;
+    position: relative !important;
+}
+
+.select2-container--open, .dropdown-menu {
+    z-index: 1050 !important;
+}
+
+/* Topbar Header elements styling */
 .navbar-toggle {
     position: relative;
     float: right;
     padding: 9px 10px;
-    margin-top: -37px;
-    margin-right: 15px;
-    margin-bottom: 8px;
+    margin: 8px 15px 8px 0;
     background-color: transparent;
-    background-image: none;
-    border: 1px solid transparent;
+    border: 1px solid rgba(255, 255, 255, 0.3);
     border-radius: 4px;
 }
 
 .navbar-nav>li>a {
-    margin-top: -44px;
-    padding: 6px 9px;
-    background: black;
-    border-radius: 0px 12px;
-    float:right;
-}
-
-.nav>li>a:focus, .nav>li>a:hover {
-    text-decoration: none;
-    background-color: #0b171d;
-    border-radius:0px 12px;
+    padding: 6px 12px;
+    color: #ffffff;
 }
 
 .topmenu {
     font-size: 14px;
     text-transform: uppercase;
-    position: relative;
-    transition: 0.7s;
     background: #ed3237;
     font-weight: bold;
-    letter-spacing: 1px;
     color: #ffffff;
     border-radius: 4px;
-    margin-right:3px;
+    margin-right: 3px;
 }
+
 .dropdown-menu>li>a {
     display: block;
     padding: 8px 18px;
     clear: both;
-    font-weight: 400;
-    line-height: 1.42857143;
-    color: white;
-    white-space: nowrap;
-    background: #224558;
-    margin-top: 1px;
-    font-weight: bold;
-    text-align: center;
-    border-radius: 0px 12px;
+    font-weight: 500;
+    color: #0f172a;
+    background: #ffffff;
+    text-decoration: none;
 }
 
-.mynavback{background:none;}
-
-
-@media screen and (max-width: 767px) {
- 
-  .navbar-nav {
-    margin: 27.5px 4px;
+.dropdown-menu>li>a:hover {
+    background: #f1f5f9;
+    color: #00a896;
 }
 
-
-  }
-  
-  
- @media screen and (max-width: 614px){
-.mobileIcon {
-    height: 40px;
-    float: right;
-    position: relative;
-    display: block;
-    cursor: pointer;
-    border-radius: 23px;
-    background: white;
-    margin: -40px 13px;
-}
-.menutab{
-    margin-left: 208px;
-}
-    
-#mobileuser{
-        margin: -2px 235px !important;
+.mynavback {
+    background: none;
+    margin-bottom: 0;
 }
 
-.topbar .header-right .header-menu.navbar-nav {
-    float: left !important;
-    margin: 0;
-    width: 196px;
-    margin-top: 49px;
+/* Responsive Breakpoints */
+@media screen and (max-width: 991px) {
+    .sidebar {
+        left: -250px !important;
+        transition: left 0.25s ease-in-out !important;
+    }
+    .sidebar.sidebar-open, .sidebar-condensed .sidebar {
+        left: 0 !important;
+    }
+    .main-content {
+        margin-left: 0 !important;
+        width: 100% !important;
+    }
 }
-#desktopview {
-    margin-top: 49px;
-    display:none;
-
-}
-
-.topbar .header-right .header-menu #user-header {
-    width: auto;
-    margin: -31px -19px;
-}
-
-.topbar .header-right .header-menu #user-header .dropdown-menu {
-    width: 150px !important;
-    margin: 0px 35px;
-}
-
-.topbar .header-right .header-menu #user-header .dropdown-menu li a {
-    background: #224152;
-    color: white;
-    display: block;
-    font-size: 13px;
-    padding: 8px 7px;
-}
-}  
 </style>
 </head>
 <body class="sidebar-light fixed-topbar theme-sltl bg-light-dark color-default dashboard">
