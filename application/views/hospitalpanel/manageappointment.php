@@ -768,7 +768,7 @@
                                             <?php endif; ?>
 
                                             <!-- View / Patient History -->
-                                            <a href="<?=base_url('patient/'.$p->appointment_id);?>" class="btn-action-sm btn-action-view" title="View Patient Details / Clinical History">
+                                            <a href="<?=base_url('hospitalpanel/patient/'.$p->appointment_id);?>" class="btn-action-sm btn-action-view" title="View Patient Details / Clinical History">
                                                 <i class="fa fa-eye"></i> Details
                                             </a>
 

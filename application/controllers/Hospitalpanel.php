@@ -153,20 +153,65 @@ class Hospitalpanel extends CI_Controller
 		$this->load->view('hospitalpanel/report',$data);
 	}
 
-    public function patient()
+	public function patient()
 	{
-		$id=$this->uri->segment(2);
-		$data['p']=$this->db->select('userlogin.*,appointment.*,sm_checkout.*,profile_dr.*')->join('userlogin','userlogin.USERID=appointment.user_id')->join('sm_checkout','sm_checkout.id=appointment.checkout_id','LEFT')->join('profile_dr','profile_dr.id=appointment.doctor_id')->get_where('appointment',array('appointment_id'=>$id))->row();	
-		if(is_object($data['p']) && !empty($data['p']))
-		{	
-			if($this->input->get_post('submit')=='Continue')
-			{
-				$this->Hospital_Model->patient(); 
-			}
-			$this->load->view('hospitalpanel/patienthistory',$data);
+		$userid = $this->did;
+		$id     = $this->uri->segment(3) ? (int) $this->uri->segment(3) : (int) $this->uri->segment(2);
+		if (empty($id)) {
+			$id = (int) $this->input->get_post('aid');
 		}
-		else
-		{
+
+		if ($this->input->server('REQUEST_METHOD') === 'POST') {
+			$payment_status     = $this->input->post('payment_status');
+			$payment_mode       = $this->input->post('payment_mode');
+			$appointment_status = $this->input->post('appointment_status');
+			$fee                = (float) $this->input->post('fee');
+
+			$update_data = array();
+			if (!empty($payment_status)) {
+				$update_data['payment_status'] = $payment_status;
+				if ($payment_status == 'DONE') {
+					$update_data['pay_date'] = date('Y-m-d H:i:s');
+				}
+			}
+			if (!empty($payment_mode)) {
+				$update_data['payment_mode'] = $payment_mode;
+			}
+			if ($appointment_status !== null && $appointment_status !== '') {
+				$update_data['appointment_status'] = $appointment_status;
+				if ($appointment_status == '1') {
+					$update_data['appointment_done_date'] = date('Y-m-d H:i:s');
+				}
+			}
+			if ($fee > 0) {
+				$update_data['fee']    = $fee;
+				$update_data['amount'] = $fee;
+			}
+
+			if (!empty($update_data)) {
+				$this->db->where('appointment_id', $id);
+				$this->db->where('institute_id', $userid);
+				$this->db->update('appointment', $update_data);
+			}
+
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-success'><strong>Updated!</strong> Patient encounter details and billing updated successfully.</div>");
+			redirect('hospitalpanel/patient/'.$id);
+			return;
+		}
+
+		$data['p'] = $this->db->select('appointment.*, userlogin.FNAME as u_fname, userlogin.LNAME as u_lname, userlogin.EMAIL as u_email, userlogin.MOBILE as u_mobile, userlogin.GENDER as u_gender, userlogin.DOB, userlogin.BGROUP, userlogin.HEIGHT, userlogin.WEIGHT, userlogin.IMAGE as u_image, profile_dr.fname as dr_fname, profile_dr.lname as dr_lname, profile_dr.drimage, profile_dr.mobile as dr_mobile, profile_dr.email as dr_email, sm_checkout.orderid, sm_checkout.billingaddress, sm_checkout.billingcity, sm_checkout.billingstate, sm_checkout.billingzip, sm_checkout.billingcountry, sm_checkout.paymentmod, sm_checkout.cardname')
+			->join('userlogin', 'userlogin.USERID = appointment.user_id', 'left')
+			->join('sm_checkout', 'sm_checkout.id = appointment.checkout_id', 'left')
+			->join('profile_dr', 'profile_dr.id = appointment.doctor_id', 'left')
+			->where('appointment.appointment_id', $id)
+			->where('appointment.institute_id', $userid)
+			->get('appointment')
+			->row();
+
+		if (is_object($data['p']) && !empty($data['p'])) {
+			$this->load->view('hospitalpanel/patienthistory', $data);
+		} else {
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-warning'>Appointment #$id not found in your hospital records.</div>");
 			redirect('hospitalpanel/manageappointment');
 		}
 	} 
