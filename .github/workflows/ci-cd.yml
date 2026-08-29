@@ -51,10 +51,10 @@ jobs:
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     env:
       FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
-      FTP_SERVER: ${{ secrets.FTP_SERVER || '31.42.125.150' }}
-      FTP_USERNAME: ${{ secrets.FTP_USERNAME || 'amit_upchar.info' }}
+      FTP_SERVER: ${{ secrets.FTP_SERVER || 'web.cloudonfire.com' }}
+      FTP_USERNAME: ${{ secrets.FTP_USERNAME || 'upchar5510' }}
       FTP_PORT: ${{ secrets.FTP_PORT || 21 }}
-      FTP_SERVER_DIR: ${{ secrets.FTP_SERVER_DIR || './' }}
+      FTP_SERVER_DIR: ${{ secrets.FTP_SERVER_DIR || 'public_html/' }}
       SSH_HOST: ${{ secrets.SSH_HOST }}
       SSH_USER: ${{ secrets.SSH_USER }}
       SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
