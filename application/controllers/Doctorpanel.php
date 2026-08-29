@@ -61,6 +61,21 @@ class Doctorpanel extends CI_Controller
 
 		$this->load->view('doctorpanel/dashboard', $data);
 	}
+
+	public function videocall($room = '')
+	{
+		$room = trim($room);
+		if (empty($room)) {
+			show_404();
+			return;
+		}
+
+		$data['room'] = $room;
+		$doc_name = $this->session->userdata('drusername') ? 'Dr. ' . $this->session->userdata('drusername') : 'Dr. Anushka';
+		$data['display_name'] = $doc_name;
+
+		$this->load->view('video_call', $data);
+	}
 	
 	public function updateprofile()
 	{

@@ -668,6 +668,26 @@ class Home extends CI_Controller
 		echo sendsms('Hello','9718777468');
 	}
 	
+	public function videocall($room = '')
+	{
+		$room = trim($room);
+		if (empty($room)) {
+			show_404();
+			return;
+		}
+
+		$data['room'] = $room;
+		$data['display_name'] = $this->session->userdata('username') ? 'Patient: ' . $this->session->userdata('username') : 'Upchar Patient';
+		
+		// Look up appointment for contextual info if exists
+		$appt = $this->db->get_where('appointment', array('room_id' => $room))->row();
+		if ($appt && !empty($appt->appointment_name)) {
+			$data['display_name'] = $appt->appointment_name;
+		}
+
+		$this->load->view('video_call', $data);
+	}
+
 	public function bookappointment()
 	{	
 		$mobile	=	$this->input->post('app_mobile');
@@ -678,6 +698,7 @@ class Home extends CI_Controller
 		$email	=	$this->input->post('app_email');
 		$age	=	$this->input->post('app_age');
 		$otp	=	$this->input->post('app_otp');
+		$consult_type = $this->input->post('consultation_type') ?: ($this->input->post('appointment_type') ?: 'in_clinic');
 		
 		if($this->session->userdata('userid')=='')
 		{	
@@ -777,6 +798,10 @@ class Home extends CI_Controller
 			echo 'Not Available';die;
 		}
 
+		$is_video = ($consult_type === 'video_consult' || $consult_type === 'video');
+		$app_type = $is_video ? 'video' : 'in_clinic';
+		$room_id = $is_video ? ('upchar_consult_' . bin2hex(random_bytes(8))) : null;
+
 		$idata = array(
 			'appointment_date' => $date,
 			'time_id' => $time,
@@ -796,7 +821,9 @@ class Home extends CI_Controller
 			'user_id' => $userid,
 			'payment_mode' => 'NA',
 			'payment_status' => 'NA',
-			'status' => '0'
+			'status' => '0',
+			'appointment_type' => $app_type,
+			'room_id' => $room_id
 		);
 		$this->db->insert('appointment',$idata);
 		$aid=$this->db->insert_id();

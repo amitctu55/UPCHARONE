@@ -459,7 +459,12 @@
                                             <span class="badge-status badge-unpaid"><i class="fa fa-clock-o"></i> Unpaid</span>
                                         <?php endif; ?>
                                     </td>
-                                    <td style="padding: 12px 16px; text-align: right;">
+                                    <td style="padding: 12px 16px; text-align: right; white-space: nowrap;">
+                                        <?php if (!empty($a->room_id) || (isset($a->appointment_type) && $a->appointment_type == 'video')): ?>
+                                        <a href="<?=base_url('doctorpanel/videocall/'.($a->room_id ?: 'upchar_consult_'.$a->appointment_id));?>" target="_blank" class="btn btn-xs btn-primary" style="background: #2563eb; border-color: #2563eb; font-weight: 700; border-radius: 4px; padding: 4px 8px; margin-right: 4px;">
+                                            <i class="fa fa-video-camera"></i> Join Call
+                                        </a>
+                                        <?php endif; ?>
                                         <a href="<?=base_url('doctorpanel/prescription/'.$a->appointment_id);?>" class="btn btn-xs btn-default" style="color: #00a896; font-weight: 700; border-radius: 4px; padding: 4px 8px; margin-right: 4px;">
                                             <i class="fa fa-stethoscope"></i> Write Rx
                                         </a>

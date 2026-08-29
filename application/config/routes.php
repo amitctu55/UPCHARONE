@@ -209,5 +209,8 @@ $route['change_password'] 				= 'home/change_password';
 $route['logout'] 						= 'home/logout';
 $route['processorder'] 					= 'paysecure/processorder';
 $route['processordercod'] 				= 'paysecure/processordercod';
+$route['videocall/(:any)'] 				= 'home/videocall/$1';
+$route['video-consultation/(:any)'] 	= 'home/videocall/$1';
+$route['doctorpanel/videocall/(:any)'] 	= 'doctorpanel/videocall/$1';
 
 

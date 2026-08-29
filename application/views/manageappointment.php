@@ -150,7 +150,12 @@
                         </span>
                     </div>
 
-                    <div style="display: flex; gap: 8px; align-items: center;">
+                    <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                        <?php if (!empty($p->room_id) || (isset($p->appointment_type) && $p->appointment_type == 'video')): ?>
+                            <a href="<?=base_url('videocall/'.($p->room_id ?: 'upchar_consult_'.$appt_id));?>" target="_blank" class="btn" style="background: #2563eb; color: #ffffff; font-weight: 700; font-size: 12px; padding: 5px 12px; border-radius: 20px; text-decoration: none; display: inline-flex; align-items: center; gap: 5px; box-shadow: 0 2px 6px rgba(37,99,235,0.3);">
+                                <i class="fa fa-video-camera"></i> Join Video Call
+                            </a>
+                        <?php endif; ?>
                         <span class="badge-booking-confirmed">
                             <i class="fa fa-check-circle"></i> Confirmed
                         </span>
@@ -178,10 +183,15 @@
                     </div>
 
                     <div>
-                        <div class="info-block-label">Hospital / Clinic</div>
+                        <div class="info-block-label">Consultation Mode / Facility</div>
                         <div class="info-block-value">
-                            <i class="fa fa-hospital-o" style="color: #028072;"></i>
-                            <?=html_escape($institute);?>
+                            <?php if (!empty($p->room_id) || (isset($p->appointment_type) && $p->appointment_type == 'video')): ?>
+                                <i class="fa fa-video-camera" style="color: #2563eb;"></i>
+                                <span style="color: #2563eb; font-weight: 700;">Online Video Call</span>
+                            <?php else: ?>
+                                <i class="fa fa-hospital-o" style="color: #028072;"></i>
+                                <?=html_escape($institute);?>
+                            <?php endif; ?>
                         </div>
                     </div>
 
