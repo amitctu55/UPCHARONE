@@ -32,6 +32,7 @@
 	  <li ><a href="<?=base_url();?>hospitalpanel/earnings"><i class="fa fa-line-chart" aria-hidden="true"></i><span>Revenue &amp; Payouts</span> </a></li>
 	  <li ><a href="<?=base_url();?>hospitalpanel/package"><i class="fa fa-calendar" aria-hidden="true"></i><span>Package Appointment</span> </a></li>
 	  <li ><a href="<?=base_url();?>hospitalpanel/bed"><i class="fa fa-calendar" aria-hidden="true"></i><span>Manage Bed Setup</span> </a></li>
+	  <li ><a href="<?=base_url();?>hospitalpanel/support"><i class="fa fa-life-ring" aria-hidden="true"></i><span>Support &amp; Helpdesk</span> </a></li>
     </ul>
   </div>
 </div>

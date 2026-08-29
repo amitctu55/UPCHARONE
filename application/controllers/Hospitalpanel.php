@@ -2165,4 +2165,217 @@ class Hospitalpanel extends CI_Controller
 		fclose($output);
 		exit();
 	}
+
+	// ==========================================
+	// SUPPORT TICKET & HELPDESK SYSTEM
+	// ==========================================
+
+	/**
+	 * Support Ticket Listing Page
+	 */
+	public function support()
+	{
+		$userid = $this->did;
+		$hosuid = $this->session->userdata('hosuserid');
+		
+		$keyword  = $this->input->get_post('keyword', TRUE);
+		$category = $this->input->get_post('category', TRUE);
+		$priority = $this->input->get_post('priority', TRUE);
+		$status   = $this->input->get_post('status', TRUE);
+
+		$this->db->group_start();
+		$this->db->where('hospital_id', $userid);
+		if (!empty($hosuid)) {
+			$this->db->or_where('hospital_id', $hosuid);
+		}
+		$this->db->group_end();
+
+		if (!empty($keyword)) {
+			$this->db->group_start()
+				->like('ticket_code', $keyword)
+				->or_like('subject', $keyword)
+				->or_like('description', $keyword)
+			->group_end();
+		}
+		if (!empty($category)) {
+			$this->db->where('category', $category);
+		}
+		if (!empty($priority)) {
+			$this->db->where('priority', $priority);
+		}
+		if (!empty($status)) {
+			$this->db->where('status', $status);
+		}
+
+		$data['tickets'] = $this->db->order_by('ticket_id', 'DESC')->get('support_tickets')->result();
+
+		// Counters
+		$all_tickets = $this->db->group_start()->where('hospital_id', $userid)->or_where('hospital_id', $hosuid)->group_end()->get('support_tickets')->result();
+		$data['total_count']       = count($all_tickets);
+		$data['open_count']        = 0;
+		$data['in_progress_count'] = 0;
+		$data['resolved_count']    = 0;
+
+		foreach ($all_tickets as $t) {
+			if ($t->status == 'Open') $data['open_count']++;
+			elseif ($t->status == 'In Progress') $data['in_progress_count']++;
+			elseif ($t->status == 'Resolved' || $t->status == 'Closed') $data['resolved_count']++;
+		}
+
+		$this->load->view('hospitalpanel/support_tickets', $data);
+	}
+
+	/**
+	 * Create Ticket Action
+	 */
+	public function create_ticket()
+	{
+		$userid = $this->did;
+		$hosuid = $this->session->userdata('hosuserid');
+
+		if ($this->input->post()) {
+			$this->form_validation->set_rules('category', 'Category', 'trim|required');
+			$this->form_validation->set_rules('priority', 'Priority', 'trim|required|in_list[Low,Medium,High,Urgent]');
+			$this->form_validation->set_rules('subject', 'Subject', 'trim|required|max_length[255]');
+			$this->form_validation->set_rules('description', 'Detailed Description', 'trim|required');
+
+			if ($this->form_validation->run() === TRUE) {
+				// Generate unique ticket code e.g. #TICK-84920
+				$ticket_code = '#TICK-' . rand(10000, 99999);
+				
+				// Handle file upload
+				$attachment = null;
+				if (!empty($_FILES['attachment']['name'])) {
+					$config['upload_path']   = './uploads/support/';
+					$config['allowed_types'] = 'jpg|jpeg|png|pdf|doc|docx';
+					$config['max_size']      = 5120; // 5MB
+					$config['file_name']     = 'ticket_' . time() . '_' . rand(100, 999);
+					
+					$this->load->library('upload', $config);
+					if ($this->upload->do_upload('attachment')) {
+						$upload_data = $this->upload->data();
+						$attachment  = $upload_data['file_name'];
+					}
+				}
+
+				$insert_data = array(
+					'ticket_code' => $ticket_code,
+					'hospital_id' => $userid,
+					'category'    => $this->input->post('category', TRUE),
+					'subject'     => $this->input->post('subject', TRUE),
+					'description' => $this->input->post('description', TRUE),
+					'priority'    => $this->input->post('priority', TRUE),
+					'status'      => 'Open',
+					'attachment'  => $attachment,
+					'created_at'  => date('Y-m-d H:i:s'),
+					'updated_at'  => date('Y-m-d H:i:s')
+				);
+
+				$this->db->insert('support_tickets', $insert_data);
+				$ticket_id = $this->db->insert_id();
+
+				$this->session->set_flashdata('flashmsg', "<div class='alert alert-success'>Support ticket <strong>{$ticket_code}</strong> created successfully. Our team will review and respond shortly.</div>");
+				redirect('hospitalpanel/ticket_view/' . $ticket_id);
+			} else {
+				$this->session->set_flashdata('flashmsg', "<div class='alert alert-danger'>" . validation_errors() . "</div>");
+			}
+		}
+		redirect('hospitalpanel/support');
+	}
+
+	/**
+	 * Ticket View & Reply Thread
+	 */
+	public function ticket_view($ticket_id = 0)
+	{
+		$userid = $this->did;
+		$hosuid = $this->session->userdata('hosuserid');
+		$ticket_id = intval($ticket_id);
+
+		$ticket = $this->db->where('ticket_id', $ticket_id)
+			->group_start()->where('hospital_id', $userid)->or_where('hospital_id', $hosuid)->group_end()
+			->get('support_tickets')
+			->row();
+
+		if (!$ticket) {
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-danger'>Support ticket not found or access denied.</div>");
+			redirect('hospitalpanel/support');
+		}
+
+		// Handle reply submission
+		if ($this->input->post('submit_reply')) {
+			if ($ticket->status == 'Closed' || $ticket->status == 'Resolved') {
+				$this->session->set_flashdata('flashmsg', "<div class='alert alert-warning'>Cannot post replies to a closed or resolved ticket.</div>");
+				redirect('hospitalpanel/ticket_view/' . $ticket_id);
+			}
+
+			$this->form_validation->set_rules('message', 'Reply Message', 'trim|required');
+			if ($this->form_validation->run() === TRUE) {
+				$attachment = null;
+				if (!empty($_FILES['reply_attachment']['name'])) {
+					$config['upload_path']   = './uploads/support/';
+					$config['allowed_types'] = 'jpg|jpeg|png|pdf|doc|docx';
+					$config['max_size']      = 5120;
+					$config['file_name']     = 'reply_' . time() . '_' . rand(100, 999);
+					
+					$this->load->library('upload', $config);
+					if ($this->upload->do_upload('reply_attachment')) {
+						$upload_data = $this->upload->data();
+						$attachment  = $upload_data['file_name'];
+					}
+				}
+
+				$reply_data = array(
+					'ticket_id'       => $ticket_id,
+					'sender_type'     => 'Hospital',
+					'sender_id'       => $userid,
+					'message'         => $this->input->post('message', TRUE),
+					'attachment_path' => $attachment,
+					'created_at'      => date('Y-m-d H:i:s')
+				);
+
+				$this->db->insert('ticket_replies', $reply_data);
+
+				// Update ticket timestamp and status
+				$this->db->where('ticket_id', $ticket_id)->update('support_tickets', array(
+					'updated_at' => date('Y-m-d H:i:s'),
+					'status'     => ($ticket->status == 'Open') ? 'In Progress' : $ticket->status
+				));
+
+				$this->session->set_flashdata('flashmsg', "<div class='alert alert-success'>Reply sent successfully.</div>");
+				redirect('hospitalpanel/ticket_view/' . $ticket_id);
+			}
+		}
+
+		$data['ticket'] = $ticket;
+		$data['hospital'] = $this->db->where('id', $userid)->or_where('uid', $hosuid)->get('hospital')->row();
+		$data['replies'] = $this->db->where('ticket_id', $ticket_id)->order_by('reply_id', 'ASC')->get('ticket_replies')->result();
+
+		$this->load->view('hospitalpanel/ticket_thread', $data);
+	}
+
+	/**
+	 * Mark Ticket as Resolved / Closed
+	 */
+	public function close_ticket($ticket_id = 0)
+	{
+		$userid = $this->did;
+		$hosuid = $this->session->userdata('hosuserid');
+		$ticket_id = intval($ticket_id);
+
+		$ticket = $this->db->where('ticket_id', $ticket_id)
+			->group_start()->where('hospital_id', $userid)->or_where('hospital_id', $hosuid)->group_end()
+			->get('support_tickets')
+			->row();
+
+		if ($ticket) {
+			$new_status = $this->input->get('status') == 'Closed' ? 'Closed' : 'Resolved';
+			$this->db->where('ticket_id', $ticket_id)->update('support_tickets', array(
+				'status'     => $new_status,
+				'updated_at' => date('Y-m-d H:i:s')
+			));
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-success'>Ticket <strong>{$ticket->ticket_code}</strong> has been marked as {$new_status}.</div>");
+		}
+		redirect('hospitalpanel/ticket_view/' . $ticket_id);
+	}
 }
