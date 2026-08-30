@@ -1,17 +1,16 @@
-                <div class="footer">
-                    <div class="copyright">
-                        <p class="">
-                            <span>Copyright <span class="copyright">©</span> <?=date('Y');?> </span>
-                            <span>Upchar</span>.
-                            <span>All rights reserved. </span>
-                        </p>
-                    </div>
-                </div>
+        <footer class="footer">
+            <div class="copyright">
+                <p>
+                    <span>Copyright <span class="copyright">©</span> <?=date('Y');?> </span>
+                    <span>Upchar</span>.
+                    <span>All rights reserved. </span>
+                </p>
             </div>
-            <!-- END PAGE CONTENT -->
-        </div>
-        <!-- END MAIN CONTENT -->
-    </section>
+        </footer>
+    </main>
+    <!-- END MAIN CONTENT -->
+</div>
+<!-- END DASHBOARD LAYOUT -->
 
     <a href="#" class="scrollup"><i class="fa fa-angle-up"></i></a>
 	
@@ -24,28 +23,48 @@
 
     <script>
     $(document).ready(function () {
-        // Sidebar Sub-menu Slide Down / Up Toggle Handler
-        $('body').on('click', '.nav-sidebar li.nav-parent > a', function (e) {
+        // Multi-selector event delegation for nested sub-menus
+        $(document).on('click', '.nav-sidebar .submenu-toggle, .nav-sidebar li.has-submenu > a, .nav-sidebar li.nav-parent > a', function (e) {
             e.preventDefault();
-            var $parent = $(this).parent('li.nav-parent');
-            var $sub = $parent.children('.children');
+            e.stopPropagation();
             
-            if ($parent.hasClass('active') || $sub.is(':visible')) {
-                $sub.slideUp(200);
-                $parent.removeClass('active');
-                $(this).find('.arrow').removeClass('active');
-            } else {
-                $parent.siblings('.nav-parent.active').removeClass('active').children('.children').slideUp(200);
-                $parent.siblings('.nav-parent').find('.arrow').removeClass('active');
-                
-                $sub.slideDown(200);
-                $parent.addClass('active');
-                $(this).find('.arrow').addClass('active');
+            var $trigger = $(this);
+            var $parentLi = $trigger.closest('li.has-submenu, li.nav-parent');
+            var $submenu = $parentLi.children('.submenu, .children');
+            var $arrow = $trigger.find('.arrow-icon, .arrow');
+
+            if ($submenu.length) {
+                if ($submenu.is(':visible') || $parentLi.hasClass('active')) {
+                    $submenu.stop(true, true).slideUp(200, function() {
+                        $submenu.removeClass('show');
+                    });
+                    $parentLi.removeClass('active');
+                    $arrow.css('transform', 'rotate(0deg)').removeClass('active');
+                } else {
+                    // Close sibling submenus (Accordion effect)
+                    $parentLi.siblings('.has-submenu, .nav-parent').removeClass('active').each(function() {
+                        var $other = $(this);
+                        $other.children('.submenu, .children').stop(true, true).slideUp(200).removeClass('show');
+                        $other.find('.arrow-icon, .arrow').css('transform', 'rotate(0deg)').removeClass('active');
+                    });
+
+                    // Open current submenu
+                    $submenu.stop(true, true).slideDown(200, function() {
+                        $submenu.addClass('show');
+                    });
+                    $parentLi.addClass('active');
+                    $arrow.css('transform', 'rotate(90deg)').addClass('active');
+                }
             }
         });
 
         // Ensure active menu children are visible on load
-        $('.nav-sidebar li.nav-parent.active > .children').show();
+        $('.nav-sidebar li.has-submenu.active, .nav-sidebar li.nav-parent.active').each(function() {
+            var $sub = $(this).children('.submenu, .children');
+            var $arr = $(this).find('.arrow-icon, .arrow');
+            $sub.show().addClass('show');
+            $arr.css('transform', 'rotate(90deg)').addClass('active');
+        });
     });
 
     $(window).on('load', function () {

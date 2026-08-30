@@ -170,14 +170,22 @@
             </div>
         </div>
 
+        <!-- Flash Messages -->
+        <?php if($this->session->flashdata('flashmsg')): ?>
+            <?=$this->session->flashdata('flashmsg');?>
+        <?php endif; ?>
+
         <!-- News Grid -->
         <?php if(!empty($news)): ?>
             <div class="news-grid-cards">
-                <?php foreach($news as $p): ?>
+                <?php foreach($news as $p): 
+                    $newsTitle = !empty($p['title']) ? $p['title'] : (!empty($p['name']) ? $p['name'] : 'Hospital News Announcement');
+                    $newsDesc  = !empty($p['description']) ? $p['description'] : '';
+                ?>
                     <div class="news-item-card">
                         <div class="news-media-wrap">
                             <?php if(!empty($p['image'])): ?>
-                                <img src="<?=base_url('admin1947/public/assets/upload/'.$p['image']);?>" alt="<?=$p['name'];?>">
+                                <img src="<?=base_url('admin1947/public/assets/upload/'.$p['image']);?>" alt="<?=html_escape($newsTitle);?>" onerror="this.src='<?=base_url();?>images/default-news.jpg';">
                             <?php else: ?>
                                 <div style="display: flex; align-items: center; justify-content: center; height: 100%; color: #ffffff;">
                                     <i class="fa fa-bullhorn" style="font-size: 48px; opacity: 0.3;"></i>
@@ -187,22 +195,29 @@
                         
                         <div class="news-card-body">
                             <div>
-                                <h3 class="news-card-title"><?=html_escape($p['name']);?></h3>
-                                <p class="news-card-desc"><?=html_escape($p['description']);?></p>
+                                <h3 class="news-card-title"><?=html_escape($newsTitle);?></h3>
+                                <p class="news-card-desc"><?=html_escape($newsDesc);?></p>
                             </div>
                             
                             <div class="news-card-footer">
-                                <?php if($p['status'] == 'A'): ?>
-                                    <span class="badge-news-active"><i class="fa fa-check-circle"></i> Published Live</span>
-                                <?php else: ?>
-                                    <span class="badge-news-pending"><i class="fa fa-clock-o"></i> Under Review</span>
-                                <?php endif; ?>
+                                <div>
+                                    <?php if(isset($p['status']) && $p['status'] == 'A'): ?>
+                                        <span class="badge-news-active"><i class="fa fa-check-circle"></i> Published Live</span>
+                                    <?php else: ?>
+                                        <span class="badge-news-pending"><i class="fa fa-clock-o"></i> Active</span>
+                                    <?php endif; ?>
+                                </div>
 
-                                <?php if(!empty($p['video_url'])): ?>
-                                    <a href="<?=$p['video_url'];?>" target="_blank" style="color: #0284c7; font-size: 12px; font-weight: 700; text-decoration: none;">
-                                        <i class="fa fa-play-circle"></i> Watch Video
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <?php if(!empty($p['video_url'])): ?>
+                                        <a href="<?=$p['video_url'];?>" target="_blank" style="color: #0284c7; font-size: 12px; font-weight: 700; text-decoration: none;">
+                                            <i class="fa fa-play-circle"></i> Video
+                                        </a>
+                                    <?php endif; ?>
+                                    <a href="<?=base_url('hospitalpanel/delete_news/'.$p['id']);?>" onclick="return confirm('Are you sure you want to delete this announcement?');" class="btn btn-xs btn-danger" style="background: #ef4444; border: none; color: #fff; padding: 3px 8px; border-radius: 6px;">
+                                        <i class="fa fa-trash"></i> Delete
                                     </a>
-                                <?php endif; ?>
+                                </div>
                             </div>
                         </div>
                     </div>

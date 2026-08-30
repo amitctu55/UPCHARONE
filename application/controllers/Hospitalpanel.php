@@ -41,8 +41,11 @@ class Hospitalpanel extends CI_Controller
 	
 	public function index()
 	{
-		$data['specialization']=$this->db->order_by('name','asc')->where('status','1')->get('master_specialization')->result();
-		$this->load->view('home',$data);
+		if ($this->session->userdata('hosuserid')) {
+			redirect('hospital-dashboard');
+		} else {
+			redirect('hospital-login');
+		}
 	}
 	
 	public function dashboard()
@@ -1034,28 +1037,65 @@ class Hospitalpanel extends CI_Controller
 		redirect(base_url().'hospitalpanel/doctorlist');
 	}
 	
-	public function  updatedoctor()
+	public function updatedoctor($encoded_id = null)
 	{	
-		$did=mybase64_decode($this->uri->segment(3));
-		if(isset($_POST['submit']))
-		$this->Hospital_Model->profile_consultant_fee();
-		$this->db->select('dr_practice.*,profile_dr.fname')
-		->from('dr_practice')
-         ->where(array('type'=>'H','dr_practice.user_id'=>$did,'institution_id'=>$this->did))
-         ->join('profile_dr', 'profile_dr.id = dr_practice.user_id');
-		$result = $this->db->get();
-		$res    = $result->row();
-		//echo "<pre>"; print_r($res); die;
-		$data['practice']=$this->db->get_where('dr_practice',array('type'=>'H','user_id'=>$did,'institution_id'=>$this->did))->row();
-		
-		$timings=$this->db->get_where('timing',array('user_id'=>$did,'user_type'=>'D','practice_id'=>$data['practice']->id));
-		
-		$data['timing_count']=$timings->num_rows();
-		$data['timings']=$timings->result();
-		//echo "<pre>"; print_r($data['timings']); die;
-		//echo "<pre>"; print_r($timings); die;
-		$this->load->view('hospitalpanel/profile_consultant_fee',$data);
+		if (empty($encoded_id)) {
+			$encoded_id = $this->uri->segment(3);
+		}
+		$did = mybase64_decode($encoded_id);
+
+		if ($this->input->post('submit')) {
+			$this->Hospital_Model->profile_consultant_fee();
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-success'><strong>Success!</strong> Doctor consulting fees and practice timings updated successfully.</div>");
+			redirect('hospitalpanel/managedoctor');
+			return;
+		}
+
+		$doctor = $this->db->where('id', $did)->or_where('user_id', $did)->get('profile_dr')->row();
+		$doc_id = $doctor ? $doctor->id : $did;
+		$doc_uid = $doctor ? $doctor->user_id : $did;
+
+		$practice = $this->db->where('type', 'H')
+			->where('institution_id', $this->did)
+			->group_start()->where('user_id', $doc_id)->or_where('user_id', $doc_uid)->group_end()
+			->get('dr_practice')
+			->row();
+
+		if (!$practice) {
+			$practice = (object)[
+				'id' => 0,
+				'fee' => 0,
+				'user_id' => $doc_id,
+				'institution_id' => $this->did,
+				'status' => 1
+			];
+		}
+
+		$practice_id = isset($practice->id) ? $practice->id : 0;
+		$timings = $this->db->where('practice_id', $practice_id)
+			->group_start()->where('user_id', $doc_id)->or_where('user_id', $doc_uid)->group_end()
+			->get('timing');
+
+		$data['doctor']       = $doctor;
+		$data['practice']     = $practice;
+		$data['timing_count'] = $timings->num_rows();
+		$data['timings']      = $timings->result();
+		$data['did_encoded']  = $encoded_id;
+
+		$this->load->view('hospitalpanel/profile_consultant_fee', $data);
 	}
+
+	public function deletetiming($id = '')
+	{
+		$tid = base64_decode($id);
+		if ($tid) {
+			$this->db->delete('timing_session', array('timing_id' => $tid));
+			$this->db->delete('timing', array('id' => $tid));
+		}
+		$this->session->set_flashdata('flashmsg', "<div class='alert alert-success'><strong>Success!</strong> Timing slot deleted successfully.</div>");
+		redirect($_SERVER['HTTP_REFERER'] ?: base_url('hospitalpanel/managedoctor'));
+	}
+
 	public function test_mail(){
 		$this->load->library('azad_lib');
 		
@@ -1688,10 +1728,25 @@ class Hospitalpanel extends CI_Controller
 	
 	public function managegallery()
 	{ 	
-		$id = $this->did=$this->db->where('uid',$this->session->userdata('hosuserid'))->get('hospital')->row()->id;
-		$data['gallery']=$this->db->get_where('hospitalgallery',array('uid'=>$id))->result_array();	
-		
-		$this->load->view('hospitalpanel/managegallery',$data);
+		$hospital_id = $this->did;
+		$hosuid      = $this->session->userdata('hosuserid');
+		$data['gallery'] = $this->db->group_start()->where('uid', $hospital_id)->or_where('uid', $hosuid)->group_end()->order_by('id', 'DESC')->get('hospitalgallery')->result_array();	
+		$this->load->view('hospitalpanel/managegallery', $data);
+	}
+
+	public function delete_gallery($id = 0)
+	{
+		$hospital_id = $this->did;
+		$hosuid      = $this->session->userdata('hosuserid');
+		$id          = intval($id);
+
+		if ($id > 0) {
+			$this->db->where('id', $id)
+				->group_start()->where('uid', $hospital_id)->or_where('uid', $hosuid)->group_end()
+				->delete('hospitalgallery');
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-success'>Gallery item deleted successfully.</div>");
+		}
+		redirect('hospitalpanel/managegallery');
 	}
 
 	public function news()
@@ -1699,7 +1754,6 @@ class Hospitalpanel extends CI_Controller
 		if(isset($_POST['submit']))
 		{
 			$uploadimage='';
-			//	$id=base64_decode($this->input->post('id'));
 			$uploadimage=$_FILES['uploadimage']['name'];
 			$extsign = pathinfo($_FILES['uploadimage']['name'],PATHINFO_EXTENSION);
 			if($this->input->post('type')==1) 
@@ -1730,6 +1784,8 @@ class Hospitalpanel extends CI_Controller
 					{
 						$msg="<div class='alert alert-success'><strong>Success!</strong> Data Added Successfully</div>";
 						$this->session->set_flashdata('flashmsg',$msg);
+						redirect(base_url().'hospitalpanel/managenews');
+						exit();
 					}
 					else
 					{
@@ -1744,6 +1800,8 @@ class Hospitalpanel extends CI_Controller
 				{
 					$msg="<div class='alert alert-success'><strong>Success!</strong> Data Added Successfully</div>";
 					$this->session->set_flashdata('flashmsg',$msg);
+					redirect(base_url().'hospitalpanel/managenews');
+					exit();
 				}
 				else
 				{
@@ -1757,10 +1815,25 @@ class Hospitalpanel extends CI_Controller
 
 	public function managenews()
 	{ 	
-		$id = $this->did=$this->db->where('uid',$this->session->userdata('hosuserid'))->get('hospital')->row()->id;
-		$data['news']=$this->db->get_where('news',array('hospital_id'=>$id))->result_array();	
-		//echo "<pre>";print_r($data['news']);die;
-		$this->load->view('hospitalpanel/managenews',$data);
+		$hospital_id = $this->did;
+		$hosuid      = $this->session->userdata('hosuserid');
+		$data['news'] = $this->db->group_start()->where('hospital_id', $hospital_id)->or_where('hospital_id', $hosuid)->group_end()->order_by('id', 'DESC')->get('news')->result_array();	
+		$this->load->view('hospitalpanel/managenews', $data);
+	}
+
+	public function delete_news($id = 0)
+	{
+		$hospital_id = $this->did;
+		$hosuid      = $this->session->userdata('hosuserid');
+		$id          = intval($id);
+
+		if ($id > 0) {
+			$this->db->where('id', $id)
+				->group_start()->where('hospital_id', $hospital_id)->or_where('hospital_id', $hosuid)->group_end()
+				->delete('news');
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-success'>News item deleted successfully.</div>");
+		}
+		redirect('hospitalpanel/managenews');
 	}
 
 	   

@@ -392,4 +392,159 @@ class Financial_Model extends CI_Model {
     public function get_invoice_by_id($invoice_id) {
         return $this->db->get_where('gst_invoices', array('invoice_id' => intval($invoice_id)))->row();
     }
+
+    /**
+     * Get Complete Doctor Earnings & Payout Summary
+     */
+    public function get_doctor_earnings($doctor_id) {
+        $doctor_id = intval($doctor_id);
+
+        $summary = $this->db->select('
+            COUNT(txn_id) as total_consultations,
+            COALESCE(SUM(gross_amount), 0) as gross_revenue,
+            COALESCE(SUM(platform_fee_amount), 0) as total_platform_fee,
+            COALESCE(SUM(total_platform_deduction), 0) as total_deductions,
+            COALESCE(SUM(net_facility_share), 0) as total_net,
+            COALESCE(SUM(CASE WHEN payout_status IN ("settled", "processed") THEN net_facility_share ELSE 0 END), 0) as paid_out,
+            COALESCE(SUM(CASE WHEN payout_status = "queued" THEN net_facility_share ELSE 0 END), 0) as ready_for_payout,
+            COALESCE(SUM(CASE WHEN payout_status = "pending" THEN net_facility_share ELSE 0 END), 0) as pending_escrow
+        ')
+        ->where('facility_type', 'doctor')
+        ->where('facility_id', $doctor_id)
+        ->get('financial_transactions')
+        ->row();
+
+        if (!$summary || $summary->total_consultations == 0) {
+            $apts = $this->db->select('
+                COUNT(appointment_id) as total_consultations,
+                COALESCE(SUM(CASE WHEN status = "2" THEN 1 ELSE 0 END), 0) as completed_count,
+                COALESCE(SUM(CAST(fee AS DECIMAL(10,2))), 0) as gross_revenue
+            ')
+            ->where('doctor_id', $doctor_id)
+            ->where('payment_status !=', 'UNPAID')
+            ->get('appointment')
+            ->row();
+
+            $gross = $apts ? floatval($apts->gross_revenue) : 0;
+            $split = $this->calculate_revenue_split($gross, 'doctor', $doctor_id);
+
+            return (object) array(
+                'total_consultations' => $apts ? intval($apts->total_consultations) : 0,
+                'gross_revenue'       => $gross,
+                'total_platform_fee'  => $split['platform_fee_amount'],
+                'total_deductions'    => $split['total_platform_deduction'],
+                'total_net'           => $split['net_facility_share'],
+                'pending_escrow'      => round($split['net_facility_share'] * 0.3, 2),
+                'ready_for_payout'    => round($split['net_facility_share'] * 0.7, 2),
+                'paid_out'            => 0.00
+            );
+        }
+
+        return $summary;
+    }
+
+    /**
+     * Get Complete Pathlab Earnings & Payout Summary
+     */
+    public function get_pathlab_earnings($pathlab_id) {
+        $pathlab_id = intval($pathlab_id);
+
+        $summary = $this->db->select('
+            COUNT(txn_id) as total_bookings,
+            COALESCE(SUM(gross_amount), 0) as gross_revenue,
+            COALESCE(SUM(platform_fee_amount), 0) as total_platform_fee,
+            COALESCE(SUM(total_platform_deduction), 0) as total_deductions,
+            COALESCE(SUM(net_facility_share), 0) as total_net,
+            COALESCE(SUM(CASE WHEN payout_status IN ("settled", "processed") THEN net_facility_share ELSE 0 END), 0) as paid_out,
+            COALESCE(SUM(CASE WHEN payout_status = "queued" THEN net_facility_share ELSE 0 END), 0) as ready_for_payout,
+            COALESCE(SUM(CASE WHEN payout_status = "pending" THEN net_facility_share ELSE 0 END), 0) as pending_escrow
+        ')
+        ->where('facility_type', 'pathlab')
+        ->where('facility_id', $pathlab_id)
+        ->get('financial_transactions')
+        ->row();
+
+        if (!$summary || $summary->total_bookings == 0) {
+            return (object) array(
+                'total_bookings'     => 0,
+                'gross_revenue'      => 0.00,
+                'total_platform_fee' => 0.00,
+                'total_deductions'   => 0.00,
+                'total_net'          => 0.00,
+                'pending_escrow'     => 0.00,
+                'ready_for_payout'   => 0.00,
+                'paid_out'           => 0.00
+            );
+        }
+
+        return $summary;
+    }
+
+    /**
+     * Fetch Ledger History for Doctor, Hospital, or Pathlab
+     */
+    public function get_ledger_history($facility_type, $facility_id, $limit = 50) {
+        return $this->db->where('facility_type', strtolower($facility_type))
+            ->where('facility_id', intval($facility_id))
+            ->order_by('created_at', 'DESC')
+            ->limit(intval($limit))
+            ->get('financial_transactions')
+            ->result();
+    }
+
+    /**
+     * Release Escrow Hold for Encounter
+     */
+    public function release_escrow($order_id) {
+        $this->db->where('encounter_id', intval($order_id))
+            ->or_where('txn_code', $order_id)
+            ->update('financial_transactions', array(
+                'payout_status' => 'queued',
+                'updated_at'    => date('Y-m-d H:i:s')
+            ));
+        return true;
+    }
+
+    /**
+     * Record Transaction from Payment Gateways / Checkouts
+     */
+    public function record_transaction($order_id, $payer_type, $payer_id, $payee_type, $payee_id, $amount, $payment_mode = 'ONLINE') {
+        $facility_type = strtolower($payee_type);
+        if ($facility_type === 'doctor') {
+            $cat = 'Doctor OPD Consultation';
+            $dr = $this->db->where('id', $payee_id)->or_where('user_id', $payee_id)->get('profile_dr')->row();
+            $facName = $dr ? ('Dr. ' . trim($dr->fname . ' ' . ($dr->lname ?? ''))) : 'Doctor #' . $payee_id;
+        } elseif ($facility_type === 'hospital') {
+            $cat = 'Hospital Inpatient / OPD';
+            $hosp = $this->db->where('id', $payee_id)->or_where('uid', $payee_id)->get('hospital')->row();
+            $facName = $hosp ? $hosp->name : 'Hospital #' . $payee_id;
+        } elseif ($facility_type === 'pathlab') {
+            $cat = 'Diagnostic Lab Test';
+            $lab = $this->db->where('id', $payee_id)->get('path_lab')->row();
+            $facName = $lab ? $lab->name : 'PathLab #' . $payee_id;
+        } else {
+            $cat = 'Healthcare Service';
+            $facName = ucfirst($facility_type) . ' #' . $payee_id;
+        }
+
+        $user = $this->db->where('USERID', $payer_id)->get('userlogin')->row();
+        $pName = $user ? trim($user->FNAME . ' ' . ($user->LNAME ?? '')) : 'Patient #' . $payer_id;
+        $pMob  = $user ? ($user->MOBILE ?? '') : '';
+        $pEmail = $user ? ($user->EMAIL ?? '') : '';
+
+        return $this->record_financial_transaction(
+            $facility_type,
+            $payee_id,
+            $facName,
+            $order_id,
+            $cat,
+            $payer_id,
+            $pName,
+            $pMob,
+            $pEmail,
+            $amount,
+            'paid',
+            'pending'
+        );
+    }
 }

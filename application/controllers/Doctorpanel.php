@@ -903,10 +903,26 @@ public function gallery()
 
 	public function managegallery()
 	{ 	
-		$id = $this->did= $this->db->where('user_id',$this->session->userdata('druserid'))->get('profile_dr')->row()->id;
-		$data['gallery']=$this->db->get_where('doctorgallery',array('user_id'=>$id))->result_array();	
+		$userid = $this->did;
+		$druserid = $this->session->userdata('druserid');
+		$data['gallery'] = $this->db->group_start()->where('user_id', $userid)->or_where('user_id', $druserid)->group_end()->order_by('id', 'DESC')->get('doctorgallery')->result_array();	
 		
-		$this->load->view('doctorpanel/managegallery',$data);
+		$this->load->view('doctorpanel/managegallery', $data);
+	}
+
+	public function delete_gallery($id = 0)
+	{
+		$userid   = $this->did;
+		$druserid = $this->session->userdata('druserid');
+		$id       = intval($id);
+
+		if ($id > 0) {
+			$this->db->where('id', $id)
+				->group_start()->where('user_id', $userid)->or_where('user_id', $druserid)->group_end()
+				->delete('doctorgallery');
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-success'>Gallery photo deleted successfully.</div>");
+		}
+		redirect('doctorpanel/managegallery');
 	}
 
 	public function datetime()

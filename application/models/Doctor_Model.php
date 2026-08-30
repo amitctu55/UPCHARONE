@@ -629,34 +629,29 @@ class Doctor_Model extends CI_Model
       
   }
   
-    public function gallery($image)
+    public function gallery($image = '')
 	    {
-	        $date=date('Y-m-d h:i:s');
+	        $date=date('Y-m-d H:i:s');
 	        $long=$this->input->post('long');
 			$shot=$this->input->post('shot');
-			//$id=base64_decode($this->input->post('id'));
 
-           //$image=$this->input->post('uploadimage')
 			$data=array('shot_description'=>$shot,'long_description'=>$long,'image'=>$image,'date'=>$date,'user_id'=>$this->did);
 			
 			$qq=$this->db->insert('doctorgallery',$data);
-           return $qq;
-           $drid= $this->db->insert_id();
+            return $qq;
 		}
 
-	public function add_news($image)
+	public function add_news($image = '')
 	    {
-	        $date=date('Y-m-d h:i:s');
+	        $date=date('Y-m-d H:i:s');
 	        $name=$this->input->post('name');
 	        $description=$this->input->post('description');
 	        $type=$this->input->post('type');
 			$video_url=$this->input->post('video_url');
 			
-			$data=array('title'=>$name,'description'=>$description,'type'=>$type,'image'=>$image,'video_url'=>$video_url,'creat_date'=>$date,'doctor_id'=>$this->did);
-			//echo "<pre>";print_r($data); die;
+			$data=array('title'=>$name,'description'=>$description,'type'=>$type,'video_url'=>$video_url,'creat_date'=>$date,'image'=>$image,'doctor_id'=>$this->did);
 			$qq=$this->db->insert('news',$data);
-           return $qq;
-           $drid= $this->db->insert_id();
+            return $qq;
 		}
 	
   

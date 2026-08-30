@@ -5,7 +5,7 @@
        
             </div>
         </div>
-        <div class="logopanel sidebar-inner" style="margin-top: 123px;">
+        <div class="sidebar-inner">
           <ul class="nav nav-sidebar">
                 <li style="width: 233px;background: #295771;margin-left: 3px;padding: 3px;border-radius: 0px 8px;"><a href="<?=base_url();?>pathdoctor-dashboard"><i class="fa fa-user-md"></i><span>Dashboard</span></a></li>
                 <li ><a href="<?=base_url();?>pathdoctorpanel/updateprofile"><i class="fa fa-user-md"></i><span>Update Profile</span></a></li>

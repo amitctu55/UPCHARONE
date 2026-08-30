@@ -858,60 +858,96 @@ thank you for being a part of Upchar.";
 	}
 	
 	public function profile_consultant_fee()
-	{	//echo "<pre>"; print_r($_POST); die;
-		$drid=mybase64_decode($this->uri->segment(3));//check if loged in 
-		$fee = $this->input->post('fee');
-		$practicetype = $this->input->post('objective');
-		$mon = $this->input->post('mon');
-		$tue = $this->input->post('tue');
-		$wed = $this->input->post('wed');
-		$thu = $this->input->post('thu');
-		$fri = $this->input->post('fri');
-		$sat = $this->input->post('sat');
-		$sun = $this->input->post('sun');
+	{
+		$drid = mybase64_decode($this->uri->segment(3));
+		$doctor = $this->db->where('id', $drid)->or_where('user_id', $drid)->get('profile_dr')->row();
+		$doc_id = $doctor ? $doctor->id : $drid;
+		$doc_uid = $doctor ? $doctor->user_id : $drid;
+
+		$fee = floatval($this->input->post('fee'));
+		$mon = (array)$this->input->post('mon');
+		$tue = (array)$this->input->post('tue');
+		$wed = (array)$this->input->post('wed');
+		$thu = (array)$this->input->post('thu');
+		$fri = (array)$this->input->post('fri');
+		$sat = (array)$this->input->post('sat');
+		$sun = (array)$this->input->post('sun');
 			
-		$from = $this->input->post('fromtime');
-		$to = $this->input->post('totime');
-		$max_patient = $this->input->post('max_patient');
-		$consultation_fee = $this->input->post('consultation_fee');
-		//print_r($max_patient); die;
-		$hiddenday = $this->input->post('hiddenday');
+		$from = (array)$this->input->post('fromtime');
+		$to = (array)$this->input->post('totime');
+		$max_patient = (array)$this->input->post('max_patient');
+		$consultation_fee = (array)$this->input->post('consultation_fee');
+		$hiddenday = intval($this->input->post('hiddenday'));
 		
-		$pid=$this->db->where(array('type'=>'H','user_id'=>$drid,'institution_id'=>$this->did))->get('dr_practice')->row()->id;;
+		$prow = $this->db->where(array('type'=>'H', 'institution_id'=>$this->did))
+			->group_start()->where('user_id', $doc_id)->or_where('user_id', $doc_uid)->group_end()
+			->get('dr_practice')->row();
 		
-		$this->db->where(array('type'=>'H','user_id'=>$drid,'institution_id'=>$this->did))->set('fee',$fee)->update('dr_practice');
-		//$this->db->query("DELETE `timing`,`timing_session` FROM `timing` INNER JOIN `timing_session`  ON timing_session.timing_id=timing.id WHERE user_id='".$drid."' AND user_type='D' AND institution_id='".$this->did."';");
-		if($pid)
-		$this->db->query("DELETE `timing`,`timing_session` FROM `timing` INNER JOIN `timing_session`  ON timing_session.timing_id=timing.id WHERE user_id='".$drid."' AND practice_id='".$pid."' ;");
-		for($key2=0;$key2<$hiddenday;$key2++){
-			$mon[$key2]=(@$mon[$key2])? 1 : 0;
-			$tue[$key2]=(@$tue[$key2])? 1 : 0;
-			$wed[$key2]=(@$wed[$key2])? 1 : 0;
-			$thu[$key2]=(@$thu[$key2])? 1 : 0;
-			$fri[$key2]=(@$fri[$key2])? 1 : 0;
-			$sat[$key2]=(@$sat[$key2])? 1 : 0;
-			$sun[$key2]=(@$sun[$key2])? 1 : 0;
-			
-			if(!$mon[$key2] && !$tue[$key2] && !$wed[$key2] && !$thu[$key2] && !$fri[$key2] && !$sat[$key2] && !$sun[$key2] )
-				continue;
-			
-			$timingdata=array('practice_id'=>$pid,'user_id'=>$drid,'M'=>$mon[$key2],'T'=>$tue[$key2],	'W'=>$wed[$key2],'TH'=>$thu[$key2],	'F'=>$fri[$key2],	'SA'=>$sat[$key2],	'S'=>$sun[$key2],	'status'=>'1');
-			$this->db->insert('timing',$timingdata);
-			
-			$sessions=$from[$key2];
-			$tid= $this->db->insert_id();
-			foreach($sessions as $key3=>$value)
-			{
-				if($from[$key2][$key3]=='' || $from[$key2][$key3]=='')
-					continue;
-				$sessiondata = array('timing_id'=>$tid,'from_timing'=>$from[$key2][$key3],'to_timing'=>$to[$key2][$key3],'max_patient'=>$max_patient[$key2][$key3],'consultation_fee'=>$consultation_fee[$key2][$key3],'status'=>'1');
-				$this->db->insert('timing_session',$sessiondata);
-						
-			}
-				
+		if ($prow && isset($prow->id)) {
+			$pid = $prow->id;
+			$this->db->where('id', $pid)->set('fee', $fee)->update('dr_practice');
+		} else {
+			$this->db->insert('dr_practice', array(
+				'type' => 'H',
+				'user_id' => $doc_id,
+				'institution_id' => $this->did,
+				'fee' => $fee,
+				'status' => 1
+			));
+			$pid = $this->db->insert_id();
 		}
 		
-		redirect('hospitalpanel/managedoctor');	
+		if ($pid) {
+			$this->db->query("DELETE `timing`,`timing_session` FROM `timing` INNER JOIN `timing_session` ON timing_session.timing_id=timing.id WHERE practice_id='".$pid."' ;");
+		}
+
+		for($key2 = 0; $key2 < $hiddenday; $key2++){
+			$m  = (!empty($mon[$key2])) ? 1 : 0;
+			$tu = (!empty($tue[$key2])) ? 1 : 0;
+			$w  = (!empty($wed[$key2])) ? 1 : 0;
+			$th = (!empty($thu[$key2])) ? 1 : 0;
+			$f  = (!empty($fri[$key2])) ? 1 : 0;
+			$sa = (!empty($sat[$key2])) ? 1 : 0;
+			$s  = (!empty($sun[$key2])) ? 1 : 0;
+			
+			if (!$m && !$tu && !$w && !$th && !$f && !$sa && !$s) {
+				continue;
+			}
+			
+			$timingdata = array(
+				'practice_id' => $pid,
+				'user_id'     => $doc_id,
+				'M'           => $m,
+				'T'           => $tu,
+				'W'           => $w,
+				'TH'          => $th,
+				'F'           => $f,
+				'SA'          => $sa,
+				'S'           => $s,
+				'status'      => '1'
+			);
+			$this->db->insert('timing', $timingdata);
+			$tid = $this->db->insert_id();
+			
+			if (!empty($from[$key2]) && is_array($from[$key2])) {
+				foreach($from[$key2] as $key3 => $value) {
+					if(empty($from[$key2][$key3]) || empty($to[$key2][$key3])) {
+						continue;
+					}
+					$sessiondata = array(
+						'timing_id'        => $tid,
+						'from_timing'      => $from[$key2][$key3],
+						'to_timing'        => $to[$key2][$key3],
+						'max_patient'      => $max_patient[$key2][$key3] ?? 10,
+						'consultation_fee' => $consultation_fee[$key2][$key3] ?? $fee,
+						'status'           => '1'
+					);
+					$this->db->insert('timing_session', $sessiondata);
+				}
+			}
+		}
+		
+		return true;
 	}
 	
 	public function profile_step6(){
@@ -954,21 +990,20 @@ thank you for being a part of Upchar.";
                       ->update('hospitallogin', $data); 
       
   }
-	 public function gallery($image)
+	 public function gallery($image = '')
 	    {
-	        $date=date('Y-m-d h:i:s');
+	        $date=date('Y-m-d H:i:s');
 	        $long=$this->input->post('long');
 			$shot=$this->input->post('shot');
 			
 			$data=array('shot_description'=>$shot,'long_description'=>$long,'image'=>$image,'date'=>$date,'uid'=>$this->did);
 			$qq=$this->db->insert('hospitalgallery',$data);
-           return $qq;
-           $drid= $this->db->insert_id();
+            return $qq;
 		}
 
-		public function add_news($image)
+		public function add_news($image = '')
 	    {
-	        $date=date('Y-m-d h:i:s');
+	        $date=date('Y-m-d H:i:s');
 	        $name=$this->input->post('name');
 	        $description=$this->input->post('description');
 	        $type=$this->input->post('type');
@@ -976,8 +1011,7 @@ thank you for being a part of Upchar.";
 			
 			$data=array('title'=>$name,'description'=>$description,'type'=>$type,'video_url'=>$video_url,'creat_date'=>$date,'image'=>$image,'hospital_id'=>$this->did);
 			$qq=$this->db->insert('news',$data);
-           return $qq;
-           $drid= $this->db->insert_id();
+            return $qq;
 		}
 	
 		public function get_hospital_bed($limit='10',$offset='0',$param=array())

@@ -174,13 +174,18 @@
             </div>
         </div>
 
+        <!-- Flash Messages -->
+        <?php if($this->session->flashdata('flashmsg')): ?>
+            <?=$this->session->flashdata('flashmsg');?>
+        <?php endif; ?>
+
         <!-- Gallery Grid -->
         <?php if(!empty($gallery)): ?>
             <div class="gallery-grid-cards">
                 <?php foreach($gallery as $p): ?>
                     <div class="gallery-item-card">
                         <div class="gallery-img-wrap">
-                            <img src="<?=base_url('admin1947/public/assets/upload/'.$p['image']);?>" alt="<?=$p['shot_description'];?>">
+                            <img src="<?=base_url('admin1947/public/assets/upload/'.$p['image']);?>" alt="<?=$p['shot_description'] ?? 'Photo';?>" onerror="this.src='<?=base_url();?>images/default-facility.jpg';">
                         </div>
                         <div class="gallery-card-body">
                             <div>
@@ -188,11 +193,18 @@
                                 <p class="gallery-card-desc"><?=!empty($p['long_description']) ? html_escape($p['long_description']) : 'Hospital facility showcase.';?></p>
                             </div>
                             <div class="gallery-card-footer">
-                                <?php if($p['status'] == 'A'): ?>
-                                    <span class="badge-gallery-approved"><i class="fa fa-check-circle"></i> Live / Approved</span>
-                                <?php else: ?>
-                                    <span class="badge-gallery-pending"><i class="fa fa-clock-o"></i> Pending Review</span>
-                                <?php endif; ?>
+                                <div>
+                                    <?php if(isset($p['status']) && $p['status'] == 'A'): ?>
+                                        <span class="badge-gallery-approved"><i class="fa fa-check-circle"></i> Live / Approved</span>
+                                    <?php else: ?>
+                                        <span class="badge-gallery-pending"><i class="fa fa-clock-o"></i> Active</span>
+                                    <?php endif; ?>
+                                </div>
+                                <div>
+                                    <a href="<?=base_url('hospitalpanel/delete_gallery/'.$p['id']);?>" onclick="return confirm('Are you sure you want to delete this gallery photo?');" class="btn btn-xs btn-danger" style="background: #ef4444; border: none; color: #fff; padding: 3px 8px; border-radius: 6px;">
+                                        <i class="fa fa-trash"></i> Delete
+                                    </a>
+                                </div>
                             </div>
                         </div>
                     </div>

@@ -25,22 +25,25 @@
     right: 0 !important;
     height: 60px !important;
     z-index: 1030 !important;
-    background: linear-gradient(135deg, #043d5b 0%, #006d64 100%) !important;
+    background: linear-gradient(135deg, #043d5b 0%, #0d5c63 100%) !important;
     display: flex !important;
     align-items: center !important;
     justify-content: space-between !important;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.18) !important;
     margin: 0 !important;
-    padding: 0 20px !important;
+    padding: 0.75rem 1.5rem !important;
 }
 
-/* 2. Sidebar Aligned Under Topbar */
-.sidebar {
-    position: fixed !important;
+/* 2. Sidebar Integrated in Direct Layout with Independent Scroll */
+.sidebar, aside.sidebar {
+    position: sticky !important;
     top: 60px !important;
-    bottom: 0 !important;
-    left: 0 !important;
-    width: 250px !important;
+    width: 260px !important;
+    min-width: 260px !important;
+    max-width: 260px !important;
+    flex-shrink: 0 !important;
+    height: calc(100vh - 60px) !important;
+    max-height: calc(100vh - 60px) !important;
     z-index: 1020 !important;
     overflow-y: auto !important;
     overflow-x: hidden !important;
@@ -49,10 +52,15 @@
     scrollbar-color: rgba(255, 255, 255, 0.25) transparent !important;
     background: #043d5b !important;
     box-shadow: 2px 0 10px rgba(0, 0, 0, 0.08) !important;
+    pointer-events: auto !important;
 }
 
 .sidebar::-webkit-scrollbar {
     width: 5px;
+}
+
+.sidebar::-webkit-scrollbar-track {
+    background: transparent;
 }
 
 .sidebar::-webkit-scrollbar-thumb {
@@ -66,6 +74,12 @@
     display: block !important;
     visibility: visible !important;
     opacity: 1 !important;
+    pointer-events: auto !important;
+}
+
+.sidebar .nav-sidebar > li {
+    display: block !important;
+    width: 100% !important;
 }
 
 .sidebar .nav-sidebar > li > a {
@@ -74,9 +88,11 @@
     font-weight: 500 !important;
     display: flex !important;
     align-items: center !important;
+    justify-content: flex-start !important;
     gap: 10px !important;
     padding: 12px 18px !important;
     transition: all 0.2s ease !important;
+    width: 100% !important;
 }
 
 .sidebar .nav-sidebar > li > a i {
@@ -84,6 +100,7 @@
     font-size: 15px !important;
     width: 20px !important;
     text-align: center !important;
+    flex-shrink: 0 !important;
 }
 
 .sidebar .nav-sidebar > li > a span {
@@ -107,51 +124,88 @@
 }
 
 /* Submenu / Children Visibility */
-.sidebar .nav-sidebar .children {
+.sidebar .nav-sidebar .children,
+.sidebar .submenu {
     background: #022b40 !important;
     padding: 4px 0 !important;
+    list-style: none !important;
+    margin: 0 !important;
 }
 
-.sidebar .nav-sidebar .children > li > a {
+.sidebar .nav-sidebar .children > li > a,
+.sidebar .submenu > li > a {
     color: #cbd5e1 !important;
     padding: 9px 18px 9px 42px !important;
     font-size: 12.5px !important;
-    display: block !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    text-decoration: none !important;
 }
 
 .sidebar .nav-sidebar .children > li > a:hover,
-.sidebar .nav-sidebar .children > li.active > a {
+.sidebar .nav-sidebar .children > li.active > a,
+.sidebar .submenu > li > a:hover,
+.sidebar .submenu > li.active > a {
     color: #ffffff !important;
     background: rgba(255, 255, 255, 0.08) !important;
 }
 
-/* Ensure visibility when sidebar-show or sidebar-collapsed is active */
-body.sidebar-show .sidebar,
-body.sidebar-show:not(.sidebar-hover) .sidebar,
-.sidebar-show .sidebar {
+.sidebar .submenu.show {
     display: block !important;
-    visibility: visible !important;
-    left: 0 !important;
-    opacity: 1 !important;
 }
 
-body.sidebar-show .sidebar .nav-sidebar > li > a,
-body.sidebar-show .sidebar .nav-sidebar > li > a span {
+.sidebar .arrow-icon, .sidebar .arrow {
+    transition: transform 0.2s ease-in-out;
+    margin-left: auto !important;
+    font-size: 11px;
+    color: #94a3b8;
+}
+
+/* Dashboard Layout: Direct Flexbox Wrapper */
+.dashboard-layout {
     display: flex !important;
-    visibility: visible !important;
-    color: #f8fafc !important;
+    align-items: stretch !important;
+    width: 100% !important;
+    min-height: calc(100vh - 60px) !important;
+    margin-top: 60px !important;
+    background: #f8fafc !important;
+    position: relative !important;
 }
 
-/* 3. Main Content Container beside Sidebar and below Header */
-.main-content {
-    margin-top: 60px !important;
-    margin-left: 250px !important;
-    width: calc(100% - 250px) !important;
-    min-height: calc(100vh - 60px) !important;
+/* 2. Persistent Left Sidebar with Independent Scroll */
+.sidebar, aside.sidebar {
+    width: 260px !important;
+    min-width: 260px !important;
+    max-width: 260px !important;
+    flex-shrink: 0 !important;
+    position: sticky !important;
+    top: 60px !important;
+    height: calc(100vh - 60px) !important;
+    max-height: calc(100vh - 60px) !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    -webkit-overflow-scrolling: touch !important;
+    scrollbar-width: thin !important;
+    scrollbar-color: rgba(255, 255, 255, 0.25) transparent !important;
+    background: #043d5b !important;
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.08) !important;
+    z-index: 1020 !important;
+    pointer-events: auto !important;
+}
+
+/* 3. Fluid Main Content Container */
+.main-content, #content, main.main-content {
+    flex: 1 1 0% !important;
+    min-width: 0 !important;
+    width: 100% !important;
     display: flex !important;
     flex-direction: column !important;
     background: #f8fafc !important;
     padding: 0 !important;
+    margin-left: 0 !important;
+    margin-top: 0 !important;
+    overflow-x: hidden !important;
     position: relative !important;
 }
 
@@ -159,6 +213,7 @@ body.sidebar-show .sidebar .nav-sidebar > li > a span {
     flex: 1 0 auto !important;
     padding: 0 !important;
     min-height: calc(100vh - 120px) !important;
+    width: 100% !important;
 }
 
 /* 4. Sticky Footer */
@@ -419,75 +474,75 @@ body.sidebar-show .sidebar .nav-sidebar > li > a span {
 </head>
 <body class="sidebar-light fixed-topbar theme-sltl bg-light-dark color-default dashboard">
 
-<section>
-	<div class="main-content">
-        <!-- BEGIN TOPBAR -->
-        <header class="topbar">
-			<div class="header-left-wrap">
-				<a class="header-toggle-btn menutoggle" href="#" data-toggle="sidebar-collapsed" title="Toggle Navigation Sidebar">
-                    <i class="fa fa-bars"></i>
-				</a>
-                <div class="header-hospital-title">
-                    <i class="fa fa-hospital-o" style="color: #2dd4bf;"></i>
-                    <span><?=html_escape($this->session->userdata('hospitalname') ?: 'Upchar Hospital Portal');?></span>
-                    <span class="badge-portal hidden-xs">Hospital Portal</span>
-                </div>
-			</div>
+<!-- BEGIN TOPBAR -->
+<header class="topbar">
+	<div class="header-left-wrap">
+		<a class="header-toggle-btn menutoggle" href="#" data-toggle="sidebar-collapsed" title="Toggle Navigation Sidebar">
+            <i class="fa fa-bars"></i>
+		</a>
+        <div class="header-hospital-title">
+            <i class="fa fa-hospital-o" style="color: #2dd4bf;"></i>
+            <span><?=html_escape($this->session->userdata('hospitalname') ?: 'Upchar Hospital Portal');?></span>
+            <span class="badge-portal hidden-xs">Hospital Portal</span>
+        </div>
+	</div>
 
-			<!-- header-right -->
-			<div class="header-right-wrap">
-                <a href="<?=base_url('hospitalpanel/addappointment');?>" class="btn-header-opd">
-                    <i class="fa fa-plus-circle"></i> Walk-in OPD
+	<!-- header-right -->
+	<div class="header-right-wrap">
+        <a href="<?=base_url('hospitalpanel/addappointment');?>" class="btn-header-opd">
+            <i class="fa fa-plus-circle"></i> Walk-in OPD
+        </a>
+
+        <?php 
+        $this->db->select('drimage');
+        $hosuid = $this->session->userdata('hosuserid');
+        $this->db->group_start()->where('uid', $hosuid)->or_where('id', $hosuid)->group_end();
+        $profileimg = $this->db->get('hospital')->row();
+        if($profileimg && !empty($profileimg->drimage)) {
+            $profileimg_url = admin_url()."public/assets/upload/".$profileimg->drimage;
+        } else {
+            $profileimg_url = base_url()."assets/images/user.jpg";     
+        }
+        $hospName = $this->session->userdata('hospitalname') ?: 'Hospital Admin';
+        ?>
+        
+        <!-- Modern Profile Dropdown -->
+        <div class="profile-dropdown-container dropdown" id="user-header">
+            <a href="#" class="profile-trigger-btn dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                <img src="<?=$profileimg_url;?>" class="profile-thumb-img" alt="Hospital Profile">
+                <span class="profile-trigger-text hidden-xs"><?=$hospName;?></span>
+                <i class="fa fa-chevron-down profile-chevron"></i>
+            </a>
+            <div class="profile-dropdown-menu dropdown-menu">
+                <div class="dropdown-user-header">
+                    <strong><?=$hospName;?></strong>
+                    <span><i class="fa fa-check-circle"></i> Administrator</span>
+                </div>
+                <a class="profile-menu-item" href="<?=base_url('hospitalpanel/updateprofile');?>">
+                    <i class="fa fa-hospital-o"></i> Hospital Profile
                 </a>
+                <a class="profile-menu-item" href="<?=base_url('hospitalpanel/manageappointment');?>">
+                    <i class="fa fa-calendar"></i> OPD Appointments
+                </a>
+                <a class="profile-menu-item" href="<?=base_url('hospitalpanel/managedoctor');?>">
+                    <i class="fa fa-user-md"></i> Manage Doctors
+                </a>
+                <a class="profile-menu-item" href="<?=base_url('hospitalpanel/earnings');?>">
+                    <i class="fa fa-line-chart"></i> Revenue &amp; Payouts
+                </a>
+                <a class="profile-menu-item" href="<?=base_url('hospitalpanel/change_password');?>">
+                    <i class="fa fa-key"></i> Change Password
+                </a>
+                <div class="profile-menu-divider"></div>
+                <a class="profile-menu-item profile-menu-logout" href="<?=base_url('hospitaluser/logout');?>">
+                    <i class="fa fa-sign-out"></i> Sign Out
+                </a>
+            </div>
+        </div>
+	</div>
+</header>
+<!-- END TOPBAR -->
 
-                <?php 
-                $this->db->select('drimage');
-                $hosuid = $this->session->userdata('hosuserid');
-                $this->db->group_start()->where('uid', $hosuid)->or_where('id', $hosuid)->group_end();
-                $profileimg = $this->db->get('hospital')->row();
-                if($profileimg && !empty($profileimg->drimage)) {
-                    $profileimg_url = admin_url()."public/assets/upload/".$profileimg->drimage;
-                } else {
-                    $profileimg_url = base_url()."assets/images/user.jpg";     
-                }
-                $hospName = $this->session->userdata('hospitalname') ?: 'Hospital Admin';
-                ?>
-                
-                <!-- Modern Profile Dropdown -->
-                <div class="profile-dropdown-container dropdown" id="user-header">
-                    <a href="#" class="profile-trigger-btn dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                        <img src="<?=$profileimg_url;?>" class="profile-thumb-img" alt="Hospital Profile">
-                        <span class="profile-trigger-text hidden-xs"><?=$hospName;?></span>
-                        <i class="fa fa-chevron-down profile-chevron"></i>
-                    </a>
-                    <div class="profile-dropdown-menu dropdown-menu">
-                        <div class="dropdown-user-header">
-                            <strong><?=$hospName;?></strong>
-                            <span><i class="fa fa-check-circle"></i> Administrator</span>
-                        </div>
-                        <a class="profile-menu-item" href="<?=base_url('hospitalpanel/updateprofile');?>">
-                            <i class="fa fa-hospital-o"></i> Hospital Profile
-                        </a>
-                        <a class="profile-menu-item" href="<?=base_url('hospitalpanel/manageappointment');?>">
-                            <i class="fa fa-calendar"></i> OPD Appointments
-                        </a>
-                        <a class="profile-menu-item" href="<?=base_url('hospitalpanel/managedoctor');?>">
-                            <i class="fa fa-user-md"></i> Manage Doctors
-                        </a>
-                        <a class="profile-menu-item" href="<?=base_url('hospitalpanel/earnings');?>">
-                            <i class="fa fa-line-chart"></i> Revenue &amp; Payouts
-                        </a>
-                        <a class="profile-menu-item" href="<?=base_url('hospitalpanel/change_password');?>">
-                            <i class="fa fa-key"></i> Change Password
-                        </a>
-                        <div class="profile-menu-divider"></div>
-                        <a class="profile-menu-item profile-menu-logout" href="<?=base_url('hospitaluser/logout');?>">
-                            <i class="fa fa-sign-out"></i> Sign Out
-                        </a>
-                    </div>
-                </div>
-			</div>
-        </header>
-		<!-- END TOPBAR -->
-		<!-- BEGIN PAGE CONTENT -->
+<!-- BEGIN DASHBOARD LAYOUT (Direct Flexbox Integration) -->
+<div class="dashboard-layout">
 
