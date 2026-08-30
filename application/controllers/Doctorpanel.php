@@ -23,14 +23,14 @@ class Doctorpanel extends CI_Controller
 			 // Verification Check
 			 $is_verified = true;
 			 $docLog = $this->db->where('USERID', $druserid)->get('doctorlogin')->row();
-			 if ($docLog && $docLog->APPROVED == '0') {
+			 if ($docLog && isset($docLog->APPROVED) && $docLog->APPROVED === '0') {
 				 $is_verified = false;
 			 }
 			 if ($row) {
-				 if ((isset($row->verification_status) && $row->verification_status !== 'verified') ||
-					 (isset($row->approved) && $row->approved == '0') ||
-					 (isset($row->status) && $row->status == '0') ||
-					 (isset($row->is_active) && (int)$row->is_active === 0)) {
+				 if (isset($row->verification_status) && $row->verification_status === 'rejected') {
+					 $is_verified = false;
+				 }
+				 if (isset($row->status) && $row->status === '0' && (!isset($row->approved) || $row->approved === '0')) {
 					 $is_verified = false;
 				 }
 			 }

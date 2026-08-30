@@ -6,6 +6,86 @@ class Financial_Model extends CI_Model {
     public function __construct() {
         parent::__construct();
         $this->load->database();
+        $this->ensure_financial_schema();
+    }
+
+    private function ensure_financial_schema() {
+        try {
+            $this->db->query("CREATE TABLE IF NOT EXISTS `platform_settings` (
+              `setting_id` int(11) NOT NULL AUTO_INCREMENT,
+              `default_platform_fee_percent` decimal(5,2) NOT NULL DEFAULT 10.00,
+              `gst_percent` decimal(5,2) NOT NULL DEFAULT 18.00,
+              `upchar_gstin` varchar(30) DEFAULT '07AAAAU1234A1Z5',
+              `upchar_company_name` varchar(150) DEFAULT 'Upchar Health Technologies Pvt Ltd',
+              `upchar_address` text DEFAULT NULL,
+              `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+              PRIMARY KEY (`setting_id`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8;");
+
+            $this->db->query("CREATE TABLE IF NOT EXISTS `facility_custom_commissions` (
+              `id` int(11) NOT NULL AUTO_INCREMENT,
+              `facility_type` enum('doctor','hospital','clinic','pathlab') NOT NULL,
+              `facility_id` int(11) NOT NULL,
+              `platform_fee_percent` decimal(5,2) NOT NULL DEFAULT 10.00,
+              `updated_by_admin_id` int(11) DEFAULT 1,
+              `notes` text DEFAULT NULL,
+              `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+              PRIMARY KEY (`id`),
+              KEY `idx_fac` (`facility_type`,`facility_id`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8;");
+
+            $this->db->query("CREATE TABLE IF NOT EXISTS `financial_transactions` (
+              `txn_id` int(11) NOT NULL AUTO_INCREMENT,
+              `txn_code` varchar(50) DEFAULT NULL,
+              `facility_type` enum('doctor','hospital','clinic','pathlab') NOT NULL,
+              `facility_id` int(11) NOT NULL,
+              `facility_name` varchar(150) DEFAULT NULL,
+              `encounter_id` int(11) DEFAULT NULL,
+              `category` varchar(100) DEFAULT 'OPD Consultation',
+              `patient_id` int(11) DEFAULT NULL,
+              `patient_name` varchar(100) DEFAULT NULL,
+              `patient_mobile` varchar(20) DEFAULT NULL,
+              `patient_email` varchar(100) DEFAULT NULL,
+              `gross_amount` decimal(10,2) NOT NULL DEFAULT 0.00,
+              `platform_fee_percent` decimal(5,2) NOT NULL DEFAULT 10.00,
+              `is_custom_rate` tinyint(1) NOT NULL DEFAULT 0,
+              `platform_fee_amount` decimal(10,2) NOT NULL DEFAULT 0.00,
+              `cgst_amount` decimal(10,2) NOT NULL DEFAULT 0.00,
+              `sgst_amount` decimal(10,2) NOT NULL DEFAULT 0.00,
+              `gst_amount` decimal(10,2) NOT NULL DEFAULT 0.00,
+              `total_platform_deduction` decimal(10,2) NOT NULL DEFAULT 0.00,
+              `net_facility_share` decimal(10,2) NOT NULL DEFAULT 0.00,
+              `payment_status` enum('paid','unpaid','refunded') NOT NULL DEFAULT 'paid',
+              `payout_status` enum('pending','queued','processed','settled','on_hold') NOT NULL DEFAULT 'pending',
+              `settlement_date` datetime DEFAULT NULL,
+              `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+              `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+              PRIMARY KEY (`txn_id`),
+              KEY `idx_facility` (`facility_type`,`facility_id`),
+              KEY `idx_payout_status` (`payout_status`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8;");
+
+            $this->db->query("CREATE TABLE IF NOT EXISTS `gst_invoices` (
+              `invoice_id` int(11) NOT NULL AUTO_INCREMENT,
+              `invoice_number` varchar(100) NOT NULL,
+              `facility_type` enum('doctor','hospital','clinic','pathlab') NOT NULL,
+              `facility_id` int(11) NOT NULL,
+              `facility_name` varchar(150) DEFAULT NULL,
+              `facility_gstin` varchar(30) DEFAULT NULL,
+              `billing_month` varchar(10) NOT NULL,
+              `total_taxable_value` decimal(10,2) NOT NULL DEFAULT 0.00,
+              `cgst_amount` decimal(10,2) NOT NULL DEFAULT 0.00,
+              `sgst_amount` decimal(10,2) NOT NULL DEFAULT 0.00,
+              `igst_amount` decimal(10,2) NOT NULL DEFAULT 0.00,
+              `total_invoice_amount` decimal(10,2) NOT NULL DEFAULT 0.00,
+              `generated_at` datetime DEFAULT CURRENT_TIMESTAMP,
+              PRIMARY KEY (`invoice_id`),
+              KEY `idx_fac_inv` (`facility_type`,`facility_id`),
+              KEY `idx_month` (`billing_month`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8;");
+        } catch (Exception $e) {
+            // Ignore schema creation errors
+        }
     }
 
     /**
