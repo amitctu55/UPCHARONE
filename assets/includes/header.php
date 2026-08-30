@@ -219,12 +219,59 @@
         padding: 6px 10px;
     }
 
+    /* Dashboard Layout: Direct Flexbox Wrapper with Sticky Sidebar */
+    .dashboard-layout {
+        display: flex !important;
+        align-items: stretch !important;
+        width: 100% !important;
+        min-height: calc(100vh - 62px) !important;
+        margin-top: 62px !important;
+        background: #f8fafc !important;
+        position: relative !important;
+    }
+
+    /* 2. Persistent Left Sidebar with Independent Scroll */
+    .sidebar, aside.sidebar {
+        width: 260px !important;
+        min-width: 260px !important;
+        max-width: 260px !important;
+        flex-shrink: 0 !important;
+        position: sticky !important;
+        top: 62px !important;
+        height: calc(100vh - 62px) !important;
+        max-height: calc(100vh - 62px) !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        -webkit-overflow-scrolling: touch !important;
+        scrollbar-width: thin !important;
+        scrollbar-color: rgba(255, 255, 255, 0.25) transparent !important;
+        background: #043d5b !important;
+        box-shadow: 2px 0 10px rgba(0, 0, 0, 0.08) !important;
+        z-index: 1020 !important;
+        pointer-events: auto !important;
+    }
+
+    .sidebar::-webkit-scrollbar {
+        width: 5px;
+    }
+
+    .sidebar::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.25);
+        border-radius: 4px;
+    }
+
     /* Sidebar Nav Item Colors & Permanent Visibility */
     .sidebar, .sidebar-inner, .nav-sidebar {
         background: #043d5b !important;
         display: block !important;
         visibility: visible !important;
         opacity: 1 !important;
+        pointer-events: auto !important;
+    }
+
+    .sidebar .nav-sidebar > li {
+        display: block !important;
+        width: 100% !important;
     }
 
     .sidebar .nav-sidebar > li > a {
@@ -236,6 +283,7 @@
         gap: 10px !important;
         padding: 12px 18px !important;
         transition: all 0.2s ease !important;
+        width: 100% !important;
     }
 
     .sidebar .nav-sidebar > li > a i {
@@ -243,6 +291,7 @@
         font-size: 15px !important;
         width: 20px !important;
         text-align: center !important;
+        flex-shrink: 0 !important;
     }
 
     .sidebar .nav-sidebar > li > a span {
@@ -266,39 +315,69 @@
     }
 
     /* Submenu / Children Visibility */
-    .sidebar .nav-sidebar .children {
+    .sidebar .nav-sidebar .children,
+    .sidebar .submenu {
         background: #022b40 !important;
         padding: 4px 0 !important;
+        list-style: none !important;
+        margin: 0 !important;
     }
 
-    .sidebar .nav-sidebar .children > li > a {
+    .sidebar .nav-sidebar .children > li > a,
+    .sidebar .submenu > li > a {
         color: #cbd5e1 !important;
         padding: 9px 18px 9px 42px !important;
         font-size: 12.5px !important;
-        display: block !important;
+        display: flex !important;
+        align-items: center !important;
+        gap: 8px !important;
+        text-decoration: none !important;
     }
 
     .sidebar .nav-sidebar .children > li > a:hover,
-    .sidebar .nav-sidebar .children > li.active > a {
+    .sidebar .nav-sidebar .children > li.active > a,
+    .sidebar .submenu > li > a:hover,
+    .sidebar .submenu > li.active > a {
         color: #ffffff !important;
         background: rgba(255, 255, 255, 0.08) !important;
     }
 
-    /* Ensure visibility when sidebar-show or sidebar-collapsed is active */
-    body.sidebar-show .sidebar,
-    body.sidebar-show:not(.sidebar-hover) .sidebar,
-    .sidebar-show .sidebar {
-        display: block !important;
-        visibility: visible !important;
-        left: 0 !important;
-        opacity: 1 !important;
+    .sidebar .arrow-icon, .sidebar .arrow {
+        transition: transform 0.2s ease-in-out;
+        margin-left: auto !important;
+        font-size: 11px;
+        color: #94a3b8;
     }
 
-    body.sidebar-show .sidebar .nav-sidebar > li > a,
-    body.sidebar-show .sidebar .nav-sidebar > li > a span {
+    /* 3. Fluid Main Content Container */
+    .main-content, #content, main.main-content {
+        flex: 1 1 0% !important;
+        min-width: 0 !important;
+        width: 100% !important;
         display: flex !important;
-        visibility: visible !important;
-        color: #f8fafc !important;
+        flex-direction: column !important;
+        background: #f8fafc !important;
+        padding: 0 !important;
+        margin-left: 0 !important;
+        margin-top: 0 !important;
+        overflow-x: hidden !important;
+        position: relative !important;
+    }
+
+    .page-content, .pag_cstm {
+        flex: 1 0 auto !important;
+        padding: 0 !important;
+        min-height: calc(100vh - 120px) !important;
+        width: 100% !important;
+    }
+
+    /* 4. Footer */
+    .footer {
+        margin-top: auto !important;
+        padding: 15px 24px !important;
+        background: #ffffff !important;
+        border-top: 1px solid #e2e8f0 !important;
+        z-index: 1010 !important;
     }
 
     @media screen and (max-width: 768px) {
@@ -319,73 +398,74 @@
 </head>
 
 <body class="sidebar-light fixed-topbar theme-sltl bg-light-dark color-default dashboard">
-    <section>
-        <div class="main-content" style="padding-top: 62px;">
-            <!-- BEGIN TOPBAR -->
-            <div class="topbar">
-                <div class="header-left">
-                    <div class="topnav">
-                        <a class="MENUTOGGLE" href="#" data-toggle="sidebar-collapsed">
-                            <span class="menu__handle"><span>Menu</span></span>
-                        </a>
-                    </div>
-                    <div class="sitenameadjeust">
-                        <h3 class="sitename">UPCHAR</h3>
-                        <p class="slowgon">Doctor Partner Workspace</p>            
-                    </div>
-                </div>
-
-                <div class="header-right">	
-                    <?php 
-                    $profileimg = $this->db->select('drimage')->from('profile_dr')->where('user_id', $this->session->userdata('druserid'))->get()->row();
-                    $img_src = ($profileimg && !empty($profileimg->drimage)) ? admin_url()."public/assets/upload/".$profileimg->drimage : base_url()."assets/images/user.jpg";
-                    $doc_display_name = $this->session->userdata('drusername') ? 'Dr. ' . $this->session->userdata('drusername') : 'Dr. Anushka';
-                    ?> 
-                    <ul class="header-menu nav navbar-nav" id="desktopview" style="margin: 0;">
-                        <!-- BEGIN USER DROPDOWN -->
-                        <li class="dropdown" id="user-header">
-                            <a href="#" class="dropdown-toggle profile-pill-trigger" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" id="docProfileDropdownTrigger">
-                                <div class="profile-avatar-wrap">
-                                    <img src="<?=$img_src;?>" alt="Doctor Profile">
-                                    <span class="profile-online-badge"></span>
-                                </div>
-                                <div class="profile-text-wrap">
-                                    <span class="profile-doc-name"><?=$doc_display_name;?></span>
-                                    <span class="profile-doc-role">Clinical Practitioner</span>
-                                </div>
-                                <i class="fa fa-angle-down" style="color: rgba(255,255,255,0.85); font-size: 13px; margin-left: 2px;"></i>
-                            </a>
-                            
-                            <ul class="dropdown-menu custom-doc-dropdown" id="docProfileDropdownMenu">
-                                <!-- Header inside dropdown -->
-                                <li class="dropdown-header-card">
-                                    <div style="font-weight: 800; color: #0f172a; font-size: 14px;"><?=$doc_display_name;?></div>
-                                    <div style="font-size: 11.5px; color: #00a896; font-weight: 700; display: flex; align-items: center; gap: 4px; margin-top: 2px;">
-                                        <i class="fa fa-check-circle"></i> Verified Medical Practitioner
-                                    </div>
-                                </li>
-                                
-                                <li><a href="<?=base_url('doctor-dashboard');?>"><i class="fa fa-dashboard"></i> <span>Dashboard</span></a></li>
-                                <li><a href="<?=base_url('doctorpanel/updateprofile');?>"><i class="fa fa-user-md"></i> <span>Edit Profile</span></a></li>
-                                <li><a href="<?=base_url('manageappointment');?>"><i class="fa fa-calendar"></i> <span>Appointments &amp; Visits</span></a></li>
-                                <li><a href="<?=base_url('doctorpanel/datetime');?>"><i class="fa fa-clock-o"></i> <span>Schedule &amp; Timings</span></a></li>
-                                <li><a href="<?=base_url('manageownclinic');?>"><i class="fa fa-hospital-o"></i> <span>Own Clinic Setup</span></a></li>
-                                <li><a href="<?=base_url('managepractice');?>"><i class="fa fa-medkit"></i> <span>Manage Practice</span></a></li>
-                                <li><a href="<?=base_url('doctorpanel/earnings');?>"><i class="fa fa-line-chart"></i> <span>Earnings &amp; Payouts</span></a></li>
-                                <li><a href="<?=base_url('doctorpanel/upcharhospital');?>"><i class="fa fa-building-o"></i> <span>Affiliated Hospitals</span></a></li>
-                                <li><a href="<?=base_url('doctorpanel/gallery');?>"><i class="fa fa-picture-o"></i> <span>Media Gallery</span></a></li>
-                                <li><a href="<?=base_url('doctorpanel/news');?>"><i class="fa fa-newspaper-o"></i> <span>News &amp; Articles</span></a></li>
-                                
-                                <li class="dropdown-divider"></li>
-                                <li><a href="<?=base_url('doctorpanel/change_password/');?>"><i class="fa fa-lock" style="color: #f59e0b;"></i> <span>Password &amp; Security</span></a></li>
-                                <li class="logout-link"><a href="<?=base_url('doctoruser/logout');?>"><i class="fa fa-sign-out"></i> <span>Logout</span></a></li>
-                            </ul>
-                        </li>
-                        <!-- END USER DROPDOWN -->
-                    </ul>
-                </div>
+    <!-- BEGIN TOPBAR -->
+    <header class="topbar">
+        <div class="header-left">
+            <div class="topnav">
+                <a class="MENUTOGGLE" href="#" data-toggle="sidebar-collapsed">
+                    <span class="menu__handle"><span>Menu</span></span>
+                </a>
             </div>
-            <!-- END TOPBAR -->
+            <div class="sitenameadjeust">
+                <h3 class="sitename">UPCHAR</h3>
+                <p class="slowgon">Doctor Partner Workspace</p>            
+            </div>
+        </div>
+
+        <div class="header-right">	
+            <?php 
+            $profileimg = $this->db->select('drimage')->from('profile_dr')->where('user_id', $this->session->userdata('druserid'))->get()->row();
+            $img_src = ($profileimg && !empty($profileimg->drimage)) ? admin_url()."public/assets/upload/".$profileimg->drimage : base_url()."assets/images/user.jpg";
+            $doc_display_name = $this->session->userdata('drusername') ? 'Dr. ' . $this->session->userdata('drusername') : 'Dr. Anushka';
+            ?> 
+            <ul class="header-menu nav navbar-nav" id="desktopview" style="margin: 0;">
+                <!-- BEGIN USER DROPDOWN -->
+                <li class="dropdown" id="user-header">
+                    <a href="#" class="dropdown-toggle profile-pill-trigger" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" id="docProfileDropdownTrigger">
+                        <div class="profile-avatar-wrap">
+                            <img src="<?=$img_src;?>" alt="Doctor Profile">
+                            <span class="profile-online-badge"></span>
+                        </div>
+                        <div class="profile-text-wrap">
+                            <span class="profile-doc-name"><?=$doc_display_name;?></span>
+                            <span class="profile-doc-role">Clinical Practitioner</span>
+                        </div>
+                        <i class="fa fa-angle-down" style="color: rgba(255,255,255,0.85); font-size: 13px; margin-left: 2px;"></i>
+                    </a>
+                    
+                    <ul class="dropdown-menu custom-doc-dropdown" id="docProfileDropdownMenu">
+                        <!-- Header inside dropdown -->
+                        <li class="dropdown-header-card">
+                            <div style="font-weight: 800; color: #0f172a; font-size: 14px;"><?=$doc_display_name;?></div>
+                            <div style="font-size: 11.5px; color: #00a896; font-weight: 700; display: flex; align-items: center; gap: 4px; margin-top: 2px;">
+                                <i class="fa fa-check-circle"></i> Verified Medical Practitioner
+                            </div>
+                        </li>
+                        
+                        <li><a href="<?=base_url('doctor-dashboard');?>"><i class="fa fa-dashboard"></i> <span>Dashboard</span></a></li>
+                        <li><a href="<?=base_url('doctorpanel/updateprofile');?>"><i class="fa fa-user-md"></i> <span>Edit Profile</span></a></li>
+                        <li><a href="<?=base_url('manageappointment');?>"><i class="fa fa-calendar"></i> <span>Appointments &amp; Visits</span></a></li>
+                        <li><a href="<?=base_url('doctorpanel/datetime');?>"><i class="fa fa-clock-o"></i> <span>Schedule &amp; Timings</span></a></li>
+                        <li><a href="<?=base_url('manageownclinic');?>"><i class="fa fa-hospital-o"></i> <span>Own Clinic Setup</span></a></li>
+                        <li><a href="<?=base_url('managepractice');?>"><i class="fa fa-medkit"></i> <span>Manage Practice</span></a></li>
+                        <li><a href="<?=base_url('doctorpanel/earnings');?>"><i class="fa fa-line-chart"></i> <span>Earnings &amp; Payouts</span></a></li>
+                        <li><a href="<?=base_url('doctorpanel/upcharhospital');?>"><i class="fa fa-building-o"></i> <span>Affiliated Hospitals</span></a></li>
+                        <li><a href="<?=base_url('doctorpanel/gallery');?>"><i class="fa fa-picture-o"></i> <span>Media Gallery</span></a></li>
+                        <li><a href="<?=base_url('doctorpanel/news');?>"><i class="fa fa-newspaper-o"></i> <span>News &amp; Articles</span></a></li>
+                        
+                        <li class="dropdown-divider"></li>
+                        <li><a href="<?=base_url('doctorpanel/change_password/');?>"><i class="fa fa-lock" style="color: #f59e0b;"></i> <span>Password &amp; Security</span></a></li>
+                        <li class="logout-link"><a href="<?=base_url('doctoruser/logout');?>"><i class="fa fa-sign-out"></i> <span>Logout</span></a></li>
+                    </ul>
+                </li>
+                <!-- END USER DROPDOWN -->
+            </ul>
+        </div>
+    </header>
+    <!-- END TOPBAR -->
+
+    <!-- BEGIN DASHBOARD LAYOUT (Direct Flexbox Wrapper) -->
+    <div class="dashboard-layout">
 
 <script>
 $(document).ready(function() {

@@ -1,24 +1,19 @@
-
-
-                <div class="footer">
-                    <div class="copyright">
-                        <p class="">
-                            <span>Copyright <span class="copyright">©</span> 2019 </span>
-                            <span>Upchar</span>.
-                            <span>All rights reserved. </span>
-
-                        </p>
-
-                    </div>
+        <footer class="footer">
+            <div class="copyright" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; color: #64748b; font-size: 13px;">
+                <p style="margin: 0;">
+                    <span>Copyright <span class="copyright">©</span> <?=date('Y');?> </span>
+                    <strong style="color: #043d5b;">Upchar Healthcare Technologies</strong>.
+                    <span>All rights reserved. </span>
+                </p>
+                <div style="font-size: 12px; color: #94a3b8;">
+                    <span>Clinical Practitioner Workspace v2.4</span>
                 </div>
             </div>
-            <!-- END PAGE CONTENT -->
-        </div>
-        <!-- END MAIN CONTENT -->
-        <!-- BEGIN BUILDER -->
-
-        <!-- END BUILDER -->
-    </section>
+        </footer>
+    </main>
+    <!-- END MAIN CONTENT -->
+</div>
+<!-- END DASHBOARD-LAYOUT -->
 
     <a href="#" class="scrollup"><i class="fa fa-angle-up"></i></a>
 	
@@ -28,6 +23,33 @@
     <script src="<?=base_url();?>assets/js/application.js"></script>
     <!-- Main Application Script -->
     <script src="<?=base_url();?>assets/js/layout.js"></script>
+    
+    <script>
+    $(document).ready(function() {
+        // Submenu accordion handler for doctor side-menu
+        $('.sidebar .has-submenu > a, .sidebar .nav-parent > a').on('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            var $parent = $(this).closest('li');
+            var $sub = $parent.find('> .children, > .submenu');
+            var $arrow = $(this).find('.arrow-icon, .arrow');
+            
+            // Close siblings
+            $parent.siblings('.has-submenu, .nav-parent').removeClass('active nav-active').find('> .children, > .submenu').slideUp(200);
+            $parent.siblings('.has-submenu, .nav-parent').find('.arrow-icon, .arrow').css('transform', 'rotate(0deg)');
+
+            if ($sub.is(':visible')) {
+                $sub.slideUp(200);
+                $parent.removeClass('active nav-active');
+                $arrow.css('transform', 'rotate(0deg)');
+            } else {
+                $sub.slideDown(200);
+                $parent.addClass('active nav-active');
+                $arrow.css('transform', 'rotate(90deg)');
+            }
+        });
+    });
+    </script>
 	<script>
  $(window).load(function(){        
    $('#myModal').modal('show');
