@@ -67,20 +67,32 @@ class Doctor_Model extends CI_Model
 	
 	public function profile_step1()
 	{
-		$udata=array('fname'=>$this->input->post('name'),'email'=>$this->input->post('email'),'gender'=>$this->input->post('gender'),'city'=>$this->input->post('city'));
-		$this->db->where('id',$this->did)->update('profile_dr',$udata);
+		$doc_id = $this->did ?: $this->session->userdata('druserid');
+		$udata = array(
+			'fname'  => trim($this->input->post('name', TRUE)),
+			'email'  => trim($this->input->post('email', TRUE)),
+			'gender' => trim($this->input->post('gender', TRUE)),
+			'city'   => trim($this->input->post('city', TRUE))
+		);
+		$this->db->where('id', $doc_id)->or_where('user_id', $doc_id)->update('profile_dr', $udata);
 		
-		$this->db->delete('dr_specialization',array('user_id'=>$this->did));
+		$this->db->where('user_id', $doc_id)->delete('dr_specialization');
 		$specialisation = $this->input->post('specialisation');
+		if (!empty($specialisation) && is_array($specialisation)) {
+			$spldata = array();
 			foreach($specialisation as $s){
-				$spldata[]=array('user_id'=>$this->did,'specialization_id'=>$s);
+				if (!empty($s)) {
+					$spldata[] = array('user_id' => $doc_id, 'specialization_id' => intval($s));
+				}
 			}
-		$this->db->insert_batch('dr_specialization',$spldata);
-			 $flashmsg='Updated Successfully!';
-						$this->session->set_flashdata('flashmsg',$flashmsg);
-						
+			if (!empty($spldata)) {
+				$this->db->insert_batch('dr_specialization', $spldata);
+			}
+		}
+
+		$flashmsg = "<div class='alert alert-success'><strong>Success!</strong> Clinical profile details saved successfully.</div>";
+		$this->session->set_flashdata('flashmsg', $flashmsg);
 		redirect('profile_step2');
-		
 	}
 	
 	public function profile_step2(){

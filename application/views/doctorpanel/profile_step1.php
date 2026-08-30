@@ -118,6 +118,7 @@
                 <div class="col-md-7 col-12">
                     <div class="profile-card">
                         <form action="" method="post">
+                            <input type="hidden" name="<?=$this->security->get_csrf_token_name();?>" value="<?=$this->security->get_csrf_hash();?>">
                             <div class="form-group" style="margin-bottom: 18px;">
                                 <label class="form-label-cstm">Doctor Full Name *</label>
                                 <input type="text" name="name" class="form-input-cstm" value="<?=htmlspecialchars(@$data->fname);?>" placeholder="e.g. Dr. Anushka Sharma" required>

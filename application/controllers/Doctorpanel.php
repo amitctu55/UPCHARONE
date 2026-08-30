@@ -55,11 +55,9 @@ class Doctorpanel extends CI_Controller
 	
 	public function dashboard()
 	{
-		$userid = $this->did;
-		$data['doctor'] = $this->db->get_where('profile_dr', array('id' => $userid))->row();
-		if (!$data['doctor'] && $this->session->userdata('druserid')) {
-			$data['doctor'] = $this->db->get_where('profile_dr', array('user_id' => $this->session->userdata('druserid')))->row();
-		}
+		$druserid = $this->session->userdata('druserid');
+		$data['doctor'] = $this->db->where('id', $this->did)->or_where('user_id', $druserid)->get('profile_dr')->row();
+		$userid = $data['doctor'] ? $data['doctor']->id : ($this->did ?: $druserid);
 
 		// Appointments stats
 		$data['todayappointment'] = $this->db->where(array('doctor_id' => $userid, 'appointment_date' => date('Y-m-d'), 'status' => '1'))->count_all_results('appointment');
@@ -176,17 +174,20 @@ class Doctorpanel extends CI_Controller
 	
 	public function profile_step1()
 	{
-		if(isset($_POST['submit']))
+		$druserid = $this->session->userdata('druserid');
+		if($this->input->post('submit')) {
 			$this->Doctor_Model->profile_step1();
+		}
 		
-		$data['data']=$this->db->get_where('profile_dr',array('id'=>$this->did))->row();
-		//echo "<pre>";print_r($data['data']);die;
-		$data_spl=$this->db->select('specialization_id')->get_where('dr_specialization',array('user_id'=>$this->did))->result_array();
-		$data['data_spl']= array_map (function($value){
+		$data['data'] = $this->db->where('id', $this->did)->or_where('user_id', $druserid)->get('profile_dr')->row();
+		$doc_id = $data['data'] ? $data['data']->id : ($this->did ?: $druserid);
+
+		$data_spl = $this->db->select('specialization_id')->where('user_id', $doc_id)->or_where('user_id', $druserid)->get('dr_specialization')->result_array();
+		$data['data_spl'] = array_map (function($value){
 					return $value['specialization_id'];
 				} , $data_spl);	
 
-		$this->load->view('doctorpanel/profile_step1',$data);
+		$this->load->view('doctorpanel/profile_step1', $data);
 	}
 	
 	public function profile_step2()
