@@ -61,8 +61,19 @@ class Doctorpanel extends CI_Controller
 
 		// Appointments stats
 		$data['todayappointment'] = $this->db->where(array('doctor_id' => $userid, 'appointment_date' => date('Y-m-d'), 'status' => '1'))->count_all_results('appointment');
-		$data['totalappointment'] = $this->db->where(array('doctor_id' => $userid, 'status' => '1'))->count_all_results('appointment');
+		$data['totalappointment'] = $this->db->where(array('doctor_id' => $userid))->count_all_results('appointment');
+		$data['pending_appointments'] = $this->db->where(array('doctor_id' => $userid, 'status' => '1'))->count_all_results('appointment');
 		$data['completed_appointments'] = $this->db->where(array('doctor_id' => $userid, 'status' => '2'))->count_all_results('appointment');
+		$data['cancelled_appointments'] = $this->db->where(array('doctor_id' => $userid, 'status' => '0'))->count_all_results('appointment');
+
+		// Unique Patients Count
+		$patients_res = $this->db->select('COUNT(DISTINCT user_id) as total_patients')->where('doctor_id', $userid)->get('appointment')->row();
+		$data['total_patients'] = $patients_res ? intval($patients_res->total_patients) : 0;
+
+		// Video vs In-person (Safely check if column exists)
+		$has_appt_type = $this->db->field_exists('appointment_type', 'appointment');
+		$data['video_appointments'] = $has_appt_type ? $this->db->where(array('doctor_id' => $userid, 'appointment_type' => 'video'))->count_all_results('appointment') : 0;
+		$data['inperson_appointments'] = max(0, $data['totalappointment'] - $data['video_appointments']);
 
 		// Financials
 		$data['earnings'] = $this->Financial_Model->get_doctor_earnings($userid);
@@ -70,6 +81,23 @@ class Doctorpanel extends CI_Controller
 		// Associated practices & hospitals
 		$data['total_clinics'] = $this->db->where(array('user_id' => $userid, 'type' => 'C'))->count_all_results('dr_practice');
 		$data['total_hospitals'] = $this->db->where(array('user_id' => $userid, 'type' => 'H'))->count_all_results('dr_practice');
+
+		// 6-Month Monthly Visit Trend Data
+		$monthly_labels = array();
+		$monthly_data = array();
+		for ($i = 5; $i >= 0; $i--) {
+			$month_time = strtotime("-$i month");
+			$month_key = date('Y-m', $month_time);
+			$month_label = date('M Y', $month_time);
+			$monthly_labels[] = $month_label;
+
+			$cnt = $this->db->where('doctor_id', $userid)
+				->like('appointment_date', $month_key, 'after')
+				->count_all_results('appointment');
+			$monthly_data[] = $cnt;
+		}
+		$data['monthly_labels'] = $monthly_labels;
+		$data['monthly_data'] = $monthly_data;
 
 		// Recent appointments
 		$data['recent_appointments'] = $this->db->select('appointment.*, userlogin.FNAME as user_fname, userlogin.LNAME as user_lname, userlogin.MOBILE as user_mobile')

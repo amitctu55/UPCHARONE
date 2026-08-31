@@ -220,4 +220,28 @@ $route['videocall/(:any)'] 				= 'home/videocall/$1';
 $route['video-consultation/(:any)'] 	= 'home/videocall/$1';
 $route['doctorpanel/videocall/(:any)'] 	= 'doctorpanel/videocall/$1';
 
+/*
+|--------------------------------------------------------------------------
+| UPCHAR UNIFIED PAYMENT & WALLET SYSTEM ROUTES (NON-DISRUPTIVE)
+|--------------------------------------------------------------------------
+*/
+$route['payment/checkout']                  = 'payment/checkout';
+$route['payment/create_order']              = 'payment/create_order';
+$route['payment/verify']                    = 'payment/verify';
+$route['payment/process_points_only/(:any)']= 'payment/process_points_only/$1';
+$route['payment/webhook']                   = 'payment/webhook';
+$route['payment/success/(:any)']            = 'payment/success/$1';
+$route['payment/failed/(:any)']             = 'payment/failed/$1';
 
+$route['wallet_v2']                         = 'wallet/index';
+$route['refund/initiate']                   = 'refund/initiate';
+$route['refund/status/(:any)']              = 'refund/status/$1';
+
+$route['payout/dashboard']                  = 'payout/dashboard';
+$route['payout/trigger_batch']              = 'payout/trigger_batch';
+$route['payout/add_account']                = 'payout/add_account';
+$route['payout/verify_account']             = 'payout/verify_account';
+
+$route['admin_payment']                     = 'admin_payment/index';
+$route['admin_payment/save_wallet_settings']= 'admin_payment/save_wallet_settings';
+$route['admin_payment/export_orders']       = 'admin_payment/export_orders';

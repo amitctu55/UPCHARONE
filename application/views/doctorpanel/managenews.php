@@ -142,7 +142,7 @@
             <div class="row">
                 <?php if(!empty($items)): ?>
                     <?php foreach($items as $p): ?>
-                    <div class="col-md-4 col-sm-6 col-12" style="margin-bottom: 24px;">
+                    <div class="col-md-4 col-sm-6 col-xs-12" style="margin-bottom: 24px;">
                         <div class="news-card-item">
                             <!-- Media Box -->
                             <div class="news-media-box">
@@ -162,7 +162,7 @@
                                 <div>
                                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                                         <span style="font-size: 11px; color: #64748b; font-weight: 600;">
-                                            <i class="fa fa-calendar"></i> <?=date('d M Y', strtotime($p['creat_date']));?>
+                                             <i class="fa fa-calendar"></i> <?=date('d M Y', strtotime($p['creat_date']));?>
                                         </span>
                                         <?php if($p['approved'] == '1' || $p['status'] == '1'): ?>
                                             <span class="badge-live"><i class="fa fa-check-circle"></i> Live &amp; Published</span>
@@ -195,7 +195,7 @@
                     </div>
                     <?php endforeach; ?>
                 <?php else: ?>
-                    <div class="col-12" style="text-align: center; padding: 60px; color: #94a3b8;">
+                    <div class="col-xs-12" style="text-align: center; padding: 60px; color: #94a3b8;">
                         <i class="fa fa-newspaper-o" style="font-size: 48px; display: block; margin-bottom: 12px; color: #cbd5e1;"></i>
                         <h4 style="font-weight: 700; color: #64748b;">No medical articles published yet</h4>
                         <p style="font-size: 13px;">Publish your first health article or video guide to help patients understand preventive healthcare.</p>

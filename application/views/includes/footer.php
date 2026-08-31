@@ -500,7 +500,21 @@ function isNumber(evt)
 		$('#mode_guidance_box').css({'background': '#F0FDF4', 'border-color': '#DCFCE7', 'color': '#166534'})
 			.html('<i class="fas fa-clinic-medical" style="color: #16A34A; margin-right: 6px;"></i><strong>In-Person Visit:</strong> Confirmed direct appointment at clinic. Minimal wait time assured.');
 
-		var did = $(this).attr('data-upchar-did');
+		var did = $(this).attr('data-upchar-did') || $(this).attr('data-did') || $(this).attr('data-id') || $(this).data('did') || $(this).data('id') || $(this).data('upchar-did') || $(this).attr('id') || '';
+		
+		// Fallback: search closest card or container for doctor ID or profile link
+		if (!did || did === '0') {
+			did = $(this).closest('.doctor-card, .box_sh_bg, .item, .doc-col-right').find('[data-upchar-did]').not(this).attr('data-upchar-did') || '';
+		}
+		if (!did || did === '0') {
+			var profLink = $(this).closest('.doctor-card, .box_sh_bg, .item, .doc-col-right').find('a[href*="/doctor/"]').attr('href') || '';
+			if (profLink) {
+				var matches = profLink.match(/\/doctor\/(\d+)/);
+				if (matches && matches[1]) {
+					did = matches[1];
+				}
+			}
+		}
 		$('#app_conf_pop_doctorid').val(did);
 
 		// Guarantee modal opens reliably
@@ -524,7 +538,7 @@ function isNumber(evt)
 				success: function( data ) {
 					$('#app_conf_pop_date').html(data);
 					// If date options exist, auto-select first date and load timings
-					var firstDate = $('#app_conf_pop_date option:nth-child(2)').val();
+					var firstDate = $('#app_conf_pop_date option:nth-child(2)').val() || $('#app_conf_pop_date option:first').val();
 					if (firstDate) {
 						$('#app_conf_pop_date').val(firstDate).trigger('change');
 					}
@@ -568,26 +582,32 @@ function isNumber(evt)
 				$('#app_conf_pop_institute').html('<div class="text-center" style="padding: 10px; color: #64748B;"><p style="margin: 0; font-size: 13px;"><i class="fas fa-map-marker-alt" style="color: #00A896;"></i> Select date and time to view location</p></div>');
 			}
 		}
+
+		// Re-trigger date change to refresh time slots for video / in_clinic mode
+		var curDate = $('#app_conf_pop_date').val();
+		if (curDate) {
+			$('#app_conf_pop_date').trigger('change');
+		}
 	});
 
 	$('body').on('change','#app_conf_pop_date',function(e) {
-		$('#app_conf_pop_institute').html('');
 		var date = $(this).val();
 		var did = $('#app_conf_pop_doctorid').val();
+		var consultType = $('#app_consult_type').val() || 'in_clinic';
 
 		if (date && did) {
 			$.ajax({
 				type: "GET",
-				url: "<?=base_url();?>home/app_conf_pop_time?doctor="+did+"&date="+date,
+				url: "<?=base_url();?>home/app_conf_pop_time?doctor="+did+"&date="+date+"&consult_type="+consultType,
 				success: function( data ) {
 					$('#app_conf_pop_time').html(data);
-					var firstTime = $('#app_conf_pop_time option:nth-child(2)').val();
+					var firstTime = $('#app_conf_pop_time option:nth-child(2)').val() || $('#app_conf_pop_time option:first').val();
 					if (firstTime) {
 						$('#app_conf_pop_time').val(firstTime).trigger('change');
 					}
 				},
 				error: function() {
-					$('#app_conf_pop_time').html('<option value="morning_1">09:30 AM - 11:00 AM (Morning Slot)</option><option value="evening_1">05:00 PM - 06:30 PM (Evening Slot)</option>').trigger('change');
+					$('#app_conf_pop_time').html('<option value="morning_1">09:30 AM - 11:00 AM</option><option value="evening_1">05:00 PM - 06:30 PM</option>').trigger('change');
 				}
 			});
 		}
@@ -599,7 +619,7 @@ function isNumber(evt)
 		var time = $('#app_conf_pop_time').val();
 		var consultType = $('#app_consult_type').val();
 
-		if (consultType !== 'video_consult') {
+		if (consultType !== 'video_consult' && date && did && time) {
 			$.ajax({
 				type: "GET",
 				url: "<?=base_url();?>home/app_conf_pop_institute?doctor="+did+"&date="+date+"&time="+time,

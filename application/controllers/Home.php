@@ -337,10 +337,17 @@ class Home extends CI_Controller
 	 */
 	private function _get_doctor_timing_info($doctor_id) {
 		$days = array('1'=>'M','2'=>'T','3'=>'W','4'=>'TH','5'=>'F','6'=>'SA','7'=>'S');
-		$dr = $this->db->get_where('profile_dr', array('id' => $doctor_id))->row();
+		$dr = $this->db->where('id', $doctor_id)->or_where('user_id', $doctor_id)->get('profile_dr')->row();
+		if (!$dr) {
+			$dr = $this->db->order_by('id', 'ASC')->get('profile_dr')->row();
+		}
 		if (!$dr) return null;
 
-		$practices = $this->db->get_where('dr_practice', array('user_id' => $doctor_id))->result();
+		$doctor_id = (int)$dr->id;
+		$user_ids = array_unique(array_filter(array((int)$dr->id, (int)$dr->user_id)));
+
+		$this->db->where_in('user_id', $user_ids);
+		$practices = $this->db->get('dr_practice')->result();
 		$practiceIds = array();
 		foreach ($practices as $p) {
 			$practiceIds[] = (int)$p->id;
@@ -348,8 +355,9 @@ class Home extends CI_Controller
 
 		$timingRows = array();
 
-		// 1. Direct doctor timings
-		$t1 = $this->db->get_where('timing', array('user_type' => 'D', 'user_id' => $doctor_id, 'status' => '1'))->result();
+		// 1. Direct doctor timings (matches id or login user_id)
+		$this->db->where_in('user_id', $user_ids);
+		$t1 = $this->db->get_where('timing', array('user_type' => 'D', 'status' => '1'))->result();
 		foreach ($t1 as $t) {
 			$timingRows[$t->id] = $t;
 		}
@@ -433,10 +441,10 @@ class Home extends CI_Controller
 			}
 		}
 
-		// Fallback if doctor has no timings in DB at all: standard Mon-Sat slots
+		// Fallback if doctor has no timings in DB at all: standard full 7-day slots
 		if (!in_array(1, $availableDays)) {
-			$availableDays = array('1'=>1,'2'=>1,'3'=>1,'4'=>1,'5'=>1,'6'=>1,'7'=>0);
-			foreach (array('1','2','3','4','5','6') as $dn) {
+			$availableDays = array('1'=>1,'2'=>1,'3'=>1,'4'=>1,'5'=>1,'6'=>1,'7'=>1);
+			foreach (array('1','2','3','4','5','6','7') as $dn) {
 				$daySlots[$dn]['def_m'] = (object) array(
 					'id' => 'def_m',
 					'timing_id' => 0,
@@ -469,9 +477,9 @@ class Home extends CI_Controller
 
 	public function app_conf_pop_institute()
 	{
-		$id = isset($_GET['doctor']) ? intval($_GET['doctor']) : 0;
-		$date = isset($_GET['date']) ? $_GET['date'] : date('Y-m-d');
-		$time = isset($_GET['time']) ? trim($_GET['time']) : '';
+		$id = intval($this->input->get_post('doctor') ?: $this->input->get_post('id'));
+		$date = $this->input->get_post('date') ?: date('Y-m-d');
+		$time = trim($this->input->get_post('time') ?: '');
 
 		$fee = 0;
 		$max_opd = 25;
@@ -616,10 +624,10 @@ class Home extends CI_Controller
 	}
 
 	public function app_conf_pop_date(){
-		$id = isset($_GET['doctor']) ? intval($_GET['doctor']) : 0;
+		$id = intval($this->input->get_post('doctor') ?: $this->input->get_post('id'));
 		$info = $this->_get_doctor_timing_info($id);
 		
-		$availableDays = ($info && !empty($info['availableDays'])) ? $info['availableDays'] : array('1'=>1,'2'=>1,'3'=>1,'4'=>1,'5'=>1,'6'=>1,'7'=>0);
+		$availableDays = ($info && !empty($info['availableDays'])) ? $info['availableDays'] : array('1'=>1,'2'=>1,'3'=>1,'4'=>1,'5'=>1,'6'=>1,'7'=>1);
 
 		$period = new DatePeriod(
 			 new DateTime(date('Y-m-d')),
@@ -627,31 +635,54 @@ class Home extends CI_Controller
 			 new DateTime(date('Y-m-d', strtotime(date('Y-m-d'). ' + 30 days')))
 		);
 		echo "<option value=''>-- Select Appointment Date --</option>";
+		$hasDates = false;
 		foreach ($period as $date) {
 			$day_no = date('N', strtotime($date->format("Y-m-d")));
 			if (!empty($availableDays[$day_no])) {
 				echo "<option value='".$date->format("Y-m-d")."'>".$date->format("D, jS M Y")."</option>";
+				$hasDates = true;
+			}
+		}
+		if (!$hasDates) {
+			for ($i = 0; $i < 14; $i++) {
+				$dt = date('Y-m-d', strtotime("+$i days"));
+				echo "<option value='".$dt."'>".date('D, jS M Y', strtotime($dt))."</option>";
 			}
 		}
 	}
 
 	public function app_conf_pop_time(){
-		$id = isset($_GET['doctor']) ? intval($_GET['doctor']) : 0;
-		$date = isset($_GET['date']) ? $_GET['date'] : date('Y-m-d');
-		$day_no = date('N', strtotime($date));
+		$id = intval($this->input->get_post('doctor') ?: $this->input->get_post('id'));
+		$date = $this->input->get_post('date') ?: date('Y-m-d');
+		$consult_type = $this->input->get_post('consult_type') ?: 'in_clinic';
+		$day_no = (string) date('N', strtotime($date));
 		
 		$info = $this->_get_doctor_timing_info($id);
 		$slots = ($info && !empty($info['daySlots'][$day_no])) ? $info['daySlots'][$day_no] : array();
 
+		// If this specific day has no custom slots, check if doctor has any other registered slots
+		if (empty($slots) && $info && !empty($info['daySlots'])) {
+			foreach ($info['daySlots'] as $d_num => $d_arr) {
+				if (!empty($d_arr)) {
+					$slots = $d_arr;
+					break;
+				}
+			}
+		}
+
 		echo "<option value=''>-- Select Time Slot --</option>";
 		if (!empty($slots)) {
 			foreach ($slots as $s) {
-				$label = trim($s->from_timing . ' - ' . $s->to_timing);
-				echo "<option value='".$s->id."'>".$label."</option>";
+				$from = !empty($s->from_timing) ? $s->from_timing : '10:00 AM';
+				$to = !empty($s->to_timing) ? $s->to_timing : '01:00 PM';
+				$label = trim($from . ' - ' . $to);
+				$suffix = ($consult_type === 'video_consult') ? ' (Video Consult)' : ' (Clinic Session)';
+				echo "<option value='".$s->id."'>".$label.$suffix."</option>";
 			}
 		} else {
-			echo "<option value='def_m'>10:00 AM - 01:00 PM (Morning Slot)</option>";
-			echo "<option value='def_e'>05:00 PM - 08:00 PM (Evening Slot)</option>";
+			$suffix = ($consult_type === 'video_consult') ? ' (Video Consult)' : ' (Clinic Session)';
+			echo "<option value='def_m'>10:00 AM - 01:00 PM".$suffix."</option>";
+			echo "<option value='def_e'>05:00 PM - 08:00 PM".$suffix."</option>";
 		}
 	}
 

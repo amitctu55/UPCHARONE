@@ -15,42 +15,76 @@ $isUpcharHosp  = ($seg1 == 'doctorpanel' && $seg2 == 'upcharhospital');
 $isNewsOpen    = ($seg1 == 'doctorpanel' && in_array($seg2, array('news', 'managenews')));
 ?>
 
-<div class="sidebar">
-  <div class="logopanel">
-    <div class="logopanel"> 		
-      <a href="<?=base_url('doctor-dashboard');?>"><img src="<?=base_url();?>images/logo.png" type="image/gif" style="width:42px;margin: 38px 39%;"></a>
-    </div>
-  </div>
+<aside class="sidebar">
   <div class="sidebar-inner">
+    <div class="sidebar-heading" style="padding: 10px 20px 6px 20px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: #64748b;">
+      Clinical Workspace
+    </div>
+
     <ul class="nav nav-sidebar">
-      <li class="<?=$isDashboard ? 'active' : '';?>"><a href="<?=base_url();?>doctor-dashboard"><i class="fa fa-user-md"></i><span>Dashboard</span></a></li>
-      <li class="<?=$isProfile ? 'active' : '';?>"><a href="<?=base_url();?>doctorpanel/updateprofile"><i class="fa fa-pencil-square-o"></i><span>Update Profile</span></a></li>
-      <li class="<?=$isProfileStep ? 'active' : '';?>"><a href="<?=base_url();?>profile_step1"><i class="fa fa-id-card-o"></i><span>Manage Profile</span></a></li>
-      <li class="<?=$isClinic ? 'active' : '';?>"><a href="<?=base_url();?>manageownclinic"><i class="fa fa-hospital-o" aria-hidden="true"></i><span>Manage Own Clinic</span></a></li>
-      <li class="<?=$isPractice ? 'active' : '';?>"><a href="<?=base_url();?>managepractice"><i class="fa fa-medkit" aria-hidden="true"></i><span>Manage Practice</span></a></li>
-      <li class="<?=$isApt ? 'active' : '';?>"><a href="<?=base_url();?>manageappointment"><i class="fa fa-calendar" aria-hidden="true"></i><span>Manage Appointment</span></a></li>
-      <li class="<?=$isEarnings ? 'active' : '';?>"><a href="<?=base_url();?>doctorpanel/earnings"><i class="fa fa-line-chart" aria-hidden="true"></i><span>Earnings &amp; Payouts</span></a></li>
+      <li class="<?=$isDashboard ? 'active' : '';?>">
+        <a href="<?=base_url('doctor-dashboard');?>"><i class="fa fa-user-md"></i><span>Dashboard</span></a>
+      </li>
+      <li class="<?=$isProfile ? 'active' : '';?>">
+        <a href="<?=base_url('doctorpanel/updateprofile');?>"><i class="fa fa-pencil-square-o"></i><span>Update Profile</span></a>
+      </li>
+      <li class="<?=$isProfileStep ? 'active' : '';?>">
+        <a href="<?=base_url('profile_step1');?>"><i class="fa fa-id-card-o"></i><span>Manage Profile</span></a>
+      </li>
+      <li class="<?=$isClinic ? 'active' : '';?>">
+        <a href="<?=base_url('manageownclinic');?>"><i class="fa fa-hospital-o"></i><span>Manage Own Clinic</span></a>
+      </li>
+      <li class="<?=$isPractice ? 'active' : '';?>">
+        <a href="<?=base_url('managepractice');?>"><i class="fa fa-medkit"></i><span>Manage Practice</span></a>
+      </li>
+      <li class="<?=$isApt ? 'active' : '';?>">
+        <a href="<?=base_url('manageappointment');?>"><i class="fa fa-calendar"></i><span>Manage Appointment</span></a>
+      </li>
+      <li class="<?=$isEarnings ? 'active' : '';?>">
+        <a href="<?=base_url('doctorpanel/earnings');?>"><i class="fa fa-line-chart"></i><span>Earnings &amp; Payouts</span></a>
+      </li>
       
       <!-- Gallery Management Submenu -->
-      <li class="nav-parent <?=$isGalleryOpen ? 'active' : '';?>">
-        <a href="#"><i class="fa fa-picture-o" aria-hidden="true"></i><span>Gallery Management</span><span class="fa arrow <?=$isGalleryOpen ? 'active' : '';?>"></span></a>
-        <ul class="children <?=$isGalleryOpen ? '' : 'collapse';?>" style="<?=$isGalleryOpen ? 'display: block;' : '';?>">
-          <li class="<?=($seg2 == 'gallery') ? 'active' : '';?>"><a href="<?=base_url();?>doctorpanel/gallery"><i class="fa fa-cloud-upload" aria-hidden="true"></i><span>Upload Photo</span></a></li>
-          <li class="<?=($seg2 == 'managegallery') ? 'active' : '';?>"><a href="<?=base_url();?>doctorpanel/managegallery"><i class="fa fa-th-large" aria-hidden="true"></i><span>Gallery Showcase</span></a></li>
+      <li class="nav-item has-submenu nav-parent <?=$isGalleryOpen ? 'active' : '';?>">
+        <a href="#" class="submenu-toggle">
+          <i class="fa fa-picture-o"></i><span>Gallery Management</span>
+          <i class="fa fa-angle-right arrow-icon" style="<?=$isGalleryOpen ? 'transform: rotate(90deg);' : '';?>"></i>
+        </a>
+        <ul class="children submenu <?=$isGalleryOpen ? '' : 'collapse';?>" style="<?=$isGalleryOpen ? 'display: block;' : 'display: none;';?>">
+          <li class="<?=($seg2 == 'gallery') ? 'active' : '';?>">
+            <a href="<?=base_url('doctorpanel/gallery');?>"><i class="fa fa-cloud-upload"></i><span>Upload Photo</span></a>
+          </li>
+          <li class="<?=($seg2 == 'managegallery') ? 'active' : '';?>">
+            <a href="<?=base_url('doctorpanel/managegallery');?>"><i class="fa fa-th-large"></i><span>Gallery Showcase</span></a>
+          </li>
         </ul>
       </li>
 
-      <li class="<?=$isDateTime ? 'active' : '';?>"><a href="<?=base_url();?>doctorpanel/datetime"><i class="fa fa-clock-o" aria-hidden="true"></i><span>Date &amp; Time</span></a></li>
-      <li class="<?=$isUpcharHosp ? 'active' : '';?>"><a href="<?=base_url();?>doctorpanel/upcharhospital"><i class="fa fa-building-o" aria-hidden="true"></i><span>Upchar Hospital</span></a></li>
+      <li class="<?=$isDateTime ? 'active' : '';?>">
+        <a href="<?=base_url('doctorpanel/datetime');?>"><i class="fa fa-clock-o"></i><span>Date &amp; Time</span></a>
+      </li>
+      <li class="<?=$isUpcharHosp ? 'active' : '';?>">
+        <a href="<?=base_url('doctorpanel/upcharhospital');?>"><i class="fa fa-building-o"></i><span>Upchar Hospital</span></a>
+      </li>
 
       <!-- News Management Submenu -->
-      <li class="nav-parent <?=$isNewsOpen ? 'active' : '';?>">
-        <a href="#"><i class="fa fa-newspaper-o" aria-hidden="true"></i><span>News Management</span><span class="fa arrow <?=$isNewsOpen ? 'active' : '';?>"></span></a>
-        <ul class="children <?=$isNewsOpen ? '' : 'collapse';?>" style="<?=$isNewsOpen ? 'display: block;' : '';?>">
-          <li class="<?=($seg2 == 'news') ? 'active' : '';?>"><a href="<?=base_url();?>doctorpanel/news"><i class="fa fa-plus-square-o" aria-hidden="true"></i><span>Post Article</span></a></li>
-          <li class="<?=($seg2 == 'managenews') ? 'active' : '';?>"><a href="<?=base_url();?>doctorpanel/managenews"><i class="fa fa-bullhorn" aria-hidden="true"></i><span>Manage News</span></a></li>
+      <li class="nav-item has-submenu nav-parent <?=$isNewsOpen ? 'active' : '';?>">
+        <a href="#" class="submenu-toggle">
+          <i class="fa fa-newspaper-o"></i><span>News Management</span>
+          <i class="fa fa-angle-right arrow-icon" style="<?=$isNewsOpen ? 'transform: rotate(90deg);' : '';?>"></i>
+        </a>
+        <ul class="children submenu <?=$isNewsOpen ? '' : 'collapse';?>" style="<?=$isNewsOpen ? 'display: block;' : 'display: none;';?>">
+          <li class="<?=($seg2 == 'news') ? 'active' : '';?>">
+            <a href="<?=base_url('doctorpanel/news');?>"><i class="fa fa-plus-square-o"></i><span>Post Article</span></a>
+          </li>
+          <li class="<?=($seg2 == 'managenews') ? 'active' : '';?>">
+            <a href="<?=base_url('doctorpanel/managenews');?>"><i class="fa fa-bullhorn"></i><span>Manage News</span></a>
+          </li>
         </ul>
       </li>
     </ul>
   </div>
-</div>
+</aside>
+
+<!-- BEGIN MAIN CONTENT (Direct Side-by-Side Flex Child, Z-Index: 1) -->
+<main class="main-content" id="content">
