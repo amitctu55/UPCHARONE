@@ -194,22 +194,27 @@
             <ul class="patient-nav-menu">
                 <li>
                     <a href="<?=base_url('myappointments');?>" class="<?=($this->uri->segment(1) == 'myappointments' || $this->uri->segment(1) == 'myappointents') ? 'active' : '';?>">
-                        <i class="fa fa-calendar"></i> Appointments
+                        <i class="fa fa-calendar"></i> Consultations &amp; Care
                     </a>
                 </li>
                 <li>
-                    <a href="<?=base_url('profile');?>" class="<?=($this->uri->segment(1) == 'profile') ? 'active' : '';?>">
-                        <i class="fa fa-id-card"></i> Medical Records &amp; Profile
+                    <a href="<?=base_url('wallet');?>" class="<?=($this->uri->segment(1) == 'wallet' || $this->uri->segment(1) == 'wallet_v2') ? 'active' : '';?>">
+                        <i class="fa fa-google-wallet" style="color: #f59e0b;"></i> Upchar Wallet &amp; Points
                     </a>
                 </li>
                 <li>
                     <a href="<?=base_url('mytest');?>" class="<?=($this->uri->segment(1) == 'mytest' || $this->uri->segment(1) == 'diagnostic') ? 'active' : '';?>">
-                        <i class="fa fa-flask"></i> Lab Tests &amp; Diagnostics
+                        <i class="fa fa-flask" style="color: #00a896;"></i> Lab Tests &amp; Diagnostics
+                    </a>
+                </li>
+                <li>
+                    <a href="<?=base_url('profile');?>" class="<?=($this->uri->segment(1) == 'profile') ? 'active' : '';?>">
+                        <i class="fa fa-id-card"></i> Medical Profile &amp; History
                     </a>
                 </li>
                 <li>
                     <a href="<?=base_url('doctors');?>" class="<?=($this->uri->segment(1) == 'doctors') ? 'active' : '';?>">
-                        <i class="fa fa-user-md"></i> Doctor Consultations
+                        <i class="fa fa-user-md"></i> Find Doctors
                     </a>
                 </li>
                 <li>

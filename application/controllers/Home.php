@@ -227,14 +227,40 @@ class Home extends CI_Controller
 
 	public function manageappointment()
 	{
-		$user_id = $this->session->userdata('userid') ?: $this->session->userdata('user_id');
+		$user_id = $this->session->userdata('userid') ?: $this->session->userdata('user_id') ?: $this->session->userdata('USERID');
 		if (!$user_id) {
 			redirect('login');
 			return;
 		}
 
 		$this->load->model('Appointment_model');
+		$this->load->model('Wallet_model');
+		$this->load->model('Referral_model');
+		$this->load->model('Payment_model');
+
+		$user_row = $this->db->get_where('userlogin', array('USERID' => $user_id))->row_array();
+		$user_mobile = $user_row ? $user_row['MOBILE'] : '';
+
+		$data['user_data']         = $user_row;
 		$data['appointments_data'] = $this->Appointment_model->get_user_appointments($user_id);
+		$data['wallet']            = $this->Wallet_model->get_or_create_wallet($user_id);
+		$data['wallet_history']    = $this->Wallet_model->get_transactions($user_id, 20, 0);
+		$data['point_ratio']       = floatval($this->Wallet_model->get_setting('point_to_inr_ratio', 1.00));
+		$data['cashback_pct']      = floatval($this->Wallet_model->get_setting('cashback_percentage', 5.00));
+		$data['referral_code']     = $this->Referral_model->get_or_create_code($user_id);
+		$data['payments_data']     = $this->Payment_model->get_orders_by_user($user_id, 20, 0);
+
+		// Fetch Lab Bookings
+		$this->db->from('path_book');
+		$this->db->group_start();
+		$this->db->where('user_id', $user_id);
+		if (!empty($user_mobile)) {
+			$this->db->or_where('patient_mobile', $user_mobile);
+		}
+		$this->db->group_end();
+		$this->db->order_by('booking_id', 'DESC');
+		$this->db->limit(20);
+		$data['lab_bookings'] = $this->db->get()->result_array();
 
 		$this->load->view('patient_header', $data);
 		$this->load->view('manageappointment', $data);
