@@ -1262,6 +1262,19 @@ public function gallery()
 				'upi_id'         => trim($this->input->post('upi_id', TRUE))
 			);
 			$this->db->where('id', $doctor_id)->update('profile_dr', $bdata);
+
+			// Sync to facility_payout_accounts
+			$this->load->model('Payout_model');
+			$this->Payout_model->save_facility_payout_account('doctor', $doctor_id, array(
+				'account_type'   => 'BANK_ACCOUNT',
+				'account_name'   => $bdata['account_holder'],
+				'bank_name'      => $bdata['bank_name'],
+				'account_number' => $bdata['account_no'],
+				'ifsc_code'      => $bdata['ifsc'],
+				'vpa'            => $bdata['upi_id'],
+				'is_verified'    => 1
+			));
+
 			$this->session->set_flashdata('flashmsg', "<div class='alert alert-success'><strong>Success!</strong> Bank account and payout settlement details updated successfully.</div>");
 			redirect('doctorpanel/earnings?tab=payment');
 			return;

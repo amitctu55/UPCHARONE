@@ -89,6 +89,43 @@ $pageurl3 = $this->uri->segment(3);
         </ul>
       </li>
 
+      <!-- Payment & Wallet Control Center (Razorpay & Settlements) -->
+      <li class="treeview <?php if($pageurl1=='admin_payment' || $pageurl1=='payout'){ ?> active menu-open <?php }?>">
+        <a href="<?=base_url('admin_payment');?>">
+          <i class="fa fa-credit-card" style="color: #10b981;"></i> <span>Payment &amp; Settlements</span>
+          <span class="pull-right-container">
+            <i class="fa fa-angle-left pull-right"></i>
+          </span>
+        </a>
+        <ul class="treeview-menu" <?php if($pageurl1=='admin_payment' || $pageurl1=='payout'){ ?> style="display: block;" <?php }?>>
+          <li class="<?php if($pageurl1=='admin_payment' && ($this->input->get('tab')=='dashboard' || empty($this->input->get('tab')))){ ?>active<?php }?>">
+            <a href="<?=base_url('admin_payment?tab=dashboard');?>">
+              <i class="fa fa-pie-chart"></i> Gateway Overview
+            </a>
+          </li>
+          <li class="<?php if($pageurl1=='admin_payment' && $this->input->get('tab')=='transactions'){ ?>active<?php }?>">
+            <a href="<?=base_url('admin_payment?tab=transactions');?>">
+              <i class="fa fa-list-alt"></i> Payment Orders
+            </a>
+          </li>
+          <li class="<?php if($pageurl1=='admin_payment' && $this->input->get('tab')=='wallet_settings'){ ?>active<?php }?>">
+            <a href="<?=base_url('admin_payment?tab=wallet_settings');?>">
+              <i class="fa fa-gift"></i> Wallet &amp; Points Rules
+            </a>
+          </li>
+          <li class="<?php if($pageurl1=='admin_payment' && $this->input->get('tab')=='payouts'){ ?>active<?php }?>">
+            <a href="<?=base_url('admin_payment?tab=payouts');?>">
+              <i class="fa fa-bank"></i> RazorpayX Payouts
+            </a>
+          </li>
+          <li class="<?php if($pageurl1=='admin_payment' && $this->input->get('tab')=='refunds'){ ?>active<?php }?>">
+            <a href="<?=base_url('admin_payment?tab=refunds');?>">
+              <i class="fa fa-undo"></i> Refunds Management
+            </a>
+          </li>
+        </ul>
+      </li>
+
       <!-- System Settings Portal -->
       <li class="treeview <?php if($pageurl1=='settings'){ ?> active menu-open <?php }?>">
         <a href="<?=base_url('settings');?>">

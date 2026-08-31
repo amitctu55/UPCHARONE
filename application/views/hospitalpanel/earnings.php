@@ -453,6 +453,9 @@
             <button type="button" class="revenue-tab-btn" id="tabInvoicesBtn" onclick="switchRevenueTab('invoices')">
                 <i class="fa fa-file-text-o"></i> Monthly GST Invoices &amp; ITC Filing
             </button>
+            <button type="button" class="revenue-tab-btn" id="tabBankBtn" onclick="switchRevenueTab('bank')">
+                <i class="fa fa-bank"></i> Bank &amp; RazorpayX Settlement Account
+            </button>
         </div>
 
         <!-- TAB 1: FINANCIAL LEDGER -->
@@ -522,64 +525,48 @@
                     <table class="table custom-ledger-tbl">
                         <thead>
                             <tr>
-                                <th>Transaction Code</th>
-                                <th>Category</th>
-                                <th>Patient Name</th>
-                                <th style="text-align: right;">Gross Bill</th>
-                                <th style="text-align: right;">Upchar Fee (<?=$custom_rate;?>%)</th>
+                                <th>Txn Ref</th>
+                                <th>Date</th>
+                                <th>Category / Encounter</th>
+                                <th>Patient</th>
+                                <th style="text-align: right;">Gross Billed</th>
+                                <th style="text-align: right;">Upchar Fee (<?=number_format($custom_rate,1);?>%)</th>
                                 <th style="text-align: right;">GST (18%)</th>
-                                <th style="text-align: right;">Total Deduction</th>
-                                <th style="text-align: right;">Net Hospital Share</th>
+                                <th style="text-align: right;">Net Share</th>
                                 <th style="text-align: center;">Payout Status</th>
-                                <th>Timestamp</th>
                             </tr>
                         </thead>
                         <tbody>
                             <?php if(!empty($transactions)): ?>
                                 <?php foreach($transactions as $t): ?>
                                     <tr>
+                                        <td><code><?=$t->txn_code;?></code></td>
+                                        <td><?=date('d-M-Y H:i', strtotime($t->created_at));?></td>
                                         <td>
-                                            <strong style="color: #043d5b;"><?=$t->txn_code;?></strong>
+                                            <strong><?=$t->category;?></strong>
+                                            <?php if($t->encounter_id): ?>
+                                                <br><small class="text-muted">#ENC-<?=$t->encounter_id;?></small>
+                                            <?php endif; ?>
                                         </td>
                                         <td>
-                                            <span class="badge" style="background: #e0f2fe; color: #0284c7; font-weight: 700;">
-                                                <?=$t->category;?>
-                                            </span>
+                                            <?=$t->patient_name;?><br>
+                                            <small class="text-muted"><?=$t->patient_mobile;?></small>
                                         </td>
-                                        <td>
-                                            <strong style="color: #0f172a;"><?=$t->patient_name;?></strong>
-                                        </td>
-                                        <td style="text-align: right; font-weight: 700; color: #0f172a;">
-                                            ₹<?=number_format($t->gross_amount, 2);?>
-                                        </td>
-                                        <td style="text-align: right; color: #64748b;">
-                                            ₹<?=number_format($t->platform_fee_amount, 2);?>
-                                        </td>
-                                        <td style="text-align: right; color: #64748b;">
-                                            ₹<?=number_format($t->gst_amount, 2);?>
-                                        </td>
-                                        <td style="text-align: right; color: #ef4444; font-weight: 600;">
-                                            -₹<?=number_format($t->total_platform_deduction, 2);?>
-                                        </td>
-                                        <td style="text-align: right; font-weight: 800; color: #10b981; font-size: 14px;">
-                                            ₹<?=number_format($t->net_facility_share, 2);?>
-                                        </td>
+                                        <td style="text-align: right; font-weight: 600;">₹<?=number_format($t->gross_amount, 2);?></td>
+                                        <td style="text-align: right; color: #dc2626;">- ₹<?=number_format($t->platform_fee_amount, 2);?></td>
+                                        <td style="text-align: right; color: #64748b;">- ₹<?=number_format($t->gst_amount, 2);?></td>
+                                        <td style="text-align: right; font-weight: 700; color: #10b981;">₹<?=number_format($t->net_facility_share, 2);?></td>
                                         <td style="text-align: center;">
                                             <span class="badge-status <?=$t->payout_status;?>">
-                                                <i class="fa fa-circle" style="font-size: 7px;"></i>
-                                                <?=($t->payout_status === 'processed') ? 'Settled' : 'Pending';?>
+                                                <?=ucfirst($t->payout_status);?>
                                             </span>
-                                        </td>
-                                        <td style="font-size: 12px; color: #64748b; white-space: nowrap;">
-                                            <?=date('d M Y, h:i A', strtotime($t->created_at));?>
                                         </td>
                                     </tr>
                                 <?php endforeach; ?>
                             <?php else: ?>
                                 <tr>
-                                    <td colspan="10" class="text-center" style="padding: 40px; color: #94a3b8;">
-                                        <i class="fa fa-inbox" style="font-size: 36px; margin-bottom: 10px; display: block;"></i>
-                                        No financial transactions found for the selected period.
+                                    <td colspan="9" class="text-center" style="padding: 30px; color: #94a3b8;">
+                                        No financial transactions found for the selected criteria.
                                     </td>
                                 </tr>
                             <?php endif; ?>
@@ -589,53 +576,29 @@
             </div>
         </div>
 
-        <!-- TAB 2: MONTHLY GST INVOICES & ITC -->
+        <!-- TAB 2: MONTHLY GST INVOICES -->
         <div id="invoicesSection" style="display: none;">
-            
-            <div class="earn-header-card" style="margin-bottom: 20px;">
-                <div>
-                    <h3 style="font-size: 16px; font-weight: 800; color: #043d5b; margin: 0 0 4px 0;">
-                        <i class="fa fa-file-text" style="color: #00a896;"></i> Monthly Tax Invoices for Platform Fees
-                    </h3>
-                    <p style="font-size: 12.5px; color: #64748b; margin: 0;">
-                        Download GST Invoices raised by Upchar Health Technologies for Input Tax Credit (ITC) claiming under GST laws.
-                    </p>
+            <div class="table-card" style="margin-bottom: 20px;">
+                <div class="table-hdr">
+                    <h3><i class="fa fa-file-text"></i> Monthly Platform Fee Tax Invoices</h3>
                 </div>
-                <div>
-                    <?php echo form_open("hospitalpanel/generate_monthly_invoice", 'style="display: inline-flex; gap: 8px; align-items: center;"');?>
-                        <input type="hidden" name="<?=$this->security->get_csrf_token_name();?>" value="<?=$this->security->get_csrf_hash();?>">
-                        <select name="billing_month" class="form-control" style="height: 38px; width: 140px; border-radius: 8px;">
-                            <?php for($i=0; $i<=5; $i++): 
-                                $bm = date('Y-m', strtotime("-$i month"));
-                            ?>
-                                <option value="<?=$bm;?>"><?=date('F Y', strtotime("-$i month"));?></option>
-                            <?php endfor; ?>
-                        </select>
-                        <button type="submit" class="btn btn-primary" style="background: #00a896; border-color: #00a896; font-weight: 700; height: 38px; border-radius: 8px;">
-                            <i class="fa fa-plus-circle"></i> Generate Tax Invoice
-                        </button>
-                    <?php echo form_close(); ?>
-                </div>
-            </div>
-
-            <div class="table-card">
                 <div class="table-responsive">
                     <table class="table custom-ledger-tbl">
                         <thead>
                             <tr>
                                 <th>Invoice Number</th>
                                 <th>Billing Month</th>
-                                <th style="text-align: right;">Taxable Platform Fee</th>
+                                <th style="text-align: right;">Taxable Value</th>
                                 <th style="text-align: right;">CGST (9%)</th>
                                 <th style="text-align: right;">SGST (9%)</th>
-                                <th style="text-align: right;">Total Invoice Amount</th>
+                                <th style="text-align: right;">Total Invoice</th>
                                 <th>Generated Date</th>
-                                <th style="text-align: center;">Action</th>
+                                <th style="text-align: center;">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <?php if(!empty($invoices)): ?>
-                                <?php foreach($invoices as $inv): ?>
+                            <?php if(!empty($gst_invoices)): ?>
+                                <?php foreach($gst_invoices as $inv): ?>
                                     <tr>
                                         <td>
                                             <strong style="color: #043d5b;"><?=$inv->invoice_number;?></strong>
@@ -671,7 +634,7 @@
                                 <tr>
                                     <td colspan="8" class="text-center" style="padding: 40px; color: #94a3b8;">
                                         <i class="fa fa-file-text-o" style="font-size: 36px; margin-bottom: 10px; display: block;"></i>
-                                        No GST Invoices generated yet. Select a month above and click "Generate Tax Invoice".
+                                        No GST Invoices generated yet. Invoices are generated automatically at the end of each billing cycle.
                                     </td>
                                 </tr>
                             <?php endif; ?>
@@ -679,7 +642,73 @@
                     </table>
                 </div>
             </div>
+        </div>
 
+        <!-- TAB 3: BANK & SETTLEMENT ACCOUNT -->
+        <?php 
+        $hosp_payout_acc = $this->db->get_where('facility_payout_accounts', array('facility_type' => 'hospital', 'facility_id' => $facility_id))->row_array();
+        ?>
+        <div id="bankSection" style="display: none;">
+            <div class="table-card">
+                <div class="table-hdr">
+                    <h3><i class="fa fa-university"></i> Bank Account &amp; UPI Settlement Setup (RazorpayX)</h3>
+                    <div>
+                        <span class="badge" style="background: <?=!empty($hosp_payout_acc['is_verified']) ? '#10b981' : '#f59e0b';?>; color: #fff; font-size: 12px; padding: 5px 12px; border-radius: 12px;">
+                            <?=!empty($hosp_payout_acc['is_verified']) ? '<i class="fa fa-check"></i> Account Verified' : '<i class="fa fa-clock-o"></i> Verification Pending';?>
+                        </span>
+                    </div>
+                </div>
+                <div style="padding: 24px;">
+                    <div id="hosp-payout-alert" style="display: none; padding: 12px 16px; border-radius: 8px; margin-bottom: 20px;"></div>
+
+                    <form id="form-hosp-payout" onsubmit="saveHospPayoutAccount(event)">
+                        <input type="hidden" name="facility_type" value="hospital">
+                        <input type="hidden" name="facility_id" value="<?=$facility_id;?>">
+                        <input type="hidden" name="account_type" value="BANK_ACCOUNT">
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group" style="margin-bottom: 18px;">
+                                    <label style="font-weight: 700; font-size: 13px; color: #334155; margin-bottom: 6px; display: block;">Hospital Legal Entity / Account Holder Name *</label>
+                                    <input type="text" name="account_name" class="form-control" value="<?=htmlspecialchars($hosp_payout_acc['account_name'] ?? ($hospital->name ?? ''));?>" placeholder="e.g. City Hospital Healthcare Pvt Ltd" style="height: 44px; border-radius: 8px;" required>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="form-group" style="margin-bottom: 18px;">
+                                    <label style="font-weight: 700; font-size: 13px; color: #334155; margin-bottom: 6px; display: block;">Bank Name *</label>
+                                    <input type="text" name="bank_name" class="form-control" value="<?=htmlspecialchars($hosp_payout_acc['bank_name'] ?? '');?>" placeholder="e.g. HDFC Bank, ICICI Bank, SBI" style="height: 44px; border-radius: 8px;" required>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="form-group" style="margin-bottom: 18px;">
+                                    <label style="font-weight: 700; font-size: 13px; color: #334155; margin-bottom: 6px; display: block;">Bank Account Number *</label>
+                                    <input type="text" name="account_number" class="form-control" value="<?=htmlspecialchars($hosp_payout_acc['account_number'] ?? '');?>" placeholder="Enter current / business account number" style="height: 44px; border-radius: 8px;" required>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="form-group" style="margin-bottom: 18px;">
+                                    <label style="font-weight: 700; font-size: 13px; color: #334155; margin-bottom: 6px; display: block;">IFSC Code *</label>
+                                    <input type="text" name="ifsc_code" class="form-control" value="<?=htmlspecialchars($hosp_payout_acc['ifsc_code'] ?? '');?>" placeholder="e.g. HDFC0001234" style="height: 44px; border-radius: 8px; text-transform: uppercase;" required>
+                                </div>
+                            </div>
+
+                            <div class="col-md-12">
+                                <div class="form-group" style="margin-bottom: 24px;">
+                                    <label style="font-weight: 700; font-size: 13px; color: #334155; margin-bottom: 6px; display: block;">Hospital UPI VPA (Optional)</label>
+                                    <input type="text" name="vpa" class="form-control" value="<?=htmlspecialchars($hosp_payout_acc['vpa'] ?? '');?>" placeholder="e.g. cityhospital@icici" style="height: 44px; border-radius: 8px;">
+                                </div>
+                            </div>
+                        </div>
+
+                        <button type="submit" id="btn-save-hosp-payout" class="btn btn-primary" style="background: #00a896; border-color: #00a896; padding: 10px 24px; font-weight: 700; border-radius: 8px;">
+                            <i class="fa fa-save"></i> Save Settlement Bank Account
+                        </button>
+                    </form>
+                </div>
+            </div>
         </div>
 
     </div>
@@ -692,20 +721,75 @@ function switchRevenueTab(tab) {
     if (tab === 'ledger') {
         $('#tabLedgerBtn').addClass('active');
         $('#tabInvoicesBtn').removeClass('active');
+        $('#tabBankBtn').removeClass('active');
         $('#ledgerSection').show();
         $('#invoicesSection').hide();
-    } else {
+        $('#bankSection').hide();
+    } else if (tab === 'invoices') {
         $('#tabInvoicesBtn').addClass('active');
         $('#tabLedgerBtn').removeClass('active');
+        $('#tabBankBtn').removeClass('active');
         $('#invoicesSection').show();
         $('#ledgerSection').hide();
+        $('#bankSection').hide();
+    } else if (tab === 'bank') {
+        $('#tabBankBtn').addClass('active');
+        $('#tabLedgerBtn').removeClass('active');
+        $('#tabInvoicesBtn').removeClass('active');
+        $('#bankSection').show();
+        $('#ledgerSection').hide();
+        $('#invoicesSection').hide();
     }
+}
+
+function saveHospPayoutAccount(e) {
+    e.preventDefault();
+    const btn = document.getElementById('btn-save-hosp-payout');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Saving...';
+
+    const formData = new FormData(document.getElementById('form-hosp-payout'));
+    const alertBox = document.getElementById('hosp-payout-alert');
+
+    fetch('<?=base_url("payout/add_account");?>', {
+        method: 'POST',
+        body: formData
+    })
+    .then(res => res.json())
+    .then(data => {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa fa-save"></i> Save Settlement Bank Account';
+        if (data.status === 'success') {
+            alertBox.style.display = 'block';
+            alertBox.style.background = '#dcfce7';
+            alertBox.style.color = '#15803d';
+            alertBox.style.border = '1px solid #bbf7d0';
+            alertBox.innerHTML = '<i class="fa fa-check-circle"></i> ' + data.message;
+        } else {
+            alertBox.style.display = 'block';
+            alertBox.style.background = '#fee2e2';
+            alertBox.style.color = '#b91c1c';
+            alertBox.style.border = '1px solid #fecaca';
+            alertBox.innerHTML = '<i class="fa fa-exclamation-circle"></i> ' + data.message;
+        }
+    })
+    .catch(err => {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa fa-save"></i> Save Settlement Bank Account';
+        alertBox.style.display = 'block';
+        alertBox.style.background = '#fee2e2';
+        alertBox.style.color = '#b91c1c';
+        alertBox.style.border = '1px solid #fecaca';
+        alertBox.innerHTML = '<i class="fa fa-exclamation-circle"></i> Network error. Please try again.';
+    });
 }
 
 // Auto open invoices tab if hash is #invoices
 $(document).ready(function() {
     if (window.location.hash === '#invoices') {
         switchRevenueTab('invoices');
+    } else if (window.location.hash === '#bank') {
+        switchRevenueTab('bank');
     }
 });
 </script>
