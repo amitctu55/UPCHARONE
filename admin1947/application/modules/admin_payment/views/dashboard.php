@@ -251,10 +251,15 @@
                 <?php if ($active_tab === 'payouts'): ?>
                 <div class="box box-success">
                     <div class="box-header with-border">
-                        <h3 class="box-title"><i class="fa fa-bank"></i> Provider Balances & Settlement Batches</h3>
-                        <div class="box-tools pull-right">
+                        <h3 class="box-title"><i class="fa fa-bank"></i> Provider Balances &amp; Pending Settlements</h3>
+                        <div class="box-tools pull-right" style="display: flex; gap: 8px;">
+                            <?php if (!empty($pending_settlements)): ?>
+                                <a href="<?php echo base_url('admin_payment/trigger_payout_batch'); ?>" onclick="return confirm('Trigger weekly automated settlement batch now for all verified provider accounts?');" class="btn btn-sm btn-success">
+                                    <i class="fa fa-paper-plane"></i> Trigger Weekly Batch Disbursal
+                                </a>
+                            <?php endif; ?>
                             <a href="<?php echo base_url('payout/dashboard'); ?>" target="_blank" class="btn btn-sm btn-primary">
-                                <i class="fa fa-external-link"></i> Open Dedicated Settlement Portal
+                                <i class="fa fa-external-link"></i> Provider Clearinghouse Portal
                             </a>
                         </div>
                     </div>
@@ -262,9 +267,9 @@
                         <table class="table table-bordered table-striped">
                             <thead>
                                 <tr>
-                                    <th>Facility</th>
-                                    <th>ID</th>
-                                    <th>Name</th>
+                                    <th>Facility Type</th>
+                                    <th>Provider ID</th>
+                                    <th>Provider Legal Name</th>
                                     <th>Completed Encounters</th>
                                     <th>Pending Net Share (INR)</th>
                                 </tr>
@@ -275,14 +280,61 @@
                                     <tr>
                                         <td><span class="label label-info"><?php echo strtoupper($ps['facility_type']); ?></span></td>
                                         <td>#<?php echo $ps['facility_id']; ?></td>
-                                        <td><strong><?php echo htmlspecialchars($ps['facility_name'] ?: 'Provider ' . $ps['facility_id']); ?></strong></td>
+                                        <td><strong><?php echo htmlspecialchars($ps['facility_name'] ?: 'Provider #' . $ps['facility_id']); ?></strong></td>
                                         <td><?php echo $ps['total_txns']; ?> Encounters</td>
                                         <td class="text-green"><strong>₹<?php echo number_format($ps['total_pending_amount'], 2); ?></strong></td>
                                     </tr>
                                     <?php endforeach; ?>
                                 <?php else: ?>
                                     <tr>
-                                        <td colspan="5" class="text-center text-muted">All provider earnings have been disbursed!</td>
+                                        <td colspan="5" class="text-center text-muted" style="padding: 20px;">
+                                            <i class="fa fa-check-circle text-green" style="font-size: 20px;"></i><br>
+                                            All provider earnings are up-to-date and settled.
+                                        </td>
+                                    </tr>
+                                <?php endif; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="box box-default">
+                    <div class="box-header with-border">
+                        <h3 class="box-title"><i class="fa fa-history"></i> Historical Payout Settlement Batches</h3>
+                    </div>
+                    <div class="box-body table-responsive">
+                        <table class="table table-bordered table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Batch Ref</th>
+                                    <th>Date</th>
+                                    <th>Facilities</th>
+                                    <th>Total Disbursed</th>
+                                    <th>Successful</th>
+                                    <th>Failed / On-Hold</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php if (!empty($payout_batches)): ?>
+                                    <?php foreach ($payout_batches as $pb): ?>
+                                    <tr>
+                                        <td><code><?php echo $pb['batch_ref']; ?></code></td>
+                                        <td><?php echo date('d M Y', strtotime($pb['batch_date'])); ?></td>
+                                        <td><?php echo $pb['total_facilities']; ?> Facilities</td>
+                                        <td><strong>₹<?php echo number_format($pb['total_amount'], 2); ?></strong></td>
+                                        <td class="text-green"><?php echo $pb['successful_payouts']; ?></td>
+                                        <td class="text-red"><?php echo $pb['failed_payouts']; ?></td>
+                                        <td>
+                                            <span class="label label-<?php echo ($pb['status'] === 'COMPLETED') ? 'success' : (($pb['status'] === 'PARTIAL') ? 'warning' : 'info'); ?>">
+                                                <?php echo $pb['status']; ?>
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    <?php endforeach; ?>
+                                <?php else: ?>
+                                    <tr>
+                                        <td colspan="7" class="text-center text-muted">No historical settlement batches recorded yet.</td>
                                     </tr>
                                 <?php endif; ?>
                             </tbody>

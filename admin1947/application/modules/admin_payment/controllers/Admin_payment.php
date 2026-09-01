@@ -123,4 +123,15 @@ class Admin_payment extends CI_Controller {
         fclose($output);
         exit;
     }
+
+    /**
+     * POST: Trigger Weekly Payout Batch for Verified Provider Accounts
+     */
+    public function trigger_payout_batch() {
+        $admin_id = $this->session->userdata('adminuserid') ?: $this->session->userdata('userid') ?: 1;
+        $res = $this->Payout_model->create_payout_batch($admin_id, 'Batch Triggered via Super Admin Panel');
+        
+        $this->session->set_flashdata('flashmsg', '<div class="alert alert-success"><strong>Batch Disbursal Completed!</strong> Batch Ref: ' . $res['batch_ref'] . ' (Total: ₹' . number_format($res['total_amount'], 2) . ', Successful: ' . $res['successful'] . ', Failed/On-Hold: ' . $res['failed'] . ').</div>');
+        redirect(base_url('admin_payment?tab=payouts'));
+    }
 }
