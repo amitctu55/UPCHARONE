@@ -13,6 +13,7 @@ class Payment extends CI_Controller {
         $this->load->model('Payment_model');
         $this->load->model('Wallet_model');
         $this->load->model('Referral_model');
+        $this->load->model('Refund_model');
         $this->load->model('Financial_Model');
         $this->load->library('Razorpay_lib');
         $this->load->helper(array('url', 'form'));
@@ -44,9 +45,13 @@ class Payment extends CI_Controller {
         $aid       = $this->session->userdata('AppointmentCheckout');
 
         $purpose      = $this->input->get_post('purpose') ?: ($aid ? 'APPOINTMENT' : 'WALLET_RECHARGE');
-        $reference_id = $this->input->get_post('reference_id') ?: $aid;
-        $amount       = floatval($this->input->get_post('amount') ?: (isset($securePay['Amount']) ? $securePay['Amount'] : 500.00));
-        $item_name    = $this->input->get_post('item_name') ?: (isset($securePay['Service']) ? $securePay['Service'] : 'Doctor OPD Consultation');
+        $reference_id = $this->input->get_post('reference_id') ?: ($aid ?: ('UPCH-' . date('YmdHis')));
+        $amount       = floatval($this->input->get_post('amount') ?: (isset($securePay['Amount']) ? $securePay['Amount'] : 100.00));
+        
+        $defaultItemName = ($purpose === 'WALLET_RECHARGE') 
+            ? 'Upchar Points Wallet Recharge' 
+            : (isset($securePay['Service']) ? $securePay['Service'] : 'Doctor OPD Consultation');
+        $item_name    = $this->input->get_post('item_name') ?: $defaultItemName;
 
         $user_points  = $this->Wallet_model->get_balance($userId);
         $point_ratio  = floatval($this->Wallet_model->get_setting('point_to_inr_ratio', 1.00));
@@ -81,7 +86,7 @@ class Payment extends CI_Controller {
         $amount        = floatval($this->input->post('amount'));
         $purpose       = $this->input->post('purpose') ?: 'APPOINTMENT';
         $reference_id  = $this->input->post('reference_id') ?: null;
-        $points_to_use = floatval($this->input->post('wallet_points_to_use') ?: 0);
+        $points_to_use = ($purpose === 'WALLET_RECHARGE') ? 0 : floatval($this->input->post('wallet_points_to_use') ?: 0);
 
         if ($amount <= 0) {
             echo json_encode(array('status' => 'error', 'message' => 'Invalid order amount.'));
@@ -361,11 +366,71 @@ class Payment extends CI_Controller {
 
             // Award Referral Bonus if this is referee's first booking
             $this->Referral_model->complete_first_booking_reward($userId);
+        } else if ($purpose === 'LAB_TEST' && $ref_id) {
+            // Update pathology booking record
+            $this->db->where('booking_id', $ref_id)->update('path_book', array(
+                'payment_status' => '1',
+                'payment_mode'   => 'RAZORPAY',
+                'txn_id'         => $order['internal_order_ref'],
+                'pay_date'       => date('Y-m-d H:i:s'),
+                'status'         => '1'
+            ));
+
+            // Award Cashback Points
+            $cashback_pct = floatval($this->Wallet_model->get_setting('cashback_percentage', 5.00));
+            if ($cashback_pct > 0) {
+                $cashback_pts = round(($amount * ($cashback_pct / 100)), 2);
+                if ($cashback_pts > 0) {
+                    $this->Wallet_model->credit_points(
+                        $userId,
+                        $cashback_pts,
+                        'LABTEST_CASHBACK',
+                        $ref_id,
+                        'Cashback reward for Pathology Booking #' . $ref_id,
+                        'WALLET'
+                    );
+                }
+            }
+        } else if ($purpose === 'MEDICART' && $ref_id) {
+            // Update Pharmacy / Medicine order record
+            $this->db->where('order_id', $ref_id)->update('orders', array(
+                'payment_status' => 'PAID',
+                'payment_mode'   => 'RAZORPAY',
+                'txn_id'         => $order['internal_order_ref'],
+                'updated_at'     => date('Y-m-d H:i:s')
+            ));
         }
 
         // Clear session checkout tokens if any
         $this->session->unset_userdata('SecurePay');
         $this->session->unset_userdata('AppointmentCheckout');
+    }
+
+    /**
+     * Unified Payment Dashboard & Transaction History for Patient
+     */
+    public function history() {
+        $userId = $this->_get_user_id();
+        if (!$userId) {
+            $this->session->set_userdata('last_page', base_url('payment/history'));
+            $this->session->set_flashdata('flashmsg', '<div class="alert alert-warning">Please login to access your payment history.</div>');
+            redirect(base_url('login'));
+            return;
+        }
+
+        $data['user_id']        = $userId;
+        $data['user_data']      = $this->db->get_where('userlogin', array('USERID' => $userId))->row_array();
+        $data['orders']         = $this->Payment_model->get_orders_by_user($userId, 50, 0);
+        $data['wallet']         = $this->Wallet_model->get_or_create_wallet($userId);
+        $data['transactions']   = $this->Wallet_model->get_transactions($userId, 50, 0, 'ALL');
+        $data['refunds']        = $this->Refund_model->get_refunds(array('user_id' => $userId), 20, 0);
+        $data['referral_stats'] = $this->Referral_model->get_stats($userId);
+        $data['point_ratio']    = floatval($this->Wallet_model->get_setting('point_to_inr_ratio', 1.00));
+        $data['cashback_pct']   = floatval($this->Wallet_model->get_setting('cashback_percentage', 5.00));
+
+        $this->load->view('patient_header', $data);
+        $this->load->view('payment/history', $data);
+        $this->load->view('patient_footer');
     }
 
     /**

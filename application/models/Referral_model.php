@@ -12,6 +12,25 @@ class Referral_model extends CI_Model {
         $this->load->database();
         $this->load->model('Wallet_model');
         date_default_timezone_set("Asia/Kolkata");
+        $this->_ensure_tables();
+    }
+
+    private function _ensure_tables() {
+        $this->db->query("CREATE TABLE IF NOT EXISTS `user_referrals` (
+            `id` int(11) NOT NULL AUTO_INCREMENT,
+            `referrer_user_id` int(11) NOT NULL,
+            `referee_user_id` int(11) NOT NULL,
+            `referral_code` varchar(30) NOT NULL,
+            `points_given_referrer` decimal(10,2) NOT NULL DEFAULT 0.00,
+            `points_given_referee` decimal(10,2) NOT NULL DEFAULT 0.00,
+            `status` enum('PENDING','COMPLETED') NOT NULL DEFAULT 'PENDING',
+            `created_at` datetime NOT NULL,
+            `completed_at` datetime DEFAULT NULL,
+            PRIMARY KEY (`id`),
+            KEY `idx_referrer` (`referrer_user_id`),
+            KEY `idx_referee` (`referee_user_id`),
+            KEY `idx_referral_code` (`referral_code`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
     }
 
     /**

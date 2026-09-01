@@ -169,6 +169,95 @@ $pageurl3 = $this->uri->segment(3);
         </a>
       </li>
 
+      <li class="header">ENTERPRISE MANAGEMENT</li>
+
+      <!-- HR & Staff Management -->
+      <li class="treeview <?php if($pageurl1=='hr'){ ?> active menu-open <?php }?>">
+        <a href="<?=base_url('../hr/dashboard');?>" target="_blank">
+          <i class="fa fa-users" style="color: #38bdf8;"></i> <span>HR &amp; Staff Suite</span>
+          <span class="pull-right-container">
+            <i class="fa fa-angle-left pull-right"></i>
+          </span>
+        </a>
+        <ul class="treeview-menu">
+          <li><a href="<?=base_url('../hr/dashboard');?>" target="_blank"><i class="fa fa-tachometer"></i> HR Command Hub</a></li>
+          <li><a href="<?=base_url('../hr/employees');?>" target="_blank"><i class="fa fa-user-plus"></i> Staff Directory</a></li>
+          <li><a href="<?=base_url('../hr/attendance');?>" target="_blank"><i class="fa fa-calendar-check-o"></i> Daily Attendance Roster</a></li>
+          <li><a href="<?=base_url('../hr/leaves');?>" target="_blank"><i class="fa fa-calendar-times-o"></i> Leave Approvals Desk</a></li>
+          <li><a href="<?=base_url('../hr/payroll');?>" target="_blank"><i class="fa fa-money"></i> Monthly Payroll Engine</a></li>
+        </ul>
+      </li>
+
+      <!-- Logistics & Sample Collectors -->
+      <li class="treeview <?php if($pageurl1=='collector' || $pageurl1=='operations'){ ?> active menu-open <?php }?>">
+        <a href="<?=base_url('../operations/dashboard');?>" target="_blank">
+          <i class="fa fa-truck" style="color: #2dd4bf;"></i> <span>Logistics &amp; Field Desk</span>
+          <span class="pull-right-container">
+            <i class="fa fa-angle-left pull-right"></i>
+          </span>
+        </a>
+        <ul class="treeview-menu">
+          <li><a href="<?=base_url('../operations/dashboard');?>" target="_blank"><i class="fa fa-dashboard"></i> Operations Hub</a></li>
+          <li><a href="<?=base_url('../collector/dashboard');?>" target="_blank"><i class="fa fa-motorcycle"></i> Collector Pickup Queue</a></li>
+          <li><a href="<?=base_url('../operations/handoffs');?>" target="_blank"><i class="fa fa-flask"></i> Lab Sample Handoffs</a></li>
+          <li><a href="<?=base_url('../operations/expenses');?>" target="_blank"><i class="fa fa-receipt"></i> Expense Claims Desk</a></li>
+          <li><a href="<?=base_url('../attendance/punch');?>" target="_blank"><i class="fa fa-camera"></i> GPS Attendance Punch</a></li>
+        </ul>
+      </li>
+
+      <!-- BDE CRM & Partner Acquisition -->
+      <li class="treeview <?php if($pageurl1=='crm'){ ?> active menu-open <?php }?>">
+        <a href="<?=base_url('../crm/dashboard');?>" target="_blank">
+          <i class="fa fa-handshake-o" style="color: #f43f5e;"></i> <span>BDE CRM &amp; Leads</span>
+          <span class="pull-right-container">
+            <i class="fa fa-angle-left pull-right"></i>
+          </span>
+        </a>
+        <ul class="treeview-menu">
+          <li><a href="<?=base_url('../crm/dashboard');?>" target="_blank"><i class="fa fa-line-chart"></i> Revenue Dashboard</a></li>
+          <li><a href="<?=base_url('../crm/leads');?>" target="_blank"><i class="fa fa-columns"></i> Kanban Lead Pipeline</a></li>
+        </ul>
+      </li>
+
+      <!-- Diagnostic Tests & Pathology Master -->
+      <li class="treeview <?php if($pageurl1=='doctor' && ($pageurl2=='pathology' || $pageurl2=='pathologytest')){ ?> active menu-open <?php }?>">
+        <a href="<?=base_url('doctor/pathology/assign_test');?>">
+          <i class="fa fa-heartbeat" style="color: #ec4899;"></i> <span>Pathology &amp; Tests</span>
+          <span class="pull-right-container">
+            <i class="fa fa-angle-left pull-right"></i>
+          </span>
+        </a>
+        <ul class="treeview-menu">
+          <li><a href="<?=base_url('doctor/pathology/assign_test');?>"><i class="fa fa-list"></i> Pathology Test Catalog</a></li>
+          <li><a href="<?=base_url('doctor/pathology/add');?>"><i class="fa fa-plus-circle"></i> Add Diagnostic Test</a></li>
+        </ul>
+      </li>
+
+      <!-- Patient & Social User Logins -->
+      <li class="treeview <?php if($pageurl1=='users' || $pageurl2=='userlogincreate'){ ?> active menu-open <?php }?>">
+        <a href="<?=base_url('users/userlogincreate/gmail_users');?>">
+          <i class="fa fa-user-circle" style="color: #6366f1;"></i> <span>Patient Logins</span>
+          <span class="pull-right-container">
+            <i class="fa fa-angle-left pull-right"></i>
+          </span>
+        </a>
+        <ul class="treeview-menu">
+          <li><a href="<?=base_url('users/userlogincreate/gmail_users');?>"><i class="fa fa-google" style="color: #ea4335;"></i> Google / Gmail Users</a></li>
+          <li><a href="<?=base_url('users/userlogincreate/website_users');?>"><i class="fa fa-globe"></i> Registered Web Users</a></li>
+          <li><a href="<?=base_url('users/userlogincreate/facebook_users');?>"><i class="fa fa-facebook-square" style="color: #1877f2;"></i> Facebook Users</a></li>
+        </ul>
+      </li>
+
+      <!-- Healthcare Sponsored Advertisements -->
+      <li class="<?php if($pageurl1=='doctor' && $pageurl2=='clinicreg' && $pageurl3=='advertisment'){ ?>active<?php }?>">
+        <a href="<?=base_url('doctor/clinicreg/advertisment');?>">
+          <i class="fa fa-bullhorn" style="color: #eab308;"></i> <span>Sponsored Ads Manager</span>
+          <span class="pull-right-container">
+            <small class="label pull-right bg-yellow">Promos</small>
+          </span>
+        </a>
+      </li>
+
       <!-- Master Sections with Dropdowns -->
       <?php if(!empty($section)){
         for($i=0; $i<count($section); $i++){ 

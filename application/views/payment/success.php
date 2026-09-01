@@ -1,235 +1,218 @@
 <?php defined('BASEPATH') OR exit('No direct script access allowed'); ?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Payment Successful — UPCHAR Healthcare</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background: linear-gradient(135deg, #f0fdfa 0%, #f8fafc 100%);
-            margin: 0;
-            padding: 40px 15px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            box-sizing: border-box;
-        }
 
-        .success-card {
-            background: #ffffff;
-            border-radius: 20px;
-            box-shadow: 0 20px 40px -15px rgba(13, 122, 110, 0.15);
-            max-width: 520px;
-            width: 100%;
-            padding: 40px 30px;
-            text-align: center;
-            border: 1px solid #e2e8f0;
-            position: relative;
-        }
+<style>
+    .payment-status-wrapper {
+        background: #f8fafc;
+        padding: 50px 15px 80px;
+        min-height: 75vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
 
-        .success-icon-wrapper {
-            width: 80px;
-            height: 80px;
-            background: #dcfce7;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 20px;
-            box-shadow: 0 0 0 10px #f0fdf4;
-            animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
+    .success-card {
+        background: #ffffff;
+        border-radius: 18px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+        max-width: 520px;
+        width: 100%;
+        padding: 40px 30px;
+        text-align: center;
+        border: 1px solid #e2e8f0;
+        margin: 0 auto;
+    }
 
-        .success-icon-wrapper i {
-            font-size: 38px;
-            color: #16a34a;
-        }
+    .success-icon-wrapper {
+        width: 76px;
+        height: 76px;
+        background: #dcfce7;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 18px;
+        box-shadow: 0 0 0 8px #f0fdf4;
+    }
 
-        @keyframes popIn {
-            0% { transform: scale(0); opacity: 0; }
-            100% { transform: scale(1); opacity: 1; }
-        }
+    .success-icon-wrapper i {
+        font-size: 36px;
+        color: #16a34a;
+    }
 
-        h1 {
-            font-size: 24px;
-            font-weight: 800;
-            color: #0f172a;
-            margin: 0 0 8px;
-        }
+    .success-title {
+        font-size: 22px;
+        font-weight: 800;
+        color: #0f172a;
+        margin: 0 0 6px;
+    }
 
-        p.subtitle {
-            color: #64748b;
-            font-size: 15px;
-            margin: 0 0 24px;
-        }
+    .success-sub {
+        color: #64748b;
+        font-size: 14px;
+        margin: 0 0 24px;
+    }
 
-        .details-box {
-            background: #f8fafc;
-            border-radius: 12px;
-            padding: 18px 20px;
-            margin-bottom: 24px;
-            text-align: left;
-            border: 1px solid #e2e8f0;
-        }
+    .order-details-box {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 16px 20px;
+        margin-bottom: 20px;
+        text-align: left;
+    }
 
-        .detail-row {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 10px;
-            font-size: 14px;
-        }
+    .detail-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 10px;
+        font-size: 13.5px;
+    }
 
-        .detail-row:last-child {
-            margin-bottom: 0;
-            border-top: 1px dashed #cbd5e1;
-            padding-top: 10px;
-            font-weight: 700;
-            font-size: 16px;
-            color: #0d7a6e;
-        }
+    .detail-row:last-child {
+        margin-bottom: 0;
+        padding-top: 10px;
+        border-top: 1px dashed #cbd5e1;
+        font-weight: 700;
+    }
 
-        .detail-label {
-            color: #64748b;
-        }
+    .detail-label {
+        color: #64748b;
+    }
 
-        .detail-value {
-            font-weight: 600;
-            color: #1e293b;
-        }
+    .detail-value {
+        color: #0f172a;
+        font-weight: 600;
+    }
 
-        .points-earned-banner {
-            background: linear-gradient(135deg, #fef3c7 0%, #fffbeb 100%);
-            border: 1px solid #fcd34d;
-            border-radius: 12px;
-            padding: 14px;
-            margin-bottom: 24px;
-            color: #92400e;
-            font-size: 14px;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-        }
+    .points-earned-banner {
+        background: #fef3c7;
+        border: 1px dashed #f59e0b;
+        color: #92400e;
+        border-radius: 10px;
+        padding: 12px;
+        font-size: 13px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        margin-bottom: 24px;
+    }
 
-        .btn-group {
-            display: flex;
-            gap: 12px;
-            flex-direction: column;
-        }
+    .btn-group-stacked {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
 
-        .btn-primary-action {
-            background: linear-gradient(135deg, #1ab5a0 0%, #0d7a6e 100%);
-            color: #ffffff;
-            text-decoration: none;
-            padding: 14px 20px;
-            border-radius: 10px;
-            font-weight: 700;
-            font-size: 15px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            transition: all 0.2s ease;
-        }
+    .btn-primary-action {
+        background: #00a896;
+        color: #ffffff !important;
+        text-decoration: none !important;
+        border-radius: 10px;
+        padding: 12px 20px;
+        font-size: 14.5px;
+        font-weight: 700;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        transition: all 0.2s;
+        box-shadow: 0 4px 12px rgba(0, 168, 150, 0.25);
+    }
 
-        .btn-primary-action:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(13, 122, 110, 0.25);
-            color: #ffffff;
-        }
+    .btn-primary-action:hover {
+        background: #008f80;
+        transform: translateY(-1px);
+    }
 
-        .btn-secondary-action {
-            background: #ffffff;
-            color: #475569;
-            border: 1px solid #cbd5e1;
-            text-decoration: none;
-            padding: 12px 20px;
-            border-radius: 10px;
-            font-weight: 600;
-            font-size: 14px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            transition: all 0.2s ease;
-        }
+    .btn-secondary-action {
+        background: #f1f5f9;
+        color: #334155 !important;
+        text-decoration: none !important;
+        border-radius: 10px;
+        padding: 11px 20px;
+        font-size: 14px;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        transition: all 0.2s;
+    }
 
-        .btn-secondary-action:hover {
-            background: #f1f5f9;
-            color: #1e293b;
-        }
-    </style>
-</head>
-<body>
+    .btn-secondary-action:hover {
+        background: #e2e8f0;
+    }
+</style>
 
-<div class="success-card">
-    <div class="success-icon-wrapper">
-        <i class="fa-solid fa-check"></i>
-    </div>
-
-    <h1>Payment Confirmed!</h1>
-    <p class="subtitle">Thank you. Your transaction has been securely processed.</p>
-
-    <div class="details-box">
-        <div class="detail-row">
-            <span class="detail-label">Order Ref:</span>
-            <span class="detail-value"><?php echo htmlspecialchars($order['internal_order_ref']); ?></span>
+<div class="payment-status-wrapper">
+    <div class="success-card">
+        <div class="success-icon-wrapper">
+            <i class="fa fa-check"></i>
         </div>
-        <div class="detail-row">
-            <span class="detail-label">Service Type:</span>
-            <span class="detail-value"><?php echo htmlspecialchars($order['purpose']); ?></span>
-        </div>
-        <?php if (!empty($order['razorpay_payment_id'])): ?>
-        <div class="detail-row">
-            <span class="detail-label">Gateway Txn ID:</span>
-            <span class="detail-value"><?php echo htmlspecialchars($order['razorpay_payment_id']); ?></span>
-        </div>
-        <?php endif; ?>
-        <?php if ($order['wallet_points_used'] > 0): ?>
-        <div class="detail-row">
-            <span class="detail-label">Points Redeemed:</span>
-            <span class="detail-value"><?php echo number_format($order['wallet_points_used'], 0); ?> Pts</span>
-        </div>
-        <?php endif; ?>
-        <div class="detail-row">
-            <span class="detail-label">Total Amount Paid:</span>
-            <span class="detail-value">₹<?php echo number_format($order['amount'], 2); ?></span>
-        </div>
-    </div>
 
-    <?php if ($cashback_pts > 0): ?>
-    <div class="points-earned-banner">
-        <i class="fa-solid fa-coins fa-bounce" style="color: #d97706;"></i>
-        <span>You earned <strong>+<?php echo $cashback_pts; ?> Upchar Points</strong> as cashback!</span>
-    </div>
-    <?php endif; ?>
+        <h1 class="success-title">Payment Completed!</h1>
+        <p class="success-sub">Thank you. Your transaction was confirmed and processed successfully.</p>
 
-    <div class="btn-group">
-        <?php if ($order['purpose'] === 'APPOINTMENT'): ?>
-            <a href="<?php echo base_url('myappointments'); ?>" class="btn-primary-action">
-                <i class="fa-solid fa-calendar-check"></i> View My Appointments
-            </a>
-        <?php elseif ($order['purpose'] === 'WALLET_RECHARGE'): ?>
-            <a href="<?php echo base_url('wallet'); ?>" class="btn-primary-action">
-                <i class="fa-solid fa-wallet"></i> View Wallet Dashboard
-            </a>
-        <?php else: ?>
-            <a href="<?php echo base_url('mytest'); ?>" class="btn-primary-action">
-                <i class="fa-solid fa-flask"></i> View Pathology Orders
-            </a>
+        <div class="order-details-box">
+            <div class="detail-row">
+                <span class="detail-label">Order Reference:</span>
+                <span class="detail-value"><?=htmlspecialchars($order['internal_order_ref']);?></span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Purpose:</span>
+                <span class="detail-value"><?=htmlspecialchars($order['purpose']);?></span>
+            </div>
+            <?php if (!empty($order['razorpay_payment_id'])): ?>
+            <div class="detail-row">
+                <span class="detail-label">Transaction ID:</span>
+                <span class="detail-value"><?=htmlspecialchars($order['razorpay_payment_id']);?></span>
+            </div>
+            <?php endif; ?>
+            <?php if ($order['wallet_points_used'] > 0): ?>
+            <div class="detail-row">
+                <span class="detail-label">Points Redeemed:</span>
+                <span class="detail-value"><?=number_format($order['wallet_points_used'], 0);?> Pts</span>
+            </div>
+            <?php endif; ?>
+            <div class="detail-row">
+                <span class="detail-label">Total Amount:</span>
+                <span class="detail-value" style="color: #00a896; font-size: 16px;">₹<?=number_format($order['amount'], 2);?></span>
+            </div>
+        </div>
+
+        <?php if ($order['purpose'] === 'WALLET_RECHARGE'): ?>
+            <div class="points-earned-banner">
+                <i class="fa fa-star"></i>
+                <span>Your wallet has been credited with <strong>+<?=number_format($order['amount'], 2);?> Upchar Points</strong>!</span>
+            </div>
+        <?php elseif ($cashback_pts > 0): ?>
+            <div class="points-earned-banner">
+                <i class="fa fa-gift"></i>
+                <span>You earned <strong>+<?=$cashback_pts;?> Upchar Cashback Points</strong>!</span>
+            </div>
         <?php endif; ?>
 
-        <a href="<?php echo base_url(); ?>" class="btn-secondary-action">
-            <i class="fa-solid fa-house"></i> Return to Home
-        </a>
+        <div class="btn-group-stacked">
+            <?php if ($order['purpose'] === 'APPOINTMENT'): ?>
+                <a href="<?=base_url('myappointments');?>" class="btn-primary-action">
+                    <i class="fa fa-calendar"></i> View My Appointments
+                </a>
+            <?php elseif ($order['purpose'] === 'WALLET_RECHARGE'): ?>
+                <a href="<?=base_url('wallet');?>" class="btn-primary-action">
+                    <i class="fa fa-google-wallet"></i> View Wallet Dashboard
+                </a>
+            <?php else: ?>
+                <a href="<?=base_url('mytest');?>" class="btn-primary-action">
+                    <i class="fa fa-flask"></i> View Pathology Orders
+                </a>
+            <?php endif; ?>
+
+            <a href="<?=base_url();?>" class="btn-secondary-action">
+                <i class="fa fa-home"></i> Return to Homepage
+            </a>
+        </div>
     </div>
 </div>
-
-</body>
-</html>

@@ -191,10 +191,28 @@
                 </div>
             </div>
 
+            <?php
+            $path_cart = $this->session->userdata('path_cart') ?: [];
+            $path_count = is_array($path_cart) ? count($path_cart) : 0;
+            $medicart = $this->session->userdata('medicart') ?: [];
+            $med_count = is_array($medicart) ? count($medicart) : 0;
+            $total_cart_items = $path_count + $med_count;
+            ?>
+
             <ul class="patient-nav-menu">
                 <li>
                     <a href="<?=base_url('myappointments');?>" class="<?=($this->uri->segment(1) == 'myappointments' || $this->uri->segment(1) == 'myappointents') ? 'active' : '';?>">
                         <i class="fa fa-calendar"></i> Consultations &amp; Care
+                    </a>
+                </li>
+                <li>
+                    <a href="<?=base_url('mytest/checkout');?>" class="<?=($this->uri->segment(1) == 'mytest' && $this->uri->segment(2) == 'checkout') ? 'active' : '';?>" style="display: flex; align-items: center; justify-content: space-between;">
+                        <span><i class="fa fa-shopping-cart" style="color: #ec4899;"></i> My Cart</span>
+                        <?php if($total_cart_items > 0): ?>
+                            <span class="badge" style="background: #ec4899; color: #ffffff; font-size: 11px; padding: 3px 8px; border-radius: 10px; font-weight: 700;">
+                                <?=$total_cart_items;?>
+                            </span>
+                        <?php endif; ?>
                     </a>
                 </li>
                 <li>
@@ -203,8 +221,13 @@
                     </a>
                 </li>
                 <li>
-                    <a href="<?=base_url('mytest');?>" class="<?=($this->uri->segment(1) == 'mytest' || $this->uri->segment(1) == 'diagnostic') ? 'active' : '';?>">
+                    <a href="<?=base_url('mytest');?>" class="<?=($this->uri->segment(1) == 'mytest' && $this->uri->segment(2) != 'checkout' || $this->uri->segment(1) == 'diagnostic') ? 'active' : '';?>">
                         <i class="fa fa-flask" style="color: #00a896;"></i> Lab Tests &amp; Diagnostics
+                    </a>
+                </li>
+                <li>
+                    <a href="<?=base_url('payment/history');?>" class="<?=($this->uri->segment(1) == 'payment') ? 'active' : '';?>">
+                        <i class="fa fa-file-text-o" style="color: #38bdf8;"></i> Payments &amp; Invoices
                     </a>
                 </li>
                 <li>
@@ -232,3 +255,20 @@
 
     <!-- Main Content Body Container Starts -->
     <main class="patient-main-content">
+        <?php if($total_cart_items > 0 && ($this->uri->segment(1) != 'mytest' || $this->uri->segment(2) != 'checkout')): ?>
+        <!-- Floating Quick Cart Access Banner for Patient -->
+        <div style="background: linear-gradient(135deg, #00a896 0%, #028072 100%); color: #ffffff; padding: 12px 20px; border-radius: 12px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 14px rgba(0,168,150,0.25);">
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <div style="width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; font-size: 16px;">
+                    <i class="fa fa-shopping-cart"></i>
+                </div>
+                <div>
+                    <strong style="font-size: 14px;">You have <?=$total_cart_items;?> item<?=$total_cart_items > 1 ? 's' : '';?> in your cart</strong>
+                    <div style="font-size: 12px; opacity: 0.9;">Ready to complete your diagnostic test booking?</div>
+                </div>
+            </div>
+            <a href="<?=base_url('mytest/checkout');?>" class="btn btn-sm" style="background: #ffffff; color: #00a896; font-weight: 700; border-radius: 8px; padding: 6px 16px; text-decoration: none;">
+                Proceed to Checkout <i class="fa fa-arrow-right" style="margin-left: 4px;"></i>
+            </a>
+        </div>
+        <?php endif; ?>

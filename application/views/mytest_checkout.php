@@ -20,6 +20,44 @@
             </div>
         </div>
 
+        <?php if($this->session->flashdata('flashmsg')): ?>
+            <div style="margin-bottom: 20px;">
+                <?=$this->session->flashdata('flashmsg');?>
+            </div>
+        <?php endif; ?>
+
+        <?php if (empty($cart)): ?>
+            <!-- Empty Cart Handler: Quick Test Selection -->
+            <div style="background: #FFFFFF; border-radius: 12px; border: 1px solid #E2E8F0; padding: 36px 24px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.04); margin-bottom: 30px;">
+                <div style="width: 60px; height: 60px; background: #F0FDFA; color: #00A896; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 24px; margin-bottom: 14px;">
+                    <i class="fas fa-vial"></i>
+                </div>
+                <h3 style="font-size: 18px; font-weight: 800; color: #0F172A; margin: 0 0 8px 0;">Your Diagnostic Cart is Currently Empty</h3>
+                <p style="font-size: 13.5px; color: #64748B; max-width: 540px; margin: 0 auto 24px;">
+                    Please select one of our popular certified diagnostic checkups below to proceed with your booking:
+                </p>
+
+                <?php if (!empty($popular_tests)): ?>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; text-align: left; max-width: 900px; margin: 0 auto;">
+                        <?php foreach ($popular_tests as $pt): ?>
+                            <div style="border: 1px solid #E2E8F0; border-radius: 10px; padding: 14px 16px; background: #F8FAFC; display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <strong style="font-size: 13.5px; color: #0F172A; display: block;">
+                                        <?=html_escape($pt->test_name);?>
+                                    </strong>
+                                    <span style="font-size: 12px; color: #00A896; font-weight: 700;">₹<?=number_format($pt->amount);?></span>
+                                    <span style="font-size: 11px; color: #94A3B8; text-decoration: line-through; margin-left: 4px;">₹<?=round($pt->amount * 1.35);?></span>
+                                </div>
+                                <a href="<?=base_url('mytest/checkout?test_id=' . $pt->test_id);?>" class="btn btn-sm" style="background: #00A896; color: #FFFFFF; font-weight: 700; border-radius: 6px; padding: 6px 14px; font-size: 12px; text-decoration: none;">
+                                    + Add &amp; Book
+                                </a>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                <?php endif; ?>
+            </div>
+        <?php else: ?>
+
         <form action="<?=base_url('mytest/process_payment');?>" method="POST" id="checkoutForm">
             <input type="hidden" name="<?=$this->security->get_csrf_token_name();?>" value="<?=$this->security->get_csrf_hash();?>">
 
@@ -39,14 +77,14 @@
                                 <label style="font-size: 13px; font-weight: 700; color: #334155; margin-bottom: 4px; display: block;">
                                     Patient Full Name <span style="color: #EF4444;">*</span>
                                 </label>
-                                <input type="text" name="patient_name" class="form-control" required placeholder="Full Name as per ID proof" value="<?=html_escape($user->name ?? '');?>" style="height: 44px; border-radius: 8px; border: 1px solid #CBD5E1;">
+                                <input type="text" name="patient_name" class="form-control" required placeholder="Full Name as per ID proof" value="<?=html_escape($patient_name ?: @$user->FNAME);?>" style="height: 44px; border-radius: 8px; border: 1px solid #CBD5E1;">
                             </div>
 
                             <div class="col-md-3 col-6 form-group" style="margin-bottom: 14px;">
                                 <label style="font-size: 13px; font-weight: 700; color: #334155; margin-bottom: 4px; display: block;">
                                     Age (Yrs) <span style="color: #EF4444;">*</span>
                                 </label>
-                                <input type="number" name="patient_age" class="form-control" required min="1" max="120" placeholder="e.g. 35" value="32" style="height: 44px; border-radius: 8px; border: 1px solid #CBD5E1;">
+                                <input type="number" name="patient_age" class="form-control" required min="1" max="120" placeholder="e.g. 35" value="<?=$patient_age ?: 32;?>" style="height: 44px; border-radius: 8px; border: 1px solid #CBD5E1;">
                             </div>
 
                             <div class="col-md-3 col-6 form-group" style="margin-bottom: 14px;">
@@ -54,9 +92,9 @@
                                     Gender <span style="color: #EF4444;">*</span>
                                 </label>
                                 <select name="patient_gender" class="form-control" style="height: 44px; border-radius: 8px; border: 1px solid #CBD5E1;">
-                                    <option value="Male" selected>Male</option>
-                                    <option value="Female">Female</option>
-                                    <option value="Other">Other</option>
+                                    <option value="Male" <?=$patient_gender==='Male' ? 'selected' : '';?>>Male</option>
+                                    <option value="Female" <?=$patient_gender==='Female' ? 'selected' : '';?>>Female</option>
+                                    <option value="Other" <?=$patient_gender==='Other' ? 'selected' : '';?>>Other</option>
                                 </select>
                             </div>
 
@@ -64,14 +102,14 @@
                                 <label style="font-size: 13px; font-weight: 700; color: #334155; margin-bottom: 4px; display: block;">
                                     Mobile Number <span style="color: #EF4444;">*</span>
                                 </label>
-                                <input type="tel" name="patient_mobile" class="form-control" required maxlength="10" placeholder="10-digit Mobile Number" value="<?=html_escape($user->mobile ?? '');?>" style="height: 44px; border-radius: 8px; border: 1px solid #CBD5E1;">
+                                <input type="tel" name="patient_mobile" class="form-control" required maxlength="10" placeholder="10-digit Mobile Number" value="<?=html_escape($patient_mobile ?: @$user->MOBILE);?>" style="height: 44px; border-radius: 8px; border: 1px solid #CBD5E1;">
                             </div>
 
                             <div class="col-md-6 col-12 form-group" style="margin-bottom: 14px;">
                                 <label style="font-size: 13px; font-weight: 700; color: #334155; margin-bottom: 4px; display: block;">
                                     Email Address (for Digital Reports) <span style="color: #EF4444;">*</span>
                                 </label>
-                                <input type="email" name="patient_email" class="form-control" required placeholder="Email for PDF test report" value="<?=html_escape($user->email ?? '');?>" style="height: 44px; border-radius: 8px; border: 1px solid #CBD5E1;">
+                                <input type="email" name="patient_email" class="form-control" required placeholder="Email for PDF test report" value="<?=html_escape($patient_email ?: @$user->EMAIL);?>" style="height: 44px; border-radius: 8px; border: 1px solid #CBD5E1;">
                             </div>
                         </div>
                     </div>
@@ -226,6 +264,8 @@
 
             </div>
         </form>
+
+        <?php endif; ?>
 
     </div>
 </section>

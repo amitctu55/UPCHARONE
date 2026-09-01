@@ -102,6 +102,7 @@
             </div>
 
             <form action="" method="post">
+                <input type="hidden" name="<?=$this->security->get_csrf_token_name();?>" value="<?=$this->security->get_csrf_hash();?>">
                 
                 <!-- Current Password -->
                 <div style="margin-bottom: 20px;">

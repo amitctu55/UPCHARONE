@@ -902,15 +902,73 @@ class Doctorregmodel extends CI_Model
 	   return $qq;
 	}
   
-	public function advertisment($image)
+	public function get_advertisements($category = null)
 	{
-		$date=date('Y-m-d h:i:s');
-		$short=$this->input->post('short');
-		$long=$this->input->post('long');
-		$page=$this->input->post('page');
-		$active=$this->input->post('activeradio');
-		$data=array('short_description'=>$short,'long_description'=>$long,'page'=>$page,'image'=>$image,'status'=>$active,'creat_date'=>$date);
-		$query=$this->db->insert('advertisement',$data);
-		return $query;
+		if (!empty($category)) {
+			$this->db->where('category', $category);
+		}
+		$this->db->order_by('id', 'DESC');
+		return $this->db->get('advertisement')->result();
+	}
+
+	public function get_advertisement_by_id($id)
+	{
+		return $this->db->get_where('advertisement', array('id' => $id))->row();
+	}
+
+	public function advertisment($image = '')
+	{
+		$id           = $this->input->post('eid') ? base64_decode($this->input->post('eid')) : null;
+		$title        = trim($this->input->post('title') ?: $this->input->post('short'));
+		$category     = $this->input->post('category') ?: 'general';
+		$sponsor_badge= trim($this->input->post('sponsor_badge') ?: 'Sponsored Partner');
+		$short        = trim($this->input->post('short'));
+		$long         = trim($this->input->post('long'));
+		$page         = trim($this->input->post('page') ?: 'home');
+		$link_url     = trim($this->input->post('link_url') ?: $page);
+		$placement    = $this->input->post('placement') ?: 'public_dashboard';
+		$active       = $this->input->post('activeradio') !== null ? $this->input->post('activeradio') : '1';
+		$date         = date('Y-m-d H:i:s');
+
+		$data = array(
+			'title'             => $title,
+			'category'          => $category,
+			'sponsor_badge'     => $sponsor_badge,
+			'short_description' => $short,
+			'long_description'  => $long,
+			'page'              => $page,
+			'link_url'          => $link_url,
+			'placement'         => $placement,
+			'status'            => $active
+		);
+
+		if (!empty($image)) {
+			$data['image'] = $image;
+		}
+
+		if ($id) {
+			$this->db->where('id', $id)->update('advertisement', $data);
+			return $id;
+		} else {
+			$data['creat_date'] = $date;
+			$this->db->insert('advertisement', $data);
+			return $this->db->insert_id();
+		}
+	}
+
+	public function delete_advertisement($id)
+	{
+		return $this->db->where('id', $id)->delete('advertisement');
+	}
+
+	public function toggle_ad_status($id)
+	{
+		$ad = $this->get_advertisement_by_id($id);
+		if ($ad) {
+			$newStatus = ($ad->status == '1') ? '0' : '1';
+			$this->db->where('id', $id)->update('advertisement', array('status' => $newStatus));
+			return $newStatus;
+		}
+		return false;
 	}
 }

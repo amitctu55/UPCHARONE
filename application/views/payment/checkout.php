@@ -1,492 +1,448 @@
 <?php defined('BASEPATH') OR exit('No direct script access allowed'); ?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>UPCHAR Secure Payment Checkout</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        :root {
-            --primary: #0d7a6e;
-            --primary-light: #14b8a6;
-            --primary-dark: #064e3b;
-            --accent-gold: #f59e0b;
-            --accent-gold-light: #fef3c7;
-            --bg-canvas: #f8fafc;
-            --card-bg: #ffffff;
-            --text-dark: #0f172a;
-            --text-muted: #64748b;
-            --border-color: #e2e8f0;
-            --success: #10b981;
-            --radius-lg: 16px;
-            --radius-md: 10px;
-            --shadow-card: 0 10px 30px -5px rgba(13, 122, 110, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04);
-            --shadow-glow: 0 0 25px rgba(20, 184, 166, 0.25);
-        }
 
-        body {
-            font-family: 'Inter', sans-serif;
-            background: linear-gradient(135deg, #f0fdfa 0%, #f8fafc 50%, #e6fffa 100%);
-            color: var(--text-dark);
-            margin: 0;
-            padding: 40px 15px;
-            min-height: 100vh;
-            box-sizing: border-box;
-        }
+<!-- Razorpay Standard Checkout SDK -->
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 
-        .checkout-wrapper {
-            max-width: 960px;
-            margin: 0 auto;
-        }
+<style>
+    :root {
+        --checkout-teal: #00a896;
+        --checkout-teal-dark: #008f80;
+        --checkout-teal-light: #f0fdfa;
+        --checkout-navy: #1d2a44;
+        --checkout-gold: #f59e0b;
+        --checkout-gold-light: #fef3c7;
+        --checkout-slate-900: #0f172a;
+        --checkout-slate-800: #1e293b;
+        --checkout-slate-600: #475569;
+        --checkout-slate-100: #f8fafc;
+        --checkout-border: #e2e8f0;
+        --checkout-success: #10b981;
+    }
 
-        .checkout-header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
+    .unified-checkout-section {
+        background: #f8fafc;
+        padding: 35px 0 60px;
+        min-height: 80vh;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
 
-        .checkout-header h1 {
-            font-size: 28px;
-            font-weight: 800;
-            color: var(--primary-dark);
-            margin: 0 0 8px 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-        }
+    .checkout-header-block {
+        text-align: center;
+        margin-bottom: 28px;
+    }
 
-        .checkout-header p {
-            color: var(--text-muted);
-            margin: 0;
-            font-size: 15px;
-        }
+    .checkout-header-block h1 {
+        font-size: 26px;
+        font-weight: 800;
+        color: var(--checkout-navy);
+        margin: 0 0 6px 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+    }
 
-        .badge-secure {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            background: #e6fffa;
-            color: var(--primary);
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 13px;
-            font-weight: 600;
-            margin-top: 10px;
-            border: 1px solid #b2f5ea;
-        }
+    .checkout-header-block p {
+        color: var(--checkout-slate-600);
+        margin: 0;
+        font-size: 14.5px;
+    }
 
-        .checkout-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 25px;
-        }
+    .badge-secure-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: #e6fffa;
+        color: var(--checkout-teal-dark);
+        padding: 4px 14px;
+        border-radius: 20px;
+        font-size: 12.5px;
+        font-weight: 700;
+        margin-top: 10px;
+        border: 1px solid #b2f5ea;
+    }
 
-        @media (max-width: 768px) {
-            .checkout-grid {
-                grid-template-columns: 1fr;
-            }
-        }
+    .checkout-card {
+        background: #ffffff;
+        border-radius: 14px;
+        padding: 24px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04);
+        border: 1px solid var(--checkout-border);
+        margin-bottom: 20px;
+    }
 
-        .card {
-            background: var(--card-bg);
-            border-radius: var(--radius-lg);
-            padding: 26px;
-            box-shadow: var(--shadow-card);
-            border: 1px solid var(--border-color);
-            transition: all 0.3s ease;
-        }
+    .checkout-card-title {
+        font-size: 17px;
+        font-weight: 800;
+        color: var(--checkout-slate-900);
+        margin: 0 0 18px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        border-bottom: 2px solid #f1f5f9;
+        padding-bottom: 12px;
+    }
 
-        .card-title {
-            font-size: 18px;
-            font-weight: 700;
-            color: var(--text-dark);
-            margin-top: 0;
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            border-bottom: 2px solid #f1f5f9;
-            padding-bottom: 12px;
-        }
+    /* Order Summary Styles */
+    .summary-line-item {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 12px;
+        font-size: 14px;
+    }
 
-        .card-title i {
-            color: var(--primary);
-        }
+    .summary-line-item .label {
+        color: var(--checkout-slate-600);
+        font-weight: 500;
+    }
 
-        /* Order Summary Styles */
-        .summary-item {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 14px;
-            font-size: 15px;
-        }
+    .summary-line-item .value {
+        font-weight: 700;
+        color: var(--checkout-slate-900);
+    }
 
-        .summary-item .label {
-            color: var(--text-muted);
-        }
+    .summary-total-box {
+        border-top: 2px dashed var(--checkout-border);
+        padding-top: 14px;
+        margin-top: 14px;
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+    }
 
-        .summary-item .value {
-            font-weight: 600;
-            color: var(--text-dark);
-        }
+    .summary-total-box .label {
+        font-size: 16px;
+        font-weight: 800;
+        color: var(--checkout-slate-900);
+    }
 
-        .summary-total {
-            border-top: 2px dashed var(--border-color);
-            padding-top: 16px;
-            margin-top: 16px;
-            display: flex;
-            justify-content: space-between;
-            align-items: baseline;
-        }
+    .summary-total-box .value {
+        font-size: 24px;
+        font-weight: 900;
+        color: var(--checkout-teal);
+    }
 
-        .summary-total .label {
-            font-size: 17px;
-            font-weight: 700;
-            color: var(--text-dark);
-        }
+    /* Upchar Wallet Points Box */
+    .wallet-points-redemption-box {
+        background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+        border: 1px solid #fde68a;
+        border-radius: 10px;
+        padding: 14px;
+        margin-bottom: 18px;
+    }
 
-        .summary-total .value {
-            font-size: 26px;
-            font-weight: 800;
-            color: var(--primary);
-        }
+    .wallet-box-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+    }
 
-        /* Upchar Wallet Points Box */
-        .wallet-box {
-            background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
-            border: 1px solid #fde68a;
-            border-radius: var(--radius-md);
-            padding: 16px;
-            margin-bottom: 22px;
-            position: relative;
-            overflow: hidden;
-        }
+    .wallet-box-title {
+        font-size: 14px;
+        font-weight: 700;
+        color: #92400e;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
 
-        .wallet-box-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
-        }
+    .wallet-balance-tag {
+        font-size: 13px;
+        font-weight: 700;
+        color: #b45309;
+        background: #ffffff;
+        padding: 2px 8px;
+        border-radius: 12px;
+        border: 1px solid #fcd34d;
+    }
 
-        .wallet-box-title {
-            font-size: 15px;
-            font-weight: 700;
-            color: #92400e;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
+    .points-slider {
+        width: 100%;
+        height: 6px;
+        border-radius: 5px;
+        background: #fde68a;
+        outline: none;
+        accent-color: var(--checkout-teal);
+    }
 
-        .wallet-balance-tag {
-            font-size: 14px;
-            font-weight: 700;
-            color: #b45309;
-            background: #ffffff;
-            padding: 3px 10px;
-            border-radius: 12px;
-            border: 1px solid #fcd34d;
-        }
+    .points-usage-label {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 6px;
+        font-size: 12.5px;
+        font-weight: 600;
+        color: #92400e;
+    }
 
-        .points-slider-container {
-            margin-top: 12px;
-        }
+    .cashback-banner-box {
+        background: #ecfdf5;
+        border: 1px dashed #059669;
+        color: #047857;
+        padding: 10px 14px;
+        border-radius: 8px;
+        margin-top: 14px;
+        font-size: 12.5px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
 
-        .points-slider {
-            width: 100%;
-            height: 6px;
-            border-radius: 5px;
-            background: #fde68a;
-            outline: none;
-            accent-color: var(--accent-gold);
-            cursor: pointer;
-        }
+    /* Payment Methods */
+    .pay-methods-list {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        margin-bottom: 20px;
+    }
 
-        .points-usage-label {
-            display: flex;
-            justify-content: space-between;
-            font-size: 13px;
-            color: #92400e;
-            margin-top: 6px;
-            font-weight: 500;
-        }
+    .pay-method-item {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 14px 16px;
+        border-radius: 10px;
+        border: 2px solid var(--checkout-border);
+        background: #ffffff;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
 
-        /* Payment Method Options */
-        .payment-methods-grid {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 12px;
-            margin-bottom: 24px;
-        }
+    .pay-method-item:hover, .pay-method-item.active {
+        border-color: var(--checkout-teal);
+        background: #f0fdfa;
+    }
 
-        .method-card {
-            border: 2px solid var(--border-color);
-            border-radius: var(--radius-md);
-            padding: 16px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 14px;
-            transition: all 0.2s ease;
-            background: #ffffff;
-        }
+    .pay-method-icon {
+        width: 42px;
+        height: 42px;
+        border-radius: 8px;
+        background: #f1f5f9;
+        color: var(--checkout-teal);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        flex-shrink: 0;
+    }
 
-        .method-card:hover {
-            border-color: var(--primary-light);
-            background: #f0fdfa;
-        }
+    .pay-method-item.active .pay-method-icon {
+        background: var(--checkout-teal);
+        color: #ffffff;
+    }
 
-        .method-card.active {
-            border-color: var(--primary);
-            background: #f0fdfa;
-            box-shadow: 0 0 0 1px var(--primary);
-        }
+    .pay-method-info {
+        flex-grow: 1;
+    }
 
-        .method-icon {
-            width: 44px;
-            height: 44px;
-            border-radius: 10px;
-            background: #e6fffa;
-            color: var(--primary);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
-            flex-shrink: 0;
-        }
+    .pay-method-title {
+        font-size: 14.5px;
+        font-weight: 700;
+        color: var(--checkout-slate-900);
+    }
 
-        .method-card.active .method-icon {
-            background: var(--primary);
-            color: #ffffff;
-        }
+    .pay-method-desc {
+        font-size: 12px;
+        color: var(--checkout-slate-600);
+    }
 
-        .method-info {
-            flex-grow: 1;
-        }
+    .btn-checkout-submit {
+        background: var(--checkout-teal);
+        color: #ffffff;
+        border: none;
+        border-radius: 10px;
+        padding: 14px;
+        font-size: 16px;
+        font-weight: 800;
+        width: 100%;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        box-shadow: 0 4px 14px rgba(0, 168, 150, 0.3);
+        transition: all 0.2s;
+    }
 
-        .method-title {
-            font-size: 15px;
-            font-weight: 700;
-            color: var(--text-dark);
-            margin-bottom: 2px;
-        }
+    .btn-checkout-submit:hover {
+        background: var(--checkout-teal-dark);
+        color: #ffffff;
+        transform: translateY(-1px);
+        box-shadow: 0 6px 18px rgba(0, 168, 150, 0.4);
+    }
 
-        .method-desc {
-            font-size: 13px;
-            color: var(--text-muted);
-        }
+    .btn-checkout-submit:disabled {
+        background: #cbd5e1;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+    }
 
-        .method-radio {
-            accent-color: var(--primary);
-            transform: scale(1.2);
-        }
+    #checkout-error-alert {
+        display: none;
+        background: #fee2e2;
+        border: 1px solid #f87171;
+        color: #b91c1c;
+        padding: 12px 16px;
+        border-radius: 8px;
+        margin-bottom: 16px;
+        font-size: 13.5px;
+        font-weight: 600;
+    }
+</style>
 
-        /* CTA Button */
-        .btn-pay {
-            width: 100%;
-            background: linear-gradient(135deg, #1ab5a0 0%, #0d7a6e 100%);
-            color: #ffffff;
-            border: none;
-            border-radius: var(--radius-md);
-            padding: 16px 20px;
-            font-size: 17px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            box-shadow: 0 6px 20px rgba(13, 122, 110, 0.25);
-        }
+<div class="unified-checkout-section">
+    <div class="container">
+        
+        <div class="checkout-header-block">
+            <h1><i class="fa fa-shield" style="color: var(--checkout-teal);"></i> UPCHAR Secure Express Checkout</h1>
+            <p>Complete your booking securely via UPI, Cards, Net Banking or Upchar Points</p>
+            <div class="badge-secure-pill"><i class="fa fa-lock"></i> 256-Bit SSL Encrypted Healthcare Payment</div>
+        </div>
 
-        .btn-pay:hover {
-            background: linear-gradient(135deg, #14b8a6 0%, #064e3b 100%);
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(13, 122, 110, 0.35);
-        }
+        <div id="checkout-error-alert"></div>
 
-        .btn-pay:disabled {
-            background: #cbd5e1;
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
-        }
+        <div class="row">
+            <!-- Left Column: Order Summary & Points -->
+            <div class="col-md-6 col-sm-12">
+                <div class="checkout-card">
+                    <h2 class="checkout-card-title">
+                        <i class="fa fa-file-text-o" style="color: var(--checkout-teal);"></i> Order Summary
+                    </h2>
 
-        .cashback-badge {
-            background: #ecfdf5;
-            border: 1px dashed #059669;
-            color: #047857;
-            padding: 10px 14px;
-            border-radius: var(--radius-md);
-            margin-top: 16px;
-            font-size: 13px;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
+                    <div class="summary-line-item">
+                        <span class="label">Service / Item:</span>
+                        <span class="value"><?=htmlspecialchars($item_name);?></span>
+                    </div>
 
-        .trust-badges {
-            display: flex;
-            justify-content: center;
-            gap: 20px;
-            margin-top: 24px;
-            color: var(--text-muted);
-            font-size: 12px;
-            font-weight: 500;
-        }
+                    <div class="summary-line-item">
+                        <span class="label">Booking Ref:</span>
+                        <span class="value">#<?=htmlspecialchars($reference_id ?: 'UPCH-' . rand(1000, 9999));?></span>
+                    </div>
 
-        .trust-badges span {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
+                    <div class="summary-line-item">
+                        <span class="label">Patient Name:</span>
+                        <span class="value"><?=htmlspecialchars(isset($user_data['NAME']) ? $user_data['NAME'] : 'Valued Patient');?></span>
+                    </div>
 
-        #error-alert {
-            display: none;
-            background: #fee2e2;
-            border: 1px solid #f87171;
-            color: #b91c1c;
-            padding: 12px 16px;
-            border-radius: var(--radius-md);
-            margin-bottom: 16px;
-            font-size: 14px;
-        }
-    </style>
-    <!-- Razorpay Standard Checkout SDK -->
-    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
-</head>
-<body>
+                    <div class="summary-line-item">
+                        <span class="label">Gross Amount:</span>
+                        <span class="value">₹<?=number_format($amount, 2);?></span>
+                    </div>
 
-<div class="checkout-wrapper">
-    <div class="checkout-header">
-        <h1><i class="fa-solid fa-shield-halved"></i> UPCHAR Express Checkout</h1>
-        <p>Complete your booking securely via UPI, Cards, Net Banking or Upchar Points</p>
-        <div class="badge-secure"><i class="fa-solid fa-lock"></i> 256-Bit SSL Encrypted Payment</div>
-    </div>
+                    <?php if ($purpose !== 'WALLET_RECHARGE'): ?>
+                        <!-- Upchar Points Redemption Widget for Appointments / Lab tests -->
+                        <div class="wallet-points-redemption-box">
+                            <div class="wallet-box-top">
+                                <span class="wallet-box-title">
+                                    <i class="fa fa-star" style="color: var(--checkout-gold);"></i> Redeem Upchar Points
+                                </span>
+                                <span class="wallet-balance-tag">
+                                    Available: <strong id="lbl-avail-points"><?=number_format($user_points, 0);?></strong> Pts
+                                </span>
+                            </div>
 
-    <div id="error-alert"></div>
-
-    <div class="checkout-grid">
-        <!-- Left: Order Summary & Points Slider -->
-        <div class="card">
-            <h2 class="card-title"><i class="fa-solid fa-file-invoice"></i> Order Summary</h2>
-
-            <div class="summary-item">
-                <span class="label">Service / Item:</span>
-                <span class="value"><?php echo htmlspecialchars($item_name); ?></span>
-            </div>
-
-            <div class="summary-item">
-                <span class="label">Booking Ref:</span>
-                <span class="value">#<?php echo htmlspecialchars($reference_id ?: 'UPCH-' . rand(1000, 9999)); ?></span>
-            </div>
-
-            <div class="summary-item">
-                <span class="label">Patient Name:</span>
-                <span class="value"><?php echo htmlspecialchars(isset($user_data['NAME']) ? $user_data['NAME'] : 'Valued Patient'); ?></span>
-            </div>
-
-            <div class="summary-item">
-                <span class="label">Gross Bill Amount:</span>
-                <span class="value">₹<?php echo number_format($amount, 2); ?></span>
-            </div>
-
-            <!-- Upchar Points Redemption Widget -->
-            <div class="wallet-box">
-                <div class="wallet-box-header">
-                    <span class="wallet-box-title">
-                        <i class="fa-solid fa-coins" style="color: var(--accent-gold);"></i> Redeem Upchar Points
-                    </span>
-                    <span class="wallet-balance-tag">
-                        Available: <strong id="lbl-avail-points"><?php echo number_format($user_points, 0); ?></strong> Pts
-                    </span>
-                </div>
-
-                <?php if ($user_points > 0): ?>
-                    <?php 
-                        $max_points_applicable = min($user_points, $amount / $point_ratio);
-                    ?>
-                    <div class="points-slider-container">
-                        <input type="range" id="points-slider" class="points-slider" 
-                               min="0" max="<?php echo (int)$max_points_applicable; ?>" value="0" step="1" 
-                               oninput="updatePointsUsage(this.value)">
-                        <div class="points-usage-label">
-                            <span>Using: <strong id="lbl-points-used">0</strong> Pts</span>
-                            <span>Points Discount: <strong id="lbl-points-discount">₹0.00</strong></span>
+                            <?php if ($user_points > 0): ?>
+                                <?php 
+                                    $max_points_applicable = min($user_points, ($point_ratio > 0 ? $amount / $point_ratio : $amount));
+                                ?>
+                                <div>
+                                    <input type="range" id="points-slider" class="points-slider" 
+                                           min="0" max="<?=(int)$max_points_applicable;?>" value="0" step="1" 
+                                           oninput="updatePointsUsage(this.value)">
+                                    <div class="points-usage-label">
+                                        <span>Using: <strong id="lbl-points-used">0</strong> Pts</span>
+                                        <span>Points Discount: <strong id="lbl-points-discount">₹0.00</strong></span>
+                                    </div>
+                                </div>
+                            <?php else: ?>
+                                <div style="font-size: 12px; color: #92400e;">
+                                    No points in wallet. Earn <?=$cashback_pct;?>% cashback points on this booking!
+                                </div>
+                            <?php endif; ?>
                         </div>
+
+                        <div class="summary-line-item" id="row-points-deduction" style="display: none; color: #059669;">
+                            <span class="label">Upchar Points Applied:</span>
+                            <span class="value" id="val-points-applied">- ₹0.00</span>
+                        </div>
+                    <?php endif; ?>
+
+                    <div class="summary-total-box">
+                        <span class="label">Net Payable Amount:</span>
+                        <span class="value" id="val-net-payable">₹<?=number_format($amount, 2);?></span>
                     </div>
-                <?php else: ?>
-                    <div style="font-size: 12px; color: #92400e;">
-                        No points currently in wallet. Earn <?php echo $cashback_pct; ?>% cashback points on this order!
-                    </div>
-                <?php endif; ?>
-            </div>
 
-            <div class="summary-item" id="row-points-deduction" style="display: none; color: #059669;">
-                <span class="label">Upchar Points Applied:</span>
-                <span class="value" id="val-points-applied">- ₹0.00</span>
-            </div>
-
-            <div class="summary-total">
-                <span class="label">Net Payable Amount:</span>
-                <span class="value" id="val-net-payable">₹<?php echo number_format($amount, 2); ?></span>
-            </div>
-
-            <div class="cashback-badge">
-                <i class="fa-solid fa-gift"></i>
-                <span>You will earn <strong><?php echo round($amount * ($cashback_pct / 100), 0); ?> Upchar Cashback Points</strong> after payment!</span>
-            </div>
-        </div>
-
-        <!-- Right: Payment Method & Action Trigger -->
-        <div class="card">
-            <h2 class="card-title"><i class="fa-solid fa-credit-card"></i> Select Payment Method</h2>
-
-            <div class="payment-methods-grid">
-                <!-- Method 1: Razorpay Gateway (UPI, Cards, Net Banking) -->
-                <div class="method-card active" id="method-card-gateway" onclick="selectMethod('GATEWAY')">
-                    <div class="method-icon"><i class="fa-solid fa-qrcode"></i></div>
-                    <div class="method-info">
-                        <div class="method-title">Razorpay Standard Gateway</div>
-                        <div class="method-desc">UPI (GPay, PhonePe, Paytm), Credit/Debit Card, Net Banking</div>
-                    </div>
-                    <input type="radio" name="pay_mode" id="rb-gateway" value="GATEWAY" class="method-radio" checked>
-                </div>
-
-                <!-- Method 2: 100% Upchar Wallet Points (Active only if full points used) -->
-                <div class="method-card" id="method-card-points" onclick="selectMethod('POINTS')" style="<?php echo ($user_points * $point_ratio < $amount) ? 'opacity: 0.5;' : ''; ?>">
-                    <div class="method-icon" style="background: #fffbeb; color: var(--accent-gold);"><i class="fa-solid fa-wallet"></i></div>
-                    <div class="method-info">
-                        <div class="method-title">100% Upchar Points</div>
-                        <div class="method-desc">Instant confirmation with zero gateway fees</div>
-                    </div>
-                    <input type="radio" name="pay_mode" id="rb-points" value="POINTS" class="method-radio" <?php echo ($user_points * $point_ratio < $amount) ? 'disabled' : ''; ?>>
+                    <?php if ($purpose === 'WALLET_RECHARGE'): ?>
+                        <div class="cashback-banner-box">
+                            <i class="fa fa-plus-circle" style="font-size: 18px; color: var(--checkout-teal);"></i>
+                            <span>You will receive <strong><?=number_format($amount * ($point_ratio > 0 ? (1 / $point_ratio) : 1), 0);?> Upchar Points</strong> in your wallet instantly upon successful payment!</span>
+                        </div>
+                    <?php else: ?>
+                        <div class="cashback-banner-box">
+                            <i class="fa fa-gift" style="font-size: 18px; color: var(--checkout-teal);"></i>
+                            <span>You will earn <strong><?=round($amount * ($cashback_pct / 100), 0);?> Upchar Cashback Points</strong> after completing this booking!</span>
+                        </div>
+                    <?php endif; ?>
                 </div>
             </div>
 
-            <button type="button" id="btn-submit-pay" class="btn-pay" onclick="handlePayAction()">
-                <i class="fa-solid fa-lock"></i> <span id="btn-pay-text">Pay ₹<?php echo number_format($amount, 2); ?> Securely</span>
-            </button>
+            <!-- Right Column: Payment Method Selection & Checkout Trigger -->
+            <div class="col-md-6 col-sm-12">
+                <div class="checkout-card">
+                    <h2 class="checkout-card-title">
+                        <i class="fa fa-credit-card" style="color: var(--checkout-teal);"></i> Select Payment Method
+                    </h2>
 
-            <div class="trust-badges">
-                <span><i class="fa-solid fa-shield-check" style="color: var(--success);"></i> RBI Authorized</span>
-                <span><i class="fa-solid fa-bolt" style="color: var(--accent-gold);"></i> Instant Confirmation</span>
-                <span><i class="fa-solid fa-rotate-left" style="color: var(--primary);"></i> 100% Refund Guarantee</span>
+                    <div class="pay-methods-list">
+                        <!-- Method 1: Razorpay Gateway (UPI, Cards, Net Banking) -->
+                        <div class="pay-method-item active" id="method-card-gateway" onclick="selectMethod('GATEWAY')">
+                            <div class="pay-method-icon"><i class="fa fa-qrcode"></i></div>
+                            <div class="pay-method-info">
+                                <div class="pay-method-title">Online Payment Gateway (Razorpay)</div>
+                                <div class="pay-method-desc">UPI (GPay, PhonePe, Paytm), Cards &amp; Net Banking</div>
+                            </div>
+                            <input type="radio" name="pay_mode" id="rb-gateway" value="GATEWAY" checked style="accent-color: var(--checkout-teal);">
+                        </div>
+
+                        <?php if ($purpose !== 'WALLET_RECHARGE'): ?>
+                        <!-- Method 2: 100% Upchar Wallet Points -->
+                        <div class="pay-method-item" id="method-card-points" onclick="selectMethod('POINTS')" style="<?=($user_points * $point_ratio < $amount) ? 'opacity: 0.5;' : '';?>">
+                            <div class="pay-method-icon" style="color: var(--checkout-gold);"><i class="fa fa-star"></i></div>
+                            <div class="pay-method-info">
+                                <div class="pay-method-title">100% Upchar Points</div>
+                                <div class="pay-method-desc">Instant 1-Click zero-OTP checkout with wallet balance</div>
+                            </div>
+                            <input type="radio" name="pay_mode" id="rb-points" value="POINTS" <?=($user_points * $point_ratio < $amount) ? 'disabled' : '';?> style="accent-color: var(--checkout-teal);">
+                        </div>
+                        <?php endif; ?>
+                    </div>
+
+                    <button type="button" id="btn-submit-pay" class="btn-checkout-submit" onclick="handlePayAction()">
+                        <i class="fa fa-lock"></i> <span id="btn-pay-text">Pay ₹<?=number_format($amount, 2);?> Securely</span>
+                    </button>
+
+                    <div style="display: flex; justify-content: space-around; margin-top: 20px; font-size: 11.5px; color: #64748b;">
+                        <span><i class="fa fa-check-circle" style="color: var(--checkout-teal);"></i> RBI Authorized</span>
+                        <span><i class="fa fa-bolt" style="color: var(--checkout-gold);"></i> Instant Credit</span>
+                        <span><i class="fa fa-refresh" style="color: #0284c7;"></i> 100% Refund Guarantee</span>
+                    </div>
+                </div>
             </div>
         </div>
+
     </div>
 </div>
 
 <script>
-    const totalGrossAmount = <?php echo floatval($amount); ?>;
-    const userMaxPoints    = <?php echo floatval($user_points); ?>;
-    const pointRatio       = <?php echo floatval($point_ratio); ?>;
-    const orderPurpose     = '<?php echo addslashes($purpose); ?>';
-    const referenceId      = '<?php echo addslashes($reference_id); ?>';
+    const totalGrossAmount = <?=floatval($amount);?>;
+    const userMaxPoints    = <?=floatval($user_points);?>;
+    const pointRatio       = <?=floatval($point_ratio);?>;
+    const orderPurpose     = '<?=addslashes($purpose);?>';
+    const referenceId      = '<?=addslashes($reference_id);?>';
+    const csrfName         = '<?=$this->security->get_csrf_token_name();?>';
+    const csrfHash         = '<?=$this->security->get_csrf_hash();?>';
 
     let pointsUsed = 0;
     let netPayable = totalGrossAmount;
@@ -502,14 +458,13 @@
         document.getElementById('val-net-payable').innerText = '₹' + netPayable.toFixed(2);
 
         const deductionRow = document.getElementById('row-points-deduction');
-        if (pointsUsed > 0) {
+        if (pointsUsed > 0 && deductionRow) {
             deductionRow.style.display = 'flex';
             document.getElementById('val-points-applied').innerText = '- ₹' + discount.toFixed(2);
-        } else {
+        } else if (deductionRow) {
             deductionRow.style.display = 'none';
         }
 
-        // Auto-switch payment mode if 100% points
         if (netPayable === 0) {
             selectMethod('POINTS');
         } else {
@@ -523,35 +478,42 @@
 
     function selectMethod(mode) {
         selectedMode = mode;
+        const gwCard = document.getElementById('method-card-gateway');
+        const ptCard = document.getElementById('method-card-points');
+        const rbGw   = document.getElementById('rb-gateway');
+        const rbPt   = document.getElementById('rb-points');
+
         if (mode === 'GATEWAY') {
-            document.getElementById('method-card-gateway').classList.add('active');
-            document.getElementById('method-card-points').classList.remove('active');
-            document.getElementById('rb-gateway').checked = true;
+            if (gwCard) gwCard.classList.add('active');
+            if (ptCard) ptCard.classList.remove('active');
+            if (rbGw) rbGw.checked = true;
         } else {
-            document.getElementById('method-card-points').classList.add('active');
-            document.getElementById('method-card-gateway').classList.remove('active');
-            document.getElementById('rb-points').checked = true;
+            if (ptCard) ptCard.classList.add('active');
+            if (gwCard) gwCard.classList.remove('active');
+            if (rbPt) rbPt.checked = true;
         }
     }
 
-    function showError(msg) {
-        const alertBox = document.getElementById('error-alert');
-        alertBox.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i> ' + msg;
+    function showCheckoutError(msg) {
+        const alertBox = document.getElementById('checkout-error-alert');
+        alertBox.innerHTML = '<i class="fa fa-exclamation-circle"></i> ' + msg;
         alertBox.style.display = 'block';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     function handlePayAction() {
         const btn = document.getElementById('btn-submit-pay');
         btn.disabled = true;
-        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Initializing Secure Gateway...';
+        btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Initializing Payment Gateway...';
 
         const formData = new FormData();
         formData.append('amount', totalGrossAmount);
         formData.append('purpose', orderPurpose);
         formData.append('reference_id', referenceId);
         formData.append('wallet_points_to_use', pointsUsed);
+        formData.append(csrfName, csrfHash);
 
-        fetch('<?php echo base_url("payment/create_order"); ?>', {
+        fetch('<?=base_url("payment/create_order");?>', {
             method: 'POST',
             body: formData
         })
@@ -560,7 +522,34 @@
             if (data.status === 'points_only') {
                 window.location.href = data.redirect_url;
             } else if (data.status === 'success') {
-                // Trigger Razorpay Modal
+                // If local test mock order ID
+                if (data.razorpay_order_id.startsWith('order_mock_')) {
+                    // Automatically simulate success in test environment
+                    const verifyData = new FormData();
+                    verifyData.append('razorpay_order_id', data.razorpay_order_id);
+                    verifyData.append('razorpay_payment_id', 'pay_mock_' + Math.random().toString(36).substring(2, 12));
+                    verifyData.append('razorpay_signature', 'mock_signature_verified');
+                    verifyData.append('internal_order_ref', data.internal_order_ref);
+                    verifyData.append(csrfName, csrfHash);
+
+                    fetch('<?=base_url("payment/verify");?>', {
+                        method: 'POST',
+                        body: verifyData
+                    })
+                    .then(r => r.json())
+                    .then(v => {
+                        if (v.status === 'success') {
+                            window.location.href = v.redirect_url;
+                        } else {
+                            showCheckoutError(v.message || 'Verification failed.');
+                            btn.disabled = false;
+                            btn.innerHTML = '<i class="fa fa-lock"></i> Retry Payment';
+                        }
+                    });
+                    return;
+                }
+
+                // Standard Live Razorpay Modal
                 const options = {
                     key: data.key_id,
                     amount: data.amount_paise,
@@ -568,25 +557,25 @@
                     name: 'UPCHAR Healthcare',
                     description: 'Payment for ' + orderPurpose + ' #' + referenceId,
                     order_id: data.razorpay_order_id,
-                    image: '<?php echo base_url("images/logo.png"); ?>',
+                    image: '<?=base_url("images/logo.png");?>',
                     prefill: {
                         name: data.user_name,
                         email: data.user_email,
                         contact: data.user_mobile
                     },
                     theme: {
-                        color: '#0d7a6e'
+                        color: '#00a896'
                     },
                     handler: function(response) {
-                        // Verify on server
-                        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Verifying Payment...';
+                        btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Verifying Payment...';
                         const verifyData = new FormData();
                         verifyData.append('razorpay_order_id', response.razorpay_order_id);
                         verifyData.append('razorpay_payment_id', response.razorpay_payment_id);
                         verifyData.append('razorpay_signature', response.razorpay_signature);
                         verifyData.append('internal_order_ref', data.internal_order_ref);
+                        verifyData.append(csrfName, csrfHash);
 
-                        fetch('<?php echo base_url("payment/verify"); ?>', {
+                        fetch('<?=base_url("payment/verify");?>', {
                             method: 'POST',
                             body: verifyData
                         })
@@ -595,20 +584,20 @@
                             if (v.status === 'success') {
                                 window.location.href = v.redirect_url;
                             } else {
-                                showError(v.message || 'Verification failed.');
+                                showCheckoutError(v.message || 'Verification failed.');
                                 btn.disabled = false;
-                                btn.innerHTML = '<i class="fa-solid fa-lock"></i> Retry Payment';
+                                btn.innerHTML = '<i class="fa fa-lock"></i> Retry Payment';
                             }
                         })
                         .catch(err => {
-                            showError('Network error during verification.');
+                            showCheckoutError('Network error during verification.');
                             btn.disabled = false;
                         });
                     },
                     modal: {
                         ondismiss: function() {
                             btn.disabled = false;
-                            btn.innerHTML = '<i class="fa-solid fa-lock"></i> Pay ₹' + netPayable.toFixed(2) + ' Securely';
+                            btn.innerHTML = '<i class="fa fa-lock"></i> Pay ₹' + netPayable.toFixed(2) + ' Securely';
                         }
                     }
                 };
@@ -616,18 +605,15 @@
                 const rzp = new Razorpay(options);
                 rzp.open();
             } else {
-                showError(data.message || 'Unable to initialize order.');
+                showCheckoutError(data.message || 'Unable to initialize order.');
                 btn.disabled = false;
-                btn.innerHTML = '<i class="fa-solid fa-lock"></i> Pay Securely';
+                btn.innerHTML = '<i class="fa fa-lock"></i> Pay Securely';
             }
         })
         .catch(err => {
-            showError('Server communication error. Please try again.');
+            showCheckoutError('Server communication error. Please try again.');
             btn.disabled = false;
-            btn.innerHTML = '<i class="fa-solid fa-lock"></i> Pay Securely';
+            btn.innerHTML = '<i class="fa fa-lock"></i> Pay Securely';
         });
     }
 </script>
-
-</body>
-</html>

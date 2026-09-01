@@ -9,14 +9,24 @@ function __construct() {
 
 	}
     public function profile()
-   {
-     $userid =$this->session->userdata('userid');
-	$udata=array('FNAME'=>$this->input->post('name'),'GENDER'=>$this->input->post('gender'),'EMAIL'=>$this->input->post('email'),'MOBILE'=>$this->input->post('mobile'),'DOB'=>$this->input->post('dob'));
-		$this->db->where('userid',$userid)->update('userlogin',$udata);
-
-    redirect('updateprofile');
-		
-}
+    {
+        $userid = $this->session->userdata('userid') ?: $this->session->userdata('USERID');
+        $udata = array(
+            'FNAME'  => $this->input->post('name', TRUE),
+            'GENDER' => $this->input->post('gender', TRUE),
+            'EMAIL'  => $this->input->post('email', TRUE),
+            'MOBILE' => $this->input->post('mobile', TRUE),
+            'DOB'    => $this->input->post('dob', TRUE),
+            'BGROUP' => $this->input->post('bgroup', TRUE)
+        );
+        if ($userid) {
+            $this->db->where('USERID', $userid)->update('userlogin', $udata);
+            if (!empty($udata['FNAME'])) {
+                $this->session->set_userdata('username', $udata['FNAME']);
+            }
+        }
+        return true;
+    }
 
 public function updateprofile(){
 		

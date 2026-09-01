@@ -12,6 +12,46 @@ class Payout_model extends CI_Model {
         $this->load->database();
         $this->load->library('Razorpay_lib');
         date_default_timezone_set("Asia/Kolkata");
+        $this->_ensure_tables();
+    }
+
+    private function _ensure_tables() {
+        $this->db->query("CREATE TABLE IF NOT EXISTS `facility_payout_accounts` (
+            `id` int(11) NOT NULL AUTO_INCREMENT,
+            `facility_type` enum('doctor','hospital','clinic','pathlab') NOT NULL,
+            `facility_id` int(11) NOT NULL,
+            `account_type` enum('BANK_ACCOUNT','VPA') NOT NULL,
+            `account_name` varchar(100) NOT NULL,
+            `account_number` varchar(30) DEFAULT NULL,
+            `ifsc_code` varchar(15) DEFAULT NULL,
+            `bank_name` varchar(100) DEFAULT NULL,
+            `vpa` varchar(100) DEFAULT NULL,
+            `razorpayx_contact_id` varchar(50) DEFAULT NULL,
+            `razorpayx_fund_account_id` varchar(50) DEFAULT NULL,
+            `is_verified` tinyint(1) NOT NULL DEFAULT 0,
+            `is_active` tinyint(1) NOT NULL DEFAULT 1,
+            `created_at` datetime NOT NULL,
+            `updated_at` datetime DEFAULT NULL,
+            PRIMARY KEY (`id`),
+            KEY `idx_facility` (`facility_type`, `facility_id`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+
+        $this->db->query("CREATE TABLE IF NOT EXISTS `payout_batches` (
+            `id` int(11) NOT NULL AUTO_INCREMENT,
+            `batch_ref` varchar(50) NOT NULL,
+            `batch_date` date NOT NULL,
+            `total_facilities` int(11) NOT NULL DEFAULT 0,
+            `total_amount` decimal(12,2) NOT NULL DEFAULT 0.00,
+            `successful_payouts` int(11) NOT NULL DEFAULT 0,
+            `failed_payouts` int(11) NOT NULL DEFAULT 0,
+            `status` enum('DRAFT','PROCESSING','COMPLETED','PARTIAL') NOT NULL DEFAULT 'DRAFT',
+            `triggered_by_admin_id` int(11) DEFAULT NULL,
+            `notes` text DEFAULT NULL,
+            `created_at` datetime NOT NULL,
+            `completed_at` datetime DEFAULT NULL,
+            PRIMARY KEY (`id`),
+            UNIQUE KEY `uk_batch_ref` (`batch_ref`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
     }
 
     /**

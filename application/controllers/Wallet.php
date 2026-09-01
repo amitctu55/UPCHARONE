@@ -36,9 +36,9 @@ class Wallet extends CI_Controller {
         $data['cashback_pct'] = floatval($this->Wallet_model->get_setting('cashback_percentage', 5.00));
         $data['user_data'] = $this->db->get_where('userlogin', array('USERID' => $userId))->row_array();
 
-        $this->load->view('includes/header', $data);
+        $this->load->view('patient_header', $data);
         $this->load->view('wallet/index', $data);
-        $this->load->view('includes/footer');
+        $this->load->view('patient_footer');
     }
 
     /**
@@ -66,6 +66,12 @@ class Wallet extends CI_Controller {
      */
     public function recharge() {
         $userId = $this->_check_auth();
+
+        if (strtolower($this->input->server('REQUEST_METHOD')) !== 'post') {
+            redirect(base_url('wallet'));
+            return;
+        }
+
         $amount = floatval($this->input->post('amount'));
         $minRecharge = floatval($this->Wallet_model->get_setting('min_recharge_amount', 100.00));
 
@@ -78,19 +84,7 @@ class Wallet extends CI_Controller {
         $rate = floatval($this->Wallet_model->get_setting('point_to_inr_ratio', 1.00));
         $pointsToAdd = ($rate > 0) ? ($amount / $rate) : $amount;
 
-        // In a real live environment, Razorpay/PayU order is created here.
-        // For demonstration and immediate top-up test:
-        $gatewayTxnId = 'GATEWAY-DEMO-' . time() . '-' . rand(1000, 9999);
-        $desc = 'Wallet Top-Up of ₹' . number_format($amount, 2) . ' (' . number_format($pointsToAdd, 2) . ' Upchar Points)';
-
-        $res = $this->Wallet_model->credit_points($userId, $pointsToAdd, 'WALLET_RECHARGE', null, $desc, 'RAZORPAY', $gatewayTxnId);
-
-        if ($res) {
-            $this->session->set_flashdata('flashmsg', '<div class="alert alert-success"><strong>Recharge Successful!</strong> ₹' . number_format($amount, 2) . ' added. You received ' . number_format($pointsToAdd, 2) . ' Upchar Points!</div>');
-        } else {
-            $this->session->set_flashdata('flashmsg', '<div class="alert alert-danger">Recharge failed. Please try again.</div>');
-        }
-
-        redirect(base_url('wallet'));
+        $topupRef = 'TOPUP-' . date('YmdHis') . '-' . rand(100, 999);
+        redirect(base_url('payment/checkout?purpose=WALLET_RECHARGE&reference_id=' . $topupRef . '&amount=' . $amount . '&item_name=' . urlencode('Upchar Points Wallet Recharge (' . number_format($pointsToAdd, 0) . ' Pts)')));
     }
 }

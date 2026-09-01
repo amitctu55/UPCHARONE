@@ -117,3 +117,49 @@ if( ! function_exists('getMeta'))
 		}
 	}	
 }
+
+if ( ! function_exists('enforce_single_session_role'))
+{
+    /**
+     * Enforce Strictly Single Active Role per Browser Session
+     * Admin, Staff, and Patient/User cannot be simultaneously logged in on the same browser session.
+     */
+    function enforce_single_session_role($intendedRole)
+    {
+        $CI = get_instance();
+
+        // 1. Patient / User Login: Clears all Admin, Staff, and Provider credentials
+        if ($intendedRole === 'user') {
+            $staff_keys = ['staff_user_id', 'staff_code', 'staff_name', 'staff_email', 'staff_phone', 'staff_role', 'staff_dept', 'staff_designation', 'staff_logged_in'];
+            $admin_keys = ['adminuserid', 'userid_admin', 'adminusername', 'code'];
+            $partner_keys = ['doctor_id', 'hospital_id', 'pathology_id', 'chemist_id', 'clinic_id', 'pathdoctor_id'];
+            $CI->session->unset_userdata(array_merge($staff_keys, $admin_keys, $partner_keys));
+            $CI->session->set_userdata('active_auth_role', 'user');
+            @setcookie('ci_admin_session', '', time() - 3600, '/');
+        }
+        // 2. Staff / Logistics Login: Clears Patient and Provider credentials
+        elseif ($intendedRole === 'staff') {
+            $user_keys = ['userid', 'USERID', 'user_id', 'useremail', 'username', 'signupuserid', 'forgotuserid'];
+            $admin_keys = ['adminuserid', 'userid_admin', 'adminusername'];
+            $partner_keys = ['doctor_id', 'hospital_id', 'pathology_id', 'chemist_id', 'clinic_id', 'pathdoctor_id'];
+            $CI->session->unset_userdata(array_merge($user_keys, $admin_keys, $partner_keys));
+            $CI->session->set_userdata('active_auth_role', 'staff');
+        }
+        // 3. Admin1947 Login: Clears Patient and Provider credentials
+        elseif ($intendedRole === 'admin') {
+            $user_keys = ['userid', 'USERID', 'user_id', 'useremail', 'username', 'signupuserid', 'forgotuserid'];
+            $partner_keys = ['doctor_id', 'hospital_id', 'pathology_id', 'chemist_id', 'clinic_id', 'pathdoctor_id'];
+            $CI->session->unset_userdata(array_merge($user_keys, $partner_keys));
+            $CI->session->set_userdata('active_auth_role', 'admin');
+        }
+        // 4. Healthcare Partner (Doctor / Hospital / Lab): Clears User and Staff credentials
+        elseif ($intendedRole === 'partner') {
+            $user_keys = ['userid', 'USERID', 'user_id', 'useremail', 'username', 'signupuserid', 'forgotuserid'];
+            $staff_keys = ['staff_user_id', 'staff_code', 'staff_name', 'staff_email', 'staff_phone', 'staff_role', 'staff_dept', 'staff_designation', 'staff_logged_in'];
+            $admin_keys = ['adminuserid', 'userid_admin', 'adminusername'];
+            $CI->session->unset_userdata(array_merge($user_keys, $staff_keys, $admin_keys));
+            $CI->session->set_userdata('active_auth_role', 'partner');
+        }
+    }
+}
+

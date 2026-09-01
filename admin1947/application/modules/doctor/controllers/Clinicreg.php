@@ -887,59 +887,91 @@ class Clinicreg extends CI_Controller
          
     public function advertisment()
 	{
-		if(isset($_POST['submit']))
-		{
-			$id=base64_decode($this->input->post('eid'));
-			if($id=='')
-			{
-				$uploadimage='';
-				//$id=base64_decode($this->input->post('id'));
-				$uploadimage=$_FILES['uploadimage']['name'];
-				$extsign = pathinfo($_FILES['uploadimage']['name'],PATHINFO_EXTENSION);
-      	
-				if($uploadimage != '') 
-				{	
-					$rname=rand(1111111,999999999);
-					$date=date('Y-m-d');
-					$uploadimage=$typename.'_profile_pic_'.$rname.$date.'.'.$extsign;
-					
-					$config['upload_path']          = './public/assets/upload/';
-					$config['allowed_types'] = 'jpg|png|jpeg|JPG|PNG|JPEG';
-					$config['max_size']             = 2048;
-					$config['quality'] = '60%';
-					$config['file_name']  = $uploadimage;
-					$this->load->library('upload', $config);
-					
-					if ( ! $this->upload->do_upload('uploadimage'))
-					{
-						$error = $this->upload->display_errors();
-						$flashmsg='<div class="alert alert-danger">
-						  <strong>Failed!</strong>'.$error.'
-						</div>';
-						$this->session->set_flashdata('flashmsg',$flashmsg);
-						redirect(base_url().'doctor/clinicreg/advertisment');
-						exit();
-					}
+		$edit_id = $this->input->get('edit') ? base64_decode($this->input->get('edit')) : null;
+		$category_filter = $this->input->get('category');
 
-					if($this->doctorregmodel->advertisment($uploadimage)) 
-					{
-						$msg="<div class='alert alert-success'><strong>Success!</strong> Data Added Successfully</div>";
-						$this->session->set_flashdata('flashmsg',$msg);
-					}
-					else
-					{
-						$msg="<div class='alert alert-danger'><strong>Failed!</strong> Something went wrong. Please try again.</div>";
-						$this->session->set_flashdata('flashmsg',$msg);
-					}
+		if (isset($_POST['submit']))
+		{
+			$id = $this->input->post('eid') ? base64_decode($this->input->post('eid')) : null;
+			$uploadimage = '';
+
+			// Direct Image URL provided
+			$direct_image_url = trim($this->input->post('image_url'));
+			if (!empty($direct_image_url)) {
+				$uploadimage = $direct_image_url;
+			}
+			// File upload
+			elseif (!empty($_FILES['uploadimage']['name']))
+			{
+				$extsign = pathinfo($_FILES['uploadimage']['name'], PATHINFO_EXTENSION);
+				$rname = rand(1111111, 999999999);
+				$uploadimage = 'ad_' . $rname . '_' . date('Y-m-d') . '.' . $extsign;
+
+				$config['upload_path']   = './public/assets/upload/';
+				$config['allowed_types'] = 'jpg|png|jpeg|JPG|PNG|JPEG|webp|gif';
+				$config['max_size']      = 5120;
+				$config['file_name']     = $uploadimage;
+				$this->load->library('upload', $config);
+
+				if (!is_dir('./public/assets/upload/')) {
+					@mkdir('./public/assets/upload/', 0777, true);
+				}
+
+				if (!$this->upload->do_upload('uploadimage'))
+				{
+					$error = $this->upload->display_errors();
+					$flashmsg = '<div class="alert alert-danger"><strong>Upload Failed: </strong>' . $error . '</div>';
+					$this->session->set_flashdata('flashmsg', $flashmsg);
+					redirect(base_url() . 'doctor/clinicreg/advertisment');
+					exit();
 				}
 			}
-		}		
+
+			if ($this->doctorregmodel->advertisment($uploadimage))
+			{
+				$msg = "<div class='alert alert-success'><strong>Success!</strong> Sponsored Advertisement saved successfully.</div>";
+				$this->session->set_flashdata('flashmsg', $msg);
+			}
+			else
+			{
+				$msg = "<div class='alert alert-danger'><strong>Failed!</strong> Something went wrong. Please try again.</div>";
+				$this->session->set_flashdata('flashmsg', $msg);
+			}
+			redirect(base_url() . 'doctor/clinicreg/advertisment');
+			exit();
+		}
+
+		$data['advertisements']  = $this->doctorregmodel->get_advertisements($category_filter);
+		$data['edit_ad']         = $edit_id ? $this->doctorregmodel->get_advertisement_by_id($edit_id) : null;
+		$data['selected_cat']    = $category_filter;
+		$data['heading_title']   = 'Sponsored Advertisements & Showcase Master';
+		$data['module']          = 'Doctor';
+
 		$this->load->view('inc/topheaderlink');
 		$this->load->view('inc/topheader');
-		$this->load->view('advertisment');
+		$this->load->view('advertisment', $data);
 		$this->load->view('sidebar');
 		$this->load->view('inc/headersetting');
 		$this->load->view('inc/footerlink');
 		$this->load->view('inc/table_footer');
-    }
+	}
+
+	public function advertisement()
+	{
+		$this->advertisment();
+	}
+
+	public function delete_ad($id)
+	{
+		$this->doctorregmodel->delete_advertisement($id);
+		$this->session->set_flashdata('flashmsg', '<div class="alert alert-success">Advertisement deleted successfully.</div>');
+		redirect(base_url() . 'doctor/clinicreg/advertisment');
+	}
+
+	public function toggle_ad($id)
+	{
+		$newSt = $this->doctorregmodel->toggle_ad_status($id);
+		$this->session->set_flashdata('flashmsg', '<div class="alert alert-info">Advertisement status updated to ' . ($newSt == '1' ? 'ACTIVE' : 'INACTIVE') . '.</div>');
+		redirect(base_url() . 'doctor/clinicreg/advertisment');
+	}
 }

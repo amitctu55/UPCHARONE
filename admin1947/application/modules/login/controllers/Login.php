@@ -73,6 +73,10 @@ class Login extends CI_Controller {
         $query = $this->db->get()->row();
 
         if (!empty($query)) {
+            // Strictly enforce single session: Flush patient / partner session keys and patient cookies
+            $this->session->unset_userdata(array('useremail', 'signupuserid', 'forgotuserid', 'doctor_id', 'hospital_id', 'pathology_id', 'clinic_id'));
+            @setcookie('ci_session', '', time() - 3600, '/');
+
             $session_data = array(
                 'adminuserid'    => $query->id,
                 'userid'         => $query->id,
@@ -81,6 +85,7 @@ class Login extends CI_Controller {
                 'pwd'            => $query->password,
                 'code'           => $query->role,
                 'institution_id' => $query->id,
+                'active_auth_role' => 'admin',
                 'logged_in'      => TRUE
             );
 
@@ -98,6 +103,7 @@ class Login extends CI_Controller {
      */
     public function logout() {
         $this->session->sess_destroy();
+        @setcookie('ci_admin_session', '', time() - 3600, '/');
         redirect(base_url('login'));
     }
 

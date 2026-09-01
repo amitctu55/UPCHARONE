@@ -86,6 +86,25 @@ class Dashboard extends CI_Controller
         $abdm_stats = $this->abdm_model->get_abdm_stats();
         $data = array_merge($data, $abdm_stats);
 
+        // Enterprise Multi-Role & Logistics Suite Metrics
+        $today = date('Y-m-d');
+        $data['total_staff']       = $this->db->table_exists('staff_users') ? $this->db->where('status', 'active')->count_all_results('staff_users') : 0;
+        $data['today_attendance']  = $this->db->table_exists('staff_attendance') ? $this->db->where('punch_date', $today)->where('status', 'present')->count_all_results('staff_attendance') : 0;
+        $data['today_late']        = $this->db->table_exists('staff_attendance') ? $this->db->where('punch_date', $today)->where('status', 'late')->count_all_results('staff_attendance') : 0;
+        $data['pending_leaves']    = $this->db->table_exists('staff_leave_requests') ? $this->db->where('status', 'pending')->count_all_results('staff_leave_requests') : 0;
+        
+        $data['total_path_orders'] = $this->db->table_exists('path_book') ? $this->db->count_all_results('path_book') : 0;
+        $data['active_pickups']    = $this->db->table_exists('path_book') ? $this->db->where_in('collection_status', ['assigned', 'en_route', 'arrived'])->count_all_results('path_book') : 0;
+        $data['pending_handoffs']  = $this->db->table_exists('path_book') ? $this->db->where('collection_status', 'sample_collected')->count_all_results('path_book') : 0;
+        $data['pending_expenses']  = $this->db->table_exists('staff_expense_claims') ? $this->db->where('status', 'submitted')->count_all_results('staff_expense_claims') : 0;
+
+        $data['total_crm_leads']   = $this->db->table_exists('staff_crm_leads') ? $this->db->count_all_results('staff_crm_leads') : 0;
+        $crm_sum = $this->db->table_exists('staff_crm_leads') ? $this->db->select_sum('est_monthly_revenue')->get('staff_crm_leads')->row() : null;
+        $data['crm_pipeline_val']  = $crm_sum ? floatval($crm_sum->est_monthly_revenue) : 0.00;
+
+        $data['total_gmail_users'] = $this->db->where('GUID IS NOT NULL')->where('GUID !=', '')->count_all_results('userlogin');
+        $data['active_ads_count']  = $this->db->table_exists('advertisement') ? $this->db->where('status', '1')->count_all_results('advertisement') : 0;
+
         $this->load->view('inc/topheaderlink');
         $this->load->view('inc/topheader');
         $this->load->view('dashboard', $data);

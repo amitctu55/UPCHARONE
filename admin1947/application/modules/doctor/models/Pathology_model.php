@@ -27,16 +27,25 @@ class Pathology_model extends CI_Model
 	
 	
 	
-	public function insert_assign_test($test_id)
+	public function insert_assign_test($test_id = null, $path_lab_id = null, $lab_price = 0, $comment = '')
 	{	
-		$data	=array(
-						'test_id'			=>$this->input->post('test_id'),
-						'path_lab_id'		=>$this->input->post('path_lab_id'),
-						'status'			=>'1',
-						'created_date'		=>date('Y-m-d h:i:s'),
-					);
-		$id = $this->db->insert('path_lab_test',$data);
-		return $id;
+		$tid   = $test_id !== null ? $test_id : $this->input->post('test_id');
+		$pid   = $path_lab_id !== null ? $path_lab_id : $this->input->post('path_lab_id');
+		$price = $lab_price ? $lab_price : (int)$this->input->post('lab_price');
+		$comm  = $comment ? $comment : $this->input->post('comment');
+		$stat  = $this->input->post('status') !== null ? $this->input->post('status') : '1';
+
+		$data = array(
+			'test_id'      => (int)$tid,
+			'path_lab_id'  => (int)$pid,
+			'lab_price'    => (int)$price,
+			'comment'      => $comm,
+			'status'       => $stat,
+			'created_date' => date('Y-m-d H:i:s'),
+			'updated_date' => date('Y-m-d H:i:s')
+		);
+		$this->db->insert('path_lab_test', $data);
+		return $this->db->insert_id();
 	}
 	
 	function assign_test_delete($id)

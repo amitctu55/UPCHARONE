@@ -1,145 +1,138 @@
 <?php defined('BASEPATH') OR exit('No direct script access allowed'); ?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Payment Failed — UPCHAR Healthcare</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background: linear-gradient(135deg, #fff1f2 0%, #f8fafc 100%);
-            margin: 0;
-            padding: 40px 15px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            box-sizing: border-box;
-        }
 
-        .failure-card {
-            background: #ffffff;
-            border-radius: 20px;
-            box-shadow: 0 20px 40px -15px rgba(225, 29, 72, 0.15);
-            max-width: 520px;
-            width: 100%;
-            padding: 40px 30px;
-            text-align: center;
-            border: 1px solid #ffe4e6;
-        }
+<style>
+    .payment-failed-wrapper {
+        background: #fff1f2;
+        padding: 50px 15px 80px;
+        min-height: 75vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
 
-        .failure-icon-wrapper {
-            width: 80px;
-            height: 80px;
-            background: #ffe4e6;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 20px;
-            box-shadow: 0 0 0 10px #fff1f2;
-        }
+    .failure-card {
+        background: #ffffff;
+        border-radius: 18px;
+        box-shadow: 0 10px 30px rgba(225, 29, 72, 0.08);
+        max-width: 520px;
+        width: 100%;
+        padding: 40px 30px;
+        text-align: center;
+        border: 1px solid #ffe4e6;
+        margin: 0 auto;
+    }
 
-        .failure-icon-wrapper i {
-            font-size: 38px;
-            color: #e11d48;
-        }
+    .failure-icon-wrapper {
+        width: 76px;
+        height: 76px;
+        background: #ffe4e6;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 18px;
+        box-shadow: 0 0 0 8px #fff1f2;
+    }
 
-        h1 {
-            font-size: 24px;
-            font-weight: 800;
-            color: #0f172a;
-            margin: 0 0 8px;
-        }
+    .failure-icon-wrapper i {
+        font-size: 36px;
+        color: #e11d48;
+    }
 
-        p.subtitle {
-            color: #64748b;
-            font-size: 15px;
-            margin: 0 0 24px;
-        }
+    .failure-title {
+        font-size: 22px;
+        font-weight: 800;
+        color: #0f172a;
+        margin: 0 0 6px;
+    }
 
-        .error-alert-box {
-            background: #fff1f2;
-            border-left: 4px solid #e11d48;
-            border-radius: 8px;
-            padding: 14px 16px;
-            margin-bottom: 24px;
-            text-align: left;
-            color: #9f1239;
-            font-size: 14px;
-            font-weight: 500;
-        }
+    .failure-sub {
+        color: #64748b;
+        font-size: 14px;
+        margin: 0 0 20px;
+    }
 
-        .btn-group {
-            display: flex;
-            gap: 12px;
-            flex-direction: column;
-        }
+    .error-alert-box {
+        background: #fff1f2;
+        border-left: 4px solid #e11d48;
+        border-radius: 8px;
+        padding: 12px 16px;
+        margin-bottom: 24px;
+        text-align: left;
+        color: #9f1239;
+        font-size: 13.5px;
+        font-weight: 600;
+    }
 
-        .btn-retry {
-            background: linear-gradient(135deg, #e11d48 0%, #be123c 100%);
-            color: #ffffff;
-            text-decoration: none;
-            padding: 14px 20px;
-            border-radius: 10px;
-            font-weight: 700;
-            font-size: 15px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            transition: all 0.2s ease;
-        }
+    .btn-failed-group {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
 
-        .btn-retry:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(225, 29, 72, 0.25);
-            color: #ffffff;
-        }
+    .btn-retry-action {
+        background: #e11d48;
+        color: #ffffff !important;
+        text-decoration: none !important;
+        padding: 12px 20px;
+        border-radius: 10px;
+        font-weight: 700;
+        font-size: 14.5px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        transition: all 0.2s;
+        box-shadow: 0 4px 12px rgba(225, 29, 72, 0.25);
+    }
 
-        .btn-secondary {
-            background: #ffffff;
-            color: #475569;
-            border: 1px solid #cbd5e1;
-            text-decoration: none;
-            padding: 12px 20px;
-            border-radius: 10px;
-            font-weight: 600;
-            font-size: 14px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-        }
-    </style>
-</head>
-<body>
+    .btn-retry-action:hover {
+        background: #be123c;
+        transform: translateY(-1px);
+    }
 
-<div class="failure-card">
-    <div class="failure-icon-wrapper">
-        <i class="fa-solid fa-xmark"></i>
-    </div>
+    .btn-secondary-failed {
+        background: #f1f5f9;
+        color: #334155 !important;
+        text-decoration: none !important;
+        border-radius: 10px;
+        padding: 11px 20px;
+        font-size: 14px;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        transition: all 0.2s;
+    }
 
-    <h1>Payment Incomplete</h1>
-    <p class="subtitle">The transaction could not be processed. Any amount debited will be refunded automatically by your bank.</p>
+    .btn-secondary-failed:hover {
+        background: #e2e8f0;
+    }
+</style>
 
-    <div class="error-alert-box">
-        <strong><i class="fa-solid fa-circle-exclamation"></i> Reason:</strong> 
-        <?php echo htmlspecialchars($error_reason ?: 'Payment cancelled or declined by bank.'); ?>
-    </div>
+<div class="payment-failed-wrapper">
+    <div class="failure-card">
+        <div class="failure-icon-wrapper">
+            <i class="fa fa-times"></i>
+        </div>
 
-    <div class="btn-group">
-        <a href="<?php echo base_url('payment/checkout?purpose=' . (isset($order['purpose']) ? $order['purpose'] : 'APPOINTMENT') . '&reference_id=' . (isset($order['reference_id']) ? $order['reference_id'] : '') . '&amount=' . (isset($order['amount']) ? $order['amount'] : '500')); ?>" class="btn-retry">
-            <i class="fa-solid fa-rotate-right"></i> Try Again
-        </a>
-        <a href="<?php echo base_url(); ?>" class="btn-secondary">
-            <i class="fa-solid fa-house"></i> Return to Homepage
-        </a>
+        <h1 class="failure-title">Payment Incomplete</h1>
+        <p class="failure-sub">The transaction could not be processed. Any debited amount will be auto-refunded by your bank within standard banking timelines.</p>
+
+        <div class="error-alert-box">
+            <strong><i class="fa fa-exclamation-circle"></i> Reason:</strong> 
+            <?=htmlspecialchars($error_reason ?: 'Payment cancelled or declined by bank.');?>
+        </div>
+
+        <div class="btn-failed-group">
+            <a href="<?=base_url('payment/checkout?purpose=' . (isset($order['purpose']) ? $order['purpose'] : 'WALLET_RECHARGE') . '&reference_id=' . (isset($order['reference_id']) ? $order['reference_id'] : '') . '&amount=' . (isset($order['amount']) ? $order['amount'] : '100'));?>" class="btn-retry-action">
+                <i class="fa fa-refresh"></i> Retry Payment
+            </a>
+            <a href="<?=base_url();?>" class="btn-secondary-failed">
+                <i class="fa fa-home"></i> Return to Homepage
+            </a>
+        </div>
     </div>
 </div>
-
-</body>
-</html>

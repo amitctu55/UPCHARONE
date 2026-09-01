@@ -295,30 +295,77 @@ class Mytest extends CI_Controller {
      * Checkout Page: Patient Details, Timing, Collection & Payment Method
      */
     public function checkout() {
+        $add_test_id = intval($this->input->get('test_id') ?: $this->input->get('add'));
         $cart = $this->session->userdata('path_cart') ?: [];
-        if (empty($cart)) {
-            $this->session->set_flashdata('flashmsg', '<div class="alert alert-warning"><i class="fa fa-info-circle"></i> Your test cart is empty. Please select a pathology test first.</div>');
-            redirect('mytest');
+
+        if ($add_test_id > 0 && !isset($cart[$add_test_id])) {
+            $this->db->select('pt.*, pc.category_name, pl.name as lab_name, c.name as city_name');
+            $this->db->from('pathtest pt');
+            $this->db->join('path_category pc', 'pc.category_id = pt.category_id', 'left');
+            $this->db->join('pathlab pl', 'pl.id = pt.path_id', 'left');
+            $this->db->join('master_city c', 'c.id = pl.city', 'left');
+            $this->db->where('pt.test_id', $add_test_id);
+            $testObj = $this->db->get()->row();
+
+            if ($testObj) {
+                $amount = floatval($testObj->amount);
+                $cart[$add_test_id] = [
+                    'test_id'     => $testObj->test_id,
+                    'test_name'   => $testObj->test_name,
+                    'short_name'  => $testObj->short_name ?: $testObj->test_name,
+                    'code'        => $testObj->code ?: ('UPC-' . $testObj->test_id),
+                    'lab_id'      => $testObj->path_id,
+                    'lab_name'    => $testObj->lab_name ?: 'Upchar Diagnostic Lab',
+                    'city_name'   => $testObj->city_name ?: 'Lucknow',
+                    'category'    => $testObj->category_name ?: 'Diagnostic Test',
+                    'sample_type' => $testObj->test_type ?: 'Blood',
+                    'report_time' => $testObj->report_day ?: 'Same Day',
+                    'amount'      => $amount,
+                    'mrp'         => round($amount * 1.35),
+                    'quantity'    => 1
+                ];
+                $this->session->set_userdata('path_cart', $cart);
+            }
+        }
+
+        // Fetch popular tests for quick add if cart is light
+        $popular_tests = $this->db->where('status', '1')->order_by('test_id', 'asc')->limit(6)->get('pathtest')->result();
+
+        // Enforce Login before booking diagnostic tests
+        $user_id = $this->session->userdata('USERID') ?: $this->session->userdata('userid') ?: $this->session->userdata('user_id');
+        if (!$user_id) {
+            $this->session->set_userdata('last_page', base_url('mytest/checkout'));
+            $this->session->set_flashdata('flashmsg', '<div class="alert alert-warning">Please login to complete your diagnostic test booking.</div>');
+            redirect('login');
             return;
         }
 
+        $user = $this->db->where('USERID', $user_id)->get('userlogin')->row();
         $totals = $this->_calculate_cart_totals($cart);
 
-        // Pre-fill user profile if logged in
-        $user_id = $this->session->userdata('user_id') ?: $this->session->userdata('id');
-        $user = null;
-        if ($user_id) {
-            $user = $this->db->where('id', $user_id)->get('userlogin')->row();
+        // Compute age from DOB if present
+        $calculated_age = 32;
+        if (!empty($user->DOB)) {
+            $dob_time = strtotime($user->DOB);
+            if ($dob_time) {
+                $calculated_age = max(1, date('Y') - date('Y', $dob_time));
+            }
         }
 
-        $data['cart']         = $cart;
-        $data['cart_count']   = count($cart);
-        $data['subtotal']     = $totals['subtotal'];
-        $data['total_mrp']    = $totals['total_mrp'];
-        $data['savings']      = $totals['savings'];
+        $data['cart']           = $cart;
+        $data['cart_count']     = count($cart);
+        $data['subtotal']       = $totals['subtotal'];
+        $data['total_mrp']      = $totals['total_mrp'];
+        $data['savings']        = $totals['savings'];
         $data['collection_fee'] = 0.00; // Free Home Sample Collection
-        $data['final_total']  = $totals['subtotal'];
-        $data['user']         = $user;
+        $data['final_total']    = $totals['subtotal'];
+        $data['user']           = $user;
+        $data['patient_name']   = $user ? trim($user->FNAME . ' ' . $user->LNAME) : '';
+        $data['patient_mobile'] = $user ? $user->MOBILE : '';
+        $data['patient_email']  = $user ? $user->EMAIL : '';
+        $data['patient_gender'] = $user && !empty($user->GENDER) ? $user->GENDER : 'Male';
+        $data['patient_age']    = $calculated_age;
+        $data['popular_tests']  = $popular_tests;
 
         $this->load->view('mytest_checkout', $data);
     }
@@ -329,6 +376,15 @@ class Mytest extends CI_Controller {
     public function process_payment() {
         if ($this->input->server('REQUEST_METHOD') !== 'POST') {
             redirect('mytest/checkout');
+            return;
+        }
+
+        // Enforce Login
+        $user_id = $this->session->userdata('USERID') ?: $this->session->userdata('userid') ?: $this->session->userdata('user_id');
+        if (!$user_id) {
+            $this->session->set_userdata('last_page', base_url('mytest/checkout'));
+            $this->session->set_flashdata('flashmsg', '<div class="alert alert-warning">Please login to complete your booking.</div>');
+            redirect('login');
             return;
         }
 
@@ -440,8 +496,14 @@ class Mytest extends CI_Controller {
                 @$this->azad_lib->sendMail($patient_email, $email_subj, $email_body);
             }
 
-            // 4. Clear Cart and redirect to Order Success
+            // 4. Clear Cart and redirect based on payment mode
             $this->session->unset_userdata('path_cart');
+
+            if ($payment_mode === 'ONLINE_UPI' || $payment_mode === 'ONLINE_CARD' || $payment_mode === 'RAZORPAY') {
+                redirect(base_url('payment/checkout?purpose=LAB_TEST&reference_id=' . $booking_id . '&amount=' . $totals['subtotal'] . '&item_name=' . urlencode('Diagnostic Pathology Lab Tests (Booking #' . $booking_id . ')')));
+                return;
+            }
+
             redirect('mytest/order_success/' . $booking_id);
             return;
         }

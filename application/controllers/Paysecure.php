@@ -61,14 +61,20 @@ class Paysecure extends CI_Controller {
 		if(isset($gatewayData) && count($gatewayData))
 		{
 			$userId = $this->session->userdata('USERID') ?: $this->session->userdata('userid') ?: $this->session->userdata('WEB_UID') ?: $this->session->userdata('user_id');
-			$user_points = $userId ? $this->Wallet_model->get_balance($userId) : 0.00;
+			if (!$userId) {
+				$this->session->set_userdata('last_page', base_url('paysecure/acheckout'));
+				$this->session->set_flashdata('flashmsg', '<div class="alert alert-warning">Please login to complete your appointment booking.</div>');
+				redirect(base_url('login'));
+				return;
+			}
+			$user_points = $this->Wallet_model->get_balance($userId);
 			$data['user_points'] = $user_points;
 			$data['gatewayData']=$gatewayData;
 			$data['AppointmentCheckout']=$AppointmentCheckout;
 			$this->load->view('secure/appointmentcheckout',$data);
 		}else
 		{
-			echo '403 UnAuthorized Access!!';
+			redirect(base_url('login'));
 		}
 	}
 
@@ -155,12 +161,19 @@ class Paysecure extends CI_Controller {
 		$AppointmentCheckout=$this->session->userdata('AppointmentCheckout');
 		if(isset($gatewayData) && count($gatewayData))
 		{
+			$userId = $this->session->userdata('USERID') ?: $this->session->userdata('userid') ?: $this->session->userdata('WEB_UID') ?: $this->session->userdata('user_id');
+			if (!$userId) {
+				$this->session->set_userdata('last_page', base_url('paysecure/acheckout_hospital'));
+				$this->session->set_flashdata('flashmsg', '<div class="alert alert-warning">Please login to complete your appointment booking.</div>');
+				redirect(base_url('login'));
+				return;
+			}
 			$data['gatewayData']=$gatewayData;
 			$data['AppointmentCheckout']=$AppointmentCheckout;
 			$this->load->view('secure/appointmentcheckout_hospital',$data);
 		}else
 		{
-			echo '403 UnAuthorized Access!!';
+			redirect(base_url('login'));
 		}
 	}
 

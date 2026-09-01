@@ -232,8 +232,16 @@ $route['payment/process_points_only/(:any)']= 'payment/process_points_only/$1';
 $route['payment/webhook']                   = 'payment/webhook';
 $route['payment/success/(:any)']            = 'payment/success/$1';
 $route['payment/failed/(:any)']             = 'payment/failed/$1';
+$route['payment/history']                   = 'payment/history';
+$route['payment/orders']                    = 'payment/history';
+$route['payment/dashboard']                 = 'payment/history';
 
+$route['wallet']                            = 'wallet/index';
+$route['wallet/recharge']                   = 'wallet/recharge';
+$route['wallet/get_balance_ajax']           = 'wallet/get_balance_ajax';
 $route['wallet_v2']                         = 'wallet/index';
+$route['wallet/(:any)']                     = 'wallet/$1';
+
 $route['refund/initiate']                   = 'refund/initiate';
 $route['refund/status/(:any)']              = 'refund/status/$1';
 
@@ -245,3 +253,55 @@ $route['payout/verify_account']             = 'payout/verify_account';
 $route['admin_payment']                     = 'admin_payment/index';
 $route['admin_payment/save_wallet_settings']= 'admin_payment/save_wallet_settings';
 $route['admin_payment/export_orders']       = 'admin_payment/export_orders';
+
+/*
+|--------------------------------------------------------------------------
+| UPCHAR ENTERPRISE MULTI-ROLE & LOGISTICS SUITE ROUTES
+|--------------------------------------------------------------------------
+*/
+$route['staff']                             = 'staff/login';
+$route['staff/login']                       = 'staff/login';
+$route['staff/authenticate']                = 'staff/authenticate';
+$route['staff/demo_login/(:any)']           = 'staff/demo_login/$1';
+$route['staff/logout']                      = 'staff/logout';
+
+// Sample Collector (Phlebotomist) Mobile Field PWA
+$route['collector']                         = 'collector/dashboard';
+$route['collector/dashboard']               = 'collector/dashboard';
+$route['collector/pickup/(:num)']           = 'collector/pickup/$1';
+$route['collector/update_status']           = 'collector/update_status';
+$route['collector/scan_barcode']            = 'collector/scan_barcode';
+$route['collector/complete_payment']        = 'collector/complete_payment';
+
+// Geofenced Attendance Engine
+$route['attendance']                        = 'attendance/punch';
+$route['attendance/punch']                  = 'attendance/punch';
+$route['attendance/record_punch_in']        = 'attendance/record_punch_in';
+$route['attendance/record_punch_out']       = 'attendance/record_punch_out';
+$route['attendance/history']                = 'attendance/history';
+
+// HR & Staff Portal
+$route['hr']                                = 'hr/dashboard';
+$route['hr/dashboard']                      = 'hr/dashboard';
+$route['hr/employees']                      = 'hr/employees';
+$route['hr/save_employee']                  = 'hr/save_employee';
+$route['hr/leaves']                         = 'hr/leaves';
+$route['hr/update_leave']                   = 'hr/update_leave';
+$route['hr/payroll']                        = 'hr/payroll';
+
+// BDE CRM Suite
+$route['crm']                               = 'crm/dashboard';
+$route['crm/dashboard']                     = 'crm/dashboard';
+$route['crm/leads']                         = 'crm/leads';
+$route['crm/save_lead']                     = 'crm/save_lead';
+$route['crm/update_stage']                  = 'crm/update_stage';
+$route['crm/onboard_partner/(:num)']        = 'crm/onboard_partner/$1';
+
+// Central Operations & Expense Desk
+$route['operations']                        = 'operations/dashboard';
+$route['operations/dashboard']              = 'operations/dashboard';
+$route['operations/handoffs']               = 'operations/handoffs';
+$route['operations/verify_handoff']         = 'operations/verify_handoff';
+$route['operations/expenses']               = 'operations/expenses';
+$route['operations/save_expense']           = 'operations/save_expense';
+$route['operations/update_expense']         = 'operations/update_expense';

@@ -847,8 +847,56 @@ $ref_code      = isset($referral_code) ? $referral_code : 'UPCH-PATIENT-50';
                     </tbody>
                 </table>
             </div>
+    <!-- SPONSORED HEALTHCARE DEALS & PARTNER SHOWCASE -->
+    <?php if (!empty($sponsored_ads)): ?>
+    <div style="background: #ffffff; border-radius: var(--radius-xl); border: 1px solid var(--border-color); padding: 24px; margin-top: 25px; box-shadow: var(--shadow-soft);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; flex-wrap: wrap; gap: 8px;">
+            <div>
+                <span class="badge" style="background: #e0f2fe; color: #0369a1; font-size: 11px; font-weight: 700; text-transform: uppercase;">
+                    <i class="fa fa-bullhorn"></i> Verified Medical Partner Offers
+                </span>
+                <h4 style="margin: 6px 0 0; font-size: 17px; font-weight: 800; color: var(--text-main);">
+                    Special Sponsored Healthcare Discounts &amp; Deals
+                </h4>
+            </div>
+            <a href="<?=base_url();?>#sponsoredShowcaseSection" target="_blank" style="font-size: 12.5px; color: var(--primary-teal); font-weight: 700; text-decoration: none;">
+                View All Offers &rarr;
+            </a>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px;">
+            <?php foreach (array_slice($sponsored_ads, 0, 3) as $ad): 
+                $imgSrc = filter_var($ad->image, FILTER_VALIDATE_URL) ? $ad->image : (base_url('public/assets/upload/' . $ad->image));
+                $adUrl  = base_url('home/ad_click/' . $ad->id);
+            ?>
+            <div style="background: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between;">
+                <div style="position: relative; height: 120px; overflow: hidden;">
+                    <img src="<?=$imgSrc;?>" alt="<?=html_escape($ad->title);?>" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.src='https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=400';">
+                    <span style="position: absolute; top: 8px; left: 8px; background: rgba(15, 23, 42, 0.85); color: #2dd4bf; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 12px;">
+                        <?=html_escape($ad->sponsor_badge ?: 'Sponsored Partner');?>
+                    </span>
+                </div>
+                <div style="padding: 14px; flex-grow: 1; display: flex; flex-direction: column; justify-content: space-between;">
+                    <div>
+                        <strong style="font-size: 14px; color: var(--text-main); display: block; margin-bottom: 4px; line-height: 1.3;">
+                            <?=html_escape($ad->title ?: $ad->short_description);?>
+                        </strong>
+                        <p style="font-size: 12px; color: var(--text-muted); margin: 0 0 10px; line-height: 1.4;">
+                            <?=html_escape($ad->short_description);?>
+                        </p>
+                    </div>
+                    <div style="border-top: 1px solid #e2e8f0; padding-top: 10px; display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-size: 11px; color: #16a34a; font-weight: 700;"><i class="fa fa-tag"></i> Partner Offer</span>
+                        <a href="<?=$adUrl;?>" target="_blank" class="btn btn-xs" style="background: var(--primary-teal); color: #ffffff; font-weight: 700; border-radius: 6px; padding: 5px 12px;">
+                            Claim Offer &rarr;
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <?php endforeach; ?>
         </div>
     </div>
+    <?php endif; ?>
 
 </div>
 

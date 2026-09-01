@@ -14,6 +14,28 @@ class Refund_model extends CI_Model {
         $this->load->model('Payment_model');
         $this->load->library('Razorpay_lib');
         date_default_timezone_set("Asia/Kolkata");
+        $this->_ensure_tables();
+    }
+
+    private function _ensure_tables() {
+        $this->db->query("CREATE TABLE IF NOT EXISTS `payment_refunds` (
+            `id` int(11) NOT NULL AUTO_INCREMENT,
+            `refund_ref` varchar(60) NOT NULL,
+            `original_order_ref` varchar(60) NOT NULL,
+            `razorpay_refund_id` varchar(50) DEFAULT NULL,
+            `user_id` int(11) NOT NULL,
+            `refund_amount` decimal(10,2) NOT NULL,
+            `refund_to` enum('WALLET','GATEWAY') NOT NULL,
+            `reason` text DEFAULT NULL,
+            `initiated_by` enum('SYSTEM','ADMIN','PATIENT') NOT NULL DEFAULT 'SYSTEM',
+            `status` enum('INITIATED','PROCESSING','COMPLETED','FAILED') NOT NULL DEFAULT 'INITIATED',
+            `created_at` datetime NOT NULL,
+            `completed_at` datetime DEFAULT NULL,
+            PRIMARY KEY (`id`),
+            UNIQUE KEY `uk_refund_ref` (`refund_ref`),
+            KEY `idx_order_ref` (`original_order_ref`),
+            KEY `idx_user_refunds` (`user_id`, `status`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
     }
 
     /**

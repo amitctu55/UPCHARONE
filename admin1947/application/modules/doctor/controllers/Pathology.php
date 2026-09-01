@@ -38,25 +38,49 @@ class Pathology extends CI_Controller
 	
 	public function add()
 	{
-		//$this->form_validation->set_rules('test_id','Test Name','trim|required|max_length[100]');
-		$this->form_validation->set_rules('path_lab_id','Path Name','trim|required|max_length[100]');
-		$this->form_validation->set_rules('test_id','Test Name',"trim|numeric|required|max_length[255]|is_unique[path_lab_test.test_id='".$this->db->escape_str($this->input->post('test_id'))."' AND path_lab_id!='".$this->db->escape_str($this->input->post('path_lab_id'))."']");
-		if($this->form_validation->run()==TRUE)
+		$this->load->library('form_validation');
+		$this->form_validation->set_rules('path_lab_id', 'Pathology Center', 'trim|required|numeric');
+		$this->form_validation->set_rules('test_id', 'Diagnostic Test', 'trim|required|numeric');
+
+		if ($this->input->post('submit') && $this->form_validation->run() == TRUE)
 		{
-			if($this->pathology_model->insert_assign_test()) 
+			$path_lab_id = (int)$this->input->post('path_lab_id');
+			$test_id     = (int)$this->input->post('test_id');
+
+			// Check for duplicate assignment
+			$existing = $this->db->get_where('path_lab_test', array(
+				'path_lab_id' => $path_lab_id,
+				'test_id'     => $test_id
+			))->row();
+
+			if ($existing)
 			{
-				$msg="<div class='alert alert-success'><strong>Success!</strong> Test Added Successfully </div>";
-				$this->session->set_flashdata('flashmsg',$msg);
-				redirect(base_url().'doctor/pathology/index');
-			}	
+				$this->session->set_flashdata('flashmsg', '<div class="alert alert-warning"><strong>Notice:</strong> This diagnostic test is already assigned to the selected pathology laboratory.</div>');
+			}
+			else
+			{
+				$inserted_id = $this->pathology_model->insert_assign_test();
+				if ($inserted_id) 
+				{
+					$msg = "<div class='alert alert-success'><strong>Success!</strong> Test assigned to laboratory successfully.</div>";
+					$this->session->set_flashdata('flashmsg', $msg);
+					redirect(base_url() . 'doctor/pathology/index');
+					return;
+				}
+				else
+				{
+					$this->session->set_flashdata('flashmsg', '<div class="alert alert-danger"><strong>Error:</strong> Failed to assign test. Please try again.</div>');
+				}
+			}
 		}
-		$data['heading_title'] 	= 'Assing Test Add';
-		$data['module'] 		= 'Assing Test Add';
+
+		$data['heading_title'] 	= 'Assign Test to Lab';
+		$data['module'] 		= 'Pathology Test Assignment';
 		$data['test']			= $this->pathology_model->get_test(array('status'=>'1'));
 		$data['pathlab']		= $this->pathology_model->get_pathlab(array('approved'=>'1'));
 		$this->load->view('inc/topheaderlink');
 		$this->load->view('inc/topheader');
-		$this->load->view('pathology/assign_test_add',$data);
+		$this->load->view('pathology/assign_test_add', $data);
 		$this->load->view('sidebar');
 		$this->load->view('inc/headersetting');
 		$this->load->view('inc/footerlink');

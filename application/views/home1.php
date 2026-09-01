@@ -319,6 +319,108 @@
     </div>
 </section>
 
+<!-- 5.5 SPONSORED HEALTHCARE SHOWCASE (MEDICINES, MEDICAL STORES, HOSPITALS, PATHOLOGY LABS) -->
+<?php if (!empty($sponsored_ads)): ?>
+<section class="section-wrapper" id="sponsoredShowcaseSection" style="background: linear-gradient(180deg, #F8FAFC 0%, #EFF6FF 100%); padding: 50px 0; border-top: 1px solid #E2E8F0; border-bottom: 1px solid #E2E8F0;">
+    <div class="container">
+        <div class="section-title-wrap" style="text-align: center; margin-bottom: 30px;">
+            <span class="section-badge" style="background: rgba(0, 168, 150, 0.12); color: #008f80; border: 1px solid rgba(0, 168, 150, 0.3); font-size: 11.5px; font-weight: 700; padding: 4px 14px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.5px;">
+                <i class="fas fa-bullhorn"></i> Verified Partner Offers &amp; Sponsored Healthcare
+            </span>
+            <h2 class="section-main-heading" style="font-size: 26px; font-weight: 800; color: #0F172A; margin: 10px 0 6px;">
+                Featured Medicine Offers, Medical Stores, Hospitals &amp; Labs
+            </h2>
+            <p class="section-sub-heading" style="font-size: 14px; color: #64748B; max-width: 680px; margin: 0 auto;">
+                Exclusive partner deals on genuine medicines, NABH hospital consultations, doorstep diagnostic checkups, and verified neighborhood medical stores.
+            </p>
+        </div>
+
+        <!-- Ad Category Filter Tabs -->
+        <div style="display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; margin-bottom: 26px;">
+            <button type="button" class="btn btn-sm btn-ad-filter active" data-cat="all" style="font-weight: 700; border-radius: 20px; padding: 6px 16px; font-size: 12px; background: #00a896; color: #fff; border: none;">
+                All Offers
+            </button>
+            <button type="button" class="btn btn-sm btn-ad-filter" data-cat="medicine" style="font-weight: 700; border-radius: 20px; padding: 6px 16px; font-size: 12px; background: #fff; color: #334155; border: 1px solid #CBD5E1;">
+                💊 Sponsored Medicines
+            </button>
+            <button type="button" class="btn btn-sm btn-ad-filter" data-cat="medical_store" style="font-weight: 700; border-radius: 20px; padding: 6px 16px; font-size: 12px; background: #fff; color: #334155; border: 1px solid #CBD5E1;">
+                🏪 Medical Stores
+            </button>
+            <button type="button" class="btn btn-sm btn-ad-filter" data-cat="hospital" style="font-weight: 700; border-radius: 20px; padding: 6px 16px; font-size: 12px; background: #fff; color: #334155; border: 1px solid #CBD5E1;">
+                🏥 Featured Hospitals
+            </button>
+            <button type="button" class="btn btn-sm btn-ad-filter" data-cat="pathology" style="font-weight: 700; border-radius: 20px; padding: 6px 16px; font-size: 12px; background: #fff; color: #334155; border: 1px solid #CBD5E1;">
+                🔬 Diagnostic Labs
+            </button>
+            <button type="button" class="btn btn-sm btn-ad-filter" data-cat="equipment" style="font-weight: 700; border-radius: 20px; padding: 6px 16px; font-size: 12px; background: #fff; color: #334155; border: 1px solid #CBD5E1;">
+                🩺 Medical Devices
+            </button>
+        </div>
+
+        <!-- Ad Cards Grid -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px;" id="adShowcaseGrid">
+            <?php foreach ($sponsored_ads as $ad): 
+                $imgSrc = filter_var($ad->image, FILTER_VALIDATE_URL) ? $ad->image : (base_url('public/assets/upload/' . $ad->image));
+                $adUrl  = base_url('home/ad_click/' . $ad->id);
+                $cat = $ad->category ?: 'general';
+            ?>
+            <div class="sponsored-ad-card" data-category="<?=$cat;?>" style="background: #FFFFFF; border-radius: 14px; border: 1px solid #E2E8F0; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.03); display: flex; flex-direction: column; justify-content: space-between; transition: all 0.3s ease;">
+                <div style="position: relative; height: 160px; overflow: hidden; background: #0f172a;">
+                    <img src="<?=$imgSrc;?>" alt="<?=html_escape($ad->title);?>" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s ease;" onerror="this.src='https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=500';">
+                    <span style="position: absolute; top: 12px; left: 12px; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(4px); color: #2DD4BF; font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 20px; border: 1px solid rgba(45, 212, 191, 0.4);">
+                        <i class="fas fa-certificate"></i> <?=html_escape($ad->sponsor_badge ?: 'Sponsored Partner');?>
+                    </span>
+                    <span style="position: absolute; bottom: 10px; right: 12px; background: rgba(0, 0, 0, 0.6); color: #FFFFFF; font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 4px; text-transform: uppercase;">
+                        <?=str_replace('_', ' ', $cat);?>
+                    </span>
+                </div>
+
+                <div style="padding: 18px; flex-grow: 1; display: flex; flex-direction: column; justify-content: space-between;">
+                    <div>
+                        <h4 style="font-size: 16px; font-weight: 800; color: #0F172A; margin: 0 0 6px; line-height: 1.35;">
+                            <?=html_escape($ad->title ?: $ad->short_description);?>
+                        </h4>
+                        <p style="font-size: 13px; color: #64748B; margin: 0 0 12px; line-height: 1.45;">
+                            <?=html_escape($ad->short_description);?>
+                        </p>
+                    </div>
+
+                    <div style="border-top: 1px solid #F1F5F9; padding-top: 12px; display: flex; align-items: center; justify-content: space-between;">
+                        <span style="font-size: 11.5px; color: #0284C7; font-weight: 600;">
+                            <i class="fas fa-check-circle"></i> Verified Offer
+                        </span>
+                        <a href="<?=$adUrl;?>" target="_blank" class="btn btn-sm" style="background: #00a896; color: #FFFFFF; font-weight: 700; border-radius: 8px; padding: 6px 14px; font-size: 12px; text-decoration: none; display: inline-flex; align-items: center; gap: 4px;">
+                            Explore Offer <i class="fas fa-arrow-right" style="font-size: 10px;"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <?php endforeach; ?>
+        </div>
+    </div>
+</section>
+
+<script>
+$('.btn-ad-filter').click(function() {
+    $('.btn-ad-filter').css({'background': '#fff', 'color': '#334155', 'border': '1px solid #CBD5E1'}).removeClass('active');
+    $(this).css({'background': '#00a896', 'color': '#fff', 'border': 'none'}).addClass('active');
+
+    var cat = $(this).data('cat');
+    if (cat === 'all') {
+        $('.sponsored-ad-card').fadeIn();
+    } else {
+        $('.sponsored-ad-card').each(function() {
+            if ($(this).data('category') === cat) {
+                $(this).fadeIn();
+            } else {
+                $(this).fadeOut();
+            }
+        });
+    }
+});
+</script>
+<?php endif; ?>
+
 <!-- 6. HIGH-TRUST STATS BAR -->
 <div class="container">
     <div class="trust-stats-bar">

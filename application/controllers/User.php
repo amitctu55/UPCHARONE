@@ -22,7 +22,10 @@ class User extends CI_Controller {
 		$password = md5($this->input->post('password'));
         $login = $this->User_Model->login($email,$password);
 		if($login=='SUCCESS'){
-			$response=array('status'=>'success','msg'=>'Logged in Successfully');
+			$last_page = $this->session->userdata('last_page');
+			$this->session->unset_userdata('last_page');
+			$redirect_url = $last_page ?: base_url('myappointments');
+			$response=array('status'=>'success','msg'=>'Logged in Successfully', 'redirect_url' => $redirect_url);
 		}else if($login=='UNVERIFIED'){
 			$response=array('status'=>'failed','msg'=>'Your account is pending verification and approval by the Administrator. You cannot login until approved.');
 		}else if($login=='OTP'){
@@ -134,6 +137,67 @@ class User extends CI_Controller {
 		echo json_encode($response);
 	}
 	
+	public function google_auth()
+	{
+		$credential = $this->input->post('credential');
+		$googleData = array();
+
+		// If Google JWT token provided (from Google Identity Services)
+		if (!empty($credential)) {
+			$parts = explode('.', $credential);
+			if (count($parts) === 3) {
+				$payload = json_decode(base64_decode(strtr($parts[1], '-_', '+/')), true);
+				if (!empty($payload['sub'])) {
+					$googleData = array(
+						'guid'    => $payload['sub'],
+						'email'   => @$payload['email'],
+						'fname'   => @$payload['given_name'] ?: @$payload['name'],
+						'lname'   => @$payload['family_name'] ?: '',
+						'picture' => @$payload['picture']
+					);
+				}
+			}
+		}
+
+		// Fallback to direct POST payload
+		if (empty($googleData['guid'])) {
+			$googleData = array(
+				'guid'    => $this->input->post('guid') ?: $this->input->post('google_id'),
+				'email'   => $this->input->post('email'),
+				'fname'   => $this->input->post('name') ?: $this->input->post('fname'),
+				'picture' => $this->input->post('image') ?: $this->input->post('picture')
+			);
+		}
+
+		if (!empty($googleData['guid']) || !empty($googleData['email'])) {
+			$user = $this->User_Model->google_auth_sync($googleData);
+			if ($user) {
+				$last_page = $this->session->userdata('last_page');
+				$this->session->unset_userdata('last_page');
+				$redirect_url = $last_page ?: base_url('myappointments');
+
+				if ($this->input->is_ajax_request() || $this->input->post('is_ajax')) {
+					echo json_encode(array('status' => 'success', 'msg' => 'Google Login Successful', 'redirect_url' => $redirect_url));
+					return;
+				}
+				redirect($redirect_url);
+				return;
+			}
+		}
+
+		if ($this->input->is_ajax_request()) {
+			echo json_encode(array('status' => 'failed', 'msg' => 'Unable to authenticate with Google. Please try again.'));
+			return;
+		}
+		$this->session->set_flashdata('flashmsg', '<div class="alert alert-danger">Google authentication failed. Please try again.</div>');
+		redirect(base_url('login'));
+	}
+
+	public function google_login()
+	{
+		$this->google_auth();
+	}
+
 	public function logout()
     {
         $this->session->sess_destroy();

@@ -226,6 +226,7 @@
           </p>
 
           <form action="<?=base_url('wallet/recharge');?>" method="post" id="rechargeForm">
+            <input type="hidden" name="<?=$this->security->get_csrf_token_name();?>" value="<?=$this->security->get_csrf_hash();?>">
             <div class="form-group">
               <label style="font-size: 13px; font-weight: 700; color: #334155;">Select Quick Top-Up Amount:</label>
               <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px;">

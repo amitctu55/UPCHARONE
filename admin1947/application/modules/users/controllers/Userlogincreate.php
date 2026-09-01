@@ -111,9 +111,22 @@ class Userlogincreate extends CI_Controller {
 		redirect(base_url('users/userlogincreate/userview'));
 	}
 
+	public function gmail_users()
+	{
+		$this->gmail();
+	}
+
 	public function gmail()
 	{
-		$data['userlogin'] = $this->db->get_where('userlogin', array('GUID !=' => ''))->result();
+		$this->db->select('userlogin.*, (SELECT COUNT(*) FROM appointment WHERE appointment.user_id = userlogin.USERID) as total_appointments, (SELECT points_balance FROM user_wallet WHERE user_wallet.user_id = userlogin.USERID LIMIT 1) as wallet_points');
+		$this->db->from('userlogin');
+		$this->db->where('GUID !=', '');
+		$this->db->where('GUID IS NOT NULL', NULL, FALSE);
+		$this->db->order_by('USERID', 'DESC');
+		$data['userlogin'] = $this->db->get()->result();
+
+		$data['heading_title'] = 'Google / Gmail Social Auth Registrations';
+		$data['module']        = 'User Management';
 
 		$this->load->view('inc/topheaderlink');
 		$this->load->view('inc/topheader');
@@ -122,6 +135,11 @@ class Userlogincreate extends CI_Controller {
 		$this->load->view('inc/headersetting');
 		$this->load->view('inc/footerlink');
 		$this->load->view('inc/table_footer');
+	}
+
+	public function facebook_users()
+	{
+		$this->facebook();
 	}
 
 	public function facebook()
@@ -137,6 +155,16 @@ class Userlogincreate extends CI_Controller {
 		$this->load->view('inc/table_footer');
 	}
 
+	public function app_download_users()
+	{
+		$this->website();
+	}
+
+	public function website_users()
+	{
+		$this->website();
+	}
+
 	public function website()
 	{
 		$data['userlogin'] = $this->db->get_where('userlogin', array('USERID !=' => ''))->result();
@@ -148,5 +176,19 @@ class Userlogincreate extends CI_Controller {
 		$this->load->view('inc/headersetting');
 		$this->load->view('inc/footerlink');
 		$this->load->view('inc/table_footer');
+	}
+
+	public function toggle_user_status($id = null)
+	{
+		$uid = $id ?: $this->input->get('USERID');
+		if ($uid) {
+			$u = $this->db->get_where('userlogin', array('USERID' => $uid))->row();
+			if ($u) {
+				$newSt = ($u->STATUS == '1') ? '2' : '1';
+				$this->db->where('USERID', $uid)->update('userlogin', array('STATUS' => $newSt));
+				$this->session->set_flashdata('flashmsg', '<div class="alert alert-info">User status updated to ' . ($newSt == '1' ? 'ACTIVE' : 'BLOCKED') . '.</div>');
+			}
+		}
+		redirect($_SERVER['HTTP_REFERER'] ?: base_url('users/userlogincreate/gmail_users'));
 	}
 }

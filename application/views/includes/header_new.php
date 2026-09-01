@@ -1,10 +1,16 @@
 <?php
-if ($this->session->userdata('userid')!=''){
-	$userdata['id']=$this->session->userdata('userid');
-	$userdata['row']=$this->db->get_where('userlogin',array('USERID'=>$userdata['id']))->row();
-	$userdata['email']=$userdata['row']->EMAIL;
-	$userdata['mobile']=$userdata['row']->MOBILE;
-	$userdata['name']=$userdata['row']->FNAME.' '.$userdata['row']->LNAME;
+$isUserLoggedIn = ($this->session->userdata('userid')!='' || $this->session->userdata('USERID')!='' || $this->session->userdata('user_id')!='');
+$currentUserName = $this->session->userdata('username') ?: 'Patient';
+if ($isUserLoggedIn){
+	$userid = $this->session->userdata('userid') ?: $this->session->userdata('USERID') ?: $this->session->userdata('user_id');
+	$userdata['id']=$userid;
+	$userdata['row']=$this->db->get_where('userlogin',array('USERID'=>$userid))->row();
+	if ($userdata['row']) {
+		$userdata['email']=$userdata['row']->EMAIL;
+		$userdata['mobile']=$userdata['row']->MOBILE;
+		$userdata['name']=$userdata['row']->FNAME.' '.$userdata['row']->LNAME;
+		$currentUserName = $userdata['row']->FNAME ?: $currentUserName;
+	}
 }
 if(
 		current_url() != base_url().'login' &&
@@ -382,125 +388,134 @@ color: #fff;}
                         <aside class="col-md-9" id="HeadMobile">
                           <nav class="navbar">
                             <ul class="nav navbar-nav navbar-right">
-                              <li>
-                                <a href="<?=base_url();?>">
-                                  <span class="glyphicon glyphicon-home iconEffect"></span> Home
-                                </a>
-                              </li>
+            <li>
+              <a href="<?=base_url();?>">
+                <span class="glyphicon glyphicon-home iconEffect"></span> Home
+              </a>
+            </li>
 
-                              <!-- 1. Our Partners (4-Category Dropdown: Hospital, Doctor, Pathology, Pharmacy) -->
-                              <li class="dropdown partner-dropdown-container">
-                                <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
-                                  <i class="fas fa-handshake iconEffect"></i> Our Partners <span class="caret"></span>
-                                </a>
-                                <div class="partner-menu-box">
-                                  <div class="partner-menu-header">
-                                    <h5><i class="fas fa-hospital-user" style="color: #00A896;"></i> Our Partner Network</h5>
-                                    <span>Verified Healthcare Providers</span>
-                                  </div>
-                                  <div class="partner-grid">
-                                    <a href="<?=base_url('hospitals');?>" class="partner-card-link">
-                                      <div class="partner-card-icon"><i class="fas fa-hospital"></i></div>
-                                      <div class="partner-card-text">
-                                        <h6>Hospital</h6>
-                                        <p>Browse network hospitals & clinics</p>
-                                      </div>
-                                    </a>
-                                    <a href="<?=base_url('doctors');?>" class="partner-card-link">
-                                      <div class="partner-card-icon"><i class="fas fa-user-md"></i></div>
-                                      <div class="partner-card-text">
-                                        <h6>Doctor</h6>
-                                        <p>Certified specialists & surgeons</p>
-                                      </div>
-                                    </a>
-                                    <a href="<?=base_url('mytest');?>" class="partner-card-link">
-                                      <div class="partner-card-icon"><i class="fas fa-flask"></i></div>
-                                      <div class="partner-card-text">
-                                        <h6>Pathology</h6>
-                                        <p>Diagnostic labs & sample testing</p>
-                                      </div>
-                                    </a>
-                                    <a href="<?=base_url('medical-signup');?>" class="partner-card-link">
-                                      <div class="partner-card-icon"><i class="fas fa-pills"></i></div>
-                                      <div class="partner-card-text">
-                                        <h6>Pharmacy</h6>
-                                        <p>Verified chemist & medical stores</p>
-                                      </div>
-                                    </a>
-                                  </div>
-                                </div>
-                              </li>
+            <?php if (!$isUserLoggedIn): ?>
+            <!-- 1. Our Partners (4-Category Dropdown: Hospital, Doctor, Pathology, Pharmacy) - Shown ONLY for Guest / Logged-Out Users -->
+            <li class="dropdown partner-dropdown-container">
+              <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
+                <i class="fas fa-handshake iconEffect"></i> Our Partners <span class="caret"></span>
+              </a>
+              <div class="partner-menu-box">
+                <div class="partner-menu-header">
+                  <h5><i class="fas fa-hospital-user" style="color: #00A896;"></i> Our Partner Network</h5>
+                  <span>Verified Healthcare Providers</span>
+                </div>
+                <div class="partner-grid">
+                  <a href="<?=base_url('hospitals');?>" class="partner-card-link">
+                    <div class="partner-card-icon"><i class="fas fa-hospital"></i></div>
+                    <div class="partner-card-text">
+                      <h6>Hospital</h6>
+                      <p>Browse network hospitals & clinics</p>
+                    </div>
+                  </a>
+                  <a href="<?=base_url('doctors');?>" class="partner-card-link">
+                    <div class="partner-card-icon"><i class="fas fa-user-md"></i></div>
+                    <div class="partner-card-text">
+                      <h6>Doctor</h6>
+                      <p>Certified specialists & surgeons</p>
+                    </div>
+                  </a>
+                  <a href="<?=base_url('mytest');?>" class="partner-card-link">
+                    <div class="partner-card-icon"><i class="fas fa-flask"></i></div>
+                    <div class="partner-card-text">
+                      <h6>Pathology</h6>
+                      <p>Diagnostic labs & sample testing</p>
+                    </div>
+                  </a>
+                  <a href="<?=base_url('medical-signup');?>" class="partner-card-link">
+                    <div class="partner-card-icon"><i class="fas fa-pills"></i></div>
+                    <div class="partner-card-text">
+                      <h6>Pharmacy</h6>
+                      <p>Verified chemist & medical stores</p>
+                    </div>
+                  </a>
+                </div>
+              </div>
+            </li>
 
-                              <!-- 2. Become Partner / Login (4 Portal Categories) -->
-                              <li class="dropdown partner-dropdown-container">
-                                <a class="dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">
-                                  <i class="fas fa-user-plus iconEffect"></i> Become Partner / Login <span class="caret"></span>
-                                </a>
-                                <div class="partner-menu-box">
-                                  <div class="partner-menu-header">
-                                    <h5><i class="fas fa-shield-alt" style="color: #00A896;"></i> Partner Access Portal</h5>
-                                    <span>Onboarding & Account Login</span>
-                                  </div>
-                                  <div class="partner-grid">
-                                    <div class="partner-login-card">
-                                      <div class="partner-card-icon"><i class="fas fa-user-md"></i></div>
-                                      <div class="partner-card-text">
-                                        <h6>Doctor Portal</h6>
-                                        <div class="partner-card-actions">
-                                          <a href="<?=base_url('doctor-aindex');?>" class="partner-btn-login"><i class="fas fa-sign-in-alt"></i> Login</a>
-                                          <a href="<?=base_url('doctor-signup');?>" class="partner-btn-join"><i class="fas fa-plus"></i> Join</a>
-                                        </div>
-                                      </div>
-                                    </div>
-                                    <div class="partner-login-card">
-                                      <div class="partner-card-icon"><i class="fas fa-hospital"></i></div>
-                                      <div class="partner-card-text">
-                                        <h6>Hospital Portal</h6>
-                                        <div class="partner-card-actions">
-                                          <a href="<?=base_url('hospital-aindex');?>" class="partner-btn-login"><i class="fas fa-sign-in-alt"></i> Login</a>
-                                          <a href="<?=base_url('hospital-signup');?>" class="partner-btn-join"><i class="fas fa-plus"></i> Join</a>
-                                        </div>
-                                      </div>
-                                    </div>
-                                    <div class="partner-login-card">
-                                      <div class="partner-card-icon"><i class="fas fa-flask"></i></div>
-                                      <div class="partner-card-text">
-                                        <h6>Pathology Lab</h6>
-                                        <div class="partner-card-actions">
-                                          <a href="<?=base_url('pathlab-login');?>" class="partner-btn-login"><i class="fas fa-sign-in-alt"></i> Login</a>
-                                          <a href="<?=base_url('pathlab-signup');?>" class="partner-btn-join"><i class="fas fa-plus"></i> Join</a>
-                                        </div>
-                                      </div>
-                                    </div>
-                                    <div class="partner-login-card">
-                                      <div class="partner-card-icon"><i class="fas fa-pills"></i></div>
-                                      <div class="partner-card-text">
-                                        <h6>Pharmacy Store</h6>
-                                        <div class="partner-card-actions">
-                                          <a href="<?=base_url('medical-login');?>" class="partner-btn-login"><i class="fas fa-sign-in-alt"></i> Login</a>
-                                          <a href="<?=base_url('medical-signup');?>" class="partner-btn-join"><i class="fas fa-plus"></i> Join</a>
-                                        </div>
-                                      </div>
-                                    </div>
-                                  </div>
-                                </div>
-                              </li>
+            <!-- 2. Become Partner / Login (4 Portal Categories) - Shown ONLY for Guest / Logged-Out Users -->
+            <li class="dropdown partner-dropdown-container">
+              <a class="dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">
+                <i class="fas fa-user-plus iconEffect"></i> Become Partner / Login <span class="caret"></span>
+              </a>
+              <div class="partner-menu-box">
+                <div class="partner-menu-header">
+                  <h5><i class="fas fa-shield-alt" style="color: #00A896;"></i> Partner Access Portal</h5>
+                  <span>Onboarding & Account Login</span>
+                </div>
+                <div class="partner-grid">
+                  <div class="partner-login-card">
+                    <div class="partner-card-icon"><i class="fas fa-user-md"></i></div>
+                    <div class="partner-card-text">
+                      <h6>Doctor Portal</h6>
+                      <div class="partner-card-actions">
+                        <a href="<?=base_url('doctor-aindex');?>" class="partner-btn-login"><i class="fas fa-sign-in-alt"></i> Login</a>
+                        <a href="<?=base_url('doctor-signup');?>" class="partner-btn-join"><i class="fas fa-plus"></i> Join</a>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="partner-login-card">
+                    <div class="partner-card-icon"><i class="fas fa-hospital"></i></div>
+                    <div class="partner-card-text">
+                      <h6>Hospital Portal</h6>
+                      <div class="partner-card-actions">
+                        <a href="<?=base_url('hospital-aindex');?>" class="partner-btn-login"><i class="fas fa-sign-in-alt"></i> Login</a>
+                        <a href="<?=base_url('hospital-signup');?>" class="partner-btn-join"><i class="fas fa-plus"></i> Join</a>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="partner-login-card">
+                    <div class="partner-card-icon"><i class="fas fa-flask"></i></div>
+                    <div class="partner-card-text">
+                      <h6>Pathology Lab</h6>
+                      <div class="partner-card-actions">
+                        <a href="<?=base_url('pathlab-login');?>" class="partner-btn-login"><i class="fas fa-sign-in-alt"></i> Login</a>
+                        <a href="<?=base_url('pathlab-signup');?>" class="partner-btn-join"><i class="fas fa-plus"></i> Join</a>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="partner-login-card">
+                    <div class="partner-card-icon"><i class="fas fa-pills"></i></div>
+                    <div class="partner-card-text">
+                      <h6>Pharmacy Store</h6>
+                      <div class="partner-card-actions">
+                        <a href="<?=base_url('medical-login');?>" class="partner-btn-login"><i class="fas fa-sign-in-alt"></i> Login</a>
+                        <a href="<?=base_url('medical-signup');?>" class="partner-btn-join"><i class="fas fa-plus"></i> Join</a>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </li>
 
-                              <?php if ($this->session->userdata('userid')==''){ ?>
-                              <li>
-                                <a href="https://upcharrnews.blogspot.com/" target="_blank"><i class="fas fa-newspaper iconEffect"></i> Blog</a>
-                              </li>
-                              <li>
-                                <a href="<?=base_url('login');?>" class="nav-login-btn"><span class="glyphicon glyphicon-log-in iconEffect"></span> Patient Login</a>
-                              </li>
-                              <?php } else { ?>
-                              <li>
-                                <a href="<?=base_url('myappointments');?>"><i class="fas fa-calendar-alt iconEffect"></i> My Appointments</a>
-                              </li>
-                              <li>
-                                <a href="<?=base_url('Home/logout');?>" class="nav-logout-btn"><span class="glyphicon glyphicon-log-out iconEffect"></span> Logout</a>
-                              </li>
-                              <?php } ?>
+            <li>
+              <a href="https://upcharrnews.blogspot.com/" target="_blank"><i class="fas fa-newspaper iconEffect"></i> Blog</a>
+            </li>
+            <li>
+              <a href="<?=base_url('login');?>" class="nav-login-btn"><span class="glyphicon glyphicon-log-in iconEffect"></span> Patient Login</a>
+            </li>
+            <?php else: ?>
+            <!-- Authenticated User Navigation: Clean & Focused on Patient Services -->
+            <li>
+              <a href="<?=base_url('myappointments');?>"><i class="fas fa-calendar-alt iconEffect"></i> My Appointments</a>
+            </li>
+            <li>
+              <a href="<?=base_url('wallet');?>"><i class="fas fa-wallet iconEffect" style="color: #f59e0b;"></i> Wallet &amp; Points</a>
+            </li>
+            <li>
+              <a href="<?=base_url('profile');?>" style="font-weight: 700; color: #00A896;">
+                <i class="fas fa-user-circle"></i> <?=html_escape($currentUserName);?>
+              </a>
+            </li>
+            <li>
+              <a href="<?=base_url('Home/logout');?>" class="nav-logout-btn"><span class="glyphicon glyphicon-log-out iconEffect"></span> Logout</a>
+            </li>
+            <?php endif; ?>
                             </ul>
                           </nav>
                         </aside>

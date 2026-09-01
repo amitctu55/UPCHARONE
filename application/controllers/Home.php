@@ -20,6 +20,7 @@ class Home extends CI_Controller
 		$data['news'] 			= $this->db->order_by('id','DESC')->limit('4')->get_where('news',array('approved'=>'1','status'=>'1'))->result();
 		$data['pathology_tests'] = $this->db->order_by('test_id', 'asc')->where('status', '1')->limit(12)->get('pathtest')->result();
 		$data['pathology_categories'] = $this->db->order_by('category_name', 'asc')->where('status', '1')->get('path_category')->result();
+		$data['sponsored_ads']   = $this->db->where('status', '1')->order_by('id', 'DESC')->get('advertisement')->result();
 		if ($this->session->userdata('userid')!='')
 		{
 			
@@ -262,9 +263,23 @@ class Home extends CI_Controller
 		$this->db->limit(20);
 		$data['lab_bookings'] = $this->db->get()->result_array();
 
+		$data['sponsored_ads'] = $this->db->where('status', '1')->order_by('id', 'DESC')->get('advertisement')->result();
+
 		$this->load->view('patient_header', $data);
 		$this->load->view('manageappointment', $data);
 		$this->load->view('patient_footer');
+	}
+
+	public function ad_click($id)
+	{
+		$ad = $this->db->get_where('advertisement', array('id' => $id))->row();
+		if ($ad) {
+			$this->db->where('id', $id)->set('clicks', 'clicks+1', FALSE)->update('advertisement');
+			$dest = !empty($ad->link_url) ? $ad->link_url : (!empty($ad->page) ? $ad->page : base_url());
+			redirect($dest);
+			return;
+		}
+		redirect(base_url());
 	}
 	public function process(){
 		$query = $this->input->post('query');
@@ -1356,8 +1371,10 @@ class Home extends CI_Controller
 
 	public function change_password()
 	{
-		$userid = $this->session->userdata('userid') ?: $this->session->userdata('user_id');
+		$userid = $this->session->userdata('userid') ?: $this->session->userdata('user_id') ?: $this->session->userdata('USERID');
 		if (!$userid) {
+			$this->session->set_userdata('last_page', base_url('change_password'));
+			$this->session->set_flashdata('flashmsg', '<div class="alert alert-warning">Please login to change your password.</div>');
 			redirect('login');
 			return;
 		}
@@ -1370,15 +1387,15 @@ class Home extends CI_Controller
 			$user = $this->db->get_where('userlogin', array('USERID' => $userid))->row();
 			if ($user && ($user->PASSWORD == $cur_password || $user->PASSWORD == $this->input->post('password') || $user->PASSWORD == $this->input->post('oldpass'))) {
 				if ($new_password === $conf_password) {
-					$hash = password_hash($this->input->post('newpass'), PASSWORD_BCRYPT);
-					$this->db->where('USERID', $userid)->update('userlogin', array('PASSWORD' => md5($this->input->post('newpass'))));
-					$this->session->set_flashdata('msg', "<div class='alert alert-success'>Password updated successfully!</div>");
-					$this->session->set_flashdata('flashmsg', "<div class='alert alert-success'>Password updated successfully!</div>");
+					$this->db->where('USERID', $userid)->update('userlogin', array('PASSWORD' => $new_password));
+					$this->session->set_flashdata('flashmsg', "<div class='alert alert-success'><strong>Success!</strong> Password updated successfully.</div>");
+					redirect('change_password');
+					return;
 				} else {
-					$this->session->set_flashdata('msg', "<div class='alert alert-danger'>New password and confirm password do not match.</div>");
+					$this->session->set_flashdata('flashmsg', "<div class='alert alert-danger'>New password and confirm password do not match.</div>");
 				}
 			} else {
-				$this->session->set_flashdata('msg', "<div class='alert alert-danger'>Current password is incorrect.</div>");
+				$this->session->set_flashdata('flashmsg', "<div class='alert alert-danger'>Current password is incorrect.</div>");
 			}
 		}
 
@@ -1390,15 +1407,34 @@ class Home extends CI_Controller
 
 	public function profile()
 	{
-		$userid = $this->session->userdata('userid') ?: $this->session->userdata('user_id');
+		$userid = $this->session->userdata('userid') ?: $this->session->userdata('user_id') ?: $this->session->userdata('USERID');
 		if (!$userid) {
+			$this->session->set_userdata('last_page', base_url('profile'));
+			$this->session->set_flashdata('flashmsg', '<div class="alert alert-warning">Please login to view your profile.</div>');
 			redirect('login');
 			return;
 		}
 
+		// Ensure patient_dependents table exists
+		$this->db->query("CREATE TABLE IF NOT EXISTS `patient_dependents` (
+			`id` int(11) NOT NULL AUTO_INCREMENT,
+			`primary_user_id` int(11) NOT NULL,
+			`name` varchar(150) NOT NULL,
+			`relationship` varchar(50) NOT NULL,
+			`gender` varchar(10) DEFAULT 'M',
+			`dob` date DEFAULT NULL,
+			`blood_group` varchar(10) DEFAULT NULL,
+			`medical_history` text DEFAULT NULL,
+			`created_at` datetime NOT NULL,
+			PRIMARY KEY (`id`),
+			KEY `idx_primary_user` (`primary_user_id`)
+		) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+
 		if (isset($_POST['submit'])) {
 			$this->Userlogin_Model->profile();
 			$this->session->set_flashdata('flashmsg', "<div class='alert alert-success'>Profile details updated successfully!</div>");
+			redirect('profile');
+			return;
 		}
 
 		if ($this->input->post('action') === 'add_dependent') {
@@ -1415,7 +1451,7 @@ class Home extends CI_Controller
 					'name'            => $dep_name,
 					'relationship'    => $dep_rel,
 					'gender'          => $dep_gen ?: 'M',
-					'dob'             => $dep_dob ?: null,
+					'dob'             => !empty($dep_dob) ? $dep_dob : null,
 					'blood_group'     => $dep_bg ?: null,
 					'medical_history' => $dep_med ?: null,
 					'created_at'      => date('Y-m-d H:i:s')
@@ -1435,7 +1471,7 @@ class Home extends CI_Controller
 		}
 
 		$data['specialization'] = $this->db->order_by('name','asc')->where('status','1')->get('master_specialization')->result();
-		$user = $this->db->get_where('userlogin', array('userid' => $userid))->row();
+		$user = $this->db->get_where('userlogin', array('USERID' => $userid))->row();
 
 		if (!$user) {
 			$user = (object) array(
@@ -1459,8 +1495,10 @@ class Home extends CI_Controller
 
 	public function updateprofile()
 	{
-		$userid = $this->session->userdata('userid') ?: $this->session->userdata('user_id');
+		$userid = $this->session->userdata('userid') ?: $this->session->userdata('user_id') ?: $this->session->userdata('USERID');
 		if (!$userid) {
+			$this->session->set_userdata('last_page', base_url('updateprofile'));
+			$this->session->set_flashdata('flashmsg', '<div class="alert alert-warning">Please login to update your profile.</div>');
 			redirect('login');
 			return;
 		}
@@ -1471,7 +1509,7 @@ class Home extends CI_Controller
 		}
 
 		$data['specialization'] = $this->db->order_by('name','asc')->where('status','1')->get('master_specialization')->result();
-		$user_img = $this->db->select('IMAGE')->get_where('userlogin', array('userid' => $userid))->row('IMAGE');
+		$user_img = $this->db->select('IMAGE')->get_where('userlogin', array('USERID' => $userid))->row('IMAGE');
 		$data['src'] = $user_img ?: '';
 
 		if (empty($data['src'])) {

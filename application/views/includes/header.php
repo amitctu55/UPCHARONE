@@ -1,21 +1,27 @@
 <?php
-if ($this->session->userdata('userid')!=''){ 
-	$userdata['id']=$this->session->userdata('userid');
-	$userdata['row']=$this->db->get_where('userlogin',array('USERID'=>$userdata['id']))->row();
-	$userdata['email']=$userdata['row']->EMAIL;
-	$userdata['mobile']=$userdata['row']->MOBILE;
-	$userdata['name']=$userdata['row']->FNAME.' '.$userdata['row']->LNAME;
+$isUserLoggedIn = ($this->session->userdata('userid')!='' || $this->session->userdata('USERID')!='' || $this->session->userdata('user_id')!='');
+$currentUserName = $this->session->userdata('username') ?: 'Patient';
+if ($isUserLoggedIn){ 
+	$userid = $this->session->userdata('userid') ?: $this->session->userdata('USERID') ?: $this->session->userdata('user_id');
+	$userdata['id']=$userid;
+	$userdata['row']=$this->db->get_where('userlogin',array('USERID'=>$userid))->row();
+	if ($userdata['row']) {
+		$userdata['email']=$userdata['row']->EMAIL;
+		$userdata['mobile']=$userdata['row']->MOBILE;
+		$userdata['name']=$userdata['row']->FNAME.' '.$userdata['row']->LNAME;
+		$currentUserName = $userdata['row']->FNAME ?: $currentUserName;
+	}
 }
 if(		
 		current_url() != base_url().'login' && 
 		current_url() != base_url().'signup' && 
 		current_url() != base_url().'forgotpassword' && 
-		current_url() != base_url().'verifymobile' &&
+		current_url() != base_url().'verifymobile' && 
 		
 		current_url() != base_url().'doctor-login' && 
 		current_url() != base_url().'doctor-signup' && 
 		current_url() != base_url().'doctor-forgotpassword' && 
-		current_url() != base_url().'doctor-verifymobile' &&
+		current_url() != base_url().'doctor-verifymobile' && 
 		
 		current_url() != base_url().'hospital-login' && 
 		current_url() != base_url().'hospital-signup' && 
@@ -87,7 +93,8 @@ if(
               </a>
             </li>
 
-            <!-- 1. Our Partners (4-Category Dropdown: Hospital, Doctor, Pathology, Pharmacy) -->
+            <?php if (!$isUserLoggedIn): ?>
+            <!-- 1. Our Partners (4-Category Dropdown: Hospital, Doctor, Pathology, Pharmacy) - Shown ONLY for Guest / Logged-Out Users -->
             <li class="dropdown partner-dropdown-container">
               <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
                 <i class="fas fa-handshake iconEffect"></i> Our Partners <span class="caret"></span>
@@ -130,7 +137,7 @@ if(
               </div>
             </li>
 
-            <!-- 2. Become Partner / Login (4 Portal Categories with Login & Join Actions) -->
+            <!-- 2. Become Partner / Login (4 Portal Categories with Login & Join Actions) - Shown ONLY for Guest / Logged-Out Users -->
             <li class="dropdown partner-dropdown-container">
               <a class="dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">
                 <i class="fas fa-user-plus iconEffect"></i> Become Partner / Login <span class="caret"></span>
@@ -185,21 +192,29 @@ if(
               </div>
             </li>
 
-            <?php if ($this->session->userdata('userid')==''){ ?>
             <li>
               <a href="https://upcharrnews.blogspot.com/" target="_blank"><i class="fas fa-newspaper iconEffect"></i> Blog</a>
             </li>
             <li>
               <a href="<?=base_url('login');?>" class="nav-login-btn"><span class="glyphicon glyphicon-log-in iconEffect"></span> Patient Login</a>
             </li>
-            <?php } else { ?>
+            <?php else: ?>
+            <!-- Authenticated User Navigation: Clean & Focused on Patient Services -->
             <li>
               <a href="<?=base_url('myappointments');?>"><i class="fas fa-calendar-alt iconEffect"></i> My Appointments</a>
             </li>
             <li>
+              <a href="<?=base_url('wallet');?>"><i class="fas fa-wallet iconEffect" style="color: #f59e0b;"></i> Wallet &amp; Points</a>
+            </li>
+            <li>
+              <a href="<?=base_url('profile');?>" style="font-weight: 700; color: #00A896;">
+                <i class="fas fa-user-circle"></i> <?=html_escape($currentUserName);?>
+              </a>
+            </li>
+            <li>
               <a href="<?=base_url('Home/logout');?>" class="nav-logout-btn"><span class="glyphicon glyphicon-log-out iconEffect"></span> Logout</a>
             </li>
-            <?php } ?>
+            <?php endif; ?>
           </ul>
         </nav>
       </aside>

@@ -58,6 +58,21 @@
             <span style="color: #EF4444; font-size: 12px;"><?php echo form_error('test_id');?></span>
           </div>
 
+          <div class="row">
+            <div class="col-md-6">
+              <label style="display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 6px;">
+                Laboratory Test Price (₹) <small style="color: #64748B; font-weight: 400;">(Optional override)</small>
+              </label>
+              <input type="number" name="lab_price" id="lab_price" class="form-control" placeholder="e.g. 299" value="<?=set_value('lab_price', '0');?>" style="height: 42px; border-radius: 8px; border: 1px solid #CBD5E1; font-size: 14px;">
+            </div>
+            <div class="col-md-6">
+              <label style="display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 6px;">
+                Notes / Sample Instructions
+              </label>
+              <input type="text" name="comment" id="comment" class="form-control" placeholder="e.g. 10-12 hrs fasting required" value="<?=set_value('comment');?>" style="height: 42px; border-radius: 8px; border: 1px solid #CBD5E1; font-size: 14px;">
+            </div>
+          </div>
+
           <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px; padding: 18px;">
             <label style="display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 8px;">Assignment Status</label>
             <div style="display: flex; gap: 16px; align-items: center;">
