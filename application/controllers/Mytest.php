@@ -9,6 +9,37 @@ class Mytest extends CI_Controller {
         $this->load->helper(array('url', 'html', 'form', 'security', 'settings'));
         $this->load->database();
         $this->load->library('session');
+        $this->_ensure_table_schema();
+    }
+
+    private function _ensure_table_schema() {
+        if ($this->db->table_exists('path_book')) {
+            $fields = $this->db->list_fields('path_book');
+            if (!in_array('user_id', $fields)) {
+                $this->db->query("ALTER TABLE `path_book` ADD COLUMN `user_id` INT(11) DEFAULT NULL AFTER `booking_id`");
+            }
+            if (!in_array('patient_address', $fields)) {
+                $this->db->query("ALTER TABLE `path_book` ADD COLUMN `patient_address` TEXT DEFAULT NULL AFTER `patient_email`");
+            }
+            if (!in_array('patient_age', $fields)) {
+                $this->db->query("ALTER TABLE `path_book` ADD COLUMN `patient_age` VARCHAR(10) DEFAULT NULL AFTER `patient_address`");
+            }
+            if (!in_array('patient_gender', $fields)) {
+                $this->db->query("ALTER TABLE `path_book` ADD COLUMN `patient_gender` VARCHAR(10) DEFAULT NULL AFTER `patient_age`");
+            }
+            if (!in_array('time_slot', $fields)) {
+                $this->db->query("ALTER TABLE `path_book` ADD COLUMN `time_slot` VARCHAR(100) DEFAULT NULL AFTER `book_date`");
+            }
+            if (!in_array('visit_type', $fields)) {
+                $this->db->query("ALTER TABLE `path_book` ADD COLUMN `visit_type` VARCHAR(50) DEFAULT 'HOME_COLLECTION' AFTER `time_slot`");
+            }
+            if (!in_array('txn_id', $fields)) {
+                $this->db->query("ALTER TABLE `path_book` ADD COLUMN `txn_id` VARCHAR(100) DEFAULT NULL AFTER `visit_type`");
+            }
+            if (!in_array('notes', $fields)) {
+                $this->db->query("ALTER TABLE `path_book` ADD COLUMN `notes` TEXT DEFAULT NULL AFTER `txn_id`");
+            }
+        }
     }
 
     /**
@@ -343,6 +374,7 @@ class Mytest extends CI_Controller {
 
         // 1. Insert into path_book
         $book_data = [
+            'user_id'         => $this->session->userdata('USERID') ?: $this->session->userdata('userid') ?: null,
             'patient_name'    => $patient_name,
             'patient_mobile'  => $patient_mobile,
             'patient_email'   => $patient_email,
