@@ -771,7 +771,7 @@ class Webservicesci extends CI_Controller {
 		$mobile=$appointment_data->appointment_mobile;
 		$msg="Your Appointment booked successfully! Appointment# $aid
 			Please Pay the Fee Rs. $ordertotal at Counter,  Request# $OrderId
-			WWW.UPCHARR.COM";
+			WWW.UPCHAR.INFO";
 			sendsms($msg,$mobile);
 		
 		$updatedata=array('PAYMENT_STATUS'=>'COC');

@@ -2083,6 +2083,10 @@ class CI_Email {
 			 *
 			 * We want the negotiation, so we'll force it below ...
 			 */
+			stream_context_set_option($this->_smtp_connect, 'ssl', 'verify_peer', FALSE);
+			stream_context_set_option($this->_smtp_connect, 'ssl', 'verify_peer_name', FALSE);
+			stream_context_set_option($this->_smtp_connect, 'ssl', 'allow_self_signed', TRUE);
+
 			$method = is_php('5.6')
 				? STREAM_CRYPTO_METHOD_TLSv1_0_CLIENT | STREAM_CRYPTO_METHOD_TLSv1_1_CLIENT | STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT
 				: STREAM_CRYPTO_METHOD_TLS_CLIENT;

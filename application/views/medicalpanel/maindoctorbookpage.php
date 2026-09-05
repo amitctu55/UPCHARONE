@@ -97,7 +97,7 @@
   <a data-toggle="pill" href="#home"><span class="titleinbox">Dr. Danish</span>
   <p class="datadoctor">dental specialist</p></a>
   <p class="datadoctor2"><i class="fa fa-clock-o" aria-hidden="true"></i> 11:00 AM To 1:00 PM</p>
-  <a href="https://www.upcharr.com/search?location=&city=&keyword=&spl=" class="bookbtn text-center">View Details<i class="fa fa-chevron-right" id="bookbtn_icon" aria-hidden="true"></i></a>
+  <a href="https://upchar.info/search?location=&city=&keyword=&spl=" class="bookbtn text-center">View Details<i class="fa fa-chevron-right" id="bookbtn_icon" aria-hidden="true"></i></a>
 
 </div>
 </div>
@@ -108,7 +108,7 @@
       <span class="titleinbox">Dr. Sandeep</span>
   <p class="datadoctor">dental specialist</p></a>
   <p class="datadoctor2"><i class="fa fa-clock-o" aria-hidden="true"></i> 11:00 AM To 1:00 PM</p>
-    <a href="https://www.upcharr.com/search?location=&city=&keyword=&spl=" class="bookbtn text-center">View Details <i class="fa fa-chevron-right" id="bookbtn_icon" aria-hidden="true"></i></a>
+    <a href="https://upchar.info/search?location=&city=&keyword=&spl=" class="bookbtn text-center">View Details <i class="fa fa-chevron-right" id="bookbtn_icon" aria-hidden="true"></i></a>
 
 
 </div>
@@ -119,7 +119,7 @@
   <a data-toggle="pill" href="#menu2"><span class="titleinbox">Dr. Swati Singh</span>
   <p class="datadoctor">dental specialist</p></a>
   <p class="datadoctor2"><i class="fa fa-clock-o" aria-hidden="true"></i> 11:00 AM To 1:00 PM</p>
-  <a href="https://www.upcharr.com/search?location=&city=&keyword=&spl=" class="bookbtn text-center">View Details<i class="fa fa-chevron-right" id="bookbtn_icon" aria-hidden="true"></i></a>
+  <a href="https://upchar.info/search?location=&city=&keyword=&spl=" class="bookbtn text-center">View Details<i class="fa fa-chevron-right" id="bookbtn_icon" aria-hidden="true"></i></a>
 
 </div>
 </div>
@@ -133,7 +133,7 @@
   <a data-toggle="pill" href="#home"><span class="titleinbox">Dr. Danish</span></a>
   <p class="datadoctor">dental specialist</p>
   <p class="datadoctor2"><i class="fa fa-clock-o" aria-hidden="true"></i> 11:00 AM To 1:00 PM</p>
-  <a href="https://www.upcharr.com/search?location=&city=&keyword=&spl=" class="bookbtn text-center">View Details<i class="fa fa-chevron-right" id="bookbtn_icon" aria-hidden="true"></i></a>
+  <a href="https://upchar.info/search?location=&city=&keyword=&spl=" class="bookbtn text-center">View Details<i class="fa fa-chevron-right" id="bookbtn_icon" aria-hidden="true"></i></a>
 
 </div>
 </div>
@@ -143,7 +143,7 @@
   <a data-toggle="pill" href="#home"><span class="titleinbox">Dr. Danish</span></a>
   <p class="datadoctor">dental specialist</p>
   <p class="datadoctor2"><i class="fa fa-clock-o" aria-hidden="true"></i> 11:00 AM To 1:00 PM</p>
-  <a href="https://www.upcharr.com/search?location=&city=&keyword=&spl=" class="bookbtn text-center">View Details<i class="fa fa-chevron-right" id="bookbtn_icon" aria-hidden="true"></i></a>
+  <a href="https://upchar.info/search?location=&city=&keyword=&spl=" class="bookbtn text-center">View Details<i class="fa fa-chevron-right" id="bookbtn_icon" aria-hidden="true"></i></a>
 
 </div>
 </div>
@@ -153,7 +153,7 @@
   <a data-toggle="pill" href="#home"><span class="titleinbox">Dr. Danish</span></a>
   <p class="datadoctor">dental specialist</p>
   <p class="datadoctor2"><i class="fa fa-clock-o" aria-hidden="true"></i> 11:00 AM To 1:00 PM</p>
-  <a href="https://www.upcharr.com/search?location=&city=&keyword=&spl=" class="bookbtn text-center">View Details<i class="fa fa-chevron-right" id="bookbtn_icon" aria-hidden="true"></i></a>
+  <a href="https://upchar.info/search?location=&city=&keyword=&spl=" class="bookbtn text-center">View Details<i class="fa fa-chevron-right" id="bookbtn_icon" aria-hidden="true"></i></a>
 
 </div>
 </div>
@@ -166,7 +166,7 @@
   <a data-toggle="pill" href="#home"><span class="titleinbox">Dr. Danish</span></a>
   <p class="datadoctor">dental specialist</p>
   <p class="datadoctor2"><i class="fa fa-clock-o" aria-hidden="true"></i> 11:00 AM To 1:00 PM</p>
-  <a href="https://www.upcharr.com/search?location=&city=&keyword=&spl=" class="bookbtn text-center">View Details<i class="fa fa-chevron-right" id="bookbtn_icon" aria-hidden="true"></i></a>
+  <a href="https://upchar.info/search?location=&city=&keyword=&spl=" class="bookbtn text-center">View Details<i class="fa fa-chevron-right" id="bookbtn_icon" aria-hidden="true"></i></a>
 
 </div>
 </div>
@@ -176,7 +176,7 @@
   <a data-toggle="pill" href="#home"><span class="titleinbox">Dr. Danish</span></a>
   <p class="datadoctor">dental specialist</p>
   <p class="datadoctor2"><i class="fa fa-clock-o" aria-hidden="true"></i> 11:00 AM To 1:00 PM</p>
-  <a href="https://www.upcharr.com/search?location=&city=&keyword=&spl=" class="bookbtn text-center">View Details<i class="fa fa-chevron-right" id="bookbtn_icon" aria-hidden="true"></i></a>
+  <a href="https://upchar.info/search?location=&city=&keyword=&spl=" class="bookbtn text-center">View Details<i class="fa fa-chevron-right" id="bookbtn_icon" aria-hidden="true"></i></a>
 
 </div>
 </div>
@@ -186,7 +186,7 @@
   <a data-toggle="pill" href="#menu2"><span class="titleinbox">Dr. Swati Singh</span></a>
   <p class="datadoctor">dental specialist</p>
   <p class="datadoctor2"><i class="fa fa-clock-o" aria-hidden="true"></i> 11:00 AM To 1:00 PM</p>
-  <a href="https://www.upcharr.com/search?location=&city=&keyword=&spl=" class="bookbtn text-center">View Details<i class="fa fa-chevron-right" id="bookbtn_icon" aria-hidden="true"></i></a>
+  <a href="https://upchar.info/search?location=&city=&keyword=&spl=" class="bookbtn text-center">View Details<i class="fa fa-chevron-right" id="bookbtn_icon" aria-hidden="true"></i></a>
 
 </div>
 </div>
@@ -224,7 +224,7 @@
               <p class="datadoctor">dental specialist</p>
               <p class="doctoreducation">MBBS</p>
               <p class="colorblack">Ut enim ad minim veniam, quis nostrud Ut enim ad minim veniam, quis nostrud Ut enim ad minim veniam, quis nostrudUt enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea co</p>
-              <a href="https://www.upcharr.com/search?location=&city=&keyword=&spl=" class="bookbtn text-center">Book Appointment <i class="fa fa-chevron-right" id="bookbtn_icon" aria-hidden="true"></i></a>
+              <a href="https://upchar.info/search?location=&city=&keyword=&spl=" class="bookbtn text-center">Book Appointment <i class="fa fa-chevron-right" id="bookbtn_icon" aria-hidden="true"></i></a>
           </div>
           </div>
           
@@ -243,7 +243,7 @@
               <p class="datadoctor">dental specialist</p>
               <p class="doctoreducation">MBBS</p>
               <p class="colorblack">Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea co</p>
-              <a href="https://www.upcharr.com/search?location=&city=&keyword=&spl=" class="bookbtn text-center">Book Appointment <i class="fa fa-chevron-right" id="bookbtn_icon" aria-hidden="true"></i></a>
+              <a href="https://upchar.info/search?location=&city=&keyword=&spl=" class="bookbtn text-center">Book Appointment <i class="fa fa-chevron-right" id="bookbtn_icon" aria-hidden="true"></i></a>
           </div>
           </div>
           
@@ -264,7 +264,7 @@
               <p class="datadoctor">dental specialist</p>
               <p class="doctoreducation">MBBS</p>
               <p class="colorblack">Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea co</p>
-              <a href="https://www.upcharr.com/search?location=&city=&keyword=&spl=" class="bookbtn text-center">Book Appointment <i class="fa fa-chevron-right" id="bookbtn_icon" aria-hidden="true"></i></a>
+              <a href="https://upchar.info/search?location=&city=&keyword=&spl=" class="bookbtn text-center">Book Appointment <i class="fa fa-chevron-right" id="bookbtn_icon" aria-hidden="true"></i></a>
           </div>
           </div>
           

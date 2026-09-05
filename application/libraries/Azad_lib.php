@@ -31,13 +31,14 @@ public function sendMail($to,$subject,$body,$variables=array(),$attachment='')
 { 
 
 //mail($to,$subject,$body);
-	 //$setting = $this->CI->db->get_where('setting_smtp',array('id','1'))->row();	
+		$this->CI->load->helper('settings');
 		$setting = new stdClass();
-		$setting->smtpserver ='mail.upcharr.com';
-		$setting->smtpport ='465';
-		$setting->smtpuser ='upcharr@upcharr.com';
-		$setting->smtppass ='swati@123';//'admin123456';
-		$setting->fromemail ='upcharr@upcharr.com';
+		$setting->smtpserver = function_exists('get_system_setting') ? get_system_setting('smtp_host', 'mail.upchar.info') : 'mail.upchar.info';
+		$setting->smtpport   = function_exists('get_system_setting') ? get_system_setting('smtp_port', '465') : '465';
+		$setting->smtpuser   = function_exists('get_system_setting') ? get_system_setting('smtp_username', 'support@upchar.info') : 'support@upchar.info';
+		$setting->smtppass   = function_exists('get_system_setting') ? get_system_setting('smtp_password', 'Abc@28010') : 'Abc@28010';
+		$setting->fromemail  = function_exists('get_system_setting') ? get_system_setting('email_from_address', 'support@upchar.info') : 'support@upchar.info';
+		$setting->fromname   = function_exists('get_system_setting') ? get_system_setting('email_from_name', 'Upchar Healthcare') : 'Upchar Healthcare';
 	if(strlen($body) < 30)
 	$templateid=$body;
 	$templatefile='templates/'.@$templateid.'.html';
@@ -51,13 +52,12 @@ public function sendMail($to,$subject,$body,$variables=array(),$attachment='')
 		$body=$templatedata;
 	}	
 	 $config = array(
-			'protocol' => 'smtp',
-			//'smtp_host' => 'ssl://'.$setting->smtpserver,
-			'smtp_host' => $setting->smtpserver,
-			'smtp_port' => $setting->smtpport,
-			'smtp_user' => $setting->smtpuser,
-			'smtp_pass' => $setting->smtppass ,
-			'smtp_crypto'=> 'ssl',
+			'protocol'    => 'smtp',
+			'smtp_host'   => $setting->smtpserver,
+			'smtp_port'   => $setting->smtpport,
+			'smtp_user'   => $setting->smtpuser,
+			'smtp_pass'   => $setting->smtppass,
+			'smtp_crypto' => ($setting->smtpport == '465') ? 'ssl' : 'tls',
 			'charset'=>'utf-8',
 			'crlf' => "\r\n",
 			'newline' => "\r\n",
@@ -156,8 +156,8 @@ public function sendEmail($to,$subject, $variables,$templateid,$cc=true)
 		$data['content']= ($emailtext);
 		$data['recipients']= $to;
 		if(ENVIRONMENT == 'production'  && $cc !=false)
-		{$data['recipients_cc']=  DEV_EMAIL .','. SUPERADMIN_EMAIL ;
-		$data['bcc']=  'azadhussain16@yahoo.in,azadhussain16@gmail.com';
+		{
+			$data['recipients_cc']=  DEV_EMAIL .','. SUPERADMIN_EMAIL ;
 		}
 		$apiresult = $this->callApi(@$api_type,@$action,$data);
 		

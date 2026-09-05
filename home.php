@@ -1133,7 +1133,7 @@ color: #fff;}
                         
                          <aside class="col-md-4 widget widget_contact_info">
                             <h2 class="careplus-footer-title">Draft About Us</h2>
-                            <p>GYANTECH International Private Limited (“UPCHARR”) is the author and publisher of the internet resource http://www.upcharr.com and the mobile application ‘Upchar’ (together, “Website”). Upcharr owns and operates the services provided through the Website..
+                            <p>Workboat Media Private Limited (“UPCHARR”) is the author and publisher of the internet resource http://www.upcharr.com and the mobile application ‘Upchar’ (together, “Website”). Upcharr owns and operates the services provided through the Website..
                          <a href="aboutus.php" class="careplus-readmore-btn">read more <span></span></a>   </p>
                         </aside>
 
@@ -1150,7 +1150,7 @@ color: #fff;}
                                 <li><a href="Press.php">Press</a></li>
                                 <li><a href="Contact Us.php">Contact Us</a></li>
                                 <li><a href="tc.html">Tearm And condition</a></li>
-                                <li><a href="gyantech.php">Gyantech International Pvt Ltd</a></li><!--
+                                <li><a href="gyantech.php">Workboat Media Pvt Ltd</a></li><!--
                                 <li><a href="404.html">Prostheses</a></li>
                                 <li><a href="404.html">Patient Reports</a></li>
                                 <li><a href="404.html">Traumatology</a></li>

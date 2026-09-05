@@ -193,7 +193,7 @@ if(
             </li>
 
             <li>
-              <a href="https://upcharrnews.blogspot.com/" target="_blank"><i class="fas fa-newspaper iconEffect"></i> Blog</a>
+              <a href="https://upchar.info/" target="_blank"><i class="fas fa-newspaper iconEffect"></i> Blog</a>
             </li>
             <li>
               <a href="<?=base_url('login');?>" class="nav-login-btn"><span class="glyphicon glyphicon-log-in iconEffect"></span> Patient Login</a>

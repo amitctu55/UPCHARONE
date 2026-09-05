@@ -64,7 +64,7 @@
                             </tr>
                             
                             
-                             <th colspan="3" scope="row" class="text-center"><h4>Payment Pay By Gyantech International Pvt Ltd.</h4></th>
+                             <th colspan="3" scope="row" class="text-center"><h4>Payment Pay By Workboat Media Pvt Ltd.</h4></th>
                              
                   
                             </tr>

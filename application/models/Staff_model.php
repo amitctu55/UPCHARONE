@@ -166,7 +166,7 @@ class Staff_model extends CI_Model {
                 [
                     'staff_code'    => 'UPC-ADM-001',
                     'name'          => 'Super Admin',
-                    'email'         => 'admin@upcharr.com',
+                    'email'         => 'admin@upchar.info',
                     'phone'         => '9999990001',
                     'password_hash' => $default_pass,
                     'role'          => 'super_admin',
@@ -178,7 +178,7 @@ class Staff_model extends CI_Model {
                 [
                     'staff_code'    => 'UPC-HR-001',
                     'name'          => 'Pooja Sharma (HR Lead)',
-                    'email'         => 'hr@upcharr.com',
+                    'email'         => 'hr@upchar.info',
                     'phone'         => '9999990002',
                     'password_hash' => $default_pass,
                     'role'          => 'hr',
@@ -190,7 +190,7 @@ class Staff_model extends CI_Model {
                 [
                     'staff_code'    => 'UPC-BDE-001',
                     'name'          => 'Rahul Verma (BDE)',
-                    'email'         => 'bde@upcharr.com',
+                    'email'         => 'bde@upchar.info',
                     'phone'         => '9999990003',
                     'password_hash' => $default_pass,
                     'role'          => 'bde',
@@ -202,7 +202,7 @@ class Staff_model extends CI_Model {
                 [
                     'staff_code'    => 'UPC-COL-001',
                     'name'          => 'Amit Kumar (Phlebotomist)',
-                    'email'         => 'collector@upcharr.com',
+                    'email'         => 'collector@upchar.info',
                     'phone'         => '9999990004',
                     'password_hash' => $default_pass,
                     'role'          => 'collector',
@@ -214,7 +214,7 @@ class Staff_model extends CI_Model {
                 [
                     'staff_code'    => 'UPC-OPS-001',
                     'name'          => 'Suresh Patel (Ops)',
-                    'email'         => 'ops@upcharr.com',
+                    'email'         => 'ops@upchar.info',
                     'phone'         => '9999990005',
                     'password_hash' => $default_pass,
                     'role'          => 'office_staff',

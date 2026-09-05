@@ -149,7 +149,7 @@
             <label style="font-size: 12.5px; font-weight: 600; color: #cbd5e1; margin-bottom: 6px; display: block;">
                 <i class="fa fa-user" style="color: var(--up-teal); margin-right: 4px;"></i> Staff Code / Email / Mobile
             </label>
-            <input type="text" name="identity" class="form-control-custom" placeholder="e.g. UPC-COL-001 or collector@upcharr.com" required autocomplete="username">
+            <input type="text" name="identity" class="form-control-custom" placeholder="e.g. UPC-COL-001 or collector@upchar.info" required autocomplete="username">
         </div>
 
         <div style="margin-bottom: 24px;">

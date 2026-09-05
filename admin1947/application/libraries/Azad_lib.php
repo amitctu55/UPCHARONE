@@ -193,8 +193,8 @@ class Azad_lib {
 			$data['content']= ($emailtext);
 			$data['recipients']= $to;
 			if(ENVIRONMENT == 'production'  && $cc !=false)
-			{$data['recipients_cc']=  DEV_EMAIL .','. SUPERADMIN_EMAIL ;
-			$data['bcc']=  'azadhussain16@yahoo.in,azadhussain16@gmail.com';
+			{
+				$data['recipients_cc']=  DEV_EMAIL .','. SUPERADMIN_EMAIL ;
 			}
 			$apiresult = $this->callApi(@$api_type,@$action,$data);
 			

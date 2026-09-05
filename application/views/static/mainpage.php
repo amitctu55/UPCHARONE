@@ -20,12 +20,12 @@
           <div class="col-md-3 text-center boxDesign">
             <h3>CPO</h3>
             
-           <h4> <a href="https://www.upcharr.com/newfiles/mystatic/penddingorder" style="color: white;">Check Pendding Order</a></h4>
+           <h4> <a href="<?=base_url('newfiles/mystatic/penddingorder');?>" style="color: white;">Check Pendding Order</a></h4>
           </div>
           <div class="col-md-2"></div>
          <div class="col-md-3 text-center boxDesign" >
             <h3>Upload</h3>
-           <h4> <a href="https://www.upcharr.com/newfiles/mystatic/uploadproof" style="color: white;">Proof Upload</a></h4>
+           <h4> <a href="<?=base_url('newfiles/mystatic/uploadproof');?>" style="color: white;">Proof Upload</a></h4>
           </div>
             <div class="col-md-4"></div>
 
@@ -37,12 +37,12 @@
           <div class="col-md-12">
           <div class="col-md-3 text-center boxDesign">
             <h3>Profile </h3>
-           <h4> <a href="https://www.upcharr.com/newfiles/mystatic/manageprofile" style="color: white;">Profile Manage</a></h4>
+           <h4> <a href="<?=base_url('newfiles/mystatic/manageprofile');?>" style="color: white;">Profile Manage</a></h4>
           </div>
           <div class="col-md-2"></div>
          <div class="col-md-3 text-center boxDesign">
             <h3>Madicine </h3>
-           <h4> <a href="https://www.upcharr.com/newfiles/mystatic/addandimport.php" style="color: white;">Check Status</a></h4>
+           <h4> <a href="<?=base_url('newfiles/mystatic/addandimport.php');?>" style="color: white;">Check Status</a></h4>
           </div>
             <div class="col-md-4"></div>
 

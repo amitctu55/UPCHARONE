@@ -49,9 +49,7 @@ class User_Model extends CI_Model {
 				$otp=rand(100000,999999);
 				$this->db->where('USERID',$row->USERID)->set('OTP',$otp)->update('userlogin');
 				$this->session->set_userdata('forgotuserid', $row->USERID);
-				//$msg="Dear ".$row->FNAME.",OTP to change password is $otp UPCHAR";
-				$msg="Your One Time Password is $otp WWW.UPCHARR.COM";
-				sendsms($msg,$row->MOBILE);
+				send_verification_otp($row->MOBILE, $otp, $row->EMAIL, $row->FNAME . ' ' . $row->LNAME);
 				return 'SUCCESS';
 			/*}
 			else 
@@ -85,12 +83,7 @@ class User_Model extends CI_Model {
 			
 			
 				$otp=$row->OTP;
-				//$otp=rand(100000,999999);
-				//$this->db->where('USERID',$row->USERID)->set('OTP',$otp)->update('userlogin');
-				//$this->session->set_userdata('forgotuserid', $row->USERID);
-				//$msg="Dear ".$row->FNAME.",Your One Time Password is $otp UPCHAR";
-				$msg="Your One Time Password is $otp WWW.UPCHARR.COM";
-				sendsms($msg,$row->MOBILE);
+				send_verification_otp($row->MOBILE, $otp, $row->EMAIL, $row->FNAME . ' ' . $row->LNAME);
 				return 'SUCCESS';
 			}
 			else {
@@ -153,8 +146,7 @@ class User_Model extends CI_Model {
 				$otp=rand(100000,999999);
 				$this->db->where('USERID',$row->USERID)->set('OTP',$otp)->update('userlogin');
 				$this->session->set_userdata('signupuserid', $row->USERID);
-				$msg="Your One Time Password is $otp WWW.UPCHARR.COM";
-				@sendsms($msg,$row->MOBILE);
+				send_verification_otp($row->MOBILE, $otp, $row->EMAIL, $row->FNAME . ' ' . $row->LNAME);
 				return 'OTP';
 			}
 			else if($row->STATUS==2){
@@ -265,8 +257,7 @@ class User_Model extends CI_Model {
 			$lname=@$name[1];
 			$otp=rand(100000,999999);
 			//$msg="Dear ".$name[0].",Thank you for registration, Verification OTP is $otp UPCHAR";
-			$msg="Your One Time Password is $otp WWW.UPCHARR.COM";
-			sendsms($msg,$mobile);
+			send_verification_otp($mobile, $otp, $email, $fname . ' ' . $lname);
 			$udata=array(
 					'PASSWORD'=>$pass,
 					'FNAME'=>$fname,

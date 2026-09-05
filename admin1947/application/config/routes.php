@@ -67,4 +67,8 @@ $route['admin_payment'] = 'admin_payment/index';
 $route['admin_payment/(:any)'] = 'admin_payment/$1';
 $route['admin_payment/(:any)/(:any)'] = 'admin_payment/$1/$2';
 
+$route['inquiries'] = 'inquiries/index';
+$route['inquiries/(:any)'] = 'inquiries/$1';
+$route['inquiries/(:any)/(:any)'] = 'inquiries/$1/$2';
+
 

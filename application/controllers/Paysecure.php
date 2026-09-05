@@ -265,7 +265,7 @@ class Paysecure extends CI_Controller {
 
 		$msg="Your Appointment booked successfully! Appointment# $aid
 			Please Pay the Fee Rs. $ordertotal at Counter,  Request# $OrderId
-			WWW.UPCHARR.COM";
+			https://www.upchar.info";
 			sendsms($msg,$mobile);
 
 		$updatedata=array('PAYMENT_STATUS'=>'COC');
@@ -285,8 +285,8 @@ class Paysecure extends CI_Controller {
 		$user	=	$this->User_Model->get_appointment_details($aid);
 		$this->load->library('azad_lib');
 		/*Admin Email Start */
-		$body="Hello upchar <BR> You have new booking  by ".$user['appointment_name']."  to ".$user['name']." for ".$user['fname'].", <BR>Timing - ".$user['from_timing']." to ".$user['to_timing']." ,Date - ".$user['appointment_date']." ,<BR>fee - ".$user['fee']." paid ".$user['payment_mode']." ,appointment no - ".$user['appointment_id'].".<BR>Thank You  <BR>Email: info@upcharr.com ";
-		$this->azad_lib->sendMail('info@upcharr.com','New Appointment Booking',$body);
+		$body="Hello upchar <BR> You have new booking  by ".$user['appointment_name']."  to ".$user['name']." for ".$user['fname'].", <BR>Timing - ".$user['from_timing']." to ".$user['to_timing']." ,Date - ".$user['appointment_date']." ,<BR>fee - ".$user['fee']." paid ".$user['payment_mode']." ,appointment no - ".$user['appointment_id'].".<BR>Thank You  <BR>Email: info@upchar.info ";
+		$this->azad_lib->sendMail('info@upchar.info','New Appointment Booking',$body);
 		/*Admin Email End */
 		
 		/*User Email Start */
@@ -297,7 +297,7 @@ class Paysecure extends CI_Controller {
 					Your appointment no is ".$user['appointment_id'].",".$user['name']." for ".$user['fname'].",<BR>Timing - ".$user['from_timing']." to ".$user['to_timing']." ,Date - ".$user['appointment_date'].",fee - ".$user['fee']." paid ".$user['payment_mode'].".<BR>
 					If you want to confirm your Priority appointment  paid online by your account.<BR>
 					Feel free to call any time on 8448449603 to our customer care will help you.<BR>
-					Thank You  <BR>Email: info@upcharr.com <BR>WWW.UPCHARR.COM";
+					Thank You  <BR>Email: info@upchar.info <BR>WWW.UPCHAR.INFO";
 			$this->azad_lib->sendMail($user['appointment_email'],'Thanks for book appointment ',$body);
 		}
 		/*User Email End */
@@ -311,8 +311,8 @@ class Paysecure extends CI_Controller {
 				Thank you<BR>
 				Upchar<BR>
 				8448440603<BR>
-				partner@upcharr.com<BR>";
-		$this->azad_lib->sendMail($user['dr_email'],'Upcharr Appointment Booking',$body);
+				partner@upchar.info<BR>";
+		$this->azad_lib->sendMail($user['dr_email'],'Upchar Appointment Booking',$body);
 		/*Doctor Email End */
 		
 		$this->session->unset_userdata('SecurePay');
@@ -336,7 +336,7 @@ class Paysecure extends CI_Controller {
 
 		$msg="Your Appointment booked successfully! Appointment# $aid
 			Please Pay the Fee Rs. $ordertotal at Counter,  Request# $OrderId
-			WWW.UPCHARR.COM";
+			WWW.UPCHAR.INFO";
 			sendsms($msg,$mobile);
 
 		$updatedata=array('PAYMENT_STATUS'=>'COC');
@@ -356,8 +356,8 @@ class Paysecure extends CI_Controller {
 		$user	=	$this->User_Model->get_appointment_details($aid);
 		$this->load->library('azad_lib');
 		/*Admin Email Start */
-		$body="Hello upchar <BR> You have new booking  by ".$user['appointment_name']."  to ".$user['name']." for ".$user['fname'].", <BR>Timing - ".$user['from_timing']." to ".$user['to_timing']." ,Date - ".$user['appointment_date']." ,<BR>fee - ".$user['fee']." paid ".$user['payment_mode']." ,appointment no - ".$user['appointment_id'].".<BR>Thank You  <BR>Email: info@upcharr.com ";
-		$this->azad_lib->sendMail('info@upcharr.com','New Appointment Booking',$body);
+		$body="Hello upchar <BR> You have new booking  by ".$user['appointment_name']."  to ".$user['name']." for ".$user['fname'].", <BR>Timing - ".$user['from_timing']." to ".$user['to_timing']." ,Date - ".$user['appointment_date']." ,<BR>fee - ".$user['fee']." paid ".$user['payment_mode']." ,appointment no - ".$user['appointment_id'].".<BR>Thank You  <BR>Email: info@upchar.info ";
+		$this->azad_lib->sendMail('info@upchar.info','New Appointment Booking',$body);
 		/*Admin Email End */
 		
 		/*User Email Start */
@@ -368,7 +368,7 @@ class Paysecure extends CI_Controller {
 					Your appointment no is ".$user['appointment_id'].",".$user['name']." for ".$user['fname'].",<BR>Timing - ".$user['from_timing']." to ".$user['to_timing']." ,Date - ".$user['appointment_date'].",fee - ".$user['fee']." paid ".$user['payment_mode'].".<BR>
 					If you want to confirm your Priority appointment  paid online by your account.<BR>
 					Feel free to call any time on 8448449603 to our customer care will help you.<BR>
-					Thank You  <BR>Email: info@upcharr.com <BR>WWW.UPCHARR.COM";
+					Thank You  <BR>Email: info@upchar.info <BR>WWW.UPCHAR.INFO";
 			$this->azad_lib->sendMail($user['appointment_email'],'Thanks for book appointment ',$body);
 		}
 		/*User Email End */
@@ -382,8 +382,8 @@ class Paysecure extends CI_Controller {
 				Thank you<BR>
 				Upchar<BR>
 				8448440603<BR>
-				partner@upcharr.com<BR>";
-		$this->azad_lib->sendMail($user['dr_email'],'Upcharr Appointment Booking',$body);
+				partner@upchar.info<BR>";
+		$this->azad_lib->sendMail($user['dr_email'],'Upchar Appointment Booking',$body);
 		/*Doctor Email End */
 		
 		$this->session->unset_userdata('SecurePay');
@@ -517,7 +517,7 @@ class Paysecure extends CI_Controller {
 
 			$msg="Your Appointment booked successfully! Appointment# $aid
 			Payment of Rs $Amount Received Successfully vied Order# $OrderId
-			WWW.UPCHARR.COM";
+			WWW.UPCHAR.INFO";
 			sendsms($msg,$mobile);
 			
 			
@@ -555,8 +555,8 @@ class Paysecure extends CI_Controller {
 		$this->Financial_Model->record_transaction($OrderId, 'PATIENT', $patient_uid, $payee_type, $payee_id, $ordertotal, $TrakingId);
 
           $this->load->library('azad_lib');
-			$body="Thank You  <BR>   Email: info@upcharr.com  ";
-			$this->azad_lib->sendMail('info@upcharr.com','Thanks for book appointment ',$body); 
+			$body="Thank You  <BR>   Email: info@upchar.info  ";
+			$this->azad_lib->sendMail('info@upchar.info','Thanks for book appointment ',$body); 
     
 		$this->session->set_flashdata('pgresponse', 'Thank you! Payment Successful The Appointment detail has been sent to the registered  mobile no.');
 
@@ -721,7 +721,7 @@ class Paysecure extends CI_Controller {
 
 			$msg="Your Appointment booked successfully! Appointment# $aid
 			Payment of Rs $Amount Received Successfully vied Order# $OrderId
-			WWW.UPCHARR.COM";
+			WWW.UPCHAR.INFO";
 			sendsms($msg,$mobile);
 
 			//--------------------START code for the delivery and entry of codes-----------------------------------
@@ -749,8 +749,8 @@ class Paysecure extends CI_Controller {
 		$this->db->update('appointment',$updateuserdata);
  
           $this->load->library('azad_lib');
-			$body="Thank You  <BR>   Email: info@upcharr.com  ";
-			$this->azad_lib->sendMail('info@upcharr.com','Thanks for book appointment ',$body);
+			$body="Thank You  <BR>   Email: info@upchar.info  ";
+			$this->azad_lib->sendMail('info@upchar.info','Thanks for book appointment ',$body);
 		//$this->session->set_flashdata('pgresponse', 'Thank you! Payment Successful The Appointment detail has been sent to the registered  mobile no.');
 
 			//-------------------------End code for delivery and entry of codes -----------------------------

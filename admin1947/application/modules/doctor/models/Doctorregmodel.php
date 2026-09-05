@@ -270,11 +270,11 @@ class Doctorregmodel extends CI_Model
 				$this->db->insert_batch('instition_services',$qualdata);
 			}
 			$msg="Welcome to Upchar , Thanks for joining Upchar Team
-			WWW.UPCHARR.COM";
+			WWW.UPCHAR.INFO";
 			sendsms($msg,$mobile);
 			/*Admin Email Start */
 			$this->load->library('azad_lib');
-			$body="Welcome to Upchar <BR> Thans for joining Upchar Team <BR>Email: info@upcharr.com ";
+			$body="Welcome to Upchar <BR> Thanks for joining Upchar Team <BR>Email: info@upchar.info ";
 			$this->azad_lib->sendMail_admin($email,'Welcome Upchar Hospital',$body);
 			/*Admin Email End */
 		}

@@ -3,7 +3,7 @@
 
 <div class="container">
 <div class="row">
-                        <aside class="col-md-3 logocont"><a href="https://www.upcharr.com/" class="careplus-logo"><img src="upchar-logo.png" style="height: 155px;" alt=""></a></aside>
+                        <aside class="col-md-3 logocont"><a href="https://upchar.info/" class="careplus-logo"><img src="upchar-logo.png" style="height: 155px;" alt=""></a></aside>
 
                         <aside class="col-md-9">
                                   <h2 class="sitename"><b>Upchar Online Medical Solutions</b></h2>
@@ -35,8 +35,8 @@
                     
                                     <div class="collapse navbar-collapse" id="navbar-collapse-1">
                                      <!-- <ul class="nav navbar-nav" style="display: table;content: " ";">
-                                        <li class="active"><a href="https://www.upcharr.com/">Home</a></li>
-                                        <li><a href="https://www.upcharr.com/search?location=&amp;city=&amp;keyword=&amp;spl=">Appointment</a>
+                                        <li class="active"><a href="https://upchar.info/">Home</a></li>
+                                        <li><a href="https://upchar.info/search?location=&amp;city=&amp;keyword=&amp;spl=">Appointment</a>
                                             <ul class="careplus-dropdown-menu">
                                                                                            
                                             </ul>
@@ -74,7 +74,7 @@
                                             </ul>
                                         </li>
                                         
-                                         <li class="careplus-megamenu-li"><a href="https://www.upcharr.com/doctors">Our Doctor</a></li>
+                                         <li class="careplus-megamenu-li"><a href="https://upchar.info/doctors">Our Doctor</a></li>
                                         <li class="careplus-megamenu-li"><a href="#">Our Services</a>
                                             <ul class="careplus-megamenu">
                                                 <li class="row">
@@ -103,7 +103,7 @@
                                                     </div>
                                                     <div class="col-md-6">
                                                         <a href="#" class="careplus-thumbnail">
-                                                            <img src="https://www.upcharr.com/extra-images/megamenu-frame.jpg" alt="">
+                                                            <img src="https://upchar.info/extra-images/megamenu-frame.jpg" alt="">
                                                         </a>
                                                     </div>
                                                 </li>
@@ -125,8 +125,8 @@
                                     </li>--> 
                                    <!--- <li>
                                       <div class="login">               
-                                        <a href="https://www.upcharr.com/login">Login </a>
-                                        <a href="https://www.upcharr.com/signup">/ Sign Up</a>                  
+                                        <a href="https://upchar.info/login">Login </a>
+                                        <a href="https://upchar.info/signup">/ Sign Up</a>                  
                                   
                                     </div>
                                   </li>
@@ -158,7 +158,7 @@ function myFunction() {
 
 
 
-<form action="https://www.upcharr.com/search" method="GET">
+<form action="https://upchar.info/search" method="GET">
                 <div class="box-form">
                       
       

@@ -17,6 +17,7 @@ $isEarnings    = ($seg1 == 'hospitalpanel' && in_array($seg2, array('earnings', 
 $isPackage     = ($seg1 == 'hospitalpanel' && $seg2 == 'package');
 $isBed         = ($seg1 == 'hospitalpanel' && in_array($seg2, array('bed', 'addbed', 'editbed')));
 $isSupport     = ($seg1 == 'hospitalpanel' && in_array($seg2, array('support', 'create_ticket', 'ticket_view')));
+$isInquiries   = ($seg1 == 'hospitalpanel' && in_array($seg2, array('inquiries', 'inquiry_view')));
 ?>
 
 <aside class="sidebar">
@@ -31,6 +32,20 @@ $isSupport     = ($seg1 == 'hospitalpanel' && in_array($seg2, array('support', '
       <li class="<?=$isProfile ? 'active' : '';?>"><a href="<?=base_url();?>hospitalpanel/updateprofile"><i class="fa fa-hospital-o" aria-hidden="true"></i><span>Hospital Profile</span></a></li>
       <li class="<?=$isDoc ? 'active' : '';?>"><a href="<?=base_url();?>hospitalpanel/managedoctor"><i class="fa fa-user-md" aria-hidden="true"></i><span>Manage Doctors</span></a></li>
       <li class="<?=$isApt ? 'active' : '';?>"><a href="<?=base_url();?>hospitalpanel/manageappointment"><i class="fa fa-calendar" aria-hidden="true"></i><span>Manage Appointment</span></a></li>
+      <li class="<?=$isInquiries ? 'active' : '';?>">
+        <a href="<?=base_url();?>hospitalpanel/inquiries">
+          <i class="fa fa-envelope-open-o" aria-hidden="true"></i>
+          <span>Patient Inquiries</span>
+          <?php 
+          $pending_inq_badge = 0;
+          if (isset($this->did)) {
+              $pending_inq_badge = $this->db->group_start()->where('hospital_id', $this->did)->or_where('hospital_id', $this->session->userdata('hosuserid'))->group_end()->where('status', 'pending')->count_all_results('inquiries');
+          }
+          if ($pending_inq_badge > 0): ?>
+            <span class="badge pull-right" style="background: #00a896; font-size: 11px; margin-top: 2px;"><?=$pending_inq_badge;?></span>
+          <?php endif; ?>
+        </a>
+      </li>
       <li class="<?=$isDocList ? 'active' : '';?>"><a href="<?=base_url();?>hospitalpanel/doctorlist"><i class="fa fa-stethoscope" aria-hidden="true"></i><span>Upchar Doctors</span></a></li>
       <li class="<?=$isReport ? 'active' : '';?>"><a href="<?=base_url();?>hospitalpanel/report"><i class="fa fa-bar-chart" aria-hidden="true"></i><span>Report</span></a></li>
       

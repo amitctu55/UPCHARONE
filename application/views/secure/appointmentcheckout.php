@@ -280,7 +280,7 @@ $(document).ready(function(){
                 <div class="container">
                     <div class="row">
                         <div class="col-md-3 text-center advertisement">
-                    <img src="https://www.upcharr.com/images/Final_logo23.png" >
+                    <img src="https://upchar.info/images/Final_logo23.png" >
                             <h5 style="color:white;">Space For Ads..</h5>
                         </div>
                         <div class="col-md-9">

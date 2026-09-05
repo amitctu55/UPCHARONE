@@ -177,24 +177,36 @@ class Settings extends CI_Controller {
         }
 
         // Standard SMTP or Native Mail
-        $smtp_host = get_system_setting('smtp_host', 'smtp.gmail.com');
-        $smtp_port = get_system_setting('smtp_port', '587');
-        $smtp_crypto = get_system_setting('smtp_crypto', 'tls');
-        $smtp_user = get_system_setting('smtp_user', '');
-        $smtp_pass = get_system_setting('smtp_pass', '');
+        $smtp_host   = trim($this->input->post('smtp_host', TRUE)) ?: get_system_setting('smtp_host', 'smtp.gmail.com');
+        $smtp_port   = (int)($this->input->post('smtp_port', TRUE) ?: get_system_setting('smtp_port', '587'));
+        $smtp_crypto = trim($this->input->post('smtp_crypto', TRUE)) ?: get_system_setting('smtp_crypto', 'tls');
+        $smtp_user   = trim($this->input->post('smtp_user', TRUE)) ?: get_system_setting('smtp_user', '');
+        $smtp_pass   = $this->input->post('smtp_pass', TRUE) ?: get_system_setting('smtp_pass', '');
+
+        // Auto-detect crypto by port
+        if ($smtp_port == 587) {
+            $smtp_crypto = 'tls';
+        } else if ($smtp_port == 465) {
+            $smtp_crypto = 'ssl';
+        } else if ($smtp_crypto === 'none') {
+            $smtp_crypto = '';
+        }
 
         $this->load->library('email');
+        $this->email->clear(true);
         $config = array(
-            'protocol'  => 'smtp',
-            'smtp_host' => $smtp_host,
-            'smtp_port' => (int)$smtp_port,
-            'smtp_user' => $smtp_user,
-            'smtp_pass' => $smtp_pass,
-            'smtp_crypto' => $smtp_crypto !== 'none' ? $smtp_crypto : '',
-            'mailtype'  => 'html',
-            'charset'   => 'utf-8',
-            'newline'   => "\r\n",
-            'wordwrap'  => TRUE
+            'protocol'    => 'smtp',
+            'smtp_host'   => $smtp_host,
+            'smtp_port'   => $smtp_port,
+            'smtp_user'   => $smtp_user,
+            'smtp_pass'   => $smtp_pass,
+            'smtp_crypto' => $smtp_crypto,
+            'smtp_timeout'=> 8,
+            'mailtype'    => 'html',
+            'charset'     => 'utf-8',
+            'crlf'        => "\r\n",
+            'newline'     => "\r\n",
+            'wordwrap'    => TRUE
         );
 
         $this->email->initialize($config);
@@ -203,12 +215,33 @@ class Settings extends CI_Controller {
         $this->email->subject($subject);
         $this->email->message($body);
 
-        if ($this->email->send()) {
-            echo json_encode(['status' => 'success', 'message' => "Test email successfully sent to {$to_email} via SMTP.", 'debug' => $this->email->print_debugger(['headers'])]);
+        // Buffer any raw socket warnings to prevent breaking JSON response
+        ob_start();
+        $send_res = @$this->email->send();
+        $raw_output = ob_get_clean();
+
+        $this->output->set_content_type('application/json');
+
+        if ($send_res) {
+            $resp = [
+                'status'  => 'success',
+                'message' => "Test email successfully delivered to {$to_email} via SMTP ({$smtp_host}:{$smtp_port}).",
+                'debug'   => strip_tags($this->email->print_debugger(['headers']))
+            ];
         } else {
-            $debug_log = $this->email->print_debugger();
-            echo json_encode(['status' => 'error', 'message' => "SMTP delivery failed. Check your host, port, authentication credentials, and firewall settings.", 'debug' => $debug_log]);
+            $debug_log = strip_tags($this->email->print_debugger());
+            if (empty($debug_log) && !empty($raw_output)) {
+                $debug_log = strip_tags($raw_output);
+            }
+            $resp = [
+                'status'  => 'error',
+                'message' => "SMTP delivery failed. Check your host, port, authentication credentials, and firewall settings.",
+                'debug'   => $debug_log ?: 'Connection timed out or remote SMTP server rejected the recipient.'
+            ];
         }
+        echo json_encode($resp);
+        return;
+        return;
     }
 
     /**

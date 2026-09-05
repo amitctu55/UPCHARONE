@@ -21,13 +21,13 @@
 				        <div class="col-md-3 text-center boxdesign">
 				          
 				    
-				            <h4><a href="https://www.upcharr.com/newfiles/mystatic/addmadicine.php" target="_blank" style="color:white;">Import Madicine</a></h4>
+				            <h4><a href="https://upchar.info/newfiles/mystatic/addmadicine.php" target="_blank" style="color:white;">Import Madicine</a></h4>
 				        </div>
 				        <div class="col-md-2"></div>
 				        <div class="col-md-3 text-center boxdesign">
 				           
 				    
-				            <h4><a href="https://www.upcharr.com/newfiles/mystatic/importsheet.php" target="_blank" style="color:white;">Export Madicine</a></h4>
+				            <h4><a href="https://upchar.info/newfiles/mystatic/importsheet.php" target="_blank" style="color:white;">Export Madicine</a></h4>
 				        </div>				        
 				        <div class="col-md-2"></div>
 				    </div>

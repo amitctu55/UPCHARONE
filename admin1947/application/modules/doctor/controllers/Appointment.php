@@ -163,7 +163,7 @@ class Appointment extends CI_Controller
 		$mobile=$this->input->post('mobile');
 		$this->session->set_userdata('app_otp',$otp);
 		$msg="Your One Time Password is $otp
-		WWW.UPCHARR.COM";
+		WWW.UPCHAR.INFO";
 		sendsms($msg,$mobile);
 		echo 'OK';
 	}
@@ -530,7 +530,7 @@ class Appointment extends CI_Controller
 
 		$msg="Your Appointment booked successfully! Appointment# $aid
 			Please Pay the Fee Rs. $ordertotal at Counter,  Request# $OrderId
-			WWW.UPCHARR.COM";
+			WWW.UPCHAR.INFO";
 			sendsms($msg,$mobile);
 
 		$updatedata=array('PAYMENT_STATUS'=>'COC');
@@ -545,8 +545,8 @@ class Appointment extends CI_Controller
 		
 		$this->load->library('azad_lib');
 		/*Admin Email Start */
-		$body="Hello upchar <BR> You have new booking  by ".$user['appointment_name']."  to ".$user['name']." for ".$user['fname'].", <BR>Timing - ".$user['from_timing']." to ".$user['to_timing']." ,Date - ".$user['appointment_date']." ,<BR>fee - ".$user['fee']." paid ".$user['payment_mode']." ,appointment no - ".$user['appointment_id'].".<BR>Thank You  <BR>Email: info@upcharr.com ";
-		$this->azad_lib->sendMail_admin('info@upcharr.com','New Appointment Booking ',$body);
+		$body="Hello upchar <BR> You have new booking  by ".$user['appointment_name']."  to ".$user['name']." for ".$user['fname'].", <BR>Timing - ".$user['from_timing']." to ".$user['to_timing']." ,Date - ".$user['appointment_date']." ,<BR>fee - ".$user['fee']." paid ".$user['payment_mode']." ,appointment no - ".$user['appointment_id'].".<BR>Thank You  <BR>Email: info@upchar.info ";
+		$this->azad_lib->sendMail_admin('info@upchar.info','New Appointment Booking ',$body);
 		/*Admin Email End */
 		
 		/*User Email Start */
@@ -559,7 +559,7 @@ class Appointment extends CI_Controller
 
 					If you want to confirm your Priority appointment  paid online by your account.<BR>
 					Feel free to call any time on 8448449603 to our customer care will help you.<BR>
-					Thank You  <BR>Email: info@upcharr.com <BR>WWW.UPCHARR.COM";
+					Thank You  <BR>Email: info@upchar.info <BR>WWW.UPCHAR.INFO";
 			$this->azad_lib->sendMail_admin($user['appointment_email'],'Thanks for book appointment ',$body);
 		}
 		/*User Email End */
@@ -573,8 +573,8 @@ class Appointment extends CI_Controller
 				Thank you<BR>
 				Upchar<BR>
 				8448440603<BR>
-				partner@upcharr.com<BR>";
-		$this->azad_lib->sendMail_admin($user['dr_email'],'Upcharr Appointment Booking',$body);
+				partner@upchar.info<BR>";
+		$this->azad_lib->sendMail_admin($user['dr_email'],'Upchar Appointment Booking',$body);
 		/*Doctor Email End */
 		
 		$this->session->unset_userdata('SecurePay');

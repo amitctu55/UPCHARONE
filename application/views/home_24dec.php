@@ -594,7 +594,7 @@
                         
                          <aside class="col-md-4 widget widget_contact_info">
                             <h2 class="careplus-footer-title">Draft About Us</h2>
-                            <p>GYANTECH International Private Limited (“UPCHARR”) is the author and publisher of the internet resource http://www.upcharr.com and the mobile application ‘Upchar’ (together, “Website”). Upcharr owns and operates the services provided through the Website..
+                            <p>Workboat Media Private Limited (“UPCHARR”) is the author and publisher of the internet resource https://upchar.info and the mobile application ‘Upchar’ (together, “Website”). Upcharr owns and operates the services provided through the Website..
                          <a href="aboutus.php" class="careplus-readmore-btn">read more <span></span></a>   </p>
                         </aside>
 
@@ -611,7 +611,7 @@
                                 <li><a href="Press.php">Press</a></li>
                                 <li><a href="Contact Us.php">Contact Us</a></li>
                                 <li><a href="tc.html">Tearm And condition</a></li>
-                                <li><a href="gyantech.php">Gyantech International Pvt Ltd</a></li>
+                                <li><a href="gyantech.php">Workboat Media Pvt Ltd</a></li>
                             </ul>
                         </aside>
                        
@@ -625,7 +625,7 @@
                                 </li>
                                 <li>
                                     <h6>Mail Us At:</h6>
-                                    <a href="mailto:yourdomain@name.com">hello@upcharr.com - info@upcharr.com</a>
+                                    <a href="mailto:yourdomain@name.com">hello@upchar.info - info@upchar.info</a>
                                 </li>
                                 <li>
                                     <h6>Our Location:</h6>

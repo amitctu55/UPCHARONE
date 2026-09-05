@@ -57,6 +57,20 @@ $pageurl3 = $this->uri->segment(3);
         </a>
       </li>
 
+      <!-- Hospital Inquiries Module -->
+      <li class="<?php if($pageurl1=='inquiries'){ ?> active <?php }?>">
+        <a href="<?=base_url('inquiries');?>">
+          <i class="fa fa-comments-o" style="color: #00a896;"></i> <span>Hospital Inquiries</span>
+          <?php 
+          $pending_hosp_inqs = $this->db->where('status', 'pending')->count_all_results('inquiries');
+          if($pending_hosp_inqs > 0): ?>
+            <span class="pull-right-container">
+              <small class="label pull-right bg-yellow"><?=$pending_hosp_inqs;?></small>
+            </span>
+          <?php endif; ?>
+        </a>
+      </li>
+
       <!-- Revenue & Commission Module with Sublinks -->
       <li class="treeview <?php if($pageurl1=='admin_revenue'){ ?> active menu-open <?php }?>">
         <a href="<?=base_url('admin_revenue');?>">

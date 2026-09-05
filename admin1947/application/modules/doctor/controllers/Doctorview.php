@@ -134,6 +134,38 @@ class Doctorview extends CI_Controller
 		$this->verify($id);
 	}
 
+	public function toggle_promoted($id = null)
+	{
+		$did = $this->input->post('did') ? $this->input->post('did') : ($this->input->post('id') ? $this->input->post('id') : ($id ? $id : $this->uri->segment(4)));
+		$row = $this->db->select('is_promoted, fname, lname')->get_where('profile_dr', array('id' => $did))->row();
+		if (!$row) {
+			if ($this->input->is_ajax_request() || $this->input->post('did') || $this->input->post('id')) {
+				echo json_encode(array('status' => '0', 'message' => 'Doctor not found.'));
+				return;
+			}
+			redirect(base_url('doctor/doctorview'));
+			return;
+		}
+
+		$current = (int) $row->is_promoted;
+		$new_status = ($current === 1) ? 0 : 1;
+		$this->db->set('is_promoted', $new_status)->where(array('id' => $did))->update('profile_dr');
+		
+		$msg = ($new_status === 1) ? 'Doctor promoted to Sponsored/Featured sidebar.' : 'Doctor removed from Promoted status.';
+
+		if ($this->input->is_ajax_request() || $this->input->post('did') || $this->input->post('id')) {
+			echo json_encode(array(
+				'status'      => (string) $new_status,
+				'is_promoted' => $new_status,
+				'message'     => $msg
+			));
+			return;
+		}
+
+		$this->session->set_flashdata('flashmsg', "<div class='alert alert-success'>$msg</div>");
+		redirect(base_url('doctor/doctorview'));
+	}
+
 	public function view($id = null)
 	{
 		$doc_id = $id ? $id : $this->uri->segment(4);

@@ -54,7 +54,7 @@
     <div class="col-sm-6 text-center blackBack">
       <h4 class="content_design"><?=$hospital->name;?></h4>
       <p>WE ARE ONLINE FOR PATIENT'S 24 HOUR'S</p>
-      <!-- <a href="https://www.upcharr.com/search?location=&city=&keyword=&spl=#" class="btn BooKNow">Book Now</a> -->
+      <!-- <a href="https://upchar.info/search?location=&city=&keyword=&spl=#" class="btn BooKNow">Book Now</a> -->
       <!--  <h6>Message on WhatsApp</h6> -->
     </div>
     <div class="col-md-1"></div>
@@ -74,7 +74,7 @@
         <p class="detailsinfo"><a href="skype:+1-425-793-8900?call" class="link_ar"><i class="fa fa-mobile colmd4icon" aria-hidden="true"></i><?=$hospital->mobile;?></a></p>
         <p class="detailsinfo"><i class="fa fa-location-arrow colmd4icon" aria-hidden="true"></i> <strong><?=$hospital->address;?></strong></p>
         <p class="detailsinfo">
-        <a href='mailto:info@upcharr.com'><i class="fa fa-envelope colmd4icon" aria-hidden="true"></i> Send Enquiry By Email</a></p>
+        <a href='mailto:info@upchar.info'><i class="fa fa-envelope colmd4icon" aria-hidden="true"></i> Send Enquiry By Email</a></p>
       </div>
     </div>
     <div class="col-md-8">

@@ -42,7 +42,7 @@ color: #fff;}
 
 <div class="container">
 <div class="row">
-                        <aside class="col-md-3 logocont"><a href="https://www.upcharr.com/" class="careplus-logo"><img src="upchar-logo.png" style="height: 155px;" alt=""></a></aside>
+                        <aside class="col-md-3 logocont"><a href="https://upchar.info/" class="careplus-logo"><img src="upchar-logo.png" style="height: 155px;" alt=""></a></aside>
 
                         <aside class="col-md-9">
                                   <h2 class="sitename"><b>Upchar Online Medical Solutions</b></h2>
@@ -74,8 +74,8 @@ color: #fff;}
                     
                                     <div class="collapse navbar-collapse" id="navbar-collapse-1">
                                      <!-- <ul class="nav navbar-nav" style="display: table;content: " ";">
-                                        <li class="active"><a href="https://www.upcharr.com/">Home</a></li>
-                                        <li><a href="https://www.upcharr.com/search?location=&amp;city=&amp;keyword=&amp;spl=">Appointment</a>
+                                        <li class="active"><a href="https://upchar.info/">Home</a></li>
+                                        <li><a href="https://upchar.info/search?location=&amp;city=&amp;keyword=&amp;spl=">Appointment</a>
                                             <ul class="careplus-dropdown-menu">
                                                                                            
                                             </ul>
@@ -113,7 +113,7 @@ color: #fff;}
                                             </ul>
                                         </li>
                                         
-                                         <li class="careplus-megamenu-li"><a href="https://www.upcharr.com/doctors">Our Doctor</a></li>
+                                         <li class="careplus-megamenu-li"><a href="https://upchar.info/doctors">Our Doctor</a></li>
                                         <li class="careplus-megamenu-li"><a href="#">Our Services</a>
                                             <ul class="careplus-megamenu">
                                                 <li class="row">
@@ -142,7 +142,7 @@ color: #fff;}
                                                     </div>
                                                     <div class="col-md-6">
                                                         <a href="#" class="careplus-thumbnail">
-                                                            <img src="https://www.upcharr.com/extra-images/megamenu-frame.jpg" alt="">
+                                                            <img src="https://upchar.info/extra-images/megamenu-frame.jpg" alt="">
                                                         </a>
                                                     </div>
                                                 </li>
@@ -164,8 +164,8 @@ color: #fff;}
                                     </li>--> 
                                    <!--- <li>
                                       <div class="login">               
-                                        <a href="https://www.upcharr.com/login">Login </a>
-                                        <a href="https://www.upcharr.com/signup">/ Sign Up</a>                  
+                                        <a href="https://upchar.info/login">Login </a>
+                                        <a href="https://upchar.info/signup">/ Sign Up</a>                  
                                   
                                     </div>
                                   </li>
@@ -197,7 +197,7 @@ function myFunction() {
 
 
 
-<form action="https://www.upcharr.com/search" method="GET">
+<form action="https://upchar.info/search" method="GET">
                 <div class="box-form">
                       
       
@@ -653,7 +653,7 @@ function myFunction() {
                         
                          <aside class="col-md-4 widget widget_contact_info">
                             <h2 class="careplus-footer-title">Draft About Us</h2>
-                            <p>GYANTECH International Private Limited (“UPCHARR”) is the author and publisher of the internet resource http://www.upcharr.com and the mobile application ‘Upchar’ (together, “Website”). Upcharr owns and operates the services provided through the Website..
+                            <p>Workboat Media Private Limited (“UPCHARR”) is the author and publisher of the internet resource https://upchar.info and the mobile application ‘Upchar’ (together, “Website”). Upcharr owns and operates the services provided through the Website..
                          <a href="aboutus.php" class="careplus-readmore-btn">read more <span></span></a>   </p>
                         </aside>
 
@@ -670,11 +670,11 @@ function myFunction() {
                                 <li><a href="Press.php">Press</a></li>
                                 <li><a href="Contact Us.php">Contact Us</a></li>
                                 <li><a href="tc.html">Tearm And condition</a></li>
-                                <li><a href="gyantech.php">Gyantech International Pvt Ltd</a></li><!--
+                                <li><a href="gyantech.php">Workboat Media Pvt Ltd</a></li><!--
                                 <li><a href="404.html">Prostheses</a></li>
                                 <li><a href="404.html">Patient Reports</a></li>
                                 <li><a href="404.html">Traumatology</a></li>
-                                <li><a href="https://www.upcharr.com/search?location=&city=&keyword=&spl=">Appointment</a></li>-->
+                                <li><a href="https://upchar.info/search?location=&city=&keyword=&spl=">Appointment</a></li>-->
                             </ul>
                         </aside>
                         <!--// Widget Useful Link \\-->
@@ -689,7 +689,7 @@ function myFunction() {
                                 </li>
                                 <li>
                                     <h6>Mail Us At:</h6>
-                                    <a href="mailto:yourdomain@name.com">hello@upcharr.com - info@upcharr.com</a>
+                                    <a href="mailto:yourdomain@name.com">hello@upchar.info - info@upchar.info</a>
                                 </li>
                                 <li>
                                     <h6>Our Location:</h6>

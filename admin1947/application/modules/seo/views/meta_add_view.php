@@ -36,7 +36,7 @@
             </label>
             <div style="display: flex; align-items: center; border-radius: 8px; border: 1px solid #CBD5E1; overflow: hidden; height: 42px;">
               <span style="background: #F8FAFC; border-right: 1px solid #E2E8F0; padding: 0 14px; color: #64748B; font-size: 13px; font-family: monospace; line-height: 42px;">
-                https://www.upcharr.com/
+                https://upchar.info/
               </span>
               <input type="text" id="page_url" name="page_url" class="form-control" value="<?php echo set_value('page_url');?>" placeholder="doctors/delhi/cardiologist" style="border: none; box-shadow: none; height: 100%; font-size: 14px; padding: 0 14px;">
             </div>

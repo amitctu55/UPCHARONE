@@ -1,3 +1,16 @@
+<style>
+  .badge-status-promoted {
+    background: #fef3c7 !important;
+    color: #b45309 !important;
+    border: 1px solid #fde68a !important;
+    font-weight: 700;
+  }
+  .badge-status-promoted:hover {
+    background: #fde68a !important;
+    color: #92400e !important;
+  }
+</style>
+
 <div class="content-wrapper">
   <!-- Content Header & Breadcrumbs -->
   <section class="content-header" style="padding: 20px 20px 10px;">
@@ -193,6 +206,7 @@
                   <th>Email & Phone</th>
                   <th style="width: 110px; text-align: center;">Verification</th>
                   <th style="width: 110px; text-align: center;">Approval</th>
+                  <th style="width: 105px; text-align: center;">Promoted</th>
                   <th style="width: 100px; text-align: center;">Reg. Date</th>
                   <th style="width: 140px; text-align: center;">Actions</th>
                 </tr>
@@ -201,6 +215,7 @@
                 <?php if(!empty($doctor)): foreach($doctor as $val): 
                   $isVerified = ($val['verified'] == 1);
                   $isApproved = ($val['approved'] == 1);
+                  $isPromoted = (isset($val['is_promoted']) && $val['is_promoted'] == 1);
                 ?>
                   <tr id="row-<?=$val['id'];?>">
                     <td style="text-align: center; vertical-align: middle;">
@@ -232,6 +247,12 @@
                         <span><?=$isApproved ? 'Approved' : 'Pending';?></span>
                       </a>
                     </td>
+                    <td style="text-align: center; vertical-align: middle;">
+                      <a href="<?=base_url('doctor/doctorview/toggle_promoted/'.$val['id']);?>" class="badge-pill-status <?php echo $isPromoted ? 'badge-status-promoted' : 'badge-status-inactive';?> action-promote-btn" data-id="<?php echo $val['id']; ?>" data-name="<?php echo htmlspecialchars($val['fname']); ?>" title="Toggle Sponsored / Promoted Status">
+                        <i class="fa <?=$isPromoted ? 'fa-star' : 'fa-star-o';?>"></i>
+                        <span><?=$isPromoted ? 'Promoted' : 'Standard';?></span>
+                      </a>
+                    </td>
                     <td style="text-align: center; font-size: 12px; color: #64748b; vertical-align: middle;">
                       <?=date('d M Y', strtotime($val['creat_date']));?>
                     </td>
@@ -252,7 +273,7 @@
                   </tr>
                 <?php endforeach; else: ?>
                   <tr>
-                    <td colspan="9" style="text-align: center; padding: 40px 20px; color: #94a3b8;">
+                    <td colspan="10" style="text-align: center; padding: 40px 20px; color: #94a3b8;">
                       <i class="fa fa-user-md fa-3x" style="margin-bottom: 10px; display: block; opacity: 0.5;"></i>
                       <p style="font-size: 14px; font-weight: 500; margin: 0;">No doctor records matching criteria.</p>
                     </td>
@@ -490,6 +511,41 @@ $(document).ready(function(){
           $t.find('i').removeClass('fa-check-circle').addClass('fa-times-circle');
           $t.find('span').text('Unverified');
           showToast(docName + ' verification set to Unverified.', 'info');
+        }
+      },
+      error: function(){
+        $t.css('opacity', '1');
+        window.location.href = $t.attr('href');
+      }
+    });
+  });
+
+  // Promote Action Handler
+  $(document).on('click', '.action-promote-btn', function(e){
+    e.preventDefault();
+    var $t = $(this);
+    var key = $t.data('id');
+    var docName = $t.data('name') || 'Doctor';
+    var uri = '<?=base_url('doctor/doctorview/toggle_promoted')?>';
+    
+    $t.css('opacity', '0.5');
+    $.ajax({
+      type: "POST",
+      url: uri,
+      dataType: 'json',
+      data: { did: key, id: key },
+      success: function(result){
+        $t.css('opacity', '1');
+        if(result['is_promoted'] == 1 || result['status'] == 1 || result['status'] == '1') {
+          $t.removeClass('badge-status-inactive').addClass('badge-status-promoted');
+          $t.find('i').removeClass('fa-star-o').addClass('fa-star');
+          $t.find('span').text('Promoted');
+          showToast(docName + ' promoted to Featured/Sponsored sidebar.', 'success');
+        } else {
+          $t.removeClass('badge-status-promoted').addClass('badge-status-inactive');
+          $t.find('i').removeClass('fa-star').addClass('fa-star-o');
+          $t.find('span').text('Standard');
+          showToast(docName + ' removed from Promoted status.', 'info');
         }
       },
       error: function(){

@@ -106,7 +106,7 @@ color: #fff;}
                                     <div class="collapse navbar-collapse" id="navbar-collapse-1">
                                       <ul class="nav navbar-nav">
                                         <li class="active"><a href="<?=base_url();?>">Home</a></li>
-                                        <li><a href="https://www.upcharr.com/search?location=&city=&keyword=&spl=">Appointment</a>
+                                        <li><a href="https://upchar.info/search?location=&city=&keyword=&spl=">Appointment</a>
                                             <ul class="careplus-dropdown-menu">
                                                                                            
                                             </ul>

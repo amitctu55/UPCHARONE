@@ -2508,11 +2508,16 @@ header {
 }
 
 /* Associated Doctors Grid on Hospital Page */
-.associated-doctors-grid {
+.doctors-container,
+.associated-doctors-grid,
+.associated-doctors-wrapper {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 16px;
   margin-top: 14px;
+  max-height: none !important;
+  height: auto !important;
+  overflow: visible !important;
 }
 
 .associated-doctor-card {
@@ -2673,10 +2678,18 @@ header {
 }
 
 .footer-brand-logo {
-  height: 65px;
+  height: 52px;
   width: auto;
+  max-width: 100%;
+  object-fit: contain;
   margin-bottom: 16px;
-  filter: brightness(0) invert(1);
+  display: block;
+  filter: none !important;
+  transition: opacity 0.2s ease;
+}
+
+.footer-brand-logo:hover {
+  opacity: 0.92;
 }
 
 .footer-about-text {

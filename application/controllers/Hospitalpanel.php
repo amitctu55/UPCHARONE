@@ -2352,4 +2352,128 @@ class Hospitalpanel extends CI_Controller
 		}
 		redirect('hospitalpanel/ticket_view/' . $ticket_id);
 	}
+
+	/**
+	 * Hospital Inquiries Management Dashboard
+	 */
+	public function inquiries()
+	{
+		$hospital_id = $this->did;
+		$hosuid = $this->session->userdata('hosuserid');
+
+		$status  = $this->input->get_post('status', TRUE) ?: 'all';
+		$keyword = trim($this->input->get_post('keyword', TRUE) ?: '');
+
+		$this->db->group_start();
+		$this->db->where('hospital_id', $hospital_id);
+		if (!empty($hosuid)) {
+			$this->db->or_where('hospital_id', $hosuid);
+		}
+		$this->db->group_end();
+
+		if (!empty($status) && $status !== 'all') {
+			$this->db->where('status', $status);
+		}
+
+		if (!empty($keyword)) {
+			$this->db->group_start()
+				->like('user_name', $keyword)
+				->or_like('user_email', $keyword)
+				->or_like('user_phone', $keyword)
+				->or_like('subject', $keyword)
+				->or_like('message', $keyword)
+			->group_end();
+		}
+
+		$data['inquiries'] = $this->db->order_by('id', 'DESC')->get('inquiries')->result();
+
+		// Counters
+		$this->db->group_start()->where('hospital_id', $hospital_id);
+		if (!empty($hosuid)) {
+			$this->db->or_where('hospital_id', $hosuid);
+		}
+		$all_inqs = $this->db->group_end()->get('inquiries')->result();
+
+		$data['total_count']   = count($all_inqs);
+		$data['pending_count'] = 0;
+		$data['replied_count'] = 0;
+		$data['closed_count']  = 0;
+
+		foreach ($all_inqs as $inq) {
+			if ($inq->status == 'pending') $data['pending_count']++;
+			elseif ($inq->status == 'replied') $data['replied_count']++;
+			elseif ($inq->status == 'closed') $data['closed_count']++;
+		}
+
+		$data['active_status'] = $status;
+		$data['keyword']       = $keyword;
+
+		$this->load->view('hospitalpanel/inquiries', $data);
+	}
+
+	/**
+	 * Send or Update Reply to Patient Inquiry
+	 */
+	public function reply_inquiry()
+	{
+		$hospital_id = $this->did;
+		$hosuid = $this->session->userdata('hosuserid');
+
+		$inquiry_id    = intval($this->input->post('inquiry_id'));
+		$reply_message = trim($this->input->post('reply_message', TRUE) ?: '');
+		$status        = $this->input->post('status') ?: 'replied';
+
+		if ($inquiry_id > 0 && !empty($reply_message)) {
+			// Verify inquiry ownership
+			$inquiry = $this->db->where('id', $inquiry_id)
+				->group_start()->where('hospital_id', $hospital_id)->or_where('hospital_id', $hosuid)->group_end()
+				->get('inquiries')
+				->row();
+
+			if ($inquiry) {
+				$this->db->where('id', $inquiry_id)->update('inquiries', array(
+					'reply_message' => $reply_message,
+					'status'        => $status,
+					'updated_at'    => date('Y-m-d H:i:s')
+				));
+				$this->session->set_flashdata('flashmsg', "<div class='alert alert-success' style='border-radius: 8px; margin: 15px 0;'><i class='fa fa-check-circle'></i> Reply submitted successfully for <strong>" . htmlspecialchars($inquiry->user_name) . "</strong>'s inquiry!</div>");
+			} else {
+				$this->session->set_flashdata('flashmsg', "<div class='alert alert-danger' style='border-radius: 8px; margin: 15px 0;'>Inquiry record not found or access denied.</div>");
+			}
+		} else {
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-warning' style='border-radius: 8px; margin: 15px 0;'>Please enter a reply response.</div>");
+		}
+
+		redirect('hospitalpanel/inquiries');
+	}
+
+	/**
+	 * Update Inquiry Status (Pending / Replied / Closed)
+	 */
+	public function update_inquiry_status($inquiry_id = 0, $new_status = 'closed')
+	{
+		$hospital_id = $this->did;
+		$hosuid = $this->session->userdata('hosuserid');
+		$inquiry_id = intval($inquiry_id);
+
+		$allowed = array('pending', 'replied', 'closed');
+		if (!in_array($new_status, $allowed)) {
+			$new_status = 'closed';
+		}
+
+		$inquiry = $this->db->where('id', $inquiry_id)
+			->group_start()->where('hospital_id', $hospital_id)->or_where('hospital_id', $hosuid)->group_end()
+			->get('inquiries')
+			->row();
+
+		if ($inquiry) {
+			$this->db->where('id', $inquiry_id)->update('inquiries', array(
+				'status'     => $new_status,
+				'updated_at' => date('Y-m-d H:i:s')
+			));
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-success' style='border-radius: 8px; margin: 15px 0;'><i class='fa fa-check-circle'></i> Inquiry #{$inquiry_id} status updated to <strong>" . ucfirst($new_status) . "</strong>.</div>");
+		}
+
+		redirect('hospitalpanel/inquiries');
+	}
 }

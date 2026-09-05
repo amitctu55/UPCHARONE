@@ -78,7 +78,7 @@
                   #<?=$p->meta_id;?>
                 </td>
                 <td style="padding: 14px 16px; font-size: 13px; font-family: monospace; color: #0d9488;">
-                  https://www.upcharr.com/<?=$p->page_url;?>
+                  https://upchar.info/<?=$p->page_url;?>
                 </td>
                 <td style="padding: 14px 16px; font-weight: 600; color: #0F172A; font-size: 13px; max-width: 200px;">
                   <?=$p->meta_title;?>

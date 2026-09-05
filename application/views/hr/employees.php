@@ -109,7 +109,7 @@
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                         <div>
                             <label style="font-size: 12.5px; font-weight: 700; color: #334155; margin-bottom: 4px;">Email Address *</label>
-                            <input type="email" name="email" class="form-control" placeholder="email@upcharr.com" required style="border-radius: 8px;">
+                            <input type="email" name="email" class="form-control" placeholder="email@upchar.info" required style="border-radius: 8px;">
                         </div>
                         <div>
                             <label style="font-size: 12.5px; font-weight: 700; color: #334155; margin-bottom: 4px;">Mobile Phone *</label>

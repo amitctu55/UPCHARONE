@@ -1702,61 +1702,120 @@
   $('#formSendTestEmail').on('submit', function(e) {
     e.preventDefault();
     var btn = $('#btnSubmitTestEmail');
+    var origHtml = btn.html();
     btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Dispatching...');
     $('#testEmailResult').hide().empty();
 
-    $.post('<?=base_url("settings/send_test_email");?>', {
+    var postData = {
       test_email: $('#test_recipient_email').val(),
-      email_provider: $('#emailProviderSelect').val()
-    }, function(res) {
-      btn.prop('disabled', false).html('<i class="fa fa-send"></i> Dispatch Test Email');
-      var alertClass = (res.status === 'success') ? 'alert-success' : 'alert-danger';
-      var out = '<div class="alert ' + alertClass + '"><strong>' + (res.status === 'success' ? 'Success:' : 'Error:') + '</strong> ' + res.message;
-      if (res.debug) {
-        out += '<pre style="margin-top: 10px; font-size: 11px; max-height: 150px; overflow-y: auto;">' + res.debug + '</pre>';
+      email_provider: $('#emailProviderSelect').val(),
+      smtp_host: $('input[name="smtp_host"]').val(),
+      smtp_port: $('input[name="smtp_port"]').val(),
+      smtp_crypto: $('select[name="smtp_crypto"]').val(),
+      smtp_user: $('input[name="smtp_user"]').val(),
+      smtp_pass: $('input[name="smtp_pass"]').val(),
+      sendgrid_api_key: $('input[name="sendgrid_api_key"]').val(),
+      mail_from_name: $('input[name="mail_from_name"]').val(),
+      mail_from_email: $('input[name="mail_from_email"]').val()
+    };
+
+    $.ajax({
+      url: '<?=base_url("settings/send_test_email");?>',
+      type: 'POST',
+      data: postData,
+      dataType: 'json',
+      timeout: 15000,
+      success: function(res) {
+        btn.prop('disabled', false).html(origHtml);
+        var alertClass = (res && res.status === 'success') ? 'alert-success' : 'alert-danger';
+        var out = '<div class="alert ' + alertClass + '"><strong>' + (res && res.status === 'success' ? 'Success:' : 'Error:') + '</strong> ' + ((res && res.message) ? res.message : 'No response from server');
+        if (res && res.debug) {
+          out += '<pre style="margin-top: 10px; font-size: 11px; max-height: 150px; overflow-y: auto;">' + res.debug + '</pre>';
+        }
+        out += '</div>';
+        $('#testEmailResult').html(out).slideDown();
+      },
+      error: function(xhr, status, errorThrown) {
+        btn.prop('disabled', false).html(origHtml);
+        var msg = 'Request failed (' + (status || 'error') + '). ';
+        if (status === 'timeout') {
+          msg = 'The SMTP server did not respond within 15 seconds. Please verify your host, port, and firewall rules.';
+        } else if (xhr && xhr.responseText) {
+          try {
+            var parsed = JSON.parse(xhr.responseText);
+            if (parsed.message) msg = parsed.message;
+          } catch(e) {
+            msg += (xhr.status ? 'HTTP ' + xhr.status + ': ' : '') + errorThrown;
+          }
+        }
+        $('#testEmailResult').html('<div class="alert alert-danger"><strong>Error:</strong> ' + msg + '</div>').slideDown();
       }
-      out += '</div>';
-      $('#testEmailResult').html(out).slideDown();
-    }, 'json');
+    });
   });
 
   // Test SMS
   $('#formSendTestSms').on('submit', function(e) {
     e.preventDefault();
     var btn = $('#btnSubmitTestSms');
+    var origHtml = btn.html();
     btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Sending...');
     $('#testSmsResult').hide().empty();
 
-    $.post('<?=base_url("settings/send_test_sms");?>', {
-      test_mobile: $('#test_sms_mobile').val(),
-      test_message: $('#test_sms_message').val()
-    }, function(res) {
-      btn.prop('disabled', false).html('<i class="fa fa-paper-plane"></i> Send Test SMS');
-      var alertClass = (res.status === 'success') ? 'alert-success' : 'alert-danger';
-      var out = '<div class="alert ' + alertClass + '"><strong>' + (res.status === 'success' ? 'Success (' + res.provider + '):' : 'Error:') + '</strong> ' + res.message;
-      if (res.raw_response) {
-        out += '<pre style="margin-top: 10px; font-size: 11px; max-height: 120px; overflow-y: auto;">' + res.raw_response + '</pre>';
+    $.ajax({
+      url: '<?=base_url("settings/send_test_sms");?>',
+      type: 'POST',
+      data: {
+        test_mobile: $('#test_sms_mobile').val(),
+        test_message: $('#test_sms_message').val()
+      },
+      dataType: 'json',
+      timeout: 15000,
+      success: function(res) {
+        btn.prop('disabled', false).html(origHtml);
+        var alertClass = (res && res.status === 'success') ? 'alert-success' : 'alert-danger';
+        var out = '<div class="alert ' + alertClass + '"><strong>' + (res && res.status === 'success' ? 'Success (' + res.provider + '):' : 'Error:') + '</strong> ' + ((res && res.message) ? res.message : 'No response from server');
+        if (res && res.raw_response) {
+          out += '<pre style="margin-top: 10px; font-size: 11px; max-height: 120px; overflow-y: auto;">' + res.raw_response + '</pre>';
+        }
+        out += '</div>';
+        $('#testSmsResult').html(out).slideDown();
+      },
+      error: function(xhr, status) {
+        btn.prop('disabled', false).html(origHtml);
+        var msg = (status === 'timeout') ? 'SMS gateway timed out.' : 'Failed to send SMS request to server.';
+        $('#testSmsResult').html('<div class="alert alert-danger"><strong>Error:</strong> ' + msg + '</div>').slideDown();
       }
-      out += '</div>';
-      $('#testSmsResult').html(out).slideDown();
-    }, 'json');
+    });
   });
 
   // Test WhatsApp
   $('#formSendTestWa').on('submit', function(e) {
     e.preventDefault();
     var btn = $('#btnSubmitTestWa');
+    var origHtml = btn.html();
     btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Sending...');
     $('#testWaResult').hide().empty();
 
-    $.post('<?=base_url("settings/send_test_whatsapp");?>', {
-      test_mobile: $('#test_wa_mobile').val(),
-      test_message: $('#test_wa_message').val()
-    }, function(res) {
-      btn.prop('disabled', false).html('<i class="fa fa-paper-plane"></i> Send WhatsApp');
-      var alertClass = (res.status === 'success') ? 'alert-success' : 'alert-danger';
-      $('#testWaResult').html('<div class="alert ' + alertClass + '">' + res.message + '</div>').slideDown();
-    }, 'json');
+    $.ajax({
+      url: '<?=base_url("settings/send_test_whatsapp");?>',
+      type: 'POST',
+      data: {
+        test_mobile: $('#test_wa_mobile').val(),
+        test_message: $('#test_wa_message').val()
+      },
+      dataType: 'json',
+      timeout: 15000,
+      success: function(res) {
+        btn.prop('disabled', false).html(origHtml);
+        var alertClass = (res && res.status === 'success') ? 'alert-success' : 'alert-danger';
+        $('#testWaResult').html('<div class="alert ' + alertClass + '">' + ((res && res.message) ? res.message : 'Success') + '</div>').slideDown();
+      },
+      error: function(xhr, status) {
+        btn.prop('disabled', false).html(origHtml);
+        var msg = (status === 'timeout') ? 'WhatsApp gateway timed out.' : 'Failed to reach WhatsApp service.';
+        $('#testWaResult').html('<div class="alert alert-danger"><strong>Error:</strong> ' + msg + '</div>').slideDown();
+      }
+    });
   });
 
   // Verify Third-Party Integrations

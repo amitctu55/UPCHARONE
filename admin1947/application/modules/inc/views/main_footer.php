@@ -1,7 +1,7 @@
 <br><br>
 
 <footer class="container-fluid text-center">
-  <p>&copy;  FDDI - 2018 Developed By NSPL </p>
+  <p>&copy; <?=date('Y');?> Upchar. Developed By Workboat Media Pvt Ltd</p>
 </footer>
 
 

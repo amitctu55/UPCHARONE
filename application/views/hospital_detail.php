@@ -108,9 +108,9 @@ $hospEmail = !empty($hospital->email) ? $hospital->email : 'support@upchar.info'
                 <a href="tel:<?=$hospMobile;?>" class="btn btn-primary-cta" style="padding: 12px 20px; font-size: 15px; justify-content: center; display: flex; align-items: center; gap: 8px;">
                     <i class="fas fa-phone-alt"></i> Contact Hospital
                 </a>
-                <a href="mailto:<?=$hospEmail;?>" class="btn btn-secondary" style="padding: 10px 16px; justify-content: center; display: flex; align-items: center; gap: 8px;">
-                    <i class="fas fa-envelope"></i> Send Enquiry
-                </a>
+                <button type="button" class="btn btn-secondary" data-toggle="modal" data-target="#enquiryModal" style="padding: 10px 16px; justify-content: center; display: flex; align-items: center; gap: 8px; border: 1px solid #CBD5E1; background: #FFFFFF; font-weight: 600; cursor: pointer; width: 100%;">
+                    <i class="fas fa-envelope" style="color: #00A896;"></i> Send Enquiry
+                </button>
             </div>
         </div>
     </div>
@@ -190,10 +190,10 @@ $hospEmail = !empty($hospital->email) ? $hospital->email : 'support@upchar.info'
             <!-- Associated Specialists & Doctors Grid -->
             <div class="hosp-profile-card">
                 <h3 class="hosp-profile-section-title">
-                    <i class="fas fa-user-md" style="color: #00A896;"></i> Associated Specialists & Doctors
+                    <i class="fas fa-user-md" style="color: #00A896;"></i> Associated Specialists & Doctors <?=(!empty($clinic)) ? '('.count($clinic).')' : '';?>
                 </h3>
 
-                <div class="associated-doctors-grid">
+                <div class="associated-doctors-grid" style="max-height: none !important; height: auto !important; overflow: visible !important;">
                     <?php if (!empty($clinic)) { foreach($clinic as $doc) { 
                         $docImg = (!empty($doc->drimage) && file_exists('admin1947/public/assets/upload/'.$doc->drimage)) 
                                   ? admin_url().'public/assets/upload/'.$doc->drimage 
@@ -237,7 +237,7 @@ $hospEmail = !empty($hospital->email) ? $hospital->email : 'support@upchar.info'
                             <a href="<?=base_url('doctor/'.$doc->id);?>" class="btn btn-secondary" style="flex: 1; padding: 8px 10px; font-size: 13px; text-align: center;">
                                 View Profile
                             </a>
-                            <a href="javascript:void(0);" class="btn btn-primary-cta getappointment" data-upchar-did="<?=$doc->id;?>" data-toggle="modal" data-target="#myModal" style="flex: 1.2; padding: 8px 10px; font-size: 13px; text-align: center; display: flex; align-items: center; justify-content: center; gap: 4px;">
+                            <a href="javascript:void(0);" class="btn btn-primary-cta getappointment btn-book-appointment" data-doctor-id="<?=$doc->id;?>" data-hospital-id="<?=$hospital->id;?>" data-did="<?=$doc->id;?>" data-upchar-did="<?=$doc->id;?>" data-toggle="modal" data-target="#myModal" style="flex: 1.2; padding: 8px 10px; font-size: 13px; text-align: center; display: flex; align-items: center; justify-content: center; gap: 4px;">
                                 <i class="fas fa-calendar-check"></i> Book
                             </a>
                         </div>
@@ -336,5 +336,168 @@ $hospEmail = !empty($hospital->email) ? $hospital->email : 'support@upchar.info'
         </div>
     </div>
 </div>
+
+<!-- Send Enquiry Modal -->
+<div class="modal fade" id="enquiryModal" tabindex="-1" role="dialog" aria-labelledby="enquiryModalLabel" aria-hidden="true" style="z-index: 10500;">
+    <div class="modal-dialog modal-dialog-centered" role="document" style="max-width: 520px; margin: 30px auto;">
+        <div class="modal-content" style="border-radius: 16px; border: none; box-shadow: 0 20px 40px rgba(0,0,0,0.22); overflow: hidden;">
+            <!-- Modal Header -->
+            <div class="modal-header" style="background: linear-gradient(135deg, #043D5B 0%, #008F80 100%); color: #FFFFFF; padding: 20px 24px; position: relative;">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close" style="color: #FFFFFF; opacity: 0.85; font-size: 24px; font-weight: 400; text-shadow: none; position: absolute; right: 20px; top: 18px; background: none; border: none;">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <div style="width: 42px; height: 42px; border-radius: 10px; background: rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center; font-size: 20px; color: #FFFFFF;">
+                        <i class="fas fa-envelope-open-text"></i>
+                    </div>
+                    <div>
+                        <h4 class="modal-title" id="enquiryModalLabel" style="font-size: 18px; font-weight: 700; margin: 0; color: #FFFFFF;">
+                            Send Enquiry to Hospital
+                        </h4>
+                        <span style="font-size: 12px; color: #E2E8F0; display: block; margin-top: 2px;">
+                            <?=htmlspecialchars($hospital->name);?>
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal Body / Form -->
+            <form action="<?=base_url('send-enquiry');?>" method="POST" id="hospitalEnquiryForm" autocomplete="off">
+                <input type="hidden" name="<?=$this->security->get_csrf_token_name();?>" value="<?=$this->security->get_csrf_hash();?>">
+                <input type="hidden" name="hospital_id" value="<?=$hospital->id;?>">
+                
+                <div class="modal-body" style="padding: 24px; background: #FFFFFF;">
+                    <!-- Alert Status Container -->
+                    <div id="enquiryAlertBox" style="display: none; margin-bottom: 16px;"></div>
+
+                    <!-- Full Name -->
+                    <div class="form-group" style="margin-bottom: 16px;">
+                        <label style="font-size: 13px; font-weight: 600; color: #1E293B; margin-bottom: 6px; display: block;">
+                            <i class="fas fa-user" style="color: #00A896; margin-right: 5px;"></i> Full Name <span style="color: #EF4444;">*</span>
+                        </label>
+                        <input type="text" name="user_name" id="enq_user_name" class="form-control" placeholder="e.g. Ramesh Kumar" required style="height: 42px; border-radius: 8px; border: 1.5px solid #CBD5E1; padding: 8px 14px; font-size: 14px;">
+                    </div>
+
+                    <!-- Contact Details (2 Columns) -->
+                    <div class="row" style="margin: 0 -8px 16px -8px;">
+                        <div class="col-sm-6" style="padding: 0 8px; margin-bottom: 10px;">
+                            <label style="font-size: 13px; font-weight: 600; color: #1E293B; margin-bottom: 6px; display: block;">
+                                <i class="fas fa-phone-alt" style="color: #00A896; margin-right: 5px;"></i> Phone Number <span style="color: #EF4444;">*</span>
+                            </label>
+                            <input type="tel" name="user_phone" id="enq_user_phone" class="form-control" placeholder="10-digit mobile" pattern="[0-9]{10}" required style="height: 42px; border-radius: 8px; border: 1.5px solid #CBD5E1; padding: 8px 14px; font-size: 14px;">
+                        </div>
+                        <div class="col-sm-6" style="padding: 0 8px; margin-bottom: 10px;">
+                            <label style="font-size: 13px; font-weight: 600; color: #1E293B; margin-bottom: 6px; display: block;">
+                                <i class="fas fa-envelope" style="color: #00A896; margin-right: 5px;"></i> Email Address <span style="color: #EF4444;">*</span>
+                            </label>
+                            <input type="email" name="user_email" id="enq_user_email" class="form-control" placeholder="e.g. ramesh@gmail.com" required style="height: 42px; border-radius: 8px; border: 1.5px solid #CBD5E1; padding: 8px 14px; font-size: 14px;">
+                        </div>
+                    </div>
+
+                    <!-- Subject -->
+                    <div class="form-group" style="margin-bottom: 16px;">
+                        <label style="font-size: 13px; font-weight: 600; color: #1E293B; margin-bottom: 6px; display: block;">
+                            <i class="fas fa-tag" style="color: #00A896; margin-right: 5px;"></i> Subject / Topic
+                        </label>
+                        <input type="text" name="subject" id="enq_subject" class="form-control" placeholder="e.g. Bed availability / Package cost / OPD appointment" style="height: 42px; border-radius: 8px; border: 1.5px solid #CBD5E1; padding: 8px 14px; font-size: 14px;">
+                    </div>
+
+                    <!-- Message / Query -->
+                    <div class="form-group" style="margin-bottom: 8px;">
+                        <label style="font-size: 13px; font-weight: 600; color: #1E293B; margin-bottom: 6px; display: block;">
+                            <i class="fas fa-comment-medical" style="color: #00A896; margin-right: 5px;"></i> Your Message / Query <span style="color: #EF4444;">*</span>
+                        </label>
+                        <textarea name="message" id="enq_message" class="form-control" rows="4" placeholder="Please describe your clinical query, required treatment, or admission request..." required style="border-radius: 8px; border: 1.5px solid #CBD5E1; padding: 10px 14px; font-size: 14px; resize: vertical;"></textarea>
+                    </div>
+
+                    <div style="font-size: 11.5px; color: #64748B; margin-top: 10px; display: flex; align-items: center; gap: 6px;">
+                        <i class="fas fa-lock" style="color: #16A34A;"></i> Your details are shared securely with the verified hospital administration desk only.
+                    </div>
+                </div>
+
+                <!-- Modal Footer -->
+                <div class="modal-footer" style="padding: 16px 24px; background: #F8FAFC; border-top: 1px solid #E2E8F0; display: flex; justify-content: flex-end; gap: 10px;">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal" style="border-radius: 8px; padding: 9px 18px; font-size: 13.5px; font-weight: 600; border: 1px solid #CBD5E1; background: #FFFFFF; color: #475569;">
+                        Cancel
+                    </button>
+                    <button type="submit" id="submitEnquiryBtn" class="btn btn-primary-cta" style="border-radius: 8px; padding: 9px 24px; font-size: 14px; font-weight: 700; display: inline-flex; align-items: center; gap: 8px;">
+                        <i class="fas fa-paper-plane" id="submitEnquiryIcon"></i> <span id="submitEnquiryText">Submit Enquiry</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+$(document).ready(function() {
+    $('#hospitalEnquiryForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        var $form = $(this);
+        var $btn = $('#submitEnquiryBtn');
+        var $btnText = $('#submitEnquiryText');
+        var $btnIcon = $('#submitEnquiryIcon');
+        var $alertBox = $('#enquiryAlertBox');
+
+        // Basic Client Validation
+        var name = $.trim($('#enq_user_name').val());
+        var phone = $.trim($('#enq_user_phone').val());
+        var email = $.trim($('#enq_user_email').val());
+        var message = $.trim($('#enq_message').val());
+
+        if (!name || !phone || !email || !message) {
+            $alertBox.html('<div class="alert alert-warning" style="border-radius: 8px; margin: 0; padding: 10px 14px; font-size: 13px;"><i class="fas fa-exclamation-triangle"></i> Please fill in all required fields.</div>').slideDown(200);
+            return false;
+        }
+
+        // Disable Button & Show Spinner
+        $btn.prop('disabled', true);
+        $btnText.text('Submitting Enquiry...');
+        $btnIcon.attr('class', 'fas fa-spinner fa-spin');
+        $alertBox.hide();
+
+        var formData = $form.serialize() + '&ajax=1';
+
+        $.ajax({
+            url: $form.attr('action'),
+            type: 'POST',
+            data: formData,
+            dataType: 'json',
+            success: function(res) {
+                $btn.prop('disabled', false);
+                $btnText.text('Submit Enquiry');
+                $btnIcon.attr('class', 'fas fa-paper-plane');
+
+                if (typeof res === 'string') {
+                    try { res = JSON.parse(res); } catch(e) {}
+                }
+
+                if (res && res.status === 'success') {
+                    $alertBox.html('<div class="alert alert-success" style="border-radius: 8px; margin: 0; padding: 12px 16px; font-size: 13.5px;"><i class="fas fa-check-circle"></i> ' + res.message + '</div>').slideDown(200);
+                    $form[0].reset();
+                    setTimeout(function() {
+                        $('#enquiryModal').modal('hide');
+                        $alertBox.hide();
+                    }, 3500);
+                } else {
+                    var errMsg = (res && res.message) ? res.message : 'An error occurred while submitting your enquiry. Please try again.';
+                    $alertBox.html('<div class="alert alert-danger" style="border-radius: 8px; margin: 0; padding: 10px 14px; font-size: 13px;"><i class="fas fa-times-circle"></i> ' + errMsg + '</div>').slideDown(200);
+                }
+            },
+            error: function(xhr) {
+                $btn.prop('disabled', false);
+                $btnText.text('Submit Enquiry');
+                $btnIcon.attr('class', 'fas fa-paper-plane');
+                var errText = 'Server connection failed. Please try again later.';
+                if (xhr && xhr.responseJSON && xhr.responseJSON.message) {
+                    errText = xhr.responseJSON.message;
+                }
+                $alertBox.html('<div class="alert alert-danger" style="border-radius: 8px; margin: 0; padding: 10px 14px; font-size: 13px;"><i class="fas fa-times-circle"></i> ' + errText + '</div>').slideDown(200);
+            }
+        });
+    });
+});
+</script>
 
 <?php include ("includes/footer.php"); ?>

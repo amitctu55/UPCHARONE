@@ -85,7 +85,7 @@
 
 
                                   <p>
-                                    Please carefully go through these terms and conditions (“Terms”) and the privacy policy available at https://www.Upcharr.com/company/privacy (“Privacy Policy”)before you decide to access the Website or avail the services made available on the Website by Upchar. These Terms and the Privacy Policy together constitute a legal agreement (“Agreement”) between you and Upchar in connection with your visit to the Website and your use of the Services (as defined below).
+                                    Please carefully go through these terms and conditions (“Terms”) and the privacy policy available at <?=base_url('privacy');?> (“Privacy Policy”)before you decide to access the Website or avail the services made available on the Website by Upchar. These Terms and the Privacy Policy together constitute a legal agreement (“Agreement”) between you and Upchar in connection with your visit to the Website and your use of the Services (as defined below).
                                     The Agreement applies to you whether you are -
 
                                   </p>
@@ -111,7 +111,7 @@ For Practitioners: Listing of Practitioners and their profiles and contact detai
 </ul>
 
 <p>The Services may change from time to time, at the sole discretion of Upchar, and the Agreement will apply to your visit to and your use of the Website to avail the Service, as well as to all information provided by you on the Website at any given point in time.</p>
-<p>This Agreement defines the terms and conditions under which you are allowed to use the Website and describes the manner in which we shall treat your account while you are registered as a member with us. If you have any questions about any part of the Agreement, feel free to contact us at <a href="#">support@Upchar.com.</a></p>
+<p>This Agreement defines the terms and conditions under which you are allowed to use the Website and describes the manner in which we shall treat your account while you are registered as a member with us. If you have any questions about any part of the Agreement, feel free to contact us at <a href="mailto:support@upchar.info">support@upchar.info.</a></p>
 
 <p>By downloading or accessing the Website to use the Services, you irrevocably accept all the conditions stipulated in this Agreement, the Subscription Terms of Service and Privacy Policy, as available on the Website, and agree to abide by them. This Agreement supersedes all previous oral and written terms and conditions (if any) communicated to you relating to your use of the Website to avail the Services. By availing any Service, you signify your acceptance of the terms of this Agreement.</p>
 

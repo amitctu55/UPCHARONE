@@ -1,5 +1,8 @@
 <head>
-    <link rel="icon" href="images/logo.png" type="image/gif" sizes="16x16">
+    <link rel="icon" href="<?=base_url('images/logo.png');?>" type="image/gif" sizes="16x16">
+    <!-- Owl Carousel CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/assets/owl.carousel.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/assets/owl.theme.default.min.css" />
 </head>
 <!-- Mirrored from eyecix.com/html/careplus/team-list.html by --->
 <?php include ("includes/header_new.php"); ?>
@@ -42,6 +45,188 @@
 .box_sh_bg:hover #MoreShow{
   
     transition:0.9s;
+}
+
+/* Sidebar Featured Doctor Card Container */
+.sidebar-promoted-section {
+    width: 100%;
+    margin-top: 20px;
+    margin-bottom: 24px;
+}
+.sidebar-promoted-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    padding: 0 4px;
+}
+.sidebar-promoted-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #0A2540;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.sidebar-promoted-title i {
+    color: #f59e0b;
+}
+
+.sidebar-doctor-card {
+    width: 100%;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 22px 14px 18px;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.07);
+    position: relative;
+    box-sizing: border-box;
+    text-align: center;
+    margin: 0 auto;
+}
+
+/* Sponsored / Featured Tag */
+.sidebar-doctor-card .badge-sponsored {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background-color: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeeba;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 4px;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    z-index: 2;
+}
+
+.sidebar-doctor-avatar {
+    width: 88px;
+    height: 88px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin: 0 auto 12px auto;
+    border: 3px solid #f0fdfa;
+    box-shadow: 0 3px 10px rgba(0, 168, 150, 0.18);
+    display: block;
+}
+
+.sidebar-doctor-name {
+    font-size: 15px;
+    font-weight: 700;
+    color: #0A2540;
+    margin: 0 0 4px 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding: 0 4px;
+}
+.sidebar-doctor-spec {
+    font-size: 12px;
+    font-weight: 600;
+    color: #00a896;
+    margin-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.sidebar-doctor-hosp {
+    font-size: 11.5px;
+    color: #64748b;
+    margin-bottom: 15px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Fix Full-Width Action Buttons (No Clipping / Truncation) */
+.sidebar-doctor-card .btn-action {
+    display: block;
+    width: 100%;
+    margin-bottom: 8px;
+    padding: 8px 10px;
+    font-size: 13px;
+    font-weight: 600;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    border-radius: 6px;
+    box-sizing: border-box;
+    text-decoration: none !important;
+    transition: all 0.2s ease;
+    line-height: 1.35;
+}
+.sidebar-doctor-card .btn-action:last-child {
+    margin-bottom: 0;
+}
+
+.btn-sidebar-contact {
+    background: #f8fafc;
+    color: #334155 !important;
+    border: 1px solid #cbd5e1;
+}
+.btn-sidebar-contact:hover {
+    background: #f1f5f9;
+    color: #0f172a !important;
+    border-color: #94a3b8;
+}
+
+.btn-sidebar-profile {
+    background: #043d5b;
+    color: #ffffff !important;
+    border: 1px solid #043d5b;
+}
+.btn-sidebar-profile:hover {
+    background: #032b40;
+    color: #ffffff !important;
+}
+
+.btn-sidebar-book {
+    background: #00a896;
+    color: #ffffff !important;
+    border: 1px solid #00a896;
+}
+.btn-sidebar-book:hover {
+    background: #028072;
+    color: #ffffff !important;
+}
+
+/* Owl Carousel Custom Nav for Sidebar */
+.sidebar-doctor-slider.owl-carousel .owl-nav {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 10px;
+}
+.sidebar-doctor-slider.owl-carousel .owl-nav button.owl-prev,
+.sidebar-doctor-slider.owl-carousel .owl-nav button.owl-next {
+    background: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    color: #475569 !important;
+    width: 32px;
+    height: 32px;
+    border-radius: 50% !important;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px !important;
+    transition: all 0.2s ease;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    cursor: pointer;
+}
+.sidebar-doctor-slider.owl-carousel .owl-nav button.owl-prev:hover,
+.sidebar-doctor-slider.owl-carousel .owl-nav button.owl-next:hover {
+    background: #00a896 !important;
+    border-color: #00a896 !important;
+    color: #ffffff !important;
 }
 
 .advrtzmnt {
@@ -327,46 +512,58 @@ small photos close--*/
     </form>
     <section id="doctor_list">
         <div class="container">
-            <div class="col-xs-3 text-center advrtzmnt">
-                <div id="myCarousel" class="carousel slide" data-ride="carousel">
-                    <div class="carousel-inner">
-                        <?php $j=1;
-						foreach($doctors as $d){ 
-						if($j==1){?>
-						<div class="item active">
-                            <div class="col-md-12 text-center">
-                                <img class="docimgSide" src="<?=admin_url();?>public/assets/upload/<?=($d->drimage)? $d->drimage : 'dummydr.jpg';?>" alt="<?=$d->fname.' '.$d->lname;?>">
-                            </div>
-                            <div class="col-md-12 text-center">
-                                <span><?=$d->fname.' '.$d->lname;?></span>
-                            </div>
-                            <div class="col-md-12 text-center">
-                                <a href="#" class="btn boxbtn">Contact Hospital</a>
-                                <a href="<?=base_url();?>doctor/<?=$d->id;?>" class="btn boxbtn">View Profile</a> 
-                                <a href="#" class="btn boxbtn getappointment" data-upchar-did='<?=$d->id;?>' data-toggle="modal" data-target="#myModal">Book Appointment</a>
-                            </div>
+            <?php $promoted_list = !empty($promoted_doctors) ? $promoted_doctors : array(); ?>
+            <?php if (!empty($promoted_list)): ?>
+            <div class="col-md-3 col-sm-4 col-xs-12" style="padding-left: 0; padding-right: 15px;">
+                <div class="sidebar-promoted-section">
+                    <div class="sidebar-promoted-header" style="margin-bottom: 12px;">
+                        <h5 class="sidebar-promoted-title">
+                            <i class="fa fa-star"></i> Promoted Specialists
+                        </h5>
+                    </div>
+
+                    <div class="owl-carousel sidebar-doctor-slider owl-theme">
+                        <?php foreach($promoted_list as $d): 
+                            $drImg = (!empty($d->drimage) && file_exists('admin1947/public/assets/upload/'.$d->drimage)) 
+                                ? admin_url('public/assets/upload/'.$d->drimage) 
+                                : base_url('images/dummydr.jpg');
+                            $drName = (stripos($d->fname, 'dr') === false ? 'Dr. ' : '') . trim($d->fname . ' ' . $d->lname);
+                            $drSpl = !empty($d->spl_name) ? $d->spl_name : 'Verified Specialist';
+                            $hospName = !empty($d->hosp_name) ? $d->hosp_name : 'Upchar Partner Hospital';
+                            $contactPhone = !empty($d->contact_phone) ? $d->contact_phone : '8448440603';
+                        ?>
+                        <div class="sidebar-doctor-card text-center">
+                            <span class="badge-sponsored"><i class="fa fa-bolt"></i> Sponsored</span>
+                            
+                            <img src="<?=$drImg;?>" alt="<?=htmlspecialchars($drName);?>" class="doctor-avatar img-fluid rounded-circle mb-2 sidebar-doctor-avatar">
+                            
+                            <h6 class="doctor-name sidebar-doctor-name mt-2 mb-1" title="<?=htmlspecialchars($drName);?>"><?=htmlspecialchars($drName);?></h6>
+                            <div class="sidebar-doctor-spec" title="<?=htmlspecialchars($drSpl);?>"><?=htmlspecialchars($drSpl);?></div>
+                            <div class="sidebar-doctor-hosp" title="<?=htmlspecialchars($hospName);?>" style="margin-bottom: 15px;"><i class="fa fa-hospital-o"></i> <?=htmlspecialchars($hospName);?></div>
+
+                            <a href="tel:<?=$contactPhone;?>" class="btn btn-secondary btn-action btn-sidebar-contact" title="Call <?=htmlspecialchars($hospName);?>">
+                                <i class="fa fa-phone"></i> Contact Hospital
+                            </a>
+                            <a href="<?=base_url('doctor/'.$d->id);?>" class="btn btn-info btn-action btn-sidebar-profile" title="View Full Doctor Profile">
+                                <i class="fa fa-user-md"></i> View Profile
+                            </a> 
+                            <a href="#" class="btn btn-success btn-action btn-sidebar-book getappointment btn-book-appointment" 
+                               data-doctor-id="<?=$d->id;?>" 
+                               data-upchar-did="<?=$d->id;?>" 
+                               data-toggle="modal" 
+                               data-target="#myModal"
+                               title="Instant Online Appointment Booking">
+                                <i class="fa fa-calendar-check-o"></i> Book Appointment
+                            </a>
                         </div>
-						<?php } else{ ?>
-                        <div class="item">
-                            <div class="col-md-12 text-center">
-                                <img class="docimg" src="<?=admin_url();?>public/assets/upload/<?=($d->drimage)? $d->drimage : 'dummydr.jpg';?>" alt="<?=$d->fname.' '.$d->lname;?>">    
-                            </div>
-                            <div class="col-md-12 text-center">
-                                <span><?=$d->fname.' '.$d->lname;?></span>
-                            </div>
-                            <div class="col-md-12 text-center">
-                                <a href="#" class="btn boxbtn">Contact Hospital</a>
-                                <a href="<?=base_url();?>doctor/<?=$d->id;?>" class="btn boxbtn">View Profile</a> 
-                                <a href="#" class="btn boxbtn getappointment" data-upchar-did='<?=$d->id;?>' data-toggle="modal" data-target="#myModal">Book Appointment</a>
-                            </div>
-                        </div>
-                        <?php } $j++; } ?>
-                        <a href="#myCarousel" data-slide="prev"><i class="fa fa-arrow-circle-left BtnAds" aria-hidden="true"></i>  </a>
-                        <a href="#myCarousel" data-slide="next"><i class="fa fa-arrow-circle-right BtnAds" aria-hidden="true"></i>  </a>   
+                        <?php endforeach; ?>
                     </div>
                 </div>
             </div>
-			<div class="col-sm-9">
+            <div class="col-md-9 col-sm-8 col-xs-12">
+            <?php else: ?>
+            <div class="col-xs-12">
+            <?php endif; ?>
                 <div class="col-sm-12" style="padding: 0;">
                     <?php if (!empty($doctors)) { foreach($doctors as $d){ 
                         $quastring = '';
@@ -463,7 +660,7 @@ small photos close--*/
                             <div class="action-buttons">
                                 <a href="<?=base_url();?>doctor/<?=$d->id;?>" class="btn btn-outline">View Profile</a>
                                 <a href="tel:8448440603" class="btn btn-secondary">Contact Hospital</a>
-                                <a href="#" class="btn btn-primary-cta getappointment" data-upchar-did="<?=$d->id;?>" data-toggle="modal" data-target="#myModal">Book Appointment</a>
+                                <a href="#" class="btn btn-primary-cta getappointment btn-book-appointment" data-doctor-id="<?=$d->id;?>" data-upchar-did="<?=$d->id;?>" data-toggle="modal" data-target="#myModal">Book Appointment</a>
                             </div>
                         </div>
                     </div>
@@ -596,10 +793,30 @@ small photos close--*/
     </section>
     <br/><br/>
     <?php include ('includes/footer.php'); ?>
+    <!-- Owl Carousel 2 JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/owl.carousel.min.js"></script>
     <script> 
         $(document).ready(function(){
-        $(".secondmenuicon").click(function(){
-        $("#sidebartab").slideToggle("slow");
-        });
+            $(".secondmenuicon").click(function(){
+                $("#sidebartab").slideToggle("slow");
+            });
+
+            if (typeof $.fn.owlCarousel !== 'undefined' && $('.sidebar-doctor-slider').length) {
+                var itemCount = $('.sidebar-doctor-slider .sidebar-doctor-card').length;
+                $('.sidebar-doctor-slider').owlCarousel({
+                    loop: (itemCount > 1),
+                    margin: 10,
+                    nav: (itemCount > 1),
+                    dots: false,
+                    autoplay: (itemCount > 1),
+                    autoplayTimeout: 4000,
+                    autoplayHoverPause: true,
+                    items: 1, // Show 1 card at a time in the sidebar
+                    navText: [
+                        '<i class="fa fa-arrow-left"></i>',
+                        '<i class="fa fa-arrow-right"></i>'
+                    ]
+                });
+            }
         });
     </script>

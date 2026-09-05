@@ -67,7 +67,7 @@
 
                                          
                                         <li class="col-md-3">
-                                        <figure ><a href='<?=base_url();?>hospital-login'><img src="https://www.upcharr.com/images/Hospital.jpg" alt=""><span><i class="fa fa-link" style="padding:5px 0px;"></i><small></small></span></a>
+                                        <figure ><a href='<?=base_url();?>hospital-login'><img src="https://upchar.info/images/Hospital.jpg" alt=""><span><i class="fa fa-link" style="padding:5px 0px;"></i><small></small></span></a>
                                             <!--    <time datetime="2008-02-14 20:00">21 AUG</time>-->
                                         </figure>
                                         <div class="careplus-blog-modern-text text-center">
@@ -77,7 +77,7 @@
 
 
                                     <li class="col-md-3">
-                                        <figure ><a href="blog-detail.php"><img src="https://www.upcharr.com/images/blog-modern-img3.jpg" alt=""><span><i class="fa fa-link" style="padding:5px 0px;"></i><small></small></span></a>
+                                        <figure ><a href="blog-detail.php"><img src="https://upchar.info/images/blog-modern-img3.jpg" alt=""><span><i class="fa fa-link" style="padding:5px 0px;"></i><small></small></span></a>
                                             <!--    <time datetime="2008-02-14 20:00">21 AUG</time>-->
                                         </figure>
                                         <div class="careplus-blog-modern-text text-center">
@@ -86,7 +86,7 @@
                                     </li>
                                     <li class="col-md-3">
                                       
-                                        <figure><a href="blog-detail.php"><img src="https://www.upcharr.com/images/3d-printed-pharmaceuticals-header_kss.jpg" alt=""><span><i class="fa fa-link" style="padding:5px 0px;"></i><small></small></span></a>
+                                        <figure><a href="blog-detail.php"><img src="https://upchar.info/images/3d-printed-pharmaceuticals-header_kss.jpg" alt=""><span><i class="fa fa-link" style="padding:5px 0px;"></i><small></small></span></a>
                                            <!--    <time datetime="2008-02-14 20:00">21 AUG</time>-->
                                         </figure>
                                         <div class="careplus-blog-modern-text text-center">
@@ -95,7 +95,7 @@
                                     </li>
                                     <li class="col-md-3">
                                     
-                                        <figure><a href='<?=base_url();?>doctor-login'><img src="https://www.upcharr.com/images/blog-modern-img2.jpg" alt=""><span><i class="fa fa-link" style="padding:5px 0px;"></i><small></small></span></a>
+                                        <figure><a href='<?=base_url();?>doctor-login'><img src="https://upchar.info/images/blog-modern-img2.jpg" alt=""><span><i class="fa fa-link" style="padding:5px 0px;"></i><small></small></span></a>
                                           <!--    <time datetime="2008-02-14 20:00">21 AUG</time>-->
                                         </figure>
                                           <div class="careplus-blog-modern-text text-center">
