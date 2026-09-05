@@ -896,14 +896,20 @@
                         <div class="revenue-card-hdr">
                             <span><i class="fa fa-file-text-o" style="color: #00a896; margin-right: 6px;"></i> Facility Monthly GST Invoices (SAC 998313)</span>
                             <div>
-                                <?php echo form_open("admin_revenue/generate_invoice", 'style="display: inline-flex; gap: 8px; flex-wrap: wrap;"');?>
+                                <?php echo form_open("admin_revenue/generate_invoice", 'style="display: inline-flex; gap: 8px; flex-wrap: wrap; align-items: center;"');?>
                                     <input type="hidden" name="<?=$this->security->get_csrf_token_name();?>" value="<?=$this->security->get_csrf_hash();?>">
-                                    <select name="facility_type" class="form-control" style="width: 120px; height: 36px; border-radius: 6px;">
+                                    <select name="facility_type" id="invFacTypeSelect" onchange="updateInvoiceFacilityDropdown()" class="form-control" style="width: 130px; height: 36px; border-radius: 6px;">
                                         <option value="hospital">Hospital</option>
                                         <option value="clinic">Clinic</option>
                                         <option value="pathology">Pathology</option>
                                     </select>
-                                    <input type="number" name="facility_id" class="form-control" placeholder="Facility ID (e.g. 304)" style="width: 150px; height: 36px; border-radius: 6px;" required>
+                                    <select name="facility_id" id="invFacIdSelect" class="form-control" style="min-width: 220px; max-width: 320px; height: 36px; border-radius: 6px;" required>
+                                        <?php if(!empty($hospitals)): ?>
+                                            <?php foreach($hospitals as $h): ?>
+                                                <option value="<?=$h->id;?>"><?=$h->name;?> (#<?=$h->id;?><?=($h->city ? ' - '.$h->city : '');?>)</option>
+                                            <?php endforeach; ?>
+                                        <?php endif; ?>
+                                    </select>
                                     <input type="month" name="billing_month" class="form-control" value="<?=date('Y-m');?>" style="width: 150px; height: 36px; border-radius: 6px;">
                                     <button type="submit" class="btn btn-sm btn-primary" style="background: #00a896; border-color: #00a896; font-weight: 700; height: 36px; border-radius: 6px; padding: 0 16px;">
                                         <i class="fa fa-plus-circle"></i> Generate Tax Invoice
@@ -1358,6 +1364,16 @@ function updateFacilityDropdown() {
         options += '<option value="' + item.id + '">' + item.name + ' (#' + item.id + (item.city ? ' - ' + item.city : '') + ')</option>';
     });
     $('#facIdSelect').html(options);
+}
+
+function updateInvoiceFacilityDropdown() {
+    var type = $('#invFacTypeSelect').val();
+    var list = (type === 'hospital') ? hospitalList : ((type === 'clinic') ? clinicList : pathlabList);
+    var options = '';
+    list.forEach(function(item) {
+        options += '<option value="' + item.id + '">' + item.name + ' (#' + item.id + (item.city ? ' - ' + item.city : '') + ')</option>';
+    });
+    $('#invFacIdSelect').html(options);
 }
 
 function openKpiModal(type) {

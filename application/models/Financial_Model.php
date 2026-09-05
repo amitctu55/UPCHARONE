@@ -421,7 +421,10 @@ class Financial_Model extends CI_Model {
         ');
         $this->db->where('facility_type', $facility_type);
         $this->db->where('facility_id', $facility_id);
-        $this->db->where('DATE_FORMAT(created_at, "%Y-%m")', $billing_month);
+        $startDate = date('Y-m-01 00:00:00', strtotime($billing_month . '-01'));
+        $endDate   = date('Y-m-t 23:59:59', strtotime($billing_month . '-01'));
+        $this->db->where('created_at >=', $startDate);
+        $this->db->where('created_at <=', $endDate);
         $res = $this->db->get('financial_transactions')->row();
 
         $taxable = floatval($res->taxable_value ?? 0);

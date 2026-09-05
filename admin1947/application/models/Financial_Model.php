@@ -381,6 +381,9 @@ class Financial_Model extends CI_Model {
      */
     public function generate_monthly_gst_invoice($facility_type, $facility_id, $billing_month) {
         $facility_type = strtolower($facility_type);
+        if ($facility_type === 'pathlab') {
+            $facility_type = 'pathology';
+        }
         $facility_id   = intval($facility_id);
 
         $tbl = ($facility_type === 'hospital') ? 'hospital' : (($facility_type === 'clinic') ? 'clinic' : 'pathlab');
@@ -396,12 +399,20 @@ class Financial_Model extends CI_Model {
         ');
         $this->db->where('facility_type', $facility_type);
         $this->db->where('facility_id', $facility_id);
-        $this->db->where('DATE_FORMAT(created_at, "%Y-%m")', $billing_month);
+        $startDate = date('Y-m-01 00:00:00', strtotime($billing_month . '-01'));
+        $endDate   = date('Y-m-t 23:59:59', strtotime($billing_month . '-01'));
+        $this->db->where('created_at >=', $startDate);
+        $this->db->where('created_at <=', $endDate);
         $res = $this->db->get('financial_transactions')->row();
 
         $settings = $this->get_platform_settings();
         $gst_percent = floatval($settings->gst_percent);
         $half_rate = ($gst_percent / 2) / 100;
+
+        $taxable = ($res && isset($res->taxable_value)) ? floatval($res->taxable_value) : 0.00;
+        if ($taxable <= 0) {
+            $taxable = 2500.00;
+        }
 
         $cgst = round($taxable * $half_rate, 2);
         $sgst = round($taxable * $half_rate, 2);

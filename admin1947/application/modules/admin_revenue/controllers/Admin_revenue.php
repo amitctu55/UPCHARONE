@@ -260,13 +260,15 @@ class Admin_revenue extends CI_Controller {
      * Generate Monthly GST Tax Invoice for Facility
      */
     public function generate_invoice() {
-        $facility_type = $this->input->post('facility_type');
-        $facility_id   = intval($this->input->post('facility_id'));
-        $billing_month = $this->input->post('billing_month') ?: date('Y-m');
+        $facility_type = $this->input->get_post('facility_type') ?: 'hospital';
+        $facility_id   = intval($this->input->get_post('facility_id'));
+        $billing_month = $this->input->get_post('billing_month') ?: date('Y-m');
 
         if ($facility_id > 0) {
             $inv_id = $this->Financial_Model->generate_monthly_gst_invoice($facility_type, $facility_id, $billing_month);
-            $this->session->set_flashdata('flashmsg', "<div class='alert alert-success' style='border-radius: 8px; margin: 15px 0;'><i class='fa fa-check-circle'></i> GST Tax Invoice generated successfully (Invoice ID #{$inv_id})!</div>");
+            $this->session->set_flashdata('flashmsg', "<div class='alert alert-success' style='border-radius: 8px; margin: 15px 0;'><i class='fa fa-check-circle'></i> GST Tax Invoice generated successfully (Invoice ID #{$inv_id})! <a href='" . base_url('admin_revenue/invoice_view/' . $inv_id) . "' target='_blank' style='color: #043d5b; text-decoration: underline; font-weight: 700; margin-left: 8px;'>View / Print Invoice</a></div>");
+        } else {
+            $this->session->set_flashdata('flashmsg', "<div class='alert alert-warning' style='border-radius: 8px; margin: 15px 0;'><i class='fa fa-exclamation-triangle'></i> Please select or specify a valid Facility ID to generate a monthly GST tax invoice.</div>");
         }
 
         redirect(base_url('admin_revenue?tab=invoices#tab_invoices'));
@@ -286,7 +288,16 @@ class Admin_revenue extends CI_Controller {
 
         $data['invoice']  = $invoice;
         $tbl = ($invoice->facility_type === 'hospital') ? 'hospital' : (($invoice->facility_type === 'clinic') ? 'clinic' : 'pathlab');
-        $data['facility'] = $this->db->get_where($tbl, array('id' => $invoice->facility_id))->row();
+        $facility = $this->db->get_where($tbl, array('id' => $invoice->facility_id))->row();
+        if (!$facility) {
+            $facility = (object) array(
+                'name'    => $invoice->facility_name,
+                'email'   => 'N/A',
+                'mobile'  => 'N/A',
+                'address' => 'On-file with Upchar Platform'
+            );
+        }
+        $data['facility'] = $facility;
         $data['settings'] = $this->Financial_Model->get_platform_settings();
         $this->load->view('gst_invoice_view', $data);
     }

@@ -24,8 +24,7 @@ class Login extends CI_Controller {
             return;
         }
 
-        // Render login view
-        $this->load->view('inc/topheaderlink');
+        // Render standalone modern login view
         $this->load->view('mlogin');
     }
 
