@@ -445,12 +445,63 @@ class Home extends CI_Controller
 		$ad = $this->db->get_where('advertisement', array('id' => $id))->row();
 		if ($ad) {
 			$this->db->where('id', $id)->set('clicks', 'clicks+1', FALSE)->update('advertisement');
-			$dest = !empty($ad->link_url) ? $ad->link_url : (!empty($ad->page) ? $ad->page : base_url());
+			$rawDest = !empty($ad->link_url) ? trim($ad->link_url) : (!empty($ad->page) ? trim($ad->page) : base_url());
+
+			// Parse destination URL
+			$parsed = parse_url($rawDest);
+			$host   = isset($parsed['host']) ? strtolower($parsed['host']) : '';
+			$isInternal = empty($host) || in_array($host, array('upchar.info', 'www.upchar.info', 'upcharr.com', 'www.upcharr.com', 'localhost', '127.0.0.1'));
+
+			if ($isInternal) {
+				$path = isset($parsed['path']) ? ltrim($parsed['path'], '/') : '';
+				// Strip subfolder when matching localhost paths
+				$path = preg_replace('#^demo/upchar/?#i', '', $path);
+
+				if ($path === 'hospital' || $path === 'hospitallist') {
+					$path = 'hospitals';
+				} elseif ($path === 'medical' || $path === 'medicine' || $path === '') {
+					$path = 'medical';
+					$catParam = !empty($ad->category) ? $ad->category : 'equipment';
+					$path .= '?category=' . urlencode($catParam) . '&offer=' . $ad->id;
+				}
+
+				$queryStr = (isset($parsed['query']) && strpos($path, '?') === false) ? '?' . $parsed['query'] : '';
+				$dest = base_url($path . $queryStr);
+			} else {
+				$dest = $rawDest;
+			}
+
 			redirect($dest);
 			return;
 		}
 		redirect(base_url());
 	}
+
+	public function medical()
+	{
+		$data['title'] = 'Upchar Pharmacy & Medical Devices Network';
+		$cat = $this->input->get('category') ?: 'all';
+		$data['selected_category'] = $cat;
+		$data['highlight_offer']   = $this->input->get('offer') ?: null;
+
+		$this->db->where('status', '1');
+		if ($cat !== 'all' && in_array($cat, array('medicine', 'medical_store', 'equipment', 'pathology', 'hospital'))) {
+			$this->db->where('category', $cat);
+		} else {
+			$this->db->where_in('category', array('medicine', 'medical_store', 'equipment', 'general'));
+		}
+		$data['offers'] = $this->db->order_by('id', 'DESC')->get('advertisement')->result();
+
+		// Load verified chemists from profile_chem if any
+		$data['chemists'] = $this->db->get_where('profile_chem', array('status' => '1', 'approved' => '1'))->result();
+
+		// Specializations and cities for global search bar
+		$data['specialization'] = $this->db->order_by('name', 'asc')->where('status', '1')->get('master_specialization')->result();
+		$data['cities']         = $this->db->order_by('name', 'asc')->where('status', '1')->get('master_city')->result();
+
+		$this->load->view('medical', $data);
+	}
+
 	public function process(){
 		$query = $this->input->post('query');
 		$qs=explode(';',trim($query));
