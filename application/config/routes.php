@@ -318,3 +318,8 @@ $route['operations/verify_handoff']         = 'operations/verify_handoff';
 $route['operations/expenses']               = 'operations/expenses';
 $route['operations/save_expense']           = 'operations/save_expense';
 $route['operations/update_expense']         = 'operations/update_expense';
+
+// Modern Header / Navbar Aliases
+$route['lab-tests']                         = 'mytest';
+$route['medicines']                         = 'home/medical';
+$route['dashboard']                         = 'home/myappointments';

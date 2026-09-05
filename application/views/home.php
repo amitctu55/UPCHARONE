@@ -1,187 +1,257 @@
 <?php include ("includes/header_new.php"); ?>
 
-<!-- 1. HERO & CENTERED FLOATING SEARCH PILL -->
-<section class="hero-search-section">
-    <div class="container">
-        <div class="hero-search-header">
-            <div class="hero-trust-pill">
-                <i class="fas fa-user-circle"></i> Welcome Back, <?=@$this->session->userdata('username') ?: 'Valued Patient';?>
+<!-- 1. DYNAMIC SPLIT HERO SECTION WITH MULTI-TAB SEARCH -->
+<section class="hero-wrapper position-relative overflow-hidden">
+    <div class="container py-4">
+        <div class="row align-items-center" style="display: flex; align-items: center; flex-wrap: wrap;">
+            <!-- Left Hero Content & Dynamic Search Widget -->
+            <div class="col-lg-7 col-md-12">
+                <div class="d-inline-flex align-items-center bg-white px-3 py-2 rounded-pill shadow-sm mb-3" style="border: 1px solid #e2e8f0; display: inline-flex; align-items: center; gap: 8px; border-radius: 50px; padding: 6px 16px; background: #fff; margin-bottom: 16px;">
+                    <span class="badge bg-success rounded-circle" style="background-color: #10b981; color: #fff; width: 20px; height: 20px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 10px;">
+                        <i class="fas fa-check"></i>
+                    </span>
+                    <small class="fw-bold text-dark" style="font-weight: 700; color: #1e293b;">India's Trusted Healthcare Network</small>
+                </div>
+
+                <h1 class="hero-main-title mb-3">
+                    Your Home For Health &amp; <span>Doctor Consultations</span>
+                </h1>
+
+                <p class="fs-5 text-muted mb-4 pe-lg-4" style="font-size: 1.15rem; color: #64748b; line-height: 1.6; margin-bottom: 24px;">
+                    Book verified in-clinic appointments, instant 24/7 video consultations, certified lab tests, and hospital care seamlessly.
+                </p>
+
+                <!-- MULTI-TAB SEARCH CONTAINER -->
+                <div class="search-card">
+                    <!-- Search Pill Tabs -->
+                    <div class="search-tab-group">
+                        <button type="button" class="search-tab-btn active" data-type="doctors" data-action="<?=base_url('doctors');?>" data-placeholder="Search doctors, specialties (e.g. Cardiologist, Dentist)...">
+                            <i class="fas fa-user-md me-1"></i> Doctors
+                        </button>
+                        <button type="button" class="search-tab-btn" data-type="lab-tests" data-action="<?=base_url('lab-tests');?>" data-placeholder="Search lab tests &amp; checkups (e.g. CBC, Full Body)...">
+                            <i class="fas fa-flask me-1"></i> Lab Tests
+                        </button>
+                        <button type="button" class="search-tab-btn" data-type="hospitals" data-action="<?=base_url('hospitals');?>" data-placeholder="Search hospitals &amp; clinics by name or department...">
+                            <i class="fas fa-hospital me-1"></i> Hospitals
+                        </button>
+                    </div>
+
+                    <!-- Search Form -->
+                    <form id="heroSearchForm" action="<?=base_url('doctors');?>" method="GET" class="row g-2 align-items-center" style="margin: 0;">
+                        <div class="col-md-4 col-sm-12" style="padding: 4px;">
+                            <div class="input-group" style="width: 100%;">
+                                <span class="input-group-addon" style="background: #f8fafc; border: 1px solid #e2e8f0; border-right: none; color: #ef4444;"><i class="fas fa-map-marker-alt"></i></span>
+                                <select name="city" id="heroCitySelect" class="form-control" style="border: 1px solid #e2e8f0; border-left: none; background: #f8fafc; font-weight: 600; color: #334155; height: 44px; border-radius: 0 8px 8px 0;">
+                                    <option value="">All Locations</option>
+                                    <?php if (!empty($cities)) { foreach($cities as $c){ ?>
+                                    <option value="<?=$c->name;?>" <?=(isset($_GET['city']) && ($_GET['city'] == $c->id || $_GET['city'] == $c->name)) ? 'selected' : '';?>><?=$c->name;?></option>
+                                    <?php } } else { ?>
+                                    <option value="Varanasi" selected>Varanasi</option>
+                                    <option value="Lucknow">Lucknow</option>
+                                    <option value="Delhi">Delhi</option>
+                                    <option value="Mumbai">Mumbai</option>
+                                    <?php } ?>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-5 col-sm-12" style="padding: 4px;">
+                            <div class="input-group" style="width: 100%;">
+                                <span class="input-group-addon" style="background: #f8fafc; border: 1px solid #e2e8f0; border-right: none; color: #64748b;"><i class="fas fa-search"></i></span>
+                                <input type="text" id="heroKeywordInput" name="keyword" value="<?=@$_GET['keyword'];?>" class="form-control" placeholder="Search doctors, specialties..." style="border: 1px solid #e2e8f0; border-left: none; background: #f8fafc; height: 44px; border-radius: 0 8px 8px 0;">
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-sm-12" style="padding: 4px;">
+                            <button type="submit" class="btn btn-primary w-100" style="width: 100%; height: 44px; font-weight: 700; border-radius: 8px; background: #2563eb; border: none; color: #fff; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);">
+                                Find Care <i class="fas fa-arrow-right"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </div>
-            <h1 class="hero-main-title">
-                Your Home For <span>Health & Doctor</span> Consultations
-            </h1>
-            <p class="hero-main-desc">
-                Find and book verified in-clinic doctor appointments, instant 24/7 video consultations, certified diagnostic lab tests, and advanced hospital care.
-            </p>
-        </div>
 
-        <!-- Prominent Centered Floating Search Pill UI -->
-        <form action="<?=base_url();?>search" method="GET">
-            <div class="search-pill-container">
-                <!-- Location Picker -->
-                <div class="search-pill-sec loc-sec">
-                    <i class="fas fa-map-marker-alt search-pill-icon"></i>
-                    <select class="search-pill-select" name="city" id="searchCitySelect" title="Select Location">
-                        <option value="">All Locations / Cities</option>
-                        <?php if (!empty($cities)) { foreach($cities as $c){ ?>
-                        <option value='<?=$c->id;?>' <?=(isset($_GET['city']) && $_GET['city'] == $c->id) ? 'selected' : '';?>><?=$c->name;?></option>
-                        <?php } } ?>
-                    </select>
+            <!-- Right Hero Graphic with Floating Live Stat Badges -->
+            <div class="col-lg-5 col-md-12 text-center" style="margin-top: 30px;">
+                <div class="hero-image-container">
+                    <img src="<?=base_url('images/hero-doctor.png');?>" alt="Verified Healthcare Specialists" class="hero-main-graphic img-fluid" onerror="this.src='<?=base_url('images/ladydoctor.jpg');?>'">
+
+                    <!-- Floating Live Stat Badge 1 (Specialists) -->
+                    <div class="hero-floating-badge badge-top">
+                        <div class="badge-icon-box bg-soft-blue">
+                            <i class="fas fa-user-md"></i>
+                        </div>
+                        <div style="text-align: left;">
+                            <div style="font-weight: 800; font-size: 16px; color: #0f172a; line-height: 1.2;">1,400+</div>
+                            <small style="color: #64748b; font-weight: 600; font-size: 11px;">Verified Specialists</small>
+                        </div>
+                    </div>
+
+                    <!-- Floating Live Stat Badge 2 (24/7 Care) -->
+                    <div class="hero-floating-badge badge-bottom">
+                        <div class="badge-icon-box bg-soft-success">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <div style="text-align: left;">
+                            <div style="font-weight: 800; font-size: 16px; color: #0f172a; line-height: 1.2;">24/7 Care</div>
+                            <small style="color: #64748b; font-weight: 600; font-size: 11px;">Instant Video Connect</small>
+                        </div>
+                    </div>
                 </div>
-
-                <div class="search-pill-divider"></div>
-
-                <!-- Keyword Search -->
-                <div class="search-pill-sec kw-sec">
-                    <i class="fas fa-search search-pill-icon"></i>
-                    <input type="text" id="hint" class="search-pill-input ui-autocomplete-input" name="keyword" value="<?=@$_GET['keyword'];?>" placeholder="Search doctors, clinics, hospitals, treatments..." autocomplete="off">
-                </div>
-
-                <div class="search-pill-divider"></div>
-
-                <!-- Specialization Dropdown -->
-                <div class="search-pill-sec spl-sec">
-                    <i class="fas fa-user-md search-pill-icon"></i>
-                    <select class="search-pill-select" name="spl" title="Select Specialization">
-                        <option value="">All Specialties</option>
-                        <?php if (!empty($specialization)) { foreach($specialization as $s){ ?>
-                        <option value='<?=$s->id;?>' <?=(isset($_GET['spl']) && $_GET['spl'] == $s->id) ? 'selected' : '';?>><?=$s->name;?></option>
-                        <?php } } ?>                   
-                    </select>
-                </div>
-
-                <!-- Primary Search CTA Button -->
-                <button type="submit" class="search-pill-btn" title="Search Doctors & Clinics">
-                    <i class="fas fa-search"></i> Find Care
-                </button>
             </div>
-        </form>
-    </div>
-</section>
-
-<!-- 2. CORE SERVICE CARDS (4-CARD HIGH-TRUST GRID) -->
-<section class="core-services-section">
-    <div class="container">
-        <div class="core-services-grid">
-            <!-- Service 1: Instant Video Consult -->
-            <a href="<?=base_url('search');?>" class="core-service-card">
-                <div class="service-icon-box service-icon-blue">
-                    <i class="fas fa-video"></i>
-                </div>
-                <h3 class="service-card-title">Instant Video Consult</h3>
-                <p class="service-card-desc">Connect within 60 secs with verified medical specialists 24/7 from anywhere.</p>
-                <div class="service-card-btn">
-                    Consult Online <i class="fas fa-arrow-right"></i>
-                </div>
-            </a>
-
-            <!-- Service 2: In-Clinic Appointments -->
-            <a href="<?=base_url('doctors');?>" class="core-service-card">
-                <div class="service-icon-box service-icon-emerald">
-                    <i class="fas fa-user-md"></i>
-                </div>
-                <h3 class="service-card-title">In-Clinic Appointments</h3>
-                <p class="service-card-desc">Confirmed doctor appointments with guaranteed minimal wait times and zero fees.</p>
-                <div class="service-card-btn">
-                    Find Doctors <i class="fas fa-arrow-right"></i>
-                </div>
-            </a>
-
-            <!-- Service 3: Lab Tests & Diagnostics -->
-            <a href="<?=base_url('pathlab-login');?>" class="core-service-card">
-                <div class="service-icon-box service-icon-indigo">
-                    <i class="fas fa-flask"></i>
-                </div>
-                <h3 class="service-card-title">Lab Tests & Checkups</h3>
-                <p class="service-card-desc">100% certified pathology labs with free doorstep sample pickup & digital reports.</p>
-                <div class="service-card-btn">
-                    Book Lab Test <i class="fas fa-arrow-right"></i>
-                </div>
-            </a>
-
-            <!-- Service 4: Surgeries & Hospital Care -->
-            <a href="<?=base_url('hospitals');?>" class="core-service-card">
-                <div class="service-icon-box service-icon-sky">
-                    <i class="fas fa-hospital"></i>
-                </div>
-                <h3 class="service-card-title">Surgeries & Hospitals</h3>
-                <p class="service-card-desc">Advanced surgical procedures, accredited hospitals, and complete insurance help.</p>
-                <div class="service-card-btn">
-                    Explore Surgeries <i class="fas fa-arrow-right"></i>
-                </div>
-            </a>
         </div>
     </div>
 </section>
 
-<!-- 3. SPECIALIZATION CATEGORY GRID -->
-<section class="section-wrapper" style="background: #FFFFFF; padding: 60px 0;">
+<!-- 2. QUICK SERVICE CARDS (4-COLUMN HIGH-TRUST GRID) -->
+<section class="py-5" style="background: #ffffff; padding: 50px 0;">
     <div class="container">
-        <div class="section-title-wrap">
-            <span class="section-badge">Top Specialties</span>
-            <h2 class="section-main-heading">Consult Top Doctors by Specialization</h2>
-            <p class="section-sub-heading">Get expert medical consultation for any health concern with India's most experienced doctors.</p>
+        <div class="row g-4" style="display: flex; flex-wrap: wrap; margin: -12px;">
+            <!-- 1. Instant Video Consult -->
+            <div class="col-lg-3 col-md-6 col-sm-6 col-xs-12" style="padding: 12px;">
+                <a href="<?=base_url('doctors');?>" class="service-card">
+                    <div>
+                        <div class="service-card-icon-box bg-soft-blue">
+                            <i class="fas fa-video"></i>
+                        </div>
+                        <h4 style="font-size: 17px; font-weight: 700; color: #0f172a; margin: 0 0 8px 0;">Instant Video Consult</h4>
+                        <p style="font-size: 13px; color: #64748b; line-height: 1.5; margin: 0 0 16px 0;">24/7 connectivity in 60s with certified specialist doctors right from home.</p>
+                    </div>
+                    <div style="font-weight: 700; color: #2563eb; font-size: 13px; display: flex; align-items: center; gap: 6px;">
+                        Consult Online <i class="fas fa-arrow-right" style="font-size: 11px;"></i>
+                    </div>
+                </a>
+            </div>
+
+            <!-- 2. In-Clinic Appointments -->
+            <div class="col-lg-3 col-md-6 col-sm-6 col-xs-12" style="padding: 12px;">
+                <a href="<?=base_url('doctors');?>" class="service-card">
+                    <div>
+                        <div class="service-card-icon-box bg-soft-emerald">
+                            <i class="fas fa-user-md"></i>
+                        </div>
+                        <h4 style="font-size: 17px; font-weight: 700; color: #0f172a; margin: 0 0 8px 0;">In-Clinic Appointments</h4>
+                        <p style="font-size: 13px; color: #64748b; line-height: 1.5; margin: 0 0 16px 0;">Zero wait time &amp; no booking fees. Book verified specialists near you.</p>
+                    </div>
+                    <div style="font-weight: 700; color: #059669; font-size: 13px; display: flex; align-items: center; gap: 6px;">
+                        Find Doctors <i class="fas fa-arrow-right" style="font-size: 11px;"></i>
+                    </div>
+                </a>
+            </div>
+
+            <!-- 3. Lab Tests & Checkups -->
+            <div class="col-lg-3 col-md-6 col-sm-6 col-xs-12" style="padding: 12px;">
+                <a href="<?=base_url('lab-tests');?>" class="service-card">
+                    <div>
+                        <div class="service-card-icon-box bg-soft-indigo">
+                            <i class="fas fa-flask"></i>
+                        </div>
+                        <h4 style="font-size: 17px; font-weight: 700; color: #0f172a; margin: 0 0 8px 0;">Lab Tests &amp; Checkups</h4>
+                        <p style="font-size: 13px; color: #64748b; line-height: 1.5; margin: 0 0 16px 0;">100% NABL certified partner labs with free doorstep sample collection.</p>
+                    </div>
+                    <div style="font-weight: 700; color: #4f46e5; font-size: 13px; display: flex; align-items: center; gap: 6px;">
+                        Book Lab Test <i class="fas fa-arrow-right" style="font-size: 11px;"></i>
+                    </div>
+                </a>
+            </div>
+
+            <!-- 4. Surgeries & Hospitals -->
+            <div class="col-lg-3 col-md-6 col-sm-6 col-xs-12" style="padding: 12px;">
+                <a href="<?=base_url('hospitals');?>" class="service-card">
+                    <div>
+                        <div class="service-card-icon-box bg-soft-sky">
+                            <i class="fas fa-hospital"></i>
+                        </div>
+                        <h4 style="font-size: 17px; font-weight: 700; color: #0f172a; margin: 0 0 8px 0;">Surgeries &amp; Hospitals</h4>
+                        <p style="font-size: 13px; color: #64748b; line-height: 1.5; margin: 0 0 16px 0;">NABH accredited hospitals with seamless admission &amp; insurance support.</p>
+                    </div>
+                    <div style="font-weight: 700; color: #0284c7; font-size: 13px; display: flex; align-items: center; gap: 6px;">
+                        Explore Care <i class="fas fa-arrow-right" style="font-size: 11px;"></i>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- 3. TOP SPECIALTIES GRID (6-COLUMN RESPONSIVE) -->
+<section class="section-wrapper" style="background: #f8fafc; padding: 60px 0; border-top: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0;">
+    <div class="container">
+        <div class="section-title-wrap" style="text-align: center; margin-bottom: 40px;">
+            <span class="badge bg-soft-primary px-3 py-2 rounded-pill fw-bold text-uppercase fs-8" style="font-size: 11px; padding: 4px 14px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; display: inline-block;">Top Specialties</span>
+            <h2 class="section-main-heading" style="font-size: 28px; font-weight: 800; color: #0f172a; margin: 8px 0;">Consult Top Doctors by Specialization</h2>
+            <p class="section-sub-heading" style="font-size: 14px; color: #64748b; max-width: 620px; margin: 0 auto;">Get expert medical consultation for any health concern with India's most experienced doctors.</p>
         </div>
 
-        <div class="specialization-category-grid">
-            <a href="<?=base_url();?>search?spl=1" class="spec-category-card">
-                <div class="spec-category-icon" style="background: #E8F0FE; color: #1A73E8;">
-                    <i class="fas fa-stethoscope"></i>
-                </div>
-                <h4 class="spec-category-title">General Medicine</h4>
-                <p class="spec-category-subtitle">Fever, Cough, Flu, Fatigue</p>
-            </a>
+        <div class="row" style="display: flex; flex-wrap: wrap; margin: -10px;">
+            <div class="col-lg-2 col-md-4 col-sm-4 col-xs-6" style="padding: 10px;">
+                <a href="<?=base_url('doctors?spl=General+Medicine');?>" class="specialty-card">
+                    <div class="specialty-icon-circle bg-soft-blue">
+                        <i class="fas fa-stethoscope"></i>
+                    </div>
+                    <h5 style="font-size: 14px; font-weight: 700; color: #0f172a; margin: 0 0 4px;">General Medicine</h5>
+                    <small style="color: #64748b; font-size: 11px;">Fever, Flu, Fatigue</small>
+                </a>
+            </div>
 
-            <a href="<?=base_url();?>search?spl=2" class="spec-category-card">
-                <div class="spec-category-icon" style="background: #FCE7F3; color: #EC4899;">
-                    <i class="fas fa-female"></i>
-                </div>
-                <h4 class="spec-category-title">Gynecology</h4>
-                <p class="spec-category-subtitle">Women's Health & Maternity</p>
-            </a>
+            <div class="col-lg-2 col-md-4 col-sm-4 col-xs-6" style="padding: 10px;">
+                <a href="<?=base_url('doctors?spl=Gynecology');?>" class="specialty-card">
+                    <div class="specialty-icon-circle bg-soft-pink">
+                        <i class="fas fa-female"></i>
+                    </div>
+                    <h5 style="font-size: 14px; font-weight: 700; color: #0f172a; margin: 0 0 4px;">Gynecology</h5>
+                    <small style="color: #64748b; font-size: 11px;">Women &amp; Maternity</small>
+                </a>
+            </div>
 
-            <a href="<?=base_url();?>search?spl=3" class="spec-category-card">
-                <div class="spec-category-icon" style="background: #FEF3C7; color: #D97706;">
-                    <i class="fas fa-allergies"></i>
-                </div>
-                <h4 class="spec-category-title">Dermatology</h4>
-                <p class="spec-category-subtitle">Skin, Hair & Acne Care</p>
-            </a>
+            <div class="col-lg-2 col-md-4 col-sm-4 col-xs-6" style="padding: 10px;">
+                <a href="<?=base_url('doctors?spl=Dermatology');?>" class="specialty-card">
+                    <div class="specialty-icon-circle bg-soft-amber">
+                        <i class="fas fa-allergies"></i>
+                    </div>
+                    <h5 style="font-size: 14px; font-weight: 700; color: #0f172a; margin: 0 0 4px;">Dermatology</h5>
+                    <small style="color: #64748b; font-size: 11px;">Skin, Hair &amp; Acne</small>
+                </a>
+            </div>
 
-            <a href="<?=base_url();?>search?spl=4" class="spec-category-card">
-                <div class="spec-category-icon" style="background: #CFFAFE; color: #0891B2;">
-                    <i class="fas fa-baby"></i>
-                </div>
-                <h4 class="spec-category-title">Pediatrics</h4>
-                <p class="spec-category-subtitle">Child Health & Vaccines</p>
-            </a>
+            <div class="col-lg-2 col-md-4 col-sm-4 col-xs-6" style="padding: 10px;">
+                <a href="<?=base_url('doctors?spl=Pediatrics');?>" class="specialty-card">
+                    <div class="specialty-icon-circle bg-soft-cyan">
+                        <i class="fas fa-baby"></i>
+                    </div>
+                    <h5 style="font-size: 14px; font-weight: 700; color: #0f172a; margin: 0 0 4px;">Pediatrics</h5>
+                    <small style="color: #64748b; font-size: 11px;">Child Care &amp; Vaccine</small>
+                </a>
+            </div>
 
-            <a href="<?=base_url();?>search?spl=5" class="spec-category-card">
-                <div class="spec-category-icon" style="background: #EDE9FE; color: #7C3AED;">
-                    <i class="fas fa-bone"></i>
-                </div>
-                <h4 class="spec-category-title">Orthopedics</h4>
-                <p class="spec-category-subtitle">Joints, Bones & Spine Care</p>
-            </a>
+            <div class="col-lg-2 col-md-4 col-sm-4 col-xs-6" style="padding: 10px;">
+                <a href="<?=base_url('doctors?spl=Orthopedics');?>" class="specialty-card">
+                    <div class="specialty-icon-circle bg-soft-purple">
+                        <i class="fas fa-bone"></i>
+                    </div>
+                    <h5 style="font-size: 14px; font-weight: 700; color: #0f172a; margin: 0 0 4px;">Orthopedics</h5>
+                    <small style="color: #64748b; font-size: 11px;">Joints, Bones &amp; Spine</small>
+                </a>
+            </div>
 
-            <a href="<?=base_url();?>search?spl=6" class="spec-category-card">
-                <div class="spec-category-icon" style="background: #E6F4EA; color: #16A34A;">
-                    <i class="fas fa-tooth"></i>
-                </div>
-                <h4 class="spec-category-title">Dentistry</h4>
-                <p class="spec-category-subtitle">Teeth, Gums & Root Canal</p>
-            </a>
+            <div class="col-lg-2 col-md-4 col-sm-4 col-xs-6" style="padding: 10px;">
+                <a href="<?=base_url('doctors?spl=Dentistry');?>" class="specialty-card">
+                    <div class="specialty-icon-circle bg-soft-emerald">
+                        <i class="fas fa-tooth"></i>
+                    </div>
+                    <h5 style="font-size: 14px; font-weight: 700; color: #0f172a; margin: 0 0 4px;">Dentistry</h5>
+                    <small style="color: #64748b; font-size: 11px;">Teeth &amp; Root Canal</small>
+                </a>
+            </div>
         </div>
     </div>
 </section>
 
 <!-- 4. FEATURED SPECIALISTS SLIDER -->
-<section class="section-wrapper" style="padding: 60px 0; background: #F8FAFC;">
+<section class="section-wrapper" style="padding: 60px 0; background: #ffffff;">
     <div class="container">                    
-        <div class="section-title-wrap">
-            <span class="section-badge">Verified Consultants</span>
-            <h2 class="section-main-heading">Book Our Leading Specialists</h2>
-            <p class="section-sub-heading">Experienced medical practitioners verified for quality care, high ratings, and patient trust.</p>
+        <div class="section-title-wrap" style="text-align: center; margin-bottom: 35px;">
+            <span class="badge bg-soft-primary px-3 py-2 rounded-pill fw-bold text-uppercase fs-8" style="font-size: 11px; padding: 4px 14px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; display: inline-block;">Verified Consultants</span>
+            <h2 class="section-main-heading" style="font-size: 28px; font-weight: 800; color: #0f172a; margin: 8px 0;">Book Our Leading Specialists</h2>
+            <p class="section-sub-heading" style="font-size: 14px; color: #64748b; max-width: 620px; margin: 0 auto;">Experienced medical practitioners verified for quality care, high ratings, and patient trust.</p>
         </div>
 
         <div class="specialists-slider-container">
@@ -204,21 +274,27 @@
                              : admin_url().'public/assets/upload/dummydr.jpg';
                     $drPrefix = (strcasecmp(substr($ds->fname, 0, 2), 'Dr') != 0) ? 'Dr. ' : '';
                 ?>
-                <div class="specialist-card">
-                    <div class="specialist-avatar-wrap">
-                        <img loading="lazy" src="<?=$drImg;?>" alt="<?=$ds->fname;?>" class="specialist-avatar">
+                <div class="specialist-card doctor-card">
+                    <div class="doctor-avatar-wrap">
+                        <img loading="lazy" src="<?=$drImg;?>" alt="<?=$ds->fname;?>" class="doctor-avatar">
+                        <span class="doctor-verified-badge"><i class="fas fa-check"></i></span>
                     </div>
-                    <h4 class="specialist-name">
-                        <a href="<?=base_url();?>doctor/<?=$ds->id;?>"><?=$drPrefix.$ds->fname.' '.$ds->lname;?></a>
+                    <h4 class="specialist-name" style="font-size: 16px; font-weight: 800; color: #0f172a; margin: 0 0 6px;">
+                        <a href="<?=base_url();?>doctor/<?=$ds->id;?>" style="color: #0f172a; text-decoration: none;"><?=$drPrefix.$ds->fname.' '.$ds->lname;?></a>
                     </h4>
                     <?php if (!empty($quastring)) { ?>
-                    <span class="specialist-qualification" title="<?=$quastring;?>"><?=$quastring;?></span>
+                    <span class="badge bg-soft-primary text-primary fs-8 px-3 py-1 rounded-pill mb-2" title="<?=$quastring;?>" style="display: inline-block; font-size: 11px; margin-bottom: 12px;"><?=$quastring;?></span>
                     <?php } else { ?>
-                    <span class="specialist-qualification">Consultant Specialist</span>
+                    <span class="badge bg-soft-primary text-primary fs-8 px-3 py-1 rounded-pill mb-2" style="display: inline-block; font-size: 11px; margin-bottom: 12px;">Consultant Specialist</span>
                     <?php } ?>
-                    <a href="<?=base_url();?>doctor/<?=$ds->id;?>" class="specialist-btn-view">
-                        <i class="fa fa-calendar-check"></i> View Profile & Book
-                    </a>
+                    <div style="display: flex; gap: 6px; width: 100%; margin-top: auto;">
+                        <a href="<?=base_url();?>doctor/<?=$ds->id;?>" class="btn btn-sm btn-outline-primary" style="width: 50%; font-size: 12px; border-radius: 20px; padding: 6px 0; font-weight: 600;">
+                            Profile
+                        </a>
+                        <a href="<?=base_url();?>doctor/<?=$ds->id;?>" class="btn btn-sm btn-primary" style="width: 50%; font-size: 12px; border-radius: 20px; padding: 6px 0; font-weight: 600; background: #2563eb; border-color: #2563eb;">
+                            Book Now
+                        </a>
+                    </div>
                 </div>
                 <?php } } else { ?>
                 <div class="col-md-12 text-center text-muted" style="padding: 30px;">
@@ -551,7 +627,7 @@ $('.btn-ad-filter').click(function() {
 
 <?php $this->load->view('includes/footer.php'); ?>
 
-<!-- Interactive Specialist Slider Script -->
+<!-- Interactive Specialist Slider & Multi-Tab Search Scripts -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     var track = document.getElementById('specialistsTrack');
@@ -569,5 +645,51 @@ document.addEventListener('DOMContentLoaded', function() {
             track.scrollBy({ left: scrollAmount, behavior: 'smooth' });
         });
     }
+
+    // Dynamic Multi-Tab Search Switcher
+    var searchTabs = document.querySelectorAll('.search-tab-btn');
+    var heroForm = document.getElementById('heroSearchForm');
+    var heroInput = document.getElementById('heroKeywordInput');
+
+    if (searchTabs.length) {
+        searchTabs.forEach(function(tab) {
+            tab.addEventListener('click', function(e) {
+                e.preventDefault();
+                searchTabs.forEach(function(t) { t.classList.remove('active'); });
+                this.classList.add('active');
+
+                var targetAction = this.getAttribute('data-action');
+                var targetPlaceholder = this.getAttribute('data-placeholder');
+
+                if (heroForm) heroForm.action = targetAction;
+                if (heroInput) heroInput.placeholder = targetPlaceholder;
+            });
+        });
+    }
+
+    // Synchronize City dropdown with header selector & localStorage
+    var savedCity = localStorage.getItem('upchar_selected_city');
+    var heroCity = document.getElementById('heroCitySelect');
+    if (savedCity && heroCity) {
+        for (var i = 0; i < heroCity.options.length; i++) {
+            if (heroCity.options[i].text.toLowerCase() === savedCity.toLowerCase() || heroCity.options[i].value.toLowerCase() === savedCity.toLowerCase()) {
+                heroCity.selectedIndex = i;
+                break;
+            }
+        }
+    }
+
+    $(document).on('click', '.city-option', function() {
+        var c = $(this).data('city');
+        if (heroCity && c) {
+            for (var i = 0; i < heroCity.options.length; i++) {
+                if (heroCity.options[i].text.toLowerCase() === c.toLowerCase() || heroCity.options[i].value.toLowerCase() === c.toLowerCase()) {
+                    heroCity.selectedIndex = i;
+                    break;
+                }
+            }
+        }
+    });
 });
 </script>
+
