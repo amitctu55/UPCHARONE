@@ -9,6 +9,22 @@ class Settings extends CI_Controller {
 
         // Auth check
         if (!$this->session->userdata('adminuserid') && !$this->session->userdata('userid') && !$this->session->userdata('username')) {
+            $is_ajax = $this->input->is_ajax_request()
+                || $this->input->post('is_ajax')
+                || (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest')
+                || (isset($_SERVER['HTTP_ACCEPT']) && stripos($_SERVER['HTTP_ACCEPT'], 'application/json') !== false)
+                || (isset($_SERVER['HTTP_SEC_FETCH_DEST']) && $_SERVER['HTTP_SEC_FETCH_DEST'] === 'empty');
+
+            if ($is_ajax) {
+                while (ob_get_level()) { ob_end_clean(); }
+                header('Content-Type: application/json; charset=utf-8', true, 401);
+                echo json_encode([
+                    'status' => 'error',
+                    'message' => 'Your session has expired. Please log in again to continue.',
+                    'redirect' => base_url('login')
+                ]);
+                exit;
+            }
             redirect(base_url() . 'login');
         }
 
@@ -62,65 +78,93 @@ class Settings extends CI_Controller {
      * Save Configuration Form Submission (AJAX & standard POST)
      */
     public function save() {
-        $category = $this->input->post('category', TRUE) ?: 'general';
-        $is_ajax = $this->input->is_ajax_request();
+        try {
+            $category = $this->input->post('category', TRUE) ?: 'general';
+            $is_ajax = $this->input->is_ajax_request()
+                || $this->input->post('is_ajax')
+                || (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest')
+                || (isset($_SERVER['HTTP_ACCEPT']) && stripos($_SERVER['HTTP_ACCEPT'], 'application/json') !== false)
+                || (isset($_SERVER['HTTP_SEC_FETCH_DEST']) && $_SERVER['HTTP_SEC_FETCH_DEST'] === 'empty');
 
-        // Admin username and IP
-        $admin_user = $this->session->userdata('username') ?: 'SuperAdmin';
-        $ip_address = $this->input->ip_address();
+            // Admin username and IP
+            $admin_user = $this->session->userdata('username') ?: 'SuperAdmin';
+            $ip_address = $this->input->ip_address();
 
-        $post_data = $this->input->post(NULL, FALSE); // Keep raw for passwords/special chars
-        unset($post_data['category'], $post_data['submit']);
-
-        $uploaded_files = [];
-
-        // Process File Uploads (Logos, Favicon, FCM JSON)
-        if (!empty($_FILES)) {
-            $upload_path = FCPATH . 'public/uploads/settings/';
-            if (!is_dir($upload_path)) {
-                @mkdir($upload_path, 0777, true);
+            $post_data = $this->input->post(NULL, FALSE); // Keep raw for passwords/special chars
+            if (!is_array($post_data)) {
+                $post_data = [];
             }
+            unset($post_data['category'], $post_data['submit'], $post_data['is_ajax']);
 
-            $config['upload_path'] = $upload_path;
-            $config['allowed_types'] = 'jpg|jpeg|png|gif|ico|svg|json';
-            $config['max_size'] = 5120; // 5MB
-            $config['encrypt_name'] = TRUE;
+            $uploaded_files = [];
 
-            $this->load->library('upload', $config);
+            // Process File Uploads (Logos, Favicon, FCM JSON)
+            if (!empty($_FILES)) {
+                $upload_path = FCPATH . 'public/uploads/settings/';
+                if (!is_dir($upload_path)) {
+                    @mkdir($upload_path, 0777, true);
+                }
+                if (!is_dir($upload_path) || !is_writable($upload_path)) {
+                    $alt_path = dirname(FCPATH) . DIRECTORY_SEPARATOR . 'public' . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . 'settings' . DIRECTORY_SEPARATOR;
+                    if (!is_dir($alt_path)) {
+                        @mkdir($alt_path, 0777, true);
+                    }
+                    if (is_dir($alt_path) && is_writable($alt_path)) {
+                        $upload_path = $alt_path;
+                    }
+                }
 
-            foreach ($_FILES as $field_name => $file_info) {
-                if (!empty($file_info['name'])) {
-                    $this->upload->initialize($config);
-                    if ($this->upload->do_upload($field_name)) {
-                        $upload_res = $this->upload->data();
-                        $uploaded_files[$field_name] = 'public/uploads/settings/' . $upload_res['file_name'];
-                    } else {
-                        $error_msg = $this->upload->display_errors('', '');
-                        if ($is_ajax) {
-                            echo json_encode(['status' => 'error', 'message' => "Upload error for {$field_name}: {$error_msg}"]);
+                $config['upload_path'] = $upload_path;
+                $config['allowed_types'] = 'jpg|jpeg|png|gif|ico|svg|json';
+                $config['max_size'] = 5120; // 5MB
+                $config['encrypt_name'] = TRUE;
+
+                $this->load->library('upload', $config);
+
+                foreach ($_FILES as $field_name => $file_info) {
+                    if (!empty($file_info['name']) && isset($file_info['error']) && $file_info['error'] === UPLOAD_ERR_OK) {
+                        $this->upload->initialize($config);
+                        if ($this->upload->do_upload($field_name)) {
+                            $upload_res = $this->upload->data();
+                            $uploaded_files[$field_name] = 'public/uploads/settings/' . $upload_res['file_name'];
+                        } else {
+                            $error_msg = $this->upload->display_errors('', '');
+                            while (ob_get_level()) { ob_end_clean(); }
+                            header('Content-Type: application/json; charset=utf-8');
+                            echo json_encode([
+                                'status' => 'error',
+                                'message' => "Upload error for {$field_name}: {$error_msg}"
+                            ]);
                             return;
                         }
                     }
                 }
             }
-        }
 
-        // Save Category Data via Settings_lib
-        $result = $this->settings_lib->save_category($category, $post_data, $uploaded_files, $admin_user, $ip_address);
+            // Save Category Data via Settings_lib
+            $result = $this->settings_lib->save_category($category, $post_data, $uploaded_files, $admin_user, $ip_address);
 
-        if ($is_ajax) {
+            // Clean output buffers to guarantee pure JSON response
+            while (ob_get_level()) { ob_end_clean(); }
+            header('Content-Type: application/json; charset=utf-8');
+
             echo json_encode([
-                'status' => 'success',
-                'message' => $result['message'],
-                'changed_count' => $result['changed_count'],
+                'status' => (!empty($result['status'])) ? 'success' : 'error',
+                'message' => $result['message'] ?? 'Settings updated successfully.',
+                'changed_count' => $result['changed_count'] ?? 0,
                 'uploaded_files' => $uploaded_files
             ]);
             return;
+        } catch (Throwable $e) {
+            log_message('error', 'Exception in Settings::save: ' . $e->getMessage());
+            while (ob_get_level()) { ob_end_clean(); }
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode([
+                'status' => 'error',
+                'message' => 'Server error while saving settings: ' . $e->getMessage()
+            ]);
+            return;
         }
-
-        $flash_type = $result['status'] ? 'success' : 'danger';
-        $this->session->set_flashdata('flashmsg', "<div class='alert alert-{$flash_type}'><strong>" . ucfirst($flash_type) . "!</strong> {$result['message']}</div>");
-        redirect(base_url('settings') . '?tab=' . $category);
     }
 
     /**
@@ -129,6 +173,9 @@ class Settings extends CI_Controller {
     public function send_test_email() {
         $to_email = trim($this->input->post('test_email', TRUE));
         $provider = $this->input->post('email_provider', TRUE) ?: get_system_setting('email_provider', 'smtp');
+
+        while (ob_get_level()) { ob_end_clean(); }
+        header('Content-Type: application/json; charset=utf-8');
 
         if (empty($to_email) || !filter_var($to_email, FILTER_VALIDATE_EMAIL)) {
             echo json_encode(['status' => 'error', 'message' => 'Please provide a valid recipient email address.']);
@@ -139,8 +186,6 @@ class Settings extends CI_Controller {
         $from_email = get_system_setting('mail_from_email', 'noreply@upchar.com');
         $subject = "Upchar Gateway Test Email - " . date('d M Y H:i:s');
         $body = "<h2>Upchar Healthcare System Test Email</h2><p>This is a verification test email sent from the Upchar Admin System Settings Portal.</p><p><strong>Provider:</strong> " . strtoupper($provider) . "<br><strong>Timestamp:</strong> " . date('Y-m-d H:i:s T') . "<br><strong>Status:</strong> Gateway is operating properly.</p>";
-
-        $debug_log = '';
 
         if ($provider === 'sendgrid') {
             $api_key = get_system_setting('sendgrid_api_key');
@@ -220,8 +265,6 @@ class Settings extends CI_Controller {
         $send_res = @$this->email->send();
         $raw_output = ob_get_clean();
 
-        $this->output->set_content_type('application/json');
-
         if ($send_res) {
             $resp = [
                 'status'  => 'success',
@@ -241,13 +284,15 @@ class Settings extends CI_Controller {
         }
         echo json_encode($resp);
         return;
-        return;
     }
 
     /**
      * Send Test SMS Verification
      */
     public function send_test_sms() {
+        while (ob_get_level()) { ob_end_clean(); }
+        header('Content-Type: application/json; charset=utf-8');
+
         $mobile = trim($this->input->post('test_mobile', TRUE));
         $message = trim($this->input->post('test_message', TRUE)) ?: "Upchar Healthcare test SMS verification code: " . rand(100000, 999999);
         $provider = get_system_setting('sms_provider', 'msg91');
@@ -280,7 +325,7 @@ class Settings extends CI_Controller {
             curl_setopt($ch, CURLOPT_USERPWD, "{$sid}:{$token}");
             curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query([
                 'From' => $from,
-                'To' => $to,
+                'To'   => $to,
                 'Body' => $message
             ]));
             $response = curl_exec($ch);
@@ -290,63 +335,83 @@ class Settings extends CI_Controller {
             $res_arr = @json_decode($response, true);
             if ($http_code >= 200 && $http_code < 300) {
                 $result_status = 'success';
-                $result_msg = "Twilio SMS dispatched successfully to {$mobile}. SID: " . ($res_arr['sid'] ?? 'OK');
+                $result_msg = "SMS dispatched via Twilio to {$to}. SID: " . ($res_arr['sid'] ?? 'N/A');
             } else {
-                $result_msg = "Twilio error: " . ($res_arr['message'] ?? $response);
+                $result_msg = "Twilio error: " . ($res_arr['message'] ?? "HTTP {$http_code}");
             }
             $raw_response = $response;
 
         } elseif ($provider === 'fast2sms') {
             $api_key = get_system_setting('fast2sms_api_key');
             if (empty($api_key)) {
-                echo json_encode(['status' => 'error', 'message' => 'Fast2SMS API Key is not configured.']);
+                echo json_encode(['status' => 'error', 'message' => 'Fast2SMS API Key is missing.']);
                 return;
             }
 
-            $fields = [
-                'sender_id' => get_system_setting('default_sender_id', 'TXTIND'),
-                'message' => $message,
-                'language' => 'english',
-                'route' => 'v3',
-                'numbers' => preg_replace('/\D/', '', $mobile),
-            ];
+            $clean_mobile = preg_replace('/\D/', '', $mobile);
+            if (strlen($clean_mobile) > 10) {
+                $clean_mobile = substr($clean_mobile, -10);
+            }
 
             $ch = curl_init('https://www.fast2sms.com/dev/bulkV2');
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
             curl_setopt($ch, CURLOPT_POST, true);
-            curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($fields));
+            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode([
+                'route' => 'v3',
+                'sender_id' => 'TXTIND',
+                'message' => $message,
+                'language' => 'english',
+                'flash' => 0,
+                'numbers' => $clean_mobile
+            ]));
             curl_setopt($ch, CURLOPT_HTTPHEADER, [
-                'authorization: ' . $api_key
+                'authorization: ' . $api_key,
+                'Content-Type: application/json'
             ]);
             $response = curl_exec($ch);
+            $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
             curl_close($ch);
 
             $res_arr = @json_decode($response, true);
-            if (!empty($res_arr['return'])) {
+            if (!empty($res_arr['return']) && $res_arr['return'] === true) {
                 $result_status = 'success';
-                $result_msg = "Fast2SMS message sent successfully to {$mobile}.";
+                $result_msg = "SMS dispatched via Fast2SMS to {$clean_mobile}.";
             } else {
-                $result_msg = "Fast2SMS error: " . ($res_arr['message'][0] ?? $response);
+                $result_msg = "Fast2SMS error: " . ($res_arr['message'][0] ?? 'Failed to deliver SMS');
             }
             $raw_response = $response;
 
         } else {
             // Default Msg91
             $auth_key = get_system_setting('msg91_auth_key');
-            $sender = get_system_setting('msg91_sender_id', 'UPCARE');
-            $template_id = get_system_setting('msg91_dlt_te_id', '1507161519686689997');
+            $sender_id = get_system_setting('msg91_sender_id', 'UPCHAR');
 
             if (empty($auth_key)) {
-                // If no custom key, test via standard HTTP bulk gateway endpoint
-                $auth_key = '45C6DA05EDD0DC';
+                echo json_encode(['status' => 'error', 'message' => 'Msg91 Auth Key is missing.']);
+                return;
             }
 
             $clean_mobile = preg_replace('/\D/', '', $mobile);
-            $url = "http://bulksms.smsroot.com/app/smsapi/index.php?key={$auth_key}&campaign=0&routeid=13&type=text&contacts={$clean_mobile}&senderid={$sender}&msg=" . urlencode($message) . "&template_id={$template_id}";
+            if (strlen($clean_mobile) === 10) {
+                $clean_mobile = '91' . $clean_mobile;
+            }
+
+            $url = "https://api.msg91.com/api/v2/sendsms";
+            $payload = [
+                'sender' => $sender_id,
+                'route'  => '4',
+                'country'=> '91',
+                'sms'    => [['message' => $message, 'to' => [$clean_mobile]]]
+            ];
 
             $ch = curl_init($url);
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($ch, CURLOPT_TIMEOUT, 15);
+            curl_setopt($ch, CURLOPT_POST, true);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
+            curl_setopt($ch, CURLOPT_HTTPHEADER, [
+                'authkey: ' . $auth_key,
+                'Content-Type: application/json'
+            ]);
             $response = curl_exec($ch);
             $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
             curl_close($ch);
@@ -372,6 +437,9 @@ class Settings extends CI_Controller {
      * Send Test WhatsApp Message
      */
     public function send_test_whatsapp() {
+        while (ob_get_level()) { ob_end_clean(); }
+        header('Content-Type: application/json; charset=utf-8');
+
         $mobile = trim($this->input->post('test_mobile', TRUE));
         $message = trim($this->input->post('test_message', TRUE)) ?: "Hello from Upchar Healthcare! This is a test notification from your WhatsApp Business API integration.";
         
@@ -419,6 +487,9 @@ class Settings extends CI_Controller {
      * Test Third-Party Integration Credentials (ABDM, Razorpay, Google Maps)
      */
     public function test_integration() {
+        while (ob_get_level()) { ob_end_clean(); }
+        header('Content-Type: application/json; charset=utf-8');
+
         $type = $this->input->post('type', TRUE);
 
         if ($type === 'abdm') {
@@ -501,6 +572,8 @@ class Settings extends CI_Controller {
      * Clear Cache Endpoint
      */
     public function clear_cache() {
+        while (ob_get_level()) { ob_end_clean(); }
+        header('Content-Type: application/json; charset=utf-8');
         $this->settings_lib->clear_cache();
         echo json_encode(['status' => 'success', 'message' => 'Application settings cache flushed successfully.']);
     }

@@ -1656,6 +1656,7 @@
     submitBtn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Saving...');
 
     var formData = new FormData(this);
+    formData.append('is_ajax', '1');
 
     $.ajax({
       url: form.attr('action'),
@@ -1664,17 +1665,43 @@
       processData: false,
       contentType: false,
       dataType: 'json',
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest',
+        'Accept': 'application/json'
+      },
       success: function(res) {
         submitBtn.prop('disabled', false).html(originalText);
-        if (res.status === 'success') {
+        if (res && res.status === 'success') {
           showNotification('success', res.message || 'Settings saved successfully!');
+          if (res.redirect) {
+            setTimeout(function() { window.location.href = res.redirect; }, 1200);
+          }
         } else {
-          showNotification('danger', res.message || 'Failed to save settings.');
+          showNotification('danger', (res && res.message) ? res.message : 'Failed to save settings.');
         }
       },
-      error: function(xhr) {
+      error: function(xhr, status, error) {
         submitBtn.prop('disabled', false).html(originalText);
-        showNotification('danger', 'Server error while saving settings. Please try again.');
+        var msg = 'Server error while saving settings. Please try again.';
+        if (xhr && xhr.status === 401) {
+          msg = 'Session expired. Please log in again to save settings.';
+          setTimeout(function() { window.location.href = '<?=base_url("login");?>'; }, 1500);
+        } else if (xhr && xhr.responseJSON && xhr.responseJSON.message) {
+          msg = xhr.responseJSON.message;
+        } else if (xhr && xhr.responseText) {
+          try {
+            var parsed = JSON.parse(xhr.responseText);
+            if (parsed && parsed.message) {
+              msg = parsed.message;
+            }
+          } catch(e) {
+            console.error('Settings save response:', xhr.responseText);
+            if (xhr.status) {
+              msg = 'Request failed with HTTP ' + xhr.status + ' (' + (error || status) + '). Check server logs.';
+            }
+          }
+        }
+        showNotification('danger', msg);
       }
     });
   });

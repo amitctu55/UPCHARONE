@@ -14,9 +14,55 @@ class Settings_lib {
 
     public function __construct() {
         $this->CI =& get_instance();
-        $this->CI->load->database();
+        if (isset($this->CI->load)) { $this->CI->load->database(); }
         $this->encryption_key = config_item('encryption_key') ?: 'Upchar_System_Secret_Key_2026';
         $this->cache_file = APPPATH . 'cache/system_settings_cache.json';
+        $this->ensure_tables();
+    }
+
+    /**
+     * Ensure system_settings and system_settings_audit_log tables exist
+     */
+    public function ensure_tables() {
+        try {
+            if (!$this->CI->db) {
+                return;
+            }
+
+            // Create system_settings table if not exists
+            $this->CI->db->query("CREATE TABLE IF NOT EXISTS `system_settings` (
+              `id` INT(11) NOT NULL AUTO_INCREMENT,
+              `category` VARCHAR(50) NOT NULL,
+              `setting_key` VARCHAR(100) NOT NULL,
+              `setting_value` MEDIUMTEXT DEFAULT NULL,
+              `is_encrypted` TINYINT(1) DEFAULT 0,
+              `field_type` VARCHAR(30) DEFAULT 'text',
+              `description` VARCHAR(255) DEFAULT NULL,
+              `updated_by` VARCHAR(100) DEFAULT 'System',
+              `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+              PRIMARY KEY (`id`),
+              UNIQUE KEY `idx_setting_key` (`setting_key`),
+              KEY `idx_setting_category` (`category`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8;");
+
+            // Create audit log table if not exists
+            $this->CI->db->query("CREATE TABLE IF NOT EXISTS `system_settings_audit_log` (
+              `id` INT(11) NOT NULL AUTO_INCREMENT,
+              `admin_id` INT(11) DEFAULT NULL,
+              `admin_username` VARCHAR(100) DEFAULT NULL,
+              `category` VARCHAR(50) NOT NULL,
+              `action` VARCHAR(50) DEFAULT 'UPDATE',
+              `changes` LONGTEXT DEFAULT NULL,
+              `ip_address` VARCHAR(45) DEFAULT NULL,
+              `user_agent` VARCHAR(255) DEFAULT NULL,
+              `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+              PRIMARY KEY (`id`),
+              KEY `idx_audit_category` (`category`),
+              KEY `idx_audit_created` (`created_at`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8;");
+        } catch (Throwable $e) {
+            log_message('error', 'Error in ensure_tables: ' . $e->getMessage());
+        }
     }
 
     /**
@@ -68,34 +114,47 @@ class Settings_lib {
             }
         }
 
-        // Fetch from database
-        $rows = $this->CI->db->get('system_settings')->result_array();
         $settings = [];
+        try {
+            $rows = $this->CI->db ? $this->CI->db->get('system_settings')->result_array() : [];
 
-        foreach ($rows as $row) {
-            $val = $row['setting_value'];
-            if ($row['is_encrypted'] == 1 && !empty($val)) {
-                $val = $this->decrypt_value($val);
+            foreach ($rows as $row) {
+                $val = $row['setting_value'];
+                if ($row['is_encrypted'] == 1 && !empty($val)) {
+                    $val = $this->decrypt_value($val);
+                }
+
+                $settings[$row['setting_key']] = [
+                    'id' => $row['id'],
+                    'category' => $row['category'],
+                    'key' => $row['setting_key'],
+                    'value' => $val,
+                    'raw_value' => $row['setting_value'],
+                    'is_encrypted' => (bool)$row['is_encrypted'],
+                    'field_type' => $row['field_type'],
+                    'description' => $row['description'],
+                    'updated_by' => $row['updated_by'],
+                    'updated_at' => $row['updated_at']
+                ];
             }
-
-            $settings[$row['setting_key']] = [
-                'id' => $row['id'],
-                'category' => $row['category'],
-                'key' => $row['setting_key'],
-                'value' => $val,
-                'raw_value' => $row['setting_value'],
-                'is_encrypted' => (bool)$row['is_encrypted'],
-                'field_type' => $row['field_type'],
-                'description' => $row['description'],
-                'updated_by' => $row['updated_by'],
-                'updated_at' => $row['updated_at']
-            ];
+        } catch (Throwable $e) {
+            log_message('error', 'Error in Settings_lib get_all: ' . $e->getMessage());
         }
 
         self::$memory_cache = $settings;
 
-        // Persist to file cache
-        @file_put_contents($this->cache_file, json_encode($settings, JSON_UNESCAPED_UNICODE));
+        // Persist to file cache safely
+        try {
+            $cache_dir = dirname($this->cache_file);
+            if (!is_dir($cache_dir)) {
+                @mkdir($cache_dir, 0777, true);
+            }
+            if (is_dir($cache_dir) && is_writable($cache_dir)) {
+                @file_put_contents($this->cache_file, json_encode($settings, JSON_UNESCAPED_UNICODE));
+            }
+        } catch (Throwable $e) {
+            // Ignore cache write errors
+        }
 
         return $settings;
     }
@@ -110,80 +169,119 @@ class Settings_lib {
      * @return array ['status' => bool, 'message' => string, 'changed_count' => int]
      */
     public function save_category($category, $submitted_data, $uploaded_files = [], $admin_user = 'SuperAdmin', $ip_address = null) {
-        $existing = $this->get_all(true);
-        $changes = [];
-        $changed_count = 0;
+        $this->ensure_tables();
 
-        // Handle uploaded files
-        if (!empty($uploaded_files)) {
-            foreach ($uploaded_files as $file_key => $file_path) {
-                $submitted_data[$file_key] = $file_path;
-            }
-        }
+        try {
+            $existing = $this->get_all(true);
+            $changes = [];
+            $changed_count = 0;
 
-        foreach ($submitted_data as $key => $new_val) {
-            // Check if key exists in settings
-            if (!isset($existing[$key])) {
-                continue;
+            // Handle uploaded files
+            if (!empty($uploaded_files)) {
+                foreach ($uploaded_files as $file_key => $file_path) {
+                    $submitted_data[$file_key] = $file_path;
+                }
             }
 
-            $item = $existing[$key];
-            $is_encrypted = $item['is_encrypted'];
-            $old_val = $item['value'];
-            $new_val = is_string($new_val) ? trim($new_val) : $new_val;
+            foreach ($submitted_data as $key => $new_val) {
+                // If setting key does not exist, insert or skip
+                $is_encrypted = false;
+                $old_val = null;
 
-            // If it's a sensitive/encrypted password field and user submitted placeholder '••••••••' or empty, do not overwrite
-            if ($is_encrypted && ($new_val === '••••••••' || $new_val === '********' || $new_val === '')) {
-                continue;
-            }
-
-            // Check if value changed
-            if ((string)$old_val !== (string)$new_val) {
-                $db_val = $new_val;
-                if ($is_encrypted && !empty($new_val)) {
-                    $db_val = $this->encrypt_value($new_val);
+                if (isset($existing[$key])) {
+                    $item = $existing[$key];
+                    $is_encrypted = (bool)$item['is_encrypted'];
+                    $old_val = $item['value'];
                 }
 
-                $this->CI->db->where('setting_key', $key);
-                $this->CI->db->update('system_settings', [
-                    'setting_value' => $db_val,
-                    'updated_by' => $admin_user,
-                    'updated_at' => date('Y-m-d H:i:s')
-                ]);
+                $new_val = is_string($new_val) ? trim($new_val) : $new_val;
 
-                // Track diff for audit log (mask sensitive fields)
-                $changes[$key] = [
-                    'old' => $is_encrypted ? '********' : $old_val,
-                    'new' => $is_encrypted ? '********' : $new_val
-                ];
-                $changed_count++;
+                // Skip sensitive/encrypted password field if user submitted mask placeholder or empty
+                if ($is_encrypted && (
+                    $new_val === '' || 
+                    $new_val === null || 
+                    $new_val === '••••••••' || 
+                    $new_val === 'â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢' || 
+                    $new_val === '********' || 
+                    preg_match('/^[\x{2022}\*•]+$/u', (string)$new_val)
+                )) {
+                    continue;
+                }
+
+                // Check if value changed or newly set
+                if (!isset($existing[$key]) || (string)$old_val !== (string)$new_val) {
+                    $db_val = $new_val;
+                    if ($is_encrypted && !empty($new_val)) {
+                        $db_val = $this->encrypt_value($new_val);
+                    }
+
+                    if (isset($existing[$key])) {
+                        $this->CI->db->where('setting_key', $key);
+                        $this->CI->db->update('system_settings', [
+                            'setting_value' => $db_val,
+                            'updated_by' => $admin_user,
+                            'updated_at' => date('Y-m-d H:i:s')
+                        ]);
+                    } else {
+                        // Key not present in table yet, insert it
+                        $this->CI->db->insert('system_settings', [
+                            'category' => $category,
+                            'setting_key' => $key,
+                            'setting_value' => $db_val,
+                            'is_encrypted' => 0,
+                            'field_type' => 'text',
+                            'description' => ucfirst(str_replace('_', ' ', $key)),
+                            'updated_by' => $admin_user,
+                            'updated_at' => date('Y-m-d H:i:s')
+                        ]);
+                    }
+
+                    // Track diff for audit log (mask sensitive fields)
+                    $changes[$key] = [
+                        'old' => $is_encrypted ? '********' : $old_val,
+                        'new' => $is_encrypted ? '********' : $new_val
+                    ];
+                    $changed_count++;
+                }
             }
+
+            // Record Audit Log if any changes occurred (guarded against failures)
+            if (!empty($changes)) {
+                try {
+                    $admin_id = $this->CI->session->userdata('adminuserid') ?: $this->CI->session->userdata('userid') ?: 1;
+                    $this->CI->db->insert('system_settings_audit_log', [
+                        'admin_id' => $admin_id,
+                        'admin_username' => $admin_user,
+                        'category' => $category,
+                        'action' => 'UPDATE',
+                        'changes' => json_encode($changes, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE),
+                        'ip_address' => $ip_address ?: $this->CI->input->ip_address(),
+                        'user_agent' => substr($this->CI->input->user_agent() ?: '', 0, 250),
+                        'created_at' => date('Y-m-d H:i:s')
+                    ]);
+                } catch (Throwable $e) {
+                    log_message('error', 'Audit log write failed: ' . $e->getMessage());
+                }
+            }
+
+            // Clear caches
+            $this->clear_cache();
+
+            return [
+                'status' => true,
+                'message' => $changed_count > 0 ? "Successfully updated {$changed_count} setting(s)." : "Settings saved (no modifications made).",
+                'changed_count' => $changed_count,
+                'changes' => $changes
+            ];
+        } catch (Throwable $e) {
+            log_message('error', 'Error in Settings_lib save_category: ' . $e->getMessage());
+            return [
+                'status' => false,
+                'message' => 'Database error while saving settings: ' . $e->getMessage(),
+                'changed_count' => 0,
+                'changes' => []
+            ];
         }
-
-        // Record Audit Log if any changes occurred
-        if (!empty($changes)) {
-            $admin_id = $this->CI->session->userdata('adminuserid') ?: $this->CI->session->userdata('userid') ?: 1;
-            $this->CI->db->insert('system_settings_audit_log', [
-                'admin_id' => $admin_id,
-                'admin_username' => $admin_user,
-                'category' => $category,
-                'action' => 'UPDATE',
-                'changes' => json_encode($changes, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE),
-                'ip_address' => $ip_address ?: $this->CI->input->ip_address(),
-                'user_agent' => substr($this->CI->input->user_agent(), 0, 250),
-                'created_at' => date('Y-m-d H:i:s')
-            ]);
-        }
-
-        // Clear caches
-        $this->clear_cache();
-
-        return [
-            'status' => true,
-            'message' => $changed_count > 0 ? "Successfully updated {$changed_count} setting(s)." : "No settings were modified.",
-            'changed_count' => $changed_count,
-            'changes' => $changes
-        ];
     }
 
     /**
