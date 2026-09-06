@@ -1,30 +1,31 @@
 @media screen and (max-width: 480px) {
-	.hospital {
-   
-	height:auto;
+    .hospital {
 
-}
+        height: auto;
 
-.h-15{
-	height:auto;
-}
+    }
 
-.mx-3{
- 
-	height:auto;
-}
-	
+    .h-15 {
+        height: auto;
+    }
+
+    .mx-3 {
+
+        height: auto;
+    }
+
 }
 
 .hospital {
     padding: 5px 27px 3px;
     visibility: visible;
     width: 100%;
-	height:157px;
+    height: 157px;
     position: relative;
     border-bottom: 3px solid;
-    background-color: #9bc03c;
+    background-color: #878b7cff;
 }
+
 .hospital:before {
     content: '';
     position: absolute;
@@ -34,62 +35,68 @@
     border-left: 20px solid transparent;
 }
 
-.h-15{
-	height:310px;
+.h-15 {
+    height: 310px;
 }
-.p-15{
+
+.p-15 {
     padding-right: 15px;
     padding-left: 15px;
 }
-.t-30{
-    top:30%;
+
+.t-30 {
+    top: 30%;
 }
 
-.mt-2{
+.mt-2 {
     padding-top: 5rem;
-   
+
 }
-.pb-2{
+
+.pb-2 {
     padding-bottom: 4rem;
     margin-bottom: 4rem;
 }
 
-.border-green{
-    border:3px solid #9bc03c;
+.border-green {
+    border: 3px solid #878b7cff;
 }
 
-.mx-3{
+.mx-3 {
     margin-left: 4rem;
     margin-right: 4rem;
-	height:726px;
+    height: 726px;
 }
-.modal-body { 
-    h1 { 
-      font-weight:900; 
-      font-size:2.3em;
-      text-transform:uppercase;
+
+.modal-body {
+    h1 {
+        font-weight: 900;
+        font-size: 2.3em;
+        text-transform: uppercase;
     }
-    
-    a.pre-order-btn { 
-      color:#000;
-      background-color:gold;
-      border-radius:1em;
-      padding:1em;
-      display: block;
-      margin: 2em auto;
-      width:50%;
-      font-size:1.25em;
-      font-weight:6600;
-      &:hover { 
-      background-color:#000;
-        text-decoration:none;
-        color:gold;
-      }
+
+    a.pre-order-btn {
+        color: #000;
+        background-color: gold;
+        border-radius: 1em;
+        padding: 1em;
+        display: block;
+        margin: 2em auto;
+        width: 50%;
+        font-size: 1.25em;
+        font-weight: 6600;
+
+        &:hover {
+            background-color: #000;
+            text-decoration: none;
+            color: gold;
+        }
     }
-    
-    
-  }
-  .fontSignUp {
+
+
+}
+
+.fontSignUp {
     background: #94b63c;
     color: #ffffff;
     padding: 4px 20px;
@@ -105,19 +112,23 @@
     float: left;
     padding: 0px 0px;
 }
+
 .careplus-infolist {
     float: left;
     width: 77%;
     padding-left: 10px;
     text-align: ;
 }
+
 .careplus-user-list {
     float: left;
     margin: 9px 0px 0px 13px;
 }
+
 .careplus-user-list li {
-    margin: 15px 0px 0px -11px!important;
+    margin: 15px 0px 0px -11px !important;
 }
+
 .careplus-user-list li {
     float: left;
     list-style: none;
@@ -125,16 +136,20 @@
     position: relative;
     padding-bottom: 4px;
 }
+
 li {
     line-height: 28px;
     list-style: inside none disc;
 }
+
 .careplus-user-list li a {
     font-size: 14px;
 }
+
 .topmenu {
-    padding: 14px 27px!important;
+    padding: 14px 27px !important;
 }
+
 .sitename {
     font-family: verdana;
     color: white;
@@ -149,11 +164,11 @@ li {
     text-transform: uppercase;
     position: relative;
     transition: 0.7s;
-    background: #9bc03c;
+    background: #878b7cff;
     font-weight: bold;
     letter-spacing: 1px;
-    color:white;
-        margin: -3px;
+    color: white;
+    margin: -3px;
 }
 
 
@@ -175,11 +190,61 @@ li {
     text-decoration: none;
 }
 
-a:hover, a:focus, a:active {
+a:hover,
+a:focus,
+a:active {
     outline: none;
     text-decoration: none;
 }
-.col-xs-1, .col-sm-1, .col-md-1, .col-lg-1, .col-xs-2, .col-sm-2, .col-md-2, .col-lg-2, .col-xs-3, .col-sm-3, .col-md-3, .col-lg-3, .col-xs-4, .col-sm-4, .col-md-4, .col-lg-4, .col-xs-5, .col-sm-5, .col-md-5, .col-lg-5, .col-xs-6, .col-sm-6, .col-md-6, .col-lg-6, .col-xs-7, .col-sm-7, .col-md-7, .col-lg-7, .col-xs-8, .col-sm-8, .col-md-8, .col-lg-8, .col-xs-9, .col-sm-9, .col-md-9, .col-lg-9, .col-xs-10, .col-sm-10, .col-md-10, .col-lg-10, .col-xs-11, .col-sm-11, .col-md-11, .col-lg-11, .col-xs-12, .col-sm-12, .col-md-12, .col-lg-12 {
+
+.col-xs-1,
+.col-sm-1,
+.col-md-1,
+.col-lg-1,
+.col-xs-2,
+.col-sm-2,
+.col-md-2,
+.col-lg-2,
+.col-xs-3,
+.col-sm-3,
+.col-md-3,
+.col-lg-3,
+.col-xs-4,
+.col-sm-4,
+.col-md-4,
+.col-lg-4,
+.col-xs-5,
+.col-sm-5,
+.col-md-5,
+.col-lg-5,
+.col-xs-6,
+.col-sm-6,
+.col-md-6,
+.col-lg-6,
+.col-xs-7,
+.col-sm-7,
+.col-md-7,
+.col-lg-7,
+.col-xs-8,
+.col-sm-8,
+.col-md-8,
+.col-lg-8,
+.col-xs-9,
+.col-sm-9,
+.col-md-9,
+.col-lg-9,
+.col-xs-10,
+.col-sm-10,
+.col-md-10,
+.col-lg-10,
+.col-xs-11,
+.col-sm-11,
+.col-md-11,
+.col-lg-11,
+.col-xs-12,
+.col-sm-12,
+.col-md-12,
+.col-lg-12 {
     position: relative;
     min-height: 1px;
     padding-right: 15px;
@@ -201,41 +266,87 @@ a:hover, a:focus, a:active {
     line-height: 1;
     color: white;
     text-align: center;
-    background-color:#9bc03c;
+    background-color: #878b7cff;
     border-radius: 4px;
     border: none;
     border-radius: 6px 0px 0px 6px;
 }
 
 
-.navbar-nav > li > a {
+.navbar-nav>li>a {
     font-size: 14px;
     font-weight: bold;
     text-transform: uppercase;
-    background-image: linear-gradient(-90deg, #9bc03c, #93b53c);
+    background-image: linear-gradient(-90deg, #878b7cff, #93b53c);
     border-radius: 5px;
     margin-left: 5px;
     padding: 8px 14px;
-    color:white;
+    color: white;
 }
 
-.navbar-nav > li > a, .navbar-nav > li:hover > a:after, .navbar-nav > li:hover > a:before, .careplus-blog-modern figure a:before, .careplus-gallery-filterable ul li a, .careplus-plane-gallery figure > a:before, .careplus-tags a, .careplus-blog-social ul li a, .careplus-post-arrow, .comment-reply-link, .careplus-blog-grid figure a:before, .careplus-blog-grid-option li a, .careplus-pagination > ul > li > .previous span:before, .careplus-pagination > ul > li > .next span:before, .careplus-pagination > ul > li > .previous span:after, .careplus-pagination > ul > li > .next span:after, .careplus-pagination > ul > li > .previous:before, .careplus-pagination > ul > li > .next:before, .careplus-pagination > ul > li > .previous:after, .careplus-pagination > ul > li > .next:after, .careplus-pagination > ul > li > a, .careplus-pagination > ul > li > span, .careplus-related-team figure a:before, .careplus-related-team figure a:after, .careplus-team-filterable ul li a, .careplus-shop-option li a, .faq-accordion .panel-title a, .careplus-Pricing-Plan .careplus-error-btn, .careplus-Pricing-Plan .careplus-error-btn span:after, .careplus-Pricing-Plan .careplus-error-btn span:before, .careplus-Pricing-Plan .careplus-error-btn:before, .careplus-Pricing-Plan .careplus-error-btn:after, .available-btn, .careplus-blog-medium-text > span, .careplus-department-grid-text::before, .careplus-department-grid-text::after {
+.navbar-nav>li>a,
+.navbar-nav>li:hover>a:after,
+.navbar-nav>li:hover>a:before,
+.careplus-blog-modern figure a:before,
+.careplus-gallery-filterable ul li a,
+.careplus-plane-gallery figure>a:before,
+.careplus-tags a,
+.careplus-blog-social ul li a,
+.careplus-post-arrow,
+.comment-reply-link,
+.careplus-blog-grid figure a:before,
+.careplus-blog-grid-option li a,
+.careplus-pagination>ul>li>.previous span:before,
+.careplus-pagination>ul>li>.next span:before,
+.careplus-pagination>ul>li>.previous span:after,
+.careplus-pagination>ul>li>.next span:after,
+.careplus-pagination>ul>li>.previous:before,
+.careplus-pagination>ul>li>.next:before,
+.careplus-pagination>ul>li>.previous:after,
+.careplus-pagination>ul>li>.next:after,
+.careplus-pagination>ul>li>a,
+.careplus-pagination>ul>li>span,
+.careplus-related-team figure a:before,
+.careplus-related-team figure a:after,
+.careplus-team-filterable ul li a,
+.careplus-shop-option li a,
+.faq-accordion .panel-title a,
+.careplus-Pricing-Plan .careplus-error-btn,
+.careplus-Pricing-Plan .careplus-error-btn span:after,
+.careplus-Pricing-Plan .careplus-error-btn span:before,
+.careplus-Pricing-Plan .careplus-error-btn:before,
+.careplus-Pricing-Plan .careplus-error-btn:after,
+.available-btn,
+.careplus-blog-medium-text>span,
+.careplus-department-grid-text::before,
+.careplus-department-grid-text::after {
     -webkit-transition: all 0.4s ease-in-out;
     -moz-transition: all 0.4s ease-in-out;
     -ms-transition: all 0.4s ease-in-out;
     -o-transition: all 0.4s ease-in-out;
     transition: all 0.4s ease-in-out;
 }
-.navbar-nav > li:hover > a:after, .navbar-nav > li:hover > a:before, .navbar-nav > li.active > a:after, .navbar-nav > li.active > a:before {
+
+.navbar-nav>li:hover>a:after,
+.navbar-nav>li:hover>a:before,
+.navbar-nav>li.active>a:after,
+.navbar-nav>li.active>a:before {
     opacity: 1;
 }
 
 
-.navbar-nav > li > a:after, .careplus-related-blog > ul > li:hover .careplus-related-blog-text:after, .careplus-appointment-form form:after, .careplus-team-medium-info, .careplus-team-medium-info:before, .careplus-partners ul li figure span, .careplus-breadcrumb:before, .careplus-department-grid figure a:before {
-    border-bottom-color: #9bc03c;
+.navbar-nav>li>a:after,
+.careplus-related-blog>ul>li:hover .careplus-related-blog-text:after,
+.careplus-appointment-form form:after,
+.careplus-team-medium-info,
+.careplus-team-medium-info:before,
+.careplus-partners ul li figure span,
+.careplus-breadcrumb:before,
+.careplus-department-grid figure a:before {
+    border-bottom-color: #878b7cff;
 }
 
-.navbar-nav > li > a:after {
+.navbar-nav>li>a:after {
     content: '';
     position: absolute;
     left: 50%;
@@ -246,7 +357,9 @@ a:hover, a:focus, a:active {
     border-bottom: 4px solid;
     opacity: 0;
 }
-*:before, *:after {
+
+*:before,
+*:after {
     -webkit-box-sizing: border-box;
     -moz-box-sizing: border-box;
     box-sizing: border-box;
@@ -271,17 +384,55 @@ a:hover, a:focus, a:active {
     position: relative;
     display: table;
     border-collapse: separate;
-    margin-top:5px;
+    margin-top: 5px;
 }
 
 
 
-.careplus-color-two, .careplus-colorhover-two:hover, .navbar-nav > li:hover > a, .navbar-nav > li.active > a, .careplus-fancy-title span i, .careplus-blog-modern figure a span, .careplus-content-post-title span i, .careplus-content-post .careplus-readmore-btn, .careplus-plane-gallery figure figcaption > a, .widget_contact_info ul li h6, .careplus-blog-grid figure a span, .widget_useful_link ul li:hover a, .careplus-about-service h2 span, .carelus-team-social li a, .careplus-team-modern figure a span, .careplus-blog-option li i, .widget_populer_posts section time i, .careplus-tags a:hover, .careplus-blog-social ul li:hover a, .careplus-prenxt-post ul li:hover .careplus-post-arrow, .text-holder:hover .comment-reply-link, .widget_cetagories ul li:hover a, .widget_populer_posts ul li:hover section h6 a, .careplus-blog-grid-option li:hover a, .careplus-blog-large figure a span, .careplus-blog-large .careplus-blog-option li:hover a, .careplus-blog-large .careplus-blog-option li:hover a i, .careplus-blog-medium-text .careplus-blog-grid-option li a, .careplus-blog-medium figure a span, .careplus-related-team figure a span, .careplus-team-post-text > .careplus-footer-social li:hover a, .careplus-team-list figure a span, .careplus-related-products figure a span, .careplus-shop-grid figure a span, .careplus-shop-list figure a span, .careplus-department-grid figure a span, .careplus-department-list figure a > span, .careplus-error-btn, .careplus-search-result-text form input[type="submit"] {
-    color: #9bc03c;
+.careplus-color-two,
+.careplus-colorhover-two:hover,
+.navbar-nav>li:hover>a,
+.navbar-nav>li.active>a,
+.careplus-fancy-title span i,
+.careplus-blog-modern figure a span,
+.careplus-content-post-title span i,
+.careplus-content-post .careplus-readmore-btn,
+.careplus-plane-gallery figure figcaption>a,
+.widget_contact_info ul li h6,
+.careplus-blog-grid figure a span,
+.widget_useful_link ul li:hover a,
+.careplus-about-service h2 span,
+.carelus-team-social li a,
+.careplus-team-modern figure a span,
+.careplus-blog-option li i,
+.widget_populer_posts section time i,
+.careplus-tags a:hover,
+.careplus-blog-social ul li:hover a,
+.careplus-prenxt-post ul li:hover .careplus-post-arrow,
+.text-holder:hover .comment-reply-link,
+.widget_cetagories ul li:hover a,
+.widget_populer_posts ul li:hover section h6 a,
+.careplus-blog-grid-option li:hover a,
+.careplus-blog-large figure a span,
+.careplus-blog-large .careplus-blog-option li:hover a,
+.careplus-blog-large .careplus-blog-option li:hover a i,
+.careplus-blog-medium-text .careplus-blog-grid-option li a,
+.careplus-blog-medium figure a span,
+.careplus-related-team figure a span,
+.careplus-team-post-text>.careplus-footer-social li:hover a,
+.careplus-team-list figure a span,
+.careplus-related-products figure a span,
+.careplus-shop-grid figure a span,
+.careplus-shop-list figure a span,
+.careplus-department-grid figure a span,
+.careplus-department-list figure a>span,
+.careplus-error-btn,
+.careplus-search-result-text form input[type="submit"] {
+    color: #878b7cff;
 }
 
 
-.nav > li.careplus-megamenu-li {
+.nav>li.careplus-megamenu-li {
     position: static;
 }
 
@@ -298,14 +449,19 @@ a:hover, a:focus, a:active {
     visibility: hidden;
     z-index: 999;
 }
-.careplus-megamenu, .careplus-dropdown-menu {
+
+.careplus-megamenu,
+.careplus-dropdown-menu {
     -webkit-transition: all 0.6s cubic-bezier(0.68, -1, 0.265, 2);
     -moz-transition: all 0.6s cubic-bezier(0.68, -1, 0.265, 2);
     -ms-transition: all 0.6s cubic-bezier(0.68, -1, 0.265, 2);
     -o-transition: all 0.6s cubic-bezier(0.68, -1, 0.265, 2);
     transition: all 0.6s cubic-bezier(0.68, -1, 0.265, 2);
 }
-.careplus-banner, .careplus-banner-one, .careplus-banner-one-layer {
+
+.careplus-banner,
+.careplus-banner-one,
+.careplus-banner-one-layer {
     float: left;
     width: 100%;
 }
@@ -323,12 +479,14 @@ a:hover, a:focus, a:active {
     touch-action: pan-y;
     -webkit-tap-highlight-color: transparent;
 }
+
 .slick-slide {
     display: none;
     float: left;
     height: 100%;
     min-height: 1px;
 }
+
 .slick-list {
     position: relative;
     display: block;
@@ -336,7 +494,9 @@ a:hover, a:focus, a:active {
     margin: 0;
     padding: 0;
 }
-.slick-slider .slick-track, .slick-slider .slick-list {
+
+.slick-slider .slick-track,
+.slick-slider .slick-list {
     -webkit-transform: translate3d(0, 0, 0);
     -moz-transform: translate3d(0, 0, 0);
     -ms-transform: translate3d(0, 0, 0);
@@ -351,6 +511,7 @@ a:hover, a:focus, a:active {
 img {
     border: 0;
 }
+
 img {
     height: auto;
     max-width: 100%;
@@ -360,10 +521,13 @@ img {
 img {
     vertical-align: middle;
 }
+
 .slick-initialized .slick-slide {
     display: block;
 }
-.slick-track:before, .slick-track:after {
+
+.slick-track:before,
+.slick-track:after {
     display: table;
     content: '';
 }
@@ -395,6 +559,7 @@ img {
     text-align: right;
     margin: 8px 0 0;
 }
+
 .careplus-banner-wrap h1 {
     font-size: 50px;
     color: #ffffff;
@@ -405,6 +570,7 @@ img {
     text-transform: uppercase;
     letter-spacing: 5px;
 }
+
 .slick-active .careplus-banner-btn {
     -webkit-animation-name: careplus-banner-btn;
     animation-name: careplus-banner-btn;
@@ -413,6 +579,7 @@ img {
     -webkit-animation-fill-mode: both;
     animation-fill-mode: both;
 }
+
 .careplus-banner-btn {
     display: inline-block;
     text-transform: uppercase;
@@ -422,8 +589,16 @@ img {
     color: #ffffff;
     padding: 10px 23px;
 }
-.careplus-banner-btn:hover{color: white;text-decoration: none;}
-.careplus-banner-btn {color: white;}
+
+.careplus-banner-btn:hover {
+    color: white;
+    text-decoration: none;
+}
+
+.careplus-banner-btn {
+    color: white;
+}
+
 .careplus-banner-btn:before {
     content: '';
     position: absolute;
@@ -433,11 +608,13 @@ img {
     width: 52px;
     height: 1px;
 }
+
 .careplus-banner-btn span {
     position: absolute;
     right: 0px;
     top: 0px;
 }
+
 .careplus-banner-btn span:before {
     content: '';
     position: absolute;
@@ -447,6 +624,7 @@ img {
     width: 52px;
     height: 1px;
 }
+
 .careplus-banner-btn span:after {
     content: '';
     position: absolute;
@@ -456,6 +634,7 @@ img {
     width: 1px;
     height: 32px;
 }
+
 .careplus-banner-btn:after {
     content: '';
     position: absolute;
@@ -466,9 +645,12 @@ img {
     height: 32px;
 }
 
-.careplus-banner-one .container, .careplus-banner-one .row, .careplus-banner-one .col-md-12 {
+.careplus-banner-one .container,
+.careplus-banner-one .row,
+.careplus-banner-one .col-md-12 {
     height: 100%;
 }
+
 .careplus-banner-caption {
     position: absolute;
     left: 0px;
@@ -477,6 +659,7 @@ img {
     z-index: 1;
     height: 100%;
 }
+
 .careplus-banner-wrap h1 {
     font-size: 50px;
     color: #ffffff;
@@ -487,6 +670,7 @@ img {
     text-transform: uppercase;
     letter-spacing: 5px;
 }
+
 .careplus-banner-wrap h1 span {
     font-size: 30px;
     display: block;
@@ -505,7 +689,10 @@ img {
 
 
 
-.careplus-main-wrapper, .careplus-main-content, .careplus-main-header, .careplus-navigation-section {
+.careplus-main-wrapper,
+.careplus-main-content,
+.careplus-main-header,
+.careplus-navigation-section {
     float: left;
     width: 100%;
 }
@@ -514,7 +701,7 @@ img {
     float: left;
     width: 100%;
     position: relative;
-   
+
 }
 
 .careplus-services-full {
@@ -524,12 +711,13 @@ img {
 .careplus-main-content {
     padding: 5px 0px 60px 0px;
 }
+
 .careplus-fancy-title {
     float: left;
     width: 100%;
     text-align: center;
-    margin:47px 0px 17px;
-   
+    margin: 47px 0px 17px;
+
 }
 
 .careplus-fancy-title h2 {
@@ -539,34 +727,39 @@ img {
     letter-spacing: 2px;
     text-transform: uppercase;
     font-weight: bold;
-    color:white;
+    color: white;
 }
 
 .careplus-service-wrap {
-    background: rgb(8,54,75);
-    background: -moz-radial-gradient(center, ellipse cover, rgba(8,54,75,1) 15%, rgba(30,77,77,1) 51%);
-    background: -webkit-radial-gradient(center, ellipse cover, rgba(8,54,75,1) 15%,rgba(30,77,77,1) 51%);
-    background: radial-gradient(ellipse at center, rgba(8,54,75,1) 15%,rgba(30,77,77,1) 51%);
+    background: rgb(8, 54, 75);
+    background: -moz-radial-gradient(center, ellipse cover, rgba(8, 54, 75, 1) 15%, rgba(30, 77, 77, 1) 51%);
+    background: -webkit-radial-gradient(center, ellipse cover, rgba(8, 54, 75, 1) 15%, rgba(30, 77, 77, 1) 51%);
+    background: radial-gradient(ellipse at center, rgba(8, 54, 75, 1) 15%, rgba(30, 77, 77, 1) 51%);
 }
-.careplus-service, .careplus-service-wrap {
+
+.careplus-service,
+.careplus-service-wrap {
     float: left;
     width: 100%;
 }
 
 .careplus-service-wrap {
- 
+
     border-radius: 1px 17px;
-    background: #9bc03c;
+    background: #878b7cff;
     padding: 38px 0px;
 }
+
 .careplus-service-wrap:hover {
     background: #78962d;
 }
 
-.careplus-service, .careplus-service-wrap {
+.careplus-service,
+.careplus-service-wrap {
     float: left;
     width: 100%;
 }
+
 .careplus-service-wrap p {
     margin: 0px;
     color: #ffffff;
@@ -574,9 +767,10 @@ img {
     opacity: 0;
     visibility: hidden;
 }
-.careplus-service > ul > li {
+
+.careplus-service>ul>li {
     list-style: none;
-    margin:0px 0px 11px;
+    margin: 0px 0px 11px;
 }
 
 .careplus-service-wrap h5 {
@@ -585,6 +779,7 @@ img {
     color: #ffffff;
     font-weight: bold;
 }
+
 .careplus-service-wrap p {
     margin: 0px;
     color: #ffffff;
@@ -595,16 +790,45 @@ img {
 
 
 
-.careplus-color-two, .careplus-colorhover-two:hover, .navbar-nav > li:hover > a, .navbar-nav > li.active > a, .careplus-fancy-title span i, .careplus-blog-modern figure a span, .careplus-content-post-title span i, .careplus-content-post .careplus-readmore-btn, .careplus-plane-gallery figure figcaption > a, .widget_contact_info ul li h6, .careplus-blog-grid figure a span, .widget_useful_link ul li:hover a, .careplus-about-service h2 span, .carelus-team-social li a, .careplus-team-modern figure a span, .careplus-blog-option li i, .widget_populer_posts section time i, .careplus-tags a:hover, .careplus-blog-social ul li:hover a, .careplus-prenxt-post ul li:hover .careplus-post-arrow, .text-holder:hover .comment-reply-link, .widget_cetagories ul li:hover a, .widget_populer_posts ul li:hover section h6 a, .careplus-blog-grid-option li:hover a, .careplus-blog-large figure a span, .careplus-blog-large .careplus-blog-option li:hover a, .careplus-blog-large .careplus-blog-option li:hover a i, .careplus-blog-medium-text .careplus-blog-grid-option li a, .careplus-blog-medium figure a span, .careplus-related-team figure a span, .careplus-team-post-text > .careplus-footer-social li:hover a, .careplus-team-list figure a span, .careplus-related-products figure a span, .careplus-shop-grid figure a span, .careplus-shop-list figure a span, .careplus-department-grid figure a span, .careplus-department-list figure a > span, .careplus-error-btn, .careplus-search-result-text form input[type="submit"]
-
-
-
-
-
-
-
-
-.careplus-main-section {
+.careplus-color-two,
+.careplus-colorhover-two:hover,
+.navbar-nav>li:hover>a,
+.navbar-nav>li.active>a,
+.careplus-fancy-title span i,
+.careplus-blog-modern figure a span,
+.careplus-content-post-title span i,
+.careplus-content-post .careplus-readmore-btn,
+.careplus-plane-gallery figure figcaption>a,
+.widget_contact_info ul li h6,
+.careplus-blog-grid figure a span,
+.widget_useful_link ul li:hover a,
+.careplus-about-service h2 span,
+.carelus-team-social li a,
+.careplus-team-modern figure a span,
+.careplus-blog-option li i,
+.widget_populer_posts section time i,
+.careplus-tags a:hover,
+.careplus-blog-social ul li:hover a,
+.careplus-prenxt-post ul li:hover .careplus-post-arrow,
+.text-holder:hover .comment-reply-link,
+.widget_cetagories ul li:hover a,
+.widget_populer_posts ul li:hover section h6 a,
+.careplus-blog-grid-option li:hover a,
+.careplus-blog-large figure a span,
+.careplus-blog-large .careplus-blog-option li:hover a,
+.careplus-blog-large .careplus-blog-option li:hover a i,
+.careplus-blog-medium-text .careplus-blog-grid-option li a,
+.careplus-blog-medium figure a span,
+.careplus-related-team figure a span,
+.careplus-team-post-text>.careplus-footer-social li:hover a,
+.careplus-team-list figure a span,
+.careplus-related-products figure a span,
+.careplus-shop-grid figure a span,
+.careplus-shop-list figure a span,
+.careplus-department-grid figure a span,
+.careplus-department-list figure a>span,
+.careplus-error-btn,
+.careplus-search-result-text form input[type="submit"] .careplus-main-section {
     float: left;
     width: 100%;
     position: relative;
@@ -613,7 +837,10 @@ img {
 
 
 
-.careplus-team-medium .careplus-readmore-btn:before, .careplus-team-medium .careplus-readmore-btn:after, .careplus-team-medium .careplus-readmore-btn span:before, .careplus-team-medium .careplus-readmore-btn span:after {
+.careplus-team-medium .careplus-readmore-btn:before,
+.careplus-team-medium .careplus-readmore-btn:after,
+.careplus-team-medium .careplus-readmore-btn span:before,
+.careplus-team-medium .careplus-readmore-btn span:after {
     background-color: #ffffff;
 }
 
@@ -624,22 +851,26 @@ img {
 /*--section 2--*/
 
 
-.careplus-team, .careplus-team-medium, .careplus-team-medium figure, .careplus-team-medium figure > a, .careplus-team-medium figure a img {
+.careplus-team,
+.careplus-team-medium,
+.careplus-team-medium figure,
+.careplus-team-medium figure>a,
+.careplus-team-medium figure a img {
     float: left;
     width: 100%;
 }
 
-.careplus-team > ul > li {
+.careplus-team>ul>li {
     list-style: none;
     margin: 0px 0px 30px;
 }
 
-.careplus-team > ul > li {
+.careplus-team>ul>li {
     list-style: none;
     margin: 0px 0px 30px;
 }
 
-.careplus-team > ul > li {
+.careplus-team>ul>li {
     list-style: none;
     margin: 0px 0px 30px;
 }
@@ -652,14 +883,17 @@ img {
     transform: translateY(-103px);
     padding: 31px 19px;
 }
+
 .careplus-team-medium ul li:hover .careplus-team-medium-text {
     visibility: visible;
     opacity: 1;
 }
-.pager li>a, .pager li>span {
+
+.pager li>a,
+.pager li>span {
     display: inline-block;
     padding: 8px 24px;
-    background-color: #9bc03c;
+    background-color: #878b7cff;
     border: 1px solid #ddd;
     border-radius: 15px;
     margin-top: 9px;
@@ -667,10 +901,10 @@ img {
     border: none;
 }
 
-@media (min-width: 992px)
-.col-md-3 {
+@media (min-width: 992px) .col-md-3 {
     width: 25%;
 }
+
 .careplus-team-medium figure {
     margin: 0px;
     padding: 94px 0px 0px;
@@ -689,20 +923,144 @@ a {
     text-align: center;
     overflow: hidden;
     height: 373px;
-    border: 2px solid #9bc03c;
+    border: 2px solid #878b7cff;
     animation: float 3s linear 2s infinite alternate;
 }
 
 
-article, aside, details, figcaption, figure, footer, header, hgroup, main, menu, nav, section, summary {
+article,
+aside,
+details,
+figcaption,
+figure,
+footer,
+header,
+hgroup,
+main,
+menu,
+nav,
+section,
+summary {
     display: block;
 }
 
 
-.careplus-bgcolor, .careplus-bgcolorhover:hover, .careplus-blog ul li:hover .careplus-readmore-btn, .careplus-blog ul li:hover .careplus-readmore-btn:before, .careplus-blog ul li:hover .careplus-readmore-btn span:before, .careplus-blog ul li:hover .careplus-readmore-btn:after, .careplus-blog ul li:hover .careplus-readmore-btn span:after, .careplus-section-postfull .careplus-transparent-shape, .careplus-team-medium-info, .careplus-plane-gallery figure > a:before, .careplus-tabs-thumb span:before, .careplus-footer-transparent, .careplus-dark-transparent, .careplus-about-transparent, .careplus-team-modern figure:before, .careplus-team-modern figure > a:before, .careplus-thumb-heading, blockquote i, .comment-respond form p input[type="submit"], .comment-respond form p label:before, .comment-respond form p label:after, .comment-respond form p label span:before, .comment-respond form p label span:after, .widget_department ul li a, .widget_cetagories ul li a:before, .widget-gallery a:before, .careplus-blog-grid figure a:before, .careplus-pagination > ul > li:hover > .next, .careplus-pagination > ul > li:hover > .previous span:before, .careplus-pagination > ul > li:hover > .next span:before, .careplus-pagination > ul > li:hover > .previous span:after, .careplus-pagination > ul > li:hover > .next span:after, .careplus-pagination > ul > li:hover > .previous:after, .careplus-pagination > ul > li:hover > .next:after, .careplus-pagination > ul > li:hover > .previous:before, .careplus-pagination > ul > li:hover > .next:before, .careplus-blog-large figure a:before, .careplus-blog-large .careplus-readmore-btn span:before, .careplus-blog-large .careplus-readmore-btn span:after, .careplus-blog-large .careplus-readmore-btn:after, .careplus-blog-large .careplus-readmore-btn:before, .careplus-blog-medium figure a:before, .careplus-about-education li:before, .careplus-related-team figure a:before, .careplus-related-team figure a:after, .careplus-team-filterable ul li a.is-checked, .careplus-team-list figure a:before, .careplus-team ul li:hover .careplus-team-list-text .careplus-readmore-btn span:before, .careplus-team ul li:hover .careplus-team-list-text .careplus-readmore-btn span:after, .careplus-transparent, .careplus-fancy-title span:before, .careplus-fancy-title span:after, .careplus-blog-modern figure a:before, .careplus-shop-detail-text .careplus-readmore-btn:before, .careplus-shop-detail-text .careplus-readmore-btn:after, .careplus-department-grid figure a:before, .careplus-shop-detail-text .careplus-readmore-btn span:before, .careplus-shop-detail-text .careplus-readmore-btn span:after, .careplus-shop-tabs .nav-tabs > li:last-child > a:before, .careplus-shop-tabs .nav-tabs > li:last-child > a:after, .careplus-shop-tabs .nav-tabs > li:first-child > a:before, .careplus-shop-tabs .nav-tabs > li:first-child > a:after, .careplus-shop-tabs .nav-tabs > li.active > a, .careplus-shop-tabs .nav-tabs > li.active > a:hover, .careplus-shop-tabs .nav-tabs > li.active > a:focus, .careplus-related-products figure a:before, .careplus-shop-grid figure a:before, .careplus-shop ul li:hover .careplus-readmore-btn, .careplus-shop ul li:hover .careplus-readmore-btn:before, .careplus-shop ul li:hover .careplus-readmore-btn:after, .careplus-shop ul li:hover .careplus-readmore-btn span:before, .careplus-shop ul li:hover .careplus-readmore-btn span:after, .careplus-shop-list figure a:before, .careplus-shop ul li:hover .careplus-shop-list-text .careplus-readmore-btn:before, .careplus-shop ul li:hover .careplus-shop-list-text .careplus-readmore-btn span:before, .careplus-shop ul li:hover .careplus-shop-list-text .careplus-readmore-btn:after, .careplus-shop ul li:hover .careplus-shop-list-text .careplus-readmore-btn span:after, .careplus-department ul li:hover .careplus-department-grid-text .careplus-readmore-btn:before, .careplus-department ul li:hover .careplus-department-grid-text .careplus-readmore-btn span:before, .careplus-department ul li:hover .careplus-department-grid-text .careplus-readmore-btn:after, .careplus-department ul li:hover .careplus-department-grid-text .careplus-readmore-btn span:after, .careplus-department-list figure a:before, .careplus-department ul li:hover .careplus-department-list-text .careplus-readmore-btn:before, .careplus-appointment-request-form form ul li input[type="submit"], .careplus-department ul li:hover .careplus-department-list-text .careplus-readmore-btn span:before, .careplus-department ul li:hover .careplus-department-list-text .careplus-readmore-btn:after, .careplus-department ul li:hover .careplus-department-list-text .careplus-readmore-btn span:after, .careplus-appointment-request-form form ul li > label:before, .careplus-appointment-request-form form ul li > label:after, .careplus-appointment-request-form form ul li label span:before, .careplus-appointment-request-form form ul li label span:after, .careplus-radio label::before, .careplus-department-form ul li input[type="submit"], .careplus-department-form ul li > label:before, .careplus-department-form ul li > label:after, .careplus-department-form ul li label span:before, .careplus-department-form ul li label span:after, .careplus-error-page-text, .careplus-search-result-text, .careplus-map-form, .faq-accordion .panel-title, .careplus-pricplan-title, .careplus-pricplan-title:before, .careplus-pricplan-title:after, .available-btn, .careplus-partners ul li figure span, .careplus-fancy-title span small:after, .careplus-fancy-title span small::before, .careplus-pagination > ul > li:hover > .previous, .careplus-team ul li:hover .careplus-team-list-text .careplus-readmore-btn::after, .careplus-team ul li:hover .careplus-team-list-text .careplus-readmore-btn span::after, .careplus-team ul li:hover .careplus-team-list-text .careplus-readmore-btn:before {
-    background-color: #9bc03c;
-    z-index:1;
+.careplus-bgcolor,
+.careplus-bgcolorhover:hover,
+.careplus-blog ul li:hover .careplus-readmore-btn,
+.careplus-blog ul li:hover .careplus-readmore-btn:before,
+.careplus-blog ul li:hover .careplus-readmore-btn span:before,
+.careplus-blog ul li:hover .careplus-readmore-btn:after,
+.careplus-blog ul li:hover .careplus-readmore-btn span:after,
+.careplus-section-postfull .careplus-transparent-shape,
+.careplus-team-medium-info,
+.careplus-plane-gallery figure>a:before,
+.careplus-tabs-thumb span:before,
+.careplus-footer-transparent,
+.careplus-dark-transparent,
+.careplus-about-transparent,
+.careplus-team-modern figure:before,
+.careplus-team-modern figure>a:before,
+.careplus-thumb-heading,
+blockquote i,
+.comment-respond form p input[type="submit"],
+.comment-respond form p label:before,
+.comment-respond form p label:after,
+.comment-respond form p label span:before,
+.comment-respond form p label span:after,
+.widget_department ul li a,
+.widget_cetagories ul li a:before,
+.widget-gallery a:before,
+.careplus-blog-grid figure a:before,
+.careplus-pagination>ul>li:hover>.next,
+.careplus-pagination>ul>li:hover>.previous span:before,
+.careplus-pagination>ul>li:hover>.next span:before,
+.careplus-pagination>ul>li:hover>.previous span:after,
+.careplus-pagination>ul>li:hover>.next span:after,
+.careplus-pagination>ul>li:hover>.previous:after,
+.careplus-pagination>ul>li:hover>.next:after,
+.careplus-pagination>ul>li:hover>.previous:before,
+.careplus-pagination>ul>li:hover>.next:before,
+.careplus-blog-large figure a:before,
+.careplus-blog-large .careplus-readmore-btn span:before,
+.careplus-blog-large .careplus-readmore-btn span:after,
+.careplus-blog-large .careplus-readmore-btn:after,
+.careplus-blog-large .careplus-readmore-btn:before,
+.careplus-blog-medium figure a:before,
+.careplus-about-education li:before,
+.careplus-related-team figure a:before,
+.careplus-related-team figure a:after,
+.careplus-team-filterable ul li a.is-checked,
+.careplus-team-list figure a:before,
+.careplus-team ul li:hover .careplus-team-list-text .careplus-readmore-btn span:before,
+.careplus-team ul li:hover .careplus-team-list-text .careplus-readmore-btn span:after,
+.careplus-transparent,
+.careplus-fancy-title span:before,
+.careplus-fancy-title span:after,
+.careplus-blog-modern figure a:before,
+.careplus-shop-detail-text .careplus-readmore-btn:before,
+.careplus-shop-detail-text .careplus-readmore-btn:after,
+.careplus-department-grid figure a:before,
+.careplus-shop-detail-text .careplus-readmore-btn span:before,
+.careplus-shop-detail-text .careplus-readmore-btn span:after,
+.careplus-shop-tabs .nav-tabs>li:last-child>a:before,
+.careplus-shop-tabs .nav-tabs>li:last-child>a:after,
+.careplus-shop-tabs .nav-tabs>li:first-child>a:before,
+.careplus-shop-tabs .nav-tabs>li:first-child>a:after,
+.careplus-shop-tabs .nav-tabs>li.active>a,
+.careplus-shop-tabs .nav-tabs>li.active>a:hover,
+.careplus-shop-tabs .nav-tabs>li.active>a:focus,
+.careplus-related-products figure a:before,
+.careplus-shop-grid figure a:before,
+.careplus-shop ul li:hover .careplus-readmore-btn,
+.careplus-shop ul li:hover .careplus-readmore-btn:before,
+.careplus-shop ul li:hover .careplus-readmore-btn:after,
+.careplus-shop ul li:hover .careplus-readmore-btn span:before,
+.careplus-shop ul li:hover .careplus-readmore-btn span:after,
+.careplus-shop-list figure a:before,
+.careplus-shop ul li:hover .careplus-shop-list-text .careplus-readmore-btn:before,
+.careplus-shop ul li:hover .careplus-shop-list-text .careplus-readmore-btn span:before,
+.careplus-shop ul li:hover .careplus-shop-list-text .careplus-readmore-btn:after,
+.careplus-shop ul li:hover .careplus-shop-list-text .careplus-readmore-btn span:after,
+.careplus-department ul li:hover .careplus-department-grid-text .careplus-readmore-btn:before,
+.careplus-department ul li:hover .careplus-department-grid-text .careplus-readmore-btn span:before,
+.careplus-department ul li:hover .careplus-department-grid-text .careplus-readmore-btn:after,
+.careplus-department ul li:hover .careplus-department-grid-text .careplus-readmore-btn span:after,
+.careplus-department-list figure a:before,
+.careplus-department ul li:hover .careplus-department-list-text .careplus-readmore-btn:before,
+.careplus-appointment-request-form form ul li input[type="submit"],
+.careplus-department ul li:hover .careplus-department-list-text .careplus-readmore-btn span:before,
+.careplus-department ul li:hover .careplus-department-list-text .careplus-readmore-btn:after,
+.careplus-department ul li:hover .careplus-department-list-text .careplus-readmore-btn span:after,
+.careplus-appointment-request-form form ul li>label:before,
+.careplus-appointment-request-form form ul li>label:after,
+.careplus-appointment-request-form form ul li label span:before,
+.careplus-appointment-request-form form ul li label span:after,
+.careplus-radio label::before,
+.careplus-department-form ul li input[type="submit"],
+.careplus-department-form ul li>label:before,
+.careplus-department-form ul li>label:after,
+.careplus-department-form ul li label span:before,
+.careplus-department-form ul li label span:after,
+.careplus-error-page-text,
+.careplus-search-result-text,
+.careplus-map-form,
+.faq-accordion .panel-title,
+.careplus-pricplan-title,
+.careplus-pricplan-title:before,
+.careplus-pricplan-title:after,
+.available-btn,
+.careplus-partners ul li figure span,
+.careplus-fancy-title span small:after,
+.careplus-fancy-title span small::before,
+.careplus-pagination>ul>li:hover>.previous,
+.careplus-team ul li:hover .careplus-team-list-text .careplus-readmore-btn::after,
+.careplus-team ul li:hover .careplus-team-list-text .careplus-readmore-btn span::after,
+.careplus-team ul li:hover .careplus-team-list-text .careplus-readmore-btn:before {
+    background-color: #878b7cff;
+    z-index: 1;
 }
+
 .careplus-fancy-title span:after {
     content: '';
     position: absolute;
@@ -711,28 +1069,32 @@ article, aside, details, figcaption, figure, footer, header, hgroup, main, menu,
     width: 75px;
     height: 1px;
 }
+
 .careplus-fancy-title span {
     display: inline-block;
     position: relative;
     padding: 0px 2px;
 }
+
 .careplus-team-medium-text {
-    padding:91px 28px 40px;
+    padding: 91px 28px 40px;
     border-bottom: 4px solid;
     position: relative;
     opacity: 0;
     visibility: hidden;
 }
-.careplus-team-medium-info, .careplus-team-medium-text {
+
+.careplus-team-medium-info,
+.careplus-team-medium-text {
     line-height: 1;
 }
 
-.careplus-team > ul > li {
+.careplus-team>ul>li {
     list-style: none;
     margin: 0px 0px 30px;
 }
-@media (min-width: 992px)
-.col-md-3 {
+
+@media (min-width: 992px) .col-md-3 {
     width: 25%;
 }
 
@@ -746,6 +1108,7 @@ figure {
     margin-bottom: 0px;
     position: relative;
 }
+
 figure {
     margin: 0;
 }
@@ -753,7 +1116,7 @@ figure {
 .careplus-team-medium ul li:hover .careplus-team-medium-text {
     visibility: visible;
     opacity: 1;
-    z-index:34;
+    z-index: 34;
 }
 
 .careplus-team-medium ul li:hover .careplus-team-medium-text {
@@ -764,27 +1127,34 @@ figure {
     transform: translateY(-103px);
 }
 
-.careplus-team-medium-info h5 a, .careplus-team-medium-text h5 a {
+.careplus-team-medium-info h5 a,
+.careplus-team-medium-text h5 a {
     color: #ffffff;
 }
+
 a {
     color: #555555;
     text-decoration: none;
 }
+
 a {
     color: #337ab7;
     text-decoration: none;
 }
+
 a {
     background-color: transparent;
 }
 
 
-.careplus-team-social li > a {
+.careplus-team-social li>a {
     color: #ffffff;
     font-size: 18px;
 }
-a:hover, a:focus, a:active {
+
+a:hover,
+a:focus,
+a:active {
     outline: none;
 }
 
@@ -801,10 +1171,118 @@ a:hover, a:focus, a:active {
 
 
 
-.careplus-bgcolor-two, .careplus-bgcolorhover-two:hover, .careplus-logo:before, .navbar-nav > li > a:before, .careplus-transparent-shape, .careplus-appointment-form form ul li input[type="submit"], .careplus-blog-modern figure > time, .careplus-blog-modern figure a span:before, .careplus-blog-modern figure a span:after, .careplus-blog-modern figure a span small:before, .careplus-blog-modern figure a span small:after, .careplus-post-list li i, .careplus-content-post .careplus-readmore-btn:before, .careplus-content-post .careplus-readmore-btn:after, .careplus-content-post .careplus-readmore-btn span:before, .careplus-content-post .careplus-readmore-btn span:after, .careplus-team-medium-text, .careplus-plane-gallery figure:before, .careplus-plane-gallery figure:after, .careplus-plane-gallery figure span:before, .careplus-plane-gallery figure span:after, .careplus-footer-title:before, .careplus-footer-title:after, .widget_useful_link ul li:hover a:before, .careplus-breadcrumb, .careplus-team-modern figure a span:before, .careplus-team-modern figure a span:after, .careplus-team-modern figure a span small:before, .careplus-team-modern figure a span small:after, blockquote, .careplus-prenxt-post ul li:hover .careplus-prev-post:before, .careplus-prenxt-post ul li:hover .careplus-next-post:before, .careplus-prenxt-post ul li:hover .careplus-prev-post:after, .careplus-prenxt-post ul li:hover .careplus-next-post:after, .careplus-prenxt-post ul li:hover .careplus-prev-post span:before, .careplus-prenxt-post ul li:hover .careplus-next-post span:before, .careplus-prenxt-post ul li:hover .careplus-prev-post span:after, .careplus-prenxt-post ul li:hover .careplus-next-post span:after, .careplus-section-heading h2:before, .careplus-section-heading h2:after, .careplus-related-blog > ul > li:hover .careplus-related-blog-text:before, .careplus-widget-heading h2:before, .careplus-widget-heading h2:after, .widget_department ul li:hover a, .widget_cetagories ul li:hover a:before, .careplus-blog-grid figure > time, .careplus-blog-grid figure a span:before, .careplus-blog-grid figure a span:after, .careplus-blog-grid figure a span small:before, .careplus-blog-grid figure a span small:after, .careplus-blog-large figure a span:before, .careplus-blog-large figure a span:after, .careplus-blog-large figure a span small:before, .careplus-blog-large figure a span small:after, .careplus-blog-medium figure a span:before, .careplus-main-section.tab-color, .careplus-blog-medium figure a span:after, .careplus-blog-medium figure a span small:before, .careplus-blog-medium figure a span small:after, .careplus-related-team figure a span:before, .careplus-related-team figure a span:after, .careplus-related-team figure a span small:before, .careplus-related-team figure a span small:after, .careplus-team-list figure a span:before, .careplus-team-list figure a span:after, .careplus-team-list figure a span small:before, .careplus-team-list figure a span small:after, .careplus-related-products figure a span:before, .careplus-related-products figure a span:after, .careplus-related-products figure a span small:before, .careplus-related-products figure a span small:after, .careplus-shop-grid figure a span:before, .careplus-shop-grid figure a span:after, .careplus-shop-grid figure a span small:before, .careplus-pricplan-title > span:after, .careplus-shop-grid figure a span small:after, .careplus-shop-list figure a span:before, .careplus-shop-list figure a span:after, .careplus-shop-list figure a span small:before, .careplus-shop-list figure a span small:after, .careplus-department-grid figure a span:before, .careplus-department-grid figure a span:after, .careplus-department-grid figure a span small:after, .careplus-department-list figure a > span:before, .careplus-department-list figure a > span:after, .careplus-department-list figure a > span small:before, .careplus-department-list figure a > span small:after, .careplus-department-list ul li:hover figure:before, .careplus-department-list ul li:hover figure:after, .careplus-department-list ul li:hover figure > span:before, .careplus-department-list ul li:hover figure > span:after, .careplus-error-btn:after, .careplus-error-btn:before, .careplus-error-btn span:after, .careplus-error-btn span:before, .careplus-pricplan-title > span:before, .careplus-search-result-text form label:before, .careplus-search-result-text form label:after, .careplus-search-result-text form label span:before, .careplus-search-result-text form label span:after, .careplus-Pricing-Plan ul li:hover .careplus-error-btn, .careplus-Pricing-Plan ul li:hover .careplus-error-btn span:after, .careplus-Pricing-Plan ul li:hover .careplus-error-btn span:before, .careplus-Pricing-Plan ul li:hover .careplus-error-btn:after, .careplus-Pricing-Plan ul li:hover .careplus-error-btn:before, .careplus-appointment-bord ul.schedule-days li, .careplus-appointment-bord ul li:hover .available-btn, .careplus-department-grid figure a span small:before {
-    background-color: #9bc03c;
+.careplus-bgcolor-two,
+.careplus-bgcolorhover-two:hover,
+.careplus-logo:before,
+.navbar-nav>li>a:before,
+.careplus-transparent-shape,
+.careplus-appointment-form form ul li input[type="submit"],
+.careplus-blog-modern figure>time,
+.careplus-blog-modern figure a span:before,
+.careplus-blog-modern figure a span:after,
+.careplus-blog-modern figure a span small:before,
+.careplus-blog-modern figure a span small:after,
+.careplus-post-list li i,
+.careplus-content-post .careplus-readmore-btn:before,
+.careplus-content-post .careplus-readmore-btn:after,
+.careplus-content-post .careplus-readmore-btn span:before,
+.careplus-content-post .careplus-readmore-btn span:after,
+.careplus-team-medium-text,
+.careplus-plane-gallery figure:before,
+.careplus-plane-gallery figure:after,
+.careplus-plane-gallery figure span:before,
+.careplus-plane-gallery figure span:after,
+.careplus-footer-title:before,
+.careplus-footer-title:after,
+.widget_useful_link ul li:hover a:before,
+.careplus-breadcrumb,
+.careplus-team-modern figure a span:before,
+.careplus-team-modern figure a span:after,
+.careplus-team-modern figure a span small:before,
+.careplus-team-modern figure a span small:after,
+blockquote,
+.careplus-prenxt-post ul li:hover .careplus-prev-post:before,
+.careplus-prenxt-post ul li:hover .careplus-next-post:before,
+.careplus-prenxt-post ul li:hover .careplus-prev-post:after,
+.careplus-prenxt-post ul li:hover .careplus-next-post:after,
+.careplus-prenxt-post ul li:hover .careplus-prev-post span:before,
+.careplus-prenxt-post ul li:hover .careplus-next-post span:before,
+.careplus-prenxt-post ul li:hover .careplus-prev-post span:after,
+.careplus-prenxt-post ul li:hover .careplus-next-post span:after,
+.careplus-section-heading h2:before,
+.careplus-section-heading h2:after,
+.careplus-related-blog>ul>li:hover .careplus-related-blog-text:before,
+.careplus-widget-heading h2:before,
+.careplus-widget-heading h2:after,
+.widget_department ul li:hover a,
+.widget_cetagories ul li:hover a:before,
+.careplus-blog-grid figure>time,
+.careplus-blog-grid figure a span:before,
+.careplus-blog-grid figure a span:after,
+.careplus-blog-grid figure a span small:before,
+.careplus-blog-grid figure a span small:after,
+.careplus-blog-large figure a span:before,
+.careplus-blog-large figure a span:after,
+.careplus-blog-large figure a span small:before,
+.careplus-blog-large figure a span small:after,
+.careplus-blog-medium figure a span:before,
+.careplus-main-section.tab-color,
+.careplus-blog-medium figure a span:after,
+.careplus-blog-medium figure a span small:before,
+.careplus-blog-medium figure a span small:after,
+.careplus-related-team figure a span:before,
+.careplus-related-team figure a span:after,
+.careplus-related-team figure a span small:before,
+.careplus-related-team figure a span small:after,
+.careplus-team-list figure a span:before,
+.careplus-team-list figure a span:after,
+.careplus-team-list figure a span small:before,
+.careplus-team-list figure a span small:after,
+.careplus-related-products figure a span:before,
+.careplus-related-products figure a span:after,
+.careplus-related-products figure a span small:before,
+.careplus-related-products figure a span small:after,
+.careplus-shop-grid figure a span:before,
+.careplus-shop-grid figure a span:after,
+.careplus-shop-grid figure a span small:before,
+.careplus-pricplan-title>span:after,
+.careplus-shop-grid figure a span small:after,
+.careplus-shop-list figure a span:before,
+.careplus-shop-list figure a span:after,
+.careplus-shop-list figure a span small:before,
+.careplus-shop-list figure a span small:after,
+.careplus-department-grid figure a span:before,
+.careplus-department-grid figure a span:after,
+.careplus-department-grid figure a span small:after,
+.careplus-department-list figure a>span:before,
+.careplus-department-list figure a>span:after,
+.careplus-department-list figure a>span small:before,
+.careplus-department-list figure a>span small:after,
+.careplus-department-list ul li:hover figure:before,
+.careplus-department-list ul li:hover figure:after,
+.careplus-department-list ul li:hover figure>span:before,
+.careplus-department-list ul li:hover figure>span:after,
+.careplus-error-btn:after,
+.careplus-error-btn:before,
+.careplus-error-btn span:after,
+.careplus-error-btn span:before,
+.careplus-pricplan-title>span:before,
+.careplus-search-result-text form label:before,
+.careplus-search-result-text form label:after,
+.careplus-search-result-text form label span:before,
+.careplus-search-result-text form label span:after,
+.careplus-Pricing-Plan ul li:hover .careplus-error-btn,
+.careplus-Pricing-Plan ul li:hover .careplus-error-btn span:after,
+.careplus-Pricing-Plan ul li:hover .careplus-error-btn span:before,
+.careplus-Pricing-Plan ul li:hover .careplus-error-btn:after,
+.careplus-Pricing-Plan ul li:hover .careplus-error-btn:before,
+.careplus-appointment-bord ul.schedule-days li,
+.careplus-appointment-bord ul li:hover .available-btn,
+.careplus-department-grid figure a span small:before {
+    background-color: #878b7cff;
 }
-.navbar-nav > li > a:before {
+
+.navbar-nav>li>a:before {
     content: '';
     position: absolute;
     left: 0px;
@@ -814,11 +1292,24 @@ a:hover, a:focus, a:active {
     opacity: 0;
 }
 
-.careplus-post-list li i:after, .careplus-team-medium-text, .careplus-team-medium-text:before, .careplus-gallery-filterable ul li a.is-checked, .careplus-gallery-filterable ul li a.is-checked:before, .careplus-team-modern figure:after, .careplus-blog-grid ul li:hover .careplus-blog-grid-text, .careplus-blog-grid ul li:hover .careplus-blog-grid-text:before, .careplus-appointment-bord ul.schedule-days li {
+.careplus-post-list li i:after,
+.careplus-team-medium-text,
+.careplus-team-medium-text:before,
+.careplus-gallery-filterable ul li a.is-checked,
+.careplus-gallery-filterable ul li a.is-checked:before,
+.careplus-team-modern figure:after,
+.careplus-blog-grid ul li:hover .careplus-blog-grid-text,
+.careplus-blog-grid ul li:hover .careplus-blog-grid-text:before,
+.careplus-appointment-bord ul.schedule-days li {
     border-bottom-color: #08364b;
 }
 
-body h1, body h2, body h3, body h4, body h5, body h6 {
+body h1,
+body h2,
+body h3,
+body h4,
+body h5,
+body h6 {
     color: #555555;
     font-family: 'Lato', sans-serif;
     font-style: normal;
@@ -826,9 +1317,11 @@ body h1, body h2, body h3, body h4, body h5, body h6 {
     letter-spacing: 1.1px;
     margin: 0 0 8px;
 }
+
 h5 {
     font-size: 18px;
 }
+
 .careplus-team-medium-info {
     padding: 16px 28px 23px;
     visibility: visible;
@@ -844,11 +1337,14 @@ h5 {
     position: relative;
     border-bottom: 4px solid;
 }
-.careplus-team-medium-info, .careplus-team-medium-text {
+
+.careplus-team-medium-info,
+.careplus-team-medium-text {
     line-height: 1;
 }
 
-.careplus-team-medium-info > span, .careplus-team-medium-text > span {
+.careplus-team-medium-info>span,
+.careplus-team-medium-text>span {
     display: inline-block;
     font-size: 12px;
     color: white;
@@ -859,11 +1355,14 @@ h5 {
     margin: 0;
     padding: 0;
 }
-.careplus-team-medium-info h5, .careplus-team-medium-text h5 {
+
+.careplus-team-medium-info h5,
+.careplus-team-medium-text h5 {
     margin: 0px 0px 2px;
     display: inline-block;
     font-weight: bold;
 }
+
 .careplus-team-medium-text {
     padding: 91px 28px 40px;
     border-bottom: 4px solid;
@@ -873,9 +1372,11 @@ h5 {
 }
 
 
-.careplus-team-medium-info, .careplus-team-medium-text {
+.careplus-team-medium-info,
+.careplus-team-medium-text {
     line-height: 1;
 }
+
 .careplus-team-medium-text {
     -webkit-transform: translateY(-322px);
     -moz-transform: translateY(-322px);
@@ -890,9 +1391,10 @@ h5 {
     font-weight: 400;
     font-size: 14px;
     text-transform: uppercase;
-    margin:5px;
-    
+    margin: 5px;
+
 }
+
 .careplus-readmore-btn {
     display: inline-block;
     font-size: 13px;
@@ -909,15 +1411,23 @@ h5 {
     top: 0px;
     width: 100%;
 }
-small, .small {
+
+small,
+.small {
     font-size: 82%;
 }
+
 small {
     font-size: 80%;
 }
-.careplus-fancy-title span:before, .careplus-fancy-title span:after, .careplus-fancy-title span small:before, .careplus-fancy-title span small:after {
-    background-color: #9bc03c;
+
+.careplus-fancy-title span:before,
+.careplus-fancy-title span:after,
+.careplus-fancy-title span small:before,
+.careplus-fancy-title span small:after {
+    background-color: #878b7cff;
 }
+
 .careplus-fancy-title span:before {
     content: '';
     position: absolute;
@@ -926,6 +1436,7 @@ small {
     width: 75px;
     height: 1px;
 }
+
 .careplus-fancy-title span small:after {
     content: '';
     position: absolute;
@@ -934,6 +1445,7 @@ small {
     width: 40px;
     height: 1px;
 }
+
 .careplus-fancy-title span small:before {
     content: '';
     position: absolute;
@@ -943,7 +1455,107 @@ small {
     height: 1px;
 }
 
-.careplus-service-wrap, .careplus-service-wrap i, .careplus-service-wrap h5, .careplus-service-wrap p, .careplus-blog-modern figure > time, .careplus-blog-modern figure a span, .careplus-blog-modern figure a span:before, .careplus-blog-modern figure a span:after, .careplus-blog-modern figure a span small:before, .careplus-blog-modern figure a span small:after, .careplus-readmore-btn, .careplus-readmore-btn:before, .careplus-readmore-btn:after, .careplus-readmore-btn span:before, .careplus-readmore-btn span:after, .careplus-team-modern figure > a:before, .careplus-team-medium-info, .careplus-team-medium-text, .careplus-partners ul li figure, .widget_useful_link ul li a, .widget_useful_link ul li a:before, .careplus-team-modern figure figcaption, .careplus-team-modern figure a span, .careplus-team-modern figure a span:before, .careplus-team-modern figure a span:after, .careplus-team-modern figure a span small:before, .careplus-team-modern figure a span small:after, .careplus-prev-post:before, .careplus-next-post:before, .careplus-prev-post:after, .careplus-next-post:after, .careplus-prev-post span:before, .careplus-next-post span:before, .careplus-prev-post span:after, .careplus-next-post span:after, .careplus-related-blog-text:before, .careplus-related-blog-text:after, .careplus-related-blog-text > a, .comment-respond form p input[type="submit"], .widget_department ul li a, .widget_department ul li a i, .widget_cetagories ul li a, .widget_cetagories ul li a:before, .widget_populer_posts section h6 a, .widget-gallery a:before, .widget-gallery a i, .careplus-blog-grid figure > time, .careplus-blog-grid figure a span, .careplus-blog-grid figure a span:before, .careplus-blog-grid figure a span:after, .careplus-blog-grid figure a span small:before, .careplus-blog-grid figure a span small:after, .careplus-blog-grid-text, .careplus-blog-grid-text:before, .careplus-blog-large figure a:before, .careplus-blog-large figure a span, .careplus-blog-large figure a span:before, .careplus-blog-large figure a span:after, .careplus-blog-large figure a span small:before, .careplus-blog-large figure a span small:after, .careplus-blog-large .careplus-blog-option li a i, .careplus-blog-large .careplus-blog-option li a, .careplus-blog-medium figure a:before, .careplus-blog-medium figure a span, .careplus-blog-medium figure a span:before, .careplus-blog-medium figure a span:after, .careplus-blog-medium figure a span small:before, .careplus-blog-medium figure a span small:after, .careplus-team-post-text > .careplus-footer-social li a, .careplus-related-team figure a span, .careplus-related-team figure a span:before, .careplus-related-team figure a span:after, .careplus-related-team figure a span small:before, .careplus-related-team figure a span small:after, .careplus-team-list figure a:before, .careplus-team-list figure a span, .careplus-related-products figure a:before, .careplus-related-products figure a span, .careplus-related-products figure:before, .careplus-related-products figure:after, .careplus-shop-grid figure a:before, .careplus-shop-grid figure a span, .careplus-shop-grid figure:before, .careplus-shop-grid figure:after, .careplus-shop-list figure a:before, .careplus-shop-list figure, .careplus-shop-list-text h5 a, .careplus-shop-list figure a span, .careplus-department-grid figure a:before, .careplus-department-grid figure a span, .careplus-department-list figure a:before, .careplus-department-form ul li input[type="submit"], .careplus-department-list figure a > span, .careplus-department-list figure:before, .careplus-department-list figure:after, .careplus-department-list figure > span:before, .careplus-department-list figure > span:after, .careplus-department-list-text:before, .careplus-department-list-text:after, .careplus-appointment-request-form form ul li input[type="submit"], .careplus-blog-medium figure a:after {
+.careplus-service-wrap,
+.careplus-service-wrap i,
+.careplus-service-wrap h5,
+.careplus-service-wrap p,
+.careplus-blog-modern figure>time,
+.careplus-blog-modern figure a span,
+.careplus-blog-modern figure a span:before,
+.careplus-blog-modern figure a span:after,
+.careplus-blog-modern figure a span small:before,
+.careplus-blog-modern figure a span small:after,
+.careplus-readmore-btn,
+.careplus-readmore-btn:before,
+.careplus-readmore-btn:after,
+.careplus-readmore-btn span:before,
+.careplus-readmore-btn span:after,
+.careplus-team-modern figure>a:before,
+.careplus-team-medium-info,
+.careplus-team-medium-text,
+.careplus-partners ul li figure,
+.widget_useful_link ul li a,
+.widget_useful_link ul li a:before,
+.careplus-team-modern figure figcaption,
+.careplus-team-modern figure a span,
+.careplus-team-modern figure a span:before,
+.careplus-team-modern figure a span:after,
+.careplus-team-modern figure a span small:before,
+.careplus-team-modern figure a span small:after,
+.careplus-prev-post:before,
+.careplus-next-post:before,
+.careplus-prev-post:after,
+.careplus-next-post:after,
+.careplus-prev-post span:before,
+.careplus-next-post span:before,
+.careplus-prev-post span:after,
+.careplus-next-post span:after,
+.careplus-related-blog-text:before,
+.careplus-related-blog-text:after,
+.careplus-related-blog-text>a,
+.comment-respond form p input[type="submit"],
+.widget_department ul li a,
+.widget_department ul li a i,
+.widget_cetagories ul li a,
+.widget_cetagories ul li a:before,
+.widget_populer_posts section h6 a,
+.widget-gallery a:before,
+.widget-gallery a i,
+.careplus-blog-grid figure>time,
+.careplus-blog-grid figure a span,
+.careplus-blog-grid figure a span:before,
+.careplus-blog-grid figure a span:after,
+.careplus-blog-grid figure a span small:before,
+.careplus-blog-grid figure a span small:after,
+.careplus-blog-grid-text,
+.careplus-blog-grid-text:before,
+.careplus-blog-large figure a:before,
+.careplus-blog-large figure a span,
+.careplus-blog-large figure a span:before,
+.careplus-blog-large figure a span:after,
+.careplus-blog-large figure a span small:before,
+.careplus-blog-large figure a span small:after,
+.careplus-blog-large .careplus-blog-option li a i,
+.careplus-blog-large .careplus-blog-option li a,
+.careplus-blog-medium figure a:before,
+.careplus-blog-medium figure a span,
+.careplus-blog-medium figure a span:before,
+.careplus-blog-medium figure a span:after,
+.careplus-blog-medium figure a span small:before,
+.careplus-blog-medium figure a span small:after,
+.careplus-team-post-text>.careplus-footer-social li a,
+.careplus-related-team figure a span,
+.careplus-related-team figure a span:before,
+.careplus-related-team figure a span:after,
+.careplus-related-team figure a span small:before,
+.careplus-related-team figure a span small:after,
+.careplus-team-list figure a:before,
+.careplus-team-list figure a span,
+.careplus-related-products figure a:before,
+.careplus-related-products figure a span,
+.careplus-related-products figure:before,
+.careplus-related-products figure:after,
+.careplus-shop-grid figure a:before,
+.careplus-shop-grid figure a span,
+.careplus-shop-grid figure:before,
+.careplus-shop-grid figure:after,
+.careplus-shop-list figure a:before,
+.careplus-shop-list figure,
+.careplus-shop-list-text h5 a,
+.careplus-shop-list figure a span,
+.careplus-department-grid figure a:before,
+.careplus-department-grid figure a span,
+.careplus-department-list figure a:before,
+.careplus-department-form ul li input[type="submit"],
+.careplus-department-list figure a>span,
+.careplus-department-list figure:before,
+.careplus-department-list figure:after,
+.careplus-department-list figure>span:before,
+.careplus-department-list figure>span:after,
+.careplus-department-list-text:before,
+.careplus-department-list-text:after,
+.careplus-appointment-request-form form ul li input[type="submit"],
+.careplus-blog-medium figure a:after {
     -webkit-transition: all 0.5s ease-in-out;
     -moz-transition: all 0.5s ease-in-out;
     -ms-transition: all 0.5s ease-in-out;
@@ -951,7 +1563,7 @@ small {
     transition: all 0.5s ease-in-out;
 }
 
-.careplus-team > ul > li {
+.careplus-team>ul>li {
     list-style: none;
     margin: 0px 0px 30px;
 }
@@ -961,6 +1573,7 @@ small {
     margin: 0px 0px 18px;
     display: inline-block;
 }
+
 p {
     line-height: 24px;
     letter-spacing: 1.1px;
@@ -976,7 +1589,9 @@ p {
     border-bottom: 20px solid;
     border-left: 20px solid transparent;
 }
-*:before, *:after {
+
+*:before,
+*:after {
     -webkit-box-sizing: border-box;
     -moz-box-sizing: border-box;
     box-sizing: border-box;
@@ -990,15 +1605,20 @@ p {
     border-bottom: 20px solid;
     border-left: 20px solid transparent;
 }
+
 /*--Blog code--*/
 
-.careplus-blog, .careplus-blog-modern figure, .careplus-blog-modern figure a, .careplus-blog-modern figure a img, .careplus-blog-modern-text {
+.careplus-blog,
+.careplus-blog-modern figure,
+.careplus-blog-modern figure a,
+.careplus-blog-modern figure a img,
+.careplus-blog-modern-text {
     float: left;
     width: 100%;
     height: 188px;
 }
 
-.careplus-blog-modern figure > time {
+.careplus-blog-modern figure>time {
     position: absolute;
     left: 0px;
     top: 0px;
@@ -1012,13 +1632,20 @@ p {
     padding: 12px 10px 0px;
     opacity: 1;
 }
-.careplus-blog, .careplus-blog-modern figure, .careplus-blog-modern figure a, .careplus-blog-modern figure a img, .careplus-blog-modern-text {
+
+.careplus-blog,
+.careplus-blog-modern figure,
+.careplus-blog-modern figure a,
+.careplus-blog-modern figure a img,
+.careplus-blog-modern-text {
     float: left;
     width: 100%;
 }
 
 
-.careplus-blog-modern-text, .careplus-blog-modern-text:before, .careplus-team-filterable ul li a.is-checked:before {
+.careplus-blog-modern-text,
+.careplus-blog-modern-text:before,
+.careplus-team-filterable ul li a.is-checked:before {
     border-top-color: #08364b;
     height: 49px;
 }
@@ -1030,7 +1657,12 @@ p {
     padding: 7px 8px;
     position: relative;
 }
-.careplus-blog, .careplus-blog-modern figure, .careplus-blog-modern figure a, .careplus-blog-modern figure a img, .careplus-blog-modern-text {
+
+.careplus-blog,
+.careplus-blog-modern figure,
+.careplus-blog-modern figure a,
+.careplus-blog-modern figure a img,
+.careplus-blog-modern-text {
     float: left;
     width: 100%;
 }
@@ -1040,26 +1672,204 @@ p {
     opacity: 1;
     height: 100%;
 }
+
 .careplus-blog-modern ul li:hover figure a span:before {
     width: 64px;
 }
+
 .careplus-blog-modern ul li:hover figure a span {
     opacity: 1;
 
 }
 
-.clearfix:before, .clearfix:after, .dl-horizontal dd:before, .dl-horizontal dd:after, .container:before, .container:after, .container-fluid:before, .container-fluid:after, .row:before, .row:after, .form-horizontal .form-group:before, .form-horizontal .form-group:after, .btn-toolbar:before, .btn-toolbar:after, .btn-group-vertical > .btn-group:before, .btn-group-vertical > .btn-group:after, .nav:before, .nav:after, .navbar:before, .navbar:after, .navbar-header:before, .navbar-header:after, .navbar-collapse:before, .navbar-collapse:after, .pager:before, .pager:after, .panel-body:before, .panel-body:after, .modal-header:before, .modal-header:after, .modal-footer:before, .modal-footer:after {
+.clearfix:before,
+.clearfix:after,
+.dl-horizontal dd:before,
+.dl-horizontal dd:after,
+.container:before,
+.container:after,
+.container-fluid:before,
+.container-fluid:after,
+.row:before,
+.row:after,
+.form-horizontal .form-group:before,
+.form-horizontal .form-group:after,
+.btn-toolbar:before,
+.btn-toolbar:after,
+.btn-group-vertical>.btn-group:before,
+.btn-group-vertical>.btn-group:after,
+.nav:before,
+.nav:after,
+.navbar:before,
+.navbar:after,
+.navbar-header:before,
+.navbar-header:after,
+.navbar-collapse:before,
+.navbar-collapse:after,
+.pager:before,
+.pager:after,
+.panel-body:before,
+.panel-body:after,
+.modal-header:before,
+.modal-header:after,
+.modal-footer:before,
+.modal-footer:after {
     display: table;
     content: " ";
 }
-.clearfix:before, .clearfix:after, .dl-horizontal dd:before, .dl-horizontal dd:after, .container:before, .container:after, .container-fluid:before, .container-fluid:after, .row:before, .row:after, .form-horizontal .form-group:before, .form-horizontal .form-group:after, .btn-toolbar:before, .btn-toolbar:after, .btn-group-vertical > .btn-group:before, .btn-group-vertical > .btn-group:after, .nav:before, .nav:after, .navbar:before, .navbar:after, .navbar-header:before, .navbar-header:after, .navbar-collapse:before, .navbar-collapse:after, .pager:before, .pager:after, .panel-body:before, .panel-body:after, .modal-header:before, .modal-header:after, .modal-footer:before, .modal-footer:after {
+
+.clearfix:before,
+.clearfix:after,
+.dl-horizontal dd:before,
+.dl-horizontal dd:after,
+.container:before,
+.container:after,
+.container-fluid:before,
+.container-fluid:after,
+.row:before,
+.row:after,
+.form-horizontal .form-group:before,
+.form-horizontal .form-group:after,
+.btn-toolbar:before,
+.btn-toolbar:after,
+.btn-group-vertical>.btn-group:before,
+.btn-group-vertical>.btn-group:after,
+.nav:before,
+.nav:after,
+.navbar:before,
+.navbar:after,
+.navbar-header:before,
+.navbar-header:after,
+.navbar-collapse:before,
+.navbar-collapse:after,
+.pager:before,
+.pager:after,
+.panel-body:before,
+.panel-body:after,
+.modal-header:before,
+.modal-header:after,
+.modal-footer:before,
+.modal-footer:after {
     display: table;
     content: " ";
 }
-.careplus-bgcolor, .careplus-bgcolorhover:hover, .careplus-blog ul li:hover .careplus-readmore-btn, .careplus-blog ul li:hover .careplus-readmore-btn:before, .careplus-blog ul li:hover .careplus-readmore-btn span:before, .careplus-blog ul li:hover .careplus-readmore-btn:after, .careplus-blog ul li:hover .careplus-readmore-btn span:after, .careplus-section-postfull .careplus-transparent-shape, .careplus-team-medium-info, .careplus-plane-gallery figure > a:before, .careplus-tabs-thumb span:before, .careplus-footer-transparent, .careplus-dark-transparent, .careplus-about-transparent, .careplus-team-modern figure:before, .careplus-team-modern figure > a:before, .careplus-thumb-heading, blockquote i, .comment-respond form p input[type="submit"], .comment-respond form p label:before, .comment-respond form p label:after, .comment-respond form p label span:before, .comment-respond form p label span:after, .widget_department ul li a, .widget_cetagories ul li a:before, .widget-gallery a:before, .careplus-blog-grid figure a:before, .careplus-pagination > ul > li:hover > .next, .careplus-pagination > ul > li:hover > .previous span:before, .careplus-pagination > ul > li:hover > .next span:before, .careplus-pagination > ul > li:hover > .previous span:after, .careplus-pagination > ul > li:hover > .next span:after, .careplus-pagination > ul > li:hover > .previous:after, .careplus-pagination > ul > li:hover > .next:after, .careplus-pagination > ul > li:hover > .previous:before, .careplus-pagination > ul > li:hover > .next:before, .careplus-blog-large figure a:before, .careplus-blog-large .careplus-readmore-btn span:before, .careplus-blog-large .careplus-readmore-btn span:after, .careplus-blog-large .careplus-readmore-btn:after, .careplus-blog-large .careplus-readmore-btn:before, .careplus-blog-medium figure a:before, .careplus-about-education li:before, .careplus-related-team figure a:before, .careplus-related-team figure a:after, .careplus-team-filterable ul li a.is-checked, .careplus-team-list figure a:before, .careplus-team ul li:hover .careplus-team-list-text .careplus-readmore-btn span:before, .careplus-team ul li:hover .careplus-team-list-text .careplus-readmore-btn span:after, .careplus-transparent, .careplus-fancy-title span:before, .careplus-fancy-title span:after, .careplus-blog-modern figure a:before, .careplus-shop-detail-text .careplus-readmore-btn:before, .careplus-shop-detail-text .careplus-readmore-btn:after, .careplus-department-grid figure a:before, .careplus-shop-detail-text .careplus-readmore-btn span:before, .careplus-shop-detail-text .careplus-readmore-btn span:after, .careplus-shop-tabs .nav-tabs > li:last-child > a:before, .careplus-shop-tabs .nav-tabs > li:last-child > a:after, .careplus-shop-tabs .nav-tabs > li:first-child > a:before, .careplus-shop-tabs .nav-tabs > li:first-child > a:after, .careplus-shop-tabs .nav-tabs > li.active > a, .careplus-shop-tabs .nav-tabs > li.active > a:hover, .careplus-shop-tabs .nav-tabs > li.active > a:focus, .careplus-related-products figure a:before, .careplus-shop-grid figure a:before, .careplus-shop ul li:hover .careplus-readmore-btn, .careplus-shop ul li:hover .careplus-readmore-btn:before, .careplus-shop ul li:hover .careplus-readmore-btn:after, .careplus-shop ul li:hover .careplus-readmore-btn span:before, .careplus-shop ul li:hover .careplus-readmore-btn span:after, .careplus-shop-list figure a:before, .careplus-shop ul li:hover .careplus-shop-list-text .careplus-readmore-btn:before, .careplus-shop ul li:hover .careplus-shop-list-text .careplus-readmore-btn span:before, .careplus-shop ul li:hover .careplus-shop-list-text .careplus-readmore-btn:after, .careplus-shop ul li:hover .careplus-shop-list-text .careplus-readmore-btn span:after, .careplus-department ul li:hover .careplus-department-grid-text .careplus-readmore-btn:before, .careplus-department ul li:hover .careplus-department-grid-text .careplus-readmore-btn span:before, .careplus-department ul li:hover .careplus-department-grid-text .careplus-readmore-btn:after, .careplus-department ul li:hover .careplus-department-grid-text .careplus-readmore-btn span:after, .careplus-department-list figure a:before, .careplus-department ul li:hover .careplus-department-list-text .careplus-readmore-btn:before, .careplus-appointment-request-form form ul li input[type="submit"], .careplus-department ul li:hover .careplus-department-list-text .careplus-readmore-btn span:before, .careplus-department ul li:hover .careplus-department-list-text .careplus-readmore-btn:after, .careplus-department ul li:hover .careplus-department-list-text .careplus-readmore-btn span:after, .careplus-appointment-request-form form ul li > label:before, .careplus-appointment-request-form form ul li > label:after, .careplus-appointment-request-form form ul li label span:before, .careplus-appointment-request-form form ul li label span:after, .careplus-radio label::before, .careplus-department-form ul li input[type="submit"], .careplus-department-form ul li > label:before, .careplus-department-form ul li > label:after, .careplus-department-form ul li label span:before, .careplus-department-form ul li label span:after, .careplus-error-page-text, .careplus-search-result-text, .careplus-map-form, .faq-accordion .panel-title, .careplus-pricplan-title, .careplus-pricplan-title:before, .careplus-pricplan-title:after, .available-btn, .careplus-partners ul li figure span, .careplus-fancy-title span small:after, .careplus-fancy-title span small::before, .careplus-pagination > ul > li:hover > .previous, .careplus-team ul li:hover .careplus-team-list-text .careplus-readmore-btn::after, .careplus-team ul li:hover .careplus-team-list-text .careplus-readmore-btn span::after, .careplus-team ul li:hover .careplus-team-list-text .careplus-readmore-btn:before {
-    background-color: #9bc03c;
-    z-index:1;
+
+.careplus-bgcolor,
+.careplus-bgcolorhover:hover,
+.careplus-blog ul li:hover .careplus-readmore-btn,
+.careplus-blog ul li:hover .careplus-readmore-btn:before,
+.careplus-blog ul li:hover .careplus-readmore-btn span:before,
+.careplus-blog ul li:hover .careplus-readmore-btn:after,
+.careplus-blog ul li:hover .careplus-readmore-btn span:after,
+.careplus-section-postfull .careplus-transparent-shape,
+.careplus-team-medium-info,
+.careplus-plane-gallery figure>a:before,
+.careplus-tabs-thumb span:before,
+.careplus-footer-transparent,
+.careplus-dark-transparent,
+.careplus-about-transparent,
+.careplus-team-modern figure:before,
+.careplus-team-modern figure>a:before,
+.careplus-thumb-heading,
+blockquote i,
+.comment-respond form p input[type="submit"],
+.comment-respond form p label:before,
+.comment-respond form p label:after,
+.comment-respond form p label span:before,
+.comment-respond form p label span:after,
+.widget_department ul li a,
+.widget_cetagories ul li a:before,
+.widget-gallery a:before,
+.careplus-blog-grid figure a:before,
+.careplus-pagination>ul>li:hover>.next,
+.careplus-pagination>ul>li:hover>.previous span:before,
+.careplus-pagination>ul>li:hover>.next span:before,
+.careplus-pagination>ul>li:hover>.previous span:after,
+.careplus-pagination>ul>li:hover>.next span:after,
+.careplus-pagination>ul>li:hover>.previous:after,
+.careplus-pagination>ul>li:hover>.next:after,
+.careplus-pagination>ul>li:hover>.previous:before,
+.careplus-pagination>ul>li:hover>.next:before,
+.careplus-blog-large figure a:before,
+.careplus-blog-large .careplus-readmore-btn span:before,
+.careplus-blog-large .careplus-readmore-btn span:after,
+.careplus-blog-large .careplus-readmore-btn:after,
+.careplus-blog-large .careplus-readmore-btn:before,
+.careplus-blog-medium figure a:before,
+.careplus-about-education li:before,
+.careplus-related-team figure a:before,
+.careplus-related-team figure a:after,
+.careplus-team-filterable ul li a.is-checked,
+.careplus-team-list figure a:before,
+.careplus-team ul li:hover .careplus-team-list-text .careplus-readmore-btn span:before,
+.careplus-team ul li:hover .careplus-team-list-text .careplus-readmore-btn span:after,
+.careplus-transparent,
+.careplus-fancy-title span:before,
+.careplus-fancy-title span:after,
+.careplus-blog-modern figure a:before,
+.careplus-shop-detail-text .careplus-readmore-btn:before,
+.careplus-shop-detail-text .careplus-readmore-btn:after,
+.careplus-department-grid figure a:before,
+.careplus-shop-detail-text .careplus-readmore-btn span:before,
+.careplus-shop-detail-text .careplus-readmore-btn span:after,
+.careplus-shop-tabs .nav-tabs>li:last-child>a:before,
+.careplus-shop-tabs .nav-tabs>li:last-child>a:after,
+.careplus-shop-tabs .nav-tabs>li:first-child>a:before,
+.careplus-shop-tabs .nav-tabs>li:first-child>a:after,
+.careplus-shop-tabs .nav-tabs>li.active>a,
+.careplus-shop-tabs .nav-tabs>li.active>a:hover,
+.careplus-shop-tabs .nav-tabs>li.active>a:focus,
+.careplus-related-products figure a:before,
+.careplus-shop-grid figure a:before,
+.careplus-shop ul li:hover .careplus-readmore-btn,
+.careplus-shop ul li:hover .careplus-readmore-btn:before,
+.careplus-shop ul li:hover .careplus-readmore-btn:after,
+.careplus-shop ul li:hover .careplus-readmore-btn span:before,
+.careplus-shop ul li:hover .careplus-readmore-btn span:after,
+.careplus-shop-list figure a:before,
+.careplus-shop ul li:hover .careplus-shop-list-text .careplus-readmore-btn:before,
+.careplus-shop ul li:hover .careplus-shop-list-text .careplus-readmore-btn span:before,
+.careplus-shop ul li:hover .careplus-shop-list-text .careplus-readmore-btn:after,
+.careplus-shop ul li:hover .careplus-shop-list-text .careplus-readmore-btn span:after,
+.careplus-department ul li:hover .careplus-department-grid-text .careplus-readmore-btn:before,
+.careplus-department ul li:hover .careplus-department-grid-text .careplus-readmore-btn span:before,
+.careplus-department ul li:hover .careplus-department-grid-text .careplus-readmore-btn:after,
+.careplus-department ul li:hover .careplus-department-grid-text .careplus-readmore-btn span:after,
+.careplus-department-list figure a:before,
+.careplus-department ul li:hover .careplus-department-list-text .careplus-readmore-btn:before,
+.careplus-appointment-request-form form ul li input[type="submit"],
+.careplus-department ul li:hover .careplus-department-list-text .careplus-readmore-btn span:before,
+.careplus-department ul li:hover .careplus-department-list-text .careplus-readmore-btn:after,
+.careplus-department ul li:hover .careplus-department-list-text .careplus-readmore-btn span:after,
+.careplus-appointment-request-form form ul li>label:before,
+.careplus-appointment-request-form form ul li>label:after,
+.careplus-appointment-request-form form ul li label span:before,
+.careplus-appointment-request-form form ul li label span:after,
+.careplus-radio label::before,
+.careplus-department-form ul li input[type="submit"],
+.careplus-department-form ul li>label:before,
+.careplus-department-form ul li>label:after,
+.careplus-department-form ul li label span:before,
+.careplus-department-form ul li label span:after,
+.careplus-error-page-text,
+.careplus-search-result-text,
+.careplus-map-form,
+.faq-accordion .panel-title,
+.careplus-pricplan-title,
+.careplus-pricplan-title:before,
+.careplus-pricplan-title:after,
+.available-btn,
+.careplus-partners ul li figure span,
+.careplus-fancy-title span small:after,
+.careplus-fancy-title span small::before,
+.careplus-pagination>ul>li:hover>.previous,
+.careplus-team ul li:hover .careplus-team-list-text .careplus-readmore-btn::after,
+.careplus-team ul li:hover .careplus-team-list-text .careplus-readmore-btn span::after,
+.careplus-team ul li:hover .careplus-team-list-text .careplus-readmore-btn:before {
+    background-color: #878b7cff;
+    z-index: 1;
 }
+
 .careplus-banner-wrap p {
     color: #ffffff;
     margin-bottom: 29px;
@@ -1068,6 +1878,7 @@ p {
     line-height: 28px;
     width: 84%;
 }
+
 .slick-active .careplus-banner-wrap p {
     -webkit-animation-name: banner-wrap-p;
     animation-name: banner-wrap-p;
@@ -1076,6 +1887,7 @@ p {
     -webkit-animation-fill-mode: both;
     animation-fill-mode: both;
 }
+
 .careplus-transparent {
     height: 100%;
     left: 0px;
@@ -1084,33 +1896,41 @@ p {
     width: 100%;
     opacity: 0.4;
 }
+
 .widget_useful_link ul li:hover a:before {
     left: 4px;
 }
+
 .widget_useful_link ul li:hover a {
     padding: 0px 0px 0px 25px;
 }
+
 a {
     color: #555555;
     text-decoration: none;
 }
+
 .widget_useful_link ul li a {
     float: left;
     position: relative;
     color: #ffffff;
     padding: 0px 0px 0px 16px;
 }
+
 .widget_useful_link ul li:hover a {
     padding: 0px 0px 0px 25px;
     text-decoration: none;
 }
-.widget_useful_link ul li:hover a:before, .widget_cetagories ul li:hover a:before {
+
+.widget_useful_link ul li:hover a:before,
+.widget_cetagories ul li:hover a:before {
     -webkit-transform: rotate(90deg);
     -moz-transform: rotate(90deg);
     -ms-transform: rotate(90deg);
     -o-transform: rotate(90deg);
     transform: rotate(90deg);
 }
+
 .careplus-blog-modern figure a:before {
     content: '';
     position: absolute;
@@ -1126,10 +1946,12 @@ a {
     opacity: 1;
     height: 100%;
 }
+
 .careplus-blog-modern ul li:hover figure a:after {
     opacity: 1;
     height: 50%;
 }
+
 .careplus-blog-modern figure a span:after {
     content: '';
     position: absolute;
@@ -1175,21 +1997,128 @@ a {
     width: 1px;
     height: 0px;
 }
-.careplus-blog-modern-text, .careplus-blog-modern-text:before, .careplus-team-filterable ul li a.is-checked:before {
+
+.careplus-blog-modern-text,
+.careplus-blog-modern-text:before,
+.careplus-team-filterable ul li a.is-checked:before {
     border-top-color: #08364b;
 }
 
-.careplus-service-wrap, .careplus-service-wrap i, .careplus-service-wrap h5, .careplus-service-wrap p, .careplus-blog-modern figure > time, .careplus-blog-modern figure a span, .careplus-blog-modern figure a span:before, .careplus-blog-modern figure a span:after, .careplus-blog-modern figure a span small:before, .careplus-blog-modern figure a span small:after, .careplus-readmore-btn, .careplus-readmore-btn:before, .careplus-readmore-btn:after, .careplus-readmore-btn span:before, .careplus-readmore-btn span:after, .careplus-team-modern figure > a:before, .careplus-team-medium-info, .careplus-team-medium-text, .careplus-partners ul li figure, .widget_useful_link ul li a, .widget_useful_link ul li a:before, .careplus-team-modern figure figcaption, .careplus-team-modern figure a span, .careplus-team-modern figure a span:before, .careplus-team-modern figure a span:after, .careplus-team-modern figure a span small:before, .careplus-team-modern figure a span small:after, .careplus-prev-post:before, .careplus-next-post:before, .careplus-prev-post:after, .careplus-next-post:after, .careplus-prev-post span:before, .careplus-next-post span:before, .careplus-prev-post span:after, .careplus-next-post span:after, .careplus-related-blog-text:before, .careplus-related-blog-text:after, .careplus-related-blog-text > a, .comment-respond form p input[type="submit"], .widget_department ul li a, .widget_department ul li a i, .widget_cetagories ul li a, .widget_cetagories ul li a:before, .widget_populer_posts section h6 a, .widget-gallery a:before, .widget-gallery a i, .careplus-blog-grid figure > time, .careplus-blog-grid figure a span, .careplus-blog-grid figure a span:before, .careplus-blog-grid figure a span:after, .careplus-blog-grid figure a span small:before, .careplus-blog-grid figure a span small:after, .careplus-blog-grid-text, .careplus-blog-grid-text:before, .careplus-blog-large figure a:before, .careplus-blog-large figure a span, .careplus-blog-large figure a span:before, .careplus-blog-large figure a span:after, .careplus-blog-large figure a span small:before, .careplus-blog-large figure a span small:after, .careplus-blog-large .careplus-blog-option li a i, .careplus-blog-large .careplus-blog-option li a, .careplus-blog-medium figure a:before, .careplus-blog-medium figure a span, .careplus-blog-medium figure a span:before, .careplus-blog-medium figure a span:after, .careplus-blog-medium figure a span small:before, .careplus-blog-medium figure a span small:after, .careplus-team-post-text > .careplus-footer-social li a, .careplus-related-team figure a span, .careplus-related-team figure a span:before, .careplus-related-team figure a span:after, .careplus-related-team figure a span small:before, .careplus-related-team figure a span small:after, .careplus-team-list figure a:before, .careplus-team-list figure a span, .careplus-related-products figure a:before, .careplus-related-products figure a span, .careplus-related-products figure:before, .careplus-related-products figure:after, .careplus-shop-grid figure a:before, .careplus-shop-grid figure a span, .careplus-shop-grid figure:before, .careplus-shop-grid figure:after, .careplus-shop-list figure a:before, .careplus-shop-list figure, .careplus-shop-list-text h5 a, .careplus-shop-list figure a span, .careplus-department-grid figure a:before, .careplus-department-grid figure a span, .careplus-department-list figure a:before, .careplus-department-form ul li input[type="submit"], .careplus-department-list figure a > span, .careplus-department-list figure:before, .careplus-department-list figure:after, .careplus-department-list figure > span:before, .careplus-department-list figure > span:after, .careplus-department-list-text:before, .careplus-department-list-text:after, .careplus-appointment-request-form form ul li input[type="submit"], .careplus-blog-medium figure a:after {
+.careplus-service-wrap,
+.careplus-service-wrap i,
+.careplus-service-wrap h5,
+.careplus-service-wrap p,
+.careplus-blog-modern figure>time,
+.careplus-blog-modern figure a span,
+.careplus-blog-modern figure a span:before,
+.careplus-blog-modern figure a span:after,
+.careplus-blog-modern figure a span small:before,
+.careplus-blog-modern figure a span small:after,
+.careplus-readmore-btn,
+.careplus-readmore-btn:before,
+.careplus-readmore-btn:after,
+.careplus-readmore-btn span:before,
+.careplus-readmore-btn span:after,
+.careplus-team-modern figure>a:before,
+.careplus-team-medium-info,
+.careplus-team-medium-text,
+.careplus-partners ul li figure,
+.widget_useful_link ul li a,
+.widget_useful_link ul li a:before,
+.careplus-team-modern figure figcaption,
+.careplus-team-modern figure a span,
+.careplus-team-modern figure a span:before,
+.careplus-team-modern figure a span:after,
+.careplus-team-modern figure a span small:before,
+.careplus-team-modern figure a span small:after,
+.careplus-prev-post:before,
+.careplus-next-post:before,
+.careplus-prev-post:after,
+.careplus-next-post:after,
+.careplus-prev-post span:before,
+.careplus-next-post span:before,
+.careplus-prev-post span:after,
+.careplus-next-post span:after,
+.careplus-related-blog-text:before,
+.careplus-related-blog-text:after,
+.careplus-related-blog-text>a,
+.comment-respond form p input[type="submit"],
+.widget_department ul li a,
+.widget_department ul li a i,
+.widget_cetagories ul li a,
+.widget_cetagories ul li a:before,
+.widget_populer_posts section h6 a,
+.widget-gallery a:before,
+.widget-gallery a i,
+.careplus-blog-grid figure>time,
+.careplus-blog-grid figure a span,
+.careplus-blog-grid figure a span:before,
+.careplus-blog-grid figure a span:after,
+.careplus-blog-grid figure a span small:before,
+.careplus-blog-grid figure a span small:after,
+.careplus-blog-grid-text,
+.careplus-blog-grid-text:before,
+.careplus-blog-large figure a:before,
+.careplus-blog-large figure a span,
+.careplus-blog-large figure a span:before,
+.careplus-blog-large figure a span:after,
+.careplus-blog-large figure a span small:before,
+.careplus-blog-large figure a span small:after,
+.careplus-blog-large .careplus-blog-option li a i,
+.careplus-blog-large .careplus-blog-option li a,
+.careplus-blog-medium figure a:before,
+.careplus-blog-medium figure a span,
+.careplus-blog-medium figure a span:before,
+.careplus-blog-medium figure a span:after,
+.careplus-blog-medium figure a span small:before,
+.careplus-blog-medium figure a span small:after,
+.careplus-team-post-text>.careplus-footer-social li a,
+.careplus-related-team figure a span,
+.careplus-related-team figure a span:before,
+.careplus-related-team figure a span:after,
+.careplus-related-team figure a span small:before,
+.careplus-related-team figure a span small:after,
+.careplus-team-list figure a:before,
+.careplus-team-list figure a span,
+.careplus-related-products figure a:before,
+.careplus-related-products figure a span,
+.careplus-related-products figure:before,
+.careplus-related-products figure:after,
+.careplus-shop-grid figure a:before,
+.careplus-shop-grid figure a span,
+.careplus-shop-grid figure:before,
+.careplus-shop-grid figure:after,
+.careplus-shop-list figure a:before,
+.careplus-shop-list figure,
+.careplus-shop-list-text h5 a,
+.careplus-shop-list figure a span,
+.careplus-department-grid figure a:before,
+.careplus-department-grid figure a span,
+.careplus-department-list figure a:before,
+.careplus-department-form ul li input[type="submit"],
+.careplus-department-list figure a>span,
+.careplus-department-list figure:before,
+.careplus-department-list figure:after,
+.careplus-department-list figure>span:before,
+.careplus-department-list figure>span:after,
+.careplus-department-list-text:before,
+.careplus-department-list-text:after,
+.careplus-appointment-request-form form ul li input[type="submit"],
+.careplus-blog-medium figure a:after {
     -webkit-transition: all 0.5s ease-in-out;
     -moz-transition: all 0.5s ease-in-out;
     -ms-transition: all 0.5s ease-in-out;
     -o-transition: all 0.5s ease-in-out;
     transition: all 0.5s ease-in-out;
- 
+
 }
-.careplus-blog-modern-text, .careplus-blog-modern-text:before, .careplus-team-filterable ul li a.is-checked:before {
+
+.careplus-blog-modern-text,
+.careplus-blog-modern-text:before,
+.careplus-team-filterable ul li a.is-checked:before {
     border-top-color: #08364b;
 }
+
 .careplus-blog-modern-text:before {
     content: '';
     position: absolute;
@@ -1198,6 +2127,7 @@ a {
     border-top: 33px solid #08364b;
     border-left: 37px solid transparent;
 }
+
 .careplus-blog-modern figure a span {
     position: absolute;
     left: 50%;
@@ -1210,11 +2140,13 @@ a {
     margin: -27px 0px 0px -27px;
     opacity: 0;
 }
-.careplus-blog > ul > li {
+
+.careplus-blog>ul>li {
     list-style: none;
     margin: 0px 0px 30px;
     height: 231px;
 }
+
 /*
 li {
     line-height: 28px;
@@ -1225,9 +2157,11 @@ li {
 .careplus-blog-modern ul li:hover figure a span small:after {
     height: 63px;
 }
+
 .careplus-blog-modern ul li:hover figure a span small:before {
     width: 64px;
 }
+
 .careplus-blog-modern ul li:hover figure a span:after {
     height: 63px;
 }
@@ -1248,30 +2182,36 @@ li {
     width: 100%;
     position: relative;
     overflow: hidden;
-	margin-top: 64px;
+    margin-top: 64px;
 }
+
 .footer-logo {
     float: left;
     margin: 0px 0px 0px;
 }
+
 a {
     color: #555555;
     text-decoration: none;
 }
+
 .widget_contact_info p {
     margin: 0px 0px 36px;
     color: #ffffff;
     float: left;
     width: 100%;
 }
+
 p {
     line-height: 28px;
     letter-spacing: 1.21px;
     margin-bottom: 10px;
 }
+
 p {
     margin: 0 0 10px;
 }
+
 .careplus-footer-title {
     margin: 0px;
     color: #ffffff;
@@ -1282,6 +2222,7 @@ p {
     margin: 0px 0px 30px;
     font-weight: bold;
 }
+
 .careplus-footer-title:after {
     content: '';
     position: absolute;
@@ -1290,13 +2231,121 @@ p {
     width: 40px;
     height: 1px;
 }
+
 .careplus-footer-one {
     background-image: url(images/footer-back-img.jpg);
 }
 
-.careplus-bgcolor-two, .careplus-bgcolorhover-two:hover, .careplus-logo:before, .navbar-nav > li > a:before, .careplus-transparent-shape, .careplus-appointment-form form ul li input[type="submit"], .careplus-blog-modern figure > time, .careplus-blog-modern figure a span:before, .careplus-blog-modern figure a span:after, .careplus-blog-modern figure a span small:before, .careplus-blog-modern figure a span small:after, .careplus-post-list li i, .careplus-content-post .careplus-readmore-btn:before, .careplus-content-post .careplus-readmore-btn:after, .careplus-content-post .careplus-readmore-btn span:before, .careplus-content-post .careplus-readmore-btn span:after, .careplus-team-medium-text, .careplus-plane-gallery figure:before, .careplus-plane-gallery figure:after, .careplus-plane-gallery figure span:before, .careplus-plane-gallery figure span:after, .careplus-footer-title:before, .careplus-footer-title:after, .widget_useful_link ul li:hover a:before, .careplus-breadcrumb, .careplus-team-modern figure a span:before, .careplus-team-modern figure a span:after, .careplus-team-modern figure a span small:before, .careplus-team-modern figure a span small:after, blockquote, .careplus-prenxt-post ul li:hover .careplus-prev-post:before, .careplus-prenxt-post ul li:hover .careplus-next-post:before, .careplus-prenxt-post ul li:hover .careplus-prev-post:after, .careplus-prenxt-post ul li:hover .careplus-next-post:after, .careplus-prenxt-post ul li:hover .careplus-prev-post span:before, .careplus-prenxt-post ul li:hover .careplus-next-post span:before, .careplus-prenxt-post ul li:hover .careplus-prev-post span:after, .careplus-prenxt-post ul li:hover .careplus-next-post span:after, .careplus-section-heading h2:before, .careplus-section-heading h2:after, .careplus-related-blog > ul > li:hover .careplus-related-blog-text:before, .careplus-widget-heading h2:before, .careplus-widget-heading h2:after, .widget_department ul li:hover a, .widget_cetagories ul li:hover a:before, .careplus-blog-grid figure > time, .careplus-blog-grid figure a span:before, .careplus-blog-grid figure a span:after, .careplus-blog-grid figure a span small:before, .careplus-blog-grid figure a span small:after, .careplus-blog-large figure a span:before, .careplus-blog-large figure a span:after, .careplus-blog-large figure a span small:before, .careplus-blog-large figure a span small:after, .careplus-blog-medium figure a span:before, .careplus-main-section.tab-color, .careplus-blog-medium figure a span:after, .careplus-blog-medium figure a span small:before, .careplus-blog-medium figure a span small:after, .careplus-related-team figure a span:before, .careplus-related-team figure a span:after, .careplus-related-team figure a span small:before, .careplus-related-team figure a span small:after, .careplus-team-list figure a span:before, .careplus-team-list figure a span:after, .careplus-team-list figure a span small:before, .careplus-team-list figure a span small:after, .careplus-related-products figure a span:before, .careplus-related-products figure a span:after, .careplus-related-products figure a span small:before, .careplus-related-products figure a span small:after, .careplus-shop-grid figure a span:before, .careplus-shop-grid figure a span:after, .careplus-shop-grid figure a span small:before, .careplus-pricplan-title > span:after, .careplus-shop-grid figure a span small:after, .careplus-shop-list figure a span:before, .careplus-shop-list figure a span:after, .careplus-shop-list figure a span small:before, .careplus-shop-list figure a span small:after, .careplus-department-grid figure a span:before, .careplus-department-grid figure a span:after, .careplus-department-grid figure a span small:after, .careplus-department-list figure a > span:before, .careplus-department-list figure a > span:after, .careplus-department-list figure a > span small:before, .careplus-department-list figure a > span small:after, .careplus-department-list ul li:hover figure:before, .careplus-department-list ul li:hover figure:after, .careplus-department-list ul li:hover figure > span:before, .careplus-department-list ul li:hover figure > span:after, .careplus-error-btn:after, .careplus-error-btn:before, .careplus-error-btn span:after, .careplus-error-btn span:before, .careplus-pricplan-title > span:before, .careplus-search-result-text form label:before, .careplus-search-result-text form label:after, .careplus-search-result-text form label span:before, .careplus-search-result-text form label span:after, .careplus-Pricing-Plan ul li:hover .careplus-error-btn, .careplus-Pricing-Plan ul li:hover .careplus-error-btn span:after, .careplus-Pricing-Plan ul li:hover .careplus-error-btn span:before, .careplus-Pricing-Plan ul li:hover .careplus-error-btn:after, .careplus-Pricing-Plan ul li:hover .careplus-error-btn:before, .careplus-appointment-bord ul.schedule-days li, .careplus-appointment-bord ul li:hover .available-btn, .careplus-department-grid figure a span small:before {
-    background-color: #9bc03c;
-    z-index:5;
+.careplus-bgcolor-two,
+.careplus-bgcolorhover-two:hover,
+.careplus-logo:before,
+.navbar-nav>li>a:before,
+.careplus-transparent-shape,
+.careplus-appointment-form form ul li input[type="submit"],
+.careplus-blog-modern figure>time,
+.careplus-blog-modern figure a span:before,
+.careplus-blog-modern figure a span:after,
+.careplus-blog-modern figure a span small:before,
+.careplus-blog-modern figure a span small:after,
+.careplus-post-list li i,
+.careplus-content-post .careplus-readmore-btn:before,
+.careplus-content-post .careplus-readmore-btn:after,
+.careplus-content-post .careplus-readmore-btn span:before,
+.careplus-content-post .careplus-readmore-btn span:after,
+.careplus-team-medium-text,
+.careplus-plane-gallery figure:before,
+.careplus-plane-gallery figure:after,
+.careplus-plane-gallery figure span:before,
+.careplus-plane-gallery figure span:after,
+.careplus-footer-title:before,
+.careplus-footer-title:after,
+.widget_useful_link ul li:hover a:before,
+.careplus-breadcrumb,
+.careplus-team-modern figure a span:before,
+.careplus-team-modern figure a span:after,
+.careplus-team-modern figure a span small:before,
+.careplus-team-modern figure a span small:after,
+blockquote,
+.careplus-prenxt-post ul li:hover .careplus-prev-post:before,
+.careplus-prenxt-post ul li:hover .careplus-next-post:before,
+.careplus-prenxt-post ul li:hover .careplus-prev-post:after,
+.careplus-prenxt-post ul li:hover .careplus-next-post:after,
+.careplus-prenxt-post ul li:hover .careplus-prev-post span:before,
+.careplus-prenxt-post ul li:hover .careplus-next-post span:before,
+.careplus-prenxt-post ul li:hover .careplus-prev-post span:after,
+.careplus-prenxt-post ul li:hover .careplus-next-post span:after,
+.careplus-section-heading h2:before,
+.careplus-section-heading h2:after,
+.careplus-related-blog>ul>li:hover .careplus-related-blog-text:before,
+.careplus-widget-heading h2:before,
+.careplus-widget-heading h2:after,
+.widget_department ul li:hover a,
+.widget_cetagories ul li:hover a:before,
+.careplus-blog-grid figure>time,
+.careplus-blog-grid figure a span:before,
+.careplus-blog-grid figure a span:after,
+.careplus-blog-grid figure a span small:before,
+.careplus-blog-grid figure a span small:after,
+.careplus-blog-large figure a span:before,
+.careplus-blog-large figure a span:after,
+.careplus-blog-large figure a span small:before,
+.careplus-blog-large figure a span small:after,
+.careplus-blog-medium figure a span:before,
+.careplus-main-section.tab-color,
+.careplus-blog-medium figure a span:after,
+.careplus-blog-medium figure a span small:before,
+.careplus-blog-medium figure a span small:after,
+.careplus-related-team figure a span:before,
+.careplus-related-team figure a span:after,
+.careplus-related-team figure a span small:before,
+.careplus-related-team figure a span small:after,
+.careplus-team-list figure a span:before,
+.careplus-team-list figure a span:after,
+.careplus-team-list figure a span small:before,
+.careplus-team-list figure a span small:after,
+.careplus-related-products figure a span:before,
+.careplus-related-products figure a span:after,
+.careplus-related-products figure a span small:before,
+.careplus-related-products figure a span small:after,
+.careplus-shop-grid figure a span:before,
+.careplus-shop-grid figure a span:after,
+.careplus-shop-grid figure a span small:before,
+.careplus-pricplan-title>span:after,
+.careplus-shop-grid figure a span small:after,
+.careplus-shop-list figure a span:before,
+.careplus-shop-list figure a span:after,
+.careplus-shop-list figure a span small:before,
+.careplus-shop-list figure a span small:after,
+.careplus-department-grid figure a span:before,
+.careplus-department-grid figure a span:after,
+.careplus-department-grid figure a span small:after,
+.careplus-department-list figure a>span:before,
+.careplus-department-list figure a>span:after,
+.careplus-department-list figure a>span small:before,
+.careplus-department-list figure a>span small:after,
+.careplus-department-list ul li:hover figure:before,
+.careplus-department-list ul li:hover figure:after,
+.careplus-department-list ul li:hover figure>span:before,
+.careplus-department-list ul li:hover figure>span:after,
+.careplus-error-btn:after,
+.careplus-error-btn:before,
+.careplus-error-btn span:after,
+.careplus-error-btn span:before,
+.careplus-pricplan-title>span:before,
+.careplus-search-result-text form label:before,
+.careplus-search-result-text form label:after,
+.careplus-search-result-text form label span:before,
+.careplus-search-result-text form label span:after,
+.careplus-Pricing-Plan ul li:hover .careplus-error-btn,
+.careplus-Pricing-Plan ul li:hover .careplus-error-btn span:after,
+.careplus-Pricing-Plan ul li:hover .careplus-error-btn span:before,
+.careplus-Pricing-Plan ul li:hover .careplus-error-btn:after,
+.careplus-Pricing-Plan ul li:hover .careplus-error-btn:before,
+.careplus-appointment-bord ul.schedule-days li,
+.careplus-appointment-bord ul li:hover .available-btn,
+.careplus-department-grid figure a span small:before {
+    background-color: #878b7cff;
+    z-index: 5;
 }
 
 .careplus-footer-title:before {
@@ -1307,6 +2356,7 @@ p {
     width: 60px;
     height: 1px;
 }
+
 .careplus-readmore-btn:before {
     content: '';
     position: absolute;
@@ -1316,6 +2366,7 @@ p {
     height: 1px;
     background-color: #bbbbbb;
 }
+
 .careplus-readmore-btn span:before {
     content: '';
     position: absolute;
@@ -1325,6 +2376,7 @@ p {
     height: 1px;
     background-color: #bbbbbb;
 }
+
 .careplus-readmore-btn span:after {
     content: '';
     position: absolute;
@@ -1334,6 +2386,7 @@ p {
     height: 119%;
     background-color: #bbbbbb;
 }
+
 .careplus-readmore-btn:after {
     content: '';
     position: absolute;
@@ -1343,6 +2396,7 @@ p {
     height: 119%;
     background-color: #bbbbbb;
 }
+
 .careplus-readmore-btn {
     display: inline-block;
     font-size: 13px;
@@ -1351,6 +2405,7 @@ p {
     position: relative;
     padding: 4px 21px;
 }
+
 .careplus-footer-transparent {
     position: absolute;
     left: 0px;
@@ -1360,6 +2415,7 @@ p {
     opacity: 0.95;
     background: #244b61;
 }
+
 .careplus-footer-widget {
     float: left;
     width: 100%;
@@ -1367,13 +2423,14 @@ p {
     position: relative;
     z-index: 1;
 }
+
 .careplus-copyright {
     float: left;
     width: 100%;
     position: relative;
     padding: 23px 0px 21px;
     z-index: 1;
-    margin-top: -30px;    
+    margin-top: -30px;
 }
 
 
@@ -1385,14 +2442,46 @@ p {
 
 
 
-.clearfix:before, .clearfix:after, .dl-horizontal dd:before, .dl-horizontal dd:after, .container:before, .container:after, .container-fluid:before, .container-fluid:after, .row:before, .row:after, .form-horizontal .form-group:before, .form-horizontal .form-group:after, .btn-toolbar:before, .btn-toolbar:after, .btn-group-vertical > .btn-group:before, .btn-group-vertical > .btn-group:after, .nav:before, .nav:after, .navbar:before, .navbar:after, .navbar-header:before, .navbar-header:after, .navbar-collapse:before, .navbar-collapse:after, .pager:before, .pager:after, .panel-body:before, .panel-body:after, .modal-header:before, .modal-header:after, .modal-footer:before, .modal-footer:after {
+.clearfix:before,
+.clearfix:after,
+.dl-horizontal dd:before,
+.dl-horizontal dd:after,
+.container:before,
+.container:after,
+.container-fluid:before,
+.container-fluid:after,
+.row:before,
+.row:after,
+.form-horizontal .form-group:before,
+.form-horizontal .form-group:after,
+.btn-toolbar:before,
+.btn-toolbar:after,
+.btn-group-vertical>.btn-group:before,
+.btn-group-vertical>.btn-group:after,
+.nav:before,
+.nav:after,
+.navbar:before,
+.navbar:after,
+.navbar-header:before,
+.navbar-header:after,
+.navbar-collapse:before,
+.navbar-collapse:after,
+.pager:before,
+.pager:after,
+.panel-body:before,
+.panel-body:after,
+.modal-header:before,
+.modal-header:after,
+.modal-footer:before,
+.modal-footer:after {
     display: table;
     content: " ";
 }
-media (min-width: 992px)
-.col-md-12 {
+
+media (min-width: 992px) .col-md-12 {
     width: 100%;
 }
+
 .careplus-back-top {
     color: #ffffff;
     left: 50%;
@@ -1404,9 +2493,11 @@ media (min-width: 992px)
     z-index: 1;
     height: 17px;
 }
+
 .careplus-footer-social {
     float: right;
 }
+
 .careplus-copyright:after {
     content: '';
     position: absolute;
@@ -1418,11 +2509,13 @@ media (min-width: 992px)
     opacity: 0.2;
     margin: 0px -26px 0px 0px;
 }
+
 .careplus-copyright p {
     margin: 0px;
     float: left;
     color: #ffffff;
 }
+
 .careplus-copyright:before {
     content: '';
     position: absolute;
@@ -1434,6 +2527,7 @@ media (min-width: 992px)
     opacity: 0.2;
     margin: 0px 0px 0px -26px;
 }
+
 .careplus-back-top:before {
     content: '';
     position: absolute;
@@ -1444,6 +2538,7 @@ media (min-width: 992px)
     bottom: -6px;
     opacity: 0.4;
 }
+
 .careplus-back-top:before {
     -webkit-transform: rotate(45deg);
     -moz-transform: rotate(45deg);
@@ -1451,11 +2546,14 @@ media (min-width: 992px)
     -o-transform: rotate(45deg);
     transform: rotate(45deg);
 }
-*:before, *:after {
+
+*:before,
+*:after {
     -webkit-box-sizing: border-box;
     -moz-box-sizing: border-box;
     box-sizing: border-box;
 }
+
 .careplus-back-top:after {
     background-color: #ffffff;
     bottom: -6px;
@@ -1466,6 +2564,7 @@ media (min-width: 992px)
     width: 1px;
     opacity: 0.4;
 }
+
 .careplus-back-top:after {
     -webkit-transform: rotate(-45deg);
     -moz-transform: rotate(-45deg);
@@ -1473,9 +2572,11 @@ media (min-width: 992px)
     -o-transform: rotate(-45deg);
     transform: rotate(-45deg);
 }
+
 .careplus-footer-widget .widget {
     margin-bottom: 50px;
 }
+
 .careplus-readmore-btn:before {
     content: '';
     position: absolute;
@@ -1495,19 +2596,24 @@ media (min-width: 992px)
     float: left;
     width: 100%;
 }
+
 ul {
     margin-bottom: 0;
 }
-ul, ol {
+
+ul,
+ol {
     margin-top: 0;
     margin-bottom: 10px;
 }
+
 .widget_useful_link ul li {
     float: left;
     width: 50%;
     list-style: none;
     margin: 0px 0px 12px;
 }
+
 /*
 li {
     line-height: 28px;
@@ -1520,8 +2626,108 @@ li {
     color: #ffffff;
     padding: 0px 0px 0px 16px;
 }
-f
-.careplus-service-wrap, .careplus-service-wrap i, .careplus-service-wrap h5, .careplus-service-wrap p, .careplus-blog-modern figure > time, .careplus-blog-modern figure a span, .careplus-blog-modern figure a span:before, .careplus-blog-modern figure a span:after, .careplus-blog-modern figure a span small:before, .careplus-blog-modern figure a span small:after, .careplus-readmore-btn, .careplus-readmore-btn:before, .careplus-readmore-btn:after, .careplus-readmore-btn span:before, .careplus-readmore-btn span:after, .careplus-team-modern figure > a:before, .careplus-team-medium-info, .careplus-team-medium-text, .careplus-partners ul li figure, .widget_useful_link ul li a, .widget_useful_link ul li a:before, .careplus-team-modern figure figcaption, .careplus-team-modern figure a span, .careplus-team-modern figure a span:before, .careplus-team-modern figure a span:after, .careplus-team-modern figure a span small:before, .careplus-team-modern figure a span small:after, .careplus-prev-post:before, .careplus-next-post:before, .careplus-prev-post:after, .careplus-next-post:after, .careplus-prev-post span:before, .careplus-next-post span:before, .careplus-prev-post span:after, .careplus-next-post span:after, .careplus-related-blog-text:before, .careplus-related-blog-text:after, .careplus-related-blog-text > a, .comment-respond form p input[type="submit"], .widget_department ul li a, .widget_department ul li a i, .widget_cetagories ul li a, .widget_cetagories ul li a:before, .widget_populer_posts section h6 a, .widget-gallery a:before, .widget-gallery a i, .careplus-blog-grid figure > time, .careplus-blog-grid figure a span, .careplus-blog-grid figure a span:before, .careplus-blog-grid figure a span:after, .careplus-blog-grid figure a span small:before, .careplus-blog-grid figure a span small:after, .careplus-blog-grid-text, .careplus-blog-grid-text:before, .careplus-blog-large figure a:before, .careplus-blog-large figure a span, .careplus-blog-large figure a span:before, .careplus-blog-large figure a span:after, .careplus-blog-large figure a span small:before, .careplus-blog-large figure a span small:after, .careplus-blog-large .careplus-blog-option li a i, .careplus-blog-large .careplus-blog-option li a, .careplus-blog-medium figure a:before, .careplus-blog-medium figure a span, .careplus-blog-medium figure a span:before, .careplus-blog-medium figure a span:after, .careplus-blog-medium figure a span small:before, .careplus-blog-medium figure a span small:after, .careplus-team-post-text > .careplus-footer-social li a, .careplus-related-team figure a span, .careplus-related-team figure a span:before, .careplus-related-team figure a span:after, .careplus-related-team figure a span small:before, .careplus-related-team figure a span small:after, .careplus-team-list figure a:before, .careplus-team-list figure a span, .careplus-related-products figure a:before, .careplus-related-products figure a span, .careplus-related-products figure:before, .careplus-related-products figure:after, .careplus-shop-grid figure a:before, .careplus-shop-grid figure a span, .careplus-shop-grid figure:before, .careplus-shop-grid figure:after, .careplus-shop-list figure a:before, .careplus-shop-list figure, .careplus-shop-list-text h5 a, .careplus-shop-list figure a span, .careplus-department-grid figure a:before, .careplus-department-grid figure a span, .careplus-department-list figure a:before, .careplus-department-form ul li input[type="submit"], .careplus-department-list figure a > span, .careplus-department-list figure:before, .careplus-department-list figure:after, .careplus-department-list figure > span:before, .careplus-department-list figure > span:after, .careplus-department-list-text:before, .careplus-department-list-text:after, .careplus-appointment-request-form form ul li input[type="submit"], .careplus-blog-medium figure a:after {
+
+f .careplus-service-wrap,
+.careplus-service-wrap i,
+.careplus-service-wrap h5,
+.careplus-service-wrap p,
+.careplus-blog-modern figure>time,
+.careplus-blog-modern figure a span,
+.careplus-blog-modern figure a span:before,
+.careplus-blog-modern figure a span:after,
+.careplus-blog-modern figure a span small:before,
+.careplus-blog-modern figure a span small:after,
+.careplus-readmore-btn,
+.careplus-readmore-btn:before,
+.careplus-readmore-btn:after,
+.careplus-readmore-btn span:before,
+.careplus-readmore-btn span:after,
+.careplus-team-modern figure>a:before,
+.careplus-team-medium-info,
+.careplus-team-medium-text,
+.careplus-partners ul li figure,
+.widget_useful_link ul li a,
+.widget_useful_link ul li a:before,
+.careplus-team-modern figure figcaption,
+.careplus-team-modern figure a span,
+.careplus-team-modern figure a span:before,
+.careplus-team-modern figure a span:after,
+.careplus-team-modern figure a span small:before,
+.careplus-team-modern figure a span small:after,
+.careplus-prev-post:before,
+.careplus-next-post:before,
+.careplus-prev-post:after,
+.careplus-next-post:after,
+.careplus-prev-post span:before,
+.careplus-next-post span:before,
+.careplus-prev-post span:after,
+.careplus-next-post span:after,
+.careplus-related-blog-text:before,
+.careplus-related-blog-text:after,
+.careplus-related-blog-text>a,
+.comment-respond form p input[type="submit"],
+.widget_department ul li a,
+.widget_department ul li a i,
+.widget_cetagories ul li a,
+.widget_cetagories ul li a:before,
+.widget_populer_posts section h6 a,
+.widget-gallery a:before,
+.widget-gallery a i,
+.careplus-blog-grid figure>time,
+.careplus-blog-grid figure a span,
+.careplus-blog-grid figure a span:before,
+.careplus-blog-grid figure a span:after,
+.careplus-blog-grid figure a span small:before,
+.careplus-blog-grid figure a span small:after,
+.careplus-blog-grid-text,
+.careplus-blog-grid-text:before,
+.careplus-blog-large figure a:before,
+.careplus-blog-large figure a span,
+.careplus-blog-large figure a span:before,
+.careplus-blog-large figure a span:after,
+.careplus-blog-large figure a span small:before,
+.careplus-blog-large figure a span small:after,
+.careplus-blog-large .careplus-blog-option li a i,
+.careplus-blog-large .careplus-blog-option li a,
+.careplus-blog-medium figure a:before,
+.careplus-blog-medium figure a span,
+.careplus-blog-medium figure a span:before,
+.careplus-blog-medium figure a span:after,
+.careplus-blog-medium figure a span small:before,
+.careplus-blog-medium figure a span small:after,
+.careplus-team-post-text>.careplus-footer-social li a,
+.careplus-related-team figure a span,
+.careplus-related-team figure a span:before,
+.careplus-related-team figure a span:after,
+.careplus-related-team figure a span small:before,
+.careplus-related-team figure a span small:after,
+.careplus-team-list figure a:before,
+.careplus-team-list figure a span,
+.careplus-related-products figure a:before,
+.careplus-related-products figure a span,
+.careplus-related-products figure:before,
+.careplus-related-products figure:after,
+.careplus-shop-grid figure a:before,
+.careplus-shop-grid figure a span,
+.careplus-shop-grid figure:before,
+.careplus-shop-grid figure:after,
+.careplus-shop-list figure a:before,
+.careplus-shop-list figure,
+.careplus-shop-list-text h5 a,
+.careplus-shop-list figure a span,
+.careplus-department-grid figure a:before,
+.careplus-department-grid figure a span,
+.careplus-department-list figure a:before,
+.careplus-department-form ul li input[type="submit"],
+.careplus-department-list figure a>span,
+.careplus-department-list figure:before,
+.careplus-department-list figure:after,
+.careplus-department-list figure>span:before,
+.careplus-department-list figure>span:after,
+.careplus-department-list-text:before,
+.careplus-department-list-text:after,
+.careplus-appointment-request-form form ul li input[type="submit"],
+.careplus-blog-medium figure a:after {
     -webkit-transition: all 0.5s ease-in-out;
     -moz-transition: all 0.5s ease-in-out;
     -ms-transition: all 0.5s ease-in-out;
@@ -1550,7 +2756,22 @@ f
 }
 
 
-.clearfix:after, .dl-horizontal dd:after, .container:after, .container-fluid:after, .row:after, .form-horizontal .form-group:after, .btn-toolbar:after, .btn-group-vertical > .btn-group:after, .nav:after, .navbar:after, .navbar-header:after, .navbar-collapse:after, .pager:after, .panel-body:after, .modal-header:after, .modal-footer:after {
+.clearfix:after,
+.dl-horizontal dd:after,
+.container:after,
+.container-fluid:after,
+.row:after,
+.form-horizontal .form-group:after,
+.btn-toolbar:after,
+.btn-group-vertical>.btn-group:after,
+.nav:after,
+.navbar:after,
+.navbar-header:after,
+.navbar-collapse:after,
+.pager:after,
+.panel-body:after,
+.modal-header:after,
+.modal-footer:after {
     clear: both;
 }
 
@@ -1569,16 +2790,18 @@ f
     margin: 0px 0px 0px 15px;
     list-style: none;
 }
+
 li {
     line-height: 28px;
     list-style: inside none disc;
 }
+
 /*--crousel css code--*/
 
 
-.thumbnails li> .fff .caption { 
-    background:#fff !important; 
-    padding:10px
+.thumbnails li>.fff .caption {
+    background: #fff !important;
+    padding: 10px
 }
 
 /* Page Header */
@@ -1590,13 +2813,13 @@ li {
     color: #999;
     text-transform: uppercase;
 }
-    
+
 .page-header h3 {
     line-height: 0.88rem;
     color: #000;
 }
 
-ul.thumbnails { 
+ul.thumbnails {
     margin-bottom: 0px;
 }
 
@@ -1609,7 +2832,7 @@ ul.thumbnails {
     color: #444;
 }
 
-.caption p {  
+.caption p {
     color: #999;
 }
 
@@ -1620,7 +2843,8 @@ ul.thumbnails {
     text-align: right;
     width: 100%;
 }
-.carousel-control{
+
+.carousel-control {
     background: #666;
     border: 0px;
     border-radius: 0px;
@@ -1639,10 +2863,13 @@ ul.thumbnails {
 
 /* Mobile Only */
 @media (max-width: 767px) {
-    .page-header, .control-box {
+
+    .page-header,
+    .control-box {
         text-align: center;
-    } 
+    }
 }
+
 @media (max-width: 479px) {
     .caption {
         word-break: break-all;
@@ -1650,44 +2877,105 @@ ul.thumbnails {
 }
 
 
-li { list-style-type:none;}
+li {
+    list-style-type: none;
+}
 
-::selection { background: #ff5e99; color: #FFFFFF; text-shadow: 0; }
-::-moz-selection { background: #ff5e99; color: #FFFFFF; }
+::selection {
+    background: #ff5e99;
+    color: #FFFFFF;
+    text-shadow: 0;
+}
+
+::-moz-selection {
+    background: #ff5e99;
+    color: #FFFFFF;
+}
 
 
-.widget_contact_info ul li span, .widget_contact_info ul li a {
+.widget_contact_info ul li span,
+.widget_contact_info ul li a {
     float: left;
     color: #ffffff;
 }
 
 
-.widget_contact_info ul, .widget_contact_info ul li {
+.widget_contact_info ul,
+.widget_contact_info ul li {
     float: left;
     width: 100%;
 }
+
 ul {
     margin-bottom: 0;
 }
-ul, ol {
+
+ul,
+ol {
     margin-top: 0;
     margin-bottom: 10px;
 }
 
- 
+
 .careplus-main-section {
     float: left;
     width: 100%;
     position: relative;
 }
-.careplus-color-two, .careplus-colorhover-two:hover, .navbar-nav > li:hover > a, .navbar-nav > li.active > a, .careplus-fancy-title span i, .careplus-blog-modern figure a span, .careplus-content-post-title span i, .careplus-content-post .careplus-readmore-btn, .careplus-plane-gallery figure figcaption > a, .widget_contact_info ul li h6, .careplus-blog-grid figure a span, .widget_useful_link ul li:hover a, .careplus-about-service h2 span, .carelus-team-social li a, .careplus-team-modern figure a span, .careplus-blog-option li i, .widget_populer_posts section time i, .careplus-tags a:hover, .careplus-blog-social ul li:hover a, .careplus-prenxt-post ul li:hover .careplus-post-arrow, .text-holder:hover .comment-reply-link, .widget_cetagories ul li:hover a, .widget_populer_posts ul li:hover section h6 a, .careplus-blog-grid-option li:hover a, .careplus-blog-large figure a span, .careplus-blog-large .careplus-blog-option li:hover a, .careplus-blog-large .careplus-blog-option li:hover a i, .careplus-blog-medium-text .careplus-blog-grid-option li a, .careplus-blog-medium figure a span, .careplus-related-team figure a span, .careplus-team-post-text > .careplus-footer-social li:hover a, .careplus-team-list figure a span, .careplus-related-products figure a span, .careplus-shop-grid figure a span, .careplus-shop-list figure a span, .careplus-department-grid figure a span, .careplus-department-list figure a > span, .careplus-error-btn, .careplus-search-result-text form input[type="submit"] {
-    color: #9bc03c;
-    z-index:2;
+
+.careplus-color-two,
+.careplus-colorhover-two:hover,
+.navbar-nav>li:hover>a,
+.navbar-nav>li.active>a,
+.careplus-fancy-title span i,
+.careplus-blog-modern figure a span,
+.careplus-content-post-title span i,
+.careplus-content-post .careplus-readmore-btn,
+.careplus-plane-gallery figure figcaption>a,
+.widget_contact_info ul li h6,
+.careplus-blog-grid figure a span,
+.widget_useful_link ul li:hover a,
+.careplus-about-service h2 span,
+.carelus-team-social li a,
+.careplus-team-modern figure a span,
+.careplus-blog-option li i,
+.widget_populer_posts section time i,
+.careplus-tags a:hover,
+.careplus-blog-social ul li:hover a,
+.careplus-prenxt-post ul li:hover .careplus-post-arrow,
+.text-holder:hover .comment-reply-link,
+.widget_cetagories ul li:hover a,
+.widget_populer_posts ul li:hover section h6 a,
+.careplus-blog-grid-option li:hover a,
+.careplus-blog-large figure a span,
+.careplus-blog-large .careplus-blog-option li:hover a,
+.careplus-blog-large .careplus-blog-option li:hover a i,
+.careplus-blog-medium-text .careplus-blog-grid-option li a,
+.careplus-blog-medium figure a span,
+.careplus-related-team figure a span,
+.careplus-team-post-text>.careplus-footer-social li:hover a,
+.careplus-team-list figure a span,
+.careplus-related-products figure a span,
+.careplus-shop-grid figure a span,
+.careplus-shop-list figure a span,
+.careplus-department-grid figure a span,
+.careplus-department-list figure a>span,
+.careplus-error-btn,
+.careplus-search-result-text form input[type="submit"] {
+    color: #878b7cff;
+    z-index: 2;
 }
+
 .careplus-fancy-title span i {
     font-size: 25px;
 }
-body h1, body h2, body h3, body h4, body h5, body h6 {
+
+body h1,
+body h2,
+body h3,
+body h4,
+body h5,
+body h6 {
     color: #555555;
     font-family: 'Lato', sans-serif;
     font-style: normal;
@@ -1695,48 +2983,50 @@ body h1, body h2, body h3, body h4, body h5, body h6 {
     letter-spacing: 1.1px;
     margin: 0 0 8px;
 }
-.h6, h6 {
+
+.h6,
+h6 {
     font-size: 16px;
 }
 
 
 
 
- .vertical .carousel-inner {
-  height: 100%;
+.vertical .carousel-inner {
+    height: 100%;
 }
 
 .carousel.vertical .item {
-  -webkit-transition: 0.6s ease-in-out top;
-     -moz-transition: 0.6s ease-in-out top;
-      -ms-transition: 0.6s ease-in-out top;
-       -o-transition: 0.6s ease-in-out top;
-          transition: 0.6s ease-in-out top;
+    -webkit-transition: 0.6s ease-in-out top;
+    -moz-transition: 0.6s ease-in-out top;
+    -ms-transition: 0.6s ease-in-out top;
+    -o-transition: 0.6s ease-in-out top;
+    transition: 0.6s ease-in-out top;
 }
 
 .carousel.vertical .active {
-  top: 0;
+    top: 0;
 }
 
 .carousel.vertical .next {
-  top: 400px;
+    top: 400px;
 }
 
 .carousel.vertical .prev {
-  top: -400px;
+    top: -400px;
 }
 
 .carousel.vertical .next.left,
 .carousel.vertical .prev.right {
-  top: 0;
+    top: 0;
 }
 
 .carousel.vertical .active.left {
-  top: -400px;
+    top: -400px;
 }
 
 .carousel.vertical .active.right {
-  top: 400px;
+    top: 400px;
 }
 
 .carousel.vertical .item {
@@ -1760,9 +3050,9 @@ body h1, body h2, body h3, body h4, body h5, body h6 {
     width: 665px;
 }
 
-.showPartners:hover#showBox{
-   display: block;
-   transition: 0.7s;
+.showPartners:hover#showBox {
+    display: block;
+    transition: 0.7s;
 }
 
 
@@ -1777,41 +3067,41 @@ body h1, body h2, body h3, body h4, body h5, body h6 {
 }
 
 .image {
-  display: block;
-  width: 100%;
-  height: 195px;
-  transition:0.5s;
+    display: block;
+    width: 100%;
+    height: 195px;
+    transition: 0.5s;
 
 }
 
 .overlay {
-  position: absolute;
-  bottom: 100%;
-  left: 0;
-  right: 0;
-  background-color: #08364b;
-  overflow: hidden;
-  width: 100%;
-  height:0;
-  transition: .5s ease;
-  opacity: 0.7;
+    position: absolute;
+    bottom: 100%;
+    left: 0;
+    right: 0;
+    background-color: #08364b;
+    overflow: hidden;
+    width: 100%;
+    height: 0;
+    transition: .5s ease;
+    opacity: 0.7;
 }
 
 .imghove:hover .overlay {
-  bottom: 0;
-  height: 100%;
+    bottom: 0;
+    height: 100%;
 }
 
 .text {
-  color: white;
-  font-size: 20px;
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  -webkit-transform: translate(-50%, -50%);
-  -ms-transform: translate(-50%, -50%);
-  transform: translate(-50%, -50%);
-  text-align: center;
+    color: white;
+    font-size: 20px;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    -webkit-transform: translate(-50%, -50%);
+    -ms-transform: translate(-50%, -50%);
+    transform: translate(-50%, -50%);
+    text-align: center;
 }
 
 
@@ -1820,6 +3110,7 @@ ul.timeline {
     list-style-type: none;
     position: relative;
 }
+
 ul.timeline:before {
     content: ' ';
     background: #d4d9df;
@@ -1830,11 +3121,13 @@ ul.timeline:before {
     height: 100%;
     z-index: 400;
 }
-ul.timeline > li {
+
+ul.timeline>li {
     margin: 20px 0;
     padding-left: 20px;
 }
-ul.timeline > li:before {
+
+ul.timeline>li:before {
     content: ' ';
     background: white;
     display: inline-block;
@@ -1846,25 +3139,35 @@ ul.timeline > li:before {
     height: 20px;
     z-index: 400;
 }
-.imghove:hover .image{transform: scale(1.2, 1.2);}
+
+.imghove:hover .image {
+    transform: scale(1.2, 1.2);
+}
 
 
-.nav > li > a:hover, .nav > li > a:focus {
+.nav>li>a:hover,
+.nav>li>a:focus {
     text-decoration: none;
-    background-color: #9bc03c;
+    background-color: #878b7cff;
     color: white;
 }
-.dropdown-menu > li > a:hover {
+
+.dropdown-menu>li>a:hover {
     transform: scale(1.1, 1.1);
-    transition:0.2s;
-    
+    transition: 0.2s;
+
 }
-.dropdown-menu > li > a:hover, .dropdown-menu > li > a:focus {
+
+.dropdown-menu>li>a:hover,
+.dropdown-menu>li>a:focus {
     color: #262626;
     text-decoration: none;
 }
 
-.dropdown-menu > li > a > span:hover {color:#043d5b;}
+.dropdown-menu>li>a>span:hover {
+    color: #043d5b;
+}
+
 /*
 .dropdown-menu > li > a {
     display: block;
@@ -1874,16 +3177,22 @@ ul.timeline > li:before {
     line-height: 1.42857143;
     color: #fff;
     white-space: nowrap;
-    background: #9bc03c;
+    background: #878b7cff;
     text-align: center;
     border-bottom: 2px solid #8bad35;
 }
 */
-.dropdown-menu > li > a:hover .dropdown-menu > li > a > span{color:red;
+.dropdown-menu>li>a:hover .dropdown-menu>li>a>span {
+    color: red;
 }
-.UserMenu{color:white;}
 
-.smallImg:hover{transform: scale(1.2, 1.2);}
+.UserMenu {
+    color: white;
+}
+
+.smallImg:hover {
+    transform: scale(1.2, 1.2);
+}
 
 .docimg {
     height: 170px;
@@ -1891,6 +3200,7 @@ ul.timeline > li:before {
     box-shadow: 0px -5px 4px -1px #848181;
     width: 170px;
 }
+
 .doctorText {
     background: #043d5b;
     text-align: center;
@@ -1899,45 +3209,48 @@ ul.timeline > li:before {
     font-weight: bold;
     border-radius: 10px;
     text-transform: uppercase;
-    font-size:11px;
+    font-size: 11px;
     padding: 5px;
 }
-.submitBtn{
+
+.submitBtn {
     background: #043d5b;
     padding: 6px 34px;
     color: white;
     border: none;
 }
-.note
-{
+
+.note {
     text-align: center;
     height: 80px;
     background: #043d5b;
     color: #fff;
     font-weight: bold;
     line-height: 80px;
-    box-shadow:0px -4px 11px 0px #52493e;
+    box-shadow: 0px -4px 11px 0px #52493e;
 }
-.form-content
-{
+
+.form-content {
     padding: 5%;
-    border:15px solid #043d5b;
+    border: 15px solid #043d5b;
     margin-bottom: 2%;
 }
-.form-control{
-    border-radius:5px 9px;
+
+.form-control {
+    border-radius: 5px 9px;
 }
-.btnSubmit
-{
-    border:none;
-    border-radius:1.5rem;
+
+.btnSubmit {
+    border: none;
+    border-radius: 1.5rem;
     padding: 1%;
     width: 20%;
     cursor: pointer;
     background: #043d5b;
     color: #fff;
-    box-shadow:2px -4px 4px #5a4835;
+    box-shadow: 2px -4px 4px #5a4835;
 }
+
 .mylabel {
     padding: 8px;
     background: #043d5b;
@@ -1945,7 +3258,7 @@ ul.timeline > li:before {
     width: 100%;
     border-radius: 23px;
     text-align: center;
-    cursor:pointer;
+    cursor: pointer;
 }
 
 
@@ -1956,20 +3269,21 @@ input[type="file"] {
 
 
 .panel-login {
-  
-  -webkit-box-shadow: 0px 2px 3px 0px rgba(0,0,0,0.2);
-  -moz-box-shadow: 0px 2px 3px 0px rgba(0,0,0,0.2);
-  box-shadow: 0px 2px 3px 0px rgba(0,0,0,0.2);
-  background: #00000040;
-  box-shadow: 0px -3px 13px -2px black;
+
+    -webkit-box-shadow: 0px 2px 3px 0px rgba(0, 0, 0, 0.2);
+    -moz-box-shadow: 0px 2px 3px 0px rgba(0, 0, 0, 0.2);
+    box-shadow: 0px 2px 3px 0px rgba(0, 0, 0, 0.2);
+    background: #00000040;
+    box-shadow: 0px -3px 13px -2px black;
 }
 
 .panel-login>.panel-heading {
     color: #00415d;
     text-align: center;
     background: #00000040;
-        padding: 29px;
+    padding: 29px;
 }
+
 .panel-login>.panel-heading a {
     text-decoration: none;
     color: white;
@@ -1985,21 +3299,24 @@ input[type="file"] {
 .panel-login>.panel-heading a.active {
     color: white;
     font-size: 18px;
-    box-shadow:0px 0px 17px 0px black;
+    box-shadow: 0px 0px 17px 0px black;
 }
 
-.panel-login>.panel-heading hr{
-  margin-top: 10px;
-  margin-bottom: 0px;
-  clear: both;
-  border: 0;
-  height: 1px;
-  background-image: -webkit-linear-gradient(left,rgba(0, 0, 0, 0),rgba(0, 0, 0, 0.15),rgba(0, 0, 0, 0));
-  background-image: -moz-linear-gradient(left,rgba(0,0,0,0),rgba(0,0,0,0.15),rgba(0,0,0,0));
-  background-image: -ms-linear-gradient(left,rgba(0,0,0,0),rgba(0,0,0,0.15),rgba(0,0,0,0));
-  background-image: -o-linear-gradient(left,rgba(0,0,0,0),rgba(0,0,0,0.15),rgba(0,0,0,0));
+.panel-login>.panel-heading hr {
+    margin-top: 10px;
+    margin-bottom: 0px;
+    clear: both;
+    border: 0;
+    height: 1px;
+    background-image: -webkit-linear-gradient(left, rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0));
+    background-image: -moz-linear-gradient(left, rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0));
+    background-image: -ms-linear-gradient(left, rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0));
+    background-image: -o-linear-gradient(left, rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0));
 }
-.panel-login input[type="text"], .panel-login input[type="email"], .panel-login input[type="password"] {
+
+.panel-login input[type="text"],
+.panel-login input[type="email"],
+.panel-login input[type="password"] {
     height: 45px;
     font-size: 16px;
     -webkit-transition: all 0.1s linear;
@@ -2011,12 +3328,13 @@ input[type="file"] {
 
 .panel-login input:hover,
 .panel-login input:focus {
-  outline:none;
-  -webkit-box-shadow: none;
-  -moz-box-shadow: none;
-  box-shadow: none;
-  border-color: #183e50;
+    outline: none;
+    -webkit-box-shadow: none;
+    -moz-box-shadow: none;
+    box-shadow: none;
+    border-color: #183e50;
 }
+
 .btn-login {
     background-color: #043d5b;
     outline: none;
@@ -2028,46 +3346,50 @@ input[type="file"] {
     text-transform: uppercase;
     box-shadow: 0px -2px 12px -1px black;
 }
+
 .btn-login:hover,
 .btn-login:focus {
-  color: #fff;
-  background-color:;
+    color: #fff;
+    background-color: ;
 }
+
 .forgot-password {
-  text-decoration: underline;
-  color: #b5b3b3;
+    text-decoration: underline;
+    color: #b5b3b3;
 }
+
 .forgot-password:hover,
 .forgot-password:focus {
-  text-decoration: underline;
-  color: #a9a4a4;
+    text-decoration: underline;
+    color: #a9a4a4;
 }
 
 .btn-register {
-  background-color: #5c4e41;
-  outline: none;
-  color: #fff;
-  font-size: 14px;
-  height: auto;
-  font-weight: normal;
-  padding: 14px 0;
-  text-transform: uppercase;
+    background-color: #5c4e41;
+    outline: none;
+    color: #fff;
+    font-size: 14px;
+    height: auto;
+    font-weight: normal;
+    padding: 14px 0;
+    text-transform: uppercase;
 
 }
+
 .btn-register:hover,
 .btn-register:focus {
-  color: #fff;
-  background-color: #1CA347;
+    color: #fff;
+    background-color: #1CA347;
 
 }
 
 
-body{
-  width: 100%;
-  background: #08364b;
-  background-position: center;
-  background-attachment: fixed;
-  background-repeat: no-repeat;
-  background-size: cover;   
+body {
+    width: 100%;
+    background: #08364b;
+    background-position: center;
+    background-attachment: fixed;
+    background-repeat: no-repeat;
+    background-size: cover;
 
 }

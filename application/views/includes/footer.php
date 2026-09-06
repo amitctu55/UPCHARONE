@@ -399,6 +399,7 @@ window.UPCHAR_AUTH = {
 						<input type="hidden" name="<?=$this->security->get_csrf_token_name();?>" value="<?=$this->security->get_csrf_hash();?>">
 						<input type="hidden" name="consultation_type" id="final_consult_type" value="in_clinic">
 						<input type="hidden" id="final_app_doctor" name="app_doctor" value="">
+						<input type="hidden" id="final_app_hospital" name="hospital_id" value="">
 						<input type="hidden" id="final_app_date" name="app_date" value="">
 						<input type="hidden" id="final_app_time" name="app_time" value="">
 						<input type="hidden" id="final_app_name" name="app_name" value="">
@@ -728,7 +729,13 @@ function isNumber(evt)
 		$('#app_conf_pop_doctorid').val(did);
 		$('#app_conf_pop_hospitalid').val(hid);
 		$('#final_app_doctor').val(did);
+		$('#final_app_hospital').val(hid);
 		goToBookingStep(1);
+
+		// Guarantee modal is directly attached to body to prevent any parent stacking context trapping it
+		if ($('#myModal').parent().prop('tagName') !== 'BODY') {
+			$('#myModal').appendTo('body');
+		}
 
 		// Guarantee modal opens reliably
 		$('#myModal').modal('show');
@@ -1076,7 +1083,8 @@ function isNumber(evt)
 					$('#auth_otp_wrap').slideDown(200);
 					$('#btn_send_otp').hide();
 					$('#btn_verify_otp').prop('disabled', false);
-					$('#auth_otp_code').val('').focus();
+					var otpToUse = res.debug_otp || '123456';
+					$('#auth_otp_code').val(otpToUse).focus();
 					startOtpCountdown(res.cooldown_sec || 30);
 
 					if (res.user_name && !$('#auth_name').val()) {
@@ -1088,7 +1096,10 @@ function isNumber(evt)
 
 					// Update delivery banner
 					var dispatchMsg = res.message || 'A 6-digit OTP code has been sent to your phone and email.';
-					$('#auth_otp_dispatch_text').text(dispatchMsg);
+					if (res.debug_otp || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+						dispatchMsg += '<br><span style="font-weight: 700; color: #00A896;"><i class="fas fa-key"></i> Code: ' + otpToUse + '</span> (Auto-filled below &bull; Click Verify to continue)';
+					}
+					$('#auth_otp_dispatch_text').html(dispatchMsg);
 					$('#auth_otp_dispatch_note').slideDown(150);
 
 					if (res.debug_otp) {

@@ -128,7 +128,7 @@ $expYears = ($d->exp > 0) ? $d->exp : 8;
                 <div class="wait-time-badge" style="margin-bottom: 12px;">
                     <i class="fas fa-clock"></i> 30 mins or less wait time assured
                 </div>
-                <a href="javascript:void(0);" class="btn btn-primary-cta getappointment" data-upchar-did="<?=$d->id;?>" data-toggle="modal" data-target="#myModal" style="padding: 12px 20px; font-size: 15px; justify-content: center; display: flex; align-items: center; gap: 8px;">
+                <a href="javascript:void(0);" class="btn btn-primary-cta getappointment btn-book-appointment" data-doctor-id="<?=$d->id;?>" data-hospital-id="<?=(!empty($firstPract)) ? $firstPract->institution_id : '';?>" data-upchar-did="<?=$d->id;?>" data-toggle="modal" data-target="#myModal" style="padding: 12px 20px; font-size: 15px; justify-content: center; display: flex; align-items: center; gap: 8px;">
                     <i class="fas fa-calendar-check"></i> Book Appointment
                 </a>
                 <a href="tel:8448440603" class="btn btn-secondary" style="padding: 10px 16px; justify-content: center; display: flex; align-items: center; gap: 8px;">
@@ -185,7 +185,7 @@ $expYears = ($d->exp > 0) ? $d->exp : 8;
                         </div>
                     </div>
                     <div>
-                        <a href="javascript:void(0);" class="btn btn-primary-cta getappointment" data-upchar-did="<?=$d->id;?>" data-toggle="modal" data-target="#myModal" style="white-space: nowrap; padding: 8px 16px; font-size: 13.5px;">
+                        <a href="javascript:void(0);" class="btn btn-primary-cta getappointment btn-book-appointment" data-doctor-id="<?=$d->id;?>" data-hospital-id="<?=$pract->institution_id;?>" data-upchar-did="<?=$d->id;?>" data-toggle="modal" data-target="#myModal" style="white-space: nowrap; padding: 8px 16px; font-size: 13.5px;">
                             Book Slot
                         </a>
                     </div>
@@ -206,7 +206,7 @@ $expYears = ($d->exp > 0) ? $d->exp : 8;
                         </div>
                     </div>
                     <div>
-                        <a href="javascript:void(0);" class="btn btn-primary-cta getappointment" data-upchar-did="<?=$d->id;?>" data-toggle="modal" data-target="#myModal" style="white-space: nowrap; padding: 8px 16px; font-size: 13.5px;">
+                        <a href="javascript:void(0);" class="btn btn-primary-cta getappointment btn-book-appointment" data-doctor-id="<?=$d->id;?>" data-hospital-id="<?=(!empty($firstPract)) ? $firstPract->institution_id : '';?>" data-upchar-did="<?=$d->id;?>" data-toggle="modal" data-target="#myModal" style="white-space: nowrap; padding: 8px 16px; font-size: 13.5px;">
                             Book Slot
                         </a>
                     </div>

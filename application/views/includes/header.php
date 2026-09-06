@@ -35,8 +35,9 @@ if(
 
 }
 ?>
-
-<header>
+<!DOCTYPE html>
+<html lang="en">
+<head>
 	<?php 
 	$meta_rec = getMeta();
 	if( array_key_exists('dynamic_meta',$meta_rec) && @is_array($meta_array) && !empty($meta_array) )

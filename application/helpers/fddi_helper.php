@@ -458,6 +458,17 @@ if (!function_exists('send_verification_otp'))
 	 */
 	function send_verification_otp($mobile, $otp, $email = '', $name = '')
 	{
+		$is_local = (isset($_SERVER['HTTP_HOST']) && (strpos($_SERVER['HTTP_HOST'], 'localhost') !== false || strpos($_SERVER['HTTP_HOST'], '127.0.0.1') !== false)) || (php_sapi_name() === 'cli');
+		if ($is_local) {
+			// On local dev / demo environment, return immediately without blocking on external SMTP/SMS gateways
+			return array(
+				'mobile'     => $mobile,
+				'email'      => $email,
+				'sms_sent'   => true,
+				'email_sent' => true
+			);
+		}
+
 		$msg = "Your Upchar verification code is $otp. Do not share this code with anyone. WWW.UPCHAR.INFO";
 		$sms_sent = @sendsms($msg, $mobile);
 

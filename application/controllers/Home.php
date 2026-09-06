@@ -115,12 +115,15 @@ class Home extends CI_Controller
 		$data['current_page'] = $page_param;
 		$data['total_pages'] = ($total_doctors > 0) ? ceil($total_doctors / $per_page) : 1;
 		
+		$this->db->order_by('profile_dr.id', 'ASC');
 		$data['doctors'] = $this->db->limit($per_page, $offset)->get('profile_dr')->result();
 		$this->db->flush_cache();
 
 		// Fetch ONLY Promoted / Sponsored Doctors for the Sidebar
 		$data['promoted_doctors'] = $this->_get_promoted_doctors($spl);
 
+		if($city != '') $this->db->where("city", $city);
+		if($keyword != '') $this->db->like("name", $keyword);
 		$data['hospital']=$this->db->limit(10)->get_where('hospital', array('approved'=>'1','verified'=>'1'))->result();
 		$data['clinic']=$this->db->get_where('clinic', array('status'=>'1'))->result();
 		$data['specialization']=$this->db->order_by('name','asc')->where('status','1')->get('master_specialization')->result();
@@ -215,6 +218,7 @@ class Home extends CI_Controller
 			redirect('doctors');
 			return;
 		}
+		$data['practs'] = $this->db->where('user_id', $data['d']->id)->where('status', '1')->get('dr_practice')->result();
 		$this->load->view('detail_page',$data);
 	}
 
@@ -356,6 +360,7 @@ class Home extends CI_Controller
 		$data['current_page'] = $page_param;
 		$data['total_pages'] = ($total_doctors > 0) ? ceil($total_doctors / $per_page) : 1;
 		
+		$this->db->order_by('profile_dr.id', 'ASC');
 		$data['doctors'] = $this->db->limit($per_page, $offset)->get('profile_dr')->result();
 		$this->db->flush_cache();
 
@@ -372,19 +377,57 @@ class Home extends CI_Controller
 
 	public function hospitals()
 	{
-	    $data['specialization']=$this->db->order_by('name','asc')->where('status','1')->get('master_specialization')->result();
-		$data['cities']=$this->db->order_by('name','asc')->where('status','1')->get('master_city')->result();
-		$data['hospital']=$this->db->get_where('hospital', array('approved'=>'1','verified'=>'1'))->result();
-		$this->load->view('hospital_list',$data);
+		$per_page_param = $this->input->get('per_page');
+		$page_param = (int) $this->input->get('page');
+		if ($page_param < 1) $page_param = 1;
+
+		$city = $this->input->get('city');
+		$keyword = trim($this->input->get('keyword') ?? '');
+		$spl = $this->input->get('spl');
+
+		$per_page = 10;
+		if ($per_page_param === '20') $per_page = 20;
+		else if ($per_page_param === '50') $per_page = 50;
+		else if ($per_page_param === 'all') $per_page = 1000;
+		else if ($per_page_param === '10') $per_page = 10;
+
+		$offset = ($page_param - 1) * $per_page;
+
+		// Build query with optional city/keyword filters
+		$this->db->start_cache();
+		$this->db->where('hospital.approved', '1');
+		$this->db->where('hospital.verified', '1');
+		if (!empty($city)) {
+			$this->db->where('hospital.city', $city);
+		}
+		if (!empty($keyword)) {
+			$this->db->group_start();
+			$this->db->like('hospital.name', $keyword);
+			$this->db->or_like('hospital.address', $keyword);
+			$this->db->or_like('hospital.about', $keyword);
+			$this->db->group_end();
+		}
+		$this->db->stop_cache();
+
+		$total_hospitals = $this->db->count_all_results('hospital');
+		$data['total_hospitals'] = $total_hospitals;
+		$data['per_page'] = $per_page;
+		$data['per_page_param'] = $per_page_param ?: '10';
+		$data['current_page'] = $page_param;
+		$data['total_pages'] = ($total_hospitals > 0) ? ceil($total_hospitals / $per_page) : 1;
+
+		$this->db->order_by('hospital.id', 'ASC');
+		$data['hospital'] = $this->db->limit($per_page, $offset)->get('hospital')->result();
+		$this->db->flush_cache();
+
+		$data['specialization'] = $this->db->order_by('name','asc')->where('status','1')->get('master_specialization')->result();
+		$data['cities'] = $this->db->order_by('name','asc')->where('status','1')->get('master_city')->result();
+		$this->load->view('hospital_list', $data);
 	}
-	
 	
 	public function hospitallist()
 	{	
-	    $data['specialization']=$this->db->order_by('name','asc')->where('status','1')->get('master_specialization')->result();
-		$data['cities']=$this->db->order_by('name','asc')->where('status','1')->get('master_city')->result();
-		$data['hospital']=$this->db->get_where('hospital', array('approved'=>'1','verified'=>'1'))->result();
-		$this->load->view('hospitallist',$data);
+		$this->hospitals();
 	}
 	
 	public function logout()
@@ -1349,6 +1392,17 @@ class Home extends CI_Controller
 		$pid = 0;
 		$instType = 'clinic';
 		$institution_id = 0;
+
+		$req_hospital_id = intval($this->input->post('hospital_id') ?: $this->input->post('institution_id'));
+		if ($req_hospital_id > 0) {
+			$institution_id = $req_hospital_id;
+			$instType = 'hospital';
+			$practMatch = $this->db->get_where('dr_practice', array('user_id' => $doctor, 'institution_id' => $req_hospital_id, 'type' => 'H'))->row();
+			if ($practMatch) {
+				$pid = $practMatch->id;
+				if ($consultation_fee <= 0 && !empty($practMatch->fee)) $consultation_fee = floatval($practMatch->fee);
+			}
+		}
 
 		$timingRow = $timing_id ? $this->db->get_where('timing', array('id' => $timing_id))->row() : null;
 		if ($timingRow) {
