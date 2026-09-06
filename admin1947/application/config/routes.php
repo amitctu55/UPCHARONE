@@ -71,4 +71,17 @@ $route['inquiries'] = 'inquiries/index';
 $route['inquiries/(:any)'] = 'inquiries/$1';
 $route['inquiries/(:any)/(:any)'] = 'inquiries/$1/$2';
 
+// SEO and Meta Tags Management
+$route['seo/meta'] = 'seo/meta/index';
+$route['seo/meta/index'] = 'seo/meta/index';
+$route['seo/meta/add'] = 'seo/meta/add';
+$route['seo/meta/edit/(:any)'] = 'seo/meta/edit/$1';
+$route['seo/meta/delete/(:any)'] = 'seo/meta/delete/$1';
+$route['seo/meta/delete'] = 'seo/meta/delete';
+$route['seo/meta/bulk_delete'] = 'seo/meta/bulk_delete';
+$route['seo/meta/bulk_status'] = 'seo/meta/bulk_status';
+$route['seo/meta/toggle_status/(:any)'] = 'seo/meta/toggle_status/$1';
+$route['seo/meta/quick_preview/(:any)'] = 'seo/meta/quick_preview/$1';
+$route['seo/meta/(:any)'] = 'seo/meta/$1';
+
 

@@ -306,9 +306,21 @@ $pageurl3 = $this->uri->segment(3);
           <li class="<?php if($pageurl1=='settings' && $pageurl2=='health'){ ?>active<?php }?>">
             <a href="<?=base_url('settings?tab=health');?>"><i class="fa fa-heartbeat"></i> System Health</a>
           </li>
+          <li class="<?php if($pageurl1=='seo'){ ?>active<?php }?>">
+            <a href="<?=base_url('seo/meta/index');?>"><i class="fa fa-line-chart"></i> SEO &amp; Meta Tags</a>
+          </li>
         </ul>
       </li>
 
+      <!-- SEO Management Dashboard -->
+      <li class="<?php if($pageurl1=='seo'){ ?>active<?php }?>">
+        <a href="<?=base_url('seo/meta/index');?>">
+          <i class="fa fa-line-chart" style="color: #0d9488;"></i> <span>SEO &amp; Meta Tags</span>
+          <span class="pull-right-container">
+            <small class="label pull-right bg-teal" style="background: #0d9488 !important;">SEO</small>
+          </span>
+        </a>
+      </li>
       <!-- Upchar Points & Wallet -->
       <li class="<?php if($pageurl1=='masters' && $pageurl2=='walletadmin'){ ?>active<?php }?>">
         <a href="<?=base_url('masters/walletadmin');?>">

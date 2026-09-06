@@ -95,25 +95,46 @@ if( ! function_exists('getMeta'))
 			 $uri_page.="?".$_SERVER['QUERY_STRING'];
 		}
 		
-		$res=$CI->db->query("SELECT * FROM meta_tags WHERE page_url='".$uri_page."' ")->row();
+		$res = null;
+		if ($CI->db) {
+			$res = $CI->db->query("SELECT * FROM meta_tags WHERE page_url='".$CI->db->escape_str($uri_page)."' AND status='1' LIMIT 1")->row();
+		}
 		
 		if( is_object($res) )
 		{
 			return array(
-			
 				"meta_title"=>$res->meta_title,
 				"meta_keyword"=>$res->meta_keyword,
-				"meta_description"=>$res->meta_description
+				"meta_description"=>$res->meta_description,
+				"canonical_url"=>isset($res->canonical_url) ? $res->canonical_url : '',
+				"robots_meta"=>isset($res->robots_meta) ? $res->robots_meta : 'index, follow',
+				"og_title"=>!empty($res->og_title) ? $res->og_title : $res->meta_title,
+				"og_description"=>!empty($res->og_description) ? $res->og_description : $res->meta_description,
+				"og_image"=>isset($res->og_image) ? $res->og_image : '',
+				"og_type"=>isset($res->og_type) ? $res->og_type : 'website',
+				"twitter_title"=>!empty($res->twitter_title) ? $res->twitter_title : (!empty($res->og_title) ? $res->og_title : $res->meta_title),
+				"twitter_description"=>!empty($res->twitter_description) ? $res->twitter_description : (!empty($res->og_description) ? $res->og_description : $res->meta_description),
+				"twitter_image"=>!empty($res->twitter_image) ? $res->twitter_image : (isset($res->og_image) ? $res->og_image : ''),
+				"schema_markup"=>isset($res->schema_markup) ? $res->schema_markup : ''
 			 );
-									
-									
 		}else
 		{			
-				  return array("meta_title"=>"Upchar One Place of Healthcare",
-				  "meta_keyword"=>"Upchar One Place of Healthcare, Doctor Appointment, Hospitals, Pathology, Diagnostic Labs",
-				   "meta_description"=>"Upchar One Place of Healthcare - Find and book appointments with verified doctors, hospitals, clinics, and pathology labs.",
-				   'dynamic_meta'=>TRUE 
-				);
+			return array(
+				"meta_title"=>"Upchar One Place of Healthcare",
+				"meta_keyword"=>"Upchar One Place of Healthcare, Doctor Appointment, Hospitals, Pathology, Diagnostic Labs",
+				"meta_description"=>"Upchar One Place of Healthcare - Find and book appointments with verified doctors, hospitals, clinics, and pathology labs.",
+				"canonical_url"=>"",
+				"robots_meta"=>"index, follow",
+				"og_title"=>"Upchar One Place of Healthcare",
+				"og_description"=>"Upchar One Place of Healthcare - Find and book appointments with verified doctors, hospitals, clinics, and pathology labs.",
+				"og_image"=>"",
+				"og_type"=>"website",
+				"twitter_title"=>"Upchar One Place of Healthcare",
+				"twitter_description"=>"Upchar One Place of Healthcare - Find and book appointments with verified doctors, hospitals, clinics, and pathology labs.",
+				"twitter_image"=>"",
+				"schema_markup"=>"",
+				'dynamic_meta'=>TRUE 
+			);
 		}
 	}	
 }
