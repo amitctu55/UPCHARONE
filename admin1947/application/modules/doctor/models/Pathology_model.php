@@ -3,26 +3,40 @@ class Pathology_model extends CI_Model
 { 
 	public function get_assign_test($limit='10',$offset='0',$param=array())
 	{	
-		$test_id	= @$param['test_id'];
-		$keyword 		= $this->db->escape_str($this->input->get('keyword',TRUE));
-	
-		if($test_id!='')
-		{
-			$this->db->where("test_id",$test_id);
-		}
-	    if($keyword!='')
-		{
-			$this->db->where("(pathlab.name LIKE '%".$keyword."%' )");
-		}
-		$this->db->order_by('path_lab_test.id','desc');
-		$this->db->limit($limit,$offset);
-		$this->db->select('SQL_CALC_FOUND_ROWS path_lab_test.*,pathlab.name,pathtest.test_name',FALSE);
+		try {
+			if (!$this->db || !$this->db->table_exists('path_lab_test')) {
+				return array();
+			}
+			$test_id	= @$param['test_id'];
+			$keyword 	= $this->db->escape_str($this->input->get('keyword',TRUE));
+		
+			if($test_id!='')
+			{
+				$this->db->where("path_lab_test.test_id",$test_id);
+			}
+			if($keyword!='')
+			{
+				if ($this->db->table_exists('pathlab')) {
+					$this->db->where("(pathlab.name LIKE '%".$keyword."%' )");
+				}
+			}
+			$this->db->order_by('path_lab_test.id','desc');
+			$this->db->limit($limit,$offset);
+			$this->db->select('SQL_CALC_FOUND_ROWS path_lab_test.*,pathlab.name,pathtest.test_name',FALSE);
 
-		$this->db->join('pathtest','path_lab_test.test_id=pathtest.test_id','left');
-		$this->db->join('pathlab','pathlab.id=path_lab_test.path_lab_id','left');
-		$result = $this->db->get('path_lab_test')->result_array();
-		$result = ($limit=='1') ? @$result[0]: $result;	
-		return $result;
+			if ($this->db->table_exists('pathtest')) {
+				$this->db->join('pathtest','path_lab_test.test_id=pathtest.test_id','left');
+			}
+			if ($this->db->table_exists('pathlab')) {
+				$this->db->join('pathlab','pathlab.id=path_lab_test.path_lab_id','left');
+			}
+			$q = $this->db->get('path_lab_test');
+			$result = ($q && is_object($q)) ? $q->result_array() : array();
+			$result = ($limit=='1') ? @$result[0]: $result;	
+			return $result ?: array();
+		} catch (Throwable $e) {
+			return array();
+		}
 	}
 	
 	
@@ -55,31 +69,44 @@ class Pathology_model extends CI_Model
 	
 	public  function get_test($page=array())
 	{		
-		if( is_array($page) && !empty($page) )
-		{	
-			$this->db->select('test_id,test_name');
-			$result =  $this->db->get_where('pathtest',$page)->result_array();
-			if( is_array($result) && !empty($result) )
-			{
-				return $result;
+		try {
+			if ($this->db && $this->db->table_exists('pathtest')) {
+				$this->db->select('test_id,test_name');
+				if( is_array($page) && !empty($page) ) {
+					$q = $this->db->get_where('pathtest',$page);
+				} else {
+					$q = $this->db->get('pathtest');
+				}
+				if ($q && is_object($q)) {
+					$result = $q->result_array();
+					if( is_array($result) && !empty($result) ) {
+						return $result;
+					}
+				}
 			}
-		}
+		} catch (Throwable $e) {}
+		return array();
 	}
-	
-	
-
 	
 	public  function get_pathlab($page=array())
 	{		
-		if( is_array($page) && !empty($page) )
-		{
-			$this->db->select('id,name');
-			$result =  $this->db->get_where('pathlab',$page)->result_array();
-			if( is_array($result) && !empty($result) )
-			{
-				return $result;
+		try {
+			if ($this->db && $this->db->table_exists('pathlab')) {
+				$this->db->select('id,name');
+				if( is_array($page) && !empty($page) ) {
+					$q = $this->db->get_where('pathlab',$page);
+				} else {
+					$q = $this->db->get('pathlab');
+				}
+				if ($q && is_object($q)) {
+					$result = $q->result_array();
+					if( is_array($result) && !empty($result) ) {
+						return $result;
+					}
+				}
 			}
-		}
+		} catch (Throwable $e) {}
+		return array();
 	}
 	
 	public function test_insert()
