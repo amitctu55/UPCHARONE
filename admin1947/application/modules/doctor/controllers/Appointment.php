@@ -105,6 +105,108 @@ class Appointment extends CI_Controller
 		$this->load->view('inc/footerlink');
 		$this->load->view('inc/table_footer');
 	}
+
+	public function analytics()
+	{
+		$data['total_appointments'] = 0;
+		$data['today_appointments'] = 0;
+		$data['doctor_stats'] = array();
+		$data['hospital_doctor_stats'] = array();
+		$data['affiliations_stats'] = array();
+
+		try {
+			if ($this->db && $this->db->table_exists('appointment')) {
+				$data['total_appointments'] = $this->db->count_all_results('appointment');
+				$data['today_appointments'] = $this->db->where('appointment_date', date('Y-m-d'))->count_all_results('appointment');
+
+				// 1. Doctor-Level Tracking
+				if ($this->db->table_exists('profile_dr')) {
+					$doc_q = $this->db->query("
+						SELECT 
+							p.id as doctor_id,
+							p.fname,
+							p.lname,
+							p.speciality,
+							p.mobile,
+							p.email,
+							COUNT(a.appointment_id) as total_bookings,
+							SUM(CASE WHEN a.appointment_date = CURDATE() THEN 1 ELSE 0 END) as today_bookings,
+							SUM(CASE WHEN a.status = '1' OR a.status = 'COMPLETED' THEN 1 ELSE 0 END) as confirmed_count,
+							SUM(CASE WHEN a.status = '0' OR a.status = 'PENDING' THEN 1 ELSE 0 END) as pending_count
+						FROM profile_dr p
+						LEFT JOIN appointment a ON a.doctor_id = p.id
+						GROUP BY p.id
+						ORDER BY total_bookings DESC, p.fname ASC
+					");
+					if ($doc_q && is_object($doc_q)) {
+						$data['doctor_stats'] = $doc_q->result_array() ?: array();
+					}
+				}
+
+				// 2. Hospital-Doctor Tracking Breakdown
+				if ($this->db->table_exists('hospital') && $this->db->table_exists('profile_dr')) {
+					$hd_q = $this->db->query("
+						SELECT 
+							h.id as hospital_id,
+							h.name as hospital_name,
+							h.city as hospital_city,
+							p.id as doctor_id,
+							p.fname as dr_fname,
+							p.lname as dr_lname,
+							p.speciality as dr_speciality,
+							COUNT(a.appointment_id) as total_appointments,
+							MAX(a.appointment_date) as last_appointment_date,
+							SUM(CASE WHEN a.status = '1' OR a.status = 'COMPLETED' THEN 1 ELSE 0 END) as confirmed_count
+						FROM appointment a
+						JOIN profile_dr p ON p.id = a.doctor_id
+						JOIN hospital h ON (h.uid = a.institute_id OR h.id = a.institute_id)
+						GROUP BY h.id, p.id
+						ORDER BY total_appointments DESC
+					");
+					if ($hd_q && is_object($hd_q)) {
+						$data['hospital_doctor_stats'] = $hd_q->result_array() ?: array();
+					}
+				}
+
+				// 3. Doctor Affiliations to Hospitals with active appointment count
+				if ($this->db->table_exists('dr_practice') && $this->db->table_exists('hospital') && $this->db->table_exists('profile_dr')) {
+					$aff_q = $this->db->query("
+						SELECT 
+							dp.id as practice_id,
+							dp.user_id as doctor_id,
+							dp.institution_id as hospital_id,
+							dp.type,
+							dp.fee,
+							dp.status as practice_status,
+							p.fname as dr_fname,
+							p.lname as dr_lname,
+							p.speciality as dr_speciality,
+							h.name as hospital_name,
+							h.city as hospital_city,
+							(SELECT COUNT(*) FROM appointment a WHERE a.doctor_id = dp.user_id AND (a.institute_id = h.uid OR a.institute_id = h.id)) as appointment_count
+						FROM dr_practice dp
+						JOIN profile_dr p ON p.id = dp.user_id
+						JOIN hospital h ON h.id = dp.institution_id
+						ORDER BY appointment_count DESC, h.name ASC
+					");
+					if ($aff_q && is_object($aff_q)) {
+						$data['affiliations_stats'] = $aff_q->result_array() ?: array();
+					}
+				}
+			}
+		} catch (Throwable $e) {}
+
+		$data['heading_title'] = 'Advanced Appointment Analytics & Tracking';
+		$data['module'] = 'Appointment Analytics';
+
+		$this->load->view('inc/topheaderlink');
+		$this->load->view('inc/topheader');
+		$this->load->view('appointment_analytics', $data);
+		$this->load->view('sidebar');
+		$this->load->view('inc/headersetting');
+		$this->load->view('inc/footerlink');
+		$this->load->view('inc/table_footer');
+	}
      
 	public function app_conf_hospital_institute()
 	{

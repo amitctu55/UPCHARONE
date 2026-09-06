@@ -53,6 +53,114 @@ $pageurl3 = $this->uri->segment(3);
         </a>
       </li>
 
+      <!-- =========================================================
+           1. CLINIC & HOSPITAL MANAGEMENT
+           ========================================================= -->
+      <?php 
+      $is_clinic_active = ($pageurl1 == 'doctor' && $pageurl2 == 'clinicreg');
+      ?>
+      <li class="treeview <?php if($is_clinic_active){ ?> active menu-open <?php }?>">
+        <a href="#">
+          <i class="fa fa-hospital-o" style="color: #00a896;"></i> <span>Clinic &amp; Hospital</span>
+          <span class="pull-right-container">
+            <i class="fa fa-angle-left pull-right"></i>
+          </span>
+        </a>
+        <ul class="treeview-menu" <?php if($is_clinic_active){ ?> style="display: block;" <?php }?>>
+          <li class="<?php if($pageurl1=='doctor' && $pageurl2=='clinicreg' && in_array($pageurl3, array('insert', 'add'))){ ?>active<?php }?>">
+            <a href="<?=base_url('doctor/clinicreg/insert');?>">
+              <i class="fa fa-plus-circle"></i> Add Clinic/Hospital
+            </a>
+          </li>
+          <li class="<?php if($pageurl1=='doctor' && $pageurl2=='clinicreg' && ($pageurl3=='viewhospital' || empty($pageurl3))){ ?>active<?php }?>">
+            <a href="<?=base_url('doctor/clinicreg/viewhospital');?>">
+              <i class="fa fa-building-o"></i> View Hospitals
+            </a>
+          </li>
+          <li class="<?php if($pageurl1=='doctor' && $pageurl2=='clinicreg' && $pageurl3=='biomedicalmachine'){ ?>active<?php }?>">
+            <a href="<?=base_url('doctor/clinicreg/biomedicalmachine');?>">
+              <i class="fa fa-cogs"></i> Biomedical Machines
+            </a>
+          </li>
+          <li class="<?php if($pageurl1=='doctor' && $pageurl2=='clinicreg' && $pageurl3=='advertisment'){ ?>active<?php }?>">
+            <a href="<?=base_url('doctor/clinicreg/advertisment');?>">
+              <i class="fa fa-bullhorn"></i> Advertisements
+            </a>
+          </li>
+          <!-- Part 2: Doctor-Hospital Affiliation Management -->
+          <li class="<?php if($pageurl1=='doctor' && $pageurl2=='clinicreg' && $pageurl3=='hospital_doctor'){ ?>active<?php }?>">
+            <a href="<?=base_url('doctor/clinicreg/hospital_doctor');?>">
+              <i class="fa fa-link"></i> Doctor-Hospital Links
+            </a>
+          </li>
+          <li class="<?php if($pageurl1=='doctor' && $pageurl2=='clinicreg' && $pageurl3=='assign_doctor'){ ?>active<?php }?>">
+            <a href="<?=base_url('doctor/clinicreg/assign_doctor');?>">
+              <i class="fa fa-user-plus"></i> Assign Doctor to Hospital
+            </a>
+          </li>
+        </ul>
+      </li>
+
+      <!-- =========================================================
+           2. DOCTOR & APPOINTMENT MANAGEMENT
+           ========================================================= -->
+      <?php 
+      $is_doctor_active = ($pageurl1 == 'doctor' && in_array($pageurl2, array('doctorview', 'appointment', 'doctoredit', 'doctoradd')));
+      ?>
+      <li class="treeview <?php if($is_doctor_active){ ?> active menu-open <?php }?>">
+        <a href="#">
+          <i class="fa fa-user-md" style="color: #38bdf8;"></i> <span>Doctor &amp; Appointments</span>
+          <span class="pull-right-container">
+            <i class="fa fa-angle-left pull-right"></i>
+          </span>
+        </a>
+        <ul class="treeview-menu" <?php if($is_doctor_active){ ?> style="display: block;" <?php }?>>
+          <li class="<?php if($pageurl1=='doctor' && $pageurl2=='doctorview'){ ?>active<?php }?>">
+            <a href="<?=base_url('doctor/doctorview');?>">
+              <i class="fa fa-stethoscope"></i> View Doctors
+            </a>
+          </li>
+          <li class="<?php if($pageurl1=='doctor' && $pageurl2=='appointment' && in_array($pageurl3, array('doctorappointment', 'viewappointment', ''))){ ?>active<?php }?>">
+            <a href="<?=base_url('doctor/appointment/doctorappointment');?>">
+              <i class="fa fa-calendar-check-o"></i> Doctor Appointments
+            </a>
+          </li>
+          <!-- Part 2: Advanced Appointment Analytics & Tracking -->
+          <li class="<?php if($pageurl1=='doctor' && $pageurl2=='appointment' && $pageurl3=='analytics'){ ?>active<?php }?>">
+            <a href="<?=base_url('doctor/appointment/analytics');?>">
+              <i class="fa fa-bar-chart"></i> Appointment Analytics
+            </a>
+          </li>
+        </ul>
+      </li>
+
+      <!-- =========================================================
+           3. USER MANAGEMENT
+           ========================================================= -->
+      <?php 
+      $is_user_mgmt_active = ($pageurl1 == 'users' && in_array($pageurl2, array('usercreate', 'changepassword')));
+      ?>
+      <li class="treeview <?php if($is_user_mgmt_active){ ?> active menu-open <?php }?>">
+        <a href="#">
+          <i class="fa fa-users" style="color: #a855f7;"></i> <span>User Management</span>
+          <span class="pull-right-container">
+            <i class="fa fa-angle-left pull-right"></i>
+          </span>
+        </a>
+        <ul class="treeview-menu" <?php if($is_user_mgmt_active){ ?> style="display: block;" <?php }?>>
+          <li class="<?php if($pageurl1=='users' && $pageurl2=='usercreate'){ ?>active<?php }?>">
+            <a href="<?=base_url('users/usercreate');?>">
+              <i class="fa fa-user-plus"></i> Create User
+            </a>
+          </li>
+          <li class="<?php if($pageurl1=='users' && $pageurl2=='changepassword'){ ?>active<?php }?>">
+            <a href="<?=base_url('users/changepassword');?>">
+              <i class="fa fa-key"></i> Change Password
+            </a>
+          </li>
+        </ul>
+      </li>
+
       <!-- ABDM Integration -->
       <li class="<?php if($pageurl1=='abdm'){ ?>active<?php }?>">
         <a href="<?=base_url('abdm');?>">
@@ -414,6 +522,16 @@ $pageurl3 = $this->uri->segment(3);
         </a>
       </li>
       <?php } } ?>
+
+      <!-- =========================================================
+           4. ACCOUNT ACTIONS (SIGN OUT)
+           ========================================================= -->
+      <li class="header" style="margin-top: 15px; border-top: 1px solid rgba(255,255,255,0.08);">ACCOUNT</li>
+      <li>
+        <a href="<?=base_url('others/other/signout');?>" style="color: #f87171 !important;">
+          <i class="fa fa-sign-out" style="color: #ef4444;"></i> <span>Sign Out</span>
+        </a>
+      </li>
     </ul>
   </section>
   <!-- /.sidebar -->

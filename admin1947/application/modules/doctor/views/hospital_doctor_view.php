@@ -118,7 +118,14 @@ a
 					<div class="row text-">
 						<div class="col-sm-12">
 							<?=$this->session->flashdata('flashmsg');?>
-							<h4 style="font-weight:600;margin-bottom:20px;"><?=$module;?> List</h2>
+							<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
+								<h4 style="font-weight:600;margin:0;"><?=$module;?> &amp; Doctor Affiliation Directory</h4>
+								<div>
+									<a href="<?=base_url('doctor/clinicreg/assign_doctor');?>" class="btn btn-sm btn-primary" style="font-weight: 600; border-radius: 6px; background: #00a896; border-color: #00a896; padding: 6px 14px;">
+										<i class="fa fa-user-plus"></i> Assign Doctor to Hospital
+									</a>
+								</div>
+							</div>
 						</div>
 					</div>
 					<?php $att=array('class'=>'form-horizontal form-label-left','name'=>'myform');

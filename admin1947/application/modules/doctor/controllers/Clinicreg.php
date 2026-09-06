@@ -65,6 +65,65 @@ class Clinicreg extends CI_Controller
 		$this->load->view('inc/footerlink');
 		$this->load->view('inc/table_footer');
 	}
+
+	public function assign_doctor()
+	{
+		if ($this->input->post('submit_assign'))
+		{
+			$doctor_id = (int)$this->input->post('doctor_id');
+			$hospital_id = (int)$this->input->post('hospital_id');
+			$type = $this->input->post('type') ?: 'H';
+			$fee = (float)$this->input->post('fee');
+			$time_duration = $this->input->post('time_duration') ?: '15';
+			
+			if ($doctor_id > 0 && $hospital_id > 0)
+			{
+				$existing = $this->db->get_where('dr_practice', array('user_id' => $doctor_id, 'institution_id' => $hospital_id, 'type' => $type))->row();
+				if ($existing)
+				{
+					$this->db->where('id', $existing->id)->update('dr_practice', array(
+						'fee' => $fee,
+						'time_duration' => $time_duration,
+						'status' => '1'
+					));
+					$this->session->set_flashdata('flashmsg', '<div class="alert alert-success alert-dismissible"><button type="button" class="close" data-dismiss="alert">&times;</button>Doctor affiliation updated successfully!</div>');
+				}
+				else
+				{
+					$this->db->insert('dr_practice', array(
+						'user_id' => $doctor_id,
+						'institution_id' => $hospital_id,
+						'type' => $type,
+						'fee' => $fee,
+						'time_duration' => $time_duration,
+						'status' => '1',
+						'creat_date' => date('Y-m-d H:i:s')
+					));
+					$this->session->set_flashdata('flashmsg', '<div class="alert alert-success alert-dismissible"><button type="button" class="close" data-dismiss="alert">&times;</button>Doctor successfully affiliated to hospital/clinic!</div>');
+				}
+				redirect(base_url('doctor/clinicreg/hospital_doctor'));
+				return;
+			}
+			else
+			{
+				$this->session->set_flashdata('flashmsg', '<div class="alert alert-danger alert-dismissible"><button type="button" class="close" data-dismiss="alert">&times;</button>Please select both a doctor and an institution.</div>');
+			}
+		}
+
+		$data['doctors'] = $this->db->select('id, fname, lname, speciality, mobile')->where('status', '1')->order_by('fname', 'ASC')->get('profile_dr')->result_array();
+		$data['hospitals'] = $this->db->select('id, name, city, address')->where('status !=', '2')->order_by('name', 'ASC')->get('hospital')->result_array();
+		$data['clinics'] = $this->db->select('id, name, city, address')->where('status !=', '2')->order_by('name', 'ASC')->get('clinic')->result_array();
+		$data['heading_title'] = 'Assign Doctor to Hospital / Clinic';
+		$data['module'] = 'Affiliation Management';
+
+		$this->load->view('inc/topheaderlink');
+		$this->load->view('inc/topheader');
+		$this->load->view('assign_doctor_view', $data);
+		$this->load->view('sidebar');
+		$this->load->view('inc/headersetting');
+		$this->load->view('inc/footerlink');
+		$this->load->view('inc/table_footer');
+	}
 	
 	public function doctor_fee_time()
 	{	
@@ -163,7 +222,7 @@ class Clinicreg extends CI_Controller
 			return TRUE;
 	   }
 	}
-	
+
 	public function add()
 	{	
 		$data['heading_title'] 	=  'Hospital Add';
