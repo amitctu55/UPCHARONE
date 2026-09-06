@@ -1521,7 +1521,7 @@ small photos close--*/
                     <?php if (!empty($doctors)) { foreach($doctors as $d){ 
                         $quastring = '';
                         $qu = $this->db->get_where('dr_qualifications', array('user_id' => $d->id));
-                        if ($qu && $qu->num_rows() > 0) {
+                        if ($qu && is_object($qu) && $qu->num_rows() > 0) {
                             foreach($qu->result() as $q) {
                                 $quastring .= getQualificationName($q->qualification_id).', ';
                             }
@@ -1529,21 +1529,22 @@ small photos close--*/
                         }
 
                         $practdata = $this->db->get_where('dr_practice', array('user_id' => $d->id, 'status' => '1'));
-                        $practcount = $practdata->num_rows(); 
-                        $pract = $practdata->row(); 
+                        $practcount = ($practdata && is_object($practdata)) ? $practdata->num_rows() : 0; 
+                        $pract = ($practdata && is_object($practdata)) ? $practdata->row() : null; 
                         $institution_table = '';
                         if(@$pract->type == 'C') $institution_table = 'clinic';
                         else if(@$pract->type == 'H') $institution_table = 'hospital';
                         $institution = null;
                         if($institution_table){
                             $institutiondata = $this->db->get_where($institution_table, array('id' => @$pract->institution_id, 'status' => '1'));
-                            $institution = @$institutiondata->row();
+                            $institution = ($institutiondata && is_object($institutiondata)) ? @$institutiondata->row() : null;
                         }
 
-                        $specList = $this->db->get_where('dr_specialization', array('user_id' => $d->id))->result();
+                        $specQuery = $this->db->get_where('dr_specialization', array('user_id' => $d->id));
+                        $specList = ($specQuery && is_object($specQuery)) ? $specQuery->result() : array();
                         $drImg = ($d->drimage && file_exists('admin1947/public/assets/upload/'.$d->drimage)) 
-                                 ? admin_url().'public/assets/upload/'.$d->drimage 
-                                 : admin_url().'public/assets/upload/dummydr.jpg';
+                                 ? admin_url('public/assets/upload/'.$d->drimage) 
+                                 : admin_url('public/assets/upload/dummydr.jpg');
                         $drPrefix = (strcasecmp(substr($d->fname, 0, 2), 'Dr') != 0) ? 'Dr. ' : '';
                         $drFullName = $drPrefix . trim($d->fname . ' ' . $d->lname);
                         $fee = (!empty($pract->fee)) ? $pract->fee : (($d->dr_fee > 0) ? $d->dr_fee : '500');
@@ -1618,9 +1619,14 @@ small photos close--*/
                                 </div>
                             </div>
 
-                            <?php if (!empty($d->short_about) || !empty($d->about)) { ?>
+                            <?php if (!empty($d->short_about) || !empty($d->about)) { 
+                                $bioRaw = strip_tags(!empty($d->short_about) ? $d->short_about : $d->about);
+                                $bioTrimmed = function_exists('mb_strimwidth') 
+                                    ? mb_strimwidth($bioRaw, 0, 140, '...') 
+                                    : ((strlen($bioRaw) > 140) ? (substr($bioRaw, 0, 137) . '...') : $bioRaw);
+                            ?>
                             <p class="doctor-bio-snippet">
-                                <?=htmlspecialchars(mb_strimwidth(strip_tags($d->short_about ?: $d->about), 0, 140, '...'));?>
+                                <?=htmlspecialchars($bioTrimmed);?>
                             </p>
                             <?php } ?>
 

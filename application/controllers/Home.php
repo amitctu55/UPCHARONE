@@ -116,93 +116,100 @@ class Home extends CI_Controller
 		$data['total_pages'] = ($total_doctors > 0) ? ceil($total_doctors / $per_page) : 1;
 		
 		$this->db->order_by('profile_dr.id', 'ASC');
-		$data['doctors'] = $this->db->limit($per_page, $offset)->get('profile_dr')->result();
+		$doc_q = $this->db->limit($per_page, $offset)->get('profile_dr');
+		$data['doctors'] = ($doc_q && is_object($doc_q)) ? $doc_q->result() : array();
 		$this->db->flush_cache();
 
-		// Fetch ONLY Promoted / Sponsored Doctors for the Sidebar
+		// Fetch ONLY Promoted / Sponsored Doctors for the Sidebar safely
 		$data['promoted_doctors'] = $this->_get_promoted_doctors($spl);
 
 		if($city != '') $this->db->where("city", $city);
 		if($keyword != '') $this->db->like("name", $keyword);
-		$data['hospital']=$this->db->limit(10)->get_where('hospital', array('approved'=>'1','verified'=>'1'))->result();
-		$data['clinic']=$this->db->get_where('clinic', array('status'=>'1'))->result();
-		$data['specialization']=$this->db->order_by('name','asc')->where('status','1')->get('master_specialization')->result();
-		$data['cities']=$this->db->order_by('name','asc')->where('status','1')->get('master_city')->result();
-		$data['gallery']=$this->db->get('doctorgallery')->result();	
+		$hosp_q = $this->db->limit(10)->get_where('hospital', array('approved'=>'1','verified'=>'1'));
+		$data['hospital'] = ($hosp_q && is_object($hosp_q)) ? $hosp_q->result() : array();
+
+		$clinic_q = $this->db->table_exists('clinic') ? $this->db->get_where('clinic', array('status'=>'1')) : null;
+		$data['clinic'] = ($clinic_q && is_object($clinic_q)) ? $clinic_q->result() : array();
+
+		$spec_q = $this->db->order_by('name','asc')->where('status','1')->get('master_specialization');
+		$data['specialization'] = ($spec_q && is_object($spec_q)) ? $spec_q->result() : array();
+
+		$city_q = $this->db->order_by('name','asc')->where('status','1')->get('master_city');
+		$data['cities'] = ($city_q && is_object($city_q)) ? $city_q->result() : array();
+
+		$gallery_q = $this->db->table_exists('doctorgallery') ? $this->db->get('doctorgallery') : null;
+		$data['gallery'] = ($gallery_q && is_object($gallery_q)) ? $gallery_q->result() : array();	
 		$this->load->view('team_list',$data);
 	}
 
 	/**
 	 * Fetch ONLY Premium/Promoted Doctors for the Sidebar
-	 * Matches specialization if filtered, or falls back to general promoted specialists
+	 * Matches specialization if filtered, or falls back to general specialists
 	 */
 	private function _get_promoted_doctors($spl = null, $limit = 6)
 	{
-		// 1. Try fetching promoted doctors matching selected specialization
-		if (!empty($spl)) {
-			$this->db->select('profile_dr.*, COALESCE(ms.name, "") as spl_name, h.name as hosp_name, COALESCE(h.mobile, profile_dr.mobile, "8448440603") as contact_phone');
-			$this->db->from('profile_dr');
-			$this->db->join('dr_specialization ds', 'ds.user_id = profile_dr.id', 'left');
-			$this->db->join('master_specialization ms', 'ms.id = ds.specialization_id OR ms.id = profile_dr.specialization', 'left');
-			$this->db->join('dr_practice dp', 'dp.user_id = profile_dr.id AND dp.type = "H" AND dp.status = "1"', 'left');
-			$this->db->join('hospital h', 'h.id = dp.institution_id', 'left');
-			$this->db->where('profile_dr.is_promoted', 1);
-			$this->db->where('profile_dr.approved', '1');
-			$this->db->where('profile_dr.verified', '1');
+		try {
+			$has_promoted_col = $this->db->field_exists('is_promoted', 'profile_dr');
 
-			if (is_numeric($spl)) {
-				$this->db->group_start();
-				$this->db->where('ds.specialization_id', $spl);
-				$this->db->or_where('profile_dr.specialization', $spl);
-				$this->db->group_end();
-			} else {
-				$this->db->group_start();
-				$this->db->like('ms.name', $spl);
-				$this->db->group_end();
+			// 1. If is_promoted column exists, try to get flagged doctors
+			if ($has_promoted_col) {
+				$this->db->where('approved', '1');
+				$this->db->where('verified', '1');
+				$this->db->where('is_promoted', 1);
+				if (!empty($spl) && is_numeric($spl)) {
+					$this->db->where('specialization', $spl);
+				}
+				$this->db->order_by('id', 'DESC');
+				$this->db->limit($limit);
+				$q = $this->db->get('profile_dr');
+				$promoted = ($q && is_object($q)) ? $q->result() : array();
+				if (!empty($promoted)) {
+					return $this->_enrich_promoted_doctors($promoted);
+				}
 			}
 
-			$this->db->group_by('profile_dr.id');
-			$this->db->order_by('profile_dr.id', 'DESC');
+			// 2. Fallback: verified approved doctors (matching specialization if provided)
+			$this->db->where('approved', '1');
+			$this->db->where('verified', '1');
+			if (!empty($spl) && is_numeric($spl)) {
+				$this->db->where('specialization', $spl);
+			}
+			$this->db->order_by('id', 'DESC');
 			$this->db->limit($limit);
-			$matched = $this->db->get()->result();
+			$q = $this->db->get('profile_dr');
+			$fallback = ($q && is_object($q)) ? $q->result() : array();
+			return $this->_enrich_promoted_doctors($fallback);
+		} catch (Throwable $e) {
+			log_message('error', 'Error in _get_promoted_doctors: ' . $e->getMessage());
+			return array();
+		}
+	}
 
-			if (!empty($matched)) {
-				return $matched;
+	private function _enrich_promoted_doctors($doctors)
+	{
+		if (empty($doctors)) return array();
+		foreach ($doctors as &$d) {
+			if (empty($d->spl_name)) {
+				$d->spl_name = (!empty($d->specialization)) ? getSpecilizationName($d->specialization) : 'Specialist Doctor';
+			}
+			if (empty($d->hosp_name) || empty($d->contact_phone)) {
+				try {
+					$pract = $this->db->get_where('dr_practice', array('user_id' => $d->id, 'type' => 'H', 'status' => '1'))->row();
+					if ($pract && !empty($pract->institution_id)) {
+						$hosp = $this->db->select('name, mobile')->get_where('hospital', array('id' => $pract->institution_id))->row();
+						$d->hosp_name = (!empty($hosp->name)) ? $hosp->name : 'Upchar Partner Hospital';
+						$d->contact_phone = (!empty($hosp->mobile)) ? $hosp->mobile : (!empty($d->mobile) ? $d->mobile : '8448440603');
+					} else {
+						$d->hosp_name = 'Upchar Partner Hospital';
+						$d->contact_phone = (!empty($d->mobile)) ? $d->mobile : '8448440603';
+					}
+				} catch (Throwable $ex) {
+					$d->hosp_name = 'Upchar Partner Hospital';
+					$d->contact_phone = (!empty($d->mobile)) ? $d->mobile : '8448440603';
+				}
 			}
 		}
-
-		// 2. Fallback: Fetch general Promoted Doctors (is_promoted = 1, approved = 1, verified = 1)
-		$this->db->select('profile_dr.*, COALESCE(ms.name, "") as spl_name, h.name as hosp_name, COALESCE(h.mobile, profile_dr.mobile, "8448440603") as contact_phone');
-		$this->db->from('profile_dr');
-		$this->db->join('dr_specialization ds', 'ds.user_id = profile_dr.id', 'left');
-		$this->db->join('master_specialization ms', 'ms.id = ds.specialization_id OR ms.id = profile_dr.specialization', 'left');
-		$this->db->join('dr_practice dp', 'dp.user_id = profile_dr.id AND dp.type = "H" AND dp.status = "1"', 'left');
-		$this->db->join('hospital h', 'h.id = dp.institution_id', 'left');
-		$this->db->where('profile_dr.is_promoted', 1);
-		$this->db->where('profile_dr.approved', '1');
-		$this->db->where('profile_dr.verified', '1');
-		$this->db->group_by('profile_dr.id');
-		$this->db->order_by('profile_dr.id', 'DESC');
-		$this->db->limit($limit);
-		$promoted = $this->db->get()->result();
-
-		if (!empty($promoted)) {
-			return $promoted;
-		}
-
-		// 3. Fallback: Verified approved doctors if no doctor has is_promoted set
-		$this->db->select('profile_dr.*, COALESCE(ms.name, "") as spl_name, h.name as hosp_name, COALESCE(h.mobile, profile_dr.mobile, "8448440603") as contact_phone');
-		$this->db->from('profile_dr');
-		$this->db->join('dr_specialization ds', 'ds.user_id = profile_dr.id', 'left');
-		$this->db->join('master_specialization ms', 'ms.id = ds.specialization_id OR ms.id = profile_dr.specialization', 'left');
-		$this->db->join('dr_practice dp', 'dp.user_id = profile_dr.id AND dp.type = "H" AND dp.status = "1"', 'left');
-		$this->db->join('hospital h', 'h.id = dp.institution_id', 'left');
-		$this->db->where('profile_dr.approved', '1');
-		$this->db->where('profile_dr.verified', '1');
-		$this->db->group_by('profile_dr.id');
-		$this->db->order_by('profile_dr.id', 'DESC');
-		$this->db->limit($limit);
-		return $this->db->get()->result();
+		return $doctors;
 	}
 
 	public function doctor()
@@ -361,16 +368,26 @@ class Home extends CI_Controller
 		$data['total_pages'] = ($total_doctors > 0) ? ceil($total_doctors / $per_page) : 1;
 		
 		$this->db->order_by('profile_dr.id', 'ASC');
-		$data['doctors'] = $this->db->limit($per_page, $offset)->get('profile_dr')->result();
+		$doc_q = $this->db->limit($per_page, $offset)->get('profile_dr');
+		$data['doctors'] = ($doc_q && is_object($doc_q)) ? $doc_q->result() : array();
 		$this->db->flush_cache();
 
 		if($city != '') $this->db->where("city", $city);
 		if($keyword != '') $this->db->like("name", $keyword);
-		$data['hospital'] = $this->db->limit(10)->get_where('hospital', array('approved'=>'1','verified'=>'1'))->result();
+		$hosp_q = $this->db->limit(10)->get_where('hospital', array('approved'=>'1','verified'=>'1'));
+		$data['hospital'] = ($hosp_q && is_object($hosp_q)) ? $hosp_q->result() : array();
 
-		$data['specialization'] = $this->db->order_by('name','asc')->where('status','1')->get('master_specialization')->result();
-		$data['cities'] = $this->db->order_by('name','asc')->where('status','1')->get('master_city')->result();
-		$data['gallery'] = $this->db->get('doctorgallery')->result();	
+		$clinic_q = $this->db->table_exists('clinic') ? $this->db->get_where('clinic', array('status'=>'1')) : null;
+		$data['clinic'] = ($clinic_q && is_object($clinic_q)) ? $clinic_q->result() : array();
+
+		$spec_q = $this->db->order_by('name','asc')->where('status','1')->get('master_specialization');
+		$data['specialization'] = ($spec_q && is_object($spec_q)) ? $spec_q->result() : array();
+
+		$city_q = $this->db->order_by('name','asc')->where('status','1')->get('master_city');
+		$data['cities'] = ($city_q && is_object($city_q)) ? $city_q->result() : array();
+
+		$gallery_q = $this->db->table_exists('doctorgallery') ? $this->db->get('doctorgallery') : null;
+		$data['gallery'] = ($gallery_q && is_object($gallery_q)) ? $gallery_q->result() : array();	
 		$data['promoted_doctors'] = $this->_get_promoted_doctors($spl);
 		$this->load->view('team_list', $data);
 	}
@@ -527,20 +544,28 @@ class Home extends CI_Controller
 		$data['selected_category'] = $cat;
 		$data['highlight_offer']   = $this->input->get('offer') ?: null;
 
-		$this->db->where('status', '1');
-		if ($cat !== 'all' && in_array($cat, array('medicine', 'medical_store', 'equipment', 'pathology', 'hospital'))) {
-			$this->db->where('category', $cat);
-		} else {
-			$this->db->where_in('category', array('medicine', 'medical_store', 'equipment', 'general'));
+		$offers = array();
+		if ($this->db->table_exists('advertisement')) {
+			$this->db->where('status', '1');
+			if ($cat !== 'all' && in_array($cat, array('medicine', 'medical_store', 'equipment', 'pathology', 'hospital'))) {
+				$this->db->where('category', $cat);
+			} else {
+				$this->db->where_in('category', array('medicine', 'medical_store', 'equipment', 'general'));
+			}
+			$ad_q = $this->db->order_by('id', 'DESC')->get('advertisement');
+			$offers = ($ad_q && is_object($ad_q)) ? $ad_q->result() : array();
 		}
-		$data['offers'] = $this->db->order_by('id', 'DESC')->get('advertisement')->result();
+		$data['offers'] = $offers;
 
 		// Load verified chemists from profile_chem if any
-		$data['chemists'] = $this->db->get_where('profile_chem', array('status' => '1', 'approved' => '1'))->result();
+		$chem_q = $this->db->table_exists('profile_chem') ? $this->db->get_where('profile_chem', array('status' => '1', 'approved' => '1')) : null;
+		$data['chemists'] = ($chem_q && is_object($chem_q)) ? $chem_q->result() : array();
 
 		// Specializations and cities for global search bar
-		$data['specialization'] = $this->db->order_by('name', 'asc')->where('status', '1')->get('master_specialization')->result();
-		$data['cities']         = $this->db->order_by('name', 'asc')->where('status', '1')->get('master_city')->result();
+		$spec_q = $this->db->order_by('name', 'asc')->where('status', '1')->get('master_specialization');
+		$data['specialization'] = ($spec_q && is_object($spec_q)) ? $spec_q->result() : array();
+		$city_q = $this->db->order_by('name', 'asc')->where('status', '1')->get('master_city');
+		$data['cities']         = ($city_q && is_object($city_q)) ? $city_q->result() : array();
 
 		$this->load->view('medical', $data);
 	}

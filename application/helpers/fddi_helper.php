@@ -196,8 +196,8 @@ if ( ! function_exists('getInstituteName'))
 
 if ( ! function_exists('admin_url'))
 {
-	function admin_url(){
-		return base_url().'admin1947/';
+	function admin_url($uri = ''){
+		return base_url().'admin1947/' . ltrim($uri, '/');
 	}
 }
 
