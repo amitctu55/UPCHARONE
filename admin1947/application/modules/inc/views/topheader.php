@@ -23,22 +23,25 @@
           <li class="dropdown user user-menu">
             <a href="#" class="dropdown-toggle" data-toggle="dropdown">
               <img src="<?=base_url();?>public/assets/newpanel/dist/img/user2-160x160.png" class="user-image" alt="User Image">
-              <?php //if($this->session->userdata('code')=='1'){ ?>
-				<span class="hidden-xs">Logedin as  <?php echo getRoleName($this->session->userdata('code')); ?></span>
-			 <?php /* } else if($this->session->userdata('code')=='C'){ $cenname=$this->db->get_where('fddi_center',array('id'=>$this->session->userdata('institution_id')))->row('center_name');?>
-			 <span class="hidden-xs">Logedin as Center(<?=$cenname?>)</span>
-			 <?php } else if($this->session->userdata('code')=='SC'){ $subnname=$this->db->get_where('fddi_subcenter',array('subcenter_id'=>$this->session->userdata('institution_id')))->row('subcenter_name') ?>
-			  <span class="hidden-xs">Logedin as Sub Center(<?=$subnname?>)</span>
-			 <?php } else if($this->session->userdata('code')=='AG'){ $subnname=getAgencyName( $this->session->userdata('institution_id') ); ?>
-			  <span class="hidden-xs">Logedin as Assessment Agency(<?=$subnname?>)</span>
-			 <?php } */ ?>
+              <?php
+                $role_name = 'Administrator';
+                try {
+                    if (function_exists('getRoleName')) {
+                        $ret_role = getRoleName($this->session->userdata('code'));
+                        if (!empty($ret_role)) {
+                            $role_name = $ret_role;
+                        }
+                    }
+                } catch (Throwable $e) {}
+              ?>
+				<span class="hidden-xs">Logedin as <?=htmlspecialchars($role_name, ENT_QUOTES, 'UTF-8');?></span>
             </a>
             <ul class="dropdown-menu">
               <!-- User image -->
               <li class="user-header">
                 <img src="<?=base_url();?>public/assets/newpanel/dist/img/user2-160x160.png" class="img-circle" alt="User Image">
                 <p>
-                 <?=$this->session->userdata('username');?>
+                 <?=htmlspecialchars($this->session->userdata('username') ?: 'Administrator', ENT_QUOTES, 'UTF-8');?>
                   <!--<small>Member since Nov. 2018</small>-->
                 </p>
               </li>

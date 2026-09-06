@@ -19,9 +19,27 @@ $pageurl3 = $this->uri->segment(3);
     </div>
 
     <?php 
-    $user_role = $this->db->get_where('rolewise', array('isStatus'=>'1', 'level_id'=>$this->session->userdata('code')))->row_array();
-    $module = !empty($user_role['module']) ? explode(',', $user_role['module']) : array();
-    $section = $this->db->get_where('master_sections', array('isStatus'=>'1'))->result_array();
+    $user_role = array();
+    $module = array();
+    $section = array();
+    try {
+        if ($this->db && $this->db->table_exists('rolewise')) {
+            $code = $this->session->userdata('code');
+            if (!empty($code)) {
+                $rq = $this->db->get_where('rolewise', array('isStatus'=>'1', 'level_id'=>$code));
+                if ($rq && is_object($rq) && $rq->num_rows() > 0) {
+                    $user_role = $rq->row_array() ?: array();
+                }
+            }
+        }
+        $module = !empty($user_role['module']) ? explode(',', $user_role['module']) : array();
+        if ($this->db && $this->db->table_exists('master_sections')) {
+            $sq = $this->db->get_where('master_sections', array('isStatus'=>'1'));
+            if ($sq && is_object($sq) && $sq->num_rows() > 0) {
+                $section = $sq->result_array() ?: array();
+            }
+        }
+    } catch (Throwable $e) {}
     ?>
 
     <!-- sidebar menu: : style can be found in sidebar.less -->
@@ -44,7 +62,12 @@ $pageurl3 = $this->uri->segment(3);
 
       <!-- Contact Inquiries Management -->
       <?php
-      $pending_contact_count = $this->db->where('status', 'PENDING')->count_all_results('contactus');
+      $pending_contact_count = 0;
+      try {
+          if ($this->db && $this->db->table_exists('contactus')) {
+              $pending_contact_count = $this->db->where('status', 'PENDING')->count_all_results('contactus');
+          }
+      } catch (Throwable $e) {}
       ?>
       <li class="<?php if($pageurl1=='contactus'){ ?>active<?php }?>">
         <a href="<?=base_url('contactus');?>">
@@ -62,7 +85,12 @@ $pageurl3 = $this->uri->segment(3);
         <a href="<?=base_url('inquiries');?>">
           <i class="fa fa-comments-o" style="color: #00a896;"></i> <span>Hospital Inquiries</span>
           <?php 
-          $pending_hosp_inqs = $this->db->where('status', 'pending')->count_all_results('inquiries');
+          $pending_hosp_inqs = 0;
+          try {
+              if ($this->db && $this->db->table_exists('inquiries')) {
+                  $pending_hosp_inqs = $this->db->where('status', 'pending')->count_all_results('inquiries');
+              }
+          } catch (Throwable $e) {}
           if($pending_hosp_inqs > 0): ?>
             <span class="pull-right-container">
               <small class="label pull-right bg-yellow"><?=$pending_hosp_inqs;?></small>
@@ -275,11 +303,19 @@ $pageurl3 = $this->uri->segment(3);
       <!-- Master Sections with Dropdowns -->
       <?php if(!empty($section)){
         for($i=0; $i<count($section); $i++){ 
-          if(!empty($module)) {
-            $this->db->where_in('module_id', $module);
-          }
-          $this->db->where(array('isStatus'=>'1', 'parent_id'=>$section[$i]['section_id']));
-          $management = $this->db->get('master_management')->result_array();
+          $management = array();
+          try {
+            if ($this->db && $this->db->table_exists('master_management')) {
+              if(!empty($module)) {
+                $this->db->where_in('module_id', $module);
+              }
+              $this->db->where(array('isStatus'=>'1', 'parent_id'=>$section[$i]['section_id']));
+              $mq = $this->db->get('master_management');
+              if ($mq && is_object($mq)) {
+                $management = $mq->result_array() ?: array();
+              }
+            }
+          } catch (Throwable $e) {}
 
           $controllers_in_section = array();
           for($k=0; $k<count($management); $k++) {
@@ -334,11 +370,19 @@ $pageurl3 = $this->uri->segment(3);
 
       <!-- Standalone Direct Menu Items (parent_id = 0) -->
       <?php 
-      if(!empty($module)) {
-        $this->db->where_in('module_id', $module);
-      }
-      $this->db->where(array('isStatus'=>'1', 'parent_id'=>'0'));
-      $direct_management = $this->db->get('master_management')->result_array();
+      $direct_management = array();
+      try {
+        if ($this->db && $this->db->table_exists('master_management')) {
+          if(!empty($module)) {
+            $this->db->where_in('module_id', $module);
+          }
+          $this->db->where(array('isStatus'=>'1', 'parent_id'=>'0'));
+          $dmq = $this->db->get('master_management');
+          if ($dmq && is_object($dmq)) {
+            $direct_management = $dmq->result_array() ?: array();
+          }
+        }
+      } catch (Throwable $e) {}
 
       if(!empty($direct_management)){
         for($j=0; $j<count($direct_management); $j++) {

@@ -122,40 +122,79 @@ if ( ! function_exists('last_query'))
 if ( ! function_exists('getBlockList'))
 {
 	function getBlockList($district){
-		$res = get_instance()->db->select('block_name,block_code')->order_by('block_name','ASC')->get_where('lgd_block',array('district_code'=>$district))->result();
-		return $res;
+		try {
+			$ci = get_instance();
+			if ($ci->db && $ci->db->table_exists('lgd_block')) {
+				$res = $ci->db->select('block_name,block_code')->order_by('block_name','ASC')->get_where('lgd_block',array('district_code'=>$district));
+				return ($res && is_object($res)) ? $res->result() : array();
+			}
+		} catch (Throwable $e) {}
+		return array();
 	}
 }
 
 if ( ! function_exists('getVillageList'))
 {
 	function getVillageList($block){
-		$res = get_instance()->db->select('village_name,village_code')->order_by('village_name','ASC')->get_where('lgd_villages',array('block_code'=>$block))->result();
-		return $res;
+		try {
+			$ci = get_instance();
+			if ($ci->db && $ci->db->table_exists('lgd_villages')) {
+				$res = $ci->db->select('village_name,village_code')->order_by('village_name','ASC')->get_where('lgd_villages',array('block_code'=>$block));
+				return ($res && is_object($res)) ? $res->result() : array();
+			}
+		} catch (Throwable $e) {}
+		return array();
 	}
 }
 /****************************************************/
 if ( ! function_exists('getCityName'))
 {
 	function getCityName($id){
-		$res = get_instance()->db->select('name')->get_where('master_city',array('id'=>$id))->row('name');
-		return $res;
+		try {
+			$ci = get_instance();
+			if ($ci->db && $ci->db->table_exists('master_city')) {
+				$res = $ci->db->select('name')->get_where('master_city',array('id'=>$id));
+				if ($res && is_object($res) && $res->num_rows() > 0) {
+					$row = $res->row();
+					return !empty($row->name) ? $row->name : '';
+				}
+			}
+		} catch (Throwable $e) {}
+		return '';
 	}
 }
 
 if ( ! function_exists('getsectionName'))
 {
 	function getsectionName($id){
-		$res = get_instance()->db->select('section_name')->get_where('master_sections',array('section_id'=>$id))->row('section_name');
-		return $res;
+		try {
+			$ci = get_instance();
+			if ($ci->db && $ci->db->table_exists('master_sections')) {
+				$res = $ci->db->select('section_name')->get_where('master_sections',array('section_id'=>$id));
+				if ($res && is_object($res) && $res->num_rows() > 0) {
+					$row = $res->row();
+					return !empty($row->section_name) ? $row->section_name : '';
+				}
+			}
+		} catch (Throwable $e) {}
+		return '';
 	}
 }
 
 if ( ! function_exists('getRegdcouncilName'))
 {
 	function getRegdcouncilName($id){
-		$res = get_instance()->db->select('name')->get_where('master_council',array('id'=>$id))->row('name');
-		return $res;
+		try {
+			$ci = get_instance();
+			if ($ci->db && $ci->db->table_exists('master_council')) {
+				$res = $ci->db->select('name')->get_where('master_council',array('id'=>$id));
+				if ($res && is_object($res) && $res->num_rows() > 0) {
+					$row = $res->row();
+					return !empty($row->name) ? $row->name : '';
+				}
+			}
+		} catch (Throwable $e) {}
+		return '';
 	}
 }
 
@@ -163,72 +202,153 @@ if ( ! function_exists('getRegdcouncilName'))
 if ( ! function_exists('getQualificationName'))
 {
 	function getQualificationName($id){
-		$res = get_instance()->db->select('name')->get_where('master_degree',array('id'=>$id))->row('name');
-		return $res;
+		try {
+			$ci = get_instance();
+			if ($ci->db && $ci->db->table_exists('master_degree')) {
+				$res = $ci->db->select('name')->get_where('master_degree',array('id'=>$id));
+				if ($res && is_object($res) && $res->num_rows() > 0) {
+					$row = $res->row();
+					return !empty($row->name) ? $row->name : '';
+				}
+			}
+		} catch (Throwable $e) {}
+		return '';
 	}
 }
 
 if ( ! function_exists('getSpecilizationName'))
 {
 	function getSpecilizationName($id){
-		$res = get_instance()->db->select('name')->get_where('master_specialization',array('id'=>$id))->row('name');
-		return $res;
+		try {
+			$ci = get_instance();
+			if ($ci->db && $ci->db->table_exists('master_specialization')) {
+				$res = $ci->db->select('name')->get_where('master_specialization',array('id'=>$id));
+				if ($res && is_object($res) && $res->num_rows() > 0) {
+					$row = $res->row();
+					return !empty($row->name) ? $row->name : '';
+				}
+			}
+		} catch (Throwable $e) {}
+		return '';
 	}
 }
 
 if ( ! function_exists('gethospitalName'))
 {
 	function gethospitalName($id){
-		$res = get_instance()->db->select('name')->get_where('hospital',array('id'=>$id))->row('name');
-		return $res;
+		try {
+			$ci = get_instance();
+			if ($ci->db && $ci->db->table_exists('hospital')) {
+				$res = $ci->db->select('name')->get_where('hospital',array('id'=>$id));
+				if ($res && is_object($res) && $res->num_rows() > 0) {
+					$row = $res->row();
+					return !empty($row->name) ? $row->name : '';
+				}
+			}
+		} catch (Throwable $e) {}
+		return '';
 	}
 }
 
 if ( ! function_exists('getdoctorName'))
 {
 	function getdoctorName($id){
-		$res = get_instance()->db->select('fname')->get_where('profile_dr',array('id'=>$id))->row('fname');
-		return $res;
+		try {
+			$ci = get_instance();
+			if ($ci->db && $ci->db->table_exists('profile_dr')) {
+				$res = $ci->db->select('fname')->get_where('profile_dr',array('id'=>$id));
+				if ($res && is_object($res) && $res->num_rows() > 0) {
+					$row = $res->row();
+					return !empty($row->fname) ? $row->fname : '';
+				}
+			}
+		} catch (Throwable $e) {}
+		return '';
 	}
 }
 
 if ( ! function_exists('getServicesName'))
 {
 	function getServicesName($id){
-		$res = get_instance()->db->select('name')->get_where('master_services',array('id'=>$id))->row('name');
-		return $res;
+		try {
+			$ci = get_instance();
+			if ($ci->db && $ci->db->table_exists('master_services')) {
+				$res = $ci->db->select('name')->get_where('master_services',array('id'=>$id));
+				if ($res && is_object($res) && $res->num_rows() > 0) {
+					$row = $res->row();
+					return !empty($row->name) ? $row->name : '';
+				}
+			}
+		} catch (Throwable $e) {}
+		return '';
 	}
 }
 if ( ! function_exists('getModuleName'))
 {
 	function getModuleName($module_id){
-		$res = get_instance()->db->select('module_name')->get_where('master_management',array('module_id'=>$module_id))->row('module_name');
-		return $res;
+		try {
+			$ci = get_instance();
+			if ($ci->db && $ci->db->table_exists('master_management')) {
+				$res = $ci->db->select('module_name')->get_where('master_management',array('module_id'=>$module_id));
+				if ($res && is_object($res) && $res->num_rows() > 0) {
+					$row = $res->row();
+					return !empty($row->module_name) ? $row->module_name : '';
+				}
+			}
+		} catch (Throwable $e) {}
+		return '';
 	}
 }
 if ( ! function_exists('getRoleName'))
 {
 	function getRoleName($level_id){
-		$res = get_instance()->db->select('level_name')->get_where('rolewise',array('level_id'=>$level_id))->row('level_name');
-		return $res;
+		if (empty($level_id)) {
+			return 'Administrator';
+		}
+		try {
+			$ci = get_instance();
+			if ($ci->db && $ci->db->table_exists('rolewise')) {
+				$res = $ci->db->select('level_name')->get_where('rolewise',array('level_id'=>$level_id));
+				if ($res && is_object($res) && $res->num_rows() > 0) {
+					$row = $res->row();
+					return !empty($row->level_name) ? $row->level_name : 'Administrator';
+				}
+			}
+		} catch (Throwable $e) {}
+		return 'Administrator';
 	}
 }
 if ( ! function_exists('getCityName'))
 {
 	function getCityName($id){
-		$res = get_instance()->db->select('name')->get_where('master_city',array('id'=>$id))->row('name');
-		return $res;
+		try {
+			$ci = get_instance();
+			if ($ci->db && $ci->db->table_exists('master_city')) {
+				$res = $ci->db->select('name')->get_where('master_city',array('id'=>$id));
+				if ($res && is_object($res) && $res->num_rows() > 0) {
+					$row = $res->row();
+					return !empty($row->name) ? $row->name : '';
+				}
+			}
+		} catch (Throwable $e) {}
+		return '';
 	}
 }
 if ( ! function_exists('getInstituteName'))
 {
 	function getInstituteName($id,$type='H'){
-		if($type=='C')
-			$table='clinic';
-		else
-			$table='hospital';
-		$res = get_instance()->db->select('name')->get_where($table,array('id'=>$id))->row('name');
-		return $res;
+		try {
+			$table = ($type=='C') ? 'clinic' : 'hospital';
+			$ci = get_instance();
+			if ($ci->db && $ci->db->table_exists($table)) {
+				$res = $ci->db->select('name')->get_where($table,array('id'=>$id));
+				if ($res && is_object($res) && $res->num_rows() > 0) {
+					$row = $res->row();
+					return !empty($row->name) ? $row->name : '';
+				}
+			}
+		} catch (Throwable $e) {}
+		return '';
 	}
 }
 if(!function_exists('sendsms'))
