@@ -2354,55 +2354,100 @@ class Hospitalpanel extends CI_Controller
 	}
 
 	/**
+	/**
+	 * Ensure inquiries table exists
+	 */
+	protected function _ensure_inquiries_table()
+	{
+		try {
+			if ($this->db && !$this->db->table_exists('inquiries')) {
+				$sql = "CREATE TABLE IF NOT EXISTS `inquiries` (
+				  `id` INT(11) NOT NULL AUTO_INCREMENT,
+				  `hospital_id` INT(11) NOT NULL DEFAULT 0,
+				  `user_name` VARCHAR(255) DEFAULT NULL,
+				  `user_email` VARCHAR(255) DEFAULT NULL,
+				  `user_phone` VARCHAR(50) DEFAULT NULL,
+				  `subject` VARCHAR(255) DEFAULT NULL,
+				  `message` TEXT DEFAULT NULL,
+				  `reply_message` TEXT DEFAULT NULL,
+				  `status` VARCHAR(50) DEFAULT 'pending',
+				  `created_at` DATETIME DEFAULT NULL,
+				  `updated_at` DATETIME DEFAULT NULL,
+				  PRIMARY KEY (`id`),
+				  KEY `idx_inq_hospital` (`hospital_id`),
+				  KEY `idx_inq_status` (`status`)
+				) ENGINE=InnoDB DEFAULT CHARSET=utf8;";
+				$this->db->query($sql);
+			}
+		} catch (Throwable $e) {
+			log_message('error', 'Error ensuring inquiries table: ' . $e->getMessage());
+		}
+	}
+
+	/**
 	 * Hospital Inquiries Management Dashboard
 	 */
 	public function inquiries()
 	{
+		$this->_ensure_inquiries_table();
+
 		$hospital_id = $this->did;
 		$hosuid = $this->session->userdata('hosuserid');
 
 		$status  = $this->input->get_post('status', TRUE) ?: 'all';
 		$keyword = trim($this->input->get_post('keyword', TRUE) ?: '');
 
-		$this->db->group_start();
-		$this->db->where('hospital_id', $hospital_id);
-		if (!empty($hosuid)) {
-			$this->db->or_where('hospital_id', $hosuid);
-		}
-		$this->db->group_end();
-
-		if (!empty($status) && $status !== 'all') {
-			$this->db->where('status', $status);
-		}
-
-		if (!empty($keyword)) {
-			$this->db->group_start()
-				->like('user_name', $keyword)
-				->or_like('user_email', $keyword)
-				->or_like('user_phone', $keyword)
-				->or_like('subject', $keyword)
-				->or_like('message', $keyword)
-			->group_end();
-		}
-
-		$data['inquiries'] = $this->db->order_by('id', 'DESC')->get('inquiries')->result();
-
-		// Counters
-		$this->db->group_start()->where('hospital_id', $hospital_id);
-		if (!empty($hosuid)) {
-			$this->db->or_where('hospital_id', $hosuid);
-		}
-		$all_inqs = $this->db->group_end()->get('inquiries')->result();
-
-		$data['total_count']   = count($all_inqs);
+		$data['inquiries']     = array();
+		$data['total_count']   = 0;
 		$data['pending_count'] = 0;
 		$data['replied_count'] = 0;
 		$data['closed_count']  = 0;
 
-		foreach ($all_inqs as $inq) {
-			if ($inq->status == 'pending') $data['pending_count']++;
-			elseif ($inq->status == 'replied') $data['replied_count']++;
-			elseif ($inq->status == 'closed') $data['closed_count']++;
+		try {
+			if ($this->db && $this->db->table_exists('inquiries')) {
+				$this->db->group_start();
+				$this->db->where('hospital_id', $hospital_id);
+				if (!empty($hosuid)) {
+					$this->db->or_where('hospital_id', $hosuid);
+				}
+				$this->db->group_end();
+
+				if (!empty($status) && $status !== 'all') {
+					$this->db->where('status', $status);
+				}
+
+				if (!empty($keyword)) {
+					$this->db->group_start()
+						->like('user_name', $keyword)
+						->or_like('user_email', $keyword)
+						->or_like('user_phone', $keyword)
+						->or_like('subject', $keyword)
+						->or_like('message', $keyword)
+					->group_end();
+				}
+
+				$q = $this->db->order_by('id', 'DESC')->get('inquiries');
+				if ($q && is_object($q)) {
+					$data['inquiries'] = $q->result();
+				}
+
+				// Counters
+				$this->db->group_start()->where('hospital_id', $hospital_id);
+				if (!empty($hosuid)) {
+					$this->db->or_where('hospital_id', $hosuid);
+				}
+				$cq = $this->db->group_end()->get('inquiries');
+				$all_inqs = ($cq && is_object($cq)) ? $cq->result() : array();
+
+				$data['total_count'] = count($all_inqs);
+				foreach ($all_inqs as $inq) {
+					if ($inq->status == 'pending') $data['pending_count']++;
+					elseif ($inq->status == 'replied') $data['replied_count']++;
+					elseif ($inq->status == 'closed') $data['closed_count']++;
+				}
+			}
+		} catch (Throwable $e) {
+			log_message('error', 'Error in Hospitalpanel inquiries: ' . $e->getMessage());
 		}
 
 		$data['active_status'] = $status;

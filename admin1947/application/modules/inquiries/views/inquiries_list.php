@@ -130,7 +130,7 @@
 
           <div>
             <span class="label label-info" style="font-size: 13px; padding: 6px 12px; border-radius: 6px;">
-              Total Records Found: <?=count($inquiries);?>
+              Total Records Found: <?=(!empty($inquiries) && is_array($inquiries)) ? count($inquiries) : 0;?>
             </span>
           </div>
         </form>
@@ -239,7 +239,7 @@
                 <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 5px;">
                   <button type="button" class="btn btn-xs btn-primary" 
                     style="background: #00a896; border-color: #00a896; border-radius: 6px; padding: 5px 10px; font-weight: 600;"
-                    onclick="openAdminReplyModal('<?=$row->id;?>', '<?=htmlspecialchars(addslashes($row->hospital_name ?: 'Hospital #' . $row->hospital_id));?>', '<?=htmlspecialchars(addslashes($row->user_name));?>', '<?=htmlspecialchars(addslashes($row->subject ?: 'Enquiry'));?>', '<?=htmlspecialchars(addslashes(str_replace(array("\r", "\n"), ' ', $row->message)));?>', '<?=htmlspecialchars(addslashes($row->reply_message ?? ''));?>', '<?=$row->status;?>')">
+                    onclick="openAdminReplyModal('<?=$row->id;?>', '<?=htmlspecialchars(addslashes($row->hospital_name ?: 'Hospital #' . $row->hospital_id));?>', '<?=htmlspecialchars(addslashes($row->user_name));?>', '<?=htmlspecialchars(addslashes($row->subject ?: 'Enquiry'));?>', '<?=htmlspecialchars(addslashes(str_replace(array("\r", "\n"), ' ', $row->message)));?>', '<?=htmlspecialchars(addslashes(isset($row->reply_message) ? $row->reply_message : ''));?>', '<?=$row->status;?>')">
                     <i class="fa fa-reply"></i> <?=(!empty($row->reply_message)) ? 'Edit Reply' : 'Add Reply';?>
                   </button>
 
