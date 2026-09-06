@@ -334,14 +334,17 @@ $pageurl3 = $this->uri->segment(3);
       <li class="header">ENTERPRISE MANAGEMENT</li>
 
       <!-- HR & Staff Management -->
-      <li class="treeview <?php if($pageurl1=='hr'){ ?> active menu-open <?php }?>">
-        <a href="<?=base_url('../hr/dashboard');?>" target="_blank">
-          <i class="fa fa-users" style="color: #38bdf8;"></i> <span>HR &amp; Staff Suite</span>
+      <li class="treeview <?php if($pageurl1=='hr' || ($pageurl1=='doctor' && $pageurl2=='career')){ ?> active menu-open <?php }?>">
+        <a href="#">
+          <i class="fa fa-users" style="color: #38bdf8;"></i> <span>HR &amp; Recruitment</span>
           <span class="pull-right-container">
             <i class="fa fa-angle-left pull-right"></i>
           </span>
         </a>
-        <ul class="treeview-menu">
+        <ul class="treeview-menu" <?php if($pageurl1=='hr' || ($pageurl1=='doctor' && $pageurl2=='career')){ ?> style="display: block;" <?php }?>>
+          <li class="<?php if($pageurl1=='doctor' && $pageurl2=='career'){ ?>active<?php }?>">
+            <a href="<?=base_url('doctor/career');?>"><i class="fa fa-briefcase" style="color: #00a896;"></i> Career &amp; Hiring Portal</a>
+          </li>
           <li><a href="<?=base_url('../hr/dashboard');?>" target="_blank"><i class="fa fa-tachometer"></i> HR Command Hub</a></li>
           <li><a href="<?=base_url('../hr/employees');?>" target="_blank"><i class="fa fa-user-plus"></i> Staff Directory</a></li>
           <li><a href="<?=base_url('../hr/attendance');?>" target="_blank"><i class="fa fa-calendar-check-o"></i> Daily Attendance Roster</a></li>

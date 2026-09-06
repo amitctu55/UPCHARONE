@@ -1865,63 +1865,123 @@ class Home extends CI_Controller
 
 	public function career()
 	{
-		$this->form_validation->set_rules('name','Name',"trim|required|max_length[200]");
-		$this->form_validation->set_rules('email','Email',"trim|required|max_length[200]");
-		$this->form_validation->set_rules('mobile','Mobile',"required|max_length[10]");
-		$this->form_validation->set_rules('designation','Designation',"required|max_length[200]");		
-		$this->form_validation->set_rules('qualification','Qualification',"required|max_length[200]");	
-		$this->form_validation->set_rules('message','Message',"required|max_length[500]");	
-		$this->form_validation->set_rules('uploadimage','Image',"callback_file_check[document]");
-		if($this->form_validation->run()===TRUE)
-		{
-			$uploadimage=$_FILES['uploadimage']['name'];
-			$extsign = pathinfo($_FILES['uploadimage']['name'],PATHINFO_EXTENSION);
+		if ($this->input->method() === 'post') {
+			$this->form_validation->set_rules('name', 'Full Name', "trim|required|max_length[200]");
+			$this->form_validation->set_rules('email', 'Email Address', "trim|required|valid_email|max_length[200]");
+			$this->form_validation->set_rules('mobile', 'Mobile Number', "required|regex_match[/^[0-9]{10}$/]");
+			$this->form_validation->set_rules('qualification', 'Highest Qualification', "required|max_length[200]");
 			
-			if($uploadimage!='') 
-			{	
-				$rname 							= rand(1111111,999999999);
-				$date 							= date('Y-m-d');
-				$uploadimage 					= '_profile_pic_'.$rname.$date.'.'.$extsign;
-				$config['upload_path']          = './admin1947/public/assets/document/';
-				$config['allowed_types'] 		= 'rtf|doc|docx|pdf|txt';
-				$config['max_size']             = 2048;
-				$config['quality'] 				= '60%';
-				$config['file_name']  			= $uploadimage;
-				$this->load->library('upload', $config);
-				if(! $this->upload->do_upload('uploadimage'))
+			$is_ajax = $this->input->is_ajax_request() || $this->input->post('is_ajax');
+
+			if ($this->form_validation->run() === TRUE)
+			{
+				$uploadimage = '';
+				if (!empty($_FILES['uploadimage']['name']))
 				{
-					$error = $this->upload->display_errors();
-					$flashmsg='<div class="alert alert-danger">
-					  <strong>Failed!</strong>'.$error.'
-					</div>';
-					$this->session->set_flashdata('flashmsg',$flashmsg);
-					redirect(base_url().'Home/career');
-					exit();
+					$rname       = rand(1111111, 999999999);
+					$date        = date('Y-m-d');
+					$extsign     = strtolower(pathinfo($_FILES['uploadimage']['name'], PATHINFO_EXTENSION));
+					$allowed_exts = array('rtf', 'doc', 'docx', 'pdf', 'txt');
+
+					if (!in_array($extsign, $allowed_exts)) {
+						$err = "Invalid file type. Only PDF, DOC, DOCX, RTF, or TXT resumes are allowed.";
+						if ($is_ajax) {
+							echo json_encode(array('status' => 'error', 'message' => $err));
+							return;
+						}
+						$this->session->set_flashdata('flashmsg', '<div class="alert alert-danger"><strong>Upload Error:</strong> ' . $err . '</div>');
+						redirect(base_url('Home/career'));
+						return;
+					}
+
+					$uploadimage = '_profile_pic_' . $rname . $date . '.' . $extsign;
+
+					$config['upload_path']   = './admin1947/public/assets/document/';
+					$config['allowed_types'] = 'rtf|doc|docx|pdf|txt';
+					$config['max_size']      = 5120; // 5MB
+					$config['file_name']     = $uploadimage;
+
+					$this->load->library('upload', $config);
+					if (!$this->upload->do_upload('uploadimage'))
+					{
+						$error = strip_tags($this->upload->display_errors());
+						if ($is_ajax) {
+							echo json_encode(array('status' => 'error', 'message' => 'Resume Upload Failed: ' . $error));
+							return;
+						}
+						$this->session->set_flashdata('flashmsg', '<div class="alert alert-danger"><strong>Resume Upload Failed:</strong> ' . $error . '</div>');
+						redirect(base_url('Home/career'));
+						return;
+					}
 				}
-				else
-				{	
-					$data	=	array(
-									'name'			=>$this->input->post('name'),
-									'email'			=>$this->input->post('email'),
-									'mobile'		=>$this->input->post('mobile'),
-									'qualification'	=>$this->input->post('qualification'),
-									'designation'	=>$this->input->post('designation'),
-									'message'		=>$this->input->post('message'),
-									'resume'		=>$uploadimage,
-									'creat_date'	=>date('Y-m-d h:i:s')
-								   );
-					//echo "<pre>"; print_r($data); die;
-					$this->db->insert('career',$data);
-					$this->load->library('azad_lib');
-					$body="Thank You  <BR>   Email: $email  ";
-					$this->azad_lib->sendMail($email,'Request from  abcd hospital for profile approval',$body);
-					$msg="<div class='alert alert-success'><strong>Success!</strong> Your Data Added Successfully</div>";
-					$this->session->set_flashdata('flashmsg',$msg);
-					redirect('Home/career/', '');
+
+				$job_id = (int)$this->input->post('job_id');
+				$designation = trim($this->input->post('designation', TRUE));
+				if ($job_id > 0 && empty($designation)) {
+					$job_row = $this->db->where('job_id', $job_id)->get('career_jobs')->row_array();
+					if ($job_row) {
+						$designation = $job_row['title'];
+					}
+				}
+				if (empty($designation)) {
+					$designation = 'General Application';
+				}
+
+				$insert_data = array(
+					'job_id'        => ($job_id > 0) ? $job_id : null,
+					'name'          => trim($this->input->post('name', TRUE)),
+					'email'         => trim($this->input->post('email', TRUE)),
+					'mobile'        => trim($this->input->post('mobile', TRUE)),
+					'qualification' => trim($this->input->post('qualification', TRUE)),
+					'experience'    => trim($this->input->post('experience', TRUE)),
+					'designation'   => $designation,
+					'message'       => trim($this->input->post('message', TRUE)),
+					'resume'        => $uploadimage,
+					'status'        => '0',
+					'status_stage'  => 'pending',
+					'creat_date'    => date('Y-m-d')
+				);
+
+				$this->db->insert('career', $insert_data);
+
+				$success_msg = "Thank you for applying to Upchar Healthcare! Our recruitment team will review your application and contact you soon.";
+
+				if ($is_ajax) {
+					echo json_encode(array('status' => 'success', 'message' => $success_msg));
+					return;
+				}
+
+				$this->session->set_flashdata('flashmsg', '<div class="alert alert-success" style="border-radius: 8px; font-weight: 600;"><i class="fa fa-check-circle"></i> ' . $success_msg . '</div>');
+				redirect(base_url('Home/career'));
+				return;
+			}
+			else
+			{
+				$val_error = validation_errors();
+				if ($is_ajax) {
+					echo json_encode(array('status' => 'error', 'message' => strip_tags($val_error)));
+					return;
 				}
 			}
-        }
-		$this->load->view('careers');
+		}
+
+		// GET Request: Load active job openings & page view
+		$data['jobs'] = $this->db->order_by('job_id', 'DESC')->where('status', 'active')->get('career_jobs')->result_array();
+		$depts = array();
+		if (!empty($data['jobs'])) {
+			foreach ($data['jobs'] as $j) {
+				if (!empty($j['department']) && !in_array($j['department'], $depts)) {
+					$depts[] = $j['department'];
+				}
+			}
+		}
+		$data['departments'] = $depts;
+		$data['meta_array'] = array(
+			'meta_title' => 'Careers & Healthcare Job Vacancies | Upchar Hospital & Health Network',
+			'meta_desc'  => 'Explore current job openings, doctor vacancies, nursing staff, lab technicians, and hospital operations roles at Upchar Healthcare. Apply online today.'
+		);
+
+		$this->load->view('careers', $data);
 	}
 	
 	public function file_check($file,$type)
