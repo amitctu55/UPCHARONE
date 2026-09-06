@@ -1,3 +1,33 @@
+<style>
+@media (max-width: 768px) {
+  .career-nav-tabs {
+    flex-direction: column;
+    align-items: stretch !important;
+    gap: 8px;
+    border-bottom: none !important;
+  }
+  .career-nav-tabs > a {
+    width: 100%;
+    justify-content: space-between;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+  }
+  .career-nav-actions {
+    margin-left: 0 !important;
+    width: 100%;
+    justify-content: stretch;
+  }
+  .career-nav-actions > * {
+    flex: 1 1 auto;
+    text-align: center;
+  }
+  .master-card-body {
+    padding: 14px 10px !important;
+  }
+}
+</style>
 <div class="content-wrapper">
   <!-- Content Header & Breadcrumbs -->
   <section class="content-header" style="padding: 20px 20px 10px;">
@@ -86,7 +116,7 @@
       </div>
 
       <!-- Main Navigation Tabs -->
-      <div style="display: flex; gap: 10px; border-bottom: 2px solid #e2e8f0; margin-bottom: 20px;">
+      <div class="career-nav-tabs" style="display: flex; gap: 10px; border-bottom: 2px solid #e2e8f0; margin-bottom: 20px; flex-wrap: wrap; align-items: center;">
         <a href="<?=base_url('doctor/career?tab=applications')?>" style="padding: 12px 20px; font-size: 14px; font-weight: 700; text-decoration: none; border-bottom: 3px solid <?=($active_tab == 'applications') ? '#00a896' : 'transparent'?>; color: <?=($active_tab == 'applications') ? '#00a896' : '#64748b'?>; display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s;">
           <i class="fa fa-file-text-o"></i> Candidate Applications
           <span style="background: <?=($active_tab == 'applications') ? '#00a896' : '#e2e8f0'?>; color: <?=($active_tab == 'applications') ? '#fff' : '#475569'?>; padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: 600;">
@@ -101,7 +131,7 @@
           </span>
         </a>
 
-        <div style="margin-left: auto; display: flex; align-items: center; gap: 8px;">
+        <div class="career-nav-actions" style="margin-left: auto; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
           <a href="<?=base_url('Home/career')?>" target="_blank" class="btn btn-sm btn-default" style="border-radius: 6px; font-weight: 600; color: #475569;">
             <i class="fa fa-external-link"></i> View Frontend Portal
           </a>

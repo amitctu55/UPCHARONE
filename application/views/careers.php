@@ -261,6 +261,71 @@
   border-color: #00a896;
   background: #f0fdfa;
 }
+
+/* Responsive Mobile & Tablet Optimizations */
+@media (max-width: 768px) {
+  .career-hero {
+    margin-top: 15px !important;
+    padding: 35px 0 45px !important;
+    text-align: center;
+  }
+  .career-hero-title {
+    font-size: 25px !important;
+    line-height: 1.3 !important;
+  }
+  .career-hero-subtitle {
+    font-size: 14px !important;
+    margin-bottom: 20px !important;
+  }
+  .career-hero-badge {
+    margin-bottom: 12px !important;
+    font-size: 11.5px !important;
+  }
+  .career-hero .btn-apply-job,
+  .career-hero .btn-open-spontaneous {
+    width: 100% !important;
+    justify-content: center;
+    margin-bottom: 8px;
+  }
+  .job-card {
+    padding: 18px 14px !important;
+  }
+  .job-title {
+    font-size: 18px !important;
+  }
+  .job-meta-item {
+    display: inline-flex;
+    margin-right: 12px;
+    margin-bottom: 6px;
+    font-size: 12px;
+  }
+  .btn-apply-job, .btn-view-job-details {
+    width: 100% !important;
+    justify-content: center;
+    margin-bottom: 8px;
+  }
+  .dept-filter-btn {
+    padding: 6px 14px !important;
+    font-size: 12px !important;
+  }
+  .career-modal .modal-dialog {
+    margin: 10px !important;
+    width: auto !important;
+    max-width: calc(100vw - 20px) !important;
+  }
+  .career-modal .modal-body {
+    padding: 16px 14px !important;
+  }
+  .career-modal .modal-footer {
+    padding: 12px 14px !important;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .career-modal .modal-footer .btn {
+    width: 100% !important;
+    justify-content: center;
+  }
+}
 </style>
 
 <!-- Hero Section -->

@@ -626,6 +626,185 @@
       color: #d97706 !important;
       border: 1px solid #fde68a !important;
     }
+
+    /* =========================================================
+       ADMIN1947 MOBILE & TABLET RESPONSIVE MEDIA QUERIES
+       ========================================================= */
+    @media (max-width: 991px) {
+      .content-header {
+        padding: 15px 15px 8px !important;
+      }
+      .content {
+        padding: 10px 15px 25px !important;
+      }
+      .master-card-header {
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+      .master-toolbar {
+        gap: 10px;
+      }
+    }
+
+    @media (max-width: 767px) {
+      /* Overall Container & Padding */
+      .content-header {
+        padding: 12px 10px 6px !important;
+      }
+      .content-header > h1 {
+        font-size: 18px !important;
+        margin-bottom: 4px;
+        line-height: 1.3;
+      }
+      .content-header > h1 > small {
+        display: block;
+        margin-left: 0;
+        margin-top: 3px;
+        font-size: 12px;
+        color: #64748b;
+      }
+      .content-header .breadcrumb {
+        position: static !important;
+        float: none !important;
+        padding: 6px 0 !important;
+        margin-top: 6px;
+        font-size: 11.5px;
+      }
+      .content {
+        padding: 6px 10px 30px !important;
+      }
+
+      /* Master Cards */
+      .master-card {
+        border-radius: 8px;
+        margin-bottom: 16px;
+      }
+      .master-card-header {
+        padding: 12px 14px;
+        flex-direction: column;
+        align-items: flex-start !important;
+        gap: 10px;
+      }
+      .master-card-title {
+        font-size: 15px;
+        width: 100%;
+      }
+      .master-card-body {
+        padding: 14px 12px;
+      }
+
+      /* Filter & Search Toolbars */
+      .master-toolbar, form[id*="search"] {
+        padding: 10px 12px;
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 10px;
+      }
+      .master-toolbar > div, 
+      form[id*="search"] > div {
+        width: 100% !important;
+        justify-content: stretch !important;
+      }
+      .master-toolbar .input-group,
+      form[id*="search"] .input-group {
+        width: 100% !important;
+      }
+      .master-toolbar select, 
+      .master-toolbar input[type="text"],
+      form[id*="search"] select,
+      form[id*="search"] input[type="text"] {
+        width: 100% !important;
+        font-size: 13px !important;
+      }
+
+      /* Responsive Tables with Smooth Touch Scroll */
+      .table-responsive {
+        width: 100% !important;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        margin-bottom: 15px;
+        background: #fff;
+      }
+      .table-responsive > table {
+        min-width: 680px; /* Prevents column compression */
+        margin-bottom: 0 !important;
+      }
+      .table-responsive > table th,
+      .table-responsive > table td {
+        white-space: normal;
+        padding: 8px 10px !important;
+        font-size: 12.5px;
+      }
+
+      /* Modals on Mobile Phones */
+      .modal-dialog {
+        width: auto !important;
+        margin: 10px !important;
+        max-width: calc(100vw - 20px) !important;
+      }
+      .modal-content {
+        border-radius: 10px !important;
+      }
+      .modal-header {
+        padding: 14px 16px !important;
+      }
+      .modal-title {
+        font-size: 16px !important;
+      }
+      .modal-body {
+        padding: 16px 14px !important;
+      }
+      .modal-footer {
+        padding: 12px 14px !important;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+      .modal-footer .btn {
+        flex: 1 1 auto;
+      }
+
+      /* Tab Navigation Horizontal Scroll */
+      .nav-tabs, div[style*="border-bottom: 2px solid #e2e8f0"] {
+        overflow-x: auto !important;
+        white-space: nowrap !important;
+        flex-wrap: nowrap !important;
+        -webkit-overflow-scrolling: touch !important;
+        padding-bottom: 4px;
+        display: flex;
+        gap: 8px;
+      }
+      div[style*="border-bottom: 2px solid #e2e8f0"] > a {
+        flex-shrink: 0;
+      }
+
+      /* Action Buttons */
+      .btn-icon-action {
+        width: 34px;
+        height: 34px;
+      }
+
+      /* Toast Notification Container on Mobile */
+      #toast-container {
+        top: 10px !important;
+        right: 10px !important;
+        left: 10px !important;
+      }
+      .custom-toast {
+        width: 100% !important;
+        box-sizing: border-box;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .main-header .logo {
+        font-size: 12.5px !important;
+      }
+      .table-responsive > table {
+        min-width: 600px;
+      }
+    }
   </style>
 
   <!-- jQuery 3 (Loaded in head so view scripts always execute reliably) -->

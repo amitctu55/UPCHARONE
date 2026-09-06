@@ -1071,6 +1071,26 @@ header {
   .hero-features-list {
     grid-template-columns: 1fr;
   }
+  .box-form {
+    padding: 14px 12px !important;
+    margin: 15px 10px !important;
+  }
+  .box-form .input-group {
+    margin-bottom: 10px !important;
+    width: 100% !important;
+  }
+  .box-form .col-sm-offset-1,
+  .box-form .col-sm-2,
+  .box-form .col-sm-5 {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    width: 100% !important;
+  }
+  #searchBTN {
+    margin-top: 5px !important;
+    width: 100% !important;
+    min-height: 44px !important;
+  }
 }
 
 /* ==========================================================================
