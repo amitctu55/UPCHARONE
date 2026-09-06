@@ -545,21 +545,37 @@ class Home extends CI_Controller
 		$data['highlight_offer']   = $this->input->get('offer') ?: null;
 
 		$offers = array();
-		if ($this->db->table_exists('advertisement')) {
-			$this->db->where('status', '1');
-			if ($cat !== 'all' && in_array($cat, array('medicine', 'medical_store', 'equipment', 'pathology', 'hospital'))) {
-				$this->db->where('category', $cat);
-			} else {
-				$this->db->where_in('category', array('medicine', 'medical_store', 'equipment', 'general'));
+		try {
+			if ($this->db->table_exists('advertisement')) {
+				if ($this->db->field_exists('status', 'advertisement')) {
+					$this->db->where('status', '1');
+				}
+				if ($this->db->field_exists('category', 'advertisement')) {
+					if ($cat !== 'all' && in_array($cat, array('medicine', 'medical_store', 'equipment', 'pathology', 'hospital'))) {
+						$this->db->where('category', $cat);
+					} else {
+						$this->db->where_in('category', array('medicine', 'medical_store', 'equipment', 'general'));
+					}
+				}
+				$ad_q = $this->db->order_by('id', 'DESC')->get('advertisement');
+				$offers = ($ad_q && is_object($ad_q)) ? $ad_q->result() : array();
 			}
-			$ad_q = $this->db->order_by('id', 'DESC')->get('advertisement');
-			$offers = ($ad_q && is_object($ad_q)) ? $ad_q->result() : array();
+		} catch (Throwable $e) {
+			$offers = array();
 		}
 		$data['offers'] = $offers;
 
 		// Load verified chemists from profile_chem if any
-		$chem_q = $this->db->table_exists('profile_chem') ? $this->db->get_where('profile_chem', array('status' => '1', 'approved' => '1')) : null;
-		$data['chemists'] = ($chem_q && is_object($chem_q)) ? $chem_q->result() : array();
+		$chemists = array();
+		try {
+			if ($this->db->table_exists('profile_chem')) {
+				$chem_q = $this->db->get_where('profile_chem', array('status' => '1', 'approved' => '1'));
+				$chemists = ($chem_q && is_object($chem_q)) ? $chem_q->result() : array();
+			}
+		} catch (Throwable $e) {
+			$chemists = array();
+		}
+		$data['chemists'] = $chemists;
 
 		// Specializations and cities for global search bar
 		$spec_q = $this->db->order_by('name', 'asc')->where('status', '1')->get('master_specialization');

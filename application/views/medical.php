@@ -255,9 +255,14 @@
     <div class="row" style="margin-bottom: 40px;">
         <?php if (!empty($offers)): ?>
             <?php foreach ($offers as $offer): 
-                $imgSrc = filter_var($offer->image, FILTER_VALIDATE_URL) ? $offer->image : base_url('public/assets/upload/' . $offer->image);
-                $isHighlighted = ($highlight_offer && $highlight_offer == $offer->id);
-                $cat = $offer->category ?: 'general';
+                $imgVal = !empty($offer->image) ? $offer->image : '';
+                $imgSrc = (!empty($imgVal) && filter_var($imgVal, FILTER_VALIDATE_URL)) ? $imgVal : base_url('public/assets/upload/' . $imgVal);
+                $isHighlighted = (!empty($highlight_offer) && $highlight_offer == $offer->id);
+                $cat = !empty($offer->category) ? $offer->category : 'general';
+                $sponsorBadge = !empty($offer->sponsor_badge) ? $offer->sponsor_badge : 'Verified Partner';
+                $title = !empty($offer->title) ? $offer->title : 'Upchar Healthcare Network';
+                $shortDesc = !empty($offer->short_description) ? $offer->short_description : '';
+                $longDesc = !empty($offer->long_description) ? $offer->long_description : '';
             ?>
             <div class="col-md-4 col-sm-6" style="margin-bottom: 24px;">
                 <div class="offer-card <?=$isHighlighted ? 'highlighted-offer' : '';?>" id="offer-card-<?=$offer->id;?>">
@@ -268,9 +273,9 @@
                     <?php endif; ?>
 
                     <div class="offer-img-box">
-                        <img src="<?=$imgSrc;?>" alt="<?=html_escape($offer->title);?>" onerror="this.src='https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=500';">
+                        <img src="<?=$imgSrc;?>" alt="<?=html_escape($title);?>" onerror="this.src='https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=500';">
                         <span class="offer-badge-tag">
-                            <i class="fas fa-shield-alt"></i> <?=html_escape($offer->sponsor_badge ?: 'Verified Partner');?>
+                            <i class="fas fa-shield-alt"></i> <?=html_escape($sponsorBadge);?>
                         </span>
                         <span class="offer-cat-tag">
                             <?=str_replace('_', ' ', $cat);?>
@@ -279,12 +284,12 @@
 
                     <div class="offer-body">
                         <div>
-                            <h3 class="offer-title"><?=html_escape($offer->title);?></h3>
-                            <p class="offer-short-desc"><?=html_escape($offer->short_description);?></p>
-                            <?php if (!empty($offer->long_description)): ?>
+                            <h3 class="offer-title"><?=html_escape($title);?></h3>
+                            <p class="offer-short-desc"><?=html_escape($shortDesc);?></p>
+                            <?php if (!empty($longDesc)): ?>
                                 <div class="offer-long-desc">
                                     <i class="fas fa-check" style="color: #00A896; margin-right: 4px;"></i>
-                                    <?=html_escape($offer->long_description);?>
+                                    <?=html_escape($longDesc);?>
                                 </div>
                             <?php endif; ?>
                         </div>
