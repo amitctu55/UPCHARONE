@@ -349,103 +349,97 @@ class Clinicreg extends CI_Controller
 
 	public function add()
 	{	
-		$data['heading_title'] 	=  'Hospital Add';
+		$data['heading_title'] 	=  'Hospital / Clinic Add';
 		$data['module'] 		=  'Clinic/Hospital';
-		$this->form_validation->set_rules('objective','Type','trim|required|max_length[100]');
-		$this->form_validation->set_rules('type','Hospital Type','trim|required|max_length[100]');
-		$this->form_validation->set_rules('name','Name','trim|required|max_length[255]');
+
+		$this->form_validation->set_rules('objective','Category','trim|required|max_length[100]');
+		$this->form_validation->set_rules('type','Ownership Type','trim|required|max_length[100]');
+		$this->form_validation->set_rules('name','Facility Name','trim|required|max_length[255]');
 		$this->form_validation->set_rules('website','Website','trim|max_length[100]');
+		$this->form_validation->set_rules('state','State','trim|max_length[100]');
 		$this->form_validation->set_rules('city','City','trim|required|max_length[100]');
 		$this->form_validation->set_rules('location','Location','trim|max_length[100]');
 		$this->form_validation->set_rules('address','Address','trim|max_length[255]');
+		$this->form_validation->set_rules('pincode','Pincode','trim|max_length[10]');
 		$this->form_validation->set_rules('mobile','Mobile No',"trim|numeric|required|max_length[255]|is_unique[hospitallogin.MOBILE='".$this->db->escape_str($this->input->post('mobile'))."' AND status!='2']");
-		$this->form_validation->set_rules('email', '"Email Address"','trim|required|valid_email|callback_validate_member');
+		$this->form_validation->set_rules('email', 'Email Address','trim|required|valid_email|callback_validate_member');
 		$this->form_validation->set_rules('password','Password','trim|max_length[50]');
 		$this->form_validation->set_rules('about','About','trim|max_length[255]');
 		$this->form_validation->set_rules('tags','Tags','trim|max_length[100]');
-		$this->form_validation->set_rules('services[]','Services','trim|required|max_length[255]');
-		$this->form_validation->set_rules('package','Package','trim|required|max_length[255]');
-		if($this->form_validation->run()==TRUE)
+		$this->form_validation->set_rules('services[]','Services','trim');
+		$this->form_validation->set_rules('package','Package','trim|max_length[255]');
+
+		if ($this->form_validation->run() == TRUE)
 		{	
-			$uploadimage='';
-			$id=base64_decode($this->input->post('eid'));
-			$type= $this->input->post('objective');			
-			if($type=='H')
-			{
-				$typename='hospital';
-			}
-			else if($type=='C')
-			{
-				$typename='clinic';
-			}
-				$uploadimage=$_FILES['uploadimage']['name'];
-				$extsign = pathinfo($_FILES['uploadimage']['name'],PATHINFO_EXTENSION);
-				
-				$uploadimage2=$_FILES['idproof']['name'];
-				$extsign2 = pathinfo($_FILES['idproof']['name'],PATHINFO_EXTENSION);
-				
-				$uploadimage3=$_FILES['regproof']['name'];
-				$extsign3 = pathinfo($_FILES['regproof']['name'],PATHINFO_EXTENSION);
-				
-				if($uploadimage!='') 
-				{	
-					$rname=rand(1111111,999999999);
-					$date=date('Y-m-d');
-					$uploadimage=$typename.'_profile_pic_'.$rname.$date.'.'.$extsign;
-					$rname=rand(1111111,999999999);
-					$uploadimage2=$typename.'_id_proof_'.$rname.$date.'.'.$extsign;
-					$rname=rand(1111111,999999999);
-					$uploadimage3=$typename.'_reg_proof_'.$rname.$date.'.'.$extsign;
-					
-					$config['upload_path']          = './public/assets/upload/';
-					$config['allowed_types'] = 'jpg|png|jpeg|JPG|PNG|JPEG';
-					$config['max_size']             = 2048;
-					$config['quality'] = '60%';
-					$config['file_name']  = $uploadimage;
-					$this->load->library('upload', $config);
-					
-					if ( ! $this->upload->do_upload('uploadimage'))
-					{
-						$error = $this->upload->display_errors();
-						$flashmsg='<div class="alert alert-danger">
-						  <strong>Failed!</strong>'.$error.'
-						</div>';
-						$this->session->set_flashdata('flashmsg',$flashmsg);
-						redirect(base_url().'doctor/clinicreg/add');
-						exit();
-						
-					}
-					else
-					{
-						
-						$config['file_name']  = $uploadimage2;
-						$this->load->library('upload', $config);
-						$this->upload->do_upload('idproof');
-						
-						$config['file_name']  = $uploadimage3;
-						$this->load->library('upload', $config);
-						$this->upload->do_upload('regproof');
-						
-						if($this->doctorregmodel->clinicinsert($uploadimage,$uploadimage2,$uploadimage3)) 
-						{
-							$msg="<div class='alert alert-success'><strong>Success!</strong> Data Added Successfully</div>";
-							$this->session->set_flashdata('flashmsg',$msg);
-							redirect(base_url().'doctor/clinicreg/add');
-						
-						}
-						else
-						{
-							$msg="<div class='alert alert-danger'><strong>Failed!</strong> Something went wrong. Please try again.</div>";
-							$this->session->set_flashdata('flashmsg',$msg);
-							redirect(base_url().'doctor/clinicreg/add');
-						}
-					}
+			$type = $this->input->post('objective');			
+			$typename = ($type == 'C') ? 'clinic' : 'hospital';
+
+			$uploadimage = 'dummyhosp.jpg';
+			$uploadimage2 = '';
+			$uploadimage3 = '';
+
+			$config['upload_path']   = './public/assets/upload/';
+			$config['allowed_types'] = 'jpg|png|jpeg|JPG|PNG|JPEG|pdf|PDF';
+			$config['max_size']      = 5120; // 5MB
+			$this->load->library('upload', $config);
+
+			// 1. Hospital Profile Image / Logo
+			if (!empty($_FILES['uploadimage']['name'])) {
+				$ext = pathinfo($_FILES['uploadimage']['name'], PATHINFO_EXTENSION);
+				$fname = $typename . '_profile_pic_' . rand(1111111, 999999999) . date('Y-m-d') . '.' . $ext;
+				$config['file_name'] = $fname;
+				$this->upload->initialize($config);
+				if ($this->upload->do_upload('uploadimage')) {
+					$uploadimage = $fname;
 				}
-			//}	
+			}
+
+			// 2. ID Proof
+			if (!empty($_FILES['idproof']['name'])) {
+				$ext2 = pathinfo($_FILES['idproof']['name'], PATHINFO_EXTENSION);
+				$fname2 = $typename . '_id_proof_' . rand(1111111, 999999999) . date('Y-m-d') . '.' . $ext2;
+				$config['file_name'] = $fname2;
+				$this->upload->initialize($config);
+				if ($this->upload->do_upload('idproof')) {
+					$uploadimage2 = $fname2;
+				}
+			}
+
+			// 3. Registration Proof
+			if (!empty($_FILES['regproof']['name'])) {
+				$ext3 = pathinfo($_FILES['regproof']['name'], PATHINFO_EXTENSION);
+				$fname3 = $typename . '_reg_proof_' . rand(1111111, 999999999) . date('Y-m-d') . '.' . $ext3;
+				$config['file_name'] = $fname3;
+				$this->upload->initialize($config);
+				if ($this->upload->do_upload('regproof')) {
+					$uploadimage3 = $fname3;
+				}
+			}
+
+			$institution_id = $this->doctorregmodel->clinicinsert($uploadimage, $uploadimage2, $uploadimage3);
+			if ($institution_id) {
+				$hosp_name = htmlspecialchars($this->input->post('name'));
+				$flashmsg = "<div class='alert alert-success alert-dismissible' style='border-radius: 8px;'>
+					<button type='button' class='close' data-dismiss='alert'>&times;</button>
+					<i class='fa fa-check-circle'></i> <strong>Success!</strong> Healthcare facility <strong>{$hosp_name}</strong> has been onboarded successfully (ID #{$institution_id}).
+				</div>";
+				$this->session->set_flashdata('flashmsg', $flashmsg);
+				redirect(base_url('doctor/clinicreg/viewhospital'));
+				return;
+			} else {
+				$flashmsg = "<div class='alert alert-danger alert-dismissible' style='border-radius: 8px;'>
+					<button type='button' class='close' data-dismiss='alert'>&times;</button>
+					<i class='fa fa-exclamation-triangle'></i> <strong>Error!</strong> Unable to save facility. Please check required fields and try again.
+				</div>";
+				$this->session->set_flashdata('flashmsg', $flashmsg);
+				redirect(base_url('doctor/clinicreg/add'));
+				return;
+			}
 		}
+
 		$this->load->view('inc/topheaderlink');
 		$this->load->view('inc/topheader');
-		$this->load->view('clinicreg',$data);
+		$this->load->view('clinicreg', $data);
 		$this->load->view('sidebar');
 		$this->load->view('inc/headersetting');
 		$this->load->view('inc/footerlink');

@@ -186,156 +186,121 @@ class Doctorregmodel extends CI_Model
 			return 'EMAIL';
 	}
 	
-	public function clinicinsert($drimage,$idproof='',$regproof='')
+	public function clinicinsert($drimage = '', $idproof = '', $regproof = '')
 	{
-		$date			= date('Y-m-d h:i:s');
-		$objective		= $this->input->post('objective');
-		if($objective=='H')
-		{
-			$typename='hospital';
+		$date       = date('Y-m-d H:i:s');
+		$objective  = $this->input->post('objective', TRUE) ?: 'H';
+		$typename   = ($objective == 'C') ? 'clinic' : 'hospital';
+
+		// Self-healing: ensure state and pincode columns exist
+		if (!$this->db->field_exists('state', $typename)) {
+			@$this->db->query("ALTER TABLE `{$typename}` ADD COLUMN `state` VARCHAR(100) NULL AFTER `city`");
 		}
-		else if($objective=='C')
-		{
-			$typename='clinic';
+		if (!$this->db->field_exists('pincode', $typename)) {
+			@$this->db->query("ALTER TABLE `{$typename}` ADD COLUMN `pincode` VARCHAR(10) NULL AFTER `address`");
 		}
-		$city			= $this->input->post('city');
-		$name			= $this->input->post('name');
-		$location		= $this->input->post('location');
-		$address		= $this->input->post('address');
-		$tags			= $this->input->post('tags');
-		$about			= $this->input->post('about');
-		$package		= $this->input->post('package');
-		$services		= $this->input->post('services');
-		$email			= $this->input->post('email');
-		$mobile			= $this->input->post('mobile');
-		$password		= md5($this->input->post('password'));
-		$website		= $this->input->post('website');
-		$status			= $this->input->post('status');
-		
-		//$fullname=$this->input->post('name');
-		//$name=explode(' ',ucwords($fullname));
-		//$fname=$name[0];
-		//$lname=@$name[1];
-		
-		$udata		=		array(
-								'FNAME'		=>$name,
-								'STATUS'	=>'1',
-								'APPROVED'	=>'1',
-								'PASSWORD'	=>$password,
-								'REG_DATE'	=>date('Y-m-d'),
-								'GENDER'	=>'M'
-								); 
-		if($email)
-		$udata['EMAIL']		=	$email;
-		if($mobile)
-		$udata['MOBILE']	=	$mobile;
-	
-		if($this->db->insert('hospitallogin',$udata))
+
+		$state      = trim($this->input->post('state', TRUE) ?: '');
+		$city       = (int)$this->input->post('city');
+		$location   = trim($this->input->post('location', TRUE) ?: '');
+		$address    = trim($this->input->post('address', TRUE) ?: '');
+		$pincode    = trim($this->input->post('pincode', TRUE) ?: '');
+		$name       = trim($this->input->post('name', TRUE) ?: '');
+		$tags       = trim($this->input->post('tags', TRUE) ?: '');
+		$about      = trim($this->input->post('about', TRUE) ?: '');
+		$package    = trim($this->input->post('package', TRUE) ?: '');
+		$services   = $this->input->post('services');
+		$email      = trim($this->input->post('email', TRUE) ?: '');
+		$mobile     = trim($this->input->post('mobile', TRUE) ?: '');
+		$password_raw = $this->input->post('password');
+		$password   = $password_raw ? md5($password_raw) : md5('Upchar@' . rand(1000, 9999));
+		$website    = trim($this->input->post('website', TRUE) ?: '');
+		$status     = $this->input->post('status') !== null ? $this->input->post('status') : '1';
+
+		$udata = array(
+			'FNAME'      => $name,
+			'STATUS'     => '1',
+			'APPROVED'   => '1',
+			'PASSWORD'   => $password,
+			'REG_DATE'   => date('Y-m-d H:i:s'),
+			'GENDER'     => 'M'
+		); 
+		if ($email)  $udata['EMAIL']  = $email;
+		if ($mobile) $udata['MOBILE'] = $mobile;
+
+		if ($this->db->insert('hospitallogin', $udata))
 		{   
 			$thisid = $this->db->insert_id();
-			$data=		array(
-							 'name'				=>$name,
-							 'city'				=>$city,
-							 'location'			=>$location,
-							 'address'			=>$address,
-							 'tag'				=>$tags,
-							 'website'			=>$website,
-							 'id_proof'			=>$idproof,
-							 'med_reg_proof'	=>$regproof,
-							 'drimage'			=>$drimage,
-							 'mobile'			=>$mobile,	
-							 'email'			=>$email,
-							 'about'			=>$about,
-							 'subscription'		=>$package,
-							 'services'			=>$services,
-							 'approved'			=>'1',
-							 'verified'			=>'1',
-							 'status'			=>$status,
-							 'uid'				=>$thisid,
-							 'creat_date'		=>$date,
-							 'created_by'		=>getUserId());
-			$this->db->insert($typename,$data);
-			$institution_id		= $this->db->insert_id();
-			$services 			= $this->input->post('services');
-			if(is_array($services) && !empty($services))
+			
+			$primary_service = (is_array($services) && !empty($services)) ? (int)$services[0] : (int)$services;
+
+			$data = array(
+				'name'          => $name,
+				'city'          => $city,
+				'state'         => $state,
+				'location'      => $location,
+				'address'       => $address,
+				'pincode'       => $pincode,
+				'tag'           => $tags,
+				'website'       => $website,
+				'id_proof'      => $idproof ?: '',
+				'med_reg_proof' => $regproof ?: '',
+				'drimage'       => $drimage ?: 'dummyhosp.jpg',
+				'mobile'        => $mobile,	
+				'email'         => $email,
+				'about'         => $about,
+				'subscription'  => (int)$package,
+				'services'      => $primary_service,
+				'approved'      => '1',
+				'verified'      => '1',
+				'status'        => $status,
+				'uid'           => $thisid,
+				'creat_date'    => $date,
+				'created_by'    => (int)getUserId()
+			);
+			
+			$this->db->insert($typename, $data);
+			$institution_id = $this->db->insert_id();
+
+			// Store all chosen services in instition_services
+			if (is_array($services) && !empty($services))
 			{
-				foreach($services as $q)
+				$qualdata = array();
+				foreach ($services as $q)
 				{
-					$qualdata[]	=	array(
-										  'institution_type'	=>$objective,
-										  'institution_id'		=>$institution_id,
-										  'services_id'			=>$q
-										  );
+					if ((int)$q > 0) {
+						$qualdata[] = array(
+							'institution_type' => $objective,
+							'institution_id'   => $institution_id,
+							'services_id'      => (int)$q,
+							'status'           => '1'
+						);
+					}
 				}
-				$this->db->insert_batch('instition_services',$qualdata);
+				if (!empty($qualdata)) {
+					$this->db->insert_batch('instition_services', $qualdata);
+				}
 			}
-			$msg="Welcome to Upchar , Thanks for joining Upchar Team
-			WWW.UPCHAR.INFO";
-			sendsms($msg,$mobile);
-			/*Admin Email Start */
-			$this->load->library('azad_lib');
-			$body="Welcome to Upchar <BR> Thanks for joining Upchar Team <BR>Email: info@upchar.info ";
-			$this->azad_lib->sendMail_admin($email,'Welcome Upchar Hospital',$body);
-			/*Admin Email End */
+
+			// Safe SMS and Email notifications
+			if ($mobile) {
+				$msg = "Welcome to Upchar, Thanks for joining Upchar Team. WWW.UPCHAR.INFO";
+				@sendsms($msg, $mobile);
+			}
+
+			if ($email) {
+				try {
+					$this->load->library('azad_lib');
+					$body = "Welcome to Upchar<br>Thanks for joining Upchar Team<br>Email: info@upchar.info";
+					@$this->azad_lib->sendMail_admin($email, 'Welcome Upchar Hospital', $body);
+				} catch (Throwable $e) {}
+			}
+
+			return $institution_id;
 		}
 		
-		return 1;	
-		
-		//-----------------
-		$mon 		= $this->input->post('mon');
-		$tue 		= $this->input->post('tue');
-		$wed 		= $this->input->post('wed');
-		$thu 		= $this->input->post('thu');
-		$fri 		= $this->input->post('fri');
-		$sat 		= $this->input->post('sat');
-		$sun 		= $this->input->post('sun');
-		$from 		= $this->input->post('fromtime');
-		$to 		= $this->input->post('totime');
-		
-		/*if(is_array($mon) && !empty($mon))
-		{
-			$key		= 0;
-			$timings	= $mon[$key];
-			//echo "<pre>"; print_r($mon); die;
-			for($key2=0;$key2<7;$key2++)
-			{	
-				$timingdata=array(
-								  'user_type'	=>$objective,
-								  'user_id'		=>$institution_id,
-								  'M'			=>$mon[$key][$key2],
-								  'T'			=>$tue[$key][$key2],	
-								  'W'			=>$wed[$key][$key2],
-								  'TH'			=>$thu[$key][$key2],	
-								  'F'			=>$fri[$key][$key2],	
-								  'SA'			=>$sat[$key][$key2],	
-								  'S'			=>$sun[$key][$key2],	
-								  'status'		=>'1'
-								  );
-								  
-				$this->db->insert('timing',$timingdata);
-				$sessions=$from[$key][$key2];
-				$tid= $this->db->insert_id();
-				foreach($sessions as $key3=>$value)
-				{
-					if($from[$key][$key2][$key3]=='' || $from[$key][$key2][$key3]=='')
-					continue;
-					$sessiondata = array(
-										'timing_id'		=>$tid,
-										'from_timing'	=>$from[$key][$key2][$key3],
-										'to_timing'		=>$to[$key][$key2][$key3],
-										'status'		=>'1'
-										);
-					$this->db->insert('timing_session',$sessiondata);
-				}	
-			}
-		}*/
-		//return ($this->db->affected_rows() != 1) ? false : true;
+		return false;	
 	}
-	
-	
-	      //10/01/2019
-	     // update doctor function
-	
 	
 	public function updatedoctor($id)
 	{
