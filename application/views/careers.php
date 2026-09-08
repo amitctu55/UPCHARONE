@@ -633,8 +633,8 @@
               <div style="font-weight: 600; color: #334155; font-size: 14px;" id="file-upload-label">
                 Click or tap here to upload Resume
               </div>
-              <small style="color: #94a3b8; font-size: 12px;">Supported: PDF, DOC, DOCX, RTF, TXT (Max 5MB)</small>
-              <input type="file" name="uploadimage" id="resume-file-input" style="display: none;" accept=".pdf,.doc,.docx,.rtf,.txt" required>
+              <small style="color: #94a3b8; font-size: 12px;">Supported: PDF, DOC, DOCX (Max 2MB)</small>
+              <input type="file" name="uploadimage" id="resume-file-input" style="display: none;" accept=".pdf,.doc,.docx" required>
             </div>
           </div>
 
@@ -744,22 +744,46 @@ $(document).ready(function() {
     $('#jobApplicationModal').modal('show');
   });
 
-  // File Upload Input label update
-  $('#resume-file-input').on('change', function() {
-    if (this.files && this.files.length > 0) {
-      var file = this.files[0];
-      var fileName = file.name;
-      var fileSizeMb = (file.size / (1024 * 1024)).toFixed(2);
+  // File Upload Input validation & label update (Strict 2MB Limit)
+  $('#resume-file-input').on('change', function(e) {
+    var file = this.files && this.files[0];
+    if (!file) return;
 
-      if (file.size > 5 * 1024 * 1024) {
-        alert('File size exceeds 5MB limit. Please upload a smaller file.');
-        $(this).val('');
-        $('#file-upload-label').text('Click or tap here to upload Resume');
-        return;
-      }
+    var maxSizeInBytes = 2 * 1024 * 1024; // 2MB = 2,097,152 bytes
+    var allowedExtensions = ['pdf', 'doc', 'docx'];
+    var allowedMimeTypes = [
+      'application/pdf',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    ];
+    var fileExtension = file.name.split('.').pop().toLowerCase();
 
-      $('#file-upload-label').html('<i class="fa fa-file-text-o text-success"></i> ' + fileName + ' (' + fileSizeMb + ' MB)');
+    // 1. Format & Extension Check
+    if (allowedExtensions.indexOf(fileExtension) === -1) {
+      alert('Invalid file format! Please upload a PDF, DOC, or DOCX file.');
+      $(this).val('');
+      $('#file-upload-label').text('Click or tap here to upload Resume');
+      return;
     }
+
+    // 2. MIME Type Check (when provided by browser)
+    if (file.type && allowedMimeTypes.indexOf(file.type) === -1 && fileExtension === 'pdf' && file.type !== 'application/pdf') {
+      alert('Invalid file format! Please upload a valid PDF document.');
+      $(this).val('');
+      $('#file-upload-label').text('Click or tap here to upload Resume');
+      return;
+    }
+
+    // 3. Size Check (Max 2MB)
+    if (file.size > maxSizeInBytes) {
+      alert('File size exceeds 2MB! Please upload a smaller PDF or Word file.');
+      $(this).val('');
+      $('#file-upload-label').text('Click or tap here to upload Resume');
+      return;
+    }
+
+    var fileSizeMb = (file.size / (1024 * 1024)).toFixed(2);
+    $('#file-upload-label').html('<i class="fa fa-file-text-o text-success"></i> ' + file.name + ' (' + fileSizeMb + ' MB)');
   });
 
   // Submit Application Form via AJAX
@@ -770,6 +794,17 @@ $(document).ready(function() {
     if ($('#custom-designation-group').is(':visible')) {
       var customRole = $('#custom-designation-input').val().trim();
       $('#apply-designation').val(customRole || 'General Spontaneous Application');
+    }
+
+    // Pre-flight check: Strict 2MB file size verification
+    var fileInput = document.getElementById('resume-file-input');
+    if (fileInput && fileInput.files && fileInput.files[0]) {
+      var uploadFile = fileInput.files[0];
+      var maxSizeInBytes = 2 * 1024 * 1024; // 2MB
+      if (uploadFile.size > maxSizeInBytes) {
+        alert('File size exceeds 2MB! Please upload a smaller file (Maximum 2MB).');
+        return false;
+      }
     }
 
     var $btn = $('#btn-submit-career-app');

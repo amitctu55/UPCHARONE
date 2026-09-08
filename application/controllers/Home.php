@@ -1860,15 +1860,11 @@ class Home extends CI_Controller
 			if ($this->form_validation->run() === TRUE)
 			{
 				$uploadimage = '';
-				if (!empty($_FILES['uploadimage']['name']))
+				if (isset($_FILES['uploadimage']) && !empty($_FILES['uploadimage']['name']))
 				{
-					$rname       = rand(1111111, 999999999);
-					$date        = date('Y-m-d');
-					$extsign     = strtolower(pathinfo($_FILES['uploadimage']['name'], PATHINFO_EXTENSION));
-					$allowed_exts = array('rtf', 'doc', 'docx', 'pdf', 'txt');
-
-					if (!in_array($extsign, $allowed_exts)) {
-						$err = "Invalid file type. Only PDF, DOC, DOCX, RTF, or TXT resumes are allowed.";
+					// Check PHP upload error codes
+					if (isset($_FILES['uploadimage']['error']) && ($_FILES['uploadimage']['error'] === UPLOAD_ERR_INI_SIZE || $_FILES['uploadimage']['error'] === UPLOAD_ERR_FORM_SIZE)) {
+						$err = "Error: File exceeds the server upload limit (Maximum 2MB allowed).";
 						if ($is_ajax) {
 							echo json_encode(array('status' => 'error', 'message' => $err));
 							return;
@@ -1878,11 +1874,86 @@ class Home extends CI_Controller
 						return;
 					}
 
-					$uploadimage = '_profile_pic_' . $rname . $date . '.' . $extsign;
+					if (isset($_FILES['uploadimage']['error']) && $_FILES['uploadimage']['error'] !== UPLOAD_ERR_OK && $_FILES['uploadimage']['error'] !== UPLOAD_ERR_NO_FILE) {
+						$err = "Error: File upload failed with error code: " . $_FILES['uploadimage']['error'];
+						if ($is_ajax) {
+							echo json_encode(array('status' => 'error', 'message' => $err));
+							return;
+						}
+						$this->session->set_flashdata('flashmsg', '<div class="alert alert-danger"><strong>Upload Error:</strong> ' . $err . '</div>');
+						redirect(base_url('Home/career'));
+						return;
+					}
+
+					$fileTmpPath    = $_FILES['uploadimage']['tmp_name'];
+					$fileName       = $_FILES['uploadimage']['name'];
+					$fileSize       = (int)$_FILES['uploadimage']['size'];
+					$maxSizeInBytes = 2 * 1024 * 1024; // 2MB = 2,097,152 bytes
+
+					// 1. Validate File Size (Strict 2MB Limit)
+					if ($fileSize > $maxSizeInBytes) {
+						$err = "Error: File size must be less than 2MB (" . round($fileSize / (1024 * 1024), 2) . "MB detected).";
+						if ($is_ajax) {
+							echo json_encode(array('status' => 'error', 'message' => $err));
+							return;
+						}
+						$this->session->set_flashdata('flashmsg', '<div class="alert alert-danger"><strong>Upload Error:</strong> ' . $err . '</div>');
+						redirect(base_url('Home/career'));
+						return;
+					}
+
+					// 2. Validate Extension
+					$fileExtension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
+					$allowed_exts  = array('pdf', 'doc', 'docx');
+
+					if (!in_array($fileExtension, $allowed_exts)) {
+						$err = "Error: Invalid file format! Only PDF, DOC, or DOCX documents are allowed.";
+						if ($is_ajax) {
+							echo json_encode(array('status' => 'error', 'message' => $err));
+							return;
+						}
+						$this->session->set_flashdata('flashmsg', '<div class="alert alert-danger"><strong>Upload Error:</strong> ' . $err . '</div>');
+						redirect(base_url('Home/career'));
+						return;
+					}
+
+					// 3. Validate MIME Type
+					$mimeType = '';
+					if (is_file($fileTmpPath)) {
+						if (function_exists('finfo_open')) {
+							$finfo    = finfo_open(FILEINFO_MIME_TYPE);
+							$mimeType = finfo_file($finfo, $fileTmpPath);
+							finfo_close($finfo);
+						} elseif (function_exists('mime_content_type')) {
+							$mimeType = mime_content_type($fileTmpPath);
+						}
+					}
+
+					$allowed_mimes = array(
+						'application/pdf',
+						'application/msword',
+						'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+						'application/octet-stream'
+					);
+
+					if (!empty($mimeType) && !in_array($mimeType, $allowed_mimes)) {
+						$err = "Error: Only PDF and Word documents are allowed (detected: " . htmlspecialchars($mimeType) . ").";
+						if ($is_ajax) {
+							echo json_encode(array('status' => 'error', 'message' => $err));
+							return;
+						}
+						$this->session->set_flashdata('flashmsg', '<div class="alert alert-danger"><strong>Upload Error:</strong> ' . $err . '</div>');
+						redirect(base_url('Home/career'));
+						return;
+					}
+
+					$rname       = rand(1111111, 999999999);
+					$date        = date('Y-m-d');
+					$uploadimage = '_profile_pic_' . $rname . $date . '.' . $fileExtension;
 
 					$config['upload_path']   = './admin1947/public/assets/document/';
-					$config['allowed_types'] = 'rtf|doc|docx|pdf|txt';
-					$config['max_size']      = 5120; // 5MB
+					$config['allowed_types'] = 'pdf|doc|docx';
+					$config['max_size']      = 2048; // 2048 KB = 2MB
 					$config['file_name']     = $uploadimage;
 
 					$this->load->library('upload', $config);
