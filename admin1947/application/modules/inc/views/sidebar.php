@@ -207,6 +207,25 @@ $pageurl3 = $this->uri->segment(3);
         </a>
       </li>
 
+            <!-- Career & Job Applications Module -->
+      <li class="<?php if($pageurl1=='doctor' && $pageurl2=='career'){ ?> active <?php }?>">
+        <a href="<?=base_url('doctor/career');?>">
+          <i class="fa fa-briefcase" style="color: #00a896;"></i> <span>Career Applications</span>
+          <?php 
+          $pending_career_count = 0;
+          try {
+              if ($this->db && $this->db->table_exists('career')) {
+                  $pending_career_count = $this->db->where("status_stage = 'pending' OR status_stage = '' OR status_stage IS NULL", NULL, FALSE)->count_all_results('career');
+              }
+          } catch (Throwable $e) {}
+          if($pending_career_count > 0): ?>
+            <span class="pull-right-container">
+              <small class="label pull-right bg-green"><?=$pending_career_count;?></small>
+            </span>
+          <?php endif; ?>
+        </a>
+      </li>
+
       <!-- Revenue & Commission Module with Sublinks -->
       <li class="treeview <?php if($pageurl1=='admin_revenue'){ ?> active menu-open <?php }?>">
         <a href="<?=base_url('admin_revenue');?>">
@@ -312,14 +331,22 @@ $pageurl3 = $this->uri->segment(3);
         </ul>
       </li>
 
-      <!-- SEO Management Dashboard -->
-      <li class="<?php if($pageurl1=='seo'){ ?>active<?php }?>">
-        <a href="<?=base_url('seo/meta/index');?>">
+            <!-- SEO Management Dashboard -->
+      <li class="treeview <?php if($pageurl1=='seo'){ ?> active menu-open <?php }?>">
+        <a href="#">
           <i class="fa fa-line-chart" style="color: #0d9488;"></i> <span>SEO &amp; Meta Tags</span>
           <span class="pull-right-container">
-            <small class="label pull-right bg-teal" style="background: #0d9488 !important;">SEO</small>
+            <i class="fa fa-angle-left pull-right"></i>
           </span>
         </a>
+        <ul class="treeview-menu" <?php if($pageurl1=='seo'){ ?> style="display: block;" <?php }?>>
+          <li class="<?php if($pageurl1=='seo' && ($pageurl3=='index' || empty($pageurl3))){ ?>active<?php }?>">
+            <a href="<?=base_url('seo/meta/index');?>"><i class="fa fa-dashboard" style="color: #0d9488;"></i> SEO Dashboard &amp; List</a>
+          </li>
+          <li class="<?php if($pageurl1=='seo' && $pageurl3=='add'){ ?>active<?php }?>">
+            <a href="<?=base_url('seo/meta/add');?>"><i class="fa fa-plus-circle" style="color: #10b981;"></i> Add New Meta Tag</a>
+          </li>
+        </ul>
       </li>
       <!-- Upchar Points & Wallet -->
       <li class="<?php if($pageurl1=='masters' && $pageurl2=='walletadmin'){ ?>active<?php }?>">
@@ -513,8 +540,20 @@ $pageurl3 = $this->uri->segment(3);
           $m_ctrl = $direct_management[$j]['module_controller'];
           $m_act = $direct_management[$j]['module_action'];
 
-          // Skip abdm & settings if already rendered as top item
-          if ($m_ctrl == 'abdm' || $m_ctrl == 'settings') continue;
+          // Skip items that are already covered in the primary structured menus or are logout
+          if (
+              $m_ctrl == 'abdm' || 
+              $m_ctrl == 'settings' || 
+              $m_ctrl == 'other' || 
+              $m_folder == 'others' ||
+              $m_act == 'signout' ||
+              stripos($direct_management[$j]['module_name'], 'log out') !== false ||
+              stripos($direct_management[$j]['module_name'], 'sign out') !== false ||
+              ($m_ctrl == 'clinicreg' && in_array($m_act, array('insert', 'biomedicalmachine', 'advertisment'))) ||
+              ($m_ctrl == 'users' && in_array($m_act, array('usercreate', 'changepassword')))
+          ) {
+              continue;
+          }
 
           $is_direct_active = false;
           if ($m_folder != $m_ctrl) {

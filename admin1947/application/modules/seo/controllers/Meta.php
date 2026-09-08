@@ -113,46 +113,48 @@ class Meta extends CI_Controller
         $data['res'] = [];
 
         if ($this->input->method(TRUE) === 'POST') {
-            $raw_url = trim($this->input->post('page_url', TRUE) ?: '');
-            $clean_url = $this->_normalize_url($raw_url);
-
             $this->form_validation->set_rules('page_url', 'Page URL Route', 'trim|required');
             $this->form_validation->set_rules('meta_title', 'Meta Title', 'trim|required|max_length[255]');
             $this->form_validation->set_rules('meta_description', 'Meta Description', 'trim|max_length[1000]');
             $this->form_validation->set_rules('meta_keyword', 'Meta Keywords', 'trim|max_length[500]');
 
-            $url_exists = $this->meta_model->check_url_exists($clean_url);
+            if ($this->form_validation->run() === TRUE) {
+                $raw_url = trim($this->input->post('page_url', TRUE) ?: '');
+                $clean_url = $this->_normalize_url($raw_url);
+                $url_exists = $this->meta_model->check_url_exists($clean_url);
 
-            if ($url_exists) {
-                $this->session->set_flashdata('flashmsg', "<div class='alert alert-danger alert-dismissible'><button type='button' class='close' data-dismiss='alert'>&times;</button><i class='fa fa-exclamation-triangle'></i> A meta configuration for URL <strong>/{$clean_url}</strong> already exists! Please edit the existing entry.</div>");
-            } elseif ($this->form_validation->run() === TRUE) {
-                $insert_data = [
-                    'page_url'            => $clean_url,
-                    'meta_title'          => trim($this->input->post('meta_title', TRUE)),
-                    'meta_description'    => trim($this->input->post('meta_description', TRUE) ?: ''),
-                    'meta_keyword'        => trim($this->input->post('meta_keyword', TRUE) ?: ''),
-                    'canonical_url'       => trim($this->input->post('canonical_url', TRUE) ?: ''),
-                    'robots_meta'         => trim($this->input->post('robots_meta', TRUE) ?: 'index, follow'),
-                    'og_title'            => trim($this->input->post('og_title', TRUE) ?: ''),
-                    'og_description'      => trim($this->input->post('og_description', TRUE) ?: ''),
-                    'og_image'            => trim($this->input->post('og_image', TRUE) ?: ''),
-                    'og_type'             => trim($this->input->post('og_type', TRUE) ?: 'website'),
-                    'twitter_title'       => trim($this->input->post('twitter_title', TRUE) ?: ''),
-                    'twitter_description' => trim($this->input->post('twitter_description', TRUE) ?: ''),
-                    'twitter_image'       => trim($this->input->post('twitter_image', TRUE) ?: ''),
-                    'schema_markup'       => trim($this->input->post('schema_markup', FALSE) ?: ''),
-                    'status'              => $this->input->post('status') === '0' ? '0' : '1',
-                    'meta_date_added'     => date('Y-m-d H:i:s'),
-                    'updated_at'          => date('Y-m-d H:i:s')
-                ];
-
-                $new_id = $this->meta_model->insert_meta($insert_data);
-
-                if ($new_id) {
-                    $this->session->set_flashdata('flashmsg', "<div class='alert alert-success alert-dismissible' style='border-radius: 8px;'><button type='button' class='close' data-dismiss='alert'>&times;</button><i class='fa fa-check-circle'></i> Meta tag created successfully for <strong>/{$clean_url}</strong>!</div>");
-                    redirect('seo/meta/index');
+                if ($url_exists) {
+                    $this->session->set_flashdata('flashmsg', "<div class='alert alert-danger alert-dismissible' style='border-radius: 8px;'><button type='button' class='close' data-dismiss='alert'>&times;</button><i class='fa fa-exclamation-triangle'></i> A meta configuration for URL <strong>/{$clean_url}</strong> already exists! Please edit the existing entry or use a different route.</div>");
                 } else {
-                    $this->session->set_flashdata('flashmsg', "<div class='alert alert-danger alert-dismissible'><button type='button' class='close' data-dismiss='alert'>&times;</button><i class='fa fa-exclamation-circle'></i> Failed to save meta tag to database. Please check your inputs.</div>");
+                    $insert_data = [
+                        'page_url'            => $clean_url,
+                        'meta_title'          => trim($this->input->post('meta_title', TRUE)),
+                        'meta_description'    => trim($this->input->post('meta_description', TRUE) ?: ''),
+                        'meta_keyword'        => trim($this->input->post('meta_keyword', TRUE) ?: ''),
+                        'canonical_url'       => trim($this->input->post('canonical_url', TRUE) ?: ''),
+                        'robots_meta'         => trim($this->input->post('robots_meta', TRUE) ?: 'index, follow'),
+                        'og_title'            => trim($this->input->post('og_title', TRUE) ?: ''),
+                        'og_description'      => trim($this->input->post('og_description', TRUE) ?: ''),
+                        'og_image'            => trim($this->input->post('og_image', TRUE) ?: ''),
+                        'og_type'             => trim($this->input->post('og_type', TRUE) ?: 'website'),
+                        'twitter_title'       => trim($this->input->post('twitter_title', TRUE) ?: ''),
+                        'twitter_description' => trim($this->input->post('twitter_description', TRUE) ?: ''),
+                        'twitter_image'       => trim($this->input->post('twitter_image', TRUE) ?: ''),
+                        'schema_markup'       => trim($this->input->post('schema_markup', FALSE) ?: ''),
+                        'status'              => $this->input->post('status') === '0' ? '0' : '1',
+                        'meta_date_added'     => date('Y-m-d H:i:s'),
+                        'updated_at'          => date('Y-m-d H:i:s')
+                    ];
+
+                    $new_id = $this->meta_model->insert_meta($insert_data);
+
+                    if ($new_id) {
+                        $this->session->set_flashdata('flashmsg', "<div class='alert alert-success alert-dismissible' style='border-radius: 8px;'><button type='button' class='close' data-dismiss='alert'>&times;</button><i class='fa fa-check-circle'></i> Meta tag created successfully for <strong>/{$clean_url}</strong>!</div>");
+                        redirect('seo/meta/index');
+                        return;
+                    } else {
+                        $this->session->set_flashdata('flashmsg', "<div class='alert alert-danger alert-dismissible' style='border-radius: 8px;'><button type='button' class='close' data-dismiss='alert'>&times;</button><i class='fa fa-exclamation-circle'></i> Failed to save meta tag to database. Please check your inputs.</div>");
+                    }
                 }
             }
         }
@@ -187,19 +189,19 @@ class Meta extends CI_Controller
         $data['res'] = $record;
 
         if ($this->input->method(TRUE) === 'POST') {
-            $raw_url = trim($this->input->post('page_url', TRUE) ?: '');
-            $clean_url = $this->_normalize_url($raw_url);
-
             $this->form_validation->set_rules('page_url', 'Page URL Route', 'trim|required');
             $this->form_validation->set_rules('meta_title', 'Meta Title', 'trim|required|max_length[255]');
             $this->form_validation->set_rules('meta_description', 'Meta Description', 'trim|max_length[1000]');
             $this->form_validation->set_rules('meta_keyword', 'Meta Keywords', 'trim|max_length[500]');
 
-            $url_exists = $this->meta_model->check_url_exists($clean_url, $meta_id);
+            if ($this->form_validation->run() === TRUE) {
+                $raw_url = trim($this->input->post('page_url', TRUE) ?: '');
+                $clean_url = $this->_normalize_url($raw_url);
+                $url_exists = $this->meta_model->check_url_exists($clean_url, $meta_id);
 
-            if ($url_exists) {
-                $this->session->set_flashdata('flashmsg', "<div class='alert alert-danger alert-dismissible'><button type='button' class='close' data-dismiss='alert'>&times;</button><i class='fa fa-exclamation-triangle'></i> A meta configuration for URL <strong>/{$clean_url}</strong> is already used by another record!</div>");
-            } elseif ($this->form_validation->run() === TRUE) {
+                if ($url_exists) {
+                    $this->session->set_flashdata('flashmsg', "<div class='alert alert-danger alert-dismissible' style='border-radius: 8px;'><button type='button' class='close' data-dismiss='alert'>&times;</button><i class='fa fa-exclamation-triangle'></i> A meta configuration for URL <strong>/{$clean_url}</strong> is already used by another record!</div>");
+                } else {
                 $update_data = [
                     'page_url'            => $clean_url,
                     'meta_title'          => trim($this->input->post('meta_title', TRUE)),
@@ -223,6 +225,8 @@ class Meta extends CI_Controller
 
                 $this->session->set_flashdata('flashmsg', "<div class='alert alert-success alert-dismissible' style='border-radius: 8px;'><button type='button' class='close' data-dismiss='alert'>&times;</button><i class='fa fa-check-circle'></i> Meta tag #{$meta_id} (/{$clean_url}) updated successfully!</div>");
                 redirect('seo/meta/index');
+                return;
+                }
             }
         }
 
@@ -376,14 +380,17 @@ class Meta extends CI_Controller
     private function _normalize_url($url)
     {
         $url = trim($url);
+        if ($url === '') {
+            return '';
+        }
         // Remove protocol & domain
         $url = preg_replace('#^https?://[^/]+/#i', '', $url);
         $url = preg_replace('#^https?://[^/]+$#i', '', $url);
-        // Remove base url if present
+        // Remove base url or domain if present
         $url = str_replace([base_url(), 'upchar.info/'], '', $url);
         // Trim leading and trailing slashes
         $url = trim($url, '/');
-        // Default root URL to 'home'
+        // If user typed "/" or was root
         if ($url === '' || $url === '/') {
             $url = 'home';
         }
