@@ -24,7 +24,7 @@ $config['access_admin_module']          	= array(
 );
 $config['access_admin_controller']      	= array(
 	'dashboard', 'changepassword', 'meta', 'career', 'appointment', 'clinicreg', 
-	'doctorview', 'pathology', 'pathtest', 'pathlabreg', 'usercreate', 'userlogincreate', 
+	'doctorview', 'pathology', 'pathtest', 'pathlabreg', 'usercreate', 'userlogincreate', 'patient', 
 	'walletadmin', 'settings', 'admin_revenue', 'admin_payment', 'abdm', 'contactus', 'inquiries'
 );
 $config['access_admin_action']          	= array();

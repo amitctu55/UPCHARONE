@@ -126,7 +126,7 @@ class Appointment extends CI_Controller
 							p.id as doctor_id,
 							p.fname,
 							p.lname,
-							p.speciality,
+							COALESCE(ms.name, 'General Practitioner') as speciality,
 							p.mobile,
 							p.email,
 							COUNT(a.appointment_id) as total_bookings,
@@ -134,8 +134,9 @@ class Appointment extends CI_Controller
 							SUM(CASE WHEN a.status = '1' OR a.status = 'COMPLETED' THEN 1 ELSE 0 END) as confirmed_count,
 							SUM(CASE WHEN a.status = '0' OR a.status = 'PENDING' THEN 1 ELSE 0 END) as pending_count
 						FROM profile_dr p
-						LEFT JOIN appointment a ON a.doctor_id = p.id
-						GROUP BY p.id
+						LEFT JOIN master_specialization ms ON ms.id = p.specialization
+						LEFT JOIN appointment a ON (a.doctor_id = p.id OR a.doctor_id = p.user_id)
+						GROUP BY p.id, ms.name
 						ORDER BY total_bookings DESC, p.fname ASC
 					");
 					if ($doc_q && is_object($doc_q)) {
@@ -153,14 +154,15 @@ class Appointment extends CI_Controller
 							p.id as doctor_id,
 							p.fname as dr_fname,
 							p.lname as dr_lname,
-							p.speciality as dr_speciality,
+							COALESCE(ms.name, 'General') as dr_speciality,
 							COUNT(a.appointment_id) as total_appointments,
 							MAX(a.appointment_date) as last_appointment_date,
 							SUM(CASE WHEN a.status = '1' OR a.status = 'COMPLETED' THEN 1 ELSE 0 END) as confirmed_count
 						FROM appointment a
-						JOIN profile_dr p ON p.id = a.doctor_id
+						JOIN profile_dr p ON (p.id = a.doctor_id OR p.user_id = a.doctor_id)
+						LEFT JOIN master_specialization ms ON ms.id = p.specialization
 						JOIN hospital h ON (h.uid = a.institute_id OR h.id = a.institute_id)
-						GROUP BY h.id, p.id
+						GROUP BY h.id, p.id, ms.name
 						ORDER BY total_appointments DESC
 					");
 					if ($hd_q && is_object($hd_q)) {
@@ -180,12 +182,13 @@ class Appointment extends CI_Controller
 							dp.status as practice_status,
 							p.fname as dr_fname,
 							p.lname as dr_lname,
-							p.speciality as dr_speciality,
+							COALESCE(ms.name, 'General') as dr_speciality,
 							h.name as hospital_name,
 							h.city as hospital_city,
-							(SELECT COUNT(*) FROM appointment a WHERE a.doctor_id = dp.user_id AND (a.institute_id = h.uid OR a.institute_id = h.id)) as appointment_count
+							(SELECT COUNT(*) FROM appointment a WHERE (a.doctor_id = dp.user_id OR a.doctor_id = p.id) AND (a.institute_id = h.uid OR a.institute_id = h.id)) as appointment_count
 						FROM dr_practice dp
-						JOIN profile_dr p ON p.id = dp.user_id
+						JOIN profile_dr p ON (p.id = dp.user_id OR p.user_id = dp.user_id)
+						LEFT JOIN master_specialization ms ON ms.id = p.specialization
 						JOIN hospital h ON h.id = dp.institution_id
 						ORDER BY appointment_count DESC, h.name ASC
 					");

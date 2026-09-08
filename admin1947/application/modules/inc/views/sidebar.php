@@ -143,7 +143,7 @@ $pageurl3 = $this->uri->segment(3);
            3. USER MANAGEMENT
            ========================================================= -->
       <?php 
-      $is_user_mgmt_active = ($pageurl1 == 'users' && in_array($pageurl2, array('usercreate', 'changepassword')));
+      $is_user_mgmt_active = ($pageurl1 == 'users' && in_array($pageurl2, array('patient', 'usercreate', 'changepassword', 'userlogincreate')));
       ?>
       <li class="treeview <?php if($is_user_mgmt_active){ ?> active menu-open <?php }?>">
         <a href="#">
@@ -153,6 +153,11 @@ $pageurl3 = $this->uri->segment(3);
           </span>
         </a>
         <ul class="treeview-menu" <?php if($is_user_mgmt_active){ ?> style="display: block;" <?php }?>>
+          <li class="<?php if($pageurl1=='users' && $pageurl2=='patient'){ ?>active<?php }?>">
+            <a href="<?=base_url('users/patient');?>">
+              <i class="fa fa-address-book" style="color: #00a896;"></i> Patients Directory
+            </a>
+          </li>
           <li class="<?php if($pageurl1=='users' && $pageurl2=='usercreate'){ ?>active<?php }?>">
             <a href="<?=base_url('users/usercreate');?>">
               <i class="fa fa-user-plus"></i> Create User
