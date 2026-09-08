@@ -16,15 +16,17 @@
         </div>
 
         <!-- Prominent Centered Floating Search Pill UI -->
-        <form action="<?=base_url();?>search" method="GET">
+        <form action="<?=base_url('search');?>" method="GET">
             <div class="search-pill-container">
                 <!-- Location Picker -->
                 <div class="search-pill-sec loc-sec">
                     <i class="fas fa-map-marker-alt search-pill-icon"></i>
-                    <select class="search-pill-select" name="city" id="searchCitySelect" title="Select Location">
+                    <select class="search-pill-select" name="location" id="searchCitySelect" title="Select Location">
                         <option value="">All Locations / Cities</option>
-                        <?php if (!empty($cities)) { foreach($cities as $c){ ?>
-                        <option value='<?=$c->id;?>' <?=(isset($_GET['city']) && $_GET['city'] == $c->id) ? 'selected' : '';?>><?=$c->name;?></option>
+                        <?php if (!empty($cities)) { foreach($cities as $c){ 
+                            $is_sel = (isset($_GET['location']) && ($_GET['location'] == $c->id || strcasecmp($_GET['location'], $c->name) == 0)) || (isset($_GET['city']) && ($_GET['city'] == $c->id || strcasecmp($_GET['city'], $c->name) == 0));
+                        ?>
+                        <option value='<?=$c->name;?>' <?=$is_sel ? 'selected' : '';?>><?=$c->name;?></option>
                         <?php } } ?>
                     </select>
                 </div>
@@ -34,7 +36,7 @@
                 <!-- Keyword Search -->
                 <div class="search-pill-sec kw-sec">
                     <i class="fas fa-search search-pill-icon"></i>
-                    <input type="text" id="hint" class="search-pill-input ui-autocomplete-input" name="keyword" value="<?=@$_GET['keyword'];?>" placeholder="Search doctors, clinics, hospitals, treatments..." autocomplete="off">
+                    <input type="text" id="hint" class="search-pill-input ui-autocomplete-input" name="keyword" value="<?=@htmlspecialchars($_GET['keyword'] ?? '');?>" placeholder="Search doctors, clinics, hospitals, treatments..." autocomplete="off">
                 </div>
 
                 <div class="search-pill-divider"></div>
@@ -42,10 +44,12 @@
                 <!-- Specialization Dropdown -->
                 <div class="search-pill-sec spl-sec">
                     <i class="fas fa-user-md search-pill-icon"></i>
-                    <select class="search-pill-select" name="spl" title="Select Specialization">
+                    <select class="search-pill-select" name="speciality" title="Select Specialization">
                         <option value="">All Specialties</option>
-                        <?php if (!empty($specialization)) { foreach($specialization as $s){ ?>
-                        <option value='<?=$s->id;?>' <?=(isset($_GET['spl']) && $_GET['spl'] == $s->id) ? 'selected' : '';?>><?=$s->name;?></option>
+                        <?php if (!empty($specialization)) { foreach($specialization as $s){ 
+                            $is_spec_sel = (isset($_GET['speciality']) && ($_GET['speciality'] == $s->id || strcasecmp($_GET['speciality'], $s->name) == 0)) || (isset($_GET['spl']) && ($_GET['spl'] == $s->id || strcasecmp($_GET['spl'], $s->name) == 0));
+                        ?>
+                        <option value='<?=$s->name;?>' <?=$is_spec_sel ? 'selected' : '';?>><?=$s->name;?></option>
                         <?php } } ?>                   
                     </select>
                 </div>

@@ -1365,10 +1365,12 @@ small photos close--*/
             <div class="col-sm-3">
                 <div class="input-group shadow">
                     <span class="input-group-addon"><i class="fa fa-map-marker"></i></span>
-                    <select class="form-control" name="city">
+                    <select class="form-control" name="location">
                         <option value="">All Locations / Cities</option>
-                        <?php if (!empty($cities)) { foreach($cities as $c){ ?>
-                        <option value='<?=$c->id;?>' <?=(isset($_GET['city']) && $_GET['city'] == $c->id) ? 'selected' : '';?>><?=$c->name;?></option>
+                        <?php if (!empty($cities)) { foreach($cities as $c){ 
+                            $is_c_sel = (isset($_GET['location']) && ($_GET['location'] == $c->id || strcasecmp($_GET['location'], $c->name) == 0)) || (isset($_GET['city']) && ($_GET['city'] == $c->id || strcasecmp($_GET['city'], $c->name) == 0));
+                        ?>
+                        <option value='<?=$c->name;?>' <?=$is_c_sel ? 'selected' : '';?>><?=$c->name;?></option>
                         <?php } } ?>
                     </select>
                 </div>
@@ -1376,16 +1378,18 @@ small photos close--*/
             <div class="col-sm-5">
                 <div class="input-group shadow">
                     <span class="input-group-addon"><i class="fa fa-search"></i></span>
-                    <input type="text" id="hint" class="form-control ui-autocomplete-input" name="keyword" value="<?=@$_GET['keyword'];?>" placeholder="Search Hospitals/Doctors/Clinics etc" autocomplete="off">
+                    <input type="text" id="hint" class="form-control ui-autocomplete-input" name="keyword" value="<?=@htmlspecialchars($_GET['keyword'] ?? '');?>" placeholder="Search Hospitals/Doctors/Clinics etc" autocomplete="off">
                 </div>
             </div>
             <div class="col-sm-3">
                 <div class="input-group shadow">
                     <span class="input-group-addon"><i class="fa fa-user-md"></i></span>
-                    <select class="form-control" name="spl">
+                    <select class="form-control" name="speciality">
                         <option value="">-Specialization-</option>
-                        <?php foreach($specialization as $s){ ?>
-                        <option value='<?=$s->id;?>' <?=(isset($_GET['spl']) && $_GET['spl'] == $s->id) ? 'selected' : '';?>><?=$s->name;?></option>
+                        <?php foreach($specialization as $s){ 
+                            $is_s_sel = (isset($_GET['speciality']) && ($_GET['speciality'] == $s->id || strcasecmp($_GET['speciality'], $s->name) == 0)) || (isset($_GET['spl']) && ($_GET['spl'] == $s->id || strcasecmp($_GET['spl'], $s->name) == 0));
+                        ?>
+                        <option value='<?=$s->name;?>' <?=$is_s_sel ? 'selected' : '';?>><?=$s->name;?></option>
                         <?php } ?>               
                     </select>
                 </div>   
@@ -1452,9 +1456,9 @@ small photos close--*/
             <?php endif; ?>
                 <div class="col-sm-12" style="padding: 0;">
                     <?php 
-                    $curr_city = isset($_GET['city']) ? $_GET['city'] : '';
+                    $curr_location = isset($_GET['location']) ? $_GET['location'] : (isset($_GET['city']) ? $_GET['city'] : '');
                     $curr_keyword = isset($_GET['keyword']) ? $_GET['keyword'] : '';
-                    $curr_spl = isset($_GET['spl']) ? $_GET['spl'] : '';
+                    $curr_speciality = isset($_GET['speciality']) ? $_GET['speciality'] : (isset($_GET['spl']) ? $_GET['spl'] : '');
                     $curr_per_page = isset($per_page_param) ? $per_page_param : '10';
                     $c_page = isset($current_page) ? (int)$current_page : 1;
                     $t_pages = isset($total_pages) ? (int)$total_pages : 1;
@@ -1462,12 +1466,12 @@ small photos close--*/
                     $p_size = isset($per_page) ? (int)$per_page : 10;
 
                     if (!function_exists('buildPageUrl')) {
-                        function buildPageUrl($p, $city = '', $kw = '', $spl = '', $pp = '10') {
+                        function buildPageUrl($p, $loc = '', $kw = '', $spec = '', $pp = '10') {
                             $base = (strpos(current_url(), 'search') !== false) ? base_url('search') : base_url('doctors');
                             $params = array();
-                            if (!empty($city)) $params['city'] = $city;
+                            if (!empty($loc)) $params['location'] = $loc;
                             if (!empty($kw)) $params['keyword'] = $kw;
-                            if (!empty($spl)) $params['spl'] = $spl;
+                            if (!empty($spec)) $params['speciality'] = $spec;
                             if (!empty($pp) && $pp !== '10') $params['per_page'] = $pp;
                             if ((int)$p > 1) $params['page'] = (int)$p;
                             $qs = http_build_query($params);
@@ -1505,10 +1509,10 @@ small photos close--*/
                             <div class="per-page-wrapper">
                                 <label for="perPageTopSelect" style="margin: 0; font-weight: 500; color: #64748B;">Per Page:</label>
                                 <select id="perPageTopSelect" class="per-page-select" onchange="location = this.value;">
-                                    <option value="<?=buildPageUrl(1, $curr_city, $curr_keyword, $curr_spl, '10');?>" <?=($curr_per_page == '10') ? 'selected' : '';?>>10</option>
-                                    <option value="<?=buildPageUrl(1, $curr_city, $curr_keyword, $curr_spl, '20');?>" <?=($curr_per_page == '20') ? 'selected' : '';?>>20</option>
-                                    <option value="<?=buildPageUrl(1, $curr_city, $curr_keyword, $curr_spl, '50');?>" <?=($curr_per_page == '50') ? 'selected' : '';?>>50</option>
-                                    <option value="<?=buildPageUrl(1, $curr_city, $curr_keyword, $curr_spl, 'all');?>" <?=($curr_per_page == 'all') ? 'selected' : '';?>>All</option>
+                                    <option value="<?=buildPageUrl(1, $curr_location, $curr_keyword, $curr_speciality, '10');?>" <?=($curr_per_page == '10') ? 'selected' : '';?>>10</option>
+                                    <option value="<?=buildPageUrl(1, $curr_location, $curr_keyword, $curr_speciality, '20');?>" <?=($curr_per_page == '20') ? 'selected' : '';?>>20</option>
+                                    <option value="<?=buildPageUrl(1, $curr_location, $curr_keyword, $curr_speciality, '50');?>" <?=($curr_per_page == '50') ? 'selected' : '';?>>50</option>
+                                    <option value="<?=buildPageUrl(1, $curr_location, $curr_keyword, $curr_speciality, 'all');?>" <?=($curr_per_page == 'all') ? 'selected' : '';?>>All</option>
                                 </select>
                             </div>
                         </div>
@@ -1665,9 +1669,17 @@ small photos close--*/
                         </div>
                     </div>
                     <?php } } else { ?>
-                    <div class="doctor-card text-center" style="display: block; padding: 40px; width: 100%;">
-                        <h4 style="color: #64748b; margin-bottom: 8px;">No doctors found matching your criteria.</h4>
-                        <p style="color: #94a3b8;">Try changing your location or specialization filter.</p>
+                    <div class="doctor-card text-center" style="display: block; padding: 50px 20px; width: 100%; border-radius: 12px; background: #ffffff; box-shadow: 0 4px 16px rgba(0,0,0,0.06); margin: 20px 0;">
+                        <div style="width: 70px; height: 70px; border-radius: 50%; background: #fef2f2; color: #ef4444; display: inline-flex; align-items: center; justify-content: center; font-size: 28px; margin-bottom: 16px;">
+                            <i class="fa fa-user-md"></i>
+                        </div>
+                        <h3 style="color: #1e293b; font-weight: 700; margin-bottom: 8px;">No doctors found matching your criteria</h3>
+                        <p style="color: #64748b; font-size: 15px; max-width: 540px; margin: 0 auto 24px auto; line-height: 1.6;">
+                            We couldn't find any verified specialists matching your current filters. Try changing your selected location, specialty, or searching with different keywords.
+                        </p>
+                        <a href="<?=base_url('doctors');?>" class="btn btn-primary" style="padding: 12px 28px; font-weight: 600; border-radius: 8px; background: #00a896; border: none; color: #fff; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 12px rgba(0,168,150,0.25);">
+                            <i class="fa fa-refresh"></i> Reset Filters &amp; View All Doctors
+                        </a>
                     </div>
                     <?php } ?>
                     </div>
@@ -1684,7 +1696,7 @@ small photos close--*/
                         <div class="pagination-controls">
                             <!-- Previous Page -->
                             <?php if ($c_page > 1): ?>
-                            <a href="<?=buildPageUrl($c_page - 1, $curr_city, $curr_keyword, $curr_spl, $curr_per_page);?>" class="page-btn" title="Previous Page">
+                            <a href="<?=buildPageUrl($c_page - 1, $curr_location, $curr_keyword, $curr_speciality, $curr_per_page);?>" class="page-btn" title="Previous Page">
                                 <i class="fa fa-chevron-left"></i>
                             </a>
                             <?php else: ?>
@@ -1698,25 +1710,25 @@ small photos close--*/
                             $start_p = max(1, $c_page - 2);
                             $end_p = min($t_pages, $c_page + 2);
                             if ($start_p > 1) {
-                                echo '<a href="'.buildPageUrl(1, $curr_city, $curr_keyword, $curr_spl, $curr_per_page).'" class="page-btn">1</a>';
+                                echo '<a href="'.buildPageUrl(1, $curr_location, $curr_keyword, $curr_speciality, $curr_per_page).'" class="page-btn">1</a>';
                                 if ($start_p > 2) echo '<span class="page-btn disabled">...</span>';
                             }
                             for ($p = $start_p; $p <= $end_p; $p++) {
                                 if ($p == $c_page) {
                                     echo '<span class="page-btn active">'.$p.'</span>';
                                 } else {
-                                    echo '<a href="'.buildPageUrl($p, $curr_city, $curr_keyword, $curr_spl, $curr_per_page).'" class="page-btn">'.$p.'</a>';
+                                    echo '<a href="'.buildPageUrl($p, $curr_location, $curr_keyword, $curr_speciality, $curr_per_page).'" class="page-btn">'.$p.'</a>';
                                 }
                             }
                             if ($end_p < $t_pages) {
                                 if ($end_p < $t_pages - 1) echo '<span class="page-btn disabled">...</span>';
-                                echo '<a href="'.buildPageUrl($t_pages, $curr_city, $curr_keyword, $curr_spl, $curr_per_page).'" class="page-btn">'.$t_pages.'</a>';
+                                echo '<a href="'.buildPageUrl($t_pages, $curr_location, $curr_keyword, $curr_speciality, $curr_per_page).'" class="page-btn">'.$t_pages.'</a>';
                             }
                             ?>
 
                             <!-- Next Page -->
                             <?php if ($c_page < $t_pages): ?>
-                            <a href="<?=buildPageUrl($c_page + 1, $curr_city, $curr_keyword, $curr_spl, $curr_per_page);?>" class="page-btn" title="Next Page">
+                            <a href="<?=buildPageUrl($c_page + 1, $curr_location, $curr_keyword, $curr_speciality, $curr_per_page);?>" class="page-btn" title="Next Page">
                                 <i class="fa fa-chevron-right"></i>
                             </a>
                             <?php else: ?>
@@ -1730,10 +1742,10 @@ small photos close--*/
                         <div class="per-page-wrapper">
                             <label for="perPageSelect" style="margin: 0; font-weight: 500; color: #64748B;">Per Page:</label>
                             <select id="perPageSelect" class="per-page-select" onchange="location = this.value;">
-                                <option value="<?=buildPageUrl(1, $curr_city, $curr_keyword, $curr_spl, '10');?>" <?=($curr_per_page == '10') ? 'selected' : '';?>>10</option>
-                                <option value="<?=buildPageUrl(1, $curr_city, $curr_keyword, $curr_spl, '20');?>" <?=($curr_per_page == '20') ? 'selected' : '';?>>20</option>
-                                <option value="<?=buildPageUrl(1, $curr_city, $curr_keyword, $curr_spl, '50');?>" <?=($curr_per_page == '50') ? 'selected' : '';?>>50</option>
-                                <option value="<?=buildPageUrl(1, $curr_city, $curr_keyword, $curr_spl, 'all');?>" <?=($curr_per_page == 'all') ? 'selected' : '';?>>All</option>
+                                <option value="<?=buildPageUrl(1, $curr_location, $curr_keyword, $curr_speciality, '10');?>" <?=($curr_per_page == '10') ? 'selected' : '';?>>10</option>
+                                <option value="<?=buildPageUrl(1, $curr_location, $curr_keyword, $curr_speciality, '20');?>" <?=($curr_per_page == '20') ? 'selected' : '';?>>20</option>
+                                <option value="<?=buildPageUrl(1, $curr_location, $curr_keyword, $curr_speciality, '50');?>" <?=($curr_per_page == '50') ? 'selected' : '';?>>50</option>
+                                <option value="<?=buildPageUrl(1, $curr_location, $curr_keyword, $curr_speciality, 'all');?>" <?=($curr_per_page == 'all') ? 'selected' : '';?>>All</option>
                             </select>
                         </div>
                     </div>

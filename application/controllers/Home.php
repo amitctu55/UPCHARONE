@@ -8,7 +8,7 @@ class Home extends CI_Controller
 		date_default_timezone_set("Asia/Kolkata");
 		$this->load->library(array('Form_validation'));		
 		$this->load->helper(array('query_string_helper','dbquery_helper','admin_helper'));
-        $this->load->model(array('Userlogin_Model','Hospital_Model'));
+        $this->load->model(array('Userlogin_Model','Hospital_Model','Doctor_Model'));
 	}
 
 	public function index()
@@ -76,13 +76,13 @@ class Home extends CI_Controller
 	
 	public function doctors()
 	{
-		$per_page_param = $this->input->get('per_page');
-		$page_param = (int) $this->input->get('page');
+		$per_page_param = $this->input->get_post('per_page');
+		$page_param = (int) $this->input->get_post('page');
 		if ($page_param < 1) $page_param = 1;
 
-		$spl = $this->input->get('spl');
-		$city = $this->input->get('city');
-		$keyword = trim($this->input->get('keyword') ?? '');
+		$location = trim($this->input->get_post('location') ?? ($this->input->get_post('city') ?? ''));
+		$speciality = trim($this->input->get_post('speciality') ?? ($this->input->get_post('spl') ?? ($this->input->get_post('specialization') ?? '')));
+		$keyword = trim($this->input->get_post('keyword') ?? '');
 		
 		$per_page = 10;
 		if ($per_page_param === '20') $per_page = 20;
@@ -91,40 +91,32 @@ class Home extends CI_Controller
 		else if ($per_page_param === '10') $per_page = 10;
 		
 		$offset = ($page_param - 1) * $per_page;
-		
-		// Query with optional search/filter support
-		$this->db->start_cache();
-		$this->db->where('profile_dr.approved', '1');
-		$this->db->where('profile_dr.verified', '1');
-		if($spl != ''){
-			$this->db->where("dr_specialization.specialization_id", $spl);
-			$this->db->join("dr_specialization", 'dr_specialization.user_id=profile_dr.id');
-		}
-		if($city != '') {
-			$this->db->where("profile_dr.city", $city);
-		}
-		if($keyword != '') {
-			$this->db->like("concat(COALESCE(profile_dr.fname,''),' ',COALESCE(profile_dr.lname,''))", $keyword);
-		}
-		$this->db->stop_cache();
 
-		$total_doctors = $this->db->count_all_results('profile_dr');
+		$filters = array(
+			'location' => $location,
+			'speciality' => $speciality,
+			'keyword' => $keyword
+		);
+
+		$total_doctors = $this->Doctor_Model->count_search_doctors($filters);
+		$doctors = $this->Doctor_Model->search_doctors($filters, $per_page, $offset);
+
 		$data['total_doctors'] = $total_doctors;
 		$data['per_page'] = $per_page;
 		$data['per_page_param'] = $per_page_param ?: '10';
 		$data['current_page'] = $page_param;
 		$data['total_pages'] = ($total_doctors > 0) ? ceil($total_doctors / $per_page) : 1;
-		
-		$this->db->order_by('profile_dr.id', 'ASC');
-		$doc_q = $this->db->limit($per_page, $offset)->get('profile_dr');
-		$data['doctors'] = ($doc_q && is_object($doc_q)) ? $doc_q->result() : array();
-		$this->db->flush_cache();
+		$data['doctors'] = $doctors;
 
 		// Fetch ONLY Promoted / Sponsored Doctors for the Sidebar safely
-		$data['promoted_doctors'] = $this->_get_promoted_doctors($spl);
+		$data['promoted_doctors'] = $this->_get_promoted_doctors($speciality);
 
-		if($city != '') $this->db->where("city", $city);
-		if($keyword != '') $this->db->like("name", $keyword);
+		if($location != '') {
+			$this->db->where("city", $location);
+		}
+		if($keyword != '') {
+			$this->db->like("name", $keyword);
+		}
 		$hosp_q = $this->db->limit(10)->get_where('hospital', array('approved'=>'1','verified'=>'1'));
 		$data['hospital'] = ($hosp_q && is_object($hosp_q)) ? $hosp_q->result() : array();
 
@@ -327,14 +319,14 @@ class Home extends CI_Controller
 
 	public function search()
 	{    
-		$keyword = trim($this->input->get('keyword') ?? '');
-		$spl = $this->input->get('spl');
-		$city = $this->input->get('city');
-		$date = $this->input->get('dt');
-		
-		$per_page_param = $this->input->get('per_page');
-		$page_param = (int) $this->input->get('page');
+		$per_page_param = $this->input->get_post('per_page');
+		$page_param = (int) $this->input->get_post('page');
 		if ($page_param < 1) $page_param = 1;
+
+		$location = trim($this->input->get_post('location') ?? ($this->input->get_post('city') ?? ''));
+		$speciality = trim($this->input->get_post('speciality') ?? ($this->input->get_post('spl') ?? ($this->input->get_post('specialization') ?? '')));
+		$keyword = trim($this->input->get_post('keyword') ?? '');
+		$date = $this->input->get_post('dt');
 		
 		$per_page = 10;
 		if ($per_page_param === '20') $per_page = 20;
@@ -343,37 +335,29 @@ class Home extends CI_Controller
 		else if ($per_page_param === '10') $per_page = 10;
 		
 		$offset = ($page_param - 1) * $per_page;
-		
-		// Build Query for Doctor Count & Results
-		$this->db->start_cache();
-		$this->db->where('profile_dr.approved', '1');
-		$this->db->where('profile_dr.verified', '1');
-		if($spl != ''){
-			$this->db->where("dr_specialization.specialization_id", $spl);
-			$this->db->join("dr_specialization", 'dr_specialization.user_id=profile_dr.id');
-		}
-		if($city != '') {
-			$this->db->where("profile_dr.city", $city);
-		}
-		if($keyword != '') {
-			$this->db->like("concat(COALESCE(profile_dr.fname,''),' ',COALESCE(profile_dr.lname,''))", $keyword);
-		}
-		$this->db->stop_cache();
-		
-		$total_doctors = $this->db->count_all_results('profile_dr');
+
+		$filters = array(
+			'location' => $location,
+			'speciality' => $speciality,
+			'keyword' => $keyword
+		);
+
+		$total_doctors = $this->Doctor_Model->count_search_doctors($filters);
+		$doctors = $this->Doctor_Model->search_doctors($filters, $per_page, $offset);
+
 		$data['total_doctors'] = $total_doctors;
 		$data['per_page'] = $per_page;
 		$data['per_page_param'] = $per_page_param ?: '10';
 		$data['current_page'] = $page_param;
 		$data['total_pages'] = ($total_doctors > 0) ? ceil($total_doctors / $per_page) : 1;
-		
-		$this->db->order_by('profile_dr.id', 'ASC');
-		$doc_q = $this->db->limit($per_page, $offset)->get('profile_dr');
-		$data['doctors'] = ($doc_q && is_object($doc_q)) ? $doc_q->result() : array();
-		$this->db->flush_cache();
+		$data['doctors'] = $doctors;
 
-		if($city != '') $this->db->where("city", $city);
-		if($keyword != '') $this->db->like("name", $keyword);
+		if($location != '') {
+			$this->db->where("city", $location);
+		}
+		if($keyword != '') {
+			$this->db->like("name", $keyword);
+		}
 		$hosp_q = $this->db->limit(10)->get_where('hospital', array('approved'=>'1','verified'=>'1'));
 		$data['hospital'] = ($hosp_q && is_object($hosp_q)) ? $hosp_q->result() : array();
 
@@ -388,7 +372,7 @@ class Home extends CI_Controller
 
 		$gallery_q = $this->db->table_exists('doctorgallery') ? $this->db->get('doctorgallery') : null;
 		$data['gallery'] = ($gallery_q && is_object($gallery_q)) ? $gallery_q->result() : array();	
-		$data['promoted_doctors'] = $this->_get_promoted_doctors($spl);
+		$data['promoted_doctors'] = $this->_get_promoted_doctors($speciality);
 		$this->load->view('team_list', $data);
 	}
 

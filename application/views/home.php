@@ -38,13 +38,15 @@
 
                     <!-- Search Form -->
                     <form id="heroSearchForm" action="<?=base_url('doctors');?>" method="GET" class="row g-2 align-items-center" style="margin: 0;">
-                        <div class="col-md-4 col-sm-12" style="padding: 4px;">
+                        <div class="col-md-3 col-sm-6" style="padding: 4px;">
                             <div class="input-group" style="width: 100%;">
                                 <span class="input-group-addon" style="background: #f8fafc; border: 1px solid #e2e8f0; border-right: none; color: #ef4444;"><i class="fas fa-map-marker-alt"></i></span>
-                                <select name="city" id="heroCitySelect" class="form-control" style="border: 1px solid #e2e8f0; border-left: none; background: #f8fafc; font-weight: 600; color: #334155; height: 44px; border-radius: 0 8px 8px 0;">
+                                <select name="location" id="heroCitySelect" class="form-control" style="border: 1px solid #e2e8f0; border-left: none; background: #f8fafc; font-weight: 600; color: #334155; height: 44px; border-radius: 0 8px 8px 0;">
                                     <option value="">All Locations</option>
-                                    <?php if (!empty($cities)) { foreach($cities as $c){ ?>
-                                    <option value="<?=$c->name;?>" <?=(isset($_GET['city']) && ($_GET['city'] == $c->id || $_GET['city'] == $c->name)) ? 'selected' : '';?>><?=$c->name;?></option>
+                                    <?php if (!empty($cities)) { foreach($cities as $c){ 
+                                        $is_sel = (isset($_GET['location']) && ($_GET['location'] == $c->id || strcasecmp($_GET['location'], $c->name) == 0)) || (isset($_GET['city']) && ($_GET['city'] == $c->id || strcasecmp($_GET['city'], $c->name) == 0));
+                                    ?>
+                                    <option value="<?=$c->name;?>" <?=$is_sel ? 'selected' : '';?>><?=$c->name;?></option>
                                     <?php } } else { ?>
                                     <option value="Varanasi" selected>Varanasi</option>
                                     <option value="Lucknow">Lucknow</option>
@@ -54,13 +56,26 @@
                                 </select>
                             </div>
                         </div>
-                        <div class="col-md-5 col-sm-12" style="padding: 4px;">
+                        <div class="col-md-3 col-sm-6" style="padding: 4px;">
                             <div class="input-group" style="width: 100%;">
-                                <span class="input-group-addon" style="background: #f8fafc; border: 1px solid #e2e8f0; border-right: none; color: #64748b;"><i class="fas fa-search"></i></span>
-                                <input type="text" id="heroKeywordInput" name="keyword" value="<?=@$_GET['keyword'];?>" class="form-control" placeholder="Search doctors, specialties..." style="border: 1px solid #e2e8f0; border-left: none; background: #f8fafc; height: 44px; border-radius: 0 8px 8px 0;">
+                                <span class="input-group-addon" style="background: #f8fafc; border: 1px solid #e2e8f0; border-right: none; color: #0d9488;"><i class="fas fa-user-md"></i></span>
+                                <select name="speciality" id="heroSpecialitySelect" class="form-control" style="border: 1px solid #e2e8f0; border-left: none; background: #f8fafc; font-weight: 600; color: #334155; height: 44px; border-radius: 0 8px 8px 0;">
+                                    <option value="">All Specialties</option>
+                                    <?php if (!empty($specialization)) { foreach($specialization as $s){ 
+                                        $is_spec_sel = (isset($_GET['speciality']) && ($_GET['speciality'] == $s->id || strcasecmp($_GET['speciality'], $s->name) == 0)) || (isset($_GET['spl']) && ($_GET['spl'] == $s->id || strcasecmp($_GET['spl'], $s->name) == 0));
+                                    ?>
+                                    <option value="<?=$s->name;?>" <?=$is_spec_sel ? 'selected' : '';?>><?=$s->name;?></option>
+                                    <?php } } ?>
+                                </select>
                             </div>
                         </div>
-                        <div class="col-md-3 col-sm-12" style="padding: 4px;">
+                        <div class="col-md-4 col-sm-8" style="padding: 4px;">
+                            <div class="input-group" style="width: 100%;">
+                                <span class="input-group-addon" style="background: #f8fafc; border: 1px solid #e2e8f0; border-right: none; color: #64748b;"><i class="fas fa-search"></i></span>
+                                <input type="text" id="heroKeywordInput" name="keyword" value="<?=@htmlspecialchars($_GET['keyword'] ?? '');?>" class="form-control" placeholder="Search doctors, specialties, clinics..." style="border: 1px solid #e2e8f0; border-left: none; background: #f8fafc; height: 44px; border-radius: 0 8px 8px 0;">
+                            </div>
+                        </div>
+                        <div class="col-md-2 col-sm-4" style="padding: 4px;">
                             <button type="submit" class="btn btn-primary w-100" style="width: 100%; height: 44px; font-weight: 700; border-radius: 8px; background: #2563eb; border: none; color: #fff; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);">
                                 Find Care <i class="fas fa-arrow-right"></i>
                             </button>

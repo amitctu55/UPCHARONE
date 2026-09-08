@@ -667,4 +667,184 @@ class Doctor_Model extends CI_Model
 		}
 	
   
-   }
+   
+	/**
+	 * Build dynamic WHERE clause for doctor search & filtering
+	 * Combines location, speciality, and keyword conditions using AND.
+	 */
+	private function _build_search_where($filters = array())
+	{
+		$where = array("p.approved = '1'", "p.verified = '1'");
+
+		// 1. Location filter: match city master, profile city/street, clinic/hospital addresses
+		$location = trim($filters['location'] ?? $filters['city'] ?? '');
+		if ($location !== '') {
+			$loc_clauses = array();
+			$city_ids = array();
+			$loc_names = array();
+
+			if (is_numeric($location)) {
+				$city_ids[] = (int)$location;
+				$city_q = $this->db->query("SELECT name FROM master_city WHERE id = " . (int)$location);
+				if ($city_q && $city_q->num_rows() > 0) {
+					$loc_names[] = $city_q->row()->name;
+				}
+			} else {
+				$escaped_loc_search = $this->db->escape_like_str($location);
+				$city_q = $this->db->query("SELECT id, name FROM master_city WHERE name LIKE '%{$escaped_loc_search}%'");
+				if ($city_q && $city_q->num_rows() > 0) {
+					foreach ($city_q->result() as $cr) {
+						$city_ids[] = (int)$cr->id;
+						$loc_names[] = $cr->name;
+					}
+				}
+				$loc_names[] = $location;
+			}
+
+			if (!empty($city_ids)) {
+				$in_list = implode(',', array_map('intval', $city_ids));
+				$loc_clauses[] = "p.city IN ({$in_list})";
+			}
+
+			$loc_names = array_unique(array_filter($loc_names));
+			foreach ($loc_names as $lname) {
+				$escaped_loc = $this->db->escape_like_str($lname);
+				$loc_clauses[] = "p.city LIKE '%{$escaped_loc}%'";
+				$loc_clauses[] = "p.street LIKE '%{$escaped_loc}%'";
+
+				// Match affiliated clinic or hospital location & address via dr_practice
+				$loc_clauses[] = "EXISTS (
+					SELECT 1 FROM dr_practice dp
+					LEFT JOIN clinic c ON (dp.type = 'C' AND dp.institution_id = c.id)
+					LEFT JOIN hospital h ON (dp.type = 'H' AND dp.institution_id = h.id)
+					WHERE dp.user_id = p.id AND (
+						c.address LIKE '%{$escaped_loc}%' OR c.location LIKE '%{$escaped_loc}%' OR 
+						h.address LIKE '%{$escaped_loc}%' OR h.location LIKE '%{$escaped_loc}%'
+					)
+				)";
+
+				// Match clinic where clinic.drid = p.id
+				$loc_clauses[] = "EXISTS (
+					SELECT 1 FROM clinic c2 
+					WHERE c2.drid = p.id AND (
+						c2.address LIKE '%{$escaped_loc}%' OR c2.location LIKE '%{$escaped_loc}%'
+					)
+				)";
+			}
+
+			$where[] = '(' . implode(' OR ', $loc_clauses) . ')';
+		}
+
+		// 2. Speciality filter: match specialization master table & mapping tables
+		$speciality = trim($filters['speciality'] ?? $filters['spl'] ?? $filters['specialization'] ?? '');
+		if ($speciality !== '') {
+			$spec_clauses = array();
+			$spec_ids = array();
+			$spec_names = array();
+
+			if (is_numeric($speciality)) {
+				$spec_ids[] = (int)$speciality;
+				$sq = $this->db->query("SELECT name FROM master_specialization WHERE id = " . (int)$speciality);
+				if ($sq && $sq->num_rows() > 0) {
+					$spec_names[] = $sq->row()->name;
+				}
+			} else {
+				$escaped_spec_search = $this->db->escape_like_str($speciality);
+				$sq = $this->db->query("SELECT id, name FROM master_specialization WHERE name LIKE '%{$escaped_spec_search}%'");
+				if ($sq && $sq->num_rows() > 0) {
+					foreach ($sq->result() as $sr) {
+						$spec_ids[] = (int)$sr->id;
+						$spec_names[] = $sr->name;
+					}
+				}
+				$spec_names[] = $speciality;
+			}
+
+			if (!empty($spec_ids)) {
+				$in_specs = implode(',', array_map('intval', $spec_ids));
+				$spec_clauses[] = "p.specialization IN ({$in_specs})";
+				$spec_clauses[] = "EXISTS (
+					SELECT 1 FROM dr_specialization ds 
+					WHERE (ds.user_id = p.id OR ds.user_id = p.user_id) 
+					AND ds.specialization_id IN ({$in_specs})
+				)";
+			}
+
+			$spec_names = array_unique(array_filter($spec_names));
+			foreach ($spec_names as $sname) {
+				$escaped_spec = $this->db->escape_like_str($sname);
+				$spec_clauses[] = "EXISTS (
+					SELECT 1 FROM dr_specialization ds 
+					JOIN master_specialization ms ON ds.specialization_id = ms.id
+					WHERE (ds.user_id = p.id OR ds.user_id = p.user_id) 
+					AND ms.name LIKE '%{$escaped_spec}%'
+				)";
+			}
+
+			$where[] = '(' . implode(' OR ', $spec_clauses) . ')';
+		}
+
+		// 3. Keyword filter: match doctor name, bio, specialty, clinic/hospital names & tags
+		$keyword = trim($filters['keyword'] ?? '');
+		if ($keyword !== '') {
+			$escaped_kw = $this->db->escape_like_str($keyword);
+			$kw_clauses = array(
+				"CONCAT(COALESCE(p.fname, ''), ' ', COALESCE(p.lname, '')) LIKE '%{$escaped_kw}%'",
+				"p.achievement LIKE '%{$escaped_kw}%'",
+				"p.short_about LIKE '%{$escaped_kw}%'",
+				"p.about LIKE '%{$escaped_kw}%'",
+				// Doctor specialization matches keyword
+				"EXISTS (
+					SELECT 1 FROM dr_specialization ds 
+					JOIN master_specialization ms ON ds.specialization_id = ms.id
+					WHERE (ds.user_id = p.id OR ds.user_id = p.user_id) 
+					AND ms.name LIKE '%{$escaped_kw}%'
+				)",
+				// Doctor clinic or hospital matches keyword (name or tag)
+				"EXISTS (
+					SELECT 1 FROM dr_practice dp
+					LEFT JOIN clinic c ON (dp.type = 'C' AND dp.institution_id = c.id)
+					LEFT JOIN hospital h ON (dp.type = 'H' AND dp.institution_id = h.id)
+					WHERE dp.user_id = p.id AND (
+						c.name LIKE '%{$escaped_kw}%' OR c.tag LIKE '%{$escaped_kw}%' OR 
+						h.name LIKE '%{$escaped_kw}%' OR h.tag LIKE '%{$escaped_kw}%'
+					)
+				)",
+				// Also clinic where clinic.drid = p.id
+				"EXISTS (
+					SELECT 1 FROM clinic c2 
+					WHERE c2.drid = p.id AND (c2.name LIKE '%{$escaped_kw}%' OR c2.tag LIKE '%{$escaped_kw}%')
+				)"
+			);
+
+			$where[] = '(' . implode(' OR ', $kw_clauses) . ')';
+		}
+
+		return implode(' AND ', $where);
+	}
+
+	/**
+	 * Get total count of matching doctors for search & filtering
+	 */
+	public function count_search_doctors($filters = array())
+	{
+		$where_sql = $this->_build_search_where($filters);
+		$sql = "SELECT COUNT(DISTINCT p.id) as total FROM profile_dr p WHERE {$where_sql}";
+		$q = $this->db->query($sql);
+		return ($q && $q->num_rows() > 0) ? (int)$q->row()->total : 0;
+	}
+
+	/**
+	 * Get paginated list of matching doctors for search & filtering
+	 */
+	public function search_doctors($filters = array(), $limit = 10, $offset = 0)
+	{
+		$where_sql = $this->_build_search_where($filters);
+		$limit = max(1, (int)$limit);
+		$offset = max(0, (int)$offset);
+		$sql = "SELECT p.* FROM profile_dr p WHERE {$where_sql} GROUP BY p.id ORDER BY p.id ASC LIMIT {$limit} OFFSET {$offset}";
+		$q = $this->db->query($sql);
+		return ($q && $q->num_rows() > 0) ? $q->result() : array();
+	}
+
+}
