@@ -71,48 +71,69 @@ class Clinicreg extends CI_Controller
 		if ($this->input->post('submit_assign'))
 		{
 			$doctor_id = (int)$this->input->post('doctor_id');
-			$hospital_id = (int)$this->input->post('hospital_id');
-			$type = $this->input->post('type') ?: 'H';
-			$fee = (float)$this->input->post('fee');
-			$time_duration = $this->input->post('time_duration') ?: '15';
+			$type = ($this->input->post('type') === 'C') ? 'C' : 'H';
+			$institution_id = ($type === 'C') ? (int)$this->input->post('clinic_id') : (int)$this->input->post('hospital_id');
+			if ($institution_id <= 0) {
+				$institution_id = (int)$this->input->post('hospital_id') ?: (int)$this->input->post('clinic_id');
+			}
+			$fee = (int)$this->input->post('fee');
 			
-			if ($doctor_id > 0 && $hospital_id > 0)
+			if ($doctor_id > 0 && $institution_id > 0)
 			{
-				$existing = $this->db->get_where('dr_practice', array('user_id' => $doctor_id, 'institution_id' => $hospital_id, 'type' => $type))->row();
+				$existing = $this->db->get_where('dr_practice', array('user_id' => $doctor_id, 'institution_id' => $institution_id, 'type' => $type))->row();
 				if ($existing)
 				{
 					$this->db->where('id', $existing->id)->update('dr_practice', array(
 						'fee' => $fee,
-						'time_duration' => $time_duration,
 						'status' => '1'
 					));
-					$this->session->set_flashdata('flashmsg', '<div class="alert alert-success alert-dismissible"><button type="button" class="close" data-dismiss="alert">&times;</button>Doctor affiliation updated successfully!</div>');
+					$this->session->set_flashdata('flashmsg', '<div class="alert alert-success alert-dismissible"><button type="button" class="close" data-dismiss="alert">&times;</button><i class="fa fa-check-circle"></i> Doctor affiliation updated successfully!</div>');
 				}
 				else
 				{
 					$this->db->insert('dr_practice', array(
 						'user_id' => $doctor_id,
-						'institution_id' => $hospital_id,
+						'institution_id' => $institution_id,
 						'type' => $type,
 						'fee' => $fee,
-						'time_duration' => $time_duration,
-						'status' => '1',
-						'creat_date' => date('Y-m-d H:i:s')
+						'status' => '1'
 					));
-					$this->session->set_flashdata('flashmsg', '<div class="alert alert-success alert-dismissible"><button type="button" class="close" data-dismiss="alert">&times;</button>Doctor successfully affiliated to hospital/clinic!</div>');
+					$this->session->set_flashdata('flashmsg', '<div class="alert alert-success alert-dismissible"><button type="button" class="close" data-dismiss="alert">&times;</button><i class="fa fa-check-circle"></i> Doctor successfully affiliated to healthcare facility!</div>');
 				}
-				redirect(base_url('doctor/clinicreg/hospital_doctor'));
+				redirect(base_url('doctor/clinicreg/assign_doctor'));
 				return;
 			}
 			else
 			{
-				$this->session->set_flashdata('flashmsg', '<div class="alert alert-danger alert-dismissible"><button type="button" class="close" data-dismiss="alert">&times;</button>Please select both a doctor and an institution.</div>');
+				$this->session->set_flashdata('flashmsg', '<div class="alert alert-danger alert-dismissible"><button type="button" class="close" data-dismiss="alert">&times;</button><i class="fa fa-exclamation-triangle"></i> Please select both a valid doctor and a facility.</div>');
 			}
 		}
 
-		$data['doctors'] = $this->db->select('id, fname, lname, speciality, mobile')->where('status', '1')->order_by('fname', 'ASC')->get('profile_dr')->result_array();
+		// Query doctors with joined specialization name
+		$data['doctors'] = $this->db->select('pd.id, pd.fname, pd.lname, pd.mobile, pd.city, ms.name as speciality')
+			->from('profile_dr pd')
+			->join('master_specialization ms', 'ms.id = pd.specialization', 'left')
+			->where('pd.status', '1')
+			->order_by('pd.fname', 'ASC')
+			->get()
+			->result_array();
+
+		// Query hospitals and clinics
 		$data['hospitals'] = $this->db->select('id, name, city, address')->where('status !=', '2')->order_by('name', 'ASC')->get('hospital')->result_array();
 		$data['clinics'] = $this->db->select('id, name, city, address')->where('status !=', '2')->order_by('name', 'ASC')->get('clinic')->result_array();
+		
+		// Query recent affiliations for real-time overview
+		$data['recent_affiliations'] = $this->db->select('dp.id, dp.user_id, dp.type, dp.institution_id, dp.fee, dp.status, pd.fname, pd.lname, ms.name as speciality, pd.mobile as doc_mobile, h.name as hosp_name, h.city as hosp_city, c.name as clinic_name, c.city as clinic_city')
+			->from('dr_practice dp')
+			->join('profile_dr pd', 'pd.id = dp.user_id', 'left')
+			->join('master_specialization ms', 'ms.id = pd.specialization', 'left')
+			->join('hospital h', 'h.id = dp.institution_id AND dp.type = "H"', 'left')
+			->join('clinic c', 'c.id = dp.institution_id AND dp.type = "C"', 'left')
+			->order_by('dp.id', 'DESC')
+			->limit(15)
+			->get()
+			->result_array();
+
 		$data['heading_title'] = 'Assign Doctor to Hospital / Clinic';
 		$data['module'] = 'Affiliation Management';
 
@@ -123,6 +144,16 @@ class Clinicreg extends CI_Controller
 		$this->load->view('inc/headersetting');
 		$this->load->view('inc/footerlink');
 		$this->load->view('inc/table_footer');
+	}
+
+	public function delete_affiliation($id = 0)
+	{
+		$id = (int)$id;
+		if ($id > 0) {
+			$this->db->where('id', $id)->delete('dr_practice');
+			$this->session->set_flashdata('flashmsg', '<div class="alert alert-success alert-dismissible"><button type="button" class="close" data-dismiss="alert">&times;</button><i class="fa fa-check-circle"></i> Affiliation unlinked successfully.</div>');
+		}
+		redirect(base_url('doctor/clinicreg/assign_doctor'));
 	}
 	
 	public function doctor_fee_time()
