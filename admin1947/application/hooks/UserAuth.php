@@ -39,7 +39,7 @@ public function accessCheck()
 				redirect(base_url().'login');
 			
 			
-		}else if($usertype == 'A'){
+		}else if($usertype == 'A' || $usertype == '1'){
 			
 			if( !in_array($controller,$access_admin_controller) && !in_array($controller,$access_public_controller) && !in_array($module,$access_admin_module)  ){
 			

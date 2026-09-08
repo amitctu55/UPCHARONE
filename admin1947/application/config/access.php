@@ -17,9 +17,16 @@ $config['access_public_controller']      	= array('login','other','data_view','s
 $config['access_public_action']          	= array();
 
 //super admin
-$config['access_admin_module']          	= array('masters','doctor','centers','subcenters',
-													'faculty','trainee','batches','attendance',											'results','users','placements');
-$config['access_admin_controller']      	= array('dashboard','changepassword');
+$config['access_admin_module']          	= array(
+	'masters', 'doctor', 'users', 'seo', 'admin_revenue', 'admin_payment', 
+	'settings', 'abdm', 'contactus', 'inquiries', 'centers', 'subcenters',
+	'faculty', 'trainee', 'batches', 'attendance', 'results', 'placements'
+);
+$config['access_admin_controller']      	= array(
+	'dashboard', 'changepassword', 'meta', 'career', 'appointment', 'clinicreg', 
+	'doctorview', 'pathology', 'pathtest', 'pathlabreg', 'usercreate', 'userlogincreate', 
+	'walletadmin', 'settings', 'admin_revenue', 'admin_payment', 'abdm', 'contactus', 'inquiries'
+);
 $config['access_admin_action']          	= array();
 
 //admin

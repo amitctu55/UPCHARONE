@@ -60,7 +60,7 @@ $pageurl3 = $this->uri->segment(3);
       $is_clinic_active = ($pageurl1 == 'doctor' && $pageurl2 == 'clinicreg');
       ?>
       <li class="treeview <?php if($is_clinic_active){ ?> active menu-open <?php }?>">
-        <a href="#">
+        <a href="<?=base_url('doctor/clinicreg/viewhospital');?>">
           <i class="fa fa-hospital-o" style="color: #00a896;"></i> <span>Clinic &amp; Hospital</span>
           <span class="pull-right-container">
             <i class="fa fa-angle-left pull-right"></i>
@@ -108,7 +108,7 @@ $pageurl3 = $this->uri->segment(3);
       $is_doctor_active = ($pageurl1 == 'doctor' && in_array($pageurl2, array('doctorview', 'appointment', 'doctoredit', 'doctoradd')));
       ?>
       <li class="treeview <?php if($is_doctor_active){ ?> active menu-open <?php }?>">
-        <a href="#">
+        <a href="<?=base_url('doctor/doctorview');?>">
           <i class="fa fa-user-md" style="color: #38bdf8;"></i> <span>Doctor &amp; Appointments</span>
           <span class="pull-right-container">
             <i class="fa fa-angle-left pull-right"></i>
@@ -141,7 +141,7 @@ $pageurl3 = $this->uri->segment(3);
       $is_user_mgmt_active = ($pageurl1 == 'users' && in_array($pageurl2, array('usercreate', 'changepassword')));
       ?>
       <li class="treeview <?php if($is_user_mgmt_active){ ?> active menu-open <?php }?>">
-        <a href="#">
+        <a href="<?=base_url('users/usercreate');?>">
           <i class="fa fa-users" style="color: #a855f7;"></i> <span>User Management</span>
           <span class="pull-right-container">
             <i class="fa fa-angle-left pull-right"></i>
@@ -333,7 +333,7 @@ $pageurl3 = $this->uri->segment(3);
 
             <!-- SEO Management Dashboard -->
       <li class="treeview <?php if($pageurl1=='seo'){ ?> active menu-open <?php }?>">
-        <a href="#">
+        <a href="<?=base_url('seo/meta/index');?>">
           <i class="fa fa-line-chart" style="color: #0d9488;"></i> <span>SEO &amp; Meta Tags</span>
           <span class="pull-right-container">
             <i class="fa fa-angle-left pull-right"></i>
@@ -362,7 +362,7 @@ $pageurl3 = $this->uri->segment(3);
 
       <!-- HR & Staff Management -->
       <li class="treeview <?php if($pageurl1=='hr' || ($pageurl1=='doctor' && $pageurl2=='career')){ ?> active menu-open <?php }?>">
-        <a href="#">
+        <a href="<?=base_url('doctor/career');?>">
           <i class="fa fa-users" style="color: #38bdf8;"></i> <span>HR &amp; Recruitment</span>
           <span class="pull-right-container">
             <i class="fa fa-angle-left pull-right"></i>
@@ -477,8 +477,11 @@ $pageurl3 = $this->uri->segment(3);
 
           if(!empty($management)) {
       ?>
+      <?php 
+        $section_first_url = (!empty($management)) ? (($management[0]['module_folder'] != $management[0]['module_controller']) ? base_url($management[0]['module_folder'].'/'.$management[0]['module_controller'].'/'.$management[0]['module_action']) : base_url($management[0]['module_controller'].'/'.$management[0]['module_action'])) : '#';
+      ?>
       <li class="treeview <?php if($is_section_active){ ?> active menu-open <?php }?>">
-        <a href="#">
+        <a href="<?=$section_first_url;?>">
           <i class="<?php echo $section[$i]['section_icon']; ?>"></i>
           <span><?php echo $section[$i]['section_name']; ?></span>
           <span class="pull-right-container">
