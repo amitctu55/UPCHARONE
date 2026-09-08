@@ -646,35 +646,92 @@ class Clinicreg extends CI_Controller
 	public function hospitalverify($id = null)
 	{
 		$did = $this->input->post('did') ? $this->input->post('did') : ($id ? $id : $this->uri->segment(4));
+		$did = (int)$did;
+
+		// Ensure schema columns exist so production never throws SQL 500 error
+		if ($this->db->table_exists('hospital')) {
+			if (!$this->db->field_exists('verification_status', 'hospital')) {
+				@$this->db->query("ALTER TABLE `hospital` ADD `verification_status` ENUM('pending','verified','rejected') DEFAULT 'pending'");
+			}
+			if (!$this->db->field_exists('is_active', 'hospital')) {
+				@$this->db->query("ALTER TABLE `hospital` ADD `is_active` TINYINT(1) DEFAULT 1");
+			}
+			if (!$this->db->field_exists('verified_at', 'hospital')) {
+				@$this->db->query("ALTER TABLE `hospital` ADD `verified_at` DATETIME NULL");
+			}
+			if (!$this->db->field_exists('verified_by_admin_id', 'hospital')) {
+				@$this->db->query("ALTER TABLE `hospital` ADD `verified_by_admin_id` INT(11) NULL");
+			}
+		}
+
+		// If GET request without explicit action query, display dedicated verification compliance view
+		if ($this->input->server('REQUEST_METHOD') === 'GET' && !$this->input->get('action')) {
+			$data['hospital'] = $this->db->get_where('hospital', array('id' => $did))->row_array();
+			if (empty($data['hospital'])) {
+				$this->session->set_flashdata('flashmsg', "<div class='alert alert-danger'>Hospital record #{$did} was not found.</div>");
+				redirect(base_url('doctor/clinicreg/viewhospital'));
+				return;
+			}
+			$data['affiliated_doctors'] = $this->db->select('dp.id as practice_id, dp.fee, dp.status, pd.id as doctor_id, pd.fname, pd.lname, pd.mobile, pd.email, ms.name as speciality')
+				->from('dr_practice dp')
+				->join('profile_dr pd', 'pd.id = dp.user_id', 'left')
+				->join('master_specialization ms', 'ms.id = pd.specialization', 'left')
+				->where('dp.institution_id', $did)
+				->where('dp.type', 'H')
+				->order_by('dp.id', 'DESC')
+				->get()
+				->result_array();
+
+			$data['heading_title'] = 'Hospital Verification & Compliance';
+			$data['module']        = 'Hospital Verification';
+
+			$this->load->view('inc/topheaderlink');
+			$this->load->view('inc/topheader');
+			$this->load->view('hospital_verify_view', $data);
+			$this->load->view('sidebar');
+			$this->load->view('inc/headersetting');
+			$this->load->view('inc/footerlink');
+			$this->load->view('inc/table_footer');
+			return;
+		}
+
+		// State toggle action (POST / AJAX / action parameter)
+		$target_action = $this->input->post('target_action') ?: ($this->input->get('action') ?: 'toggle');
 		$row = $this->db->select('verified, approved')->get_where('hospital', array('id' => $did))->row();
 		$current = $row ? $row->verified : '0';
 		$admin_id = $this->session->userdata('adminuserid') ?: 1;
-		if ($current == '1') {
-			$this->db->set(array(
-				'verified'            => '0',
-				'verification_status' => 'pending',
-				'is_active'           => 0
-			))->where(array('id' => $did))->update('hospital');
-			$status = '0';
-			$msg = 'Hospital verification status updated to Unverified.';
-		} else {
-			$this->db->set(array(
-				'verified'             => '1',
-				'approved'             => '1',
-				'verification_status'  => 'verified',
-				'is_active'            => 1,
-				'verified_at'          => date('Y-m-d H:i:s'),
-				'verified_by_admin_id' => $admin_id
-			))->where(array('id' => $did))->update('hospital');
+
+		$update_data = array();
+		if ($target_action === 'verify' || ($target_action === 'toggle' && $current != '1')) {
+			$update_data['verified'] = '1';
+			$update_data['approved'] = '1';
+			if ($this->db->field_exists('verification_status', 'hospital')) $update_data['verification_status'] = 'verified';
+			if ($this->db->field_exists('is_active', 'hospital')) $update_data['is_active'] = 1;
+			if ($this->db->field_exists('verified_at', 'hospital')) $update_data['verified_at'] = date('Y-m-d H:i:s');
+			if ($this->db->field_exists('verified_by_admin_id', 'hospital')) $update_data['verified_by_admin_id'] = $admin_id;
 			$status = '1';
 			$msg = 'Hospital has been Verified &amp; Approved successfully.';
+		} else {
+			$update_data['verified'] = '0';
+			if ($this->db->field_exists('verification_status', 'hospital')) $update_data['verification_status'] = 'pending';
+			if ($this->db->field_exists('is_active', 'hospital')) $update_data['is_active'] = 0;
+			$status = '0';
+			$msg = 'Hospital verification status updated to Unverified / Pending.';
 		}
-		if ($this->input->is_ajax_request() || $this->input->post('did')) {
+
+		$this->db->where('id', $did)->update('hospital', $update_data);
+
+		if ($this->input->is_ajax_request()) {
 			echo json_encode(array('status' => $status, 'message' => $msg));
 			return;
 		}
+
 		$this->session->set_flashdata('flashmsg', "<div class='alert alert-success'>$msg</div>");
-		redirect(base_url('doctor/clinicreg/viewhospital'));
+		if ($this->input->post('target_action') || $this->input->get('action')) {
+			redirect(base_url('doctor/clinicreg/hospitalverify/' . $did));
+		} else {
+			redirect(base_url('doctor/clinicreg/viewhospital'));
+		}
 	}
 	 
 	 

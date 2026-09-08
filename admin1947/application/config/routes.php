@@ -85,3 +85,23 @@ $route['seo/meta/quick_preview/(:any)'] = 'seo/meta/quick_preview/$1';
 $route['seo/meta/(:any)'] = 'seo/meta/$1';
 
 
+
+// Payout & Financial Settlements Engine
+$route['payout'] = 'admin_payment/index/dashboard';
+$route['payout/dashboard'] = 'admin_payment/index/dashboard';
+$route['payout/payouts'] = 'admin_payment/index/payouts';
+$route['payout/settlements'] = 'admin_payment/index/settlements';
+$route['payout/transactions'] = 'admin_payment/index/orders';
+$route['payout/orders'] = 'admin_payment/index/orders';
+$route['payout/wallet_settings'] = 'admin_payment/index/wallet_settings';
+$route['payout/refunds'] = 'admin_payment/index/refunds';
+$route['payout/(:any)'] = 'admin_payment/index/$1';
+$route['payout/(:any)/(:any)'] = 'admin_payment/$1/$2';
+
+// Career Management Portal
+$route['career'] = 'doctor/career/index';
+$route['career/(:any)'] = 'doctor/career/$1';
+$route['career/(:any)/(:any)'] = 'doctor/career/$1/$2';
+$route['doctor/career'] = 'doctor/career/index';
+$route['doctor/career/(:any)'] = 'doctor/career/$1';
+$route['doctor/career/(:any)/(:any)'] = 'doctor/career/$1/$2';

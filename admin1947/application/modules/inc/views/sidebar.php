@@ -308,26 +308,27 @@ $pageurl3 = $this->uri->segment(3);
             <i class="fa fa-angle-left pull-right"></i>
           </span>
         </a>
+        <?php $settings_tab = $this->input->get('tab') ?: ($pageurl2 ?: 'general'); ?>
         <ul class="treeview-menu" <?php if($pageurl1=='settings'){ ?> style="display: block;" <?php }?>>
-          <li class="<?php if($pageurl1=='settings' && ($pageurl2=='general' || empty($pageurl2))){ ?>active<?php }?>">
-            <a href="<?=base_url('settings?tab=general');?>"><i class="fa fa-globe"></i> General & Branding</a>
+          <li class="<?php if($pageurl1=='settings' && $settings_tab=='general'){ ?>active<?php }?>">
+            <a href="<?=base_url('settings?tab=general');?>"><i class="fa fa-globe"></i> General &amp; Branding</a>
           </li>
-          <li class="<?php if($pageurl1=='settings' && $pageurl2=='email'){ ?>active<?php }?>">
+          <li class="<?php if($pageurl1=='settings' && $settings_tab=='email'){ ?>active<?php }?>">
             <a href="<?=base_url('settings?tab=email');?>"><i class="fa fa-envelope-o"></i> Email Gateway</a>
           </li>
-          <li class="<?php if($pageurl1=='settings' && $pageurl2=='sms'){ ?>active<?php }?>">
-            <a href="<?=base_url('settings?tab=sms');?>"><i class="fa fa-commenting-o"></i> SMS & WhatsApp</a>
+          <li class="<?php if($pageurl1=='settings' && $settings_tab=='sms'){ ?>active<?php }?>">
+            <a href="<?=base_url('settings?tab=sms');?>"><i class="fa fa-commenting-o"></i> SMS &amp; WhatsApp</a>
           </li>
-          <li class="<?php if($pageurl1=='settings' && $pageurl2=='integrations'){ ?>active<?php }?>">
+          <li class="<?php if($pageurl1=='settings' && $settings_tab=='integrations'){ ?>active<?php }?>">
             <a href="<?=base_url('settings?tab=integrations');?>"><i class="fa fa-plug"></i> Third-Party APIs</a>
           </li>
-          <li class="<?php if($pageurl1=='settings' && $pageurl2=='security'){ ?>active<?php }?>">
-            <a href="<?=base_url('settings?tab=security');?>"><i class="fa fa-lock"></i> Security & Rules</a>
+          <li class="<?php if($pageurl1=='settings' && $settings_tab=='security'){ ?>active<?php }?>">
+            <a href="<?=base_url('settings?tab=security');?>"><i class="fa fa-lock"></i> Security &amp; Rules</a>
           </li>
-          <li class="<?php if($pageurl1=='settings' && $pageurl2=='audit'){ ?>active<?php }?>">
+          <li class="<?php if($pageurl1=='settings' && $settings_tab=='audit'){ ?>active<?php }?>">
             <a href="<?=base_url('settings?tab=audit');?>"><i class="fa fa-history"></i> Audit Trail</a>
           </li>
-          <li class="<?php if($pageurl1=='settings' && $pageurl2=='health'){ ?>active<?php }?>">
+          <li class="<?php if($pageurl1=='settings' && $settings_tab=='health'){ ?>active<?php }?>">
             <a href="<?=base_url('settings?tab=health');?>"><i class="fa fa-heartbeat"></i> System Health</a>
           </li>
           <li class="<?php if($pageurl1=='seo'){ ?>active<?php }?>">

@@ -456,40 +456,36 @@ class Doctorregmodel extends CI_Model
 		return $result;
 	}
 	
-	public function get_doctor($limit='10',$offset='0',$param=array())
+	public function get_doctor($limit='10', $offset='0', $param=array())
 	{	
-		$id					= @$param['id'];
-		$institution_id 	= $this->db->escape_str($this->uri->segment(4));
-		//echo "<pre>"; print_r($institution_id); die;
-		$keyword 			= $this->db->escape_str($this->input->get('keyword',TRUE));
-		$type 				= $this->db->escape_str($this->input->get('type',TRUE));
+		$id              = @$param['id'];
+		$institution_id  = (int)$this->uri->segment(4);
+		$keyword         = $this->db->escape_like_str(trim($this->input->get('keyword', TRUE) ?: ''));
+		$type            = $this->input->get('type', TRUE);
 	
-		if($id!='')
-		{
-			$this->db->where("id",$id);
+		if ($id != '') {
+			$this->db->where("dr_practice.id", (int)$id);
 		}
-		if($institution_id!='')
-		{
-			$this->db->where("dr_practice.institution_id",$institution_id);
+		if ($institution_id > 0) {
+			$this->db->where("dr_practice.institution_id", $institution_id);
 		}
-		if($keyword!='')
-		{
-			$this->db->where("(profile_dr.fname LIKE '%".$keyword."%' )");
+		if ($keyword != '') {
+			$this->db->where("(profile_dr.fname LIKE '%{$keyword}%' OR profile_dr.lname LIKE '%{$keyword}%' OR profile_dr.mobile LIKE '%{$keyword}%' OR h.name LIKE '%{$keyword}%' OR c.name LIKE '%{$keyword}%')");
 		}
-		if($type!='')
-		{
-			$this->db->where("TYPE",$type);
+		if (!empty($type)) {
+			$this->db->where("dr_practice.type", $type);
 		}
-		$this->db->order_by('dr_practice.id','desc');
-		$this->db->limit($limit,$offset);
-		$this->db->select('SQL_CALC_FOUND_ROWS dr_practice.*,profile_dr.fname,profile_dr.lname,profile_dr.email,profile_dr.mobile,hospital.name,hospital.city',FALSE);
-		$this->db->join('profile_dr','profile_dr.id = dr_practice.user_id','left');
-		$this->db->join('hospital','hospital.id = dr_practice.institution_id','left');
-		$result = $this->db->get('dr_practice')->result_array();
+
+		$this->db->order_by('dr_practice.id', 'DESC');
+		$this->db->limit($limit, $offset);
+		$this->db->select('SQL_CALC_FOUND_ROWS dr_practice.*, profile_dr.fname, profile_dr.lname, profile_dr.email, profile_dr.mobile, profile_dr.drimage, ms.name as speciality, COALESCE(h.name, c.name, "Healthcare Facility") as facility_name, COALESCE(h.city, c.city, profile_dr.city) as city', FALSE);
+		$this->db->join('profile_dr', 'profile_dr.id = dr_practice.user_id', 'left');
+		$this->db->join('master_specialization ms', 'ms.id = profile_dr.specialization', 'left');
+		$this->db->join('hospital h', 'h.id = dr_practice.institution_id AND (dr_practice.type = "H" OR dr_practice.type = "" OR dr_practice.type IS NULL)', 'left');
+		$this->db->join('clinic c', 'c.id = dr_practice.institution_id AND dr_practice.type = "C"', 'left');
 		
-		//echo "<pre>"; print_r($result); die;
-		$result = ($limit=='1') ? @$result[0]: $result;	
-		return $result;
+		$result = $this->db->get('dr_practice')->result_array();
+		return ($limit == '1') ? (@$result[0] ?: null) : $result;
 	}
 	
 	public function get_hospital($limit = 10, $offset = 0, $param = array())

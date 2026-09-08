@@ -399,37 +399,37 @@
     <!-- Tabbed Navigation System -->
     <div class="nav-tabs-custom-modern">
       <ul class="nav nav-tabs" id="settingsTabs">
-        <li class="<?=$active_tab === 'general' ? 'active' : '';?>">
+        <li class="<?=$active_tab === 'general' ? 'active' : '••••••••';?>">
           <a href="#tab_general" data-toggle="tab">
             <i class="fa fa-globe"></i> General & Branding
           </a>
         </li>
-        <li class="<?=$active_tab === 'email' ? 'active' : '';?>">
+        <li class="<?=$active_tab === 'email' ? 'active' : '••••••••';?>">
           <a href="#tab_email" data-toggle="tab">
             <i class="fa fa-envelope-o"></i> Email Gateway
           </a>
         </li>
-        <li class="<?=$active_tab === 'sms' ? 'active' : '';?>">
+        <li class="<?=$active_tab === 'sms' ? 'active' : '••••••••';?>">
           <a href="#tab_sms" data-toggle="tab">
             <i class="fa fa-commenting-o"></i> SMS & WhatsApp
           </a>
         </li>
-        <li class="<?=$active_tab === 'integrations' ? 'active' : '';?>">
+        <li class="<?=$active_tab === 'integrations' ? 'active' : '••••••••';?>">
           <a href="#tab_integrations" data-toggle="tab">
             <i class="fa fa-plug"></i> Third-Party APIs
           </a>
         </li>
-        <li class="<?=$active_tab === 'security' ? 'active' : '';?>">
+        <li class="<?=$active_tab === 'security' ? 'active' : '••••••••';?>">
           <a href="#tab_security" data-toggle="tab">
             <i class="fa fa-lock"></i> Security & Maintenance
           </a>
         </li>
-        <li class="<?=$active_tab === 'audit' ? 'active' : '';?>">
+        <li class="<?=$active_tab === 'audit' ? 'active' : '••••••••';?>">
           <a href="#tab_audit" data-toggle="tab">
             <i class="fa fa-history"></i> Audit Trail
           </a>
         </li>
-        <li class="<?=$active_tab === 'health' ? 'active' : '';?>">
+        <li class="<?=$active_tab === 'health' ? 'active' : '••••••••';?>">
           <a href="#tab_health" data-toggle="tab">
             <i class="fa fa-heartbeat"></i> System Diagnostics
           </a>
@@ -441,7 +441,7 @@
         <!-- ==========================================
              TAB 1: GENERAL & BRANDING
              ========================================== -->
-        <div class="tab-pane <?=$active_tab === 'general' ? 'active' : '';?>" id="tab_general">
+        <div class="tab-pane <?=$active_tab === 'general' ? 'active' : '••••••••';?>" id="tab_general">
           <form class="ajaxSettingsForm" action="<?=base_url('settings/save');?>" method="post" enctype="multipart/form-data">
             <input type="hidden" name="category" value="general">
 
@@ -454,14 +454,14 @@
                 <div class="col-md-6">
                   <div class="form-group form-group-modern">
                     <label>Application / Site Name <span class="text-danger">*</span></label>
-                    <input type="text" name="site_name" class="form-control" value="<?=htmlspecialchars($settings['site_name']['value'] ?? '');?>" required>
+                    <input type="text" name="site_name" class="form-control" value="<?=htmlspecialchars($settings['site_name']['value'] ?? '••••••••');?>" required>
                     <span class="input-hint">Displayed in browser titles, email templates, and SMS footers</span>
                   </div>
                 </div>
                 <div class="col-md-6">
                   <div class="form-group form-group-modern">
                     <label>Platform Tagline / Slogan</label>
-                    <input type="text" name="site_tagline" class="form-control" value="<?=htmlspecialchars($settings['site_tagline']['value'] ?? '');?>">
+                    <input type="text" name="site_tagline" class="form-control" value="<?=htmlspecialchars($settings['site_tagline']['value'] ?? '••••••••');?>">
                     <span class="input-hint">Secondary brand slogan used across public portal headers</span>
                   </div>
                 </div>
@@ -501,7 +501,7 @@
                   <div class="media-upload-card">
                     <label style="font-size: 13px; font-weight: 600;">Main Logo (Light Mode)</label>
                     <div class="media-preview-container">
-                      <?php $main_logo_val = $settings['main_logo']['value'] ?? ''; ?>
+                      <?php $main_logo_val = $settings['main_logo']['value'] ?? '••••••••'; ?>
                       <img src="<?=!empty($main_logo_val) ? (strpos($main_logo_val, 'http') === 0 ? $main_logo_val : base_url($main_logo_val)) : base_url('images/logo.png');?>" class="media-preview-img" id="preview_main_logo" alt="Main Logo">
                     </div>
                     <input type="file" name="main_logo" class="form-control" accept="image/*" onchange="previewMedia(this, 'preview_main_logo')">
@@ -513,7 +513,7 @@
                   <div class="media-upload-card">
                     <label style="font-size: 13px; font-weight: 600;">Browser Favicon (.ico / .png)</label>
                     <div class="media-preview-container">
-                      <?php $favicon_val = $settings['favicon']['value'] ?? ''; ?>
+                      <?php $favicon_val = $settings['favicon']['value'] ?? '••••••••'; ?>
                       <img src="<?=!empty($favicon_val) ? (strpos($favicon_val, 'http') === 0 ? $favicon_val : base_url($favicon_val)) : base_url('favicon.ico');?>" class="media-preview-img" id="preview_favicon" alt="Favicon" style="max-height: 32px;">
                     </div>
                     <input type="file" name="favicon" class="form-control" accept=".ico,.png" onchange="previewMedia(this, 'preview_favicon')">
@@ -525,7 +525,7 @@
                   <div class="media-upload-card">
                     <label style="font-size: 13px; font-weight: 600;">Email Header Logo</label>
                     <div class="media-preview-container">
-                      <?php $email_logo_val = $settings['email_logo']['value'] ?? ''; ?>
+                      <?php $email_logo_val = $settings['email_logo']['value'] ?? '••••••••'; ?>
                       <img src="<?=!empty($email_logo_val) ? (strpos($email_logo_val, 'http') === 0 ? $email_logo_val : base_url($email_logo_val)) : base_url('images/logo.png');?>" class="media-preview-img" id="preview_email_logo" alt="Email Logo">
                     </div>
                     <input type="file" name="email_logo" class="form-control" accept="image/*" onchange="previewMedia(this, 'preview_email_logo')">
@@ -544,14 +544,14 @@
                 <div class="col-md-6">
                   <div class="form-group form-group-modern">
                     <label>Official Support Email</label>
-                    <input type="email" name="support_email" class="form-control" value="<?=htmlspecialchars($settings['support_email']['value'] ?? '');?>">
+                    <input type="email" name="support_email" class="form-control" value="<?=htmlspecialchars($settings['support_email']['value'] ?? '••••••••');?>">
                     <span class="input-hint">Inquiries sent via contact forms will copy this email</span>
                   </div>
                 </div>
                 <div class="col-md-6">
                   <div class="form-group form-group-modern">
                     <label>Toll-Free / Contact Number</label>
-                    <input type="text" name="support_phone" class="form-control" value="<?=htmlspecialchars($settings['support_phone']['value'] ?? '');?>">
+                    <input type="text" name="support_phone" class="form-control" value="<?=htmlspecialchars($settings['support_phone']['value'] ?? '••••••••');?>">
                     <span class="input-hint">Displayed on patient app header and appointment receipts</span>
                   </div>
                 </div>
@@ -561,13 +561,13 @@
                 <div class="col-md-6">
                   <div class="form-group form-group-modern">
                     <label>Physical / Registered Address</label>
-                    <textarea name="physical_address" class="form-control" rows="3"><?=htmlspecialchars($settings['physical_address']['value'] ?? '');?></textarea>
+                    <textarea name="physical_address" class="form-control" rows="3"><?=htmlspecialchars($settings['physical_address']['value'] ?? '••••••••');?></textarea>
                   </div>
                 </div>
                 <div class="col-md-6">
                   <div class="form-group form-group-modern">
                     <label>Operating / Support Working Hours</label>
-                    <input type="text" name="operating_hours" class="form-control" value="<?=htmlspecialchars($settings['operating_hours']['value'] ?? '');?>">
+                    <input type="text" name="operating_hours" class="form-control" value="<?=htmlspecialchars($settings['operating_hours']['value'] ?? '••••••••');?>">
                     <span class="input-hint">Example: Mon - Sat: 08:00 AM - 09:00 PM</span>
                   </div>
                 </div>
@@ -589,7 +589,7 @@
                         $tz_options = ['Asia/Kolkata' => 'Asia/Kolkata (IST +5:30)', 'UTC' => 'UTC (+0:00)', 'America/New_York' => 'America/New_York (EST)', 'Europe/London' => 'Europe/London (GMT)', 'Asia/Dubai' => 'Asia/Dubai (+4:00)'];
                         foreach ($tz_options as $tz_val => $tz_label): 
                       ?>
-                        <option value="<?=$tz_val;?>" <?=$tz_current === $tz_val ? 'selected' : '';?>><?=$tz_label;?></option>
+                        <option value="<?=$tz_val;?>" <?=$tz_current === $tz_val ? 'selected' : '••••••••';?>><?=$tz_label;?></option>
                       <?php endforeach; ?>
                     </select>
                   </div>
@@ -609,7 +609,7 @@
                         $df_options = ['d-m-Y' => 'DD-MM-YYYY (e.g. 28-08-2026)', 'Y-m-d' => 'YYYY-MM-DD (e.g. 2026-08-28)', 'd M Y' => 'DD Mon YYYY (e.g. 28 Aug 2026)', 'm/d/Y' => 'MM/DD/YYYY (e.g. 08/28/2026)'];
                         foreach ($df_options as $df_val => $df_label):
                       ?>
-                        <option value="<?=$df_val;?>" <?=$df_current === $df_val ? 'selected' : '';?>><?=$df_label;?></option>
+                        <option value="<?=$df_val;?>" <?=$df_current === $df_val ? 'selected' : '••••••••';?>><?=$df_label;?></option>
                       <?php endforeach; ?>
                     </select>
                   </div>
@@ -618,8 +618,8 @@
                   <div class="form-group form-group-modern">
                     <label>Time Format</label>
                     <select name="time_format" class="form-control">
-                      <option value="h:i A" <?=($settings['time_format']['value'] ?? '') === 'h:i A' ? 'selected' : '';?>>12-Hour (02:30 PM)</option>
-                      <option value="H:i" <?=($settings['time_format']['value'] ?? '') === 'H:i' ? 'selected' : '';?>>24-Hour (14:30)</option>
+                      <option value="h:i A" <?=($settings['time_format']['value'] ?? '••••••••') === 'h:i A' ? 'selected' : '••••••••';?>>12-Hour (02:30 PM)</option>
+                      <option value="H:i" <?=($settings['time_format']['value'] ?? '••••••••') === 'H:i' ? 'selected' : '••••••••';?>>24-Hour (14:30)</option>
                     </select>
                   </div>
                 </div>
@@ -640,7 +640,7 @@
         <!-- ==========================================
              TAB 2: EMAIL GATEWAY (SMTP / ESP)
              ========================================== -->
-        <div class="tab-pane <?=$active_tab === 'email' ? 'active' : '';?>" id="tab_email">
+        <div class="tab-pane <?=$active_tab === 'email' ? 'active' : '••••••••';?>" id="tab_email">
           <form class="ajaxSettingsForm" action="<?=base_url('settings/save');?>" method="post">
             <input type="hidden" name="category" value="email">
 
@@ -658,11 +658,11 @@
                     <label>Active Email Provider</label>
                     <select name="email_provider" id="emailProviderSelect" class="form-control">
                       <?php $ep = $settings['email_provider']['value'] ?? 'smtp'; ?>
-                      <option value="smtp" <?=$ep === 'smtp' ? 'selected' : '';?>>Standard SMTP (Gmail, Hostinger, Custom)</option>
-                      <option value="sendgrid" <?=$ep === 'sendgrid' ? 'selected' : '';?>>SendGrid API</option>
-                      <option value="ses" <?=$ep === 'ses' ? 'selected' : '';?>>Amazon SES</option>
-                      <option value="mailgun" <?=$ep === 'mailgun' ? 'selected' : '';?>>Mailgun API</option>
-                      <option value="postmark" <?=$ep === 'postmark' ? 'selected' : '';?>>Postmark</option>
+                      <option value="smtp" <?=$ep === 'smtp' ? 'selected' : '••••••••';?>>Standard SMTP (Gmail, Hostinger, Custom)</option>
+                      <option value="sendgrid" <?=$ep === 'sendgrid' ? 'selected' : '••••••••';?>>SendGrid API</option>
+                      <option value="ses" <?=$ep === 'ses' ? 'selected' : '••••••••';?>>Amazon SES</option>
+                      <option value="mailgun" <?=$ep === 'mailgun' ? 'selected' : '••••••••';?>>Mailgun API</option>
+                      <option value="postmark" <?=$ep === 'postmark' ? 'selected' : '••••••••';?>>Postmark</option>
                     </select>
                   </div>
                 </div>
@@ -681,7 +681,7 @@
               </div>
 
               <!-- Conditional SMTP Settings -->
-              <div id="smtpSettingsPanel" style="<?=$ep === 'smtp' ? '' : 'display:none;';?>">
+              <div id="smtpSettingsPanel" style="<?=$ep === 'smtp' ? '••••••••' : 'display:none;';?>">
                 <h4 style="font-size: 14px; font-weight: 700; color: var(--adm-navy); margin: 20px 0 15px 0;">
                   <i class="fa fa-server text-primary"></i> SMTP Server Parameters
                 </h4>
@@ -703,9 +703,9 @@
                       <label>Encryption Protocol</label>
                       <select name="smtp_crypto" class="form-control">
                         <?php $sc = $settings['smtp_crypto']['value'] ?? 'tls'; ?>
-                        <option value="tls" <?=$sc === 'tls' ? 'selected' : '';?>>TLS (Recommended on Port 587)</option>
-                        <option value="ssl" <?=$sc === 'ssl' ? 'selected' : '';?>>SSL (Port 465)</option>
-                        <option value="none" <?=$sc === 'none' ? 'selected' : '';?>>None (Port 25)</option>
+                        <option value="tls" <?=$sc === 'tls' ? 'selected' : '••••••••';?>>TLS (Recommended on Port 587)</option>
+                        <option value="ssl" <?=$sc === 'ssl' ? 'selected' : '••••••••';?>>SSL (Port 465)</option>
+                        <option value="none" <?=$sc === 'none' ? 'selected' : '••••••••';?>>None (Port 25)</option>
                       </select>
                     </div>
                   </div>
@@ -715,14 +715,14 @@
                   <div class="col-md-6">
                     <div class="form-group form-group-modern">
                       <label>SMTP Username / Email</label>
-                      <input type="text" name="smtp_user" class="form-control" value="<?=htmlspecialchars($settings['smtp_user']['value'] ?? '');?>">
+                      <input type="text" name="smtp_user" class="form-control" value="<?=htmlspecialchars($settings['smtp_user']['value'] ?? '••••••••');?>">
                     </div>
                   </div>
                   <div class="col-md-6">
                     <div class="form-group form-group-modern">
                       <label>SMTP Password (Encrypted)</label>
                       <div class="input-group-secret">
-                        <input type="password" name="smtp_pass" class="form-control secret-field" placeholder="••••••••" value="<?=!empty($settings['smtp_pass']['value']) ? '••••••••' : '';?>">
+                        <input type="password" name="smtp_pass" class="form-control secret-field" placeholder="••••••••" value="<?=!empty($settings['smtp_pass']['value']) ? '••••••••' : '••••••••';?>">
                         <button type="button" class="btn-toggle-secret" onclick="toggleSecretVisibility(this)">
                           <i class="fa fa-eye"></i>
                         </button>
@@ -734,14 +734,14 @@
               </div>
 
               <!-- Conditional SendGrid Settings -->
-              <div id="sendgridSettingsPanel" style="<?=$ep === 'sendgrid' ? '' : 'display:none;';?>">
+              <div id="sendgridSettingsPanel" style="<?=$ep === 'sendgrid' ? '••••••••' : 'display:none;';?>">
                 <h4 style="font-size: 14px; font-weight: 700; color: var(--adm-navy); margin: 20px 0 15px 0;">
                   <i class="fa fa-key text-primary"></i> SendGrid API Credentials
                 </h4>
                 <div class="form-group form-group-modern">
                   <label>SendGrid API Key</label>
                   <div class="input-group-secret">
-                    <input type="password" name="sendgrid_api_key" class="form-control secret-field" placeholder="••••••••" value="<?=!empty($settings['sendgrid_api_key']['value']) ? '••••••••' : '';?>">
+                    <input type="password" name="sendgrid_api_key" class="form-control secret-field" placeholder="••••••••" value="<?=!empty($settings['sendgrid_api_key']['value']) ? '••••••••' : '••••••••';?>">
                     <button type="button" class="btn-toggle-secret" onclick="toggleSecretVisibility(this)">
                       <i class="fa fa-eye"></i>
                     </button>
@@ -751,7 +751,7 @@
               </div>
 
               <!-- Conditional SES Settings -->
-              <div id="sesSettingsPanel" style="<?=$ep === 'ses' ? '' : 'display:none;';?>">
+              <div id="sesSettingsPanel" style="<?=$ep === 'ses' ? '••••••••' : 'display:none;';?>">
                 <h4 style="font-size: 14px; font-weight: 700; color: var(--adm-navy); margin: 20px 0 15px 0;">
                   <i class="fa fa-amazon text-primary"></i> Amazon SES Credentials
                 </h4>
@@ -760,7 +760,7 @@
                     <div class="form-group form-group-modern">
                       <label>SES Access Key ID</label>
                       <div class="input-group-secret">
-                        <input type="password" name="ses_key" class="form-control secret-field" placeholder="••••••••" value="<?=!empty($settings['ses_key']['value']) ? '••••••••' : '';?>">
+                        <input type="password" name="ses_key" class="form-control secret-field" placeholder="••••••••" value="<?=!empty($settings['ses_key']['value']) ? '••••••••' : '••••••••';?>">
                         <button type="button" class="btn-toggle-secret" onclick="toggleSecretVisibility(this)">
                           <i class="fa fa-eye"></i>
                         </button>
@@ -771,7 +771,7 @@
                     <div class="form-group form-group-modern">
                       <label>SES Secret Access Key</label>
                       <div class="input-group-secret">
-                        <input type="password" name="ses_secret" class="form-control secret-field" placeholder="••••••••" value="<?=!empty($settings['ses_secret']['value']) ? '••••••••' : '';?>">
+                        <input type="password" name="ses_secret" class="form-control secret-field" placeholder="••••••••" value="<?=!empty($settings['ses_secret']['value']) ? '••••••••' : '••••••••';?>">
                         <button type="button" class="btn-toggle-secret" onclick="toggleSecretVisibility(this)">
                           <i class="fa fa-eye"></i>
                         </button>
@@ -803,7 +803,7 @@
         <!-- ==========================================
              TAB 3: SMS & WHATSAPP GATEWAY
              ========================================== -->
-        <div class="tab-pane <?=$active_tab === 'sms' ? 'active' : '';?>" id="tab_sms">
+        <div class="tab-pane <?=$active_tab === 'sms' ? 'active' : '••••••••';?>" id="tab_sms">
           <form class="ajaxSettingsForm" action="<?=base_url('settings/save');?>" method="post">
             <input type="hidden" name="category" value="sms">
 
@@ -822,10 +822,10 @@
                     <label>Active SMS Gateway</label>
                     <select name="sms_provider" id="smsProviderSelect" class="form-control">
                       <?php $sp = $settings['sms_provider']['value'] ?? 'msg91'; ?>
-                      <option value="msg91" <?=$sp === 'msg91' ? 'selected' : '';?>>Msg91 (India DLT Compliant)</option>
-                      <option value="twilio" <?=$sp === 'twilio' ? 'selected' : '';?>>Twilio Programmable SMS</option>
-                      <option value="fast2sms" <?=$sp === 'fast2sms' ? 'selected' : '';?>>Fast2SMS</option>
-                      <option value="infobip" <?=$sp === 'infobip' ? 'selected' : '';?>>Infobip</option>
+                      <option value="msg91" <?=$sp === 'msg91' ? 'selected' : '••••••••';?>>Msg91 (India DLT Compliant)</option>
+                      <option value="twilio" <?=$sp === 'twilio' ? 'selected' : '••••••••';?>>Twilio Programmable SMS</option>
+                      <option value="fast2sms" <?=$sp === 'fast2sms' ? 'selected' : '••••••••';?>>Fast2SMS</option>
+                      <option value="infobip" <?=$sp === 'infobip' ? 'selected' : '••••••••';?>>Infobip</option>
                     </select>
                   </div>
                 </div>
@@ -846,7 +846,7 @@
               </div>
 
               <!-- Conditional Msg91 Credentials -->
-              <div id="msg91Fields" style="<?=$sp === 'msg91' ? '' : 'display:none;';?>">
+              <div id="msg91Fields" style="<?=$sp === 'msg91' ? '••••••••' : 'display:none;';?>">
                 <h4 style="font-size: 14px; font-weight: 700; color: var(--adm-navy); margin: 15px 0;">
                   <i class="fa fa-key text-primary"></i> Msg91 API Credentials
                 </h4>
@@ -855,7 +855,7 @@
                     <div class="form-group form-group-modern">
                       <label>Msg91 Auth Key</label>
                       <div class="input-group-secret">
-                        <input type="password" name="msg91_auth_key" class="form-control secret-field" placeholder="••••••••" value="<?=!empty($settings['msg91_auth_key']['value']) ? '••••••••' : '';?>">
+                        <input type="password" name="msg91_auth_key" class="form-control secret-field" placeholder="••••••••" value="<?=!empty($settings['msg91_auth_key']['value']) ? '••••••••' : '••••••••';?>">
                         <button type="button" class="btn-toggle-secret" onclick="toggleSecretVisibility(this)">
                           <i class="fa fa-eye"></i>
                         </button>
@@ -878,7 +878,7 @@
               </div>
 
               <!-- Conditional Twilio Credentials -->
-              <div id="twilioFields" style="<?=$sp === 'twilio' ? '' : 'display:none;';?>">
+              <div id="twilioFields" style="<?=$sp === 'twilio' ? '••••••••' : 'display:none;';?>">
                 <h4 style="font-size: 14px; font-weight: 700; color: var(--adm-navy); margin: 15px 0;">
                   <i class="fa fa-key text-primary"></i> Twilio API Credentials
                 </h4>
@@ -887,7 +887,7 @@
                     <div class="form-group form-group-modern">
                       <label>Twilio Account SID</label>
                       <div class="input-group-secret">
-                        <input type="password" name="twilio_sid" class="form-control secret-field" placeholder="••••••••" value="<?=!empty($settings['twilio_sid']['value']) ? '••••••••' : '';?>">
+                        <input type="password" name="twilio_sid" class="form-control secret-field" placeholder="••••••••" value="<?=!empty($settings['twilio_sid']['value']) ? '••••••••' : '••••••••';?>">
                         <button type="button" class="btn-toggle-secret" onclick="toggleSecretVisibility(this)">
                           <i class="fa fa-eye"></i>
                         </button>
@@ -898,7 +898,7 @@
                     <div class="form-group form-group-modern">
                       <label>Twilio Auth Token</label>
                       <div class="input-group-secret">
-                        <input type="password" name="twilio_token" class="form-control secret-field" placeholder="••••••••" value="<?=!empty($settings['twilio_token']['value']) ? '••••••••' : '';?>">
+                        <input type="password" name="twilio_token" class="form-control secret-field" placeholder="••••••••" value="<?=!empty($settings['twilio_token']['value']) ? '••••••••' : '••••••••';?>">
                         <button type="button" class="btn-toggle-secret" onclick="toggleSecretVisibility(this)">
                           <i class="fa fa-eye"></i>
                         </button>
@@ -908,21 +908,21 @@
                   <div class="col-md-4">
                     <div class="form-group form-group-modern">
                       <label>Twilio From Number / Sender</label>
-                      <input type="text" name="twilio_from" class="form-control" value="<?=htmlspecialchars($settings['twilio_from']['value'] ?? '');?>" placeholder="+1234567890">
+                      <input type="text" name="twilio_from" class="form-control" value="<?=htmlspecialchars($settings['twilio_from']['value'] ?? '••••••••');?>" placeholder="+1234567890">
                     </div>
                   </div>
                 </div>
               </div>
 
               <!-- Conditional Fast2SMS Credentials -->
-              <div id="fast2smsFields" style="<?=$sp === 'fast2sms' ? '' : 'display:none;';?>">
+              <div id="fast2smsFields" style="<?=$sp === 'fast2sms' ? '••••••••' : 'display:none;';?>">
                 <h4 style="font-size: 14px; font-weight: 700; color: var(--adm-navy); margin: 15px 0;">
                   <i class="fa fa-key text-primary"></i> Fast2SMS Credentials
                 </h4>
                 <div class="form-group form-group-modern">
                   <label>Fast2SMS Authorization Key</label>
                   <div class="input-group-secret">
-                    <input type="password" name="fast2sms_api_key" class="form-control secret-field" placeholder="••••••••" value="<?=!empty($settings['fast2sms_api_key']['value']) ? '••••••••' : '';?>">
+                    <input type="password" name="fast2sms_api_key" class="form-control secret-field" placeholder="••••••••" value="<?=!empty($settings['fast2sms_api_key']['value']) ? '••••••••' : '••••••••';?>">
                     <button type="button" class="btn-toggle-secret" onclick="toggleSecretVisibility(this)">
                       <i class="fa fa-eye"></i>
                     </button>
@@ -943,20 +943,20 @@
                 <div class="col-md-4">
                   <div class="form-group form-group-modern">
                     <label>WhatsApp Business Account ID (WABA ID)</label>
-                    <input type="text" name="wa_account_id" class="form-control" value="<?=htmlspecialchars($settings['wa_account_id']['value'] ?? '');?>" placeholder="e.g. 10982374982374">
+                    <input type="text" name="wa_account_id" class="form-control" value="<?=htmlspecialchars($settings['wa_account_id']['value'] ?? '••••••••');?>" placeholder="e.g. 10982374982374">
                   </div>
                 </div>
                 <div class="col-md-4">
                   <div class="form-group form-group-modern">
                     <label>Phone Number ID</label>
-                    <input type="text" name="wa_phone_number_id" class="form-control" value="<?=htmlspecialchars($settings['wa_phone_number_id']['value'] ?? '');?>" placeholder="e.g. 10482937482937">
+                    <input type="text" name="wa_phone_number_id" class="form-control" value="<?=htmlspecialchars($settings['wa_phone_number_id']['value'] ?? '••••••••');?>" placeholder="e.g. 10482937482937">
                   </div>
                 </div>
                 <div class="col-md-4">
                   <div class="form-group form-group-modern">
                     <label>System User Permanent Access Token</label>
                     <div class="input-group-secret">
-                      <input type="password" name="wa_access_token" class="form-control secret-field" placeholder="••••••••" value="<?=!empty($settings['wa_access_token']['value']) ? '••••••••' : '';?>">
+                      <input type="password" name="wa_access_token" class="form-control secret-field" placeholder="••••••••" value="<?=!empty($settings['wa_access_token']['value']) ? '••••••••' : '••••••••';?>">
                       <button type="button" class="btn-toggle-secret" onclick="toggleSecretVisibility(this)">
                         <i class="fa fa-eye"></i>
                       </button>
@@ -980,7 +980,7 @@
         <!-- ==========================================
              TAB 4: THIRD-PARTY INTEGRATIONS
              ========================================== -->
-        <div class="tab-pane <?=$active_tab === 'integrations' ? 'active' : '';?>" id="tab_integrations">
+        <div class="tab-pane <?=$active_tab === 'integrations' ? 'active' : '••••••••';?>" id="tab_integrations">
           <form class="ajaxSettingsForm" action="<?=base_url('settings/save');?>" method="post">
             <input type="hidden" name="category" value="integrations">
 
@@ -996,14 +996,14 @@
                 <div class="col-md-4">
                   <div class="form-group form-group-modern">
                     <label>ABDM Client ID</label>
-                    <input type="text" name="abdm_client_id" class="form-control" value="<?=htmlspecialchars($settings['abdm_client_id']['value'] ?? '');?>">
+                    <input type="text" name="abdm_client_id" class="form-control" value="<?=htmlspecialchars($settings['abdm_client_id']['value'] ?? '••••••••');?>">
                   </div>
                 </div>
                 <div class="col-md-4">
                   <div class="form-group form-group-modern">
                     <label>ABDM Client Secret (Encrypted)</label>
                     <div class="input-group-secret">
-                      <input type="password" name="abdm_client_secret" class="form-control secret-field" placeholder="••••••••" value="<?=!empty($settings['abdm_client_secret']['value']) ? '••••••••' : '';?>">
+                      <input type="password" name="abdm_client_secret" class="form-control secret-field" placeholder="••••••••" value="<?=!empty($settings['abdm_client_secret']['value']) ? '••••••••' : '••••••••';?>">
                       <button type="button" class="btn-toggle-secret" onclick="toggleSecretVisibility(this)">
                         <i class="fa fa-eye"></i>
                       </button>
@@ -1014,8 +1014,8 @@
                   <div class="form-group form-group-modern">
                     <label>Environment Mode</label>
                     <select name="abdm_sandbox_mode" class="form-control">
-                      <option value="1" <?=($settings['abdm_sandbox_mode']['value'] ?? '1') === '1' ? 'selected' : '';?>>Sandbox / Dev Gateway (dev.abdm.gov.in)</option>
-                      <option value="0" <?=($settings['abdm_sandbox_mode']['value'] ?? '1') === '0' ? 'selected' : '';?>>Production Live Gateway (gateway.abdm.gov.in)</option>
+                      <option value="1" <?=($settings['abdm_sandbox_mode']['value'] ?? '1') === '1' ? 'selected' : '••••••••';?>>Sandbox / Dev Gateway (dev.abdm.gov.in)</option>
+                      <option value="0" <?=($settings['abdm_sandbox_mode']['value'] ?? '1') === '0' ? 'selected' : '••••••••';?>>Production Live Gateway (gateway.abdm.gov.in)</option>
                     </select>
                   </div>
                 </div>
@@ -1037,23 +1037,23 @@
                     <label>Primary Payment Gateway</label>
                     <select name="payment_gateway" class="form-control">
                       <?php $pg = $settings['payment_gateway']['value'] ?? 'razorpay'; ?>
-                      <option value="razorpay" <?=$pg === 'razorpay' ? 'selected' : '';?>>Razorpay (Cards, UPI, Netbanking)</option>
-                      <option value="cashfree" <?=$pg === 'cashfree' ? 'selected' : '';?>>Cashfree Payments</option>
-                      <option value="stripe" <?=$pg === 'stripe' ? 'selected' : '';?>>Stripe</option>
+                      <option value="razorpay" <?=$pg === 'razorpay' ? 'selected' : '••••••••';?>>Razorpay (Cards, UPI, Netbanking)</option>
+                      <option value="cashfree" <?=$pg === 'cashfree' ? 'selected' : '••••••••';?>>Cashfree Payments</option>
+                      <option value="stripe" <?=$pg === 'stripe' ? 'selected' : '••••••••';?>>Stripe</option>
                     </select>
                   </div>
                 </div>
                 <div class="col-md-4">
                   <div class="form-group form-group-modern">
                     <label>Razorpay Key ID</label>
-                    <input type="text" name="razorpay_key_id" class="form-control" value="<?=htmlspecialchars($settings['razorpay_key_id']['value'] ?? '');?>">
+                    <input type="text" name="razorpay_key_id" class="form-control" value="<?=htmlspecialchars($settings['razorpay_key_id']['value'] ?? '••••••••');?>">
                   </div>
                 </div>
                 <div class="col-md-4">
                   <div class="form-group form-group-modern">
                     <label>Razorpay Key Secret (Encrypted)</label>
                     <div class="input-group-secret">
-                      <input type="password" name="razorpay_key_secret" class="form-control secret-field" placeholder="••••••••" value="<?=!empty($settings['razorpay_key_secret']['value']) ? '••••••••' : '';?>">
+                      <input type="password" name="razorpay_key_secret" class="form-control secret-field" placeholder="••••••••" value="<?=!empty($settings['razorpay_key_secret']['value']) ? '••••••••' : '••••••••';?>">
                       <button type="button" class="btn-toggle-secret" onclick="toggleSecretVisibility(this)">
                         <i class="fa fa-eye"></i>
                       </button>
@@ -1067,7 +1067,7 @@
                   <div class="form-group form-group-modern">
                     <label>Razorpay Webhook Secret</label>
                     <div class="input-group-secret">
-                      <input type="password" name="razorpay_webhook_secret" class="form-control secret-field" placeholder="••••••••" value="<?=!empty($settings['razorpay_webhook_secret']['value']) ? '••••••••' : '';?>">
+                      <input type="password" name="razorpay_webhook_secret" class="form-control secret-field" placeholder="••••••••" value="<?=!empty($settings['razorpay_webhook_secret']['value']) ? '••••••••' : '••••••••';?>">
                       <button type="button" class="btn-toggle-secret" onclick="toggleSecretVisibility(this)">
                         <i class="fa fa-eye"></i>
                       </button>
@@ -1078,8 +1078,8 @@
                   <div class="form-group form-group-modern">
                     <label>Razorpay Mode</label>
                     <select name="razorpay_mode" class="form-control">
-                      <option value="test" <?=($settings['razorpay_mode']['value'] ?? 'test') === 'test' ? 'selected' : '';?>>Test Mode (Sandbox)</option>
-                      <option value="live" <?=($settings['razorpay_mode']['value'] ?? 'test') === 'live' ? 'selected' : '';?>>Live Production Mode</option>
+                      <option value="test" <?=($settings['razorpay_mode']['value'] ?? 'test') === 'test' ? 'selected' : '••••••••';?>>Test Mode (Sandbox)</option>
+                      <option value="live" <?=($settings['razorpay_mode']['value'] ?? 'test') === 'live' ? 'selected' : '••••••••';?>>Live Production Mode</option>
                     </select>
                   </div>
                 </div>
@@ -1100,7 +1100,7 @@
                   <div class="form-group form-group-modern">
                     <label>Google Maps API Key (Geocoding / Places / Matrix)</label>
                     <div class="input-group-secret">
-                      <input type="password" name="google_maps_api_key" class="form-control secret-field" placeholder="••••••••" value="<?=!empty($settings['google_maps_api_key']['value']) ? '••••••••' : '';?>">
+                      <input type="password" name="google_maps_api_key" class="form-control secret-field" placeholder="••••••••" value="<?=!empty($settings['google_maps_api_key']['value']) ? '••••••••' : '••••••••';?>">
                       <button type="button" class="btn-toggle-secret" onclick="toggleSecretVisibility(this)">
                         <i class="fa fa-eye"></i>
                       </button>
@@ -1113,7 +1113,7 @@
                   <div class="form-group form-group-modern">
                     <label>Firebase Cloud Messaging (FCM) Server Key</label>
                     <div class="input-group-secret">
-                      <input type="password" name="fcm_server_key" class="form-control secret-field" placeholder="••••••••" value="<?=!empty($settings['fcm_server_key']['value']) ? '••••••••' : '';?>">
+                      <input type="password" name="fcm_server_key" class="form-control secret-field" placeholder="••••••••" value="<?=!empty($settings['fcm_server_key']['value']) ? '••••••••' : '••••••••';?>">
                       <button type="button" class="btn-toggle-secret" onclick="toggleSecretVisibility(this)">
                         <i class="fa fa-eye"></i>
                       </button>
@@ -1138,7 +1138,7 @@
         <!-- ==========================================
              TAB 5: SECURITY & MAINTENANCE
              ========================================== -->
-        <div class="tab-pane <?=$active_tab === 'security' ? 'active' : '';?>" id="tab_security">
+        <div class="tab-pane <?=$active_tab === 'security' ? 'active' : '••••••••';?>" id="tab_security">
           <form class="ajaxSettingsForm" action="<?=base_url('settings/save');?>" method="post">
             <input type="hidden" name="category" value="security">
 
@@ -1151,7 +1151,7 @@
                 <div class="col-md-12">
                   <div class="form-group form-group-modern" style="display: flex; align-items: center; gap: 15px; background: #fff1f2; padding: 15px; border-radius: 8px; border: 1px solid #fecdd3;">
                     <label class="switch-modern">
-                      <input type="checkbox" name="maintenance_mode" value="1" <?=($settings['maintenance_mode']['value'] ?? '0') == '1' ? 'checked' : '';?>>
+                      <input type="checkbox" name="maintenance_mode" value="1" <?=($settings['maintenance_mode']['value'] ?? '0') == '1' ? 'checked' : '••••••••';?>>
                       <span class="slider-modern"></span>
                     </label>
                     <div>
@@ -1211,7 +1211,7 @@
                 <div class="col-md-6">
                   <div class="form-group form-group-modern" style="display: flex; align-items: center; gap: 15px; margin-top: 10px;">
                     <label class="switch-modern">
-                      <input type="checkbox" name="mfa_enabled" value="1" <?=($settings['mfa_enabled']['value'] ?? '0') == '1' ? 'checked' : '';?>>
+                      <input type="checkbox" name="mfa_enabled" value="1" <?=($settings['mfa_enabled']['value'] ?? '0') == '1' ? 'checked' : '••••••••';?>>
                       <span class="slider-modern"></span>
                     </label>
                     <div>
@@ -1260,7 +1260,7 @@
         <!-- ==========================================
              TAB 6: AUDIT TRAIL / ACTIVITY LOGS
              ========================================== -->
-        <div class="tab-pane <?=$active_tab === 'audit' ? 'active' : '';?>" id="tab_audit">
+        <div class="tab-pane <?=$active_tab === 'audit' ? 'active' : '••••••••';?>" id="tab_audit">
           <div class="settings-card">
             <h3 class="card-section-title">
               <span><i class="fa fa-history text-primary"></i> System Settings Audit Trail (<?=$total_audit_count;?> Entries)</span>
@@ -1271,16 +1271,16 @@
               <input type="hidden" name="tab" value="audit">
               <div class="col-md-4">
                 <select name="log_category" class="form-control" onchange="this.form.submit()">
-                  <option value="ALL" <?=$audit_category === 'ALL' ? 'selected' : '';?>>All Setting Categories</option>
-                  <option value="general" <?=$audit_category === 'general' ? 'selected' : '';?>>General & Branding</option>
-                  <option value="email" <?=$audit_category === 'email' ? 'selected' : '';?>>Email Gateway</option>
-                  <option value="sms" <?=$audit_category === 'sms' ? 'selected' : '';?>>SMS & WhatsApp</option>
-                  <option value="integrations" <?=$audit_category === 'integrations' ? 'selected' : '';?>>Integrations</option>
-                  <option value="security" <?=$audit_category === 'security' ? 'selected' : '';?>>Security & Maintenance</option>
+                  <option value="ALL" <?=$audit_category === 'ALL' ? 'selected' : '••••••••';?>>All Setting Categories</option>
+                  <option value="general" <?=$audit_category === 'general' ? 'selected' : '••••••••';?>>General & Branding</option>
+                  <option value="email" <?=$audit_category === 'email' ? 'selected' : '••••••••';?>>Email Gateway</option>
+                  <option value="sms" <?=$audit_category === 'sms' ? 'selected' : '••••••••';?>>SMS & WhatsApp</option>
+                  <option value="integrations" <?=$audit_category === 'integrations' ? 'selected' : '••••••••';?>>Integrations</option>
+                  <option value="security" <?=$audit_category === 'security' ? 'selected' : '••••••••';?>>Security & Maintenance</option>
                 </select>
               </div>
               <div class="col-md-5">
-                <input type="text" name="search" class="form-control" placeholder="Search by admin, IP, or field..." value="<?=htmlspecialchars($audit_search ?? '');?>">
+                <input type="text" name="search" class="form-control" placeholder="Search by admin, IP, or field..." value="<?=htmlspecialchars($audit_search ?? '••••••••');?>">
               </div>
               <div class="col-md-3">
                 <button type="submit" class="btn btn-adm-teal"><i class="fa fa-search"></i> Filter Logs</button>
@@ -1321,7 +1321,7 @@
                             $changes_obj = @json_decode($log['changes'], true);
                             if (is_array($changes_obj)) {
                                 $keys = array_keys($changes_obj);
-                                echo "Modified <strong>" . count($keys) . "</strong> field(s): <span class='text-muted'>" . implode(', ', array_slice($keys, 0, 3)) . (count($keys) > 3 ? '...' : '') . "</span>";
+                                echo "Modified <strong>" . count($keys) . "</strong> field(s): <span class='text-muted'>" . implode(', ', array_slice($keys, 0, 3)) . (count($keys) > 3 ? '...' : '••••••••') . "</span>";
                             } else {
                                 echo "—";
                             }
@@ -1354,7 +1354,7 @@
         <!-- ==========================================
              TAB 7: SYSTEM DIAGNOSTICS & HEALTH
              ========================================== -->
-        <div class="tab-pane <?=$active_tab === 'health' ? 'active' : '';?>" id="tab_health">
+        <div class="tab-pane <?=$active_tab === 'health' ? 'active' : '••••••••';?>" id="tab_health">
           <div class="settings-card">
             <h3 class="card-section-title">
               <span><i class="fa fa-heartbeat text-danger"></i> Server Environment & System Diagnostics</span>
@@ -1772,7 +1772,7 @@
             var parsed = JSON.parse(xhr.responseText);
             if (parsed.message) msg = parsed.message;
           } catch(e) {
-            msg += (xhr.status ? 'HTTP ' + xhr.status + ': ' : '') + errorThrown;
+            msg += (xhr.status ? 'HTTP ' + xhr.status + ': ' : '••••••••') + errorThrown;
           }
         }
         $('#testEmailResult').html('<div class="alert alert-danger"><strong>Error:</strong> ' + msg + '</div>').slideDown();
@@ -1875,5 +1875,20 @@
     }
 
     $('#auditDiffModal').modal('show');
+  }
+
+  // Sync tab clicks with browser history & URL
+  $('a[data-toggle="tab"]').on('shown.bs.tab', function(e) {
+    var target = $(e.target).attr('href').replace('#tab_', '');
+    if (history.pushState) {
+      var newUrl = window.location.pathname + '?tab=' + target;
+      window.history.pushState({tab: target}, '', newUrl);
+    }
+  });
+
+  // Handle hash on page load if specified
+  var currentHash = window.location.hash;
+  if (currentHash && $('a[href="' + currentHash + '"]').length) {
+    $('a[href="' + currentHash + '"]').tab('show');
   }
 </script>

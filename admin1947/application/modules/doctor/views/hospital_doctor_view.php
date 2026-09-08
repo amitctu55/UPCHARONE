@@ -1,239 +1,207 @@
-<!DOCTYPE html>
-<html>
-<style>
-.tabledata
-{
-	border:1px solid #fff!important;
-	font-weight:600;
-}
-.tableheaddata
-{
-	border:1px solid #fff!important;
-	background:#605CA8;
-	color:#fff;
-}
-  
-a 
-{
-    color: #11ff00;
-}
-.error valid
-{
-	color:green!important;
-}
-.tabledataactive
-{
-	color:green;
-}
-  .tabledatainactive{
-	  color:red;
-  }
-   table.dataTable tbody tr {
-    background-color: #e5e4f1;
-}
-</style>
-<style>
-.label-name{
-  text-align:left!important;
-  margin-top:-5px;
-}
-.starspan
-{
-  color:#e80909;
-  font-size:18px;
-}
-.mainheadlinerow
-{
-  padding:5px;margin-top:10px;margin-bottom:10px;
-}
-.mainheadline
-{
-  background:#605ca8;margin-top:10px;margin-bottom:10px;color:#fff;padding:9px;font-weight:600;
-}
-.mainheadlinefirstrow
-{
-  padding:5px;
-}
-.mainheadlinefirst
-{
-  background:#605ca8;margin-top:-15px;margin-bottom:15px;color:#fff;padding:9px;font-weight:600;
-}
-.mainhead{font-weight:600;margin-bottom:20px;}
-.formbody{border:1px solid #d6d2d2;padding:10px;border-radius:4px;}
-.note{font-weight:600;margin-top:10px;margin-bottom:20px;}
+<div class="content-wrapper" style="min-height: 900px; background-color: #f8fafc;">
+  <!-- Content Header (Page header) -->
+  <section class="content-header" style="padding: 24px 30px 15px 30px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+      <div>
+        <h1 style="font-size: 24px; font-weight: 700; color: #0f172a; margin: 0; display: flex; align-items: center; gap: 10px;">
+          <i class="fa fa-hospital-o" style="color: #00a896;"></i> Hospital &amp; Doctor Affiliation Directory
+        </h1>
+        <p style="margin: 5px 0 0 0; color: #64748b; font-size: 13px;">
+          Manage doctor practice affiliations, consultation fees, and opd time schedules across medical facilities.
+        </p>
+      </div>
+      <div style="display: flex; gap: 10px;">
+        <a href="<?=base_url('doctor/clinicreg/assign_doctor');?>" class="btn btn-primary" style="font-weight: 700; border-radius: 8px; background: #00a896; border-color: #00a896; box-shadow: 0 2px 4px rgba(0,168,150,0.25);">
+          <i class="fa fa-user-plus"></i> Assign Doctor to Facility
+        </a>
+        <a href="<?=base_url('doctor/clinicreg/viewhospital');?>" class="btn btn-default" style="font-weight: 600; border-radius: 8px;">
+          <i class="fa fa-building-o"></i> View Hospitals
+        </a>
+      </div>
+    </div>
+  </section>
 
-#reset{background:#fff;color:#000;padding: 6px 30px;}
-</style>
-<body class="hold-transition skin-blue sidebar-mini">
-	<div class="wrapper">
-		<!--there was sidebar -->
-		<!-- Content Wrapper. Contains page content -->
-		<div class="content-wrapper">
-			<!-- Content Header (Page header) -->
-			<!-- Main content -->
-			<section class="content-header">
-				<h1>
-					<?php echo $module;?>
-					<small>Control panel</small>
-				</h1>
-				<ol class="breadcrumb">
-					<li><a href="<?php echo base_url();?>masters/dashboard"><i class="fa fa-dashboard"></i> Home</a></li>
-					<li class="active"><?php echo $module;?></li>
-				</ol>
-			</section>
-			<section class="content">
-				<link rel="stylesheet" href="https://jqueryvalidation.org/files/demo/site-demos.css">
-				<link rel="stylesheet" href="<?=base_url();?>public/assets/dist/css/metallic/zebra_datepicker.min.css" type="text/css">
-				<div class="container bg-3 "> 
-					<?php $hospital_id = $this->uri->segment(4);
-					echo form_open("doctor/clinicreg/hospital_doctor/".$hospital_id."",'class="form-horizontal formbody" id="search_form" method="get"');  ?>
-					<div class="row mainheadlinefirstrow">
-						<div class="col-md-12 mainheadlinefirst">Basic Filter
-							
-						</div>
-					</div>
-					<div class="row">
-						<div class="col-md-12">
-							<div class="form-group">
-								<label class="control-label col-sm-2 label-name" for="email">Records Per Page</label> 
-								<div class="col-sm-2"><?php echo display_record_per_page();?></div>
-								<label class="control-label col-sm-1 label-name" for="email">Name</label>
-								<div class="col-sm-3">
-									<input type="text" class="form-control input-sm" name="keyword" value="<?php echo $this->input->get_post('keyword');?>">
-								</div>
-								<label class="control-label col-sm-1 label-name" for="email"></label>
-								<div class="col-sm-3">
-									<a  onclick="$('#search_form').submit();" style="padding-top:1px" class="button2 btn-lg btn btn-info" ><span> Search </span></a>
-									<?php 
-									if($this->input->get_post('keyword')!='' || $this->input->get_post('type')!='')
-									{ 
-										echo anchor("doctor/clinicreg/hospital_doctor/".$hospital_id."",'<span>Clear Search</span>');    
-									} 
-									?>
-								</div>
-							</div>
-						</div>
-					</div>
-					<?php echo form_close();?>
-					<div class="row text-">
-						<div class="col-sm-12">
-							<?=$this->session->flashdata('flashmsg');?>
-							<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
-								<h4 style="font-weight:600;margin:0;"><?=$module;?> &amp; Doctor Affiliation Directory</h4>
-								<div>
-									<a href="<?=base_url('doctor/clinicreg/assign_doctor');?>" class="btn btn-sm btn-primary" style="font-weight: 600; border-radius: 6px; background: #00a896; border-color: #00a896; padding: 6px 14px;">
-										<i class="fa fa-user-plus"></i> Assign Doctor to Hospital
-									</a>
-								</div>
-							</div>
-						</div>
-					</div>
-					<?php $att=array('class'=>'form-horizontal form-label-left','name'=>'myform');
-					echo form_open_multipart("doctor/clinicreg/hospital_doctor/".$hospital_id."", $att);?>
-					<div class="table-responsive">
-						<table class="table table-hover table-bordered table-bordered" id='neodatatable' style="border:none;">
-							<thead>
-								<tr>
-									<th><input type="checkbox" style="width:15px;" name="checkall" id="checkall"  onClick="check_uncheck_checkbox(this.checked);"/></th>
-									<th class="tableheaddata"><?=$module;?> ID</th>
-									<th class="tableheaddata">Hospital Name</th>
-									<th class="tableheaddata">Doctor Name</th>
-									<th class="tableheaddata">City</th>
-									<th class="tableheaddata">Email</th>
-									<th class="tableheaddata">Mobile</th>
-									<th class="tableheaddata">Status</th>
-									<th class="tableheaddata">View</th>
-								</tr>
-							</thead>
-							<?php
-							if(is_array($doctor) && !empty($doctor))
-							{
-							foreach($doctor as $val)
-							{
-							?>
-							<tbody>
-								<tr>
-									<td><input style="width:15px;" type="checkbox" name="arr_ids[]" value="<?php echo $val['id'];?>" id="check-all" class="flat"></td>
-									<td class="tableheaddata"><?php echo $val['id']?></td>
-									<td class="tableheaddata"><?php echo $val['name']?></td>
-									<td class="tableheaddata"><?php echo $val['fname'].' '.$val['lname'];?></td>
-									<td class="tableheaddata"><?php echo getCityName($val['city']);?></td>
-									<td class="tableheaddata"><?php echo $val['email']?></td>
-									<td class="tableheaddata"><?php echo $val['mobile']?></td>
-									<td class="tableheaddata"><?php if($val['status']==1){ echo '<font color="green">Accept</font>';}else{ echo '<font color="red">Pending</font>'; }?></td>
-									<td class="tableheaddata"><a href="<?php echo base_url().'doctor/clinicreg/doctor_fee_time/'.$val['id']?>" >Doctor Fee & Time <a></td>
-								</tr>
-							</tbody>
-							<?php 
-							}
-							}
-							?>
-							<tfoot>
-							  <tr>
-								<th><input type="checkbox" style="width:15px;" name="checkall" id="checkall"  onClick="check_uncheck_checkbox(this.checked);"/></th>
-								<th class="tableheaddata"><?=$module;?> ID</th>
-								<th class="tableheaddata">Hospital Name</th>
-								<th class="tableheaddata">Doctor Name</th>
-								<th class="tableheaddata">City</th>
-								<th class="tableheaddata">Email</th>
-								<th class="tableheaddata">Mobile</th>
-								<th class="tableheaddata">Status</th>
-								<th class="tableheaddata">View</th>
-							  </tr>
-							</tfoot>
-						</table>
-					</div>
-					<div class="row">
-						<div class="col-md-7">
-							<input name="status_action" style="width: 150px; font-weight: bold;" type="submit" value="Activate" class="button2 btn-sm btn btn-success" id="Active" onClick="return validcheckstatus('arr_ids[]','Request Accept','Record','u_status_arr[]');"/>
-							<input name="status_action" style="width: 150px; font-weight: bold;" type="submit" value="Deactivate" class="button2 btn-sm btn btn-warning" id="Deactivate" onClick="return validcheckstatus('arr_ids[]','Request Accept','Record','u_status_arr[]');"/>
-							<input name="status_action" style="width: 150px; font-weight: bold;" type="submit" value="Delete" class="button2 btn-sm btn btn-danger" id="Delete" onClick="return validcheckstatus('arr_ids[]','Request Accept','Record','u_status_arr[]');"/>
-						</div>
-						<div class="col-md-5">
-							<div class="pagination"><?php echo $page_links; ?></div>
-						</div>
-					</div>
-				</div>
-			</section>
-		</div>
-		<?php $this->load->view('footer');?>
-		<div class="control-sidebar-bg"></div>
-	</div>
-	<!-- ./wrapper -->
-</body>
-</html>
-<script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+  <!-- Main content -->
+  <section class="content" style="padding: 0 30px 40px 30px;">
+    <?=$this->session->flashdata('flashmsg');?>
+
+    <!-- Filter Card -->
+    <?php 
+      $hospital_id = $this->uri->segment(4);
+      $action_url = "doctor/clinicreg/hospital_doctor" . ($hospital_id ? "/".$hospital_id : "");
+    ?>
+    <div style="background: #ffffff; border-radius: 12px; padding: 20px 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); border: 1px solid #e2e8f0; margin-bottom: 25px;">
+      <form id="search_form" action="<?=base_url($action_url);?>" method="get" class="form-inline" style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
+        
+        <div class="form-group" style="margin: 0; flex: 1; min-width: 260px;">
+          <label style="font-size: 12px; font-weight: 600; color: #475569; margin-bottom: 4px; display: block;">Search Keyword</label>
+          <div class="input-group" style="width: 100%;">
+            <span class="input-group-addon" style="background: #f8fafc; border-color: #cbd5e1;"><i class="fa fa-search text-muted"></i></span>
+            <input type="text" name="keyword" class="form-control" placeholder="Search by doctor name, hospital, phone..." value="<?=htmlspecialchars($this->input->get('keyword') ?: '');?>" style="border-radius: 0 6px 6px 0; border-color: #cbd5e1;">
+          </div>
+        </div>
+
+        <div class="form-group" style="margin: 0; min-width: 160px;">
+          <label style="font-size: 12px; font-weight: 600; color: #475569; margin-bottom: 4px; display: block;">Facility Type</label>
+          <select name="type" class="form-control" style="width: 100%; border-radius: 6px; border-color: #cbd5e1;">
+            <option value="">All Facility Types</option>
+            <option value="H" <?=$this->input->get('type') === 'H' ? 'selected' : '';?>>Hospital</option>
+            <option value="C" <?=$this->input->get('type') === 'C' ? 'selected' : '';?>>Clinic</option>
+          </select>
+        </div>
+
+        <div class="form-group" style="margin: 0; min-width: 140px;">
+          <label style="font-size: 12px; font-weight: 600; color: #475569; margin-bottom: 4px; display: block;">Per Page</label>
+          <select name="pagesize" class="form-control" style="width: 100%; border-radius: 6px; border-color: #cbd5e1;" onchange="$('#search_form').submit();">
+            <?php 
+              $cur_ps = (int)$this->input->get('pagesize') ?: 10;
+              foreach ([10, 25, 50, 100] as $ps):
+            ?>
+              <option value="<?=$ps;?>" <?=$cur_ps === $ps ? 'selected' : '';?>><?=$ps;?> per page</option>
+            <?php endforeach; ?>
+          </select>
+        </div>
+
+        <div style="display: flex; gap: 8px; margin-top: 20px;">
+          <button type="submit" class="btn btn-primary" style="background: #00a896; border-color: #00a896; font-weight: 600; border-radius: 6px; padding: 7px 18px;">
+            <i class="fa fa-filter"></i> Apply Filter
+          </button>
+          <?php if ($this->input->get('keyword') || $this->input->get('type')): ?>
+            <a href="<?=base_url($action_url);?>" class="btn btn-default" style="font-weight: 600; border-radius: 6px; padding: 7px 14px;">
+              <i class="fa fa-times"></i> Clear
+            </a>
+          <?php endif; ?>
+        </div>
+
+      </form>
+    </div>
+
+    <!-- Practice Table Card -->
+    <div style="background: #ffffff; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); border: 1px solid #e2e8f0; overflow: hidden;">
+      <?php echo form_open_multipart($action_url, array('name' => 'myform', 'id' => 'practiceTableForm')); ?>
+        <div class="table-responsive" style="margin: 0;">
+          <table class="table table-hover" style="margin: 0; vertical-align: middle;">
+            <thead>
+              <tr style="background: #f8fafc; border-bottom: 2px solid #e2e8f0;">
+                <th style="width: 40px; text-align: center; vertical-align: middle;">
+                  <input type="checkbox" id="checkall" onclick="check_uncheck_checkbox(this.checked);" style="cursor: pointer; width: 16px; height: 16px; accent-color: #00a896;">
+                </th>
+                <th style="width: 70px; color: #475569; font-size: 12.5px; font-weight: 700;">ID</th>
+                <th style="color: #475569; font-size: 12.5px; font-weight: 700;">Doctor Name &amp; Speciality</th>
+                <th style="color: #475569; font-size: 12.5px; font-weight: 700;">Facility / Institution</th>
+                <th style="color: #475569; font-size: 12.5px; font-weight: 700;">Location / City</th>
+                <th style="color: #475569; font-size: 12.5px; font-weight: 700;">Doctor Contact</th>
+                <th style="color: #475569; font-size: 12.5px; font-weight: 700;">Consultation Fee</th>
+                <th style="color: #475569; font-size: 12.5px; font-weight: 700; text-align: center;">Status</th>
+                <th style="color: #475569; font-size: 12.5px; font-weight: 700; text-align: center; width: 180px;">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <?php if (!empty($doctor) && is_array($doctor)): foreach ($doctor as $val): ?>
+                <tr style="border-bottom: 1px solid #f1f5f9; transition: background 0.15s;">
+                  <td style="text-align: center; vertical-align: middle;">
+                    <input type="checkbox" name="arr_ids[]" value="<?=$val['id'];?>" style="cursor: pointer; width: 16px; height: 16px; accent-color: #00a896;">
+                  </td>
+                  <td style="font-weight: 600; color: #64748b; vertical-align: middle;">#<?=$val['id'];?></td>
+                  <td style="vertical-align: middle;">
+                    <div style="font-weight: 700; color: #1e293b; font-size: 14px;">
+                      Dr. <?=htmlspecialchars($val['fname'].' '.$val['lname']);?>
+                    </div>
+                    <?php if (!empty($val['speciality'])): ?>
+                      <span class="label" style="background: #e0f2fe; color: #0284c7; border: 1px solid #bae6fd; font-size: 11px; margin-top: 3px; display: inline-block;">
+                        <?=htmlspecialchars($val['speciality']);?>
+                      </span>
+                    <?php else: ?>
+                      <span class="label label-default" style="font-size: 10.5px;">General Practitioner</span>
+                    <?php endif; ?>
+                  </td>
+                  <td style="vertical-align: middle;">
+                    <div style="font-weight: 600; color: #334155; font-size: 13.5px;">
+                      <?=htmlspecialchars($val['facility_name']);?>
+                    </div>
+                    <span class="label <?=($val['type'] === 'C') ? 'label-warning' : 'label-info';?>" style="font-size: 10.5px; padding: 2px 7px; border-radius: 4px;">
+                      <?=($val['type'] === 'C') ? 'Clinic' : 'Hospital';?>
+                    </span>
+                  </td>
+                  <td style="vertical-align: middle;">
+                    <span style="color: #475569; font-size: 13px;">
+                      <i class="fa fa-map-marker text-danger"></i> <?=getCityName($val['city']);?>
+                    </span>
+                  </td>
+                  <td style="vertical-align: middle;">
+                    <div style="font-size: 12.5px; color: #334155;"><i class="fa fa-phone text-muted"></i> <?=htmlspecialchars($val['mobile']);?></div>
+                    <div style="font-size: 12px; color: #64748b;"><i class="fa fa-envelope-o text-muted"></i> <?=htmlspecialchars($val['email']);?></div>
+                  </td>
+                  <td style="vertical-align: middle; font-weight: 700; color: #059669; font-size: 14px;">
+                    Rs. <?=number_format(floatval($val['fee']), 2);?>
+                  </td>
+                  <td style="text-align: center; vertical-align: middle;">
+                    <?php if ($val['status'] == 1): ?>
+                      <span class="label label-success" style="background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; font-size: 11.5px; padding: 4px 9px; border-radius: 12px;">
+                        <i class="fa fa-check"></i> Active
+                      </span>
+                    <?php else: ?>
+                      <span class="label label-warning" style="background: #fef3c7; color: #92400e; border: 1px solid #fde68a; font-size: 11.5px; padding: 4px 9px; border-radius: 12px;">
+                        <i class="fa fa-clock-o"></i> Pending
+                      </span>
+                    <?php endif; ?>
+                  </td>
+                  <td style="text-align: center; vertical-align: middle;">
+                    <a href="<?=base_url('doctor/clinicreg/doctor_fee_time/'.$val['id']);?>" class="btn btn-xs btn-default" style="font-weight: 600; border-radius: 6px; padding: 5px 10px; color: #0284c7; border-color: #cbd5e1;" title="Doctor Fee &amp; OPD Time Slots">
+                      <i class="fa fa-clock-o"></i> Timing &amp; Slots
+                    </a>
+                    <a href="<?=base_url('doctor/clinicreg/delete_affiliation/'.$val['id']);?>" class="btn btn-xs btn-default" style="font-weight: 600; border-radius: 6px; padding: 5px 8px; color: #ef4444; border-color: #cbd5e1; margin-left: 4px;" onclick="return confirm('Are you sure you want to unlink this doctor affiliation?');" title="Unlink Affiliation">
+                      <i class="fa fa-trash-o"></i>
+                    </a>
+                  </td>
+                </tr>
+              <?php endforeach; else: ?>
+                <tr>
+                  <td colspan="9" style="text-align: center; padding: 40px 20px; color: #94a3b8;">
+                    <i class="fa fa-user-md fa-3x" style="margin-bottom: 10px; display: block; opacity: 0.4;"></i>
+                    <p style="font-size: 14px; font-weight: 500; margin: 0;">No practice affiliations found matching your query.</p>
+                  </td>
+                </tr>
+              <?php endif; ?>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Bulk Action & Pagination Footer -->
+        <div style="padding: 16px 24px; background: #ffffff; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+          <div style="display: flex; gap: 8px;">
+            <input name="status_action" type="submit" value="Activate" class="btn btn-sm btn-success" style="font-weight: 600; border-radius: 6px;" onclick="return validcheckstatus('arr_ids[]','Activate','Record');">
+            <input name="status_action" type="submit" value="Deactivate" class="btn btn-sm btn-warning" style="font-weight: 600; border-radius: 6px;" onclick="return validcheckstatus('arr_ids[]','Deactivate','Record');">
+            <input name="status_action" type="submit" value="Delete" class="btn btn-sm btn-danger" style="font-weight: 600; border-radius: 6px;" onclick="return validcheckstatus('arr_ids[]','Delete','Record');">
+          </div>
+          <div class="pagination" style="margin: 0;">
+            <?=$page_links;?>
+          </div>
+        </div>
+      <?php echo form_close(); ?>
+    </div>
+
+  </section>
+</div>
+
 <script type="text/javascript">
-function check_uncheck_checkbox(isChecked) 
-{
-	if(isChecked) {
-		$('input[name="arr_ids[]"]').each(function() { 	this.checked = isChecked; });
-	}else{
-		$('input[name="arr_ids[]"]').each(function() { 	this.checked = isChecked; });
-	}
+function check_uncheck_checkbox(isChecked) {
+  $('input[name="arr_ids[]"]').prop('checked', isChecked);
 }
-function validcheckstatus(name,action,text)
-{
-	var chObj	=	document.getElementsByName(name);
-	var result	=	false;	
-	for(var i=0;i<chObj.length;i++){
-	
-		if(chObj[i].checked){
-		  result=true;
-		  break;
-		}
-	}
-	if(!result){
-		 alert("Please select atleast one "+text+" to "+action+".");
-		 return false;
-	}else if(action=='delete'){
-			 if(!confirm("Are you sure you want to delete this.")){
-			   return false;
-			 }else{
-				return true;
-			 }
-	}else{
-		return true;
-	}
+
+function validcheckstatus(name, action, text) {
+  var chObj = document.getElementsByName(name);
+  var result = false;
+  for (var i = 0; i < chObj.length; i++) {
+    if (chObj[i].checked) {
+      result = true;
+      break;
+    }
+  }
+  if (!result) {
+    alert("Please select at least one " + text + " to " + action + ".");
+    return false;
+  }
+  return confirm("Are you sure you want to " + action + " selected records?");
 }
 </script>
