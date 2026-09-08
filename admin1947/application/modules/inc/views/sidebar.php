@@ -57,45 +57,50 @@ $pageurl3 = $this->uri->segment(3);
            1. CLINIC & HOSPITAL MANAGEMENT
            ========================================================= -->
       <?php 
-      $is_clinic_active = ($pageurl1 == 'doctor' && $pageurl2 == 'clinicreg');
+      $is_clinic_active = ($pageurl1 == 'clinicreg' || ($pageurl1 == 'doctor' && $pageurl2 == 'clinicreg'));
       ?>
       <li class="treeview <?php if($is_clinic_active){ ?> active menu-open <?php }?>">
-        <a href="<?=base_url('doctor/clinicreg/viewhospital');?>">
+        <a href="#">
           <i class="fa fa-hospital-o" style="color: #00a896;"></i> <span>Clinic &amp; Hospital</span>
           <span class="pull-right-container">
             <i class="fa fa-angle-left pull-right"></i>
           </span>
         </a>
         <ul class="treeview-menu" <?php if($is_clinic_active){ ?> style="display: block;" <?php }?>>
-          <li class="<?php if($pageurl1=='doctor' && $pageurl2=='clinicreg' && in_array($pageurl3, array('insert', 'add'))){ ?>active<?php }?>">
+          <!-- 1. Add Clinic/Hospital -->
+          <li class="<?php if(($pageurl1=='clinicreg' && in_array($pageurl2, array('insert', 'add'))) || ($pageurl1=='doctor' && $pageurl2=='clinicreg' && in_array($pageurl3, array('insert', 'add')))){ ?>active<?php }?>">
             <a href="<?=base_url('doctor/clinicreg/insert');?>">
               <i class="fa fa-plus-circle"></i> Add Clinic/Hospital
             </a>
           </li>
-          <li class="<?php if($pageurl1=='doctor' && $pageurl2=='clinicreg' && ($pageurl3=='viewhospital' || empty($pageurl3))){ ?>active<?php }?>">
+          <!-- 2. View Hospitals -->
+          <li class="<?php if(($pageurl1=='clinicreg' && in_array($pageurl2, array('viewhospital', 'viewclinic', 'hospitalview', 'clinicview', ''))) || ($pageurl1=='doctor' && $pageurl2=='clinicreg' && in_array($pageurl3, array('viewhospital', 'viewclinic', 'hospitalview', 'clinicview', '')))){ ?>active<?php }?>">
             <a href="<?=base_url('doctor/clinicreg/viewhospital');?>">
-              <i class="fa fa-building-o"></i> View Hospitals
+              <i class="fa fa-list"></i> View Hospitals
             </a>
           </li>
-          <li class="<?php if($pageurl1=='doctor' && $pageurl2=='clinicreg' && $pageurl3=='biomedicalmachine'){ ?>active<?php }?>">
-            <a href="<?=base_url('doctor/clinicreg/biomedicalmachine');?>">
-              <i class="fa fa-cogs"></i> Biomedical Machines
+          <!-- 3. Assign Doctor to Hospital -->
+          <li class="<?php if(($pageurl1=='clinicreg' && $pageurl2=='assign_doctor') || ($pageurl1=='doctor' && $pageurl2=='clinicreg' && $pageurl3=='assign_doctor')){ ?>active<?php }?>">
+            <a href="<?=base_url('doctor/clinicreg/assign_doctor');?>">
+              <i class="fa fa-user-plus"></i> Assign Doctor to Hospital
             </a>
           </li>
-          <li class="<?php if($pageurl1=='doctor' && $pageurl2=='clinicreg' && $pageurl3=='advertisment'){ ?>active<?php }?>">
-            <a href="<?=base_url('doctor/clinicreg/advertisment');?>">
-              <i class="fa fa-bullhorn"></i> Advertisements
-            </a>
-          </li>
-          <!-- Part 2: Doctor-Hospital Affiliation Management -->
-          <li class="<?php if($pageurl1=='doctor' && $pageurl2=='clinicreg' && $pageurl3=='hospital_doctor'){ ?>active<?php }?>">
+          <!-- 4. Doctor-Hospital Links -->
+          <li class="<?php if(($pageurl1=='clinicreg' && $pageurl2=='hospital_doctor') || ($pageurl1=='doctor' && $pageurl2=='clinicreg' && $pageurl3=='hospital_doctor')){ ?>active<?php }?>">
             <a href="<?=base_url('doctor/clinicreg/hospital_doctor');?>">
               <i class="fa fa-link"></i> Doctor-Hospital Links
             </a>
           </li>
-          <li class="<?php if($pageurl1=='doctor' && $pageurl2=='clinicreg' && $pageurl3=='assign_doctor'){ ?>active<?php }?>">
-            <a href="<?=base_url('doctor/clinicreg/assign_doctor');?>">
-              <i class="fa fa-user-plus"></i> Assign Doctor to Hospital
+          <!-- 5. Biomedical Machines -->
+          <li class="<?php if(($pageurl1=='clinicreg' && $pageurl2=='biomedicalmachine') || ($pageurl1=='doctor' && $pageurl2=='clinicreg' && $pageurl3=='biomedicalmachine')){ ?>active<?php }?>">
+            <a href="<?=base_url('doctor/clinicreg/biomedicalmachine');?>">
+              <i class="fa fa-cogs"></i> Biomedical Machines
+            </a>
+          </li>
+          <!-- 6. Advertisements -->
+          <li class="<?php if(($pageurl1=='clinicreg' && in_array($pageurl2, array('advertisment', 'advertisement'))) || ($pageurl1=='doctor' && $pageurl2=='clinicreg' && in_array($pageurl3, array('advertisment', 'advertisement')))){ ?>active<?php }?>">
+            <a href="<?=base_url('doctor/clinicreg/advertisment');?>">
+              <i class="fa fa-bullhorn"></i> Advertisements
             </a>
           </li>
         </ul>
@@ -108,7 +113,7 @@ $pageurl3 = $this->uri->segment(3);
       $is_doctor_active = ($pageurl1 == 'doctor' && in_array($pageurl2, array('doctorview', 'appointment', 'doctoredit', 'doctoradd')));
       ?>
       <li class="treeview <?php if($is_doctor_active){ ?> active menu-open <?php }?>">
-        <a href="<?=base_url('doctor/doctorview');?>">
+        <a href="#">
           <i class="fa fa-user-md" style="color: #38bdf8;"></i> <span>Doctor &amp; Appointments</span>
           <span class="pull-right-container">
             <i class="fa fa-angle-left pull-right"></i>
@@ -141,7 +146,7 @@ $pageurl3 = $this->uri->segment(3);
       $is_user_mgmt_active = ($pageurl1 == 'users' && in_array($pageurl2, array('usercreate', 'changepassword')));
       ?>
       <li class="treeview <?php if($is_user_mgmt_active){ ?> active menu-open <?php }?>">
-        <a href="<?=base_url('users/usercreate');?>">
+        <a href="#">
           <i class="fa fa-users" style="color: #a855f7;"></i> <span>User Management</span>
           <span class="pull-right-container">
             <i class="fa fa-angle-left pull-right"></i>
@@ -228,7 +233,7 @@ $pageurl3 = $this->uri->segment(3);
 
       <!-- Revenue & Commission Module with Sublinks -->
       <li class="treeview <?php if($pageurl1=='admin_revenue'){ ?> active menu-open <?php }?>">
-        <a href="<?=base_url('admin_revenue');?>">
+        <a href="#">
           <i class="fa fa-line-chart" style="color: #00a896;"></i> <span>Revenue &amp; Commission</span>
           <span class="pull-right-container">
             <i class="fa fa-angle-left pull-right"></i>
@@ -260,7 +265,7 @@ $pageurl3 = $this->uri->segment(3);
 
       <!-- Payment & Wallet Control Center (Razorpay & Settlements) -->
       <li class="treeview <?php if($pageurl1=='admin_payment' || $pageurl1=='payout'){ ?> active menu-open <?php }?>">
-        <a href="<?=base_url('admin_payment');?>">
+        <a href="#">
           <i class="fa fa-credit-card" style="color: #10b981;"></i> <span>Payment &amp; Settlements</span>
           <span class="pull-right-container">
             <i class="fa fa-angle-left pull-right"></i>
@@ -297,7 +302,7 @@ $pageurl3 = $this->uri->segment(3);
 
       <!-- System Settings Portal -->
       <li class="treeview <?php if($pageurl1=='settings'){ ?> active menu-open <?php }?>">
-        <a href="<?=base_url('settings');?>">
+        <a href="#">
           <i class="fa fa-cogs" style="color: #00a896;"></i> <span>System Settings</span>
           <span class="pull-right-container">
             <i class="fa fa-angle-left pull-right"></i>
@@ -333,7 +338,7 @@ $pageurl3 = $this->uri->segment(3);
 
             <!-- SEO Management Dashboard -->
       <li class="treeview <?php if($pageurl1=='seo'){ ?> active menu-open <?php }?>">
-        <a href="<?=base_url('seo/meta/index');?>">
+        <a href="#">
           <i class="fa fa-line-chart" style="color: #0d9488;"></i> <span>SEO &amp; Meta Tags</span>
           <span class="pull-right-container">
             <i class="fa fa-angle-left pull-right"></i>
@@ -362,7 +367,7 @@ $pageurl3 = $this->uri->segment(3);
 
       <!-- HR & Staff Management -->
       <li class="treeview <?php if($pageurl1=='hr' || ($pageurl1=='doctor' && $pageurl2=='career')){ ?> active menu-open <?php }?>">
-        <a href="<?=base_url('doctor/career');?>">
+        <a href="#">
           <i class="fa fa-users" style="color: #38bdf8;"></i> <span>HR &amp; Recruitment</span>
           <span class="pull-right-container">
             <i class="fa fa-angle-left pull-right"></i>
@@ -382,7 +387,7 @@ $pageurl3 = $this->uri->segment(3);
 
       <!-- Logistics & Sample Collectors -->
       <li class="treeview <?php if($pageurl1=='collector' || $pageurl1=='operations'){ ?> active menu-open <?php }?>">
-        <a href="<?=base_url('../operations/dashboard');?>" target="_blank">
+        <a href="#">
           <i class="fa fa-truck" style="color: #2dd4bf;"></i> <span>Logistics &amp; Field Desk</span>
           <span class="pull-right-container">
             <i class="fa fa-angle-left pull-right"></i>
@@ -399,7 +404,7 @@ $pageurl3 = $this->uri->segment(3);
 
       <!-- BDE CRM & Partner Acquisition -->
       <li class="treeview <?php if($pageurl1=='crm'){ ?> active menu-open <?php }?>">
-        <a href="<?=base_url('../crm/dashboard');?>" target="_blank">
+        <a href="#">
           <i class="fa fa-handshake-o" style="color: #f43f5e;"></i> <span>BDE CRM &amp; Leads</span>
           <span class="pull-right-container">
             <i class="fa fa-angle-left pull-right"></i>
@@ -413,7 +418,7 @@ $pageurl3 = $this->uri->segment(3);
 
       <!-- Diagnostic Tests & Pathology Master -->
       <li class="treeview <?php if($pageurl1=='doctor' && ($pageurl2=='pathology' || $pageurl2=='pathologytest')){ ?> active menu-open <?php }?>">
-        <a href="<?=base_url('doctor/pathology/assign_test');?>">
+        <a href="#">
           <i class="fa fa-heartbeat" style="color: #ec4899;"></i> <span>Pathology &amp; Tests</span>
           <span class="pull-right-container">
             <i class="fa fa-angle-left pull-right"></i>
@@ -427,7 +432,7 @@ $pageurl3 = $this->uri->segment(3);
 
       <!-- Patient & Social User Logins -->
       <li class="treeview <?php if($pageurl1=='users' || $pageurl2=='userlogincreate'){ ?> active menu-open <?php }?>">
-        <a href="<?=base_url('users/userlogincreate/gmail_users');?>">
+        <a href="#">
           <i class="fa fa-user-circle" style="color: #6366f1;"></i> <span>Patient Logins</span>
           <span class="pull-right-container">
             <i class="fa fa-angle-left pull-right"></i>
