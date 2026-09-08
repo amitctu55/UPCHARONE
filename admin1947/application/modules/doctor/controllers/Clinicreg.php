@@ -125,7 +125,7 @@ class Clinicreg extends CI_Controller
 		// Query recent affiliations for real-time overview
 		$data['recent_affiliations'] = $this->db->select('dp.id, dp.user_id, dp.type, dp.institution_id, dp.fee, dp.status, pd.fname, pd.lname, ms.name as speciality, pd.mobile as doc_mobile, h.name as hosp_name, h.city as hosp_city, c.name as clinic_name, c.city as clinic_city')
 			->from('dr_practice dp')
-			->join('profile_dr pd', 'pd.id = dp.user_id', 'left')
+			->join('profile_dr pd', '(pd.id = dp.user_id OR (pd.user_id = dp.user_id AND dp.user_id != 0))', 'left')
 			->join('master_specialization ms', 'ms.id = pd.specialization', 'left')
 			->join('hospital h', 'h.id = dp.institution_id AND dp.type = "H"', 'left')
 			->join('clinic c', 'c.id = dp.institution_id AND dp.type = "C"', 'left')
@@ -159,18 +159,42 @@ class Clinicreg extends CI_Controller
 	public function doctor_fee_time()
 	{	
 		$pagesize               =  (int) $this->input->get_post('pagesize');
-		$config['limit']	    =  ( $pagesize > 0 ) ? $pagesize : 10;	
+		$config['limit']	    =  ( $pagesize > 0 ) ? $pagesize : 15;	
 		$offset                 =  ( $this->input->get_post('per_page') > 0 ) ? $this->input->get_post('per_page') : 0;	
 		$base_url               =  current_url_query_string(array('filter'=>'result'),array('per_page'));
+		
+		$practice_id = (int)$this->uri->segment(4);
+		$data['practice_id'] = $practice_id;
+
+		// Fetch practice affiliation & doctor details if practice_id is passed
+		if ($practice_id > 0) {
+			$data['practice_info'] = $this->db->select('dp.id as practice_id, dp.user_id as doctor_id, dp.type as facility_type, dp.institution_id, dp.fee, dp.status, pd.fname, pd.lname, pd.mobile, pd.email, ms.name as speciality, COALESCE(h.name, c.name, "Healthcare Facility") as facility_name, COALESCE(h.city, c.city, pd.city) as facility_city')
+				->from('dr_practice dp')
+				->join('profile_dr pd', '(pd.id = dp.user_id OR (pd.user_id = dp.user_id AND dp.user_id != 0))', 'left')
+				->join('master_specialization ms', 'ms.id = pd.specialization', 'left')
+				->join('hospital h', 'h.id = dp.institution_id AND (dp.type = "H" OR dp.type = "" OR dp.type IS NULL)', 'left')
+				->join('clinic c', 'c.id = dp.institution_id AND dp.type = "C"', 'left')
+				->group_start()
+				->where('dp.id', $practice_id)
+				->or_where('dp.user_id', $practice_id)
+				->group_end()
+				->get()
+				->row_array();
+		} else {
+			$data['practice_info'] = null;
+		}
+
 		$data['doctor'] 		=  $this->doctorregmodel->get_doctor_fee_time($config['limit'],$offset);
 		$config['total_rows']   =  get_found_rows();
-		$data['heading_title'] 	=  'Doctor Fee & Time';
+		$data['heading_title'] 	=  'Doctor Fee & OPD Timings';
 		$data['module'] 		=  'Doctor Fee & Time';
 		$data['page_links'] 	=  admin_pagination($base_url, $config['total_rows'],$config['limit'],$offset);
+		
 		if( $this->input->post('status_action')!='')
 		{	
 			$this->managementmodel->update_status('dr_practice','id');			
 		}
+
 		$this->load->view('inc/topheaderlink');
 		$this->load->view('inc/topheader');
 		$this->load->view('hospital_doctor_fee_time_view',$data);
@@ -178,6 +202,75 @@ class Clinicreg extends CI_Controller
 		$this->load->view('inc/headersetting');
 		$this->load->view('inc/footerlink');
 		$this->load->view('inc/table_footer');
+	}
+
+	public function save_fee_time()
+	{
+		$practice_id = (int)$this->input->post('practice_id');
+		$user_id     = (int)$this->input->post('user_id');
+		$fee         = floatval($this->input->post('consultation_fee'));
+		$from_time   = trim($this->input->post('from_timing') ?: '09:00 AM');
+		$to_time     = trim($this->input->post('to_timing') ?: '01:00 PM');
+		$max_patient = (int)$this->input->post('max_patient') ?: 20;
+
+		if ($practice_id <= 0) {
+			$this->session->set_flashdata('flashmsg', '<div class="alert alert-danger">Invalid practice affiliation ID.</div>');
+			redirect(base_url('doctor/clinicreg/hospital_doctor'));
+			return;
+		}
+
+		// Update consultation fee in dr_practice
+		$this->db->where('id', $practice_id)->update('dr_practice', array('fee' => $fee));
+
+		// Check if user_id was missing on practice
+		if ($user_id > 0) {
+			$this->db->where('id', $practice_id)->where('user_id', 0)->update('dr_practice', array('user_id' => $user_id));
+		}
+
+		// Prepare Days of Week availability
+		$days = array(
+			'M'      => $this->input->post('day_m') ? 1 : 0,
+			'T'      => $this->input->post('day_t') ? 1 : 0,
+			'W'      => $this->input->post('day_w') ? 1 : 0,
+			'TH'     => $this->input->post('day_th') ? 1 : 0,
+			'F'      => $this->input->post('day_f') ? 1 : 0,
+			'SA'     => $this->input->post('day_sa') ? 1 : 0,
+			'S'      => $this->input->post('day_s') ? 1 : 0,
+			'status' => '1'
+		);
+
+		// Check if timing row exists
+		$existing_timing = $this->db->get_where('timing', array('practice_id' => $practice_id))->row();
+		if ($existing_timing) {
+			$timing_id = $existing_timing->id;
+			$this->db->where('id', $timing_id)->update('timing', $days);
+		} else {
+			$days['practice_id'] = $practice_id;
+			$days['user_type']   = 'D';
+			$days['user_id']     = $user_id;
+			$this->db->insert('timing', $days);
+			$timing_id = $this->db->insert_id();
+		}
+
+		// Check timing_session
+		$existing_session = $this->db->get_where('timing_session', array('timing_id' => $timing_id))->row();
+		$session_data = array(
+			'timing_id'        => $timing_id,
+			'from_timing'      => $from_time,
+			'to_timing'        => $to_time,
+			'max_patient'      => $max_patient,
+			'consultation_fee' => (string)$fee,
+			'status'           => 1
+		);
+
+		if ($existing_session) {
+			$this->db->where('id', $existing_session->id)->update('timing_session', $session_data);
+		} else {
+			$this->db->insert('timing_session', $session_data);
+		}
+
+		$this->session->set_flashdata('flashmsg', '<div class="alert alert-success alert-dismissible"><button type="button" class="close" data-dismiss="alert">&times;</button><i class="fa fa-check-circle"></i> Doctor fee and OPD schedule updated successfully!</div>');
+		redirect(base_url('doctor/clinicreg/doctor_fee_time/' . $practice_id));
 	}
 	public function createHospitalExcel() 
 	{	
@@ -674,7 +767,7 @@ class Clinicreg extends CI_Controller
 			}
 			$data['affiliated_doctors'] = $this->db->select('dp.id as practice_id, dp.fee, dp.status, pd.id as doctor_id, pd.fname, pd.lname, pd.mobile, pd.email, ms.name as speciality')
 				->from('dr_practice dp')
-				->join('profile_dr pd', 'pd.id = dp.user_id', 'left')
+				->join('profile_dr pd', '(pd.id = dp.user_id OR (pd.user_id = dp.user_id AND dp.user_id != 0))', 'left')
 				->join('master_specialization ms', 'ms.id = pd.specialization', 'left')
 				->where('dp.institution_id', $did)
 				->where('dp.type', 'H')

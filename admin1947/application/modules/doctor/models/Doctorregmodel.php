@@ -424,36 +424,64 @@ class Doctorregmodel extends CI_Model
 		return true;
 	}
 		
-	public function get_doctor_fee_time($limit='10',$offset='0',$param=array())
+	public function get_doctor_fee_time($limit='10', $offset='0', $param=array())
 	{	
-		$id					= @$param['id'];
-		$practice_id 		= $this->db->escape_str($this->uri->segment(4));
-		$keyword 			= $this->db->escape_str($this->input->get('keyword',TRUE));
+		$id          = @$param['id'];
+		$practice_id = (int)$this->uri->segment(4);
+		$keyword     = $this->db->escape_like_str(trim($this->input->get('keyword', TRUE) ?: ''));
 	
-		if($id!='')
-		{
-			$this->db->where("id",$id);
+		if ($id != '') {
+			$this->db->where("timing.id", (int)$id);
 		}
-		if($practice_id!='')
-		{
-			$this->db->where("timing.practice_id",$practice_id);
+		if ($practice_id > 0) {
+			$this->db->group_start();
+			$this->db->where("timing.practice_id", $practice_id);
+			$this->db->or_where("dr_practice.id", $practice_id);
+			$this->db->or_where("dr_practice.user_id", $practice_id);
+			$this->db->group_end();
 		}
-		if($keyword!='')
-		{
-			$this->db->where("(profile_dr.fname LIKE '%".$keyword."%' )");
+		if ($keyword != '') {
+			$this->db->where("(profile_dr.fname LIKE '%{$keyword}%' OR profile_dr.lname LIKE '%{$keyword}%' OR hospital.name LIKE '%{$keyword}%' OR clinic.name LIKE '%{$keyword}%')");
 		}
-		$this->db->order_by('timing.id','desc');
-		$this->db->limit($limit,$offset);
-		$this->db->select('SQL_CALC_FOUND_ROWS timing.*,timing_session.*,profile_dr.fname,profile_dr.lname,profile_dr.email,profile_dr.mobile,hospital.name,hospital.city',FALSE);
-		$this->db->join('dr_practice','dr_practice.id = timing.practice_id','left');
-		$this->db->join('profile_dr','profile_dr.id = dr_practice.user_id','left');
-		$this->db->join('hospital','hospital.id = dr_practice.institution_id','left');
-		$this->db->join('timing_session','timing_session.timing_id = timing.id','left');
+		$this->db->order_by('timing.id', 'desc');
+		$this->db->limit($limit, $offset);
+		$this->db->select('SQL_CALC_FOUND_ROWS timing.id as timing_id, timing.practice_id, timing.user_id as timing_user_id, timing.M, timing.T, timing.W, timing.TH, timing.F, timing.SA, timing.S, timing.status as timing_status, timing_session.id as session_id, timing_session.from_timing, timing_session.to_timing, timing_session.max_patient, COALESCE(timing_session.consultation_fee, dr_practice.fee, 0) as consultation_fee, dr_practice.id as practice_id_raw, dr_practice.user_id as doctor_user_id, dr_practice.type as facility_type, profile_dr.id as doctor_id, profile_dr.fname, profile_dr.lname, profile_dr.email, profile_dr.mobile, ms.name as speciality, COALESCE(hospital.name, clinic.name, "Healthcare Facility") as facility_name, COALESCE(hospital.city, clinic.city, profile_dr.city) as city', FALSE);
+		$this->db->join('dr_practice', 'dr_practice.id = timing.practice_id', 'left');
+		$this->db->join('profile_dr', '(profile_dr.id = dr_practice.user_id OR (profile_dr.user_id = dr_practice.user_id AND dr_practice.user_id != 0))', 'left');
+		$this->db->join('master_specialization ms', 'ms.id = profile_dr.specialization', 'left');
+		$this->db->join('hospital', 'hospital.id = dr_practice.institution_id AND (dr_practice.type = "H" OR dr_practice.type = "" OR dr_practice.type IS NULL)', 'left');
+		$this->db->join('clinic', 'clinic.id = dr_practice.institution_id AND dr_practice.type = "C"', 'left');
+		$this->db->join('timing_session', 'timing_session.timing_id = timing.id', 'left');
 		$result = $this->db->get('timing')->result_array();
 		
-		//echo "<pre>"; print_r($result); die;
-		$result = ($limit=='1') ? @$result[0]: $result;	
-		return $result;
+		// Fallback: If no timing row exists yet for this practice, retrieve directly from dr_practice
+		if (empty($result) && $practice_id > 0) {
+			$dr_p = $this->db->select('dr_practice.id as practice_id, dr_practice.id as practice_id_raw, dr_practice.user_id as doctor_user_id, dr_practice.type as facility_type, dr_practice.fee as consultation_fee, dr_practice.status as timing_status, profile_dr.id as doctor_id, profile_dr.fname, profile_dr.lname, profile_dr.email, profile_dr.mobile, ms.name as speciality, COALESCE(hospital.name, clinic.name, "Healthcare Facility") as facility_name, COALESCE(hospital.city, clinic.city, profile_dr.city) as city')
+				->from('dr_practice')
+				->join('profile_dr', '(profile_dr.id = dr_practice.user_id OR (profile_dr.user_id = dr_practice.user_id AND dr_practice.user_id != 0))', 'left')
+				->join('master_specialization ms', 'ms.id = profile_dr.specialization', 'left')
+				->join('hospital', 'hospital.id = dr_practice.institution_id AND (dr_practice.type = "H" OR dr_practice.type = "" OR dr_practice.type IS NULL)', 'left')
+				->join('clinic', 'clinic.id = dr_practice.institution_id AND dr_practice.type = "C"', 'left')
+				->group_start()
+				->where('dr_practice.id', $practice_id)
+				->or_where('dr_practice.user_id', $practice_id)
+				->group_end()
+				->get()
+				->result_array();
+			if (!empty($dr_p)) {
+				foreach ($dr_p as &$p_row) {
+					$p_row['timing_id']   = 0;
+					$p_row['session_id']  = 0;
+					$p_row['from_timing'] = '';
+					$p_row['to_timing']   = '';
+					$p_row['max_patient'] = 20;
+					$p_row['M'] = 0; $p_row['T'] = 0; $p_row['W'] = 0; $p_row['TH'] = 0; $p_row['F'] = 0; $p_row['SA'] = 0; $p_row['S'] = 0;
+				}
+				$result = $dr_p;
+			}
+		}
+
+		return ($limit == '1') ? (@$result[0] ?: null) : $result;	
 	}
 	
 	public function get_doctor($limit='10', $offset='0', $param=array())
@@ -479,7 +507,7 @@ class Doctorregmodel extends CI_Model
 		$this->db->order_by('dr_practice.id', 'DESC');
 		$this->db->limit($limit, $offset);
 		$this->db->select('SQL_CALC_FOUND_ROWS dr_practice.*, profile_dr.fname, profile_dr.lname, profile_dr.email, profile_dr.mobile, profile_dr.drimage, ms.name as speciality, COALESCE(h.name, c.name, "Healthcare Facility") as facility_name, COALESCE(h.city, c.city, profile_dr.city) as city', FALSE);
-		$this->db->join('profile_dr', 'profile_dr.id = dr_practice.user_id', 'left');
+		$this->db->join('profile_dr', '(profile_dr.id = dr_practice.user_id OR (profile_dr.user_id = dr_practice.user_id AND dr_practice.user_id != 0))', 'left');
 		$this->db->join('master_specialization ms', 'ms.id = profile_dr.specialization', 'left');
 		$this->db->join('hospital h', 'h.id = dr_practice.institution_id AND (dr_practice.type = "H" OR dr_practice.type = "" OR dr_practice.type IS NULL)', 'left');
 		$this->db->join('clinic c', 'c.id = dr_practice.institution_id AND dr_practice.type = "C"', 'left');
