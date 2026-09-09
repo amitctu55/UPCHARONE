@@ -164,10 +164,11 @@ class Clinicreg extends CI_Controller
 			}
 		}
 
-		// Query all doctors across the registry with joined specialization
-		$data['doctors'] = $this->db->select('pd.id, pd.fname, pd.lname, pd.mobile, pd.email, pd.city, ms.name as speciality')
+		// Query all doctors across the registry with joined specialization and city name
+		$data['doctors'] = $this->db->select('pd.id, pd.fname, pd.lname, pd.mobile, pd.email, COALESCE(mc.name, pd.city) as city, COALESCE(ms.name, "General Practitioner") as speciality, pd.drimage, pd.regd_no, pd.college')
 			->from('profile_dr pd')
 			->join('master_specialization ms', 'ms.id = pd.specialization', 'left')
+			->join('master_city mc', 'mc.id = pd.city', 'left')
 			->where('pd.status !=', '2')
 			->order_by('pd.fname', 'ASC')
 			->get()

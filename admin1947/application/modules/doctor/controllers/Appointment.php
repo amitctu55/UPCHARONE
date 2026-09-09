@@ -95,26 +95,33 @@ class Appointment extends CI_Controller
 		$data['doctor_metrics'] = null;
 		$data['doctor_affiliations'] = array();
 
-		// Fetch all doctors for fast switcher dropdown
+		// Fetch strictly verified doctors for fast switcher and search dropdown
 		$data['all_doctors'] = $this->db->query("
-			SELECT p.id, p.user_id, p.fname, p.lname, p.mobile, COALESCE(ms.name, 'General Practitioner') as speciality
+			SELECT p.id, p.user_id, p.fname, p.lname, p.mobile, p.email, p.city, p.drimage, p.regd_no,
+			       COALESCE(ms.name, 'General Practitioner') as speciality,
+			       COALESCE(mc.name, p.city) as city_name
 			FROM profile_dr p
 			LEFT JOIN master_specialization ms ON ms.id = p.specialization
-			WHERE p.status != '2'
+			LEFT JOIN master_city mc ON mc.id = p.city
+			WHERE p.status != '2' AND p.verified = '1'
 			ORDER BY p.fname ASC
 		")->result();
 
-		$this->db->select('appointment.*, profile_dr.id as dr_profile_id, profile_dr.fname as dr_fname, profile_dr.lname as dr_lname, profile_dr.mobile as dr_mobile, profile_dr.drimage as dr_image, hospital.name as hospital_name, hospital.city as hospital_city')
+		$this->db->select('appointment.*, profile_dr.id as dr_profile_id, profile_dr.user_id as dr_user_id, profile_dr.fname as dr_fname, profile_dr.lname as dr_lname, profile_dr.mobile as dr_mobile, profile_dr.drimage as dr_image, profile_dr.verified as dr_verified, COALESCE(ms.name, "General Practitioner") as dr_speciality, COALESCE(hospital.name, clinic.name, "Consultation Facility") as hospital_name, COALESCE(hospital.city, clinic.city, "") as hospital_city')
 			->join('profile_dr', '(profile_dr.id = appointment.doctor_id OR profile_dr.user_id = appointment.doctor_id)', 'left')
-			->join('hospital', '(hospital.uid = appointment.institute_id OR hospital.id = appointment.institute_id)', 'left');
+			->join('master_specialization ms', 'ms.id = profile_dr.specialization', 'left')
+			->join('hospital', '(hospital.uid = appointment.institute_id OR hospital.id = appointment.institute_id)', 'left')
+			->join('clinic', 'clinic.id = appointment.institute_id', 'left');
 
 		if (!empty($doctorId)) {
 			$cleanId = intval($doctorId);
 			$docRecord = $this->db->query("
-				SELECT p.*, ms.name as speciality_name
+				SELECT p.*, COALESCE(ms.name, 'General Practitioner') as speciality_name, COALESCE(mc.name, p.city) as city_name
 				FROM profile_dr p
 				LEFT JOIN master_specialization ms ON ms.id = p.specialization
-				WHERE p.id = {$cleanId} OR p.user_id = {$cleanId}
+				LEFT JOIN master_city mc ON mc.id = p.city
+				WHERE (p.id = {$cleanId} OR p.user_id = {$cleanId}) AND p.verified = '1'
+				ORDER BY (p.id = {$cleanId}) DESC
 				LIMIT 1
 			")->row();
 
@@ -138,9 +145,10 @@ class Appointment extends CI_Controller
 
 				// Fetch affiliated practices/hospitals
 				$affs = $this->db->query("
-					SELECT dp.*, h.name as hospital_name, h.city as hospital_city
+					SELECT dp.*, COALESCE(h.name, c.name, 'Affiliated Facility') as hospital_name, COALESCE(h.city, c.city, '') as hospital_city
 					FROM dr_practice dp
 					LEFT JOIN hospital h ON (h.id = dp.institution_id OR h.uid = dp.institution_id)
+					LEFT JOIN clinic c ON c.id = dp.institution_id
 					WHERE dp.user_id = '{$docId}' OR dp.user_id = '{$userId}'
 					ORDER BY dp.status DESC, h.name ASC
 				")->result();
@@ -149,8 +157,13 @@ class Appointment extends CI_Controller
 				// Filter appointments strictly to this doctor
 				$this->db->where("(appointment.doctor_id = '{$docId}' OR appointment.doctor_id = '{$userId}')");
 			} else {
-				$this->db->where("(appointment.doctor_id = {$cleanId})");
+				$this->session->set_flashdata('flashmsg', "<div class='alert alert-warning'><strong>Notice:</strong> Doctor #{$cleanId} is not verified or not found in our records. Only verified doctors and their appointments can be viewed.</div>");
+				redirect(base_url('doctor/appointment/doctorappointment'));
 			}
+		} else {
+			// When listing all appointments, filter strictly to verified doctors
+			$this->db->where('profile_dr.verified', '1');
+			$this->db->where("profile_dr.status != '2'");
 		}
 
 		$data['data'] = $this->db->order_by('appointment.appointment_id', 'DESC')
@@ -918,19 +931,68 @@ class Appointment extends CI_Controller
 
     public function data()
     {
+		$id = (int)$this->input->get('appointment_id');
+		if ($id <= 0) {
+			$id = (int)$this->input->get('id');
+		}
+		if ($id <= 0) {
+			$id = (int)$this->uri->segment(5);
+		}
+		if ($id <= 0) {
+			$id = (int)$this->uri->segment(4);
+		}
 
-    	
-	    $id=$this->input->get('appointment_id');
-	   	$data['data']=$this->db->select('profile_dr.*,hospital.*,appointment.*')->join('profile_dr','profile_dr.id=appointment.doctor_id')->join('hospital','hospital.uid=appointment.institute_id')->get_where('appointment', array('appointment_id'=>$id))->result();
-	   
+		$query = $this->db->select("
+			appointment.*,
+			profile_dr.id as dr_id,
+			profile_dr.user_id as dr_user_id,
+			profile_dr.fname as dr_fname,
+			profile_dr.lname as dr_lname,
+			profile_dr.mobile as dr_mobile,
+			profile_dr.email as dr_email,
+			profile_dr.drimage as dr_image,
+			profile_dr.regd_no as dr_regd_no,
+			profile_dr.college as dr_college,
+			profile_dr.exp as dr_exp,
+			profile_dr.dr_fee as dr_base_fee,
+			profile_dr.city as dr_city,
+			profile_dr.gender as dr_gender,
+			profile_dr.verified as dr_verified,
+			profile_dr.verification_status as dr_verification_status,
+			COALESCE(ms.name, 'General Practitioner') as dr_speciality,
+			COALESCE(hospital.name, clinic.name, 'Private Clinic / Upchar Partner Center') as facility_name,
+			COALESCE(hospital.address, clinic.address, '') as facility_address,
+			COALESCE(mc.name, hospital.city, clinic.city, '') as facility_city,
+			COALESCE(hospital.mobile, clinic.mobile, '') as facility_mobile,
+			COALESCE(hospital.email, clinic.email, '') as facility_email,
+			userlogin.FNAME as user_fname,
+			userlogin.LNAME as user_lname,
+			userlogin.MOBILE as user_mobile,
+			userlogin.EMAIL as user_email,
+			userlogin.GENDER as user_gender
+		")
+		->from('appointment')
+		->join('profile_dr', '(profile_dr.id = appointment.doctor_id OR profile_dr.user_id = appointment.doctor_id)', 'left')
+		->join('master_specialization ms', 'ms.id = profile_dr.specialization', 'left')
+		->join('hospital', '(hospital.uid = appointment.institute_id OR hospital.id = appointment.institute_id)', 'left')
+		->join('clinic', 'clinic.id = appointment.institute_id', 'left')
+		->join('master_city mc', 'mc.id = hospital.city', 'left')
+		->join('userlogin', 'userlogin.USERID = appointment.user_id', 'left')
+		->where('appointment.appointment_id', $id)
+		->get();
+
+		$data['data'] = $query->result();
+		$data['appointment'] = $query->row();
+		$data['appointment_id'] = $id;
+
 		$this->load->view('inc/topheaderlink');
 		$this->load->view('inc/topheader');
-		$this->load->view('userview',$data);
+		$this->load->view('userview', $data);
 		$this->load->view('sidebar');
 		$this->load->view('inc/headersetting');
 		$this->load->view('inc/footerlink');
 		$this->load->view('inc/table_footer');  
-	}
+    }
     
 
 

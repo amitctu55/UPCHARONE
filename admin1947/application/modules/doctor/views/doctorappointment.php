@@ -42,30 +42,57 @@
       <!-- Toast Notification Container -->
       <div id="toast-container" style="position: fixed; top: 20px; right: 20px; z-index: 99999; display: flex; flex-direction: column; gap: 10px; pointer-events: none;"></div>
 
-      <!-- Quick Doctor Switcher / Filter Toolbar -->
-      <div class="master-card" style="margin-bottom: 18px; background: #ffffff; border-radius: 10px; border: 1px solid #e2e8f0; padding: 14px 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
-        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
-          <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap; flex-grow: 1;">
-            <label for="doctor-filter-select" style="font-size: 13px; font-weight: 700; color: #334155; margin: 0;">
-              <i class="fa fa-filter" style="color: #00a896;"></i> Filter By Doctor:
-            </label>
-            <select id="doctor-filter-select" class="form-control" style="width: auto; min-width: 280px; max-width: 420px; height: 38px; border-radius: 8px; font-size: 13px;" onchange="if(this.value) window.location.href=this.value;">
-              <option value="<?=base_url('doctor/appointment/doctorappointment');?>">-- All Doctors (System-wide) --</option>
-              <?php if(!empty($all_doctors)): foreach($all_doctors as $d): 
-                $sel = (!empty($selected_doctor) && ($selected_doctor->id == $d->id || $selected_doctor->user_id == $d->id || $selected_doctor->user_id == $d->user_id)) ? 'selected' : '';
-              ?>
-                <option value="<?=base_url('doctor/appointment/doctorappointment?doctor='.$d->id);?>" <?=$sel;?>>
-                  Dr. <?=htmlspecialchars(trim($d->fname . ' ' . $d->lname));?> (<?=htmlspecialchars($d->speciality ?: 'General');?> - #<?=$d->id;?>)
-                </option>
-              <?php endforeach; endif; ?>
-            </select>
+      <!-- Quick Doctor Switcher / Search Verified Doctor Toolbar -->
+      <div class="master-card" style="margin-bottom: 18px; background: #ffffff; border-radius: 12px; border: 1px solid #e2e8f0; padding: 14px 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
+        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px;">
+          
+          <!-- Search Doctor Field with Verified Filter -->
+          <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap; flex-grow: 1;">
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <span style="font-size: 13px; font-weight: 700; color: #1e293b; display: flex; align-items: center; gap: 6px;">
+                <i class="fa fa-user-md" style="color: #00a896; font-size: 16px;"></i> Search Verified Doctor:
+              </span>
+              <span class="badge" style="background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0; font-size: 11px; font-weight: 600; padding: 4px 8px; border-radius: 12px;" title="Only verified medical practitioners listed">
+                <i class="fa fa-check-circle"></i> <?=number_format(count($all_doctors));?> Verified
+              </span>
+            </div>
+
+            <!-- Integrated Doctor Live Search Combobox -->
+            <div class="doctor-search-box-wrapper" style="position: relative; min-width: 320px; max-width: 460px; flex-grow: 1;">
+              <div style="position: relative;">
+                <span style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #64748b; font-size: 14px; pointer-events: none;">
+                  <i class="fa fa-search"></i>
+                </span>
+                <input type="text" 
+                       id="verifiedDoctorSearchInput" 
+                       class="form-control" 
+                       placeholder="Type doctor name, speciality, mobile, or ID..." 
+                       value="<?=!empty($selected_doctor) ? 'Dr. ' . htmlspecialchars(trim($selected_doctor->fname . ' ' . ($selected_doctor->lname ?? ''))) . ' (' . htmlspecialchars($selected_doctor->speciality_name ?: 'Specialist') . ')' : '';?>"
+                       style="padding-left: 36px; padding-right: 36px; height: 40px; border-radius: 8px; border: 1.5px solid <?=!empty($selected_doctor) ? '#00a896' : '#cbd5e1';?>; font-size: 13px; font-weight: 600; background: <?=!empty($selected_doctor) ? '#f0fdf4' : '#f8fafc';?>; transition: all 0.2s;"
+                       autocomplete="off">
+                <button type="button" 
+                        id="clearDoctorSearchBtn" 
+                        onclick="clearDoctorSearch()" 
+                        style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #94a3b8; font-size: 16px; cursor: pointer; display: <?=!empty($selected_doctor) ? 'block' : 'none';?>; padding: 4px;" 
+                        title="Clear search / Show all appointments">
+                  <i class="fa fa-times-circle"></i>
+                </button>
+              </div>
+              
+              <!-- Floating Autocomplete Dropdown List -->
+              <div id="verifiedDoctorDropdown" class="doctor-floating-dropdown" style="display: none; position: absolute; top: calc(100% + 5px); left: 0; right: 0; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.15), 0 8px 10px -6px rgba(0,0,0,0.1); max-height: 380px; overflow-y: auto; z-index: 99999;">
+                <!-- Populated via JavaScript -->
+              </div>
+            </div>
+
             <?php if(!empty($selected_doctor)): ?>
-              <a href="<?=base_url('doctor/appointment/doctorappointment');?>" class="btn btn-sm btn-default" style="border-radius: 8px; font-weight: 600; padding: 8px 14px;">
-                <i class="fa fa-times text-danger"></i> Clear Filter
+              <a href="<?=base_url('doctor/appointment/doctorappointment');?>" class="btn btn-sm btn-default" style="border-radius: 8px; font-weight: 600; padding: 8px 14px; border: 1px solid #e2e8f0; background: #f8fafc; color: #ef4444;" title="Reset filter to all system-wide appointments">
+                <i class="fa fa-times-circle text-danger"></i> Reset to All Doctors
               </a>
             <?php endif; ?>
           </div>
 
+          <!-- Action Buttons -->
           <div style="display: flex; gap: 8px; align-items: center;">
             <a href="<?=base_url('doctor/appointment/analytics');?>" class="btn btn-sm btn-info" style="border-radius: 8px; font-weight: 600; background: #0284c7; border-color: #0284c7; padding: 8px 16px;">
               <i class="fa fa-bar-chart"></i> Appointment Analytics
@@ -546,5 +573,212 @@ $(document).ready(function(){
       }
     });
   });
+});
+</script>
+
+<style>
+/* Verified Doctor Combobox Styles */
+.doctor-floating-dropdown {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 #f8fafc;
+}
+.doctor-floating-dropdown::-webkit-scrollbar {
+  width: 6px;
+}
+.doctor-floating-dropdown::-webkit-scrollbar-thumb {
+  background-color: #cbd5e1;
+  border-radius: 4px;
+}
+.verified-doc-item {
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  border-bottom: 1px solid #f1f5f9;
+  transition: background 0.15s ease;
+}
+.verified-doc-item:last-child {
+  border-bottom: none;
+}
+.verified-doc-item:hover, .verified-doc-item.active {
+  background-color: #f0fdf4 !important;
+}
+.verified-doc-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #00a896;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.highlight-text {
+  background-color: #fef08a;
+  font-weight: 700;
+  color: #854d0e;
+  border-radius: 2px;
+  padding: 0 1px;
+}
+</style>
+
+<script>
+// Verified Doctors Dataset
+const VERIFIED_DOCTORS = <?=json_encode(array_map(function($d){
+  return [
+    'id' => (int)$d->id,
+    'user_id' => (int)($d->user_id ?? $d->id),
+    'name' => trim($d->fname . ' ' . ($d->lname ?? '')),
+    'speciality' => !empty($d->speciality) ? $d->speciality : 'General Practitioner',
+    'mobile' => $d->mobile ?? '',
+    'city' => !empty($d->city_name) ? $d->city_name : (!empty($d->city) ? $d->city : ''),
+    'regd_no' => $d->regd_no ?? ''
+  ];
+}, !empty($all_doctors) ? $all_doctors : []));?>;
+
+const BASE_DOC_APPOINTMENT_URL = "<?=base_url('doctor/appointment/doctorappointment');?>";
+
+$(document).ready(function(){
+  var $input = $('#verifiedDoctorSearchInput');
+  var $dropdown = $('#verifiedDoctorDropdown');
+  var $clearBtn = $('#clearDoctorSearchBtn');
+  var activeIndex = -1;
+
+  function highlightMatches(text, query) {
+    if (!query) return text;
+    var reg = new RegExp('(' + query.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&') + ')', 'gi');
+    return text.replace(reg, '<span class="highlight-text">$1</span>');
+  }
+
+  function renderDoctorOptions(query) {
+    var q = (query || '').toLowerCase().trim();
+    var filtered = [];
+
+    if (!q) {
+      filtered = VERIFIED_DOCTORS.slice(0, 35);
+    } else {
+      for (var i = 0; i < VERIFIED_DOCTORS.length; i++) {
+        var doc = VERIFIED_DOCTORS[i];
+        var matchScore = 0;
+        if (doc.name.toLowerCase().indexOf(q) !== -1) matchScore += 10;
+        if (doc.speciality.toLowerCase().indexOf(q) !== -1) matchScore += 5;
+        if (doc.mobile.indexOf(q) !== -1) matchScore += 5;
+        if (doc.city.toLowerCase().indexOf(q) !== -1) matchScore += 3;
+        if (String(doc.id) === q || String(doc.user_id) === q) matchScore += 20;
+
+        if (matchScore > 0) {
+          filtered.push({ doc: doc, score: matchScore });
+        }
+      }
+      filtered.sort(function(a, b){ return b.score - a.score; });
+      filtered = filtered.map(function(item){ return item.doc; }).slice(0, 40);
+    }
+
+    if (filtered.length === 0) {
+      $dropdown.html('<div style="padding: 16px; text-align: center; color: #64748b; font-size: 13px;"><i class="fa fa-info-circle"></i> No verified doctor found matching "<strong>' + $('<div>').text(q).html() + '</strong>"</div>').show();
+      return;
+    }
+
+    var html = '';
+    html += '<div style="padding: 8px 12px; background: #f8fafc; border-bottom: 1px solid #e2e8f0; font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; display: flex; justify-content: space-between;">';
+    html += '<span>Verified Specialists (' + filtered.length + ' shown)</span>';
+    html += '<a href="' + BASE_DOC_APPOINTMENT_URL + '" style="color: #0284c7; text-transform: none;">View All System-wide</a>';
+    html += '</div>';
+
+    filtered.forEach(function(doc, idx){
+      var initials = doc.name.split(' ').map(function(w){ return w[0]; }).join('').substring(0, 2).toUpperCase() || 'DR';
+      var highlightedName = highlightMatches(doc.name, q);
+      var highlightedSpec = highlightMatches(doc.speciality, q);
+      var highlightedMobile = highlightMatches(doc.mobile, q);
+      var highlightedCity = doc.city ? highlightMatches(doc.city, q) : '';
+
+      html += '<div class="verified-doc-item" data-id="' + doc.id + '" data-user-id="' + doc.user_id + '" data-name="' + $('<div>').text(doc.name).html() + '" data-index="' + idx + '">';
+      html += '  <div class="verified-doc-avatar">' + initials + '</div>';
+      html += '  <div style="flex-grow: 1; min-width: 0;">';
+      html += '    <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">';
+      html += '      <strong style="color: #0f172a; font-size: 13px;">Dr. ' + highlightedName + '</strong>';
+      html += '      <span class="badge" style="background: #10b981; color: white; font-size: 10px; font-weight: 600; padding: 2px 6px; border-radius: 10px;"><i class="fa fa-check-circle"></i> Verified</span>';
+      html += '      <span style="font-size: 11px; color: #94a3b8; margin-left: auto;">ID: #' + doc.id + '</span>';
+      html += '    </div>';
+      html += '    <div style="font-size: 12px; color: #64748b; display: flex; gap: 8px; flex-wrap: wrap; margin-top: 2px;">';
+      html += '      <span style="color: #0284c7; font-weight: 600;">' + highlightedSpec + '</span>';
+      if (highlightedCity) html += '      <span><i class="fa fa-map-marker"></i> ' + highlightedCity + '</span>';
+      if (doc.mobile) html += '      <span><i class="fa fa-phone"></i> ' + highlightedMobile + '</span>';
+      html += '    </div>';
+      html += '  </div>';
+      html += '</div>';
+    });
+
+    $dropdown.html(html).show();
+    activeIndex = -1;
+  }
+
+  // Focus & Click
+  $input.on('focus click', function(){
+    renderDoctorOptions($(this).val());
+  });
+
+  // Typing
+  $input.on('input', function(){
+    var val = $(this).val();
+    if (val.length > 0) {
+      $clearBtn.show();
+    }
+    renderDoctorOptions(val);
+  });
+
+  // Keyboard navigation
+  $input.on('keydown', function(e){
+    var $items = $dropdown.find('.verified-doc-item');
+    if (!$items.length || !$dropdown.is(':visible')) return;
+
+    if (e.which === 40) { // ArrowDown
+      e.preventDefault();
+      activeIndex = (activeIndex + 1) % $items.length;
+      $items.removeClass('active');
+      $items.eq(activeIndex).addClass('active');
+      $items.eq(activeIndex)[0].scrollIntoView({ block: 'nearest' });
+    } else if (e.which === 38) { // ArrowUp
+      e.preventDefault();
+      activeIndex = (activeIndex - 1 + $items.length) % $items.length;
+      $items.removeClass('active');
+      $items.eq(activeIndex).addClass('active');
+      $items.eq(activeIndex)[0].scrollIntoView({ block: 'nearest' });
+    } else if (e.which === 13) { // Enter
+      e.preventDefault();
+      if (activeIndex >= 0 && activeIndex < $items.length) {
+        $items.eq(activeIndex).trigger('click');
+      }
+    } else if (e.which === 27) { // Escape
+      $dropdown.hide();
+    }
+  });
+
+  // Click on doctor item
+  $(document).on('click', '.verified-doc-item', function(e){
+    e.preventDefault();
+    var docId = $(this).data('id');
+    var docName = $(this).data('name');
+    $input.val('Dr. ' + docName);
+    $dropdown.hide();
+    window.location.href = BASE_DOC_APPOINTMENT_URL + '?doctor=' + docId;
+  });
+
+  // Click outside to close
+  $(document).on('click', function(e){
+    if (!$(e.target).closest('.doctor-search-box-wrapper').length) {
+      $dropdown.hide();
+    }
+  });
+
+  window.clearDoctorSearch = function() {
+    $input.val('');
+    $clearBtn.hide();
+    window.location.href = BASE_DOC_APPOINTMENT_URL;
+  };
 });
 </script>
