@@ -315,6 +315,18 @@
                 <span>Health Packages</span>
                 <i class="fa fa-chevron-right arrow-icon"></i>
             </a>
+
+            <a href="<?=base_url('hospitalpanel/managegallery');?>" class="action-btn-card">
+                <i class="fa fa-th-large"></i>
+                <span>Gallery Showcase</span>
+                <i class="fa fa-chevron-right arrow-icon"></i>
+            </a>
+
+            <a href="<?=base_url('hospitalpanel/managenews');?>" class="action-btn-card">
+                <i class="fa fa-newspaper-o"></i>
+                <span>News &amp; Bulletins</span>
+                <i class="fa fa-chevron-right arrow-icon"></i>
+            </a>
         </div>
 
     </div>

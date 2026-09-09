@@ -1682,45 +1682,43 @@ class Hospitalpanel extends CI_Controller
 	{	
 		if(isset($_POST['submit']))
 		{	
-			$uploadimage='';
-			//$id=base64_decode($this->input->post('id'));
-			$uploadimage=$_FILES['uploadimage']['name'];
-			$extsign = pathinfo($_FILES['uploadimage']['name'],PATHINFO_EXTENSION);
+			$uploadimage = '';
+			$extsign = !empty($_FILES['uploadimage']['name']) ? strtolower(pathinfo($_FILES['uploadimage']['name'], PATHINFO_EXTENSION)) : '';
     
-			if($uploadimage != '') 
+			if(!empty($_FILES['uploadimage']['name'])) 
 			{	
-				$typename = 'type';
-				$rname=rand(1111111,999999999);
-				$date=date('Y-m-d');
-				$uploadimage=$typename.'_profile_pic_'.$rname.$date.'.'.$extsign;
-				$config['upload_path']          = './admin1947/public/assets/upload/';
-				$config['allowed_types'] 		= 	'jpg|png|jpeg|JPG|PNG|JPEG';
-				$config['max_size']             = 2048;
-				$config['quality'] 				= '60%';
-				$config['file_name']  			= $uploadimage;
+				$typename = 'gallery';
+				$rname = rand(1111111, 999999999);
+				$date = date('Y-m-d');
+				$uploadimage = $typename . '_img_' . $rname . '_' . $date . '.' . $extsign;
+				$config['upload_path']   = './admin1947/public/assets/upload/';
+				$config['allowed_types'] = 'jpg|png|jpeg|JPG|PNG|JPEG|webp|WEBP';
+				$config['max_size']      = 10240;
+				$config['file_name']     = $uploadimage;
 				$this->load->library('upload', $config);
-				if ( ! $this->upload->do_upload('uploadimage'))
+				if (!$this->upload->do_upload('uploadimage'))
 				{
 					$error = $this->upload->display_errors();
-					$flashmsg='<div class="alert alert-danger">
-					<strong>Failed!</strong>'.$error.'
-					</div>';
-					$this->session->set_flashdata('flashmsg',$flashmsg);
+					$flashmsg = '<div class="alert alert-danger alert-dismissible fade in show"><strong>Upload Failed: </strong>' . $error . '<button type="button" class="close float-end pull-right" data-dismiss="alert">&times;</button></div>';
+					$this->session->set_flashdata('flashmsg', $flashmsg);
 					redirect(base_url().'hospitalpanel/gallery');
 					exit();
 				}
 				if($this->Hospital_Model->gallery($uploadimage)) 
 				{
-					$msg="<div class='alert alert-success'><strong>Success!</strong> Data Added Successfully</div>";
-					$this->session->set_flashdata('flashmsg',$msg);
-					
-				
+					$msg = "<div class='alert alert-success alert-dismissible fade in show'><strong>Success!</strong> Photo added to hospital gallery successfully.<button type='button' class='close float-end pull-right' data-dismiss='alert'>&times;</button></div>";
+					$this->session->set_flashdata('flashmsg', $msg);
+					redirect(base_url().'hospitalpanel/managegallery');
+					exit();
 				}
 				else
 				{
-					$msg="<div class='alert alert-danger'><strong>Failed!</strong> Something went wrong. Please try again.</div>";
-					$this->session->set_flashdata('flashmsg',$msg);
+					$msg = "<div class='alert alert-danger alert-dismissible fade in show'><strong>Failed!</strong> Could not save gallery details. Please try again.<button type='button' class='close float-end pull-right' data-dismiss='alert'>&times;</button></div>";
+					$this->session->set_flashdata('flashmsg', $msg);
 				}
+			} else {
+				$msg = "<div class='alert alert-warning alert-dismissible fade in show'><strong>Warning!</strong> Please select an image file to upload.<button type='button' class='close float-end pull-right' data-dismiss='alert'>&times;</button></div>";
+				$this->session->set_flashdata('flashmsg', $msg);
 			}
 		}
 	    $this->load->view('hospitalpanel/gallery');
@@ -1741,10 +1739,20 @@ class Hospitalpanel extends CI_Controller
 		$id          = intval($id);
 
 		if ($id > 0) {
+			$item = $this->db->select('image')
+				->where('id', $id)
+				->group_start()->where('uid', $hospital_id)->or_where('uid', $hosuid)->group_end()
+				->get('hospitalgallery')->row_array();
+			if (!empty($item) && !empty($item['image'])) {
+				$filePath = FCPATH . 'admin1947/public/assets/upload/' . $item['image'];
+				if (file_exists($filePath) && is_file($filePath)) {
+					@unlink($filePath);
+				}
+			}
 			$this->db->where('id', $id)
 				->group_start()->where('uid', $hospital_id)->or_where('uid', $hosuid)->group_end()
 				->delete('hospitalgallery');
-			$this->session->set_flashdata('flashmsg', "<div class='alert alert-success'>Gallery item deleted successfully.</div>");
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-success alert-dismissible fade in show'><strong>Deleted!</strong> Gallery photo removed successfully.<button type='button' class='close float-end pull-right' data-dismiss='alert'>&times;</button></div>");
 		}
 		redirect('hospitalpanel/managegallery');
 	}
@@ -1753,60 +1761,61 @@ class Hospitalpanel extends CI_Controller
 	{
 		if(isset($_POST['submit']))
 		{
-			$uploadimage='';
-			$uploadimage=$_FILES['uploadimage']['name'];
-			$extsign = pathinfo($_FILES['uploadimage']['name'],PATHINFO_EXTENSION);
-			if($this->input->post('type')==1) 
+			$uploadimage = '';
+			$extsign = !empty($_FILES['uploadimage']['name']) ? strtolower(pathinfo($_FILES['uploadimage']['name'], PATHINFO_EXTENSION)) : '';
+			$type = $this->input->post('type');
+
+			if($type == 1) 
 			{ 
-				if($uploadimage != '') 
-				{	
-					$typename='type';
-					$rname=rand(1111111,999999999);
-					$date=date('Y-m-d');
-					$uploadimage=$typename.'_profile_pic_'.$rname.$date.'.'.$extsign;
-					$config['upload_path']          = './admin1947/public/assets/upload/';
-					$config['allowed_types'] 		= 	'jpg|png|jpeg|JPG|PNG|JPEG';
-					$config['max_size']             = 2048;
-					$config['quality'] 				= '60%';
-					$config['file_name']  			= $uploadimage;
-					$this->load->library('upload', $config);
-					if ( ! $this->upload->do_upload('uploadimage'))
-					{
-						$error = $this->upload->display_errors();
-						$flashmsg='<div class="alert alert-danger">
-						  <strong>Failed!</strong>'.$error.'
-						</div>';
-						$this->session->set_flashdata('flashmsg',$flashmsg);
-						redirect(base_url().'hospitalpanel/news');
-						exit();
-					}
-					if($this->Hospital_Model->add_news($uploadimage)) 
-					{
-						$msg="<div class='alert alert-success'><strong>Success!</strong> Data Added Successfully</div>";
-						$this->session->set_flashdata('flashmsg',$msg);
-						redirect(base_url().'hospitalpanel/managenews');
-						exit();
-					}
-					else
-					{
-						$msg="<div class='alert alert-danger'><strong>Failed!</strong> Something went wrong. Please try again.</div>";
-						$this->session->set_flashdata('flashmsg',$msg);
-					}
-				}
-			}
-			else if($this->input->post('type')==2)
-			{
-				if($this->Hospital_Model->add_news()) 
+			if(!empty($_FILES['uploadimage']['name'])) 
+			{	
+				$typename = 'news';
+				$rname = rand(1111111, 999999999);
+				$date = date('Y-m-d');
+				$uploadimage = $typename . '_poster_' . $rname . '_' . $date . '.' . $extsign;
+				$config['upload_path']   = './admin1947/public/assets/upload/';
+				$config['allowed_types'] = 'jpg|png|jpeg|JPG|PNG|JPEG|webp|WEBP';
+				$config['max_size']      = 10240;
+				$config['file_name']     = $uploadimage;
+				$this->load->library('upload', $config);
+				if (!$this->upload->do_upload('uploadimage'))
 				{
-					$msg="<div class='alert alert-success'><strong>Success!</strong> Data Added Successfully</div>";
-					$this->session->set_flashdata('flashmsg',$msg);
+					$error = $this->upload->display_errors();
+					$flashmsg = '<div class="alert alert-danger alert-dismissible fade in show"><strong>Upload Failed: </strong>' . $error . '<button type="button" class="close float-end pull-right" data-dismiss="alert">&times;</button></div>';
+					$this->session->set_flashdata('flashmsg', $flashmsg);
+					redirect(base_url().'hospitalpanel/news');
+					exit();
+				}
+				if($this->Hospital_Model->add_news($uploadimage)) 
+				{
+					$msg = "<div class='alert alert-success alert-dismissible fade in show'><strong>Success!</strong> Announcement published successfully.<button type='button' class='close float-end pull-right' data-dismiss='alert'>&times;</button></div>";
+					$this->session->set_flashdata('flashmsg', $msg);
 					redirect(base_url().'hospitalpanel/managenews');
 					exit();
 				}
 				else
 				{
-					$msg="<div class='alert alert-danger'><strong>Failed!</strong> Something went wrong. Please try again.</div>";
-					$this->session->set_flashdata('flashmsg',$msg);
+					$msg = "<div class='alert alert-danger alert-dismissible fade in show'><strong>Failed!</strong> Could not publish announcement. Please try again.<button type='button' class='close float-end pull-right' data-dismiss='alert'>&times;</button></div>";
+					$this->session->set_flashdata('flashmsg', $msg);
+				}
+			} else {
+				$msg = "<div class='alert alert-warning alert-dismissible fade in show'><strong>Warning!</strong> Please select a banner image file.<button type='button' class='close float-end pull-right' data-dismiss='alert'>&times;</button></div>";
+				$this->session->set_flashdata('flashmsg', $msg);
+			}
+			}
+			else if($type == 2)
+			{
+				if($this->Hospital_Model->add_news()) 
+				{
+					$msg = "<div class='alert alert-success alert-dismissible fade in show'><strong>Success!</strong> Video announcement published successfully.<button type='button' class='close float-end pull-right' data-dismiss='alert'>&times;</button></div>";
+					$this->session->set_flashdata('flashmsg', $msg);
+					redirect(base_url().'hospitalpanel/managenews');
+					exit();
+				}
+				else
+				{
+					$msg = "<div class='alert alert-danger alert-dismissible fade in show'><strong>Failed!</strong> Could not publish announcement. Please try again.<button type='button' class='close float-end pull-right' data-dismiss='alert'>&times;</button></div>";
+					$this->session->set_flashdata('flashmsg', $msg);
 				}
 			}
         }           
@@ -1828,10 +1837,20 @@ class Hospitalpanel extends CI_Controller
 		$id          = intval($id);
 
 		if ($id > 0) {
+			$item = $this->db->select('image')
+				->where('id', $id)
+				->group_start()->where('hospital_id', $hospital_id)->or_where('hospital_id', $hosuid)->group_end()
+				->get('news')->row_array();
+			if (!empty($item) && !empty($item['image'])) {
+				$filePath = FCPATH . 'admin1947/public/assets/upload/' . $item['image'];
+				if (file_exists($filePath) && is_file($filePath)) {
+					@unlink($filePath);
+				}
+			}
 			$this->db->where('id', $id)
 				->group_start()->where('hospital_id', $hospital_id)->or_where('hospital_id', $hosuid)->group_end()
 				->delete('news');
-			$this->session->set_flashdata('flashmsg', "<div class='alert alert-success'>News item deleted successfully.</div>");
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-success alert-dismissible fade in show'><strong>Deleted!</strong> Announcement removed successfully.<button type='button' class='close float-end pull-right' data-dismiss='alert'>&times;</button></div>");
 		}
 		redirect('hospitalpanel/managenews');
 	}

@@ -996,7 +996,7 @@ thank you for being a part of Upchar.";
 	        $long=$this->input->post('long');
 			$shot=$this->input->post('shot');
 			
-			$data=array('shot_description'=>$shot,'long_description'=>$long,'image'=>$image,'date'=>$date,'uid'=>$this->did);
+			$data=array('shot_description'=>$shot,'long_description'=>$long,'image'=>$image,'date'=>$date,'uid'=>$this->did,'status'=>'A');
 			$qq=$this->db->insert('hospitalgallery',$data);
             return $qq;
 		}
@@ -1009,7 +1009,7 @@ thank you for being a part of Upchar.";
 	        $type=$this->input->post('type');
 			$video_url=$this->input->post('video_url');
 			
-			$data=array('title'=>$name,'description'=>$description,'type'=>$type,'video_url'=>$video_url,'creat_date'=>$date,'image'=>$image,'hospital_id'=>$this->did);
+			$data=array('title'=>$name,'description'=>$description,'type'=>$type,'video_url'=>$video_url,'creat_date'=>$date,'image'=>$image,'hospital_id'=>$this->did,'status'=>'1','approved'=>'1');
 			$qq=$this->db->insert('news',$data);
             return $qq;
 		}
