@@ -87,7 +87,7 @@ class Clinicreg extends CI_Controller
 						'fee' => $fee,
 						'status' => '1'
 					));
-					$this->session->set_flashdata('flashmsg', '<div class="alert alert-success alert-dismissible"><button type="button" class="close" data-dismiss="alert">&times;</button><i class="fa fa-check-circle"></i> Doctor affiliation updated successfully!</div>');
+					$practice_id = $existing->id;
 				}
 				else
 				{
@@ -98,8 +98,63 @@ class Clinicreg extends CI_Controller
 						'fee' => $fee,
 						'status' => '1'
 					));
-					$this->session->set_flashdata('flashmsg', '<div class="alert alert-success alert-dismissible"><button type="button" class="close" data-dismiss="alert">&times;</button><i class="fa fa-check-circle"></i> Doctor successfully affiliated to healthcare facility!</div>');
+					$practice_id = $this->db->insert_id();
 				}
+
+				// Process OPD Day Blocks and Multi-Session Time Slots
+				$timing_blocks = $this->input->post('timing_blocks');
+				$sessions_count = 0;
+				if (!empty($timing_blocks) && is_array($timing_blocks))
+				{
+					foreach ($timing_blocks as $tb)
+					{
+						$days = !empty($tb['days']) && is_array($tb['days']) ? $tb['days'] : array();
+						if (!empty($days) && !empty($tb['sessions']) && is_array($tb['sessions']))
+						{
+							$timing_data = array(
+								'practice_id' => $practice_id,
+								'user_type'   => 'D',
+								'user_id'     => $doctor_id,
+								'M'           => in_array('M', $days) ? 1 : 0,
+								'T'           => in_array('T', $days) ? 1 : 0,
+								'W'           => in_array('W', $days) ? 1 : 0,
+								'TH'          => in_array('TH', $days) ? 1 : 0,
+								'F'           => in_array('F', $days) ? 1 : 0,
+								'SA'          => in_array('SA', $days) ? 1 : 0,
+								'S'           => in_array('S', $days) ? 1 : 0,
+								'status'      => '1'
+							);
+							$this->db->insert('timing', $timing_data);
+							$timing_id = $this->db->insert_id();
+
+							foreach ($tb['sessions'] as $sess)
+							{
+								$from_t = !empty($sess['from_timing']) ? trim($sess['from_timing']) : '';
+								$to_t   = !empty($sess['to_timing']) ? trim($sess['to_timing']) : '';
+								if ($from_t !== '' && $to_t !== '')
+								{
+									$session_fee = !empty($sess['fee']) ? (int)$sess['fee'] : $fee;
+									$max_pts     = !empty($sess['max_patient']) ? (int)$sess['max_patient'] : 20;
+									$this->db->insert('timing_session', array(
+										'timing_id'        => $timing_id,
+										'from_timing'      => $from_t,
+										'to_timing'        => $to_t,
+										'max_patient'      => $max_pts,
+										'consultation_fee' => $session_fee,
+										'status'           => 1
+									));
+									$sessions_count++;
+								}
+							}
+						}
+					}
+				}
+
+				$msg = "Doctor successfully affiliated to facility!";
+				if ($sessions_count > 0) {
+					$msg .= " Configured $sessions_count OPD timing slot(s) across selected working days.";
+				}
+				$this->session->set_flashdata('flashmsg', '<div class="alert alert-success alert-dismissible"><button type="button" class="close" data-dismiss="alert">&times;</button><i class="fa fa-check-circle"></i> ' . $msg . '</div>');
 				redirect(base_url('doctor/clinicreg/assign_doctor'));
 				return;
 			}
@@ -109,11 +164,11 @@ class Clinicreg extends CI_Controller
 			}
 		}
 
-		// Query doctors with joined specialization name
-		$data['doctors'] = $this->db->select('pd.id, pd.fname, pd.lname, pd.mobile, pd.city, ms.name as speciality')
+		// Query all doctors across the registry with joined specialization
+		$data['doctors'] = $this->db->select('pd.id, pd.fname, pd.lname, pd.mobile, pd.email, pd.city, ms.name as speciality')
 			->from('profile_dr pd')
 			->join('master_specialization ms', 'ms.id = pd.specialization', 'left')
-			->where('pd.status', '1')
+			->where('pd.status !=', '2')
 			->order_by('pd.fname', 'ASC')
 			->get()
 			->result_array();
@@ -122,17 +177,41 @@ class Clinicreg extends CI_Controller
 		$data['hospitals'] = $this->db->select('id, name, city, address')->where('status !=', '2')->order_by('name', 'ASC')->get('hospital')->result_array();
 		$data['clinics'] = $this->db->select('id, name, city, address')->where('status !=', '2')->order_by('name', 'ASC')->get('clinic')->result_array();
 		
-		// Query recent affiliations for real-time overview
-		$data['recent_affiliations'] = $this->db->select('dp.id, dp.user_id, dp.type, dp.institution_id, dp.fee, dp.status, pd.fname, pd.lname, ms.name as speciality, pd.mobile as doc_mobile, h.name as hosp_name, h.city as hosp_city, c.name as clinic_name, c.city as clinic_city')
+		// Query recent affiliations with timings
+		$recent = $this->db->select('dp.id, dp.user_id, dp.type, dp.institution_id, dp.fee, dp.status, pd.fname, pd.lname, ms.name as speciality, pd.mobile as doc_mobile, h.name as hosp_name, h.city as hosp_city, c.name as clinic_name, c.city as clinic_city')
 			->from('dr_practice dp')
 			->join('profile_dr pd', '(pd.id = dp.user_id OR (pd.user_id = dp.user_id AND dp.user_id != 0))', 'left')
 			->join('master_specialization ms', 'ms.id = pd.specialization', 'left')
 			->join('hospital h', 'h.id = dp.institution_id AND dp.type = "H"', 'left')
 			->join('clinic c', 'c.id = dp.institution_id AND dp.type = "C"', 'left')
 			->order_by('dp.id', 'DESC')
-			->limit(15)
+			->limit(25)
 			->get()
 			->result_array();
+
+		foreach ($recent as &$r) {
+			$r['timings'] = array();
+			if ($this->db->table_exists('timing')) {
+				$t_rows = $this->db->get_where('timing', array('practice_id' => $r['id']))->result_array();
+				foreach ($t_rows as $tr) {
+					$days = array();
+					if ($tr['M']) $days[] = 'Mon';
+					if ($tr['T']) $days[] = 'Tue';
+					if ($tr['W']) $days[] = 'Wed';
+					if ($tr['TH']) $days[] = 'Thu';
+					if ($tr['F']) $days[] = 'Fri';
+					if ($tr['SA']) $days[] = 'Sat';
+					if ($tr['S']) $days[] = 'Sun';
+					
+					$sessions = $this->db->get_where('timing_session', array('timing_id' => $tr['id']))->result_array();
+					$r['timings'][] = array(
+						'days' => implode(', ', $days),
+						'sessions' => $sessions
+					);
+				}
+			}
+		}
+		$data['recent_affiliations'] = $recent;
 
 		$data['heading_title'] = 'Assign Doctor to Hospital / Clinic';
 		$data['module'] = 'Affiliation Management';
@@ -144,6 +223,43 @@ class Clinicreg extends CI_Controller
 		$this->load->view('inc/headersetting');
 		$this->load->view('inc/footerlink');
 		$this->load->view('inc/table_footer');
+	}
+
+	public function ajax_search_doctors()
+	{
+		$q = trim($this->input->get_post('q'));
+		$this->db->select('pd.id, pd.fname, pd.lname, pd.mobile, pd.email, pd.city, ms.name as speciality')
+			->from('profile_dr pd')
+			->join('master_specialization ms', 'ms.id = pd.specialization', 'left')
+			->where('pd.status !=', '2');
+		if ($q !== '') {
+			$this->db->group_start()
+				->like('pd.fname', $q)
+				->or_like('pd.lname', $q)
+				->or_like('pd.mobile', $q)
+				->or_like('pd.email', $q)
+				->or_like('pd.city', $q)
+				->or_like('ms.name', $q)
+				->group_end();
+		}
+		$docs = $this->db->order_by('pd.fname', 'ASC')->limit(50)->get()->result_array();
+		
+		$results = array();
+		foreach ($docs as $d) {
+			$name = 'Dr. ' . trim($d['fname'] . ' ' . $d['lname']);
+			$results[] = array(
+				'id' => $d['id'],
+				'fname' => $d['fname'],
+				'lname' => $d['lname'],
+				'name' => $name,
+				'speciality' => $d['speciality'] ?: 'General Practitioner',
+				'mobile' => $d['mobile'],
+				'city' => $d['city'] ?: '',
+				'email' => $d['email'] ?: ''
+			);
+		}
+		header('Content-Type: application/json');
+		echo json_encode(array('status' => 'success', 'items' => $results));
 	}
 
 	public function delete_affiliation($id = 0)
@@ -862,19 +978,83 @@ class Clinicreg extends CI_Controller
 	 
 	
 	
-	public function hospitalview($id)
+	public function hospitalview($id = null)
 	{    
-		$data['hospital']=$this->db->get_where('hospital',array('id'=>$id))->row();
-		$data['module']='hospital';
-		
+		$id = $id ? (int)$id : (int)$this->uri->segment(4);
+		if (!$id) {
+			redirect(base_url('doctor/clinicreg/viewhospital'));
+			return;
+		}
+
+		$hospital = $this->db->get_where('hospital', array('id' => $id))->row();
+		if (!is_object($hospital) || empty($hospital)) {
+			$this->session->set_flashdata('flashmsg', '<div class="alert alert-danger">Hospital record not found.</div>');
+			redirect(base_url('doctor/clinicreg/viewhospital'));
+			return;
+		}
+
+		$data['hospital'] = $hospital;
+		$data['module']   = 'hospital';
+
+		// Resolve City Name
+		$city_name = $hospital->city;
+		if (is_numeric($hospital->city)) {
+			$c_row = $this->db->get_where('master_city', array('id' => $hospital->city))->row();
+			if ($c_row) $city_name = $c_row->name;
+		}
+		$data['city_name'] = $city_name;
+
+		// Resolve Services / Departments
+		$services = array();
+		if ($this->db->table_exists('instition_services')) {
+			$inst_srv = $this->db->select('s.*, ms.name as service_name')
+				->from('instition_services s')
+				->join('master_services ms', 'ms.id = s.services_id', 'left')
+				->where('s.institution_id', $id)->where('s.institution_type', 'H')
+				->get();
+			if ($inst_srv && is_object($inst_srv)) {
+				$services = $inst_srv->result_array();
+			}
+		}
+		if (empty($services) && !empty($hospital->services)) {
+			$srv_row = $this->db->get_where('master_services', array('id' => $hospital->services))->row();
+			if ($srv_row) {
+				$services[] = array('service_name' => $srv_row->name);
+			}
+		}
+		$data['services_list'] = $services;
+
+		// Resolve Affiliated Doctors
+		$affiliated_doctors = array();
+		if ($this->db->table_exists('dr_practice') && $this->db->table_exists('profile_dr')) {
+			$doc_q = $this->db->select('dp.id as practice_id, dp.fee, dp.status as practice_status, pd.id as doctor_id, pd.fname, pd.lname, pd.mobile, pd.email, pd.drimage, ms.name as speciality')
+				->from('dr_practice dp')
+				->join('profile_dr pd', '(pd.id = dp.user_id OR pd.user_id = dp.user_id)', 'left')
+				->join('master_specialization ms', 'ms.id = pd.specialization', 'left')
+				->where('(dp.institution_id = ' . $id . ' OR (dp.institution_id = ' . (int)$hospital->uid . ' AND dp.institution_id != 0))')
+				->order_by('dp.id', 'DESC')
+				->get();
+			if ($doc_q && is_object($doc_q)) {
+				$affiliated_doctors = $doc_q->result_array();
+			}
+		}
+		$data['affiliated_doctors'] = $affiliated_doctors;
+
+		// Resolve User Login Account Details
+		$data['hospitallogin'] = null;
+		if (!empty($hospital->uid) && $this->db->table_exists('hospitallogin')) {
+			$data['hospitallogin'] = $this->db->get_where('hospitallogin', array('USERID' => $hospital->uid))->row();
+		}
+
+		$data['heading_title'] = $hospital->name . ' - Facility Dossier';
+
 		$this->load->view('inc/topheaderlink');
 		$this->load->view('inc/topheader');
-		$this->load->view('viewhospital',$data);
+		$this->load->view('viewhospital', $data);
 		$this->load->view('sidebar');
 		$this->load->view('inc/headersetting');
 		$this->load->view('inc/footerlink');
 		$this->load->view('inc/table_footer');
-	
 	}
 
 	
