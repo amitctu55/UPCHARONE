@@ -245,14 +245,32 @@
                 <h5 style="font-weight: 700; color: #334155; border-bottom: 2px solid #00a896; padding-bottom: 6px; margin-top: 0;">
                   <i class="fa fa-id-card-o text-primary"></i> Demographic Information
                 </h5>
-                <table class="table table-bordered table-sm" style="font-size: 13px; margin-top: 10px;">
-                  <tr><th style="width: 35%; background: #f8fafc;">Full Name</th><td id="dt-name">--</td></tr>
-                  <tr><th style="background: #f8fafc;">Mobile Number</th><td id="dt-mobile">--</td></tr>
-                  <tr><th style="background: #f8fafc;">Email Address</th><td id="dt-email">--</td></tr>
-                  <tr><th style="background: #f8fafc;">DOB / Gender</th><td id="dt-dob-gender">--</td></tr>
-                  <tr><th style="background: #f8fafc;">Blood Group</th><td id="dt-blood">--</td></tr>
-                  <tr><th style="background: #f8fafc;">Height / Weight</th><td id="dt-vitals">--</td></tr>
-                  <tr><th style="background: #f8fafc;">Registration Date</th><td id="dt-regdate">--</td></tr>
+                <style>
+                  .patient-info-table tr > th:first-child,
+                  .patient-info-table tr > td:first-child {
+                    width: 38% !important;
+                    background-color: #f1f5f9 !important;
+                    color: #1e293b !important;
+                    font-weight: 600 !important;
+                    vertical-align: middle !important;
+                    border-color: #e2e8f0 !important;
+                  }
+                  .patient-info-table tr > td:last-child {
+                    background-color: #ffffff !important;
+                    color: #0f172a !important;
+                    font-weight: 500 !important;
+                    vertical-align: middle !important;
+                    border-color: #e2e8f0 !important;
+                  }
+                </style>
+                <table class="table table-bordered table-sm patient-info-table" style="font-size: 13px; margin-top: 10px;">
+                  <tr><th>Full Name</th><td id="dt-name">--</td></tr>
+                  <tr><th>Mobile Number</th><td id="dt-mobile">--</td></tr>
+                  <tr><th>Email Address</th><td id="dt-email">--</td></tr>
+                  <tr><th>DOB / Gender</th><td id="dt-dob-gender">--</td></tr>
+                  <tr><th>Blood Group</th><td id="dt-blood">--</td></tr>
+                  <tr><th>Height / Weight</th><td id="dt-vitals">--</td></tr>
+                  <tr><th>Registration Date</th><td id="dt-regdate">--</td></tr>
                 </table>
               </div>
               <div class="col-md-6">

@@ -51,7 +51,7 @@
             </span>
             <div class="info-box-content">
               <span class="info-box-text" style="color: #64748b; font-size: 12px; font-weight: 600; text-transform: uppercase;">Tracked Doctors</span>
-              <span class="info-box-number" style="font-size: 22px; font-weight: 700; color: #1e293b;"><?=count($doctor_stats);?></span>
+              <span class="info-box-number" style="font-size: 22px; font-weight: 700; color: #1e293b;"><?=number_format(@$total_doctors ?: count($doctor_stats));?></span>
             </div>
           </div>
         </div>
@@ -119,49 +119,7 @@
                     <th style="padding: 12px 15px; text-align: center;">Actions</th>
                   </tr>
                 </thead>
-                <tbody>
-                  <?php if(!empty($doctor_stats)): ?>
-                    <?php foreach($doctor_stats as $doc): ?>
-                      <tr>
-                        <td style="padding: 12px 15px; font-weight: 600; color: #64748b;">#<?=$doc['doctor_id'];?></td>
-                        <td style="padding: 12px 15px;">
-                          <strong style="color: #1e293b;">Dr. <?=htmlspecialchars($doc['fname'].' '.$doc['lname']);?></strong>
-                        </td>
-                        <td style="padding: 12px 15px; color: #64748b;">
-                          <span class="label label-info" style="font-weight: 500;"><?=htmlspecialchars($doc['speciality'] ?: 'General Physician');?></span>
-                        </td>
-                        <td style="padding: 12px 15px; font-size: 12px; color: #64748b;">
-                          <i class="fa fa-phone text-muted"></i> <?=htmlspecialchars($doc['mobile'] ?: 'N/A');?><br>
-                          <i class="fa fa-envelope text-muted"></i> <?=htmlspecialchars($doc['email'] ?: 'N/A');?>
-                        </td>
-                        <td style="padding: 12px 15px; text-align: center;">
-                          <span class="badge bg-teal" style="font-size: 13px; padding: 4px 10px;"><?=number_format($doc['total_bookings']);?></span>
-                        </td>
-                        <td style="padding: 12px 15px; text-align: center;">
-                          <span class="badge bg-blue" style="font-size: 12px; padding: 3px 8px;"><?=number_format($doc['today_bookings']);?></span>
-                        </td>
-                        <td style="padding: 12px 15px; text-align: center;">
-                          <span class="badge bg-green" style="font-size: 12px; padding: 3px 8px;"><?=number_format($doc['confirmed_count']);?></span>
-                        </td>
-                        <td style="padding: 12px 15px; text-align: center;">
-                          <span class="badge bg-yellow" style="font-size: 12px; padding: 3px 8px;"><?=number_format($doc['pending_count']);?></span>
-                        </td>
-                        <td style="padding: 12px 15px; text-align: center;">
-                          <a href="<?=base_url('doctor/appointment/doctorappointment?doctor='.$doc['doctor_id']);?>" class="btn btn-xs btn-default" style="border-radius: 4px;" title="Filter Bookings">
-                            <i class="fa fa-search text-primary"></i> View Bookings
-                          </a>
-                        </td>
-                      </tr>
-                    <?php endforeach; ?>
-                  <?php else: ?>
-                    <tr>
-                      <td colspan="9" style="text-align: center; padding: 30px; color: #94a3b8;">
-                        <i class="fa fa-calendar-times-o" style="font-size: 32px; margin-bottom: 8px; display: block;"></i>
-                        No doctor appointment records found.
-                      </td>
-                    </tr>
-                  <?php endif; ?>
-                </tbody>
+                <tbody id="doctor-table-body"></tbody>
               </table>
             </div>
           </div>
@@ -311,21 +269,60 @@
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-  // Client-side quick filter for Doctor table
+$(document).ready(function() {
+  // Server-Side DataTables for Doctor-Level Tracking (Handles 1,400+ doctors instantly)
+  if ($.fn.DataTable.isDataTable('#doctor-table')) {
+    $('#doctor-table').DataTable().destroy();
+  }
+
+  var doctorTable = $('#doctor-table').DataTable({
+    "processing": true,
+    "serverSide": true,
+    "responsive": true,
+    "pageLength": 25,
+    "lengthMenu": [[10, 25, 50, 100], [10, 25, 50, 100]],
+    "ajax": {
+      "url": "<?=base_url('doctor/appointment/ajax_doctor_analytics');?>",
+      "type": "POST"
+    },
+    "order": [[4, "desc"]], // Default sort by Total Appointments descending
+    "columns": [
+      { "width": "70px", "className": "text-center" },
+      { "width": "22%" },
+      { "width": "16%" },
+      { "width": "18%" },
+      { "className": "text-center" },
+      { "className": "text-center" },
+      { "className": "text-center" },
+      { "className": "text-center" },
+      { "width": "120px", "className": "text-center", "orderable": false }
+    ],
+    "language": {
+      "processing": '<div style="padding: 15px; color: #00a896; font-weight: 700; font-size: 14px;"><i class="fa fa-spinner fa-spin fa-2x"></i><br>Loading Doctor Analytics...</div>',
+      "lengthMenu": "Show _MENU_ doctors per page",
+      "info": "Showing _START_ to _END_ of _TOTAL_ doctors",
+      "infoEmpty": "No doctors found",
+      "infoFiltered": "(filtered from _MAX_ total records)",
+      "search": "Quick Search:",
+      "searchPlaceholder": "Search doctor name, phone, email, speciality...",
+      "paginate": {
+        "first": '<i class="fa fa-angle-double-left"></i>',
+        "last": '<i class="fa fa-angle-double-right"></i>',
+        "next": '<i class="fa fa-angle-right"></i>',
+        "previous": '<i class="fa fa-angle-left"></i>'
+      }
+    }
+  });
+
+  // Custom search filter input integration
   var docSearch = document.getElementById('doctor-search');
   if (docSearch) {
-    docSearch.addEventListener('keyup', function() {
-      var filter = this.value.toLowerCase();
-      var rows = document.querySelectorAll('#doctor-table tbody tr');
-      rows.forEach(function(row) {
-        var text = row.textContent.toLowerCase();
-        row.style.display = text.indexOf(filter) > -1 ? '' : 'none';
-      });
+    $(docSearch).on('keyup change', function() {
+      doctorTable.search(this.value).draw();
     });
   }
 
-  // Client-side quick filter for Hospital-Doctor table
+  // Client-side quick filter for Hospital-Doctor table (128 rows)
   var hdSearch = document.getElementById('hd-search');
   if (hdSearch) {
     hdSearch.addEventListener('keyup', function() {

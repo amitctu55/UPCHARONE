@@ -305,7 +305,13 @@
                 <?php endif; ?>
               </div>
               <?php if(!empty($hospital->med_reg_proof)): ?>
-                <?php $docUrl = base_url('public/assets/images/hospital/'.$hospital->med_reg_proof); ?>
+                <?php 
+                $docFile = $hospital->med_reg_proof;
+                $docUrl = base_url('public/assets/upload/' . $docFile);
+                if (!file_exists(FCPATH . 'public/assets/upload/' . $docFile) && file_exists(FCPATH . 'public/assets/images/hospital/' . $docFile)) {
+                  $docUrl = base_url('public/assets/images/hospital/' . $docFile);
+                }
+              ?>
                 <div style="margin-top: 8px;">
                   <a href="<?=$docUrl;?>" target="_blank" class="btn btn-xs btn-primary" style="font-weight: 600; background: #00a896; border-color: #00a896;">
                     <i class="fa fa-external-link"></i> View Document
@@ -329,7 +335,13 @@
                 <?php endif; ?>
               </div>
               <?php if(!empty($hospital->id_proof)): ?>
-                <?php $idUrl = base_url('public/assets/images/hospital/'.$hospital->id_proof); ?>
+                <?php 
+                $idFile = $hospital->id_proof;
+                $idUrl = base_url('public/assets/upload/' . $idFile);
+                if (!file_exists(FCPATH . 'public/assets/upload/' . $idFile) && file_exists(FCPATH . 'public/assets/images/hospital/' . $idFile)) {
+                  $idUrl = base_url('public/assets/images/hospital/' . $idFile);
+                }
+              ?>
                 <div style="margin-top: 8px;">
                   <a href="<?=$idUrl;?>" target="_blank" class="btn btn-xs btn-primary" style="font-weight: 600; background: #00a896; border-color: #00a896;">
                     <i class="fa fa-external-link"></i> View ID Proof

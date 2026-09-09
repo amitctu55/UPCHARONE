@@ -112,10 +112,25 @@ class Usercreate extends CI_Controller
 	
 	public function delete()
 	{
-		$uid=$this->uri->segment('4');
-		if($this->usercreatemodel->usermoddelete($uid))
-		{
-			echo "Y";
+		$uid = $this->uri->segment('4');
+		$success = false;
+		if (!empty($uid)) {
+			$success = $this->usercreatemodel->usermoddelete($uid);
 		}
+
+		// Handle AJAX deletion seamlessly
+		if ($this->input->is_ajax_request() || $this->input->get('ajax') == '1') {
+			echo ($success ? "Y" : "N");
+			return;
+		}
+
+		// Handle direct browser link navigation: set flash notification and redirect back
+		if ($success) {
+			$msg = "<div class='alert alert-success'><strong>Success!</strong> Staff user account deleted successfully.</div>";
+		} else {
+			$msg = "<div class='alert alert-warning'><strong>Notice:</strong> Staff user record could not be found or has already been removed.</div>";
+		}
+		$this->session->set_flashdata('flashmsg', $msg);
+		redirect(base_url('users/usercreate'));
 	}
 }

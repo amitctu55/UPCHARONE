@@ -17,6 +17,9 @@ Options -Indexes
 
 DirectoryIndex index.php
 RewriteEngine on
+
+# Fallback alias for legacy hospital uploads
+RewriteRule ^public/assets/images/hospital/(.*)$ public/assets/upload/$1 [L]
  
 RewriteCond $1 !^(index\.php|(.*)\.swf|forums|images|css|downloads|jquery|js|robots\.txt|favicon\.ico)
 RewriteCond %{REQUEST_FILENAME} !-f

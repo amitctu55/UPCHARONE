@@ -128,7 +128,7 @@
                           <a href="javascript:void(0);" class="btn-icon-action btn-action-edit edit-user-btn" data-id="<?=$val['id'];?>" data-name="<?=$val['username'];?>" data-mobile="<?=$val['mobile'];?>" data-email="<?=$val['email'];?>" data-address="<?=$val['address'];?>" title="Edit User">
                             <i class="fa fa-pencil"></i>
                           </a>
-                          <a href="<?=base_url('users/usercreate/delete/'.$val['id']);?>" onclick="return confirm('Are you sure you want to delete this user?');" class="btn-icon-action btn-action-delete" title="Delete User">
+                          <a href="<?=base_url('users/usercreate/delete/'.$val['id']);?>" class="btn-icon-action btn-action-delete delete-user-btn" data-id="<?=$val['id'];?>" data-name="<?=html_escape($val['username']);?>" title="Delete User">
                             <i class="fa fa-trash-o"></i>
                           </a>
                         </td>
@@ -180,6 +180,39 @@ $(document).ready(function(){
     $('#useraddress').val('');
     $('#resetpassword').val('');
     $('#user-form-title').text('Create Admin User');
+  });
+
+  // AJAX user delete handler with smooth fadeOut
+  $(document).on('click', '.delete-user-btn', function(e){
+    e.preventDefault();
+    var btn = $(this);
+    var userId = btn.data('id');
+    var userName = btn.data('name') || 'this user';
+    var deleteUrl = btn.attr('href');
+
+    if (confirm('Are you sure you want to delete staff user "' + userName + '"?')) {
+      var row = $('#row-' + userId);
+      row.css('opacity', '0.4');
+
+      $.ajax({
+        url: deleteUrl,
+        type: 'GET',
+        data: { ajax: '1' },
+        success: function(response){
+          if (response.trim() === 'Y') {
+            row.fadeOut(350, function(){
+              $(this).remove();
+            });
+          } else {
+            // Fallback navigation
+            window.location.href = deleteUrl;
+          }
+        },
+        error: function(){
+          window.location.href = deleteUrl;
+        }
+      });
+    }
   });
 });
 </script>
