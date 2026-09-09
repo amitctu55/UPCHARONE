@@ -200,14 +200,17 @@ $hospEmail = !empty($hospital->email) ? $hospital->email : 'support@upchar.info'
                                   : admin_url().'public/assets/upload/dummydr.jpg';
                         $docPrefix = (strcasecmp(substr($doc->fname, 0, 2), 'Dr') != 0) ? 'Dr. ' : '';
                         
+                        $doc_id = (int)$doc->id;
+                        $doc_uid = (int)$doc->user_id;
+
                         // Specialization
-                        $docSpecs = $this->db->get_where('dr_specialization', array('user_id' => $doc->id))->result();
-                        $specName = (!empty($docSpecs) && !empty($docSpecs[0]->specialization_id)) 
-                                    ? getSpecilizationName($docSpecs[0]->specialization_id) 
-                                    : 'Specialist Physician';
+                        $docSpecs = $this->db->query("SELECT DISTINCT ds.specialization_id, ms.name FROM dr_specialization ds JOIN master_specialization ms ON ds.specialization_id = ms.id WHERE ds.user_id = $doc_id OR (ds.user_id = $doc_uid AND $doc_uid != 0)")->result();
+                        $specName = (!empty($docSpecs) && !empty($docSpecs[0]->name)) 
+                                    ? $docSpecs[0]->name 
+                                    : (!empty($doc->specialization) ? getSpecilizationName($doc->specialization) : 'Specialist Physician');
 
                         // Qualifications
-                        $docQuals = $this->db->get_where('dr_qualifications', array('user_id' => $doc->id))->result();
+                        $docQuals = $this->db->query("SELECT * FROM dr_qualifications WHERE user_id = $doc_id OR (user_id = $doc_uid AND $doc_uid != 0)")->result();
                         $qualName = (!empty($docQuals) && !empty($docQuals[0]->qualification_id)) 
                                     ? getQualificationName($docQuals[0]->qualification_id) 
                                     : 'MBBS';

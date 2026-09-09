@@ -487,9 +487,18 @@
               <span>
                 <i class="fa fa-user-md" style="color: #00a896; margin-right: 6px;"></i> Step 1: Search &amp; Select Doctor <span class="text-danger">*</span>
               </span>
-              <span class="label label-info" id="comboboxTotalBadge" style="font-size: 11px; padding: 4px 8px; border-radius: 4px;">
-                <?=number_format(count($doctors));?> Doctors Loaded
-              </span>
+              <div class="doctor-verif-filters" style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
+                <span style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase;">Filter:</span>
+                <button type="button" class="btn btn-xs doc-filter-pill active" id="pill-all" onclick="setDoctorFilter('all', this)" style="border-radius: 20px; font-weight: 600; padding: 3px 10px; background: #0f172a; color: white; border: 1px solid #0f172a;">
+                  All (<span id="count-all-pills"><?=number_format(count($doctors));?></span>)
+                </button>
+                <button type="button" class="btn btn-xs doc-filter-pill" id="pill-verified" onclick="setDoctorFilter('verified', this)" style="border-radius: 20px; font-weight: 600; padding: 3px 10px; background: #ffffff; color: #059669; border: 1px solid #a7f3d0;" title="Show only verified medical specialists">
+                  <i class="fa fa-check-circle text-success"></i> Verified (<span id="count-verified-pills">--</span>)
+                </button>
+                <button type="button" class="btn btn-xs doc-filter-pill" id="pill-unverified" onclick="setDoctorFilter('unverified', this)" style="border-radius: 20px; font-weight: 600; padding: 3px 10px; background: #ffffff; color: #b45309; border: 1px solid #fde68a;" title="Show unverified or pending verification doctors">
+                  <i class="fa fa-clock-o text-warning"></i> Unverified (<span id="count-unverified-pills">--</span>)
+                </button>
+              </div>
             </div>
 
             <!-- UNIFIED COMBOBOX FIELD: SEARCH & LIST AT SAME FIELD -->
@@ -579,22 +588,86 @@
                 </div>
               </div>
 
-              <!-- Hospital Dropdown -->
+              <!-- Hospital Selection Combobox & Verification Filter -->
               <div class="col-md-4 col-xs-12" id="hospital_wrapper" style="margin-bottom: 16px;">
                 <div class="form-group" style="margin-bottom: 0;">
-                  <label for="hospital_id">
-                    <i class="fa fa-hospital-o text-success" style="margin-right: 4px;"></i> Select Hospital <span class="text-danger">*</span>
-                  </label>
-                  <select name="hospital_id" id="hospital_id" class="form-control" required style="width: 100%;">
-                    <option value="">-- Choose Hospital (<?=count($hospitals);?> available) --</option>
-                    <?php if (!empty($hospitals)): ?>
-                      <?php foreach ($hospitals as $hosp): ?>
-                        <option value="<?=$hosp['id'];?>">
-                          <?=htmlspecialchars($hosp['name']);?> (<?=htmlspecialchars($hosp['city'] ?: $hosp['address']);?>)
-                        </option>
-                      <?php endforeach; ?>
-                    <?php endif; ?>
-                  </select>
+                  <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 4px; margin-bottom: 6px;">
+                    <label style="font-weight: 700; color: #1e293b; font-size: 13px; margin: 0;">
+                      <i class="fa fa-hospital-o text-success" style="margin-right: 4px;"></i> Select Hospital <span class="text-danger">*</span>
+                    </label>
+                    <!-- Hospital Verification Filter Pills -->
+                    <div class="hospital-filter-pills" style="display: flex; gap: 4px; align-items: center;">
+                      <span style="font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase;">Filter:</span>
+                      <button type="button" class="btn btn-xs hosp-filter-pill active" id="hosp-pill-all" onclick="setHospitalFilter('all', this)" style="border-radius: 20px; font-weight: 600; padding: 2px 8px; background: #0f172a; color: white; border: 1px solid #0f172a;">
+                        All (<span id="count-hosp-all"><?=count($hospitals);?></span>)
+                      </button>
+                      <button type="button" class="btn btn-xs hosp-filter-pill" id="hosp-pill-verified" onclick="setHospitalFilter('verified', this)" style="border-radius: 20px; font-weight: 600; padding: 2px 8px; background: #ffffff; color: #059669; border: 1px solid #a7f3d0;" title="Show verified hospitals only">
+                        <i class="fa fa-check-circle text-success"></i> Verified (<span id="count-hosp-verified">--</span>)
+                      </button>
+                      <button type="button" class="btn btn-xs hosp-filter-pill" id="hosp-pill-unverified" onclick="setHospitalFilter('unverified', this)" style="border-radius: 20px; font-weight: 600; padding: 2px 8px; background: #ffffff; color: #b45309; border: 1px solid #fde68a;" title="Show unverified or pending verification hospitals">
+                        <i class="fa fa-clock-o text-warning"></i> Unverified (<span id="count-hosp-unverified">--</span>)
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- Unified Hospital Combobox Container -->
+                  <div class="doctor-combobox-container" id="hospitalCombobox" style="position: relative;">
+                    <div class="doctor-combobox-input-wrap">
+                      <span class="doctor-combobox-icon"><i class="fa fa-search"></i></span>
+                      <input type="text" 
+                             id="hospital_combobox_input" 
+                             class="form-control doctor-combobox-input" 
+                             placeholder="Click or type to search hospital by name, city, or ID..." 
+                             autocomplete="off">
+                      <input type="hidden" name="hospital_id" id="hospital_id" value="" required>
+
+                      <div class="doctor-combobox-actions">
+                        <button type="button" class="combobox-btn" id="hospComboboxClearBtn" style="display: none; color: #94a3b8; background: none; border: none; cursor: pointer; padding: 4px;" onclick="clearSelectedHospital()" title="Clear selected hospital">
+                          <i class="fa fa-times-circle"></i>
+                        </button>
+                        <button type="button" class="combobox-btn" id="hospComboboxToggleBtn" style="color: #64748b; background: none; border: none; cursor: pointer; padding: 4px;" title="Toggle hospital list">
+                          <i class="fa fa-chevron-down"></i>
+                        </button>
+                      </div>
+                    </div>
+
+                    <!-- Floating Autocomplete Dropdown List for Hospitals -->
+                    <div id="hospitalComboboxDropdown" class="doctor-combobox-dropdown" style="display: none;">
+                      <div class="combobox-search-status" id="hospComboboxStatusText">
+                        Showing hospitals (type to filter)...
+                      </div>
+                      <div class="doctor-items-list" id="hospitalItemsList">
+                        <!-- Populated via JS -->
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Selected Hospital Confirmation Card -->
+                  <div id="selectedHospitalCard" style="display: none; margin-top: 8px; background: #f8fafc; border: 1.5px solid #00a896; border-radius: 8px; padding: 10px 14px;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;">
+                      <div style="display: flex; align-items: center; gap: 10px; min-width: 0;">
+                        <div style="width: 34px; height: 34px; border-radius: 50%; background: #00a896; color: white; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0;">
+                          <i class="fa fa-hospital-o"></i>
+                        </div>
+                        <div style="min-width: 0;">
+                          <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                            <strong style="font-size: 13.5px; color: #0f172a;" id="selectedHospName">Hospital Name</strong>
+                            <span id="selectedHospVerifBadge" class="badge" style="background: #10b981; color: white; font-size: 10px; padding: 2px 6px; border-radius: 10px;"><i class="fa fa-check-circle"></i> Verified</span>
+                            <span style="font-size: 11px; color: #64748b;">ID: #<span id="selectedHospId">--</span></span>
+                          </div>
+                          <div style="font-size: 11.5px; color: #64748b; margin-top: 1px;" id="selectedHospCity">
+                            <i class="fa fa-map-marker text-muted"></i> City
+                          </div>
+                        </div>
+                      </div>
+                      <button type="button" class="btn btn-xs btn-default" onclick="changeSelectedHospital()" style="border-radius: 4px; font-weight: 600; padding: 3px 8px;">
+                        <i class="fa fa-pencil text-primary"></i> Change
+                      </button>
+                    </div>
+                    <div id="selectedHospUnverNotice" class="alert alert-warning" style="display: none; margin-top: 8px; margin-bottom: 0; padding: 6px 10px; font-size: 11.5px; border-radius: 6px; background: #fffbeb; border: 1px solid #fde68a; color: #92400e;">
+                      <i class="fa fa-info-circle"></i> <strong>Notice:</strong> This hospital's profile verification is currently pending. Doctor affiliation &amp; OPD timings can still be configured and assigned by the admin.
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -778,6 +851,11 @@
                     <td style="padding: 12px 14px; font-weight: 600; color: #64748b;">#<?=$r['id'];?></td>
                     <td style="padding: 12px 14px;">
                       <strong style="color: #1e293b;">Dr. <?=htmlspecialchars(trim($r['fname'].' '.$r['lname']));?></strong>
+                      <?php if ($r['verified'] == '1'): ?>
+                        <span class="badge" style="background: #10b981; color: white; font-size: 9.5px; padding: 1px 5px; border-radius: 8px; margin-left: 4px;"><i class="fa fa-check-circle"></i> Verified</span>
+                      <?php else: ?>
+                        <span class="badge" style="background: #fef3c7; color: #b45309; border: 1px solid #fde68a; font-size: 9.5px; padding: 1px 5px; border-radius: 8px; margin-left: 4px;"><i class="fa fa-clock-o"></i> Unverified</span>
+                      <?php endif; ?>
                       <div style="font-size: 11.5px; color: #64748b; margin-top: 2px;">
                         <span class="label label-info" style="font-size: 10.5px;"><?=htmlspecialchars($r['speciality'] ?: 'General');?></span>
                         <?php if($r['doc_mobile']): ?><span style="margin-left: 4px;"><i class="fa fa-phone text-muted"></i> <?=htmlspecialchars($r['doc_mobile']);?></span><?php endif; ?>
@@ -785,6 +863,13 @@
                     </td>
                     <td style="padding: 12px 14px;">
                       <strong style="color: #334155;"><i class="fa fa-building-o text-muted"></i> <?=htmlspecialchars($facilityName);?></strong>
+                      <?php 
+                        $facVer = ($r['type'] === 'H') ? ($r['hosp_verified'] ?? '') : ($r['clinic_verified'] ?? ''); 
+                        if ($facVer == '1'): ?>
+                        <span class="badge" style="background: #10b981; color: white; font-size: 9.5px; padding: 1px 5px; border-radius: 8px; margin-left: 4px;"><i class="fa fa-check-circle"></i> Verified</span>
+                      <?php else: ?>
+                        <span class="badge" style="background: #fef3c7; color: #b45309; border: 1px solid #fde68a; font-size: 9.5px; padding: 1px 5px; border-radius: 8px; margin-left: 4px;"><i class="fa fa-clock-o"></i> Unverified</span>
+                      <?php endif; ?>
                       <?php if($facilityCity): ?>
                         <div style="font-size: 11.5px; color: #64748b; margin-top: 2px;"><i class="fa fa-map-marker text-muted"></i> <?=htmlspecialchars($facilityCity);?></div>
                       <?php endif; ?>
@@ -848,6 +933,7 @@
 
 <!-- CLIENT-SIDE DOCTOR DATA FOR ZERO-LATENCY COMBOBOX -->
 <script>
+var ALL_HOSPITALS = <?=json_encode($hospitals, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP);?>;
 var ALL_DOCTORS = <?=json_encode($doctors, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP);?>;
 var blockCount = 1;
 
@@ -859,10 +945,122 @@ function getAvatarColor(name) {
   return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
 }
 
+// Doctor Verification Filter State
+var currentDoctorFilter = 'all'; // 'all', 'verified', 'unverified'
+
+function setDoctorFilter(filterType, btn) {
+  currentDoctorFilter = filterType;
+  $('.doc-filter-pill').css({ 'background': '#ffffff', 'color': '#334155', 'border': '1px solid #cbd5e1' }).removeClass('active');
+  if (filterType === 'all') {
+    $(btn).css({ 'background': '#0f172a', 'color': 'white', 'border': '1px solid #0f172a' }).addClass('active');
+  } else if (filterType === 'verified') {
+    $(btn).css({ 'background': '#ecfdf5', 'color': '#059669', 'border': '1px solid #a7f3d0' }).addClass('active');
+  } else if (filterType === 'unverified') {
+    $(btn).css({ 'background': '#fffbeb', 'color': '#b45309', 'border': '1px solid #fde68a' }).addClass('active');
+  }
+  
+  // Re-run filter on combobox
+  var $input = $('#doctor_combobox_input');
+  if ($('#doctorComboboxDropdown').is(':visible')) {
+    renderDoctorItems($input.val());
+  }
+}
+
 // -------------------------------------------------------------
 // UNIFIED COMBOBOX ENGINE (SEARCH & LIST AT SAME FIELD)
 // -------------------------------------------------------------
 $(document).ready(function() {
+  // Compute Doctor Verification Counts for Pills
+  var totalVer = 0, totalUnver = 0;
+  for (var k = 0; k < ALL_DOCTORS.length; k++) {
+    if (ALL_DOCTORS[k].verified == '1') {
+      totalVer++;
+    } else {
+      totalUnver++;
+    }
+  }
+  $('#count-all-pills').text(ALL_DOCTORS.length.toLocaleString());
+  $('#count-verified-pills').text(totalVer.toLocaleString());
+  $('#count-unverified-pills').text(totalUnver.toLocaleString());
+
+  // Compute Hospital Verification Counts for Filter Pills
+  var numHospVer = 0, numHospUnver = 0;
+  for (var m = 0; m < ALL_HOSPITALS.length; m++) {
+    if (ALL_HOSPITALS[m].verified == '1') {
+      numHospVer++;
+    } else {
+      numHospUnver++;
+    }
+  }
+  $('#count-hosp-verified').text(numHospVer.toLocaleString());
+  $('#count-hosp-unverified').text(numHospUnver.toLocaleString());
+
+  // Wire Hospital Combobox Events
+  var $hospInput = $('#hospital_combobox_input');
+  var $hospDropdown = $('#hospitalComboboxDropdown');
+  var $hospToggleBtn = $('#hospComboboxToggleBtn');
+
+  $hospInput.on('focus click', function() {
+    $hospDropdown.show();
+    filterHospitals($(this).val());
+  });
+
+  $hospInput.on('input', function() {
+    var val = $(this).val();
+    if (val.length > 0) {
+      $('#hospComboboxClearBtn').show();
+    } else {
+      $('#hospComboboxClearBtn').hide();
+      $('#hospital_id').val('');
+    }
+    filterHospitals(val);
+  });
+
+  $hospToggleBtn.on('click', function(e) {
+    e.stopPropagation();
+    if ($hospDropdown.is(':visible')) {
+      $hospDropdown.hide();
+    } else {
+      $hospDropdown.show();
+      filterHospitals($hospInput.val());
+      $hospInput.focus();
+    }
+  });
+
+  // Keyboard navigation for hospitals
+  $hospInput.on('keydown', function(e) {
+    var $items = $('#hospitalItemsList .hosp-option-item');
+    if (!$items.length || !$hospDropdown.is(':visible')) return;
+
+    if (e.which === 40) { // ArrowDown
+      e.preventDefault();
+      activeHospIndex = (activeHospIndex + 1) % $items.length;
+      $items.removeClass('active-item');
+      $items.eq(activeHospIndex).addClass('active-item');
+      $items.eq(activeHospIndex)[0].scrollIntoView({ block: 'nearest' });
+    } else if (e.which === 38) { // ArrowUp
+      e.preventDefault();
+      activeHospIndex = (activeHospIndex - 1 + $items.length) % $items.length;
+      $items.removeClass('active-item');
+      $items.eq(activeHospIndex).addClass('active-item');
+      $items.eq(activeHospIndex)[0].scrollIntoView({ block: 'nearest' });
+    } else if (e.which === 13) { // Enter
+      e.preventDefault();
+      if (activeHospIndex >= 0 && activeHospIndex < $items.length) {
+        $items.eq(activeHospIndex).trigger('click');
+      }
+    } else if (e.which === 27) { // Escape
+      $hospDropdown.hide();
+    }
+  });
+
+  // Close hospital dropdown on outside click
+  $(document).on('click', function(e) {
+    if (!$(e.target).closest('#hospitalCombobox').length) {
+      $hospDropdown.hide();
+    }
+  });
+
   var $input = $('#doctor_combobox_input');
   var $hidden = $('#doctor_id');
   var $dropdown = $('#doctorComboboxDropdown');
@@ -883,11 +1081,24 @@ $(document).ready(function() {
 
     var matches = [];
     if (!query) {
-      matches = ALL_DOCTORS.slice(0, 40); // Show top 40 initially for snappy performance
-      $statusText.text('Showing first 40 of ' + ALL_DOCTORS.length + ' doctors (type to filter)');
+      if (currentDoctorFilter === 'all') {
+        matches = ALL_DOCTORS.slice(0, 40);
+      } else {
+        for (var k = 0; k < ALL_DOCTORS.length; k++) {
+          var isV = (ALL_DOCTORS[k].verified == '1');
+          if (currentDoctorFilter === 'verified' && isV) matches.push(ALL_DOCTORS[k]);
+          if (currentDoctorFilter === 'unverified' && !isV) matches.push(ALL_DOCTORS[k]);
+          if (matches.length >= 40) break;
+        }
+      }
+      $statusText.text('Showing ' + matches.length + ' doctor(s) (' + currentDoctorFilter + ') - type to filter');
     } else {
       for (var i = 0; i < ALL_DOCTORS.length; i++) {
         var d = ALL_DOCTORS[i];
+        var isV = (d.verified == '1');
+        if (currentDoctorFilter === 'verified' && !isV) continue;
+        if (currentDoctorFilter === 'unverified' && isV) continue;
+
         var name = (d.fname + ' ' + (d.lname || '')).toLowerCase();
         var spec = (d.speciality || '').toLowerCase();
         var mobile = (d.mobile || '').toLowerCase();
@@ -919,11 +1130,16 @@ $(document).ready(function() {
       var cityStr = doc.city ? '<span style="margin-right: 6px;"><i class="fa fa-map-marker text-muted"></i> ' + htmlEscape(doc.city) + '</span>' : '';
       var mobileStr = doc.mobile ? '<span><i class="fa fa-phone text-muted"></i> ' + htmlEscape(doc.mobile) + '</span>' : '';
 
+      var isVer = (doc.verified == '1');
+      var vBadge = isVer 
+        ? '<span class="badge" style="background: #10b981; color: white; font-size: 10px; font-weight: 600; padding: 2px 6px; border-radius: 10px; margin-left: 5px;"><i class="fa fa-check-circle"></i> Verified</span>'
+        : '<span class="badge" style="background: #fef3c7; color: #b45309; border: 1px solid #fde68a; font-size: 10px; font-weight: 600; padding: 2px 6px; border-radius: 10px; margin-left: 5px;"><i class="fa fa-clock-o"></i> Unverified</span>';
+
       html += '<div class="doctor-option-item" data-index="' + j + '" data-id="' + doc.id + '">' +
         '<div style="display: flex; align-items: center; gap: 12px; flex-grow: 1;">' +
           '<div class="doc-avatar-circle" style="background: ' + color + '; color: #ffffff;">' + initials.toUpperCase() + '</div>' +
           '<div>' +
-            '<div class="doc-name-text">Dr. ' + htmlEscape(fullName) + ' <span class="label label-info" style="font-size: 10.5px; font-weight: 500; margin-left: 4px;">' + htmlEscape(spec) + '</span></div>' +
+            '<div class="doc-name-text">Dr. ' + htmlEscape(fullName) + vBadge + ' <span class="label label-info" style="font-size: 10.5px; font-weight: 500; margin-left: 4px;">' + htmlEscape(spec) + '</span></div>' +
             '<div class="doc-meta-text">' + cityStr + mobileStr + '</div>' +
           '</div>' +
         '</div>' +
@@ -954,6 +1170,15 @@ $(document).ready(function() {
     $('#dossierName').text(fullName);
     $('#dossierSpec').text(doc.speciality || 'General Practitioner');
     $('#dossierId').text(doc.id);
+    
+    var isVer = (doc.verified == '1');
+    if (isVer) {
+      $('#dossierVerifBadge').attr('class', 'badge').css({'background': '#10b981', 'color': '#ffffff', 'border': 'none'}).html('<i class="fa fa-check-circle"></i> Verified Doctor');
+      $('#dossierUnverAlert').hide();
+    } else {
+      $('#dossierVerifBadge').attr('class', 'badge').css({'background': '#fef3c7', 'color': '#b45309', 'border': '1px solid #fde68a'}).html('<i class="fa fa-clock-o"></i> Unverified Doctor');
+      $('#dossierUnverAlert').fadeIn();
+    }
     $('#dossierMobile').html('<i class="fa fa-phone text-muted"></i> ' + (doc.mobile || 'N/A'));
     $('#dossierCity').html('<i class="fa fa-map-marker text-muted"></i> ' + (doc.city || 'Unspecified Location'));
     $('#dossierEmail').html('<i class="fa fa-envelope-o text-muted"></i> ' + (doc.email || 'N/A'));
@@ -1280,6 +1505,161 @@ function resetForm() {
   }
 }
 
+
+// -------------------------------------------------------------
+// HOSPITAL VERIFICATION FILTER & COMBOBOX ENGINE
+// -------------------------------------------------------------
+var currentHospitalFilter = 'all'; // 'all', 'verified', 'unverified'
+var currentHospMatches = [];
+var activeHospIndex = -1;
+
+function setHospitalFilter(type, btn) {
+  currentHospitalFilter = type;
+  $('.hosp-filter-pill').css({ 'background': '#ffffff', 'color': '#334155', 'border': '1px solid #cbd5e1' }).removeClass('active');
+  if (type === 'all') {
+    $(btn).css({ 'background': '#0f172a', 'color': 'white', 'border': '1px solid #0f172a' }).addClass('active');
+  } else if (type === 'verified') {
+    $(btn).css({ 'background': '#ecfdf5', 'color': '#059669', 'border': '1px solid #a7f3d0' }).addClass('active');
+  } else if (type === 'unverified') {
+    $(btn).css({ 'background': '#fffbeb', 'color': '#b45309', 'border': '1px solid #fde68a' }).addClass('active');
+  }
+  
+  if ($('#hospitalComboboxDropdown').is(':visible') || $('#hospital_combobox_input').val()) {
+    filterHospitals($('#hospital_combobox_input').val());
+  }
+}
+
+function filterHospitals(query) {
+  var $dropdown = $('#hospitalComboboxDropdown');
+  var $list = $('#hospitalItemsList');
+  var $statusText = $('#hospComboboxStatusText');
+  var q = $.trim(query || '').toLowerCase();
+  var matches = [];
+
+  if (!q) {
+    if (currentHospitalFilter === 'all') {
+      matches = ALL_HOSPITALS.slice(0, 40);
+    } else {
+      for (var i = 0; i < ALL_HOSPITALS.length; i++) {
+        var isVer = (ALL_HOSPITALS[i].verified == '1');
+        if (currentHospitalFilter === 'verified' && isVer) matches.push(ALL_HOSPITALS[i]);
+        if (currentHospitalFilter === 'unverified' && !isVer) matches.push(ALL_HOSPITALS[i]);
+        if (matches.length >= 40) break;
+      }
+    }
+    $statusText.text('Showing ' + matches.length + ' hospital(s) (' + currentHospitalFilter + ') - type to filter');
+  } else {
+    for (var i = 0; i < ALL_HOSPITALS.length; i++) {
+      var h = ALL_HOSPITALS[i];
+      var isVer = (h.verified == '1');
+      if (currentHospitalFilter === 'verified' && !isVer) continue;
+      if (currentHospitalFilter === 'unverified' && isVer) continue;
+
+      var name = (h.name || '').toLowerCase();
+      var city = ((h.city_name || h.city || '') + '').toLowerCase();
+      var addr = (h.address || '').toLowerCase();
+      var idStr = String(h.id);
+
+      if (name.indexOf(q) !== -1 || city.indexOf(q) !== -1 || addr.indexOf(q) !== -1 || idStr === q) {
+        matches.push(h);
+        if (matches.length >= 50) break;
+      }
+    }
+    $statusText.text(matches.length === 0 ? 'No matching hospitals found' : 'Found ' + matches.length + ' hospital(s)');
+  }
+
+  currentHospMatches = matches;
+
+  if (matches.length === 0) {
+    $list.html('<div style="padding: 20px; text-align: center; color: #94a3b8; font-size: 13px;"><i class="fa fa-hospital-o fa-2x" style="opacity: 0.4; margin-bottom: 6px; display: block;"></i>No hospitals found matching "<strong>' + htmlEscape(query) + '</strong>"</div>');
+    return;
+  }
+
+  var html = '';
+  for (var j = 0; j < matches.length; j++) {
+    var hosp = matches[j];
+    var isVer = (hosp.verified == '1');
+    var vBadge = isVer 
+      ? '<span class="badge" style="background: #10b981; color: white; font-size: 10px; font-weight: 600; padding: 2px 6px; border-radius: 10px; margin-left: 5px;"><i class="fa fa-check-circle"></i> Verified</span>'
+      : '<span class="badge" style="background: #fef3c7; color: #b45309; border: 1px solid #fde68a; font-size: 10px; font-weight: 600; padding: 2px 6px; border-radius: 10px; margin-left: 5px;"><i class="fa fa-clock-o"></i> Unverified</span>';
+    
+    var cityLabel = hosp.city_name || (hosp.city ? 'City #' + hosp.city : '');
+    var addrLabel = hosp.address ? '<span style="color: #94a3b8; font-size: 11px;"> &bull; ' + htmlEscape(hosp.address.substring(0, 35)) + '</span>' : '';
+
+    html += '<div class="doctor-option-item hosp-option-item" data-index="' + j + '" onclick="selectHospitalFromList(' + j + ')">';
+    html += '  <div style="display: flex; align-items: center; gap: 10px; flex-grow: 1; min-width: 0;">';
+    html += '    <div style="width: 32px; height: 32px; border-radius: 50%; background: #00a896; color: white; display: flex; align-items: center; justify-content: center; font-size: 13px; flex-shrink: 0;"><i class="fa fa-hospital-o"></i></div>';
+    html += '    <div style="min-width: 0;">';
+    html += '      <div class="doc-name-text">' + htmlEscape(hosp.name) + vBadge + '</div>';
+    html += '      <div class="doc-meta-text"><i class="fa fa-map-marker text-muted"></i> ' + htmlEscape(cityLabel) + addrLabel + '</div>';
+    html += '    </div>';
+    html += '  </div>';
+    html += '  <div style="text-align: right; flex-shrink: 0;">';
+    html += '    <span class="badge" style="background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; font-size: 10.5px;">#ID: ' + hosp.id + '</span>';
+    html += '  </div>';
+    html += '</div>';
+  }
+
+  $list.html(html);
+  activeHospIndex = -1;
+}
+
+function selectHospitalFromList(index) {
+  if (currentHospMatches && currentHospMatches[index]) {
+    selectHospital(currentHospMatches[index]);
+  }
+}
+
+function selectHospital(hosp) {
+  var $input = $('#hospital_combobox_input');
+  var $hidden = $('#hospital_id');
+  var $dropdown = $('#hospitalComboboxDropdown');
+  var $clearBtn = $('#hospComboboxClearBtn');
+
+  var cityLabel = hosp.city_name || (hosp.city ? 'City #' + hosp.city : 'Varanasi');
+  var display = hosp.name + ' (' + cityLabel + ')';
+
+  $input.val(display).addClass('selected-valid');
+  $hidden.val(hosp.id);
+  $clearBtn.show();
+  $dropdown.hide();
+
+  // Populate selected hospital card
+  $('#selectedHospName').text(hosp.name);
+  $('#selectedHospId').text(hosp.id);
+  $('#selectedHospCity').html('<i class="fa fa-map-marker text-muted"></i> ' + htmlEscape(cityLabel) + (hosp.address ? ' &bull; ' + htmlEscape(hosp.address) : ''));
+
+  var isVer = (hosp.verified == '1');
+  if (isVer) {
+    $('#selectedHospVerifBadge').attr('class', 'badge').css({'background': '#10b981', 'color': '#ffffff', 'border': 'none'}).html('<i class="fa fa-check-circle"></i> Verified Hospital');
+    $('#selectedHospUnverNotice').hide();
+  } else {
+    $('#selectedHospVerifBadge').attr('class', 'badge').css({'background': '#fef3c7', 'color': '#b45309', 'border': '1px solid #fde68a'}).html('<i class="fa fa-clock-o"></i> Unverified Hospital');
+    $('#selectedHospUnverNotice').fadeIn();
+  }
+
+  $('#selectedHospitalCard').fadeIn(200);
+}
+
+function clearSelectedHospital() {
+  var $input = $('#hospital_combobox_input');
+  var $hidden = $('#hospital_id');
+  var $clearBtn = $('#hospComboboxClearBtn');
+  $input.val('').removeClass('selected-valid');
+  $hidden.val('');
+  $clearBtn.hide();
+  $('#selectedHospitalCard').hide();
+  filterHospitals('');
+}
+
+function changeSelectedHospital() {
+  $('#selectedHospitalCard').hide();
+  var $input = $('#hospital_combobox_input');
+  $input.focus().select();
+  $('#hospitalComboboxDropdown').show();
+  filterHospitals($input.val());
+}
+
 function validateAssignForm() {
   var docId = $('#doctor_id').val();
   if (!docId) {
@@ -1291,7 +1671,7 @@ function validateAssignForm() {
   var facilityType = $('input[name="type"]:checked').val();
   if (facilityType === 'H' && !$('#hospital_id').val()) {
     alert('Please select a hospital.');
-    $('#hospital_id').focus();
+    $('#hospital_combobox_input').focus();
     return false;
   }
   if (facilityType === 'C' && !$('#clinic_id').val()) {

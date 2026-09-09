@@ -165,7 +165,7 @@ class Clinicreg extends CI_Controller
 		}
 
 		// Query all doctors across the registry with joined specialization and city name
-		$data['doctors'] = $this->db->select('pd.id, pd.fname, pd.lname, pd.mobile, pd.email, COALESCE(mc.name, pd.city) as city, COALESCE(ms.name, "General Practitioner") as speciality, pd.drimage, pd.regd_no, pd.college')
+		$doctors_raw = $this->db->select('pd.id, pd.user_id, pd.fname, pd.lname, pd.mobile, pd.email, COALESCE(mc.name, pd.city) as city, COALESCE(ms.name, "") as speciality, pd.drimage, pd.regd_no, pd.college, pd.verified, pd.verification_status, pd.approved')
 			->from('profile_dr pd')
 			->join('master_specialization ms', 'ms.id = pd.specialization', 'left')
 			->join('master_city mc', 'mc.id = pd.city', 'left')
@@ -174,12 +174,50 @@ class Clinicreg extends CI_Controller
 			->get()
 			->result_array();
 
-		// Query hospitals and clinics
-		$data['hospitals'] = $this->db->select('id, name, city, address')->where('status !=', '2')->order_by('name', 'ASC')->get('hospital')->result_array();
-		$data['clinics'] = $this->db->select('id, name, city, address')->where('status !=', '2')->order_by('name', 'ASC')->get('clinic')->result_array();
+		// Enrich doctor specializations from dr_specialization mapping table
+		$spec_q = $this->db->select('ds.user_id, ms.name')
+			->from('dr_specialization ds')
+			->join('master_specialization ms', 'ms.id = ds.specialization_id', 'inner')
+			->get();
+		$spec_map = array();
+		if ($spec_q && $spec_q->num_rows() > 0) {
+			foreach ($spec_q->result_array() as $sr) {
+				$spec_map[$sr['user_id']] = $sr['name'];
+			}
+		}
+
+		foreach ($doctors_raw as &$doc_item) {
+			if (empty($doc_item['speciality'])) {
+				if (isset($spec_map[$doc_item['id']])) {
+					$doc_item['speciality'] = $spec_map[$doc_item['id']];
+				} elseif (isset($spec_map[$doc_item['user_id']])) {
+					$doc_item['speciality'] = $spec_map[$doc_item['user_id']];
+				} else {
+					$doc_item['speciality'] = 'General Practitioner';
+				}
+			}
+		}
+		$data['doctors'] = $doctors_raw;
+
+		// Query hospitals and clinics with verification status and joined city name
+		$data['hospitals'] = $this->db->select('h.id, h.name, h.city, h.address, h.verified, h.verification_status, h.approved, COALESCE(mc.name, "") as city_name')
+			->from('hospital h')
+			->join('master_city mc', 'mc.id = h.city', 'left')
+			->where('h.status !=', '2')
+			->order_by('h.name', 'ASC')
+			->get()
+			->result_array();
+
+		$data['clinics'] = $this->db->select('c.id, c.name, c.city, c.address, c.verified, c.verification_status, c.approved, COALESCE(mc.name, "") as city_name')
+			->from('clinic c')
+			->join('master_city mc', 'mc.id = c.city', 'left')
+			->where('c.status !=', '2')
+			->order_by('c.name', 'ASC')
+			->get()
+			->result_array();
 		
 		// Query recent affiliations with timings
-		$recent = $this->db->select('dp.id, dp.user_id, dp.type, dp.institution_id, dp.fee, dp.status, pd.fname, pd.lname, ms.name as speciality, pd.mobile as doc_mobile, h.name as hosp_name, h.city as hosp_city, c.name as clinic_name, c.city as clinic_city')
+		$recent = $this->db->select('dp.id, dp.user_id, dp.type, dp.institution_id, dp.fee, dp.status, pd.fname, pd.lname, ms.name as speciality, pd.mobile as doc_mobile, pd.verified, pd.verification_status, pd.approved, h.name as hosp_name, h.city as hosp_city, h.verified as hosp_verified, c.name as clinic_name, c.city as clinic_city, c.verified as clinic_verified')
 			->from('dr_practice dp')
 			->join('profile_dr pd', '(pd.id = dp.user_id OR (pd.user_id = dp.user_id AND dp.user_id != 0))', 'left')
 			->join('master_specialization ms', 'ms.id = pd.specialization', 'left')

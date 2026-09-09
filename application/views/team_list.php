@@ -1523,29 +1523,65 @@ small photos close--*/
                     <div class="doctors-subwindow-scroll" id="doctorsSubwindow">
                         <div class="doctors-list-container view-mode-list" id="doctorsListContainer">
                     <?php if (!empty($doctors)) { foreach($doctors as $d){ 
+                        $did = (int)$d->id;
+                        $duid = (int)$d->user_id;
+
                         $quastring = '';
-                        $qu = $this->db->get_where('dr_qualifications', array('user_id' => $d->id));
+                        $qu = $this->db->query("SELECT * FROM dr_qualifications WHERE user_id = $did OR (user_id = $duid AND $duid != 0)");
                         if ($qu && is_object($qu) && $qu->num_rows() > 0) {
                             foreach($qu->result() as $q) {
-                                $quastring .= getQualificationName($q->qualification_id).', ';
+                                $qname = getQualificationName($q->qualification_id);
+                                if ($qname) {
+                                    $quastring .= $qname . ', ';
+                                }
                             }
                             $quastring = rtrim($quastring, ', ');
                         }
 
-                        $practdata = $this->db->get_where('dr_practice', array('user_id' => $d->id, 'status' => '1'));
+                        $practdata = $this->db->query("SELECT * FROM dr_practice WHERE (user_id = $did OR (user_id = $duid AND $duid != 0)) AND status = '1' ORDER BY id DESC");
                         $practcount = ($practdata && is_object($practdata)) ? $practdata->num_rows() : 0; 
                         $pract = ($practdata && is_object($practdata)) ? $practdata->row() : null; 
                         $institution_table = '';
                         if(@$pract->type == 'C') $institution_table = 'clinic';
                         else if(@$pract->type == 'H') $institution_table = 'hospital';
                         $institution = null;
-                        if($institution_table){
-                            $institutiondata = $this->db->get_where($institution_table, array('id' => @$pract->institution_id, 'status' => '1'));
+                        if($institution_table && !empty($pract->institution_id)){
+                            $institutiondata = $this->db->get_where($institution_table, array('id' => $pract->institution_id, 'status' => '1'));
                             $institution = ($institutiondata && is_object($institutiondata)) ? @$institutiondata->row() : null;
                         }
 
-                        $specQuery = $this->db->get_where('dr_specialization', array('user_id' => $d->id));
+                        // Query all specializations for this doctor matching either p.id or p.user_id
+                        $specQuery = $this->db->query("SELECT DISTINCT ds.specialization_id, ms.name FROM dr_specialization ds JOIN master_specialization ms ON ds.specialization_id = ms.id WHERE ds.user_id = $did OR (ds.user_id = $duid AND $duid != 0)");
                         $specList = ($specQuery && is_object($specQuery)) ? $specQuery->result() : array();
+
+                        // Collect and deduplicate specializations
+                        $spec_tags = array();
+                        $seen_specs = array();
+                        if (!empty($specList)) {
+                            foreach($specList as $sp) {
+                                $sname = !empty($sp->name) ? trim($sp->name) : trim(getSpecilizationName($sp->specialization_id));
+                                if (!empty($sname) && !isset($seen_specs[strtolower($sname)])) {
+                                    $seen_specs[strtolower($sname)] = true;
+                                    $is_match = false;
+                                    if (!empty($curr_speciality)) {
+                                        $is_match = (stripos($sname, $curr_speciality) !== false || stripos($curr_speciality, $sname) !== false);
+                                    }
+                                    $spec_tags[] = array('name' => $sname, 'is_match' => $is_match);
+                                }
+                            }
+                        }
+                        if (empty($spec_tags) && !empty($d->specialization)) {
+                            $sname = trim(getSpecilizationName($d->specialization));
+                            if (!empty($sname)) {
+                                $is_match = (!empty($curr_speciality) && (stripos($sname, $curr_speciality) !== false || stripos($curr_speciality, $sname) !== false));
+                                $spec_tags[] = array('name' => $sname, 'is_match' => $is_match);
+                            }
+                        }
+                        // Sort so that the searched speciality appears first!
+                        usort($spec_tags, function($a, $b) {
+                            return ($b['is_match'] ? 1 : 0) - ($a['is_match'] ? 1 : 0);
+                        });
+
                         $drImg = ($d->drimage && file_exists('admin1947/public/assets/upload/'.$d->drimage)) 
                                  ? admin_url('public/assets/upload/'.$d->drimage) 
                                  : admin_url('public/assets/upload/dummydr.jpg');
@@ -1590,13 +1626,17 @@ small photos close--*/
                                 <span class="doctor-degree">
                                     <i class="fa fa-graduation-cap"></i> <?=(!empty($quastring) ? htmlspecialchars($quastring) : 'MBBS');?>
                                 </span>
-                                <?php if (!empty($specList)) { 
-                                    foreach($specList as $sp) {
-                                        $sname = getSpecilizationName($sp->specialization_id);
-                                        if ($sname) { ?>
-                                            <span class="specialty-tag"><i class="fa fa-stethoscope"></i> <?=htmlspecialchars($sname);?></span>
-                                        <?php }
-                                    }
+                                <?php if (!empty($spec_tags)) { 
+                                    foreach($spec_tags as $stag) {
+                                        $tag_style = $stag['is_match'] 
+                                            ? 'background: #00a896; color: #ffffff; border: 1px solid #00a896; font-weight: 600;' 
+                                            : '';
+                                ?>
+                                        <span class="specialty-tag" style="<?=$tag_style;?>">
+                                            <i class="fa fa-stethoscope"></i> <?=htmlspecialchars($stag['name']);?>
+                                            <?php if ($stag['is_match']) { ?><i class="fa fa-check-circle" style="margin-left: 3px; font-size: 11px;"></i><?php } ?>
+                                        </span>
+                                    <?php }
                                 } else { ?>
                                     <span class="specialty-tag"><i class="fa fa-stethoscope"></i> General Physician</span>
                                 <?php } ?>

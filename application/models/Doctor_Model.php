@@ -712,12 +712,12 @@ class Doctor_Model extends CI_Model
 				$loc_clauses[] = "p.city LIKE '%{$escaped_loc}%'";
 				$loc_clauses[] = "p.street LIKE '%{$escaped_loc}%'";
 
-				// Match affiliated clinic or hospital location & address via dr_practice
+				// Match affiliated clinic or hospital location & address via dr_practice (matching p.id OR p.user_id)
 				$loc_clauses[] = "EXISTS (
 					SELECT 1 FROM dr_practice dp
 					LEFT JOIN clinic c ON (dp.type = 'C' AND dp.institution_id = c.id)
 					LEFT JOIN hospital h ON (dp.type = 'H' AND dp.institution_id = h.id)
-					WHERE dp.user_id = p.id AND (
+					WHERE (dp.user_id = p.id OR (dp.user_id = p.user_id AND p.user_id != 0)) AND (
 						c.address LIKE '%{$escaped_loc}%' OR c.location LIKE '%{$escaped_loc}%' OR 
 						h.address LIKE '%{$escaped_loc}%' OR h.location LIKE '%{$escaped_loc}%'
 					)
@@ -750,7 +750,11 @@ class Doctor_Model extends CI_Model
 				}
 			} else {
 				$escaped_spec_search = $this->db->escape_like_str($speciality);
-				$sq = $this->db->query("SELECT id, name FROM master_specialization WHERE name LIKE '%{$escaped_spec_search}%'");
+				// Stem common medical suffixes (e.g., Cardiologist -> cardio, Dermatology -> dermat)
+				$stem = preg_replace('/(ologist|ology|iatrist|iatry|iatrician|iatrics|ician|ist|ic|s)$/i', '', $speciality);
+				$escaped_stem = (!empty($stem) && strlen($stem) >= 4) ? $this->db->escape_like_str($stem) : $escaped_spec_search;
+
+				$sq = $this->db->query("SELECT id, name FROM master_specialization WHERE name LIKE '%{$escaped_spec_search}%' OR name LIKE '%{$escaped_stem}%'");
 				if ($sq && $sq->num_rows() > 0) {
 					foreach ($sq->result() as $sr) {
 						$spec_ids[] = (int)$sr->id;
@@ -758,14 +762,17 @@ class Doctor_Model extends CI_Model
 					}
 				}
 				$spec_names[] = $speciality;
+				if (!empty($stem) && strlen($stem) >= 4) {
+					$spec_names[] = $stem;
+				}
 			}
 
 			if (!empty($spec_ids)) {
-				$in_specs = implode(',', array_map('intval', $spec_ids));
+				$in_specs = implode(',', array_unique(array_map('intval', $spec_ids)));
 				$spec_clauses[] = "p.specialization IN ({$in_specs})";
 				$spec_clauses[] = "EXISTS (
 					SELECT 1 FROM dr_specialization ds 
-					WHERE (ds.user_id = p.id OR ds.user_id = p.user_id) 
+					WHERE (ds.user_id = p.id OR (ds.user_id = p.user_id AND p.user_id != 0)) 
 					AND ds.specialization_id IN ({$in_specs})
 				)";
 			}
@@ -776,7 +783,7 @@ class Doctor_Model extends CI_Model
 				$spec_clauses[] = "EXISTS (
 					SELECT 1 FROM dr_specialization ds 
 					JOIN master_specialization ms ON ds.specialization_id = ms.id
-					WHERE (ds.user_id = p.id OR ds.user_id = p.user_id) 
+					WHERE (ds.user_id = p.id OR (ds.user_id = p.user_id AND p.user_id != 0)) 
 					AND ms.name LIKE '%{$escaped_spec}%'
 				)";
 			}
@@ -797,7 +804,7 @@ class Doctor_Model extends CI_Model
 				"EXISTS (
 					SELECT 1 FROM dr_specialization ds 
 					JOIN master_specialization ms ON ds.specialization_id = ms.id
-					WHERE (ds.user_id = p.id OR ds.user_id = p.user_id) 
+					WHERE (ds.user_id = p.id OR (ds.user_id = p.user_id AND p.user_id != 0)) 
 					AND ms.name LIKE '%{$escaped_kw}%'
 				)",
 				// Doctor clinic or hospital matches keyword (name or tag)
@@ -805,7 +812,7 @@ class Doctor_Model extends CI_Model
 					SELECT 1 FROM dr_practice dp
 					LEFT JOIN clinic c ON (dp.type = 'C' AND dp.institution_id = c.id)
 					LEFT JOIN hospital h ON (dp.type = 'H' AND dp.institution_id = h.id)
-					WHERE dp.user_id = p.id AND (
+					WHERE (dp.user_id = p.id OR (dp.user_id = p.user_id AND p.user_id != 0)) AND (
 						c.name LIKE '%{$escaped_kw}%' OR c.tag LIKE '%{$escaped_kw}%' OR 
 						h.name LIKE '%{$escaped_kw}%' OR h.tag LIKE '%{$escaped_kw}%'
 					)

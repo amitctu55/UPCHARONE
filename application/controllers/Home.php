@@ -141,62 +141,118 @@ class Home extends CI_Controller
 	private function _get_promoted_doctors($spl = null, $limit = 6)
 	{
 		try {
+			$spec_ids = array();
+			if (!empty($spl)) {
+				if (is_numeric($spl)) {
+					$spec_ids[] = (int)$spl;
+				} else {
+					$escaped = $this->db->escape_like_str(trim($spl));
+					$stem = preg_replace('/(ologist|ology|iatrist|iatry|iatrician|iatrics|ician|ist|ic|s)$/i', '', trim($spl));
+					$escaped_stem = (!empty($stem) && strlen($stem) >= 4) ? $this->db->escape_like_str($stem) : $escaped;
+					$sq = $this->db->query("SELECT id FROM master_specialization WHERE name LIKE '%{$escaped}%' OR name LIKE '%{$escaped_stem}%'");
+					if ($sq && $sq->num_rows() > 0) {
+						foreach ($sq->result() as $row) {
+							$spec_ids[] = (int)$row->id;
+						}
+					}
+				}
+			}
+
 			$has_promoted_col = $this->db->field_exists('is_promoted', 'profile_dr');
 
-			// 1. If is_promoted column exists, try to get flagged doctors
-			if ($has_promoted_col) {
-				$this->db->where('approved', '1');
-				$this->db->where('verified', '1');
-				$this->db->where('is_promoted', 1);
-				if (!empty($spl) && is_numeric($spl)) {
-					$this->db->where('specialization', $spl);
+			// If speciality filter is specified, fetch verified/promoted doctors matching this speciality
+			if (!empty($spec_ids)) {
+				$in_specs = implode(',', array_unique($spec_ids));
+				$where_spec = "(p.specialization IN ({$in_specs}) OR EXISTS (
+					SELECT 1 FROM dr_specialization ds 
+					WHERE (ds.user_id = p.id OR (ds.user_id = p.user_id AND p.user_id != 0)) 
+					AND ds.specialization_id IN ({$in_specs})
+				))";
+
+				if ($has_promoted_col) {
+					$q = $this->db->query("SELECT p.* FROM profile_dr p WHERE p.approved = '1' AND p.verified = '1' AND p.is_promoted = 1 AND {$where_spec} ORDER BY p.id DESC LIMIT {$limit}");
+					$promoted = ($q && is_object($q)) ? $q->result() : array();
+					if (!empty($promoted)) {
+						return $this->_enrich_promoted_doctors($promoted, $spl);
+					}
 				}
-				$this->db->order_by('id', 'DESC');
-				$this->db->limit($limit);
-				$q = $this->db->get('profile_dr');
-				$promoted = ($q && is_object($q)) ? $q->result() : array();
-				if (!empty($promoted)) {
-					return $this->_enrich_promoted_doctors($promoted);
+
+				// Fallback to verified doctors matching this speciality
+				$q = $this->db->query("SELECT p.* FROM profile_dr p WHERE p.approved = '1' AND p.verified = '1' AND {$where_spec} ORDER BY p.id DESC LIMIT {$limit}");
+				$fallback = ($q && is_object($q)) ? $q->result() : array();
+				if (!empty($fallback)) {
+					return $this->_enrich_promoted_doctors($fallback, $spl);
 				}
 			}
 
-			// 2. Fallback: verified approved doctors (matching specialization if provided)
-			$this->db->where('approved', '1');
-			$this->db->where('verified', '1');
-			if (!empty($spl) && is_numeric($spl)) {
-				$this->db->where('specialization', $spl);
+			// General fallback when no speciality filter or no matches found for that speciality
+			if ($has_promoted_col) {
+				$q = $this->db->query("SELECT p.* FROM profile_dr p WHERE p.approved = '1' AND p.verified = '1' AND p.is_promoted = 1 ORDER BY p.id DESC LIMIT {$limit}");
+				$promoted = ($q && is_object($q)) ? $q->result() : array();
+				if (!empty($promoted)) {
+					return $this->_enrich_promoted_doctors($promoted, $spl);
+				}
 			}
-			$this->db->order_by('id', 'DESC');
-			$this->db->limit($limit);
-			$q = $this->db->get('profile_dr');
+
+			$q = $this->db->query("SELECT p.* FROM profile_dr p WHERE p.approved = '1' AND p.verified = '1' ORDER BY p.id DESC LIMIT {$limit}");
 			$fallback = ($q && is_object($q)) ? $q->result() : array();
-			return $this->_enrich_promoted_doctors($fallback);
+			return $this->_enrich_promoted_doctors($fallback, $spl);
 		} catch (Throwable $e) {
 			log_message('error', 'Error in _get_promoted_doctors: ' . $e->getMessage());
 			return array();
 		}
 	}
 
-	private function _enrich_promoted_doctors($doctors)
+	private function _enrich_promoted_doctors($doctors, $preferred_spl = null)
 	{
 		if (empty($doctors)) return array();
 		foreach ($doctors as &$d) {
-			if (empty($d->spl_name)) {
-				$d->spl_name = (!empty($d->specialization)) ? getSpecilizationName($d->specialization) : 'Specialist Doctor';
+			$did = (int)$d->id;
+			$duid = (int)$d->user_id;
+
+			// Fetch true specialization(s) for doctor from dr_specialization
+			$sq = $this->db->query("SELECT DISTINCT ms.name FROM dr_specialization ds JOIN master_specialization ms ON ds.specialization_id = ms.id WHERE ds.user_id = $did OR (ds.user_id = $duid AND $duid != 0)");
+			$names = array();
+			if ($sq && is_object($sq) && $sq->num_rows() > 0) {
+				foreach ($sq->result() as $sr) {
+					$names[] = $sr->name;
+				}
 			}
+			if (empty($names) && !empty($d->specialization)) {
+				$sn = getSpecilizationName($d->specialization);
+				if ($sn) $names[] = $sn;
+			}
+
+			// Prioritize preferred / searched speciality if doctor has it
+			$chosen_spl = '';
+			if (!empty($preferred_spl) && !empty($names)) {
+				foreach ($names as $n) {
+					if (stripos($n, $preferred_spl) !== false || stripos($preferred_spl, $n) !== false) {
+						$chosen_spl = $n;
+						break;
+					}
+				}
+			}
+			if (empty($chosen_spl) && !empty($names)) {
+				$chosen_spl = implode(', ', array_slice($names, 0, 2));
+			}
+			$d->spl_name = !empty($chosen_spl) ? $chosen_spl : 'Verified Specialist';
+
+			// Resolve affiliated hospital or clinic & contact phone
 			if (empty($d->hosp_name) || empty($d->contact_phone)) {
 				try {
-					$pract = $this->db->get_where('dr_practice', array('user_id' => $d->id, 'type' => 'H', 'status' => '1'))->row();
+					$pract = $this->db->query("SELECT * FROM dr_practice WHERE (user_id = $did OR (user_id = $duid AND $duid != 0)) AND status = '1' ORDER BY id DESC LIMIT 1")->row();
 					if ($pract && !empty($pract->institution_id)) {
-						$hosp = $this->db->select('name, mobile')->get_where('hospital', array('id' => $pract->institution_id))->row();
-						$d->hosp_name = (!empty($hosp->name)) ? $hosp->name : 'Upchar Partner Hospital';
+						$table = ($pract->type == 'C') ? 'clinic' : 'hospital';
+						$hosp = $this->db->select('name, mobile')->get_where($table, array('id' => $pract->institution_id))->row();
+						$d->hosp_name = (!empty($hosp->name)) ? $hosp->name : 'Upchar Partner Healthcare Center';
 						$d->contact_phone = (!empty($hosp->mobile)) ? $hosp->mobile : (!empty($d->mobile) ? $d->mobile : '8448440603');
 					} else {
-						$d->hosp_name = 'Upchar Partner Hospital';
+						$d->hosp_name = 'Upchar Partner Healthcare Center';
 						$d->contact_phone = (!empty($d->mobile)) ? $d->mobile : '8448440603';
 					}
 				} catch (Throwable $ex) {
-					$d->hosp_name = 'Upchar Partner Hospital';
+					$d->hosp_name = 'Upchar Partner Healthcare Center';
 					$d->contact_phone = (!empty($d->mobile)) ? $d->mobile : '8448440603';
 				}
 			}

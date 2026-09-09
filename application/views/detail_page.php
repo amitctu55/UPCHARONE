@@ -43,22 +43,28 @@
 
 <?php 
 // Extract qualifications
+$did = (int)$d->id;
+$duid = (int)$d->user_id;
+
 $quastring = '';
-$qu = $this->db->get_where('dr_qualifications', array('user_id' => $d->id));
-if ($qu && $qu->num_rows() > 0) {
+$qu = $this->db->query("SELECT * FROM dr_qualifications WHERE user_id = $did OR (user_id = $duid AND $duid != 0)");
+if ($qu && is_object($qu) && $qu->num_rows() > 0) {
     foreach($qu->result() as $q) {
-        $quastring .= getQualificationName($q->qualification_id).', ';
+        $qname = getQualificationName($q->qualification_id);
+        if ($qname) {
+            $quastring .= $qname . ', ';
+        }
     }
     $quastring = rtrim($quastring, ', ');
 }
 
 // Extract specializations
-$specList = $this->db->get_where('dr_specialization', array('user_id' => $d->id))->result();
+$specList = $this->db->query("SELECT DISTINCT ds.specialization_id, ms.name FROM dr_specialization ds JOIN master_specialization ms ON ds.specialization_id = ms.id WHERE ds.user_id = $did OR (ds.user_id = $duid AND $duid != 0)")->result();
 
 // Practice data
-$practdata = $this->db->get_where('dr_practice', array('user_id' => $d->id, 'status' => '1'));
-$practcount = $practdata->num_rows(); 
-$practs = $practdata->result();
+$practdata = $this->db->query("SELECT * FROM dr_practice WHERE (user_id = $did OR (user_id = $duid AND $duid != 0)) AND status = '1'");
+$practcount = ($practdata && is_object($practdata)) ? $practdata->num_rows() : 0; 
+$practs = ($practdata && is_object($practdata)) ? $practdata->result() : array();
 $firstPract = (!empty($practs)) ? $practs[0] : null;
 
 $drImg = ($d->drimage && file_exists('admin1947/public/assets/upload/'.$d->drimage)) 
