@@ -132,7 +132,8 @@
         </a>
 
         <div class="career-nav-actions" style="margin-left: auto; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-          <a href="<?=base_url('Home/career')?>" target="_blank" class="btn btn-sm btn-default" style="border-radius: 6px; font-weight: 600; color: #475569;">
+          <?php $frontendCareerUrl = rtrim(preg_replace('#/admin1947/?$#', '/', base_url()), '/') . '/Home/career'; ?>
+          <a href="<?=$frontendCareerUrl?>" target="_blank" class="btn btn-sm btn-default" style="border-radius: 6px; font-weight: 600; color: #475569;">
             <i class="fa fa-external-link"></i> View Frontend Portal
           </a>
           <?php if($active_tab == 'jobs'): ?>

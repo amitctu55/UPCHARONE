@@ -99,12 +99,18 @@ $route['payout/(:any)'] = 'admin_payment/index/$1';
 $route['payout/(:any)/(:any)'] = 'admin_payment/$1/$2';
 
 // Career Management Portal
-$route['career'] = 'doctor/career/index';
-$route['career/(:any)'] = 'doctor/career/$1';
-$route['career/(:any)/(:any)'] = 'doctor/career/$1/$2';
-$route['doctor/career'] = 'doctor/career/index';
-$route['doctor/career/(:any)'] = 'doctor/career/$1';
+$route['career']                    = 'doctor/career/index';
+$route['career/(:any)']             = 'doctor/career/$1';
+$route['career/(:any)/(:any)']      = 'doctor/career/$1/$2';
+$route['doctor/career']             = 'doctor/career/index';
+$route['doctor/career/(:any)']      = 'doctor/career/$1';
 $route['doctor/career/(:any)/(:any)'] = 'doctor/career/$1/$2';
+$route['Home/career']               = 'doctor/career/index';
+$route['home/career']               = 'doctor/career/index';
+$route['Home/career/(:any)']        = 'doctor/career/$1';
+$route['home/career/(:any)']        = 'doctor/career/$1';
+$route['Home/career/(:any)/(:any)'] = 'doctor/career/$1/$2';
+$route['home/career/(:any)/(:any)'] = 'doctor/career/$1/$2';
 
 // Pharmacy & Fleet Management Portal
 $route['pharmacy-fleet'] = 'masters/pharmacy_fleet';
