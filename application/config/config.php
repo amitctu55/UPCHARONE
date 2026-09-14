@@ -481,6 +481,10 @@ $config['csrf_exclude_uris'] = array(
 	'hospitaluser/.*',
 	'Pathlabuser/.*',
 	'pathlabuser/.*',
+	'Medicaluser/.*',
+	'medicaluser/.*',
+	'Pathdoctoruser/.*',
+	'pathdoctoruser/.*',
 	'User/.*',
 	'user/.*',
 	'pathology/.*',
@@ -502,7 +506,10 @@ $config['csrf_exclude_uris'] = array(
 	'staff/.*',
 	'hr/.*',
 	'crm/.*',
-	'operations/.*'
+	'operations/.*',
+	'api/.*',
+	'pharmacy/.*',
+	'delivery/.*'
 );
 
 /*

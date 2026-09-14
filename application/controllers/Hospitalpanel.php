@@ -2006,6 +2006,7 @@ class Hospitalpanel extends CI_Controller
 		$hospital = $this->db->where('id', $hospital_id)->or_where('uid', $hosuid)->get('hospital')->row();
 		$data['hospital'] = $hospital;
 		$facility_id = ($hospital && isset($hospital->id)) ? $hospital->id : $hospital_id;
+		$data['facility_id'] = $facility_id;
 
 		// 2. Fetch Filters
 		$filters = array(

@@ -28,7 +28,8 @@ class Medicalpanel extends CI_Controller {
 			 if (!in_array($page, $excep_array))
 				redirect('medical-login');
 		 }else{
-			 $this->did=$this->db->where('user_id',$this->session->userdata('medicaluserid'))->get('profile_chem')->row()->id;
+			 $chemRow = $this->db->where('user_id',$this->session->userdata('medicaluserid'))->or_where('id', $this->session->userdata('medicaluserid'))->get('profile_chem')->row();
+			 $this->did = ($chemRow && isset($chemRow->id)) ? $chemRow->id : $this->session->userdata('medicaluserid');
 		 }
 		 
 	}
@@ -117,8 +118,119 @@ class Medicalpanel extends CI_Controller {
 	
 	public function dashboard()
 	{
+		$userId = $this->session->userdata('medicaluserid');
+		
+		// 1. Resolve Chemist Profile
+		$chemProfile = $this->db->where('user_id', $userId)
+			->or_where('id', $userId)
+			->get('profile_chem')->row();
+		
+		// 2. Resolve Associated Pharmacy Store
+		$store = null;
+		if ($chemProfile) {
+			$store = $this->db->where('hospital_id', $chemProfile->id)
+				->or_where('phone', $chemProfile->mobile ?? '')
+				->get('pharmacy_stores')->row();
+		}
+		if (!$store) {
+			$store = $this->db->where('is_active', 1)->get('pharmacy_stores')->row();
+		}
+		$storeId = $store ? (int)$store->id : 1;
+		
+		// 3. Order Telemetry
+		$this->db->reset_query();
+		$totalOrders = $this->db->count_all_results('medicine_orders');
+		
+		$pendingOrders = $this->db->where_in('order_status', ['PLACED', 'PENDING_RX'])->count_all_results('medicine_orders');
+		$inTransitOrders = $this->db->where_in('order_status', ['PACKED', 'ASSIGNED', 'IN_TRANSIT'])->count_all_results('medicine_orders');
+		$deliveredOrders = $this->db->where('order_status', 'DELIVERED')->count_all_results('medicine_orders');
+		$todayOrders = $this->db->where('DATE(created_at)', date('Y-m-d'))->count_all_results('medicine_orders');
+		
+		$revRow = $this->db->select('COALESCE(SUM(total_amount), 0) as total_rev')
+			->group_start()
+				->where_in('order_status', ['DELIVERED', 'IN_TRANSIT', 'PACKED'])
+				->or_where('payment_status', 'PAID')
+			->group_end()
+			->get('medicine_orders')->row();
+		$totalRevenue = $revRow ? (float)$revRow->total_rev : 0.00;
+		
+		// 4. Inventory Telemetry
+		$totalSkus = $this->db->where('pharmacy_id', $storeId)->count_all_results('pharmacy_inventory');
+		if ($totalSkus == 0) {
+			$totalSkus = $this->db->count_all_results('pharmacy_inventory');
+		}
+		
+		$lowStockCount = $this->db->group_start()
+			->where('stock_quantity <=', 15)
+			->or_where('is_available', 0)
+			->group_end()
+			->count_all_results('pharmacy_inventory');
+			
+		$inStockCount = max(0, $totalSkus - $lowStockCount);
+		
+		// 5. Recent Live Orders
+		$recentOrders = $this->db->select('id, order_code, customer_name, customer_phone, delivery_address, total_amount, payment_mode, payment_status, order_status, created_at')
+			->order_by('id', 'DESC')
+			->limit(8)
+			->get('medicine_orders')->result();
+			
+		// 6. Fast-moving & Low stock watchlist medicines
+		$lowStockItems = $this->db->select('pi.*, mm.brand_name, mm.generic_composition, mm.manufacturer, mm.dosage_form')
+			->from('pharmacy_inventory pi')
+			->join('medicines_master mm', 'mm.id = pi.medicine_id')
+			->order_by('pi.stock_quantity', 'ASC')
+			->limit(6)
+			->get()->result();
+			
+		// 7. Weekly Trend Data (Last 7 Days) for Chart.js
+		$chartDays = [];
+		$chartOrderCounts = [];
+		$chartRevenue = [];
+		for ($i = 6; $i >= 0; $i--) {
+			$d = date('Y-m-d', strtotime("-$i days"));
+			$chartDays[] = date('D (M j)', strtotime($d));
+			
+			$dayOrderCount = $this->db->where('DATE(created_at)', $d)->count_all_results('medicine_orders');
+			$dayRevRow = $this->db->select('COALESCE(SUM(total_amount), 0) as day_rev')
+				->where('DATE(created_at)', $d)
+				->get('medicine_orders')->row();
+			$chartOrderCounts[] = (int)$dayOrderCount;
+			$chartRevenue[] = (float)($dayRevRow ? $dayRevRow->day_rev : 0);
+		}
+		
+		// 8. Profile Completeness Score
+		$profileScore = 20;
+		if ($chemProfile) {
+			if (!empty($chemProfile->fname)) $profileScore += 15;
+			if (!empty($chemProfile->mobile)) $profileScore += 15;
+			if (!empty($chemProfile->regd_no)) $profileScore += 20;
+			if (!empty($chemProfile->id_proof)) $profileScore += 15;
+			if (!empty($chemProfile->med_reg_proof)) $profileScore += 15;
+		}
+		$profileScore = min(100, $profileScore);
+
+		$data = [
+			'profile' => $chemProfile,
+			'store' => $store,
+			'store_id' => $storeId,
+			'total_orders' => $totalOrders,
+			'pending_orders' => $pendingOrders,
+			'in_transit_orders' => $inTransitOrders,
+			'delivered_orders' => $deliveredOrders,
+			'today_orders' => $todayOrders,
+			'total_revenue' => $totalRevenue,
+			'total_skus' => $totalSkus,
+			'low_stock_count' => $lowStockCount,
+			'in_stock_count' => $inStockCount,
+			'recent_orders' => $recentOrders,
+			'low_stock_items' => $lowStockItems,
+			'chart_days' => $chartDays,
+			'chart_order_counts' => $chartOrderCounts,
+			'chart_revenue' => $chartRevenue,
+			'profile_score' => $profileScore
+		];
 	    
-	    $this->load->view('medicalpanel/mainpage');
+	    $this->load->view('medicalpanel/mainpage', $data);
 	}
 
 
@@ -328,7 +440,8 @@ public function gallery()
 						
 						}
 					
-	       $this->load->view('medicalpanel/gallery');
+	       $data['content_view'] = 'medicalpanel/gallery';
+	       $this->load->view('layouts/chemist_layout', $data);
             }
 	   
 	 }

@@ -105,3 +105,9 @@ $route['career/(:any)/(:any)'] = 'doctor/career/$1/$2';
 $route['doctor/career'] = 'doctor/career/index';
 $route['doctor/career/(:any)'] = 'doctor/career/$1';
 $route['doctor/career/(:any)/(:any)'] = 'doctor/career/$1/$2';
+
+// Pharmacy & Fleet Management Portal
+$route['pharmacy-fleet'] = 'masters/pharmacy_fleet';
+$route['admin/pharmacy-fleet'] = 'masters/pharmacy_fleet';
+$route['masters/pharmacy_fleet'] = 'masters/pharmacy_fleet';
+$route['masters/pharmacy_fleet/(:any)'] = 'masters/pharmacy_fleet/$1';

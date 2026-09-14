@@ -646,7 +646,8 @@
 
         <!-- TAB 3: BANK & SETTLEMENT ACCOUNT -->
         <?php 
-        $hosp_payout_acc = $this->db->get_where('facility_payout_accounts', array('facility_type' => 'hospital', 'facility_id' => $facility_id))->row_array();
+        $active_facility_id = $facility_id ?? ($hospital->id ?? ($this->session->userdata('hosuserid') ?? 0));
+        $hosp_payout_acc = $this->db->get_where('facility_payout_accounts', array('facility_type' => 'hospital', 'facility_id' => $active_facility_id))->row_array();
         ?>
         <div id="bankSection" style="display: none;">
             <div class="table-card">
@@ -663,7 +664,7 @@
 
                     <form id="form-hosp-payout" onsubmit="saveHospPayoutAccount(event)">
                         <input type="hidden" name="facility_type" value="hospital">
-                        <input type="hidden" name="facility_id" value="<?=$facility_id;?>">
+                        <input type="hidden" name="facility_id" value="<?=$active_facility_id;?>">
                         <input type="hidden" name="account_type" value="BANK_ACCOUNT">
 
                         <div class="row">

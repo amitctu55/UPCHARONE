@@ -159,11 +159,61 @@ class Attendance_model extends CI_Model {
     public function get_daily_roster($date = null) {
         $date = $date ?: date('Y-m-d');
 
-        $this->db->select('u.id as user_id, u.name, u.staff_code, u.role, u.department, u.phone, a.id as attendance_id, a.check_in_time, a.check_out_time, a.check_in_selfie, a.distance_from_office_km, a.status as attendance_status, a.working_hours');
+        $this->db->select('u.id as user_id, u.name, u.staff_code, u.role, u.department, u.phone, u.assigned_area, a.id as attendance_id, a.punch_date, a.check_in_time, a.check_out_time, a.check_in_selfie, a.distance_from_office_km, a.status as attendance_status, a.working_hours, a.notes, a.check_in_lat, a.check_in_lng, a.check_out_lat, a.check_out_lng');
         $this->db->from('staff_users u');
         $this->db->join('staff_attendance a', "a.user_id = u.id AND a.punch_date = '{$date}'", 'left');
         $this->db->where('u.status', 'active');
         $this->db->order_by('u.role', 'ASC');
         return $this->db->get()->result_array();
     }
+
+    /**
+     * Admin Save or Update Attendance Record (All Fields)
+     */
+    public function save_admin_attendance($data) {
+        $userId    = intval($data['user_id']);
+        $punchDate = !empty($data['punch_date']) ? $data['punch_date'] : date('Y-m-d');
+
+        // Check if attendance record already exists for this user and date
+        $existing = $this->db->get_where('staff_attendance', [
+            'user_id'    => $userId,
+            'punch_date' => $punchDate
+        ])->row_array();
+
+        $saveData = [
+            'user_id'                 => $userId,
+            'punch_date'              => $punchDate,
+            'status'                  => !empty($data['status']) ? $data['status'] : 'present',
+            'check_in_time'           => !empty($data['check_in_time']) ? $data['check_in_time'] : null,
+            'check_out_time'          => !empty($data['check_out_time']) ? $data['check_out_time'] : null,
+            'working_hours'           => isset($data['working_hours']) ? floatval($data['working_hours']) : 0.00,
+            'distance_from_office_km' => isset($data['distance_from_office_km']) ? floatval($data['distance_from_office_km']) : 0.00,
+            'check_in_lat'            => isset($data['check_in_lat']) ? floatval($data['check_in_lat']) : $this->office_lat,
+            'check_in_lng'            => isset($data['check_in_lng']) ? floatval($data['check_in_lng']) : $this->office_lng,
+            'check_out_lat'           => isset($data['check_out_lat']) ? floatval($data['check_out_lat']) : $this->office_lat,
+            'check_out_lng'           => isset($data['check_out_lng']) ? floatval($data['check_out_lng']) : $this->office_lng,
+            'notes'                   => isset($data['notes']) ? trim($data['notes']) : ''
+        ];
+
+        // If status is absent and times are empty, set working hours to 0
+        if ($saveData['status'] === 'absent') {
+            $saveData['working_hours'] = 0.00;
+        }
+
+        if ($existing) {
+            $this->db->where('id', $existing['id'])->update('staff_attendance', $saveData);
+            return $existing['id'];
+        } else {
+            $this->db->insert('staff_attendance', $saveData);
+            return $this->db->insert_id();
+        }
+    }
+
+    /**
+     * Delete Attendance Record
+     */
+    public function delete_attendance($attendanceId) {
+        return $this->db->where('id', intval($attendanceId))->delete('staff_attendance');
+    }
 }
+

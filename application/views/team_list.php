@@ -1358,48 +1358,346 @@ small photos close--*/
   gap: 5px;
   margin-left: 6px;
 }
+/* User Pharmacy & Medicine Search Box */
+.user-pharmacy-search-box {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 18px 22px;
+  box-shadow: 0 4px 20px rgba(8, 54, 75, 0.08);
+  margin-top: 15px;
+  margin-bottom: 25px;
+  border: 1px solid #dbe2e8;
+}
+.search-category-tabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+.tab-btn {
+  background: #f1f5f8;
+  border: 1px solid #d5dfe6;
+  padding: 9px 18px;
+  border-radius: 20px;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #08364b;
+  cursor: pointer;
+  transition: 0.2s ease-in-out;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+.tab-btn:hover {
+  background: #e2e8f0;
+}
+.tab-btn.active {
+  background: #08364b;
+  color: #ffffff;
+  border-color: #08364b;
+}
+.tab-btn.highlight-tab {
+  background: rgba(0, 168, 255, 0.08);
+  color: #0284c7;
+  border-color: #38bdf8;
+}
+.tab-btn.highlight-tab:hover {
+  background: rgba(0, 168, 255, 0.16);
+}
+.search-fields-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.field-col {
+  flex: 1;
+  min-width: 180px;
+}
+.input-wrap {
+  display: flex;
+  align-items: center;
+  border: 1px solid #cfd9e0;
+  border-radius: 8px;
+  padding: 10px 14px;
+  background: #fafbfc;
+  position: relative;
+  transition: border-color 0.2s;
+}
+.input-wrap:focus-within {
+  border-color: #00a896;
+  box-shadow: 0 0 0 2px rgba(0, 168, 150, 0.15);
+  background: #ffffff;
+}
+.input-wrap i {
+  color: #08364b;
+  margin-right: 8px;
+  font-size: 14px;
+}
+.input-wrap input {
+  border: none;
+  outline: none;
+  background: transparent;
+  width: 100%;
+  font-size: 13.5px;
+  color: #0f172a;
+}
+.input-wrap select.search-select {
+  border: none;
+  outline: none;
+  background: transparent;
+  width: 100%;
+  font-size: 13.5px;
+  color: #0f172a;
+  cursor: pointer;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  padding-right: 18px;
+}
+.input-wrap .select-arrow {
+  position: absolute;
+  right: 12px;
+  pointer-events: none;
+  color: #94a3b8;
+  font-size: 11px;
+}
+.btn-doc-search {
+  width: 100%;
+  min-height: 42px;
+  background: #00a896;
+  border: none;
+  color: #fff;
+  font-weight: 700;
+  border-radius: 8px;
+  cursor: pointer;
+  padding: 10px 18px;
+  font-size: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: background 0.2s;
+}
+.btn-doc-search:hover {
+  background: #008f80;
+}
+.btn-med-search {
+  width: 100%;
+  min-height: 42px;
+  background: #9bc03c;
+  border: none;
+  color: #fff;
+  font-weight: 700;
+  border-radius: 8px;
+  cursor: pointer;
+  padding: 10px 18px;
+  font-size: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: background 0.2s;
+}
+.btn-med-search:hover {
+  background: #88ab30;
+}
+.btn-upload-rx {
+  width: 100%;
+  min-height: 42px;
+  background: #00a8ff;
+  border: none;
+  color: #fff;
+  font-weight: 700;
+  border-radius: 8px;
+  cursor: pointer;
+  padding: 10px;
+  font-size: 13px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: background 0.2s;
+}
+.btn-upload-rx:hover {
+  background: #0093e0;
+}
+.doctor-store-hint {
+  margin-top: 12px;
+  font-size: 12px;
+  color: #576574;
+  padding-top: 8px;
+  border-top: 1px dashed #e4e9ed;
+}
+
+/* In-Card Doctor Profile Attached Pharmacy Badge */
+.doctor-attached-pharmacy-badge {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #f8fcff;
+  border: 1px dashed #00a8ff;
+  padding: 8px 14px;
+  border-radius: 6px;
+  margin-top: 12px;
+  font-size: 12px;
+}
+.store-badge-left {
+  color: #08364b;
+}
+.store-badge-left i {
+  color: #00a8ff;
+  margin-right: 5px;
+}
+.btn-check-meds {
+  color: #00a8ff;
+  font-weight: bold;
+  text-decoration: none;
+}
+.btn-check-meds:hover {
+  text-decoration: underline;
+}
 </style>
+<?php
+$current_page = $this->uri->segment(1) ?: 'doctors';
+$is_meds_page = in_array($current_page, ['medicines', 'medical', 'medicine', 'pharmacy']);
+?>
 <div class="container-fluid">
-    <form action='<?=(strpos(current_url(), 'search') !== false) ? base_url('search') : base_url('doctors');?>' method='GET'>
-        <div class="box-form">
-            <div class="col-sm-3">
-                <div class="input-group shadow">
-                    <span class="input-group-addon"><i class="fa fa-map-marker"></i></span>
-                    <select class="form-control" name="location">
-                        <option value="">All Locations / Cities</option>
-                        <?php if (!empty($cities)) { foreach($cities as $c){ 
-                            $is_c_sel = (isset($_GET['location']) && ($_GET['location'] == $c->id || strcasecmp($_GET['location'], $c->name) == 0)) || (isset($_GET['city']) && ($_GET['city'] == $c->id || strcasecmp($_GET['city'], $c->name) == 0));
-                        ?>
-                        <option value='<?=$c->name;?>' <?=$is_c_sel ? 'selected' : '';?>><?=$c->name;?></option>
-                        <?php } } ?>
-                    </select>
-                </div>
+    <!-- Unified Search Widget with Route-Aware Tab Switching -->
+    <div class="user-pharmacy-search-box">
+      <div class="search-category-tabs">
+        <button type="button" class="tab-btn <?= (!$is_meds_page) ? 'active' : ''; ?>" id="tabFindDoctors" onclick="switchSearchTab('doctors')">
+          <i class="fa fa-user-md"></i> Find Doctors
+        </button>
+        <button type="button" class="tab-btn <?= ($is_meds_page) ? 'active' : 'highlight-tab'; ?>" id="tabOrderMeds" onclick="switchSearchTab('medicines')">
+          <i class="fa fa-pills"></i> Order Medicines (Doorstep Delivery)
+        </button>
+        <button type="button" class="tab-btn" onclick="alert('24/7 UPCHAR Emergency Ambulance Helpline: 108 or +91 8448440603');">
+          <i class="fa fa-ambulance"></i> Ambulance
+        </button>
+      </div>
+
+      <!-- TAB 1: DOCTOR SEARCH PANEL (DEFAULT ON /doctors) -->
+      <div id="panelFindDoctors" style="<?= (!$is_meds_page) ? 'display: block;' : 'display: none;'; ?>">
+        <form id="doctorSearchForm" action="<?= base_url('doctors'); ?>" method="GET">
+          <div class="search-fields-row">
+            <!-- Location / City -->
+            <div class="field-col col-loc" style="flex: 1.2;">
+              <div class="input-wrap">
+                <i class="fa fa-map-marker" style="color: #00a896;"></i>
+                <select name="location" id="doc_location" class="search-select">
+                  <option value="">All Locations / Cities</option>
+                  <?php if (!empty($cities)) { foreach($cities as $c){ 
+                      $is_c_sel = (isset($_GET['location']) && ($_GET['location'] == $c->id || strcasecmp($_GET['location'], $c->name) == 0)) || (isset($_GET['city']) && ($_GET['city'] == $c->id || strcasecmp($_GET['city'], $c->name) == 0));
+                  ?>
+                  <option value="<?= htmlspecialchars($c->name); ?>" <?= $is_c_sel ? 'selected' : ''; ?>><?= htmlspecialchars($c->name); ?></option>
+                  <?php } } ?>
+                </select>
+                <i class="fa fa-chevron-down select-arrow"></i>
+              </div>
             </div>
-            <div class="col-sm-5">
-                <div class="input-group shadow">
-                    <span class="input-group-addon"><i class="fa fa-search"></i></span>
-                    <input type="text" id="hint" class="form-control ui-autocomplete-input" name="keyword" value="<?=@htmlspecialchars($_GET['keyword'] ?? '');?>" placeholder="Search Hospitals/Doctors/Clinics etc" autocomplete="off">
-                </div>
+
+            <!-- Doctor/Hospital/Clinic Keyword -->
+            <div class="field-col col-query" style="flex: 2;">
+              <div class="input-wrap">
+                <i class="fa fa-search" style="color: #00a896;"></i>
+                <input type="text" id="doc_keyword" name="keyword" value="<?= @htmlspecialchars($_GET['keyword'] ?? ''); ?>" placeholder="Search Doctors, Clinics, Hospitals, Treatments..." autocomplete="off">
+              </div>
             </div>
-            <div class="col-sm-3">
-                <div class="input-group shadow">
-                    <span class="input-group-addon"><i class="fa fa-user-md"></i></span>
-                    <select class="form-control" name="speciality">
-                        <option value="">-Specialization-</option>
-                        <?php foreach($specialization as $s){ 
-                            $is_s_sel = (isset($_GET['speciality']) && ($_GET['speciality'] == $s->id || strcasecmp($_GET['speciality'], $s->name) == 0)) || (isset($_GET['spl']) && ($_GET['spl'] == $s->id || strcasecmp($_GET['spl'], $s->name) == 0));
-                        ?>
-                        <option value='<?=$s->name;?>' <?=$is_s_sel ? 'selected' : '';?>><?=$s->name;?></option>
-                        <?php } ?>               
-                    </select>
-                </div>   
+
+            <!-- Specialization -->
+            <div class="field-col col-spec" style="flex: 1.5;">
+              <div class="input-wrap">
+                <i class="fa fa-stethoscope" style="color: #00a896;"></i>
+                <select name="speciality" id="doc_speciality" class="search-select">
+                  <option value="">All Specializations</option>
+                  <?php if (!empty($specialization)) { foreach($specialization as $s){ 
+                      $is_s_sel = (isset($_GET['speciality']) && ($_GET['speciality'] == $s->id || strcasecmp($_GET['speciality'], $s->name) == 0)) || (isset($_GET['spl']) && ($_GET['spl'] == $s->id || strcasecmp($_GET['spl'], $s->name) == 0)) || (isset($_GET['specialization']) && ($_GET['specialization'] == $s->id || strcasecmp($_GET['specialization'], $s->name) == 0));
+                  ?>
+                  <option value="<?= htmlspecialchars($s->name); ?>" <?= $is_s_sel ? 'selected' : ''; ?>><?= htmlspecialchars($s->name); ?></option>
+                  <?php } } ?>               
+                </select>
+                <i class="fa fa-chevron-down select-arrow"></i>
+              </div>
             </div>
-            <div class="col-sm-1">
-                <button class="careplus-booking-btn careplus-bgcolor-two" id="searchBTN"><i class="fa fa-search" aria-hidden="true"></i></button>
+
+            <!-- Submit Button -->
+            <div class="field-col col-submit" style="flex: 1; max-width: 170px;">
+              <button type="submit" class="btn-doc-search">
+                <i class="fa fa-search"></i> Find Doctors
+              </button>
             </div>
-            <div class="clearfix"></div>
+          </div>
+        </form>
+      </div>
+
+      <!-- TAB 2: MEDICINE SEARCH PANEL -->
+      <div id="panelOrderMeds" style="<?= ($is_meds_page) ? 'display: block;' : 'display: none;'; ?>">
+        <form id="medicineSearchForm" action="<?= base_url('medical'); ?>" method="GET">
+          <div class="search-fields-row">
+            <!-- Location -->
+            <div class="field-col col-loc" style="flex: 1.2;">
+              <div class="input-wrap">
+                <i class="fa fa-map-marker" style="color: #0284c7;"></i>
+                <input type="text" placeholder="Area / Colony (e.g. Pandeypur, Sigra)" name="location" id="med_user_location" value="<?= @htmlspecialchars($_GET['location'] ?? ($_GET['city'] ?? '')); ?>">
+              </div>
+            </div>
+
+            <!-- Medicine or Doctor Store Field -->
+            <div class="field-col col-query" style="flex: 2;">
+              <div class="input-wrap">
+                <i class="fa fa-search" style="color: #0284c7;"></i>
+                <input type="text" placeholder="Search medicine, salt, or Doctor's attached pharmacy..." name="keyword" id="med_query" value="<?= @htmlspecialchars($_GET['keyword'] ?? ''); ?>">
+              </div>
+            </div>
+
+            <!-- Upload Prescription CTA -->
+            <div class="field-col col-rx" style="flex: 0.9; max-width: 150px;">
+              <button type="button" class="btn-upload-rx" onclick="$('#upcharRxUploadModal, #rxModal').modal('show');">
+                <i class="fa fa-file-prescription"></i> Upload Rx
+              </button>
+            </div>
+
+            <!-- Submit Search -->
+            <div class="field-col col-submit" style="flex: 1; max-width: 170px;">
+              <button type="button" class="btn-med-search" id="btnMedicineSearch" onclick="handleMedicineSearchSubmit()">
+                <i class="fa fa-shopping-bag"></i> Search Stores
+              </button>
+            </div>
+          </div>
+        </form>
+
+        <!-- Micro-Banner for Doctor Profile Connection -->
+        <div class="doctor-store-hint">
+          <span><i class="fa fa-check-circle" style="color:#9bc03c;"></i> <strong>Doctor-Associated Pharmacies:</strong> View exact stock and compare prices for medicines prescribed by your visiting doctor.</span>
         </div>
-    </form>
+      </div>
+    </div>
+
+    <script>
+    function switchSearchTab(tab) {
+        if (tab === 'doctors') {
+            $('#tabFindDoctors').addClass('active');
+            $('#tabOrderMeds').removeClass('active').addClass('highlight-tab');
+            $('#panelFindDoctors').show();
+            $('#panelOrderMeds').hide();
+        } else if (tab === 'medicines') {
+            $('#tabOrderMeds').addClass('active').removeClass('highlight-tab');
+            $('#tabFindDoctors').removeClass('active');
+            $('#panelFindDoctors').hide();
+            $('#panelOrderMeds').show();
+        }
+    }
+
+    function handleMedicineSearchSubmit() {
+        var q = $('#med_query').val();
+        if (typeof openMedicineCompareModal === 'function' && q && q.trim() !== '') {
+            openMedicineCompareModal(q);
+        } else {
+            $('#medicineSearchForm').submit();
+        }
+    }
+    </script>
     <section id="doctor_list">
         <div class="container">
             <?php $promoted_list = !empty($promoted_doctors) ? $promoted_doctors : array(); ?>
@@ -1679,6 +1977,20 @@ small photos close--*/
                                 <span class="trust-badge-item"><i class="fa fa-check-circle"></i> Instant Confirmation</span>
                                 <span class="trust-badge-item"><i class="fa fa-check-circle"></i> Zero Booking Fees</span>
                             </div>
+
+                            <!-- In-Card Doctor Profile Attached Chemist Integration -->
+                            <?php
+                            $doc_chemist_title = !empty($clinicName) ? htmlspecialchars($clinicName) . ' In-House Chemist' : 'Oriana Hospital In-House Chemist';
+                            ?>
+                            <div class="doctor-attached-pharmacy-badge">
+                              <div class="store-badge-left">
+                                <i class="fa fa-clinic-medical"></i>
+                                <span>Official Chemist: <strong><?=$doc_chemist_title;?></strong> (Stock Available)</span>
+                              </div>
+                              <a href="javascript:void(0);" onclick="openMedicineCompareModal(<?=$d->id;?>, 'Paracetamol')" class="btn-check-meds">
+                                Check Prescribed Medicines &rarr;
+                              </a>
+                            </div>
                         </div>
 
                         <!-- 3. Right Column (Status & Actions) -->
@@ -1889,3 +2201,4 @@ small photos close--*/
             });
         });
     </script>
+    <?php include (APPPATH . 'views/modals/medicine_order_modals.php'); ?>

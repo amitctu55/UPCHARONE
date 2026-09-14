@@ -51,13 +51,13 @@
                             </tr>
                             
                              <tr>
-                            <th scope="row">Total Madicine Through</th>
+                            <th scope="row">Total Medicine Through</th>
                               <td>- - -</td>
                               <td>- - -</td>
                   
                             </tr>
                             
-                            <th scope="row">Total Madicine Through</th>
+                            <th scope="row">Total Medicine Through</th>
                               <td>Ac Number</td>
                               <td>IFSC</td>
                   

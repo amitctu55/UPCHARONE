@@ -10,6 +10,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <link rel="stylesheet" href="<?=base_url('public/assets/css/bootstrap.min.css');?>">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
 
     <style>
         :root {
@@ -32,7 +33,7 @@
         }
 
         .ops-sidebar {
-            width: 260px;
+            width: 270px;
             background: #0f172a;
             color: #ffffff;
             flex-shrink: 0;
@@ -40,15 +41,37 @@
             flex-direction: column;
             justify-content: space-between;
             padding: 24px 0;
+            position: sticky;
+            top: 0;
+            max-height: 100vh;
+            overflow-y: auto;
+            z-index: 100;
+        }
+
+        .ops-sidebar::-webkit-scrollbar {
+            width: 5px;
+        }
+        .ops-sidebar::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 4px;
+        }
+
+        .ops-nav-heading {
+            font-size: 10.5px;
+            font-weight: 800;
+            color: #475569;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            padding: 16px 20px 6px;
         }
 
         .ops-nav a {
             display: flex;
             align-items: center;
             gap: 12px;
-            padding: 12px 20px;
+            padding: 10px 20px;
             color: #94a3b8;
-            font-size: 13.5px;
+            font-size: 13px;
             font-weight: 600;
             text-decoration: none !important;
             transition: all 0.2s;
@@ -62,16 +85,53 @@
 
         .ops-main-body {
             flex-grow: 1;
-            padding: 28px 32px;
+            padding: 24px 32px 40px;
             overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        .ops-suite-tab {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-size: 12.5px;
+            font-weight: 700;
+            color: #475569;
+            text-decoration: none !important;
+            transition: all 0.15s ease;
+            white-space: nowrap;
+        }
+        .ops-suite-tab:hover {
+            color: #0f172a;
+            background: rgba(255, 255, 255, 0.7);
+        }
+        .ops-suite-tab.active {
+            background: #0f172a !important;
+            color: #ffffff !important;
+            box-shadow: 0 2px 8px rgba(15, 23, 42, 0.15);
         }
 
         .ops-card {
             background: #ffffff;
             border-radius: 16px;
-            padding: 20px;
             border: 1px solid #e2e8f0;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+            box-shadow: 0 4px 16px rgba(15, 23, 42, 0.04);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .ops-kpi-card {
+            background: #ffffff;
+            border-radius: 14px;
+            padding: 18px 20px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .ops-kpi-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.06);
         }
     </style>
 </head>
@@ -84,8 +144,8 @@
             <div style="padding: 0 20px 20px; border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; gap: 10px;">
                 <img src="<?=base_url('images/logo.png');?>" alt="Upchar" style="height: 32px;" onerror="this.style.display='none';">
                 <div>
-                    <strong style="font-size: 16px; color: #ffffff; display: block; line-height: 1.2;">Upchar Operations</strong>
-                    <small style="color: #a5b4fc; font-size: 11px;">Central Logistics Desk</small>
+                    <strong style="font-size: 15px; color: #ffffff; display: block; line-height: 1.2;">Upchar Enterprise</strong>
+                    <small style="color: #a5b4fc; font-size: 11px;">Operations &amp; Logistics</small>
                 </div>
             </div>
 
@@ -101,32 +161,112 @@
                 </div>
             </div>
 
-            <nav class="ops-nav" style="margin-top: 14px;">
-                <a href="<?=base_url('operations/dashboard');?>" class="<?=($this->uri->segment(2)=='dashboard' || empty($this->uri->segment(2))) ? 'active' : '';?>">
-                    <i class="fa fa-tachometer" style="color: #38bdf8;"></i> Desk Overview
+            <?php
+            $seg1 = $this->uri->segment(1);
+            $seg2 = $this->uri->segment(2);
+            ?>
+            <nav class="ops-nav" style="margin-top: 10px;">
+                <div class="ops-nav-heading">Central Operations</div>
+                <a href="<?=base_url('operations');?>" class="<?=($seg1=='operations' && (empty($seg2) || $seg2=='dashboard')) ? 'active' : '';?>">
+                    <i class="fa fa-tachometer" style="color: #60a5fa;"></i> Operations Hub
                 </a>
-                <a href="<?=base_url('operations/handoffs');?>" class="<?=($this->uri->segment(2)=='handoffs') ? 'active' : '';?>">
-                    <i class="fa fa-flask" style="color: #a5b4fc;"></i> Sample Handoffs
+                <a href="<?=base_url('operations/handoffs');?>" class="<?=($seg1=='operations' && $seg2=='handoffs') ? 'active' : '';?>">
+                    <i class="fa fa-flask" style="color: #fb923c;"></i> Lab / Shift Handoffs
                 </a>
-                <a href="<?=base_url('operations/expenses');?>" class="<?=($this->uri->segment(2)=='expenses') ? 'active' : '';?>">
-                    <i class="fa fa-file-text-o" style="color: #34d399;"></i> Expense Desk
+                <a href="<?=base_url('operations/expenses');?>" class="<?=($seg1=='operations' && $seg2=='expenses') ? 'active' : '';?>">
+                    <i class="fa fa-credit-card" style="color: #4ade80;"></i> Expense Desk
                 </a>
-                <a href="<?=base_url('attendance/punch');?>">
-                    <i class="fa fa-clock-o" style="color: #fcd34d;"></i> Attendance Punch
+
+                <div class="ops-nav-heading">HR &amp; Recruitment</div>
+                <a href="<?=base_url('hr/dashboard');?>" class="<?=($seg1=='hr' && ($seg2=='dashboard' || empty($seg2))) ? 'active' : '';?>">
+                    <i class="fa fa-th-large" style="color: #38bdf8;"></i> HR Command Hub
                 </a>
-                <a href="<?=base_url('hr/dashboard');?>">
-                    <i class="fa fa-users" style="color: #f472b6;"></i> HR Suite
+                <a href="<?=base_url('hr/jobs');?>" class="<?=($seg1=='hr' && $seg2=='jobs') ? 'active' : '';?>">
+                    <i class="fa fa-id-badge" style="color: #6366f1;"></i> Job Requisitions
                 </a>
+                <a href="<?=base_url('hr/candidates');?>" class="<?=($seg1=='hr' && in_array($seg2, ['candidates', 'candidate_profile'])) ? 'active' : '';?>">
+                    <i class="fa fa-filter" style="color: #ec4899;"></i> Candidate Pipeline
+                </a>
+                <a href="<?=base_url('hr/directory');?>" class="<?=($seg1=='hr' && in_array($seg2, ['directory', 'employees'])) ? 'active' : '';?>">
+                    <i class="fa fa-users" style="color: #34d399;"></i> Staff Directory
+                </a>
+
+                <div class="ops-nav-heading">Time &amp; Payroll</div>
+                <a href="<?=base_url('attendance/roster');?>" class="<?=(($seg1=='attendance' && $seg2=='roster') || ($seg1=='hr' && $seg2=='attendance')) ? 'active' : '';?>">
+                    <i class="fa fa-calendar-check-o" style="color: #f59e0b;"></i> Attendance Roster
+                </a>
+                <a href="<?=base_url('attendance/punch');?>" class="<?=($seg1=='attendance' && in_array($seg2, ['punch', 'history'])) ? 'active' : '';?>">
+                    <i class="fa fa-clock-o" style="color: #ec4899;"></i> Web Punch-In / Out
+                </a>
+                <a href="<?=base_url('hr/leaves');?>" class="<?=($seg1=='hr' && $seg2=='leaves') ? 'active' : '';?>">
+                    <i class="fa fa-file-text-o" style="color: #a855f7;"></i> Leave Approvals
+                </a>
+                <a href="<?=base_url('hr/payroll');?>" class="<?=($seg1=='hr' && $seg2=='payroll') ? 'active' : '';?>">
+                    <i class="fa fa-calculator" style="color: #fcd34d;"></i> Payroll &amp; Salaries
+                </a>
+
+                <div class="ops-nav-heading">CRM &amp; Growth</div>
+                <a href="<?=base_url('crm');?>" class="<?=($seg1=='crm' && (empty($seg2) || $seg2=='dashboard')) ? 'active' : '';?>">
+                    <i class="fa fa-line-chart" style="color: #f59e0b;"></i> CRM Command Hub
+                </a>
+                <a href="<?=base_url('crm/leads');?>" class="<?=($seg1=='crm' && $seg2=='leads') ? 'active' : '';?>">
+                    <i class="fa fa-columns" style="color: #fbbf24;"></i> Leads &amp; Pipeline
+                </a>
+                <a href="<?=base_url('crm/contacts');?>" class="<?=($seg1=='crm' && $seg2=='contacts') ? 'active' : '';?>">
+                    <i class="fa fa-address-book" style="color: #38bdf8;"></i> Partner Directory
+                </a>
+                <a href="<?=base_url('crm/activities');?>" class="<?=($seg1=='crm' && $seg2=='activities') ? 'active' : '';?>">
+                    <i class="fa fa-phone-square" style="color: #34d399;"></i> Activity &amp; Follow-ups
+                </a>
+
+                <div class="ops-nav-heading">Account</div>
                 <a href="<?=base_url('staff/logout');?>">
                     <i class="fa fa-sign-out" style="color: #f87171;"></i> Logout
                 </a>
             </nav>
         </div>
 
-        <div style="padding: 0 20px; font-size: 11px; color: #64748b;">
+        <div style="padding: 16px 20px; font-size: 11px; color: #64748b; border-top: 1px solid rgba(255,255,255,0.06);">
             Upchar Operations &copy; <?=date('Y');?>
         </div>
     </aside>
 
     <!-- Main Content Body -->
     <main class="ops-main-body">
+
+        <!-- Unified Central Operations & Logistics Suite Segmented Header Navigation -->
+        <div class="ops-suite-navbar" style="background: #ffffff; border-radius: 16px; border: 1px solid #e2e8f0; padding: 12px 20px; margin-bottom: 24px; box-shadow: 0 4px 16px -2px rgba(0,0,0,0.03); display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px;">
+            <!-- Left Module Title -->
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <div style="width: 40px; height: 40px; border-radius: 12px; background: linear-gradient(135deg, #0f172a 0%, #6366f1 100%); color: #ffffff; display: flex; align-items: center; justify-content: center; font-size: 17px; box-shadow: 0 4px 10px rgba(99, 102, 241, 0.25);">
+                    <i class="fa fa-tachometer"></i>
+                </div>
+                <div>
+                    <div style="font-size: 10.5px; font-weight: 800; color: #6366f1; text-transform: uppercase; letter-spacing: 0.6px; line-height: 1;">
+                        Upchar Enterprise Logistics
+                    </div>
+                    <strong style="font-size: 15.5px; font-weight: 800; color: #0f172a;">
+                        Central Operations &amp; Expense Suite
+                    </strong>
+                </div>
+            </div>
+
+            <!-- Right Connected Segmented Pills -->
+            <div style="display: inline-flex; background: #f1f5f9; padding: 4px; border-radius: 12px; border: 1px solid #e2e8f0; gap: 4px; overflow-x: auto; max-width: 100%;">
+                <a href="<?=base_url('operations');?>" class="ops-suite-tab <?=($seg1=='operations' && (empty($seg2) || $seg2=='dashboard')) ? 'active' : '';?>">
+                    <i class="fa fa-tachometer" style="color: #60a5fa;"></i> Operations Hub
+                </a>
+                <a href="<?=base_url('operations/handoffs');?>" class="ops-suite-tab <?=($seg1=='operations' && $seg2=='handoffs') ? 'active' : '';?>">
+                    <i class="fa fa-flask" style="color: #fb923c;"></i> Lab Sample Handoffs
+                </a>
+                <a href="<?=base_url('operations/expenses');?>" class="ops-suite-tab <?=($seg1=='operations' && $seg2=='expenses') ? 'active' : '';?>">
+                    <i class="fa fa-credit-card" style="color: #4ade80;"></i> Expense Desk
+                </a>
+                <a href="<?=base_url('attendance/roster');?>" class="ops-suite-tab">
+                    <i class="fa fa-calendar-check-o" style="color: #f59e0b;"></i> Attendance Roster
+                </a>
+                <a href="<?=base_url('hr/directory');?>" class="ops-suite-tab">
+                    <i class="fa fa-users" style="color: #00a896;"></i> Staff Directory
+                </a>
+            </div>
+        </div>

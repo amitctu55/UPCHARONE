@@ -15,6 +15,13 @@
             </p>
         </div>
 
+        <!-- Unified Category Tabs -->
+        <div class="search-category-tabs" style="justify-content: center; display: flex; gap: 10px; margin-bottom: 18px;">
+          <button type="button" class="tab-btn active" style="background: #08364b; color: #fff; border: 1px solid #08364b; padding: 8px 18px; border-radius: 20px; font-weight: 600; cursor: pointer;"><i class="fa fa-user-md"></i> Find Doctors</button>
+          <button type="button" class="tab-btn highlight-tab" onclick="openMedicineCompareModal()" style="background: rgba(0, 168, 255, 0.12); color: #0077b6; border: 1px solid #00a8ff; padding: 8px 18px; border-radius: 20px; font-weight: 600; cursor: pointer;"><i class="fa fa-pills"></i> Order Medicines (Doorstep Delivery)</button>
+          <button type="button" class="tab-btn" onclick="alert('24/7 UPCHAR Emergency Ambulance Helpline: 108 or +91 8448440603');" style="background: #f1f5f8; border: 1px solid #d5dfe6; color: #08364b; padding: 8px 18px; border-radius: 20px; font-weight: 600; cursor: pointer;"><i class="fa fa-ambulance"></i> Ambulance</button>
+        </div>
+
         <!-- Prominent Centered Floating Search Pill UI -->
         <form action="<?=base_url('search');?>" method="GET">
             <div class="search-pill-container">
@@ -642,6 +649,7 @@ $('.btn-ad-filter').click(function() {
     </div>
 </section>
 
+<?php $this->load->view('modals/medicine_order_modals.php'); ?>
 <?php $this->load->view('includes/footer.php'); ?>
 
 <!-- Interactive Specialist Slider Script -->

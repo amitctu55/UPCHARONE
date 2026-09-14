@@ -140,6 +140,16 @@ $expYears = ($d->exp > 0) ? $d->exp : 8;
                 <a href="tel:8448440603" class="btn btn-secondary" style="padding: 10px 16px; justify-content: center; display: flex; align-items: center; gap: 8px;">
                     <i class="fas fa-phone-alt"></i> Contact Clinic / Hospital
                 </a>
+                <!-- In-Card Doctor Profile Attached Pharmacy Badge -->
+                <div class="doctor-attached-pharmacy-badge" style="margin-top: 10px; flex-direction: column; gap: 6px; text-align: center; border-radius: 8px;">
+                  <div class="store-badge-left">
+                    <i class="fas fa-clinic-medical"></i>
+                    <span>Official Chemist: <strong>Oriana Hospital Chemist</strong></span>
+                  </div>
+                  <a href="javascript:void(0);" onclick="openMedicineCompareModal(<?=$d->id;?>, 'Paracetamol')" class="btn-check-meds">
+                    Check Prescribed Medicines &rarr;
+                  </a>
+                </div>
             </div>
         </div>
     </div>
@@ -159,6 +169,50 @@ $expYears = ($d->exp > 0) ? $d->exp : 8;
                 <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px; padding: 14px 18px;">
                     <div style="display: flex; align-items: center; gap: 10px; color: #16A34A; font-weight: 600; font-size: 13.5px;">
                         <i class="fas fa-shield-alt" style="font-size: 16px;"></i> Medical Registration & Qualifications Verified
+                    </div>
+                </div>
+            </div>
+
+            <?php
+            // Fetch affiliated or nearby pharmacy store
+            $affilPharmacy = $this->db->get_where('pharmacy_stores', array('associated_doctor_id' => $d->id, 'is_active' => 1))->row();
+            if (!$affilPharmacy && !empty($firstPract->institution_id)) {
+                $affilPharmacy = $this->db->get_where('pharmacy_stores', array('hospital_id' => $firstPract->institution_id, 'is_active' => 1))->row();
+            }
+            if (!$affilPharmacy) {
+                $affilPharmacy = $this->db->limit(1)->get_where('pharmacy_stores', array('is_active' => 1))->row();
+            }
+            $pharmacyName = !empty($affilPharmacy) ? $affilPharmacy->store_name : 'Upchar Partner Chemist';
+            ?>
+            <!-- UPCHAR Online Medicine Delivery & Chemist Card -->
+            <div class="doc-profile-card" style="border: 2px solid #00A8FF; background: linear-gradient(135deg, #FFFFFF 0%, #F0F9FF 100%); position: relative; overflow: hidden;">
+                <div style="position: absolute; top: 12px; right: 14px;">
+                    <span class="label" style="background: #08364B; color: #00A8FF; font-weight: 800; padding: 4px 10px; border-radius: 12px; border: 1px solid #00A8FF;">
+                        <i class="fas fa-bolt"></i> FAST 30-MIN DELIVERY
+                    </span>
+                </div>
+                <div style="display: flex; align-items: flex-start; gap: 16px;">
+                    <div style="width: 52px; height: 52px; border-radius: 12px; background: rgba(0, 168, 255, 0.15); display: flex; align-items: center; justify-content: center; font-size: 26px; color: #00A8FF; flex-shrink: 0;">
+                        <i class="fas fa-prescription-bottle-alt"></i>
+                    </div>
+                    <div style="flex-grow: 1;">
+                        <h4 style="margin: 0 0 6px; font-weight: 800; font-size: 17px; color: #08364B;">
+                            Need Prescribed Medicines?
+                        </h4>
+                        <p style="margin: 0 0 14px; font-size: 14px; color: #475569; line-height: 1.5;">
+                            Check real-time stock at <strong><?=htmlspecialchars($pharmacyName);?></strong> or get local doorstep delivery via UPCHAR.
+                        </p>
+                        <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                            <button type="button" class="btn btn-sm" onclick="openMedicineCompareModal(<?=$d->id;?>)" style="background: #08364B; color: #FFFFFF; font-weight: 700; padding: 8px 18px; border-radius: 8px; border: none; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 2px 6px rgba(8,54,75,0.25);">
+                                <i class="fas fa-pills" style="color: #00A8FF;"></i> Order / Check Availability
+                            </button>
+                            <button type="button" class="btn btn-sm btn-default" onclick="openPrescriptionModal()" style="font-weight: 700; padding: 8px 16px; border-radius: 8px; border: 1px solid #CBD5E1; color: #334155; display: inline-flex; align-items: center; gap: 6px;">
+                                <i class="fas fa-file-upload" style="color: #9BC03C;"></i> Upload Rx
+                            </button>
+                            <span style="font-size: 12.5px; color: #64748B;">
+                                <i class="fas fa-shield-alt" style="color: #10B981;"></i> 100% Genuine & Verified by Pharmacist
+                            </span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -299,4 +353,5 @@ $expYears = ($d->exp > 0) ? $d->exp : 8;
     </div>
 </div>
 
+<?php include (APPPATH . 'views/modals/medicine_order_modals.php'); ?>
 <?php include ('includes/footer.php'); ?>

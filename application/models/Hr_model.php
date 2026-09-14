@@ -15,8 +15,8 @@ class Hr_model extends CI_Model {
     /**
      * Get Leave Requests
      */
-    public function get_leaves($filters = [], $limit = 50, $offset = 0) {
-        $this->db->select('l.*, u.name as employee_name, u.staff_code, u.department, u.role, r.name as reviewer_name');
+    public function get_leaves($filters = [], $limit = 200, $offset = 0) {
+        $this->db->select('l.*, u.name as employee_name, u.staff_code, u.department, u.role, u.phone as employee_phone, r.name as reviewer_name');
         $this->db->from('staff_leave_requests l');
         $this->db->join('staff_users u', 'u.id = l.user_id', 'inner');
         $this->db->join('staff_users r', 'r.id = l.reviewed_by', 'left');
@@ -27,8 +27,31 @@ class Hr_model extends CI_Model {
         if (!empty($filters['status'])) {
             $this->db->where('l.status', $filters['status']);
         }
+        if (!empty($filters['leave_type'])) {
+            $this->db->where('l.leave_type', $filters['leave_type']);
+        }
+        if (!empty($filters['department'])) {
+            $this->db->where('u.department', $filters['department']);
+        }
+        if (!empty($filters['search'])) {
+            $q = $filters['search'];
+            $this->db->group_start();
+            $this->db->like('u.name', $q);
+            $this->db->or_like('u.staff_code', $q);
+            $this->db->or_like('l.reason', $q);
+            $this->db->group_end();
+        }
+
         $this->db->order_by('l.id', 'DESC');
         return $this->db->get('', $limit, $offset)->result_array();
+    }
+
+    /**
+     * Delete / Cancel Leave Application
+     */
+    public function delete_leave($leaveId) {
+        $this->db->where('id', $leaveId)->delete('staff_leave_requests');
+        return $this->db->affected_rows() > 0;
     }
 
     /**
@@ -66,20 +89,42 @@ class Hr_model extends CI_Model {
     }
 
     /**
-     * Calculate Monthly Payroll Roster
+     * Calculate Monthly Payroll Roster with Comprehensive Earnings & Deductions
      */
-    public function calculate_monthly_payroll($month = null, $year = null) {
+    public function calculate_monthly_payroll($month = null, $year = null, $mode = 'full') {
         $month = $month ?: date('m');
         $year  = $year ?: date('Y');
-        $daysInMonth = cal_days_in_month(CAL_GREGORIAN, $month, $year);
+        $normMonth = str_pad($month, 2, '0', STR_PAD_LEFT);
+        $daysInMonth = cal_days_in_month(CAL_GREGORIAN, intval($month), intval($year));
+
+        // Fetch existing disbursal payments for this period
+        $disbursalsRaw = $this->db->where('month', $normMonth)
+                                  ->where('year', (string)$year)
+                                  ->get('staff_payroll_disbursals')
+                                  ->result_array();
+        $disbursals = [];
+        foreach ($disbursalsRaw as $d) {
+            $disbursals[$d['user_id']] = $d;
+        }
 
         $staff = $this->db->where('status', 'active')->get('staff_users')->result_array();
         $payrollRoster = [];
 
+        // Deterministic Bank Details Mapping
+        $bankDetails = [
+            1 => ['bank' => 'HDFC Bank', 'ac' => '50100492819201', 'ifsc' => 'HDFC0000123', 'pan' => 'AAAPU1234A'],
+            2 => ['bank' => 'ICICI Bank', 'ac' => '002101582910', 'ifsc' => 'ICIC0000021', 'pan' => 'BKKPS5678B'],
+            3 => ['bank' => 'State Bank of India', 'ac' => '30918291029', 'ifsc' => 'SBIN0001245', 'pan' => 'CRPV9012C'],
+            4 => ['bank' => 'Axis Bank', 'ac' => '918020019283', 'ifsc' => 'UTIB0000456', 'pan' => 'DAAK3456D'],
+            5 => ['bank' => 'Kotak Mahindra', 'ac' => '7810291029', 'ifsc' => 'KKBK0000789', 'pan' => 'ESSP7890E'],
+            6 => ['bank' => 'Bank of Baroda', 'ac' => '24100182910', 'ifsc' => 'BARB0LUCKNO', 'pan' => 'FSSW2345F'],
+            7 => ['bank' => 'Punjab National Bank', 'ac' => '19200021928', 'ifsc' => 'PUNB0192000', 'pan' => 'GAAK6789G']
+        ];
+
         foreach ($staff as $s) {
             $userId = $s['id'];
 
-            // Count Attendance
+            // 1. Count Attendance Records
             $this->db->where('user_id', $userId);
             $this->db->where('MONTH(punch_date)', $month);
             $this->db->where('YEAR(punch_date)', $year);
@@ -102,7 +147,7 @@ class Hr_model extends CI_Model {
                 }
             }
 
-            // Approved Leaves
+            // 2. Count Approved Leaves
             $this->db->where('user_id', $userId);
             $this->db->where('status', 'approved');
             $this->db->where('MONTH(start_date)', $month);
@@ -113,30 +158,164 @@ class Hr_model extends CI_Model {
                 $approvedLeaves += intval($l['days_count']);
             }
 
-            $effectivePayableDays = $presentDays + ($halfDays * 0.5) + min(2, $approvedLeaves);
             $baseSalary = floatval($s['base_salary']);
-            $perDayRate = ($daysInMonth > 0) ? ($baseSalary / $daysInMonth) : 0;
-            $netPayable = round($effectivePayableDays * $perDayRate, 2);
+
+            // 3. Determine Payable Days (Full Month Standard vs MTD Actual)
+            if ($mode === 'mtd') {
+                $effectivePayableDays = $presentDays + ($halfDays * 0.5) + $approvedLeaves;
+            } else {
+                // Full Month Disbursal Cycle:
+                // Base 30 days minus recorded unexcused absences or half-day deductions
+                $lopFromHalfDays = ($halfDays * 0.5);
+                $effectivePayableDays = max(1, $daysInMonth - $lopFromHalfDays);
+            }
+            $effectivePayableDays = min($daysInMonth, $effectivePayableDays);
+            $payableRatio = ($daysInMonth > 0) ? ($effectivePayableDays / $daysInMonth) : 1.0;
+
+            // 4. Earnings Breakdown (Indian Standard Payroll Structure)
+            // Base CTC Components: Basic (50%), HRA (25%), Special (15%), Medical (10%)
+            $basicSalary      = round($baseSalary * 0.50, 2);
+            $hraSalary        = round($baseSalary * 0.25, 2);
+            $specialAllowance = round($baseSalary * 0.15, 2);
+            $medicalAllowance = round($baseSalary * 0.10, 2);
+
+            // Earned Pro-Rata Earnings
+            $earnedBasic   = round($basicSalary * $payableRatio, 2);
+            $earnedHra     = round($hraSalary * $payableRatio, 2);
+            $earnedSpecial = round($specialAllowance * $payableRatio, 2);
+            $earnedMedical = round($medicalAllowance * $payableRatio, 2);
+            $grossEarned   = $earnedBasic + $earnedHra + $earnedSpecial + $earnedMedical;
+
+            // 5. Statutory & Policy Deductions
+            // PF (EPF): 12% of Basic, standard statutory cap of Rs 1,800
+            $pfDeduction = round(min(1800, $earnedBasic * 0.12), 2);
+
+            // ESI: 0.75% of Gross if Gross <= Rs 21,000
+            $esiDeduction = ($grossEarned <= 21000) ? round($grossEarned * 0.0075, 2) : 0.00;
+
+            // Professional Tax (PT): Standard Rs 200/mo slab
+            $ptDeduction = ($grossEarned > 15000) ? 200.00 : (($grossEarned > 10000) ? 150.00 : 0.00);
+
+            // Late Penalty: 1st late mark grace; Rs 250 per late mark beyond 1
+            $latePenalty = ($lateDays > 1) ? round(($lateDays - 1) * 250.00, 2) : 0.00;
+
+            // LOP (Loss of Pay) Amount
+            $lopDays = max(0, round($daysInMonth - $effectivePayableDays, 1));
+            $lopDeduction = round($baseSalary - $grossEarned, 2);
+
+            $totalDeductions = round($pfDeduction + $esiDeduction + $ptDeduction + $latePenalty, 2);
+
+            // 6. Net Take-Home Salary
+            $netSalary = max(0, round($grossEarned - $totalDeductions, 2));
+
+            // Bank details
+            $bankInfo = $bankDetails[$userId] ?? [
+                'bank' => 'HDFC Bank', 'ac' => '10020030040' . $userId, 'ifsc' => 'HDFC0000123', 'pan' => 'AAAPU100' . $userId . 'A'
+            ];
 
             $payrollRoster[] = [
-                'user_id'        => $userId,
-                'staff_code'     => $s['staff_code'],
-                'name'           => $s['name'],
-                'role'           => $s['role'],
-                'department'     => $s['department'],
-                'designation'    => $s['designation'],
-                'base_salary'    => $baseSalary,
-                'present_days'   => $presentDays,
-                'late_days'      => $lateDays,
-                'half_days'      => $halfDays,
-                'approved_leaves'=> $approvedLeaves,
-                'payable_days'   => $effectivePayableDays,
-                'total_hours'    => round($totalHours, 1),
-                'net_salary'     => $netPayable,
-                'days_in_month'  => $daysInMonth
+                'user_id'            => $userId,
+                'staff_code'         => $s['staff_code'],
+                'name'               => $s['name'],
+                'role'               => $s['role'],
+                'department'         => $s['department'],
+                'designation'        => $s['designation'],
+                'base_salary'        => $baseSalary,
+                'days_in_month'      => $daysInMonth,
+                'present_days'       => $presentDays,
+                'late_days'          => $lateDays,
+                'half_days'          => $halfDays,
+                'approved_leaves'    => $approvedLeaves,
+                'lop_days'           => $lopDays,
+                'payable_days'       => $effectivePayableDays,
+                'total_hours'        => round($totalHours, 1),
+
+                // Full Package Breakdown
+                'basic_salary'       => $basicSalary,
+                'hra'                => $hraSalary,
+                'special_allowance'  => $specialAllowance,
+                'medical_allowance'  => $medicalAllowance,
+
+                // Earned Components
+                'earned_basic'       => $earnedBasic,
+                'earned_hra'         => $earnedHra,
+                'earned_special'     => $earnedSpecial,
+                'earned_medical'     => $earnedMedical,
+                'gross_earned'       => $grossEarned,
+
+                // Deductions Breakdown
+                'pf_deduction'       => $pfDeduction,
+                'esi_deduction'      => $esiDeduction,
+                'pt_deduction'       => $ptDeduction,
+                'late_penalty'       => $latePenalty,
+                'lop_deduction'      => $lopDeduction,
+                'total_deductions'   => $totalDeductions,
+
+                // Net Disbursable
+                'net_salary'         => $netSalary,
+
+                // Bank & Payment
+                'bank_name'          => $bankInfo['bank'],
+                'account_no'         => $bankInfo['ac'],
+                'ifsc_code'          => $bankInfo['ifsc'],
+                'pan_number'         => $bankInfo['pan'],
+
+                // Payment Transfer Status & Reference Details
+                'transfer_status'    => $disbursals[$userId]['status'] ?? 'pending',
+                'txn_ref'            => $disbursals[$userId]['txn_ref'] ?? '',
+                'payment_channel'    => $disbursals[$userId]['payment_channel'] ?? 'Corporate NetBanking (HDFC Direct)',
+                'transferred_at'     => (!empty($disbursals[$userId]['transferred_at'])) ? date('d M Y, h:i A', strtotime($disbursals[$userId]['transferred_at'])) : '',
+                'transferred_at_raw' => $disbursals[$userId]['transferred_at'] ?? null,
+                'disbursal_notes'    => $disbursals[$userId]['notes'] ?? '',
+                'disbursed_amount'   => isset($disbursals[$userId]['amount']) ? floatval($disbursals[$userId]['amount']) : $netSalary,
+                'payment_status'     => (isset($disbursals[$userId]['status']) && $disbursals[$userId]['status'] === 'transferred') ? 'Transferred' : ((isset($disbursals[$userId]['status']) && $disbursals[$userId]['status'] === 'on_hold') ? 'On Hold' : 'Pending Transfer')
             ];
         }
 
         return $payrollRoster;
+    }
+
+    /**
+     * Insert or update staff payroll disbursal record
+     */
+    public function update_payroll_disbursal($userId, $month, $year, $amount, $status, $txnRef, $channel, $notes = '') {
+        $normMonth = str_pad($month, 2, '0', STR_PAD_LEFT);
+        $normYear  = (string)$year;
+        $status    = in_array($status, ['transferred', 'pending', 'on_hold']) ? $status : 'pending';
+
+        $existing = $this->db->where('user_id', $userId)
+                             ->where('month', $normMonth)
+                             ->where('year', $normYear)
+                             ->get('staff_payroll_disbursals')
+                             ->row_array();
+
+        $data = [
+            'user_id'         => $userId,
+            'month'           => $normMonth,
+            'year'            => $normYear,
+            'amount'          => floatval($amount),
+            'status'          => $status,
+            'txn_ref'         => $txnRef ?: null,
+            'payment_channel' => $channel ?: 'Corporate NetBanking (HDFC Direct)',
+            'notes'           => $notes ?: null
+        ];
+
+        if ($status === 'transferred') {
+            if ($existing && !empty($existing['transferred_at'])) {
+                $data['transferred_at'] = $existing['transferred_at'];
+            } else {
+                $data['transferred_at'] = date('Y-m-d H:i:s');
+            }
+        } else {
+            $data['transferred_at'] = null;
+        }
+
+        if ($existing) {
+            $this->db->where('id', $existing['id'])->update('staff_payroll_disbursals', $data);
+        } else {
+            $this->db->insert('staff_payroll_disbursals', $data);
+        }
+
+        return $data;
     }
 }

@@ -579,11 +579,126 @@ class Home extends CI_Controller
 
 	public function medical()
 	{
-		$data['title'] = 'Upchar Pharmacy & Medical Devices Network';
+		$data['title'] = 'Upchar Pharmacy & Medicine Delivery Network';
 		$cat = $this->input->get('category') ?: 'all';
 		$data['selected_category'] = $cat;
 		$data['highlight_offer']   = $this->input->get('offer') ?: null;
 
+		$q        = trim($this->input->get('q', true) ?: '');
+		$pincode  = trim($this->input->get('pincode', true) ?: '');
+		$service  = trim($this->input->get('service', true) ?: 'all');
+		$store_id = intval($this->input->get('store_id') ?: 0);
+
+		$data['search_query'] = $q;
+		$data['pincode']      = $pincode;
+		$data['service']      = $service;
+		$data['filter_store'] = $store_id;
+
+		// 1. If a medicine search term is provided, query matching inventory across stores
+		$medicine_results = array();
+		if ($q !== '') {
+			$escaped_q = $this->db->escape_like_str($q);
+			$where_clause = "(mm.brand_name LIKE '%{$escaped_q}%' OR mm.generic_composition LIKE '%{$escaped_q}%' OR mm.manufacturer LIKE '%{$escaped_q}%')";
+			
+			$extra_filter = "";
+			if ($pincode !== '') {
+				$extra_filter .= " AND (ps.pincode = " . $this->db->escape($pincode) . " OR ps.city LIKE '%" . $this->db->escape_like_str($pincode) . "%')";
+			}
+			if ($service === 'open24') {
+				$extra_filter .= " AND ps.operating_hours LIKE '%24%'";
+			} elseif ($service === 'delivery') {
+				$extra_filter .= " AND ps.delivery_radius_km > 0";
+			} elseif ($service === 'affiliated') {
+				$extra_filter .= " AND (ps.hospital_id IS NOT NULL OR ps.associated_doctor_id IS NOT NULL)";
+			}
+			if ($store_id > 0) {
+				$extra_filter .= " AND ps.id = {$store_id}";
+			}
+
+			$med_sql = "
+				SELECT 
+					mm.id AS medicine_id,
+					mm.brand_name,
+					mm.generic_composition,
+					mm.manufacturer,
+					mm.dosage_form,
+					mm.schedule_type,
+					mm.is_prescription_required,
+					pi.id AS inventory_id,
+					pi.mrp,
+					pi.selling_price,
+					pi.stock_quantity,
+					pi.batch_no,
+					pi.expiry_date,
+					ps.id AS pharmacy_id,
+					ps.store_name,
+					ps.phone AS store_phone,
+					ps.address AS store_address,
+					ps.city AS store_city,
+					ps.pincode AS store_pincode,
+					ps.operating_hours,
+					ps.delivery_radius_km,
+					ps.is_emergency_closed,
+					ps.hospital_id,
+					ps.associated_doctor_id,
+					h.name AS hospital_name,
+					CONCAT('Dr. ', d.fname, ' ', d.lname) AS doctor_name
+				FROM medicines_master mm
+				JOIN pharmacy_inventory pi ON pi.medicine_id = mm.id AND pi.is_available = 1 AND pi.stock_quantity > 0
+				JOIN pharmacy_stores ps ON ps.id = pi.pharmacy_id AND ps.is_active = 1 AND ps.is_emergency_closed = 0
+				LEFT JOIN hospital h ON h.id = ps.hospital_id
+				LEFT JOIN profile_dr d ON d.id = ps.associated_doctor_id
+				WHERE {$where_clause} {$extra_filter}
+				ORDER BY (ps.hospital_id IS NOT NULL OR ps.associated_doctor_id IS NOT NULL) DESC, pi.selling_price ASC
+			";
+			$m_res = $this->db->query($med_sql);
+			if ($m_res && is_object($m_res)) {
+				$medicine_results = $m_res->result();
+			}
+		}
+		$data['medicine_results'] = $medicine_results;
+
+		// 2. Query registered partner pharmacies
+		$store_where = "ps.is_active = 1";
+		if ($pincode !== '') {
+			$store_where .= " AND (ps.pincode = " . $this->db->escape($pincode) . " OR ps.city LIKE '%" . $this->db->escape_like_str($pincode) . "%')";
+		}
+		if ($service === 'open24') {
+			$store_where .= " AND ps.operating_hours LIKE '%24%'";
+		} elseif ($service === 'delivery') {
+			$store_where .= " AND ps.delivery_radius_km > 0";
+		} elseif ($service === 'affiliated') {
+			$store_where .= " AND (ps.hospital_id IS NOT NULL OR ps.associated_doctor_id IS NOT NULL)";
+		}
+		if ($store_id > 0) {
+			$store_where .= " AND ps.id = {$store_id}";
+		}
+
+		$stores_sql = "
+			SELECT 
+				ps.*,
+				(SELECT COUNT(*) FROM pharmacy_inventory pi WHERE pi.pharmacy_id = ps.id AND pi.is_available = 1 AND pi.stock_quantity > 0) AS in_stock_count,
+				h.name AS hospital_name,
+				h.address AS hospital_address,
+				CONCAT('Dr. ', d.fname, ' ', d.lname) AS doctor_name
+			FROM pharmacy_stores ps
+			LEFT JOIN hospital h ON h.id = ps.hospital_id
+			LEFT JOIN profile_dr d ON d.id = ps.associated_doctor_id
+			WHERE {$store_where}
+			ORDER BY (ps.hospital_id IS NOT NULL OR ps.associated_doctor_id IS NOT NULL) DESC, ps.id ASC
+		";
+		$s_res = $this->db->query($stores_sql);
+		$data['stores'] = ($s_res && is_object($s_res)) ? $s_res->result() : array();
+
+		// 3. Suggestions for quick pill searches
+		$sug_q = $this->db->query("SELECT id, brand_name, dosage_form, generic_composition FROM medicines_master ORDER BY id ASC LIMIT 8");
+		$data['suggested_medicines'] = ($sug_q && is_object($sug_q)) ? $sug_q->result() : array();
+
+		// 4. Distinct pincodes/cities for filter dropdown
+		$pin_q = $this->db->query("SELECT DISTINCT pincode, city FROM pharmacy_stores WHERE is_active = 1 AND pincode IS NOT NULL ORDER BY pincode ASC");
+		$data['available_locations'] = ($pin_q && is_object($pin_q)) ? $pin_q->result() : array();
+
+		// 5. Retain advertisement / equipment offers if requested
 		$offers = array();
 		try {
 			if ($this->db->table_exists('advertisement')) {
@@ -605,23 +720,9 @@ class Home extends CI_Controller
 		}
 		$data['offers'] = $offers;
 
-		// Load verified chemists from profile_chem if any
-		$chemists = array();
-		try {
-			if ($this->db->table_exists('profile_chem')) {
-				$chem_q = $this->db->get_where('profile_chem', array('status' => '1', 'approved' => '1'));
-				$chemists = ($chem_q && is_object($chem_q)) ? $chem_q->result() : array();
-			}
-		} catch (Throwable $e) {
-			$chemists = array();
-		}
-		$data['chemists'] = $chemists;
-
-		// Specializations and cities for global search bar
-		$spec_q = $this->db->order_by('name', 'asc')->where('status', '1')->get('master_specialization');
-		$data['specialization'] = ($spec_q && is_object($spec_q)) ? $spec_q->result() : array();
+		// 6. Cities and Specializations for header/modals
 		$city_q = $this->db->order_by('name', 'asc')->where('status', '1')->get('master_city');
-		$data['cities']         = ($city_q && is_object($city_q)) ? $city_q->result() : array();
+		$data['cities'] = ($city_q && is_object($city_q)) ? $city_q->result() : array();
 
 		$this->load->view('medical', $data);
 	}

@@ -169,4 +169,4 @@
 }
 
          </style>
-          			<?php include ("assets/includes/footer_hospital.php"); ?>
+          			<?php include ("assets/includes/footer_medical.php"); ?>

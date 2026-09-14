@@ -33,7 +33,7 @@
         }
 
         .hr-sidebar {
-            width: 260px;
+            width: 270px;
             background: #0f172a;
             color: #ffffff;
             flex-shrink: 0;
@@ -41,15 +41,36 @@
             flex-direction: column;
             justify-content: space-between;
             padding: 24px 0;
+            position: sticky;
+            top: 0;
+            max-height: 100vh;
+            overflow-y: auto;
+        }
+
+        .hr-sidebar::-webkit-scrollbar {
+            width: 5px;
+        }
+        .hr-sidebar::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 4px;
+        }
+
+        .hr-nav-heading {
+            font-size: 10.5px;
+            font-weight: 800;
+            color: #475569;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            padding: 16px 20px 6px;
         }
 
         .hr-nav a {
             display: flex;
             align-items: center;
             gap: 12px;
-            padding: 12px 20px;
+            padding: 10px 20px;
             color: #94a3b8;
-            font-size: 13.5px;
+            font-size: 13px;
             font-weight: 600;
             text-decoration: none !important;
             transition: all 0.2s;
@@ -65,6 +86,7 @@
             flex-grow: 1;
             padding: 28px 32px;
             overflow-x: hidden;
+            min-height: 100vh;
         }
 
         .hr-kpi-card {
@@ -73,6 +95,32 @@
             padding: 20px;
             border: 1px solid #e2e8f0;
             box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+        }
+
+        .hr-suite-tab {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border-radius: 9px;
+            font-size: 13px;
+            font-weight: 700;
+            color: #64748b;
+            text-decoration: none !important;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            white-space: nowrap;
+        }
+        .hr-suite-tab:hover {
+            color: #0f172a;
+            background: rgba(255, 255, 255, 0.7);
+        }
+        .hr-suite-tab.active {
+            background: #0f172a;
+            color: #ffffff !important;
+            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
+        }
+        .hr-suite-tab.active i {
+            color: #2dd4bf !important;
         }
     </style>
 </head>
@@ -85,13 +133,13 @@
             <div style="padding: 0 20px 20px; border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; gap: 10px;">
                 <img src="<?=base_url('images/logo.png');?>" alt="Upchar" style="height: 32px;" onerror="this.style.display='none';">
                 <div>
-                    <strong style="font-size: 16px; color: #ffffff; display: block; line-height: 1.2;">Upchar HR</strong>
-                    <small style="color: #2dd4bf; font-size: 11px;">Staff &amp; Payroll Suite</small>
+                    <strong style="font-size: 15px; color: #ffffff; display: block; line-height: 1.2;">Upchar Enterprise</strong>
+                    <small style="color: #2dd4bf; font-size: 11px;">Workforce &amp; Operations</small>
                 </div>
             </div>
 
             <div style="padding: 16px 20px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid rgba(255,255,255,0.06);">
-                <div style="width: 38px; height: 38px; border-radius: 50%; background: #ec4899; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 15px;">
+                <div style="width: 38px; height: 38px; border-radius: 50%; background: #00a896; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 15px;">
                     <?=strtoupper(substr($this->session->userdata('staff_name') ?: 'H', 0, 1));?>
                 </div>
                 <div>
@@ -102,35 +150,191 @@
                 </div>
             </div>
 
-            <nav class="hr-nav" style="margin-top: 14px;">
-                <a href="<?=base_url('hr/dashboard');?>" class="<?=($this->uri->segment(2)=='dashboard' || empty($this->uri->segment(2))) ? 'active' : '';?>">
-                    <i class="fa fa-th-large" style="color: #38bdf8;"></i> HR Dashboard
+            <?php
+            $seg1 = $this->uri->segment(1);
+            $seg2 = $this->uri->segment(2);
+            ?>
+            <nav class="hr-nav" style="margin-top: 10px;">
+                <div class="hr-nav-heading">HR &amp; Recruitment</div>
+                <a href="<?=base_url('hr/dashboard');?>" class="<?=($seg1=='hr' && ($seg2=='dashboard' || empty($seg2))) ? 'active' : '';?>">
+                    <i class="fa fa-th-large" style="color: #38bdf8;"></i> HR Command Hub
                 </a>
-                <a href="<?=base_url('hr/employees');?>" class="<?=($this->uri->segment(2)=='employees') ? 'active' : '';?>">
-                    <i class="fa fa-users" style="color: #34d399;"></i> Employee Directory
+                <a href="<?=base_url('hr/jobs');?>" class="<?=($seg1=='hr' && $seg2=='jobs') || ($seg1=='recruitment' && $seg2=='jobs') ? 'active' : '';?>">
+                    <i class="fa fa-id-badge" style="color: #6366f1;"></i> Job Requisitions
                 </a>
-                <a href="<?=base_url('hr/leaves');?>" class="<?=($this->uri->segment(2)=='leaves') ? 'active' : '';?>">
-                    <i class="fa fa-calendar-check-o" style="color: #f472b6;"></i> Leave Management
+                <a href="<?=base_url('hr/candidates');?>" class="<?=($seg1=='hr' && in_array($seg2, ['candidates', 'candidate_profile'])) || ($seg1=='recruitment' && in_array($seg2, ['candidates', 'profile'])) ? 'active' : '';?>">
+                    <i class="fa fa-filter" style="color: #ec4899;"></i> Candidate Pipeline
                 </a>
-                <a href="<?=base_url('hr/payroll');?>" class="<?=($this->uri->segment(2)=='payroll') ? 'active' : '';?>">
+                <a href="<?=base_url('hr/recruitment');?>" class="<?=($seg1=='hr' && $seg2=='recruitment') ? 'active' : '';?>">
+                    <i class="fa fa-columns" style="color: #00a896;"></i> Kanban Board
+                </a>
+                <a href="<?=base_url('hr/directory');?>" class="<?=($seg1=='hr' && in_array($seg2, ['directory', 'employees'])) ? 'active' : '';?>">
+                    <i class="fa fa-users" style="color: #34d399;"></i> Staff Directory
+                </a>
+
+                <div class="hr-nav-heading">Time &amp; Payroll</div>
+                <a href="<?=base_url('attendance/roster');?>" class="<?=(($seg1=='attendance' && $seg2=='roster') || ($seg1=='hr' && $seg2=='attendance')) ? 'active' : '';?>">
+                    <i class="fa fa-calendar-check-o" style="color: #f59e0b;"></i> Attendance Roster
+                </a>
+                <a href="<?=base_url('attendance/punch');?>" class="<?=($seg1=='attendance' && in_array($seg2, ['punch', 'history'])) ? 'active' : '';?>">
+                    <i class="fa fa-clock-o" style="color: #ec4899;"></i> Web Punch-In / Out
+                </a>
+                <a href="<?=base_url('hr/leaves');?>" class="<?=($seg1=='hr' && $seg2=='leaves') ? 'active' : '';?>">
+                    <i class="fa fa-file-text-o" style="color: #a855f7;"></i> Leave Approvals
+                </a>
+                <a href="<?=base_url('hr/payroll');?>" class="<?=($seg1=='hr' && $seg2=='payroll') ? 'active' : '';?>">
                     <i class="fa fa-calculator" style="color: #fcd34d;"></i> Payroll &amp; Salaries
                 </a>
-                <a href="<?=base_url('crm/dashboard');?>">
-                    <i class="fa fa-briefcase" style="color: #a78bfa;"></i> BDE CRM Portal
+
+                <div class="hr-nav-heading">Central Operations</div>
+                <a href="<?=base_url('operations');?>" class="<?=($seg1=='operations' && (empty($seg2) || $seg2=='dashboard')) ? 'active' : '';?>">
+                    <i class="fa fa-tachometer" style="color: #60a5fa;"></i> Operations Hub
                 </a>
-                <a href="<?=base_url('operations/dashboard');?>">
-                    <i class="fa fa-flask" style="color: #fb923c;"></i> Central Operations
+                <a href="<?=base_url('operations/handoffs');?>" class="<?=($seg1=='operations' && $seg2=='handoffs') ? 'active' : '';?>">
+                    <i class="fa fa-flask" style="color: #fb923c;"></i> Lab / Shift Handoffs
                 </a>
+                <a href="<?=base_url('operations/expenses');?>" class="<?=($seg1=='operations' && $seg2=='expenses') ? 'active' : '';?>">
+                    <i class="fa fa-credit-card" style="color: #4ade80;"></i> Expense Desk
+                </a>
+
+                <div class="hr-nav-heading">CRM &amp; Growth</div>
+                <a href="<?=base_url('crm');?>" class="<?=($seg1=='crm' && (empty($seg2) || $seg2=='dashboard')) ? 'active' : '';?>">
+                    <i class="fa fa-line-chart" style="color: #f59e0b;"></i> CRM Command Hub
+                </a>
+                <a href="<?=base_url('crm/leads');?>" class="<?=($seg1=='crm' && $seg2=='leads') ? 'active' : '';?>">
+                    <i class="fa fa-columns" style="color: #fbbf24;"></i> Leads &amp; Pipeline
+                </a>
+                <a href="<?=base_url('crm/contacts');?>" class="<?=($seg1=='crm' && $seg2=='contacts') ? 'active' : '';?>">
+                    <i class="fa fa-address-book" style="color: #38bdf8;"></i> Partner Directory
+                </a>
+                <a href="<?=base_url('crm/activities');?>" class="<?=($seg1=='crm' && $seg2=='activities') ? 'active' : '';?>">
+                    <i class="fa fa-phone-square" style="color: #34d399;"></i> Activity &amp; Follow-ups
+                </a>
+
+                <div class="hr-nav-heading">Account</div>
                 <a href="<?=base_url('staff/logout');?>">
                     <i class="fa fa-sign-out" style="color: #f87171;"></i> Logout
                 </a>
             </nav>
         </div>
 
-        <div style="padding: 0 20px; font-size: 11px; color: #64748b;">
-            Upchar Workforce Engine &copy; <?=date('Y');?>
+        <div style="padding: 16px 20px; font-size: 11px; color: #64748b; border-top: 1px solid rgba(255,255,255,0.06);">
+            Upchar Enterprise &copy; <?=date('Y');?>
         </div>
     </aside>
 
     <!-- Main Content -->
     <main class="hr-main-body">
+
+        <?php
+        $isHrRecruitment = ($seg1 == 'hr' && in_array($seg2, ['', 'dashboard', 'jobs', 'candidates', 'recruitment', 'directory', 'employees', 'candidate_profile'])) || ($seg1 == 'recruitment');
+        $isTimePayroll = ($seg1 == 'attendance') || ($seg1 == 'hr' && in_array($seg2, ['attendance', 'leaves', 'payroll', 'roster']));
+        $isCrm = ($seg1 == 'crm');
+        ?>
+
+        <?php if ($isHrRecruitment): ?>
+        <!-- Unified HR & Recruitment Suite Header Navigation -->
+        <div class="hr-suite-navbar" style="background: #ffffff; border-radius: 16px; border: 1px solid #e2e8f0; padding: 12px 20px; margin-bottom: 24px; box-shadow: 0 4px 16px -2px rgba(0,0,0,0.03); display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px;">
+            <!-- Left Module Title -->
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <div style="width: 40px; height: 40px; border-radius: 12px; background: linear-gradient(135deg, #0f172a 0%, #00a896 100%); color: #ffffff; display: flex; align-items: center; justify-content: center; font-size: 17px; box-shadow: 0 4px 10px rgba(0, 168, 150, 0.25);">
+                    <i class="fa fa-users"></i>
+                </div>
+                <div>
+                    <div style="font-size: 10.5px; font-weight: 800; color: #00a896; text-transform: uppercase; letter-spacing: 0.6px; line-height: 1;">
+                        Upchar Enterprise HRM
+                    </div>
+                    <strong style="font-size: 15.5px; font-weight: 800; color: #0f172a;">
+                        HR &amp; Recruitment Suite
+                    </strong>
+                </div>
+            </div>
+
+            <!-- Right Connected Segmented Pills -->
+            <div style="display: inline-flex; background: #f1f5f9; padding: 4px; border-radius: 12px; border: 1px solid #e2e8f0; gap: 4px; overflow-x: auto; max-width: 100%;">
+                <a href="<?=base_url('hr/dashboard');?>" class="hr-suite-tab <?=($seg1=='hr' && ($seg2=='dashboard' || empty($seg2))) ? 'active' : '';?>">
+                    <i class="fa fa-th-large" style="color: #38bdf8;"></i> HR Command Hub
+                </a>
+                <a href="<?=base_url('hr/jobs');?>" class="hr-suite-tab <?=(($seg1=='hr' && $seg2=='jobs') || ($seg1=='recruitment' && $seg2=='jobs')) ? 'active' : '';?>">
+                    <i class="fa fa-id-badge" style="color: #6366f1;"></i> Job Requisitions
+                </a>
+                <a href="<?=base_url('hr/candidates');?>" class="hr-suite-tab <?=(($seg1=='hr' && in_array($seg2, ['candidates', 'candidate_profile'])) || ($seg1=='recruitment' && in_array($seg2, ['candidates', 'profile']))) ? 'active' : '';?>">
+                    <i class="fa fa-filter" style="color: #ec4899;"></i> Candidate Pipeline
+                </a>
+                <a href="<?=base_url('hr/recruitment');?>" class="hr-suite-tab <?=($seg1=='hr' && $seg2=='recruitment') ? 'active' : '';?>">
+                    <i class="fa fa-columns" style="color: #00a896;"></i> Kanban Board
+                </a>
+                <a href="<?=base_url('hr/directory');?>" class="hr-suite-tab <?=($seg1=='hr' && in_array($seg2, ['directory', 'employees'])) ? 'active' : '';?>">
+                    <i class="fa fa-users" style="color: #10b981;"></i> Staff Directory
+                </a>
+            </div>
+        </div>
+        <?php elseif ($isTimePayroll): ?>
+        <!-- Unified Time, Attendance & Payroll Suite Header Navigation -->
+        <div class="hr-suite-navbar" style="background: #ffffff; border-radius: 16px; border: 1px solid #e2e8f0; padding: 12px 20px; margin-bottom: 24px; box-shadow: 0 4px 16px -2px rgba(0,0,0,0.03); display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px;">
+            <!-- Left Module Title -->
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <div style="width: 40px; height: 40px; border-radius: 12px; background: linear-gradient(135deg, #0f172a 0%, #f59e0b 100%); color: #ffffff; display: flex; align-items: center; justify-content: center; font-size: 17px; box-shadow: 0 4px 10px rgba(245, 158, 11, 0.25);">
+                    <i class="fa fa-calendar-check-o"></i>
+                </div>
+                <div>
+                    <div style="font-size: 10.5px; font-weight: 800; color: #f59e0b; text-transform: uppercase; letter-spacing: 0.6px; line-height: 1;">
+                        Upchar Enterprise Workforce
+                    </div>
+                    <strong style="font-size: 15.5px; font-weight: 800; color: #0f172a;">
+                        Time, Attendance &amp; Payroll Suite
+                    </strong>
+                </div>
+            </div>
+
+            <!-- Right Connected Segmented Pills -->
+            <div style="display: inline-flex; background: #f1f5f9; padding: 4px; border-radius: 12px; border: 1px solid #e2e8f0; gap: 4px; overflow-x: auto; max-width: 100%;">
+                <a href="<?=base_url('attendance/roster');?>" class="hr-suite-tab <?=(($seg1=='attendance' && ($seg2=='roster' || empty($seg2))) || ($seg1=='hr' && $seg2=='attendance')) ? 'active' : '';?>">
+                    <i class="fa fa-calendar-check-o" style="color: #f59e0b;"></i> Attendance Roster
+                </a>
+                <a href="<?=base_url('attendance/punch');?>" class="hr-suite-tab <?=($seg1=='attendance' && in_array($seg2, ['punch', 'history'])) ? 'active' : '';?>">
+                    <i class="fa fa-clock-o" style="color: #ec4899;"></i> Web Punch-In / Out
+                </a>
+                <a href="<?=base_url('hr/leaves');?>" class="hr-suite-tab <?=($seg1=='hr' && $seg2=='leaves') ? 'active' : '';?>">
+                    <i class="fa fa-file-text-o" style="color: #a855f7;"></i> Leave Approvals
+                </a>
+                <a href="<?=base_url('hr/payroll');?>" class="hr-suite-tab <?=($seg1=='hr' && $seg2=='payroll') ? 'active' : '';?>">
+                    <i class="fa fa-calculator" style="color: #fcd34d;"></i> Payroll &amp; Salaries
+                </a>
+            </div>
+        </div>
+        <?php elseif ($isCrm): ?>
+        <!-- Unified CRM & Partner Acquisition Suite Header Navigation -->
+        <div class="hr-suite-navbar" style="background: #ffffff; border-radius: 16px; border: 1px solid #e2e8f0; padding: 12px 20px; margin-bottom: 24px; box-shadow: 0 4px 16px -2px rgba(0,0,0,0.03); display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px;">
+            <!-- Left Module Title -->
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <div style="width: 40px; height: 40px; border-radius: 12px; background: linear-gradient(135deg, #0f172a 0%, #f59e0b 100%); color: #ffffff; display: flex; align-items: center; justify-content: center; font-size: 17px; box-shadow: 0 4px 10px rgba(245, 158, 11, 0.25);">
+                    <i class="fa fa-handshake-o"></i>
+                </div>
+                <div>
+                    <div style="font-size: 10.5px; font-weight: 800; color: #f59e0b; text-transform: uppercase; letter-spacing: 0.6px; line-height: 1;">
+                        Upchar Enterprise Growth
+                    </div>
+                    <strong style="font-size: 15.5px; font-weight: 800; color: #0f172a;">
+                        CRM &amp; Partner Acquisition Suite
+                    </strong>
+                </div>
+            </div>
+
+            <!-- Right Connected Segmented Pills -->
+            <div style="display: inline-flex; background: #f1f5f9; padding: 4px; border-radius: 12px; border: 1px solid #e2e8f0; gap: 4px; overflow-x: auto; max-width: 100%;">
+                <a href="<?=base_url('crm');?>" class="hr-suite-tab <?=($seg1=='crm' && (empty($seg2) || $seg2=='dashboard')) ? 'active' : '';?>">
+                    <i class="fa fa-line-chart" style="color: #f59e0b;"></i> CRM Command Hub
+                </a>
+                <a href="<?=base_url('crm/leads');?>" class="hr-suite-tab <?=($seg1=='crm' && $seg2=='leads') ? 'active' : '';?>">
+                    <i class="fa fa-columns" style="color: #fbbf24;"></i> Leads &amp; Pipeline
+                </a>
+                <a href="<?=base_url('crm/contacts');?>" class="hr-suite-tab <?=($seg1=='crm' && $seg2=='contacts') ? 'active' : '';?>">
+                    <i class="fa fa-address-book" style="color: #38bdf8;"></i> Partner Directory
+                </a>
+                <a href="<?=base_url('crm/activities');?>" class="hr-suite-tab <?=($seg1=='crm' && $seg2=='activities') ? 'active' : '';?>">
+                    <i class="fa fa-phone-square" style="color: #34d399;"></i> Activities &amp; Follow-ups
+                </a>
+            </div>
+        </div>
+        <?php endif; ?>

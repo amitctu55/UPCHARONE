@@ -11,6 +11,7 @@
 
     <!-- Pharmacy Login Form -->
     <form class="auth-form" id="medloginform" action="<?=base_url();?>Medicaluser/login" method="POST">
+      <input type="hidden" name="<?=$this->security->get_csrf_token_name();?>" value="<?=$this->security->get_csrf_hash();?>">
       <div class="form-group">
         <label for="email">Mobile Number / Email ID <span class="required">*</span></label>
         <input type="text" id="email" name="email" class="form-control" placeholder="pharmacy@example.com or 10-digit mobile" required>

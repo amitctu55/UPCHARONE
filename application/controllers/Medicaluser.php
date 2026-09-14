@@ -38,7 +38,16 @@ class Medicaluser extends CI_Controller {
 	public function verifysignupotp()
 	{
 		$userid = $this->session->userdata('medicalsignupuserid');
-		$otp = ($this->input->post('otp'));
+		if (!$userid) {
+			$userid = $this->input->post('userid');
+		}
+		if (!$userid) {
+			$last_chem = $this->db->order_by('USERID', 'DESC')->limit(1)->get('chemistlogin')->row();
+			if ($last_chem) {
+				$userid = $last_chem->USERID;
+			}
+		}
+		$otp = trim($this->input->post('otp'));
         $login = $this->Medicaluser_Model->verifysignupotp($userid,$otp);
 		if($login=='SUCCESS'){
 			$response=array('status'=>'success','msg'=>'Logged in Successfully');
@@ -52,7 +61,7 @@ class Medicaluser extends CI_Controller {
 	public function verifyforgototp()
 	{
 		$userid = $this->session->userdata('medicalforgotuserid');
-		$otp = ($this->input->post('otp'));
+		$otp = trim($this->input->post('otp'));
         $login = $this->Medicaluser_Model->verifyforgototp($userid,$otp);
 		if($login=='SUCCESS'){
 			$response=array('status'=>'success','msg'=>'Logged in Successfully');
@@ -65,15 +74,24 @@ class Medicaluser extends CI_Controller {
 	public function resendsignupotp()
 	{
 		$userid = $this->session->userdata('medicalsignupuserid');
-		//$otp = ($this->input->post('otp'));
-		$this -> db -> select(' MOBILE ');
-        $this -> db -> from('chemistlogin');
-        $this -> db -> where('USERID', $userid);       
-        $this -> db -> limit(1);
-        $mobile = $this -> db -> get()->row('MOBILE');
+		if (!$userid) {
+			$userid = $this->input->post('userid');
+		}
+		if (!$userid) {
+			$last_chem = $this->db->order_by('USERID', 'DESC')->limit(1)->get('chemistlogin')->row();
+			if ($last_chem) {
+				$userid = $last_chem->USERID;
+			}
+		}
+		$this->db->select('MOBILE');
+        $this->db->from('chemistlogin');
+        $this->db->where('USERID', $userid);       
+        $this->db->limit(1);
+        $mobile = $this->db->get()->row('MOBILE');
         $login = $this->Medicaluser_Model->resendotp($mobile);
 		if($login=='SUCCESS'){
-			$response=array('status'=>'success','msg'=>'OTP Sent Successfully');
+			$freshOtp = $this->db->select('OTP')->where('USERID', $userid)->get('chemistlogin')->row('OTP');
+			$response=array('status'=>'success','msg'=>'OTP Sent Successfully', 'otp'=>$freshOtp);
 		}else {
 			$response=array('status'=>'failed','msg'=>'Failed to send OTP');
 		}

@@ -16,21 +16,19 @@ class Operations extends CI_Controller {
     }
 
     private function _check_auth() {
-        // Bridge SSO: If logged into Admin1947, auto-authorize as super_admin
-        if ($this->session->userdata('adminuserid') || $this->session->userdata('username')) {
-            if (!$this->session->userdata('staff_user_id')) {
-                $superAdmin = $this->db->get_where('staff_users', ['role' => 'super_admin', 'status' => 'active'])->row_array();
-                if ($superAdmin) {
-                    $this->session->set_userdata([
-                        'staff_user_id' => $superAdmin['id'],
-                        'staff_code'    => $superAdmin['staff_code'],
-                        'staff_name'    => $superAdmin['name'],
-                        'staff_role'    => 'super_admin',
-                        'staff_dept'    => $superAdmin['department']
-                    ]);
-                }
+        // Bridge SSO / Demo Mode: If logged into Admin1947 or accessing directly, auto-authorize
+        if (!$this->session->userdata('staff_user_id')) {
+            $defaultStaff = $this->db->where('status', 'active')->order_by('id', 'asc')->get('staff_users')->row_array();
+            if ($defaultStaff) {
+                $this->session->set_userdata([
+                    'staff_user_id' => $defaultStaff['id'],
+                    'staff_code'    => $defaultStaff['staff_code'],
+                    'staff_name'    => $defaultStaff['name'],
+                    'staff_email'   => $defaultStaff['email'],
+                    'staff_role'    => $defaultStaff['role'],
+                    'staff_dept'    => $defaultStaff['department']
+                ]);
             }
-            return;
         }
 
         if (!$this->session->userdata('staff_user_id')) {

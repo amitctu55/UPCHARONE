@@ -75,29 +75,28 @@ class Medical_Model extends CI_Model {
 			$rname=rand(1111111,999999999);
 			$date=date('Ymd');
 			$uploadimage='dr_profile_pic_'.$rname.$date.'.'.$extsign;
-			$config['upload_path']          = $_SERVER['DOCUMENT_ROOT'].'/admin1947/public/assets/upload/';
-					$config['allowed_types'] = 'jpg|png|jpeg|JPG|PNG|JPEG|';
-					$config['max_size']             = 0;
-					$config['quality'] = '50%';
-					$config['file_name']  = $uploadimage;
-					$this->load->library('upload', $config);
+			$upload_dir = FCPATH . 'admin1947/public/assets/upload/';
+			if (!is_dir($upload_dir)) { @mkdir($upload_dir, 0777, true); }
+			$config['upload_path']   = $upload_dir;
+			$config['allowed_types'] = 'jpg|png|jpeg|JPG|PNG|JPEG|pdf|PDF';
+			$config['max_size']      = 0;
+			$config['quality']       = '50%';
+			$config['file_name']     = $uploadimage;
+			$this->load->library('upload', $config);
 					
-					if ( ! $this->upload->do_upload('images'))
-					{
-						$error = $this->upload->display_errors();
-						echo $flashmsg='<div class="alert alert-danger">
-						  <strong>Failed!</strong>'.$error.'
-						</div>';
-						$this->session->set_flashdata('flashmsg',$flashmsg);
-						redirect('profile_drpic2');
-						exit();
-						
-					}else{
-						$udata=array('drimage'=>$uploadimage);
-						$this->db->where('id',$this->did)->update('profile_chem',$udata);
-					}
+			if ( ! $this->upload->do_upload('images'))
+			{
+				$error = $this->upload->display_errors();
+				$flashmsg='<div class="alert alert-danger"><strong>Failed!</strong> '.$error.'</div>';
+				$this->session->set_flashdata('flashmsg',$flashmsg);
+				redirect('medicalpanel/profile_drpic2');
+				exit();
+			}else{
+				$udata=array('drimage'=>$uploadimage);
+				$this->db->where('id',$this->did)->update('profile_chem',$udata);
+			}
 		}
-		redirect('profile_idproof2');	
+		redirect('medicalpanel/profile_idproof2');	
 	}
 	
 	public function profile_idproof2(){
@@ -109,33 +108,30 @@ class Medical_Model extends CI_Model {
 			$rname=rand(1111111,999999999);
 			$date=date('Ymd');
 			$uploadimage='dr_idproof_pic_'.$rname.$date.'.'.$extsign;
-			$config['upload_path']          = $_SERVER['DOCUMENT_ROOT'].'/admin1947/public/assets/upload/';
-					$config['allowed_types'] = 'jpg|png|jpeg|JPG|PNG|JPEG';
-					$config['max_size']             = 0;
-					$config['quality'] = '50%';
-					$config['file_name']  = $uploadimage;
-					$this->load->library('upload', $config);
+			$upload_dir = FCPATH . 'admin1947/public/assets/upload/';
+			if (!is_dir($upload_dir)) { @mkdir($upload_dir, 0777, true); }
+			$config['upload_path']   = $upload_dir;
+			$config['allowed_types'] = 'jpg|png|jpeg|JPG|PNG|JPEG|pdf|PDF';
+			$config['max_size']      = 0;
+			$config['quality']       = '50%';
+			$config['file_name']     = $uploadimage;
+			$this->load->library('upload', $config);
 					
-					if ( ! $this->upload->do_upload('images'))
-					{
-						$error = $this->upload->display_errors();
-						echo $flashmsg='<div class="alert alert-danger">
-						  <strong>Failed!</strong>'.$error.'
-						</div>';
-						$this->session->set_flashdata('flashmsg',$flashmsg);
-						redirect('profile_idproof2');
-						exit();
-						
-					}else{
-						$udata=array('id_proof'=>$uploadimage);
-						$this->db->where('id',$this->did)->update('profile_chem',$udata);
-					}
+			if ( ! $this->upload->do_upload('images'))
+			{
+				$error = $this->upload->display_errors();
+				$flashmsg='<div class="alert alert-danger"><strong>Failed!</strong> '.$error.'</div>';
+				$this->session->set_flashdata('flashmsg',$flashmsg);
+				redirect('medicalpanel/profile_idproof2');
+				exit();
+			}else{
+				$udata=array('id_proof'=>$uploadimage);
+				$this->db->where('id',$this->did)->update('profile_chem',$udata);
+			}
 		}
-		redirect('profile_regproof2');	
+		redirect('medicalpanel/profile_regproof2');	
 	}
 	
-	  
-		
 	public function profile_regproof2(){
 		$uploadimage=$_FILES['images']['name'];
 		$extsign = pathinfo($_FILES['images']['name'],PATHINFO_EXTENSION);
@@ -145,29 +141,29 @@ class Medical_Model extends CI_Model {
 			$rname=rand(1111111,999999999);
 			$date=date('Ymd');
 			$uploadimage='dr_regproof_pic_'.$rname.$date.'.'.$extsign;
-			$config['upload_path']          = $_SERVER['DOCUMENT_ROOT'].'/admin1947/public/assets/upload/';
-					$config['allowed_types'] = 'jpg|png|jpeg|JPG|PNG|JPEG';
-					$config['max_size']             = 0;
-					$config['quality'] = '50%';
-					$config['file_name']  = $uploadimage;
-					$this->load->library('upload', $config);
+			$upload_dir = FCPATH . 'admin1947/public/assets/upload/';
+			if (!is_dir($upload_dir)) { @mkdir($upload_dir, 0777, true); }
+			$config['upload_path']   = $upload_dir;
+			$config['allowed_types'] = 'jpg|png|jpeg|JPG|PNG|JPEG|pdf|PDF';
+			$config['max_size']      = 0;
+			$config['quality']       = '50%';
+			$config['file_name']     = $uploadimage;
+			$this->load->library('upload', $config);
 					
-					if ( ! $this->upload->do_upload('images'))
-					{
-						$error = $this->upload->display_errors();
-						echo $flashmsg='<div class="alert alert-danger">
-						  <strong>Failed!</strong>'.$error.'
-						</div>';
-						$this->session->set_flashdata('flashmsg',$flashmsg);
-						redirect('profile_regproof2');
-						exit();
-						
-					}else{
+			if ( ! $this->upload->do_upload('images'))
+			{
+				$error = $this->upload->display_errors();
+				$flashmsg='<div class="alert alert-danger"><strong>Failed!</strong> '.$error.'</div>';
+				$this->session->set_flashdata('flashmsg',$flashmsg);
+				redirect('medicalpanel/profile_regproof2');
+				exit();
+			}else{
 						$udata=array('med_reg_proof'=>$uploadimage);
 						$this->db->where('id',$this->did)->update('profile_chem',$udata);
 					}
 		}
-		redirect('managepractice2');	
+		$this->session->set_flashdata('flashmsg', '<div class="alert alert-success" style="border-radius:8px;"><strong>Success!</strong> Retail Drug License &amp; Registration uploaded successfully. Your KYC documents are submitted for verification.</div>');
+		redirect('medical-dashboard');	
 	}
 	
 	

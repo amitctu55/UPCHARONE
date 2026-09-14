@@ -80,23 +80,12 @@ class Medicaluser_Model extends CI_Model {
 		if($query -> num_rows() > 0)
         {			
 			$row = $query->row();
-			if($row->OTP!= null ||$row->OTP!= ''){
-                
-			
-			
-				$otp=$row->OTP;
-				//$otp=rand(100000,999999);
-				//$this->db->where('USERID',$row->USERID)->set('OTP',$otp)->update('chemistlogin');
-				//$this->session->set_userdata('medicalforgotuserid', $row->USERID);
-				$msg="Dear ".$row->FNAME.",
-	 Your One Time Password is $otp
-	UPCHARR";
-			sendsms($msg,$row->MOBILE);
-				return 'SUCCESS';
-			}
-			else {
-				return 'FAILED';
-			}
+			$otp = rand(100000, 999999);
+			$this->db->where('USERID', $row->USERID)->set('OTP', $otp)->update('chemistlogin');
+			$this->db->where('user_id', $row->USERID)->set('otp', $otp)->update('profile_chem');
+			$msg = "Dear ".$row->FNAME.", Your One Time Password is $otp - UPCHAR";
+			@sendsms($msg, $row->MOBILE);
+			return 'SUCCESS';
         }
         else
         {
@@ -131,8 +120,22 @@ class Medicaluser_Model extends CI_Model {
 
             if($row->STATUS==1){
                 $this->session->set_userdata('medicaluserid', $row->USERID);
-                $this->session->set_userdata('medicaluseremail', $row->EMAIL);				           
-				$this->session->set_userdata('medicalusername', $row->FNAME);
+                $this->session->set_userdata('medicaluseremail', $row->EMAIL);
+                $fullName = trim($row->FNAME . ' ' . $row->LNAME);
+                $this->session->set_userdata('medicalusername', $fullName ?: $row->FNAME);
+
+                // Fetch store name or profile name
+                $storeRow = $this->db->get_where('pharmacy_stores', ['owner_id' => $row->USERID])->row();
+                if ($storeRow && !empty($storeRow->store_name)) {
+                    $this->session->set_userdata('store_name', $storeRow->store_name);
+                } else {
+                    $profRow = $this->db->get_where('profile_chem', ['user_id' => $row->USERID])->row();
+                    if ($profRow && !empty($profRow->fname)) {
+                        $this->session->set_userdata('store_name', trim($profRow->fname . ' ' . ($profRow->lname ?? '')));
+                    } else {
+                        $this->session->set_userdata('store_name', $fullName ?: $row->FNAME);
+                    }
+                }
            
 				if(!empty($row->CART)){
 					$cartArray = unserialize($row->CART);
@@ -175,10 +178,13 @@ class Medicaluser_Model extends CI_Model {
         {			
 			$row = $query->row();
             if($row->OTP==$otp){
-				$this->db->where('USERID',$userid)->set('STATUS','1')->set('OTP',null)->update('chemistlogin');//last_query();die;
+				$this->db->where('USERID',$userid)->set('STATUS','1')->set('OTP',null)->update('chemistlogin');
+				$this->db->where('user_id',$userid)->set('status','1')->set('otp',null)->update('profile_chem');
                 $this->session->set_userdata('medicaluserid', $row->USERID);
-                $this->session->set_userdata('medicaluseremail', $row->EMAIL);				           
-				$this->session->set_userdata('medicalusername', $row->FNAME);
+                $this->session->set_userdata('medicaluseremail', $row->EMAIL);
+                $fullName = trim($row->FNAME . ' ' . $row->LNAME);
+                $this->session->set_userdata('medicalusername', $fullName ?: $row->FNAME);
+                $this->session->set_userdata('store_name', $fullName ?: $row->FNAME);
            
 			if($row->CART!=''){
 				$cartArray = unserialize($row->CART);
@@ -278,10 +284,19 @@ thank you for being a part of Upchar.";
 			{  
 				$thisid = $this->db->insert_id();
 				
-				$this->db->insert('profile_chem',array('user_id'=>$thisid,'fname'=>$fullname,'email'=>$email,'mobile'=>$mobile,'verified'=>'0','approved'=>'0','status'=>'0'));//last_query();die;
+				$this->db->insert('profile_chem',array(
+					'user_id' => $thisid,
+					'fname'   => $fullname,
+					'email'   => $email,
+					'mobile'  => $mobile,
+					'otp'     => $otp,
+					'verified'=> '0',
+					'approved'=> '0',
+					'status'  => '0'
+				));
 				$this->session->set_userdata('medicalsignupuserid', $thisid);
 			
-				$response=array('status'=>'success','msg'=>'Registration Successful, Please Verify Email!');
+				$response=array('status'=>'success','msg'=>'Registration Successful, Please Verify Mobile OTP!');
 			}
 			else
 			{

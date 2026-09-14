@@ -305,6 +305,43 @@ $pageurl3 = $this->uri->segment(3);
         </ul>
       </li>
 
+      <!-- =========================================================
+           PHARMACY & DELIVERY FLEET CONSOLE
+           ========================================================= -->
+      <?php 
+      $is_pharmacy_active = ($pageurl1 == 'pharmacy-fleet' || ($pageurl1 == 'masters' && $pageurl2 == 'pharmacy_fleet'));
+      ?>
+      <li class="treeview <?php if($is_pharmacy_active){ ?> active menu-open <?php }?>">
+        <a href="#">
+          <i class="fa fa-medkit" style="color: #00a8ff;"></i> <span>Pharmacy &amp; Delivery Fleet</span>
+          <span class="pull-right-container">
+            <i class="fa fa-angle-left pull-right"></i>
+          </span>
+        </a>
+        <ul class="treeview-menu" <?php if($is_pharmacy_active){ ?> style="display: block;" <?php }?>>
+          <li class="<?php if($is_pharmacy_active && ($this->input->get('tab')=='pharmacy' || empty($this->input->get('tab')))){ ?>active<?php }?>">
+            <a href="<?=base_url('masters/pharmacy_fleet?tab=pharmacy');?>">
+              <i class="fa fa-plus-square"></i> Partner Pharmacies
+            </a>
+          </li>
+          <li class="<?php if($is_pharmacy_active && $this->input->get('tab')=='fleet'){ ?>active<?php }?>">
+            <a href="<?=base_url('masters/pharmacy_fleet?tab=fleet');?>">
+              <i class="fa fa-motorcycle"></i> Delivery Fleet &amp; Riders
+            </a>
+          </li>
+          <li class="<?php if($is_pharmacy_active && $this->input->get('tab')=='dispatch'){ ?>active<?php }?>">
+            <a href="<?=base_url('masters/pharmacy_fleet?tab=dispatch');?>">
+              <i class="fa fa-map-marker"></i> Live Dispatch Grid
+            </a>
+          </li>
+          <li class="<?php if($is_pharmacy_active && $this->input->get('tab')=='settlements'){ ?>active<?php }?>">
+            <a href="<?=base_url('masters/pharmacy_fleet?tab=settlements');?>">
+              <i class="fa fa-money"></i> Financial Settlements
+            </a>
+          </li>
+        </ul>
+      </li>
+
       <!-- System Settings Portal -->
       <li class="treeview <?php if($pageurl1=='settings'){ ?> active menu-open <?php }?>">
         <a href="#">

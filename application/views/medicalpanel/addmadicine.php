@@ -18,7 +18,7 @@
   <table class="table">
     <thead style="background: #073e59;color:white;">
       <tr >
-        <th style="text-align:center;">Madicine</th>
+        <th style="text-align:center;">Medicine</th>
         <th style="text-align:center;">Quantity</th>
         <th style="text-align:center;">Price</th>
       </tr>
@@ -114,4 +114,4 @@
     font-size: 95px;
 }
          </style>
-          			<?php include ("assets/includes/footer_hospital.php"); ?>
+          			<?php include ("assets/includes/footer_medical.php"); ?>

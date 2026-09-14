@@ -15,19 +15,19 @@
 				
 				
 				<div class="row">
-				    <h3 class="text-center" style="margin-bottom:32px;">Madicine Center</h3>
+				    <h3 class="text-center" style="margin-bottom:32px;">Medicine Center</h3>
 				    <div class="col-md-12">
 				        <div class="col-md-2"></div>
 				        <div class="col-md-3 text-center boxdesign">
 				          
 				    
-				            <h4><a href="<?=base_url();?>medicalpanel/import" target="_blank" style="color:white;">Import Madicine</a></h4>
+				            <h4><a href="<?=base_url();?>medicalpanel/import" target="_blank" style="color:white;">Import Medicine</a></h4>
 				        </div>
 				        <div class="col-md-2"></div>
 				        <div class="col-md-3 text-center boxdesign">
 				           
 				    
-				            <h4><a href="<?=base_url();?>medicalpanel/exportsheet" target="_blank" style="color:white;">Export Madicine</a></h4>
+				            <h4><a href="<?=base_url();?>medicalpanel/exportsheet" target="_blank" style="color:white;">Export Medicine</a></h4>
 				        </div>				        
 				        <div class="col-md-2"></div>
 				    </div>
@@ -108,4 +108,4 @@
     border-radius: 16px;
 }
          </style>
-          			<?php include ("assets/includes/footer_hospital.php"); ?>
+          			<?php include ("assets/includes/footer_medical.php"); ?>

@@ -416,6 +416,21 @@
 
 <!-- Floating Search & Filter Bar -->
 <div class="container" style="margin-top: 24px;">
+    <!-- UPCHAR 3-Way Search Directory Toggle (Doctors / Hospitals / Medicines & Pharmacies) -->
+    <div class="search-category-toggle-container" style="display: flex; justify-content: center; margin-bottom: 14px;">
+        <div class="search-toggle-group" style="display: inline-flex; background: #08364B; padding: 4px; border-radius: 30px; box-shadow: 0 4px 14px rgba(8, 54, 75, 0.18);">
+            <a href="<?=base_url('doctors');?>" class="search-toggle-btn" style="display: inline-flex; align-items: center; gap: 8px; padding: 8px 22px; border-radius: 24px; font-size: 13.5px; font-weight: 700; text-decoration: none; transition: all 0.25s; background: transparent; color: #E2E8F0;">
+                <i class="fas fa-user-md"></i> Doctors
+            </a>
+            <a href="<?=base_url('hospitals');?>" class="search-toggle-btn active" style="display: inline-flex; align-items: center; gap: 8px; padding: 8px 22px; border-radius: 24px; font-size: 13.5px; font-weight: 700; text-decoration: none; transition: all 0.25s; background: #00A8FF; color: #FFFFFF; box-shadow: 0 2px 6px rgba(0, 168, 255, 0.4);">
+                <i class="fas fa-hospital"></i> Hospitals
+            </a>
+            <a href="javascript:void(0);" onclick="openMedicineCompareModal()" class="search-toggle-btn" style="display: inline-flex; align-items: center; gap: 8px; padding: 8px 22px; border-radius: 24px; font-size: 13.5px; font-weight: 700; text-decoration: none; transition: all 0.25s; background: transparent; color: #9BC03C;">
+                <i class="fas fa-pills" style="color: #9BC03C;"></i> Medicines & Pharmacies <span class="badge" style="background: #E63946; color: #FFF; font-size: 10px; margin-left: 2px;">NEW</span>
+            </a>
+        </div>
+    </div>
+
     <form action='<?=(strpos(current_url(), 'search') !== false) ? base_url('search') : base_url('hospitals');?>' method='GET'>
         <div class="box-form">
             <div class="row" style="margin: 0;">
@@ -751,4 +766,5 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
+<?php include (APPPATH . 'views/modals/medicine_order_modals.php'); ?>
 <?php include ('includes/footer.php'); ?>

@@ -325,3 +325,156 @@ $route['operations/update_expense']         = 'operations/update_expense';
 $route['lab-tests']                         = 'mytest';
 $route['medicines']                         = 'home/medical';
 $route['dashboard']                         = 'home/myappointments';
+$route['search']                            = 'home/doctors';
+
+// Medical / Pharmacy Partner Portal
+$route['medical-aindex']                    = 'medicalpanel/login';
+$route['medical-login']                     = 'medicalpanel/login';
+$route['medical-signup']                    = 'medicalpanel/signup';
+$route['medical-verifymobile']              = 'medicalpanel/verifymobile';
+$route['medical-forgotpassword']            = 'medicalpanel/forgotpassword';
+$route['medical-verifymobileforgot']        = 'medicalpanel/verifymobileforgot';
+$route['medical-dashboard']                 = 'medicalpanel/dashboard';
+$route['medicalpanel']                      = 'medicalpanel/milestone';
+$route['medicalpanel/(:any)']               = 'medicalpanel/$1';
+$route['medicalpanel/(:any)/(:any)']        = 'medicalpanel/$1/$2';
+
+// =========================================================================
+// UPCHAR Pharmacy Master Dashboard & Clean RESTful Routes
+// =========================================================================
+// API routes
+$route['api/v1/medicines/compare']                = 'api_medicines/compare';
+$route['api/v1/prescriptions/upload']             = 'api_medicines/upload_prescription';
+$route['api/v1/pharmacy/orders/(:any)/verify-rx'] = 'api_medicines/verify_prescription/$1';
+$route['api/v1/medicines/create-order']           = 'api_medicines/create_order';
+
+// Phase 1 Clean URI Routes
+$route['pharmacy/dashboard']                      = 'pharmacy/dashboard';
+$route['pharmacy/profile/edit']                   = 'pharmacy/profile_edit';
+$route['pharmacy/profile/update']                 = 'pharmacy/profile_update';
+$route['pharmacy/profile/verification']           = 'pharmacy/profile_verification';
+$route['pharmacy/profile/onboarding']             = 'pharmacy/profile_onboarding';
+$route['pharmacy/doctors']                        = 'pharmacy/doctors';
+$route['pharmacy/appointments']                   = 'pharmacy/appointments';
+$route['pharmacy/reports']                        = 'pharmacy/reports';
+$route['pharmacy/gallery']                        = 'pharmacy/gallery';
+$route['pharmacy/orders/pending']                 = 'pharmacy/orders_pending';
+$route['pharmacy/inventory/import']               = 'pharmacy/inventory_import';
+
+// Phase 2 Module 1: Inventory & Stock Management
+$route['pharmacy/inventory']                      = 'pharmacy/inventory';
+$route['pharmacy/inventory/update']               = 'pharmacy/inventory_update';
+
+// Phase 2 Module 2: Order & Bill Management
+$route['pharmacy/orders']                         = 'pharmacy/orders';
+$route['pharmacy/orders/status']                  = 'pharmacy/orders_status';
+$route['pharmacy/billing/generate/(:num)']        = 'pharmacy/billing_generate/$1';
+$route['pharmacy/get_live_orders']                = 'pharmacy/get_live_orders';
+$route['pharmacy/confirm_stock']                  = 'pharmacy_orders/confirm_stock';
+$route['pharmacy/mark_packed']                    = 'pharmacy_orders/mark_packed';
+$route['pharmacy/print_invoice/(:num)']           = 'pharmacy/billing_generate/$1';
+
+// Phase 2 Module 3: Delivery Boy Handover System
+$route['pharmacy/delivery']                       = 'pharmacy/delivery';
+$route['pharmacy/delivery/assign']                = 'pharmacy/delivery_assign';
+$route['delivery/console']                        = 'delivery/console';
+$route['api/v1/delivery/chemist-handoff']         = 'delivery/chemist_handoff';
+$route['api/v1/delivery/verify-otp']              = 'delivery/verify_otp';
+
+// Phase 2 Module 4: Online Payment & Settlement System
+$route['pharmacy/payments']                       = 'pharmacy/payments';
+$route['api/webhooks/payment']                    = 'pharmacy/webhook_payment';
+
+// =========================================================================
+// UPCHAR Enterprise Management Admin Portal Routes
+// =========================================================================
+// Module 1: HR Command Hub & Default Landing Page
+$route['hr']                                      = 'hr/dashboard';
+$route['hr/dashboard']                            = 'hr/dashboard';
+
+// Module 2: HR & Recruitment (Multi-Page Architecture & ATS Workflow)
+$route['hr/recruitment']                          = 'hr/recruitment';
+$route['hr/jobs']                                 = 'hr/jobs';
+$route['hr/candidates']                           = 'hr/candidates';
+$route['hr/candidates/(:any)']                    = 'hr/candidates/$1';
+$route['hr/candidate_profile/(:num)']             = 'hr/candidate_profile/$1';
+$route['hr/candidate_profile']                    = 'hr/candidates';
+$route['hr/update_candidate_stage']               = 'hr/update_candidate_stage';
+$route['hr/add_candidate_note']                   = 'hr/add_candidate_note';
+$route['hr/onboard_candidate']                    = 'hr/onboard_candidate';
+$route['hr/save_job']                             = 'hr/save_job';
+$route['hr/toggle_job_status']                    = 'hr/toggle_job_status';
+
+$route['recruitment']                             = 'recruitment/index';
+$route['recruitment/jobs']                        = 'recruitment/jobs';
+$route['recruitment/candidates']                  = 'recruitment/candidates';
+$route['recruitment/candidates/(:any)']           = 'recruitment/candidates/$1';
+$route['recruitment/profile/(:num)']              = 'recruitment/profile/$1';
+$route['recruitment/save_job']                    = 'recruitment/save_job';
+$route['recruitment/toggle_job_status']           = 'recruitment/toggle_job_status';
+$route['recruitment/save_candidate']              = 'recruitment/save_candidate';
+$route['recruitment/update_stage']                = 'recruitment/update_stage';
+$route['recruitment/add_note']                    = 'recruitment/add_note';
+$route['recruitment/onboard']                     = 'recruitment/onboard_to_staff';
+$route['recruitment/delete_candidate']            = 'recruitment/delete_candidate';
+
+$route['hr/recruitment/save_job']                 = 'hr/save_job';
+$route['hr/recruitment/update_job']               = 'hr/update_job';
+$route['hr/recruitment/toggle_job_status']        = 'hr/toggle_job_status';
+$route['hr/recruitment/save_candidate']           = 'hr/save_candidate';
+$route['hr/recruitment/update_applicant']         = 'hr/update_applicant_status';
+$route['hr/recruitment/onboard_candidate']        = 'hr/onboard_candidate_to_staff';
+$route['hr/recruitment/delete_applicant']         = 'hr/delete_applicant';
+
+// Module 3: Staff Directory
+$route['hr/directory']                            = 'hr/directory';
+$route['hr/employees']                            = 'hr/employees';
+$route['hr/save_employee']                        = 'hr/save_employee';
+$route['hr/update_employee']                      = 'hr/update_employee';
+$route['hr/toggle_staff_status']                  = 'hr/toggle_staff_status';
+
+// Module 4: Daily Attendance & Web Punch
+$route['attendance']                              = 'attendance/punch';
+$route['attendance/roster']                       = 'hr/attendance';
+$route['attendance/save_record']                  = 'hr/save_attendance_record';
+$route['attendance/delete_record']                = 'hr/delete_attendance_record';
+$route['attendance/bulk_mark']                    = 'hr/bulk_mark_attendance';
+$route['hr/attendance']                           = 'hr/attendance';
+$route['hr/attendance/save_record']               = 'hr/save_attendance_record';
+$route['hr/attendance/delete_record']             = 'hr/delete_attendance_record';
+$route['hr/attendance/bulk_mark']                 = 'hr/bulk_mark_attendance';
+$route['attendance/punch']                        = 'attendance/punch';
+$route['attendance/record_punch_in']              = 'attendance/record_punch_in';
+$route['attendance/record_punch_out']             = 'attendance/record_punch_out';
+$route['attendance/history']                      = 'attendance/history';
+$route['attendance/reset_today_punch']            = 'attendance/reset_today_punch';
+
+// Module 5: Leave Approvals Desk
+$route['hr/leaves']                               = 'hr/leaves';
+$route['hr/leaves/update']                        = 'hr/update_leave';
+
+// Module 6: Monthly Payroll Engine
+$route['hr/payroll']                              = 'hr/payroll';
+
+// Module 7: Central Operations Desk
+$route['operations']                              = 'operations/dashboard';
+$route['operations/dashboard']                    = 'operations/dashboard';
+$route['operations/handoffs']                     = 'operations/handoffs';
+$route['operations/verify_handoff']               = 'operations/verify_handoff';
+$route['operations/expenses']                     = 'operations/expenses';
+$route['operations/save_expense']                 = 'operations/save_expense';
+$route['operations/update_expense']               = 'operations/update_expense';
+
+// Module 8: CRM & Healthcare Partner Acquisition Engine
+$route['crm']                                     = 'crm/dashboard';
+$route['crm/dashboard']                           = 'crm/dashboard';
+$route['crm/leads']                               = 'crm/leads';
+$route['crm/contacts']                            = 'crm/contacts';
+$route['crm/activities']                          = 'crm/activities';
+$route['crm/save_lead']                           = 'crm/save_lead';
+$route['crm/update_stage']                        = 'crm/update_stage';
+$route['crm/log_activity']                        = 'crm/log_activity';
+$route['crm/get_lead_json']                       = 'crm/get_lead_json';
+$route['crm/onboard_partner/(:num)']              = 'crm/onboard_partner/$1';
+
+

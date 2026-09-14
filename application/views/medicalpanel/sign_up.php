@@ -11,6 +11,7 @@
 
     <!-- Pharmacy Registration Form -->
     <form class="auth-form" id="medregistrationform" action="<?=base_url();?>Medicaluser/register" method="POST">
+      <input type="hidden" name="<?=$this->security->get_csrf_token_name();?>" value="<?=$this->security->get_csrf_hash();?>">
       <div class="form-group">
         <label for="name">Pharmacy / Store Name <span class="required">*</span></label>
         <input type="text" id="name" name="name" class="form-control" placeholder="e.g. Upchar Medicos" required>
