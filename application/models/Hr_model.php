@@ -97,6 +97,8 @@ class Hr_model extends CI_Model {
         $normMonth = str_pad($month, 2, '0', STR_PAD_LEFT);
         $daysInMonth = cal_days_in_month(CAL_GREGORIAN, intval($month), intval($year));
 
+        $this->ensure_payroll_disbursals_table();
+
         // Fetch existing disbursal payments for this period
         $disbursalsRaw = $this->db->where('month', $normMonth)
                                   ->where('year', (string)$year)
@@ -279,6 +281,8 @@ class Hr_model extends CI_Model {
      * Insert or update staff payroll disbursal record
      */
     public function update_payroll_disbursal($userId, $month, $year, $amount, $status, $txnRef, $channel, $notes = '') {
+        $this->ensure_payroll_disbursals_table();
+
         $normMonth = str_pad($month, 2, '0', STR_PAD_LEFT);
         $normYear  = (string)$year;
         $status    = in_array($status, ['transferred', 'pending', 'on_hold']) ? $status : 'pending';
@@ -317,5 +321,28 @@ class Hr_model extends CI_Model {
         }
 
         return $data;
+    }
+
+    /**
+     * Auto-ensure disbursals table exists on live production or local database
+     */
+    public function ensure_payroll_disbursals_table() {
+        if (!$this->db->table_exists('staff_payroll_disbursals')) {
+            $sql = "CREATE TABLE IF NOT EXISTS `staff_payroll_disbursals` (
+                `id` INT AUTO_INCREMENT PRIMARY KEY,
+                `user_id` INT NOT NULL,
+                `month` VARCHAR(2) NOT NULL,
+                `year` VARCHAR(4) NOT NULL,
+                `amount` DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+                `status` ENUM('transferred', 'pending', 'on_hold') NOT NULL DEFAULT 'pending',
+                `txn_ref` VARCHAR(100) NULL,
+                `payment_channel` VARCHAR(100) NULL,
+                `transferred_at` DATETIME NULL,
+                `notes` VARCHAR(255) NULL,
+                `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE KEY `user_month_year` (`user_id`, `month`, `year`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8;";
+            $this->db->query($sql);
+        }
     }
 }
