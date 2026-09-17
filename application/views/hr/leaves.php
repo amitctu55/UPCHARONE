@@ -395,7 +395,7 @@
             </button>
 
             <!-- Attendance Roster -->
-            <a href="<?= base_url('attendance/roster'); ?>" class="btn btn-default" style="background: #ffffff; border: 1px solid #cbd5e1; color: #0f172a; font-weight: 700; border-radius: 12px; padding: 10px 16px; font-size: 13px; display: inline-flex; align-items: center; gap: 6px;">
+            <a href="<?= base_url('admin1947/attendance/roster'); ?>" class="btn btn-default" style="background: #ffffff; border: 1px solid #cbd5e1; color: #0f172a; font-weight: 700; border-radius: 12px; padding: 10px 16px; font-size: 13px; display: inline-flex; align-items: center; gap: 6px;">
                 <i class="fa fa-calendar-check-o" style="color: #10b981;"></i> Roster Desk
             </a>
         </div>
@@ -491,16 +491,16 @@
         <div class="filter-row">
             <!-- Status Tabs -->
             <div class="status-pills-bar">
-                <a href="<?= base_url('hr/leaves?status=all' . ($selected_dept !== 'all' ? '&dept=' . $selected_dept : '') . ($selected_type !== 'all' ? '&type=' . $selected_type : '')); ?>" class="status-pill-btn <?= ($selected_status === 'all') ? 'active-all' : ''; ?>">
+                <a href="<?= base_url('admin1947/hr/leaves?status=all' . ($selected_dept !== 'all' ? '&dept=' . $selected_dept : '') . ($selected_type !== 'all' ? '&type=' . $selected_type : '')); ?>" class="status-pill-btn <?= ($selected_status === 'all') ? 'active-all' : ''; ?>">
                     All (<?= $metrics['total']; ?>)
                 </a>
-                <a href="<?= base_url('hr/leaves?status=pending' . ($selected_dept !== 'all' ? '&dept=' . $selected_dept : '') . ($selected_type !== 'all' ? '&type=' . $selected_type : '')); ?>" class="status-pill-btn <?= ($selected_status === 'pending') ? 'active-pending' : ''; ?>">
+                <a href="<?= base_url('admin1947/hr/leaves?status=pending' . ($selected_dept !== 'all' ? '&dept=' . $selected_dept : '') . ($selected_type !== 'all' ? '&type=' . $selected_type : '')); ?>" class="status-pill-btn <?= ($selected_status === 'pending') ? 'active-pending' : ''; ?>">
                     <span class="pulse-dot-amber"></span> Pending Review (<?= $metrics['pending']; ?>)
                 </a>
-                <a href="<?= base_url('hr/leaves?status=approved' . ($selected_dept !== 'all' ? '&dept=' . $selected_dept : '') . ($selected_type !== 'all' ? '&type=' . $selected_type : '')); ?>" class="status-pill-btn <?= ($selected_status === 'approved') ? 'active-approved' : ''; ?>">
+                <a href="<?= base_url('admin1947/hr/leaves?status=approved' . ($selected_dept !== 'all' ? '&dept=' . $selected_dept : '') . ($selected_type !== 'all' ? '&type=' . $selected_type : '')); ?>" class="status-pill-btn <?= ($selected_status === 'approved') ? 'active-approved' : ''; ?>">
                     <i class="fa fa-check-circle"></i> Approved (<?= $metrics['approved']; ?>)
                 </a>
-                <a href="<?= base_url('hr/leaves?status=rejected' . ($selected_dept !== 'all' ? '&dept=' . $selected_dept : '') . ($selected_type !== 'all' ? '&type=' . $selected_type : '')); ?>" class="status-pill-btn <?= ($selected_status === 'rejected') ? 'active-rejected' : ''; ?>">
+                <a href="<?= base_url('admin1947/hr/leaves?status=rejected' . ($selected_dept !== 'all' ? '&dept=' . $selected_dept : '') . ($selected_type !== 'all' ? '&type=' . $selected_type : '')); ?>" class="status-pill-btn <?= ($selected_status === 'rejected') ? 'active-rejected' : ''; ?>">
                     <i class="fa fa-times-circle"></i> Rejected (<?= $metrics['rejected']; ?>)
                 </a>
             </div>
@@ -895,7 +895,7 @@ function applyFilters() {
     var dept = $('#filterDeptSelect').val();
     var type = $('#filterTypeSelect').val();
     var status = '<?= $selected_status; ?>';
-    var url = '<?= base_url("hr/leaves"); ?>?status=' + encodeURIComponent(status);
+    var url = '<?= base_url("admin1947/hr/leaves"); ?>?status=' + encodeURIComponent(status);
     if (dept !== 'all') url += '&dept=' + encodeURIComponent(dept);
     if (type !== 'all') url += '&type=' + encodeURIComponent(type);
     location.href = url;
@@ -957,7 +957,7 @@ function submitApplyLeave(e) {
 
     var formData = $('#applyLeaveForm').serialize();
 
-    $.post('<?= base_url("hr/apply_leave"); ?>', formData, function(res) {
+    $.post('<?= base_url("admin1947/hr/apply_leave"); ?>', formData, function(res) {
         if (typeof res === 'string') {
             try { res = JSON.parse(res); } catch(e) {}
         }
@@ -995,7 +995,7 @@ function submitReviewDecision(e) {
 
     var formData = $('#reviewLeaveForm').serialize();
 
-    $.post('<?= base_url("hr/update_leave"); ?>', formData, function(res) {
+    $.post('<?= base_url("admin1947/hr/update_leave"); ?>', formData, function(res) {
         if (typeof res === 'string') {
             try { res = JSON.parse(res); } catch(e) {}
         }
@@ -1016,7 +1016,7 @@ function submitReviewDecision(e) {
 function confirmDeleteLeave(leaveId, name) {
     if (!confirm('Are you sure you want to cancel and delete the leave request for ' + name + '?')) return;
 
-    $.post('<?= base_url("hr/delete_leave"); ?>', {
+    $.post('<?= base_url("admin1947/hr/delete_leave"); ?>', {
         leave_id: leaveId,
         '<?= $this->security->get_csrf_token_name(); ?>': '<?= $this->security->get_csrf_hash(); ?>'
     }, function(res) {

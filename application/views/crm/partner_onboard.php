@@ -2,7 +2,7 @@
 
 <div style="max-width: 720px; margin: 0 auto;">
     <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 24px;">
-        <a href="<?=base_url('crm/leads');?>" class="btn btn-default" style="font-weight: 700; border-radius: 10px; padding: 8px 16px;">
+        <a href="<?=base_url('admin1947/crm/leads');?>" class="btn btn-default" style="font-weight: 700; border-radius: 10px; padding: 8px 16px;">
             <i class="fa fa-arrow-left"></i> Back to Kanban
         </a>
         <div>
@@ -26,7 +26,7 @@
             </div>
         </div>
 
-        <form action="<?=base_url('crm/leads');?>" method="get">
+        <form action="<?=base_url('admin1947/crm/leads');?>" method="get">
             <div style="display: grid; gap: 16px;">
                 <div>
                     <label style="font-size: 12.5px; font-weight: 700; color: #334155; margin-bottom: 4px;">Facility / Provider Name</label>

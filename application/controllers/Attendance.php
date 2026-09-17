@@ -93,7 +93,7 @@ class Attendance extends CI_Controller {
         }
 
         $this->session->set_flashdata('success_msg', "Today's attendance punch reset successfully.");
-        redirect('attendance/punch' . ($userId ? '?staff_id=' . $userId : ''));
+        redirect('admin1947/attendance/punch' . ($userId ? '?staff_id=' . $userId : ''));
     }
 
     /**

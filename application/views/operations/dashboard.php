@@ -118,7 +118,7 @@
             <button type="button" class="btn btn-default" data-toggle="modal" data-target="#submitExpenseModal" style="background: #ffffff; border: 1px solid #cbd5e1; color: #334155; font-weight: 700; border-radius: 10px; padding: 10px 16px; font-size: 13px; display: inline-flex; align-items: center; gap: 6px;">
                 <i class="fa fa-plus-circle" style="color: #00a896;"></i> Submit Expense Claim
             </button>
-            <a href="<?= base_url('operations/handoffs'); ?>" class="btn btn-default" style="background: #ffffff; border: 1px solid #cbd5e1; color: #334155; font-weight: 700; border-radius: 10px; padding: 10px 16px; font-size: 13px; display: inline-flex; align-items: center; gap: 6px;">
+            <a href="<?= base_url('admin1947/operations/handoffs'); ?>" class="btn btn-default" style="background: #ffffff; border: 1px solid #cbd5e1; color: #334155; font-weight: 700; border-radius: 10px; padding: 10px 16px; font-size: 13px; display: inline-flex; align-items: center; gap: 6px;">
                 <i class="fa fa-flask" style="color: #fb923c;"></i> Full Lab Desk
             </a>
         </div>
@@ -170,7 +170,7 @@
                 </div>
             </div>
             <div style="margin-top: 8px; font-size: 11.5px; color: #d97706; font-weight: 600;">
-                <a href="<?= base_url('operations/expenses'); ?>" style="color: inherit; text-decoration: none;">
+                <a href="<?= base_url('admin1947/operations/expenses'); ?>" style="color: inherit; text-decoration: none;">
                     ₹<?= number_format($pendingExpensesSum); ?> awaiting review &rarr;
                 </a>
             </div>
@@ -247,7 +247,7 @@
                             Recent Lab Sample Inward Log (<?= $totalHandoffs; ?>)
                         </h4>
                     </div>
-                    <a href="<?= base_url('operations/handoffs'); ?>" class="btn btn-xs btn-default" style="border-radius: 6px; font-weight: 700; color: #4338ca; border: 1px solid #cbd5e1; padding: 5px 10px;">
+                    <a href="<?= base_url('admin1947/operations/handoffs'); ?>" class="btn btn-xs btn-default" style="border-radius: 6px; font-weight: 700; color: #4338ca; border: 1px solid #cbd5e1; padding: 5px 10px;">
                         Full Handoff Desk &rarr;
                     </a>
                 </div>
@@ -332,7 +332,7 @@
                             Expense Claims Stream (<?= $totalExpenses; ?>)
                         </h4>
                     </div>
-                    <a href="<?= base_url('operations/expenses'); ?>" class="btn btn-xs btn-default" style="border-radius: 6px; font-weight: 700; color: #b45309; border: 1px solid #cbd5e1; padding: 5px 10px;">
+                    <a href="<?= base_url('admin1947/operations/expenses'); ?>" class="btn btn-xs btn-default" style="border-radius: 6px; font-weight: 700; color: #b45309; border: 1px solid #cbd5e1; padding: 5px 10px;">
                         Full Expense Desk &rarr;
                     </a>
                 </div>
@@ -455,7 +455,7 @@
 <div class="modal fade" id="submitExpenseModal" tabindex="-1" role="dialog">
     <div class="modal-dialog" role="document" style="max-width: 520px;">
         <div class="modal-content" style="border-radius: 18px; border: none; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.3); overflow: hidden;">
-            <form action="<?= base_url('operations/save_expense'); ?>" method="POST">
+            <form action="<?= base_url('admin1947/operations/save_expense'); ?>" method="POST">
                 <div class="modal-header" style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: #ffffff; padding: 20px 24px; display: flex; align-items: center; justify-content: space-between;">
                     <h4 class="modal-title" style="font-weight: 800; font-size: 17px; color: #ffffff; margin: 0;">
                         <i class="fa fa-credit-card" style="color: #2dd4bf; margin-right: 6px;"></i> Submit Petty Cash / Field Expense Claim
@@ -526,7 +526,7 @@ function handleQuickInward(e) {
     var condition = document.getElementById('dashCondition').value;
 
     $.ajax({
-        url: '<?= base_url("operations/verify_handoff"); ?>',
+        url: '<?= base_url("admin1947/operations/verify_handoff"); ?>',
         type: 'POST',
         data: {
             booking_id: bookingId,
@@ -553,7 +553,7 @@ function handleModalInward(e) {
     var condition = document.getElementById('modalCondition').value;
 
     $.ajax({
-        url: '<?= base_url("operations/verify_handoff"); ?>',
+        url: '<?= base_url("admin1947/operations/verify_handoff"); ?>',
         type: 'POST',
         data: {
             booking_id: bookingId,
@@ -576,7 +576,7 @@ function handleModalInward(e) {
 
 function quickUpdateExpense(expenseId, status) {
     $.ajax({
-        url: '<?= base_url("operations/update_expense"); ?>',
+        url: '<?= base_url("admin1947/operations/update_expense"); ?>',
         type: 'POST',
         data: {
             expense_id: expenseId,

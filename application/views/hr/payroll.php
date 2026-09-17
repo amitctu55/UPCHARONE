@@ -400,16 +400,16 @@
 
             <!-- Calculation Mode Toggle -->
             <div class="payroll-mode-toggle">
-                <a href="<?= base_url("hr/payroll?month={$month}&year={$year}&mode=full"); ?>" class="mode-pill <?= ($mode === 'full') ? 'active' : ''; ?>" title="Full Month Standard Cycle (30 Days)">
+                <a href="<?= base_url("admin1947/hr/payroll?month={$month}&year={$year}&mode=full"); ?>" class="mode-pill <?= ($mode === 'full') ? 'active' : ''; ?>" title="Full Month Standard Cycle (30 Days)">
                     <i class="fa fa-calendar"></i> Full Month Cycle
                 </a>
-                <a href="<?= base_url("hr/payroll?month={$month}&year={$year}&mode=mtd"); ?>" class="mode-pill <?= ($mode === 'mtd') ? 'active' : ''; ?>" title="Month-To-Date Accrued (To Current Day)">
+                <a href="<?= base_url("admin1947/hr/payroll?month={$month}&year={$year}&mode=mtd"); ?>" class="mode-pill <?= ($mode === 'mtd') ? 'active' : ''; ?>" title="Month-To-Date Accrued (To Current Day)">
                     <i class="fa fa-clock-o"></i> MTD Accrued
                 </a>
             </div>
 
             <!-- Month & Year Selector -->
-            <form method="GET" action="<?= base_url('hr/payroll'); ?>" style="display: inline-flex; align-items: center; gap: 6px; margin: 0;">
+            <form method="GET" action="<?= base_url('admin1947/hr/payroll'); ?>" style="display: inline-flex; align-items: center; gap: 6px; margin: 0;">
                 <input type="hidden" name="mode" value="<?= html_escape($mode); ?>">
                 <select name="month" class="form-control" onchange="this.form.submit()" style="height: 38px; border-radius: 8px; font-size: 13px; font-weight: 700; color: #0f172a; border: 1px solid #cbd5e1;">
                     <?php for ($m = 1; $m <= 12; $m++): ?>
@@ -1050,7 +1050,7 @@ function saveDisbursalStatus() {
     var btn = $('#btnSaveTransferStatus');
     btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Saving...');
 
-    $.post('<?= base_url("hr/process_disbursal"); ?>', {
+    $.post('<?= base_url("admin1947/hr/process_disbursal"); ?>', {
         user_id: currentActiveRowData.user_id,
         month: '<?= $month; ?>',
         year: '<?= $year; ?>',

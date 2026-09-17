@@ -110,11 +110,8 @@
         </div>
     </div>
     <div style="display: flex; align-items: center; gap: 8px;">
-        <a href="<?=base_url('attendance/punch');?>" class="btn btn-xs" style="background: rgba(45, 212, 191, 0.2); border: 1px solid #2dd4bf; color: #2dd4bf; font-weight: 700; border-radius: 6px; padding: 5px 10px;">
-            <i class="fa fa-clock-o"></i> Punch
-        </a>
         <a href="<?=base_url('staff/logout');?>" class="btn btn-xs" style="background: rgba(239, 68, 68, 0.2); border: 1px solid #ef4444; color: #fca5a5; font-weight: 700; border-radius: 6px; padding: 5px 10px;">
-            <i class="fa fa-sign-out"></i>
+            <i class="fa fa-sign-out"></i> Sign Out
         </a>
     </div>
 </header>

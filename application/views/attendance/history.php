@@ -52,7 +52,7 @@ $monthName = date('F Y', mktime(0, 0, 0, intval($month), 10, intval($year)));
         </div>
         <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
             <!-- Month Navigator -->
-            <form method="GET" action="<?=base_url('attendance/history');?>" style="display: inline-flex; align-items: center; gap: 8px;">
+            <form method="GET" action="<?=base_url('admin1947/attendance/history');?>" style="display: inline-flex; align-items: center; gap: 8px;">
                 <select name="month" class="form-control form-control-sm" style="border-radius: 8px; font-weight: 600; width: auto;">
                     <?php for ($m = 1; $m <= 12; $m++): ?>
                         <option value="<?=$m;?>" <?=($m == intval($month)) ? 'selected' : '';?>>
@@ -69,7 +69,7 @@ $monthName = date('F Y', mktime(0, 0, 0, intval($month), 10, intval($year)));
                     <i class="fa fa-search"></i> Go
                 </button>
             </form>
-            <a href="<?=base_url('attendance/punch');?>" class="btn btn-sm" style="background: #00a896; color: #fff; font-weight: 700; border: none; border-radius: 10px; padding: 7px 16px; font-size: 13px; box-shadow: 0 4px 12px rgba(0,168,150,0.3);">
+            <a href="<?=base_url('admin1947/attendance/punch');?>" class="btn btn-sm" style="background: #00a896; color: #fff; font-weight: 700; border: none; border-radius: 10px; padding: 7px 16px; font-size: 13px; box-shadow: 0 4px 12px rgba(0,168,150,0.3);">
                 <i class="fa fa-camera"></i> Punch In/Out
             </a>
         </div>

@@ -262,7 +262,7 @@
                         </button>
 
                         <?php if ($item['lead_stage'] === 'signed'): ?>
-                        <a href="<?=base_url('crm/onboard_partner/' . $item['id']);?>" class="btn btn-xs btn-success" title="Onboard Partner" style="border-radius: 7px; height: 30px; padding: 5px 8px; font-weight: 700; flex-shrink: 0;">
+                        <a href="<?=base_url('admin1947/crm/onboard_partner/' . $item['id']);?>" class="btn btn-xs btn-success" title="Onboard Partner" style="border-radius: 7px; height: 30px; padding: 5px 8px; font-weight: 700; flex-shrink: 0;">
                             <i class="fa fa-plug"></i>
                         </a>
                         <?php endif; ?>
@@ -299,7 +299,7 @@
                 </div>
             </div>
 
-            <form action="<?=base_url('crm/save_lead');?>" method="post">
+            <form action="<?=base_url('admin1947/crm/save_lead');?>" method="post">
                 <input type="hidden" name="<?=$this->security->get_csrf_token_name();?>" value="<?=$this->security->get_csrf_hash();?>">
                 <div class="modal-body" style="padding: 24px;">
                     <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 16px; margin-bottom: 16px;">
@@ -471,7 +471,7 @@ $(document).ready(function() {
 
         $select.prop('disabled', true);
         $.ajax({
-            url: '<?=base_url("crm/update_stage");?>',
+            url: '<?=base_url("admin1947/crm/update_stage");?>',
             type: 'POST',
             data: postData,
             dataType: 'json',
@@ -506,7 +506,7 @@ $(document).ready(function() {
     $('#kanbanActForm').submit(function(e) {
         e.preventDefault();
         $.ajax({
-            url: '<?=base_url("crm/log_activity");?>',
+            url: '<?=base_url("admin1947/crm/log_activity");?>',
             type: 'POST',
             data: $(this).serialize(),
             dataType: 'json',

@@ -93,30 +93,11 @@ class Staff extends CI_Controller {
     }
 
     /**
-     * Demo 1-Click Role Switcher (for immediate preview / pair testing)
+     * Demo login disabled for security
      */
     public function demo_login($role = 'collector') {
-        $user = $this->db->get_where('staff_users', ['role' => $role, 'status' => 'active'])->row_array();
-        if ($user) {
-            $this->load->helper('custom_helper');
-            enforce_single_session_role('staff');
-
-            $sessionData = [
-                'staff_user_id'   => $user['id'],
-                'staff_code'      => $user['staff_code'],
-                'staff_name'      => $user['name'],
-                'staff_email'     => $user['email'],
-                'staff_phone'     => $user['phone'],
-                'staff_role'      => $user['role'],
-                'staff_dept'      => $user['department'],
-                'staff_designation'=> $user['designation'],
-                'staff_logged_in' => TRUE
-            ];
-            $this->session->set_userdata($sessionData);
-            $this->_redirect_role($user['role']);
-        } else {
-            redirect('staff/login');
-        }
+        show_404();
+        exit;
     }
 
     /**

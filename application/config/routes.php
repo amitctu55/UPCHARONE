@@ -386,99 +386,8 @@ $route['pharmacy/payments']                       = 'pharmacy/payments';
 $route['api/webhooks/payment']                    = 'pharmacy/webhook_payment';
 
 // =========================================================================
-// UPCHAR Enterprise Management Admin Portal Routes
-// =========================================================================
-// Module 1: HR Command Hub & Default Landing Page
-$route['hr']                                      = 'hr/dashboard';
-$route['hr/dashboard']                            = 'hr/dashboard';
-
-// Module 2: HR & Recruitment (Multi-Page Architecture & ATS Workflow)
-$route['hr/recruitment']                          = 'hr/recruitment';
-$route['hr/jobs']                                 = 'hr/jobs';
-$route['hr/candidates']                           = 'hr/candidates';
-$route['hr/candidates/(:any)']                    = 'hr/candidates/$1';
-$route['hr/candidate_profile/(:num)']             = 'hr/candidate_profile/$1';
-$route['hr/candidate_profile']                    = 'hr/candidates';
-$route['hr/update_candidate_stage']               = 'hr/update_candidate_stage';
-$route['hr/add_candidate_note']                   = 'hr/add_candidate_note';
-$route['hr/onboard_candidate']                    = 'hr/onboard_candidate';
-$route['hr/save_job']                             = 'hr/save_job';
-$route['hr/toggle_job_status']                    = 'hr/toggle_job_status';
-
-$route['recruitment']                             = 'recruitment/index';
-$route['recruitment/jobs']                        = 'recruitment/jobs';
-$route['recruitment/candidates']                  = 'recruitment/candidates';
-$route['recruitment/candidates/(:any)']           = 'recruitment/candidates/$1';
-$route['recruitment/profile/(:num)']              = 'recruitment/profile/$1';
-$route['recruitment/save_job']                    = 'recruitment/save_job';
-$route['recruitment/toggle_job_status']           = 'recruitment/toggle_job_status';
-$route['recruitment/save_candidate']              = 'recruitment/save_candidate';
-$route['recruitment/update_stage']                = 'recruitment/update_stage';
-$route['recruitment/add_note']                    = 'recruitment/add_note';
-$route['recruitment/onboard']                     = 'recruitment/onboard_to_staff';
-$route['recruitment/delete_candidate']            = 'recruitment/delete_candidate';
-
-$route['hr/recruitment/save_job']                 = 'hr/save_job';
-$route['hr/recruitment/update_job']               = 'hr/update_job';
-$route['hr/recruitment/toggle_job_status']        = 'hr/toggle_job_status';
-$route['hr/recruitment/save_candidate']           = 'hr/save_candidate';
-$route['hr/recruitment/update_applicant']         = 'hr/update_applicant_status';
-$route['hr/recruitment/onboard_candidate']        = 'hr/onboard_candidate_to_staff';
-$route['hr/recruitment/delete_applicant']         = 'hr/delete_applicant';
-
-// Module 3: Staff Directory
-$route['hr/directory']                            = 'hr/directory';
-$route['hr/employees']                            = 'hr/employees';
-$route['hr/save_employee']                        = 'hr/save_employee';
-$route['hr/update_employee']                      = 'hr/update_employee';
-$route['hr/toggle_staff_status']                  = 'hr/toggle_staff_status';
-
-// Module 4: Daily Attendance & Web Punch
-$route['attendance']                              = 'attendance/punch';
-$route['attendance/roster']                       = 'hr/attendance';
-$route['attendance/save_record']                  = 'hr/save_attendance_record';
-$route['attendance/delete_record']                = 'hr/delete_attendance_record';
-$route['attendance/bulk_mark']                    = 'hr/bulk_mark_attendance';
-$route['hr/attendance']                           = 'hr/attendance';
-$route['hr/attendance/save_record']               = 'hr/save_attendance_record';
-$route['hr/attendance/delete_record']             = 'hr/delete_attendance_record';
-$route['hr/attendance/bulk_mark']                 = 'hr/bulk_mark_attendance';
-$route['attendance/punch']                        = 'attendance/punch';
-$route['attendance/record_punch_in']              = 'attendance/record_punch_in';
-$route['attendance/record_punch_out']             = 'attendance/record_punch_out';
-$route['attendance/history']                      = 'attendance/history';
-$route['attendance/reset_today_punch']            = 'attendance/reset_today_punch';
-
-// Module 5: Leave Approvals Desk
-$route['hr/leaves']                               = 'hr/leaves';
-$route['hr/leaves/update']                        = 'hr/update_leave';
-
-// Module 6: Monthly Payroll Engine
-$route['hr/payroll']                              = 'hr/payroll';
-
-// Module 7: Central Operations Desk
-$route['operations']                              = 'operations/dashboard';
-$route['operations/dashboard']                    = 'operations/dashboard';
-$route['operations/handoffs']                     = 'operations/handoffs';
-$route['operations/verify_handoff']               = 'operations/verify_handoff';
-$route['operations/expenses']                     = 'operations/expenses';
-$route['operations/save_expense']                 = 'operations/save_expense';
-$route['operations/update_expense']               = 'operations/update_expense';
-
-// Module 8: CRM & Healthcare Partner Acquisition Engine
-$route['crm']                                     = 'crm/dashboard';
-$route['crm/dashboard']                           = 'crm/dashboard';
-$route['crm/leads']                               = 'crm/leads';
-$route['crm/contacts']                            = 'crm/contacts';
-$route['crm/activities']                          = 'crm/activities';
-$route['crm/save_lead']                           = 'crm/save_lead';
-$route['crm/update_stage']                        = 'crm/update_stage';
-$route['crm/log_activity']                        = 'crm/log_activity';
-$route['crm/get_lead_json']                       = 'crm/get_lead_json';
-$route['crm/onboard_partner/(:num)']              = 'crm/onboard_partner/$1';
-
-// =========================================================================
 // Secure Admin1947 Enterprise Protected Routes (/admin1947/*)
+// (Frontend direct access to operations, hr, attendance, crm is deleted)
 // =========================================================================
 // 1. Operations Desk
 $route['admin1947/operations']                         = 'operations/dashboard';
@@ -502,6 +411,7 @@ $route['admin1947/hr/candidate_profile']               = 'hr/candidates';
 $route['admin1947/hr/update_candidate_stage']          = 'hr/update_candidate_stage';
 $route['admin1947/hr/add_candidate_note']              = 'hr/add_candidate_note';
 $route['admin1947/hr/onboard_candidate']               = 'hr/onboard_candidate';
+$route['admin1947/hr/delete_candidate']                = 'hr/delete_candidate';
 $route['admin1947/hr/save_job']                        = 'hr/save_job';
 $route['admin1947/hr/toggle_job_status']               = 'hr/toggle_job_status';
 $route['admin1947/hr/directory']                       = 'hr/directory';

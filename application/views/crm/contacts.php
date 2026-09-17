@@ -65,7 +65,7 @@
         </p>
     </div>
     <div style="display: flex; gap: 10px; align-items: center;">
-        <a href="<?=base_url('crm/leads');?>" class="btn" style="background: #ffffff; color: #0f172a; font-weight: 700; border-radius: 10px; padding: 9px 16px; font-size: 13px; border: 1px solid #cbd5e1;">
+        <a href="<?=base_url('admin1947/crm/leads');?>" class="btn" style="background: #ffffff; color: #0f172a; font-weight: 700; border-radius: 10px; padding: 9px 16px; font-size: 13px; border: 1px solid #cbd5e1;">
             <i class="fa fa-columns" style="color: #f59e0b;"></i> Kanban Pipeline
         </a>
         <button type="button" class="btn" data-toggle="modal" data-target="#registerLeadModal" style="background: linear-gradient(135deg, #0f172a 0%, #00a896 100%); color: #ffffff; font-weight: 700; border-radius: 10px; padding: 9px 20px; font-size: 13px; border: none; box-shadow: 0 4px 12px rgba(0, 168, 150, 0.25);">
@@ -76,7 +76,7 @@
 
 <!-- Filters & Search Bar -->
 <div class="crm-table-filter-bar">
-    <form method="get" action="<?=base_url('crm/contacts');?>" style="display: flex; gap: 10px; flex-grow: 1; align-items: center; flex-wrap: wrap; margin: 0;">
+    <form method="get" action="<?=base_url('admin1947/crm/contacts');?>" style="display: flex; gap: 10px; flex-grow: 1; align-items: center; flex-wrap: wrap; margin: 0;">
         <!-- Search Input -->
         <div style="position: relative; min-width: 240px; flex-grow: 1;">
             <i class="fa fa-search" style="position: absolute; left: 12px; top: 11px; color: #94a3b8;"></i>
@@ -116,7 +116,7 @@
             <i class="fa fa-filter"></i> Filter
         </button>
         <?php if (!empty($filters)): ?>
-        <a href="<?=base_url('crm/contacts');?>" class="btn btn-link" style="color: #ef4444; font-size: 12px; font-weight: 600;">
+        <a href="<?=base_url('admin1947/crm/contacts');?>" class="btn btn-link" style="color: #ef4444; font-size: 12px; font-weight: 600;">
             Clear
         </a>
         <?php endif; ?>
@@ -246,7 +246,7 @@
                                     <i class="fa fa-phone" style="color: #00a896;"></i>
                                 </button>
                                 <?php if ($l['lead_stage'] === 'signed'): ?>
-                                <a href="<?=base_url('crm/onboard_partner/' . $l['id']);?>" class="btn btn-xs btn-success" title="Onboard" style="border-radius: 7px; font-weight: 700; padding: 5px 9px;">
+                                <a href="<?=base_url('admin1947/crm/onboard_partner/' . $l['id']);?>" class="btn btn-xs btn-success" title="Onboard" style="border-radius: 7px; font-weight: 700; padding: 5px 9px;">
                                     <i class="fa fa-plug"></i>
                                 </a>
                                 <?php endif; ?>
@@ -336,7 +336,7 @@ $(document).ready(function() {
     $('#contactActForm').submit(function(e) {
         e.preventDefault();
         $.ajax({
-            url: '<?=base_url("crm/log_activity");?>',
+            url: '<?=base_url("admin1947/crm/log_activity");?>',
             type: 'POST',
             data: $(this).serialize(),
             dataType: 'json',

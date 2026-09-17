@@ -23,10 +23,10 @@
         </div>
 
         <div style="display: flex; gap: 10px;">
-            <a href="<?= base_url('operations'); ?>" class="btn btn-default" style="background: #ffffff; border: 1px solid #cbd5e1; color: #334155; font-weight: 600; border-radius: 10px; padding: 10px 16px; font-size: 13px; display: inline-flex; align-items: center; gap: 6px;">
+            <a href="<?= base_url('admin1947/operations'); ?>" class="btn btn-default" style="background: #ffffff; border: 1px solid #cbd5e1; color: #334155; font-weight: 600; border-radius: 10px; padding: 10px 16px; font-size: 13px; display: inline-flex; align-items: center; gap: 6px;">
                 <i class="fa fa-tachometer"></i> Operations Hub
             </a>
-            <a href="<?= base_url('operations/expenses'); ?>" class="btn btn-default" style="background: #ffffff; border: 1px solid #cbd5e1; color: #334155; font-weight: 600; border-radius: 10px; padding: 10px 16px; font-size: 13px; display: inline-flex; align-items: center; gap: 6px;">
+            <a href="<?= base_url('admin1947/operations/expenses'); ?>" class="btn btn-default" style="background: #ffffff; border: 1px solid #cbd5e1; color: #334155; font-weight: 600; border-radius: 10px; padding: 10px 16px; font-size: 13px; display: inline-flex; align-items: center; gap: 6px;">
                 <i class="fa fa-credit-card"></i> Expense Desk
             </a>
         </div>
@@ -282,7 +282,7 @@ $(document).ready(function() {
 
         $btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Verifying...');
 
-        $.post('<?= base_url("operations/verify_handoff"); ?>', {
+        $.post('<?= base_url("admin1947/operations/verify_handoff"); ?>', {
             booking_id: bookingId,
             collector_id: collectorId,
             barcode: barcode,
@@ -304,7 +304,7 @@ $(document).ready(function() {
         var barcode   = $('#quickBarcode').val();
         var condition = $('#quickCondition').val();
 
-        $.post('<?= base_url("operations/verify_handoff"); ?>', {
+        $.post('<?= base_url("admin1947/operations/verify_handoff"); ?>', {
             booking_id: bookingId,
             collector_id: 4,
             barcode: barcode,

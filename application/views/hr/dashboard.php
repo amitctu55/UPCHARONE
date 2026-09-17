@@ -28,10 +28,10 @@
         </div>
 
         <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-            <a href="<?=base_url('hr/jobs');?>" class="btn" style="background: #ffffff; color: #0f172a; border: 1px solid #cbd5e1; font-weight: 700; border-radius: 10px; padding: 9px 16px; font-size: 13px;">
+            <a href="<?=base_url('admin1947/hr/jobs');?>" class="btn" style="background: #ffffff; color: #0f172a; border: 1px solid #cbd5e1; font-weight: 700; border-radius: 10px; padding: 9px 16px; font-size: 13px;">
                 <i class="fa fa-plus-circle" style="color: #6366f1; margin-right: 4px;"></i> Post Requisition
             </a>
-            <a href="<?=base_url('hr/employees');?>" class="btn" style="background: #00a896; color: #fff; font-weight: 700; border: none; border-radius: 10px; padding: 9px 18px; font-size: 13px; box-shadow: 0 4px 12px rgba(0, 168, 150, 0.3);">
+            <a href="<?=base_url('admin1947/hr/employees');?>" class="btn" style="background: #00a896; color: #fff; font-weight: 700; border: none; border-radius: 10px; padding: 9px 18px; font-size: 13px; box-shadow: 0 4px 12px rgba(0, 168, 150, 0.3);">
                 <i class="fa fa-user-plus" style="margin-right: 4px;"></i> Add Employee
             </a>
         </div>
@@ -77,7 +77,7 @@
                 <span style="font-size: 12px; color: #64748b; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Pending Leaves</span>
                 <div style="font-size: 28px; font-weight: 800; color: #ec4899; margin-top: 4px;"><?=count($pending_leaves ?? []);?></div>
                 <small style="color: #ec4899; font-weight: 600; font-size: 11.5px;">
-                    <a href="<?=base_url('hr/leaves');?>" style="color: inherit; text-decoration: none;">Review Applications &rarr;</a>
+                    <a href="<?=base_url('admin1947/hr/leaves');?>" style="color: inherit; text-decoration: none;">Review Applications &rarr;</a>
                 </small>
             </div>
             <div style="width: 48px; height: 48px; border-radius: 12px; background: #fdf2f8; color: #ec4899; display: flex; align-items: center; justify-content: center; font-size: 22px;">
@@ -98,10 +98,10 @@
                 </span>
             </div>
             <div style="display: flex; gap: 8px;">
-                <a href="<?=base_url('attendance/roster');?>" class="btn btn-sm" style="background: #f8fafc; border: 1px solid #cbd5e1; font-weight: 700; border-radius: 8px; font-size: 12px;">
+                <a href="<?=base_url('admin1947/attendance/roster');?>" class="btn btn-sm" style="background: #f8fafc; border: 1px solid #cbd5e1; font-weight: 700; border-radius: 8px; font-size: 12px;">
                     <i class="fa fa-calendar-check-o"></i> Full Roster
                 </a>
-                <a href="<?=base_url('hr/payroll');?>" class="btn btn-sm" style="background: #eff6ff; color: #2563eb; border: 1px solid #dbeafe; font-weight: 700; border-radius: 8px; font-size: 12px;">
+                <a href="<?=base_url('admin1947/hr/payroll');?>" class="btn btn-sm" style="background: #eff6ff; color: #2563eb; border: 1px solid #dbeafe; font-weight: 700; border-radius: 8px; font-size: 12px;">
                     <i class="fa fa-calculator"></i> Payroll
                 </a>
             </div>

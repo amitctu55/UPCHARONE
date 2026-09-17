@@ -26,17 +26,11 @@ class Admin_auth_guard {
      * Halts execution and redirects or shows 403 if unauthorized.
      */
     public function enforce_admin() {
-        // Canonical Route Migration: Redirect legacy exposed routes (/operations, /hr, /attendance, /crm) to /admin1947/*
+        // Enforce strict admin1947 namespace: Frontend direct link access is completely removed
         $uri = ltrim($this->CI->uri->uri_string(), '/');
-        if (strpos($uri, 'admin1947') !== 0 && !empty($uri)) {
-            $segments = explode('/', $uri);
-            $firstSegment = strtolower($segments[0] ?? '');
-            if (in_array($firstSegment, ['operations', 'hr', 'attendance', 'crm'])) {
-                if ($this->CI->input->method() === 'get' && !$this->CI->input->is_ajax_request()) {
-                    redirect(base_url('admin1947/' . $uri), 'location', 301);
-                    exit;
-                }
-            }
+        if (strpos($uri, 'admin1947') !== 0) {
+            show_404();
+            exit;
         }
 
         $status = $this->verify_admin_role();

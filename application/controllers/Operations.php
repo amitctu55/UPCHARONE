@@ -113,13 +113,13 @@ class Operations extends CI_Controller {
 
         if ($amount <= 0 || empty($description)) {
             $this->session->set_flashdata('error_msg', 'Amount and description are required.');
-            redirect('operations/expenses');
+            redirect('admin1947/operations/expenses');
             return;
         }
 
         $id = $this->Operations_model->submit_expense($userId, $category, $amount, $expenseDate, $description);
         $this->session->set_flashdata('success_msg', "Expense claim of ₹{$amount} submitted for approval!");
-        redirect('operations/expenses');
+        redirect('admin1947/operations/expenses');
     }
 
     /**

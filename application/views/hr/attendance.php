@@ -480,19 +480,19 @@
         <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
             <!-- Date Navigation Buttons -->
             <div class="btn-group" style="box-shadow: 0 2px 6px rgba(0,0,0,0.04); border-radius: 10px; overflow: hidden; background: #ffffff; border: 1px solid #cbd5e1;">
-                <a href="<?= base_url('attendance/roster?date=' . $yesterdayDate . (!empty($search) ? '&search=' . urlencode($search) : '')); ?>" class="btn btn-sm" style="font-weight: 700; padding: 8px 14px; font-size: 12.5px; <?= ($selected_date === $yesterdayDate) ? 'background: #0f172a; color: #ffffff;' : 'background: #ffffff; color: #475569;'; ?>" title="Previous Day">
+                <a href="<?= base_url('admin1947/attendance/roster?date=' . $yesterdayDate . (!empty($search) ? '&search=' . urlencode($search) : '')); ?>" class="btn btn-sm" style="font-weight: 700; padding: 8px 14px; font-size: 12.5px; <?= ($selected_date === $yesterdayDate) ? 'background: #0f172a; color: #ffffff;' : 'background: #ffffff; color: #475569;'; ?>" title="Previous Day">
                     <i class="fa fa-chevron-left"></i> Yesterday
                 </a>
-                <a href="<?= base_url('attendance/roster?date=' . $todayDate . (!empty($search) ? '&search=' . urlencode($search) : '')); ?>" class="btn btn-sm" style="font-weight: 700; padding: 8px 14px; font-size: 12.5px; <?= ($selected_date === $todayDate) ? 'background: #0f172a; color: #ffffff;' : 'background: #ffffff; color: #475569;'; ?>">
+                <a href="<?= base_url('admin1947/attendance/roster?date=' . $todayDate . (!empty($search) ? '&search=' . urlencode($search) : '')); ?>" class="btn btn-sm" style="font-weight: 700; padding: 8px 14px; font-size: 12.5px; <?= ($selected_date === $todayDate) ? 'background: #0f172a; color: #ffffff;' : 'background: #ffffff; color: #475569;'; ?>">
                     <i class="fa fa-dot-circle-o" style="color: #10b981;"></i> Today
                 </a>
-                <a href="<?= base_url('attendance/roster?date=' . $tomorrowDate . (!empty($search) ? '&search=' . urlencode($search) : '')); ?>" class="btn btn-sm" style="font-weight: 700; padding: 8px 14px; font-size: 12.5px; <?= ($selected_date === $tomorrowDate) ? 'background: #0f172a; color: #ffffff;' : 'background: #ffffff; color: #475569;'; ?>" title="Next Day">
+                <a href="<?= base_url('admin1947/attendance/roster?date=' . $tomorrowDate . (!empty($search) ? '&search=' . urlencode($search) : '')); ?>" class="btn btn-sm" style="font-weight: 700; padding: 8px 14px; font-size: 12.5px; <?= ($selected_date === $tomorrowDate) ? 'background: #0f172a; color: #ffffff;' : 'background: #ffffff; color: #475569;'; ?>" title="Next Day">
                     Tomorrow <i class="fa fa-chevron-right"></i>
                 </a>
             </div>
 
             <!-- Date Picker Form -->
-            <form method="GET" action="<?= base_url('attendance/roster'); ?>" style="display: inline-flex; align-items: center; margin: 0;">
+            <form method="GET" action="<?= base_url('admin1947/attendance/roster'); ?>" style="display: inline-flex; align-items: center; margin: 0;">
                 <?php if (!empty($search)): ?>
                     <input type="hidden" name="search" value="<?= html_escape($search); ?>">
                 <?php endif; ?>
@@ -513,7 +513,7 @@
             </button>
 
             <!-- Web Punch Link -->
-            <a href="<?= base_url('attendance/punch'); ?>" class="btn btn-default" style="background: #ffffff; border: 1px solid #cbd5e1; color: #0f172a; font-weight: 700; border-radius: 10px; padding: 9px 14px; font-size: 13px; display: inline-flex; align-items: center; gap: 6px;" title="Launch Mobile/Web Punch Terminal">
+            <a href="<?= base_url('admin1947/attendance/punch'); ?>" class="btn btn-default" style="background: #ffffff; border: 1px solid #cbd5e1; color: #0f172a; font-weight: 700; border-radius: 10px; padding: 9px 14px; font-size: 13px; display: inline-flex; align-items: center; gap: 6px;" title="Launch Mobile/Web Punch Terminal">
                 <i class="fa fa-tablet" style="color: #7c3aed;"></i> Punch Terminal
             </a>
 
@@ -637,11 +637,11 @@
                         </button>
                     <?php endif; ?>
 
-                    <a href="<?= base_url('hr/directory?search=' . urlencode($spStaff['name'])); ?>" class="btn btn-sm" style="background: rgba(255,255,255,0.1); color: #ffffff; border: 1px solid rgba(255,255,255,0.2); font-weight: 700; border-radius: 8px; padding: 7px 14px;" title="View Staff Profile in Directory">
+                    <a href="<?= base_url('admin1947/hr/directory?search=' . urlencode($spStaff['name'])); ?>" class="btn btn-sm" style="background: rgba(255,255,255,0.1); color: #ffffff; border: 1px solid rgba(255,255,255,0.2); font-weight: 700; border-radius: 8px; padding: 7px 14px;" title="View Staff Profile in Directory">
                         <i class="fa fa-id-card-o"></i> Directory Profile
                     </a>
 
-                    <a href="<?= base_url('attendance/roster?date=' . $selected_date); ?>" class="btn btn-sm" style="background: #ffffff; color: #0f172a; font-weight: 800; border-radius: 8px; padding: 7px 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);" title="Clear Search and View Entire Roster">
+                    <a href="<?= base_url('admin1947/attendance/roster?date=' . $selected_date); ?>" class="btn btn-sm" style="background: #ffffff; color: #0f172a; font-weight: 800; border-radius: 8px; padding: 7px 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);" title="Clear Search and View Entire Roster">
                         <i class="fa fa-times-circle" style="color: #ef4444;"></i> Show All Roster
                     </a>
                 </div>
@@ -756,7 +756,7 @@
                                             <?= html_escape($h['notes'] ?? '--'); ?>
                                         </td>
                                         <td style="text-align: right;">
-                                            <a href="<?= base_url('attendance/roster?date=' . $h['punch_date'] . '&search=' . urlencode($spStaff['name'])); ?>" class="btn btn-xs" style="background: rgba(255,255,255,0.15); color: #ffffff; font-size: 10.5px; padding: 2px 8px; border-radius: 4px;" title="Jump to this date in roster">
+                                            <a href="<?= base_url('admin1947/attendance/roster?date=' . $h['punch_date'] . '&search=' . urlencode($spStaff['name'])); ?>" class="btn btn-xs" style="background: rgba(255,255,255,0.15); color: #ffffff; font-size: 10.5px; padding: 2px 8px; border-radius: 4px;" title="Jump to this date in roster">
                                                 <i class="fa fa-eye"></i> View Day
                                             </a>
                                         </td>
@@ -1015,7 +1015,7 @@
                                             <?= $initial; ?>
                                         </div>
                                         <div>
-                                            <a href="<?= base_url('attendance/roster?date=' . $selected_date . '&search=' . urlencode($row['name'])); ?>" style="font-size: 13.5px; font-weight: 800; color: #0f172a; text-decoration: none; display: inline-flex; align-items: center; gap: 5px;" title="View staff attendance spotlight">
+                                            <a href="<?= base_url('admin1947/attendance/roster?date=' . $selected_date . '&search=' . urlencode($row['name'])); ?>" style="font-size: 13.5px; font-weight: 800; color: #0f172a; text-decoration: none; display: inline-flex; align-items: center; gap: 5px;" title="View staff attendance spotlight">
                                                 <?= html_escape($row['name']); ?>
                                                 <?php if ($isSearchedMatch): ?>
                                                     <span style="color: #00a896; font-size: 11px;" title="Currently Spotlighted"><i class="fa fa-star"></i></span>
@@ -1212,7 +1212,7 @@
 <div class="modal fade" id="attendanceRecordModal" tabindex="-1" role="dialog">
     <div class="modal-dialog modal-lg" role="document" style="max-width: 840px;">
         <div class="modal-content upchar-modal-content">
-            <form action="<?= base_url('attendance/save_record'); ?>" method="POST" id="attendanceForm">
+            <form action="<?= base_url('admin1947/attendance/save_record'); ?>" method="POST" id="attendanceForm">
                 <input type="hidden" name="punch_date" id="modal_punch_date" value="<?= $selected_date; ?>">
                 
                 <div class="upchar-modal-header">
@@ -1382,7 +1382,7 @@
 <div class="modal fade" id="bulkMarkModal" tabindex="-1" role="dialog">
     <div class="modal-dialog" role="document" style="max-width: 520px;">
         <div class="modal-content upchar-modal-content">
-            <form action="<?= base_url('attendance/bulk_mark'); ?>" method="POST">
+            <form action="<?= base_url('admin1947/attendance/bulk_mark'); ?>" method="POST">
                 <input type="hidden" name="punch_date" value="<?= $selected_date; ?>">
 
                 <div class="upchar-modal-header">
@@ -1508,7 +1508,7 @@
 <!-- ========================================== -->
 <!-- FORM: Hidden Delete Record                -->
 <!-- ========================================== -->
-<form id="deleteAttendanceForm" action="<?= base_url('attendance/delete_record'); ?>" method="POST" style="display: none;">
+<form id="deleteAttendanceForm" action="<?= base_url('admin1947/attendance/delete_record'); ?>" method="POST" style="display: none;">
     <input type="hidden" name="attendance_id" id="delete_attendance_id" value="">
     <input type="hidden" name="punch_date" value="<?= $selected_date; ?>">
 </form>
@@ -1751,7 +1751,7 @@ function calculateHours() {
 function quickClockIn(userId, timeChoice) {
     var inTime = (timeChoice === 'now') ? new Date().toTimeString().split(' ')[0] : '09:30:00';
     $.ajax({
-        url: '<?= base_url("attendance/save_record"); ?>',
+        url: '<?= base_url("admin1947/attendance/save_record"); ?>',
         type: 'POST',
         data: {
             user_id: userId,
@@ -1773,7 +1773,7 @@ function quickClockIn(userId, timeChoice) {
 function quickClockOut(userId, timeChoice) {
     var outTime = (timeChoice === 'now') ? new Date().toTimeString().split(' ')[0] : '18:30:00';
     $.ajax({
-        url: '<?= base_url("attendance/save_record"); ?>',
+        url: '<?= base_url("admin1947/attendance/save_record"); ?>',
         type: 'POST',
         data: {
             user_id: userId,
@@ -1806,7 +1806,7 @@ function quickSaveStatus(userId, status) {
     }
 
     $.ajax({
-        url: '<?= base_url("attendance/save_record"); ?>',
+        url: '<?= base_url("admin1947/attendance/save_record"); ?>',
         type: 'POST',
         data: {
             user_id: userId,

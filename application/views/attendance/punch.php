@@ -547,10 +547,10 @@
             </p>
         </div>
         <div style="display: flex; gap: 10px; align-items: center;">
-            <a href="<?= base_url('attendance/roster'); ?>" class="btn btn-sm" style="background: #ffffff; border: 1px solid #cbd5e1; color: #0f172a; font-weight: 700; border-radius: 10px; padding: 9px 16px; font-size: 13px; display: inline-flex; align-items: center; gap: 6px;">
+            <a href="<?= base_url('admin1947/attendance/roster'); ?>" class="btn btn-sm" style="background: #ffffff; border: 1px solid #cbd5e1; color: #0f172a; font-weight: 700; border-radius: 10px; padding: 9px 16px; font-size: 13px; display: inline-flex; align-items: center; gap: 6px;">
                 <i class="fa fa-calendar-check-o" style="color: #00a896;"></i> Staff Roster
             </a>
-            <a href="<?= base_url('attendance/history'); ?>" class="btn btn-sm" style="background: #f1f5f9; border: 1px solid #cbd5e1; color: #1e293b; font-weight: 700; border-radius: 10px; padding: 9px 16px; font-size: 13px; display: inline-flex; align-items: center; gap: 6px;">
+            <a href="<?= base_url('admin1947/attendance/history'); ?>" class="btn btn-sm" style="background: #f1f5f9; border: 1px solid #cbd5e1; color: #1e293b; font-weight: 700; border-radius: 10px; padding: 9px 16px; font-size: 13px; display: inline-flex; align-items: center; gap: 6px;">
                 <i class="fa fa-history" style="color: #6366f1;"></i> Full History
             </a>
         </div>
@@ -587,7 +587,7 @@
         <!-- Role / Staff Quick Switcher -->
         <div style="display: flex; align-items: center; gap: 8px;">
             <span style="font-size: 12px; font-weight: 700; color: #64748b;">Punching As:</span>
-            <select class="form-control input-sm" style="width: 220px; border-radius: 8px; font-weight: 600; font-size: 12.5px;" onchange="location.href='<?= base_url('attendance/punch?staff_id='); ?>' + this.value;">
+            <select class="form-control input-sm" style="width: 220px; border-radius: 8px; font-weight: 600; font-size: 12.5px;" onchange="location.href='<?= base_url('admin1947/attendance/punch?staff_id='); ?>' + this.value;">
                 <?php foreach ($all_staff as $st): ?>
                     <option value="<?= $st['id']; ?>" <?= ($st['id'] == ($user['id'] ?? 0)) ? 'selected' : ''; ?>>
                         <?= html_escape($st['name']); ?> (<?= strtoupper($st['role']); ?>)
@@ -769,7 +769,7 @@
                     </p>
                 </div>
                 <div style="display: flex; gap: 8px;">
-                    <a href="<?= base_url('attendance/history?staff_id=' . ($user['id'] ?? 1)); ?>" class="btn btn-xs" style="background: #f8fafc; border: 1px solid #cbd5e1; color: #475569; font-weight: 700; padding: 6px 12px; border-radius: 8px;">
+                    <a href="<?= base_url('admin1947/attendance/history?staff_id=' . ($user['id'] ?? 1)); ?>" class="btn btn-xs" style="background: #f8fafc; border: 1px solid #cbd5e1; color: #475569; font-weight: 700; padding: 6px 12px; border-radius: 8px;">
                         Full Archives <i class="fa fa-angle-right"></i>
                     </a>
                 </div>
@@ -1179,7 +1179,7 @@ function submitPunchIn() {
         notes: notes
     };
 
-    $.post('<?= base_url("attendance/record_punch_in"); ?>', postData, function(res) {
+    $.post('<?= base_url("admin1947/attendance/record_punch_in"); ?>', postData, function(res) {
         if (typeof res === 'string') {
             try { res = JSON.parse(res); } catch(e) {}
         }
@@ -1215,7 +1215,7 @@ function submitPunchOut() {
         notes: notes
     };
 
-    $.post('<?= base_url("attendance/record_punch_out"); ?>', postData, function(res) {
+    $.post('<?= base_url("admin1947/attendance/record_punch_out"); ?>', postData, function(res) {
         if (typeof res === 'string') {
             try { res = JSON.parse(res); } catch(e) {}
         }
@@ -1239,10 +1239,10 @@ function submitPunchOut() {
 function confirmResetTodayPunch() {
     if (!confirm("Reset today's punch record for " + targetUserName + "? This allows testing Punch-In again.")) return;
 
-    $.get('<?= base_url("attendance/reset_today_punch?staff_id="); ?>' + targetUserId, function(res) {
+    $.get('<?= base_url("admin1947/attendance/reset_today_punch?staff_id="); ?>' + targetUserId, function(res) {
         location.reload();
     }).fail(function() {
-        location.href = '<?= base_url("attendance/reset_today_punch?staff_id="); ?>' + targetUserId;
+        location.href = '<?= base_url("admin1947/attendance/reset_today_punch?staff_id="); ?>' + targetUserId;
     });
 }
 

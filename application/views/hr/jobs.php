@@ -154,7 +154,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
                         <tr class="job-row" data-title="<?=strtolower(html_escape($job['title']));?>" data-dept="<?=strtolower(html_escape($job['department']));?>" data-status="<?=$job['status'];?>" style="vertical-align: middle;">
                             <!-- Job Title & Dept -->
                             <td style="padding: 16px 20px;">
-                                <a href="<?=base_url('hr/candidates?job_id=' . $job['job_id']);?>" style="font-weight: 700; font-size: 14px; color: #0f172a; text-decoration: none; display: flex; align-items: center; gap: 8px;">
+                                <a href="<?=base_url('admin1947/hr/candidates?job_id=' . $job['job_id']);?>" style="font-weight: 700; font-size: 14px; color: #0f172a; text-decoration: none; display: flex; align-items: center; gap: 8px;">
                                     <?=html_escape($job['title']);?>
                                     <i class="fa fa-external-link" style="font-size: 11px; color: #94a3b8;"></i>
                                 </a>
@@ -196,7 +196,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 
                             <!-- Pipeline Funnel Breakdown -->
                             <td style="padding: 16px; text-align: center;">
-                                <a href="<?=base_url('hr/candidates?job_id=' . $job['job_id']);?>" title="Click to view candidates" style="text-decoration: none;">
+                                <a href="<?=base_url('admin1947/hr/candidates?job_id=' . $job['job_id']);?>" title="Click to view candidates" style="text-decoration: none;">
                                     <div style="display: inline-flex; align-items: center; gap: 4px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 9999px; padding: 4px 10px;">
                                         <span title="Applied" style="font-size: 11px; font-weight: 700; color: #3b82f6;"><?=intval($job['count_applied']);?> App</span>
                                         <span style="color: #cbd5e1;">•</span>
@@ -228,7 +228,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
                             <!-- Action Buttons -->
                             <td style="padding: 16px 20px; text-align: right;">
                                 <div style="display: inline-flex; align-items: center; gap: 6px;">
-                                    <a href="<?=base_url('hr/candidates?job_id=' . $job['job_id']);?>" class="btn btn-sm" style="background: #f0fdfa; color: #00a896; border: 1px solid #ccfbf1; border-radius: 8px; font-size: 12px; font-weight: 700;" title="View Applicants">
+                                    <a href="<?=base_url('admin1947/hr/candidates?job_id=' . $job['job_id']);?>" class="btn btn-sm" style="background: #f0fdfa; color: #00a896; border: 1px solid #ccfbf1; border-radius: 8px; font-size: 12px; font-weight: 700;" title="View Applicants">
                                         <i class="fa fa-users"></i> Applicants
                                     </a>
 
@@ -236,7 +236,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
                                         <i class="fa fa-pencil"></i>
                                     </button>
 
-                                    <form action="<?=base_url('hr/toggle_job_status');?>" method="POST" style="display: inline-block; margin: 0;">
+                                    <form action="<?=base_url('admin1947/hr/toggle_job_status');?>" method="POST" style="display: inline-block; margin: 0;">
                                         <input type="hidden" name="job_id" value="<?=$job['job_id'];?>">
                                         <button type="submit" class="btn btn-sm" style="background: #f8fafc; color: #64748b; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 12px;" title="Toggle Open/Close">
                                             <i class="fa fa-power-off"></i>
@@ -265,7 +265,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 <div class="modal fade" id="postJobModal" tabindex="-1" role="dialog" aria-labelledby="jobModalTitle">
     <div class="modal-dialog modal-lg" role="document" style="max-width: 860px;">
         <div class="modal-content" style="border-radius: 20px; border: none; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.3); overflow: hidden;">
-            <form action="<?=base_url('hr/save_job');?>" method="POST" id="jobForm" onsubmit="handleJobFormSubmit(event)">
+            <form action="<?=base_url('admin1947/hr/save_job');?>" method="POST" id="jobForm" onsubmit="handleJobFormSubmit(event)">
                 <input type="hidden" name="job_id" id="modal_job_id" value="">
                 
                 <!-- Modal Header -->

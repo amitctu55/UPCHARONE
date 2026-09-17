@@ -164,28 +164,7 @@
         </button>
     </form>
 
-    <!-- 1-Click Role Demonstrator Links -->
-    <div style="margin-top: 28px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1);">
-        <div style="font-size: 12px; color: #94a3b8; font-weight: 600; margin-bottom: 10px; text-align: center;">
-            ⚡ Quick Demo 1-Click Role Access:
-        </div>
-        <div style="display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;">
-            <a href="<?=base_url('staff/demo_login/collector');?>" class="role-demo-pill" title="Phlebotomist Field Web App">
-                <i class="fa fa-motorcycle" style="color: #38bdf8;"></i> Phlebotomist PWA
-            </a>
-            <a href="<?=base_url('staff/demo_login/hr');?>" class="role-demo-pill" title="HR, Leaves & Payroll">
-                <i class="fa fa-users" style="color: #f472b6;"></i> HR &amp; Payroll
-            </a>
-            <a href="<?=base_url('staff/demo_login/bde');?>" class="role-demo-pill" title="BDE CRM Pipeline">
-                <i class="fa fa-briefcase" style="color: #fcd34d;"></i> BDE CRM
-            </a>
-            <a href="<?=base_url('staff/demo_login/office_staff');?>" class="role-demo-pill" title="Sample Handoffs & Expenses">
-                <i class="fa fa-flask" style="color: #34d399;"></i> Operations Desk
-            </a>
-        </div>
-    </div>
-
-    <div style="text-align: center; margin-top: 20px;">
+    <div style="text-align: center; margin-top: 25px;">
         <a href="<?=base_url();?>" style="color: #94a3b8; font-size: 12.5px; text-decoration: none;">
             <i class="fa fa-arrow-left"></i> Back to Upchar Patient Website
         </a>

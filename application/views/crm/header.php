@@ -102,22 +102,22 @@
             </div>
 
             <nav class="crm-nav" style="margin-top: 14px;">
-                <a href="<?=base_url('crm/dashboard');?>" class="<?=($this->uri->segment(2)=='dashboard' || empty($this->uri->segment(2))) ? 'active' : '';?>">
+                <a href="<?=base_url('admin1947/crm/dashboard');?>" class="<?=($this->uri->segment(3)=='dashboard' || $this->uri->segment(2)=='dashboard' || empty($this->uri->segment(2))) ? 'active' : '';?>">
                     <i class="fa fa-tachometer" style="color: #38bdf8;"></i> Pipeline Metrics
                 </a>
-                <a href="<?=base_url('crm/leads');?>" class="<?=($this->uri->segment(2)=='leads') ? 'active' : '';?>">
+                <a href="<?=base_url('admin1947/crm/leads');?>" class="<?=($this->uri->segment(3)=='leads' || $this->uri->segment(2)=='leads') ? 'active' : '';?>">
                     <i class="fa fa-columns" style="color: #fcd34d;"></i> Kanban Pipeline
                 </a>
-                <a href="<?=base_url('attendance/punch');?>">
+                <a href="<?=base_url('admin1947/attendance/punch');?>">
                     <i class="fa fa-clock-o" style="color: #34d399;"></i> Daily Punch-in
                 </a>
-                <a href="<?=base_url('operations/expenses');?>">
+                <a href="<?=base_url('admin1947/operations/expenses');?>">
                     <i class="fa fa-file-text-o" style="color: #ec4899;"></i> Expense Claims
                 </a>
-                <a href="<?=base_url('hr/dashboard');?>">
+                <a href="<?=base_url('admin1947/hr/dashboard');?>">
                     <i class="fa fa-users" style="color: #a78bfa;"></i> HR Portal
                 </a>
-                <a href="<?=base_url('staff/logout');?>">
+                <a href="<?=base_url('admin1947/login/logout');?>">
                     <i class="fa fa-sign-out" style="color: #f87171;"></i> Logout
                 </a>
             </nav>

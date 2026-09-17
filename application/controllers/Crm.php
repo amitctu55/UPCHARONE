@@ -125,7 +125,7 @@ class Crm extends CI_Controller {
                 return;
             }
             $this->session->set_flashdata('error_msg', 'Facility name and contact phone are required.');
-            redirect('crm/leads');
+            redirect('admin1947/crm/leads');
             return;
         }
 
@@ -169,7 +169,7 @@ class Crm extends CI_Controller {
         }
 
         $this->session->set_flashdata('success_msg', "Partner '{$name}' added to CRM pipeline!");
-        redirect('crm/leads');
+        redirect('admin1947/crm/leads');
     }
 
     /**
@@ -267,7 +267,7 @@ class Crm extends CI_Controller {
     public function onboard_partner($leadId) {
         $lead = $this->Crm_model->get_lead_by_id($leadId);
         if (!$lead) {
-            redirect('crm/leads');
+            redirect('admin1947/crm/leads');
             return;
         }
         $data['title'] = 'Onboard Healthcare Partner - Upchar CRM';

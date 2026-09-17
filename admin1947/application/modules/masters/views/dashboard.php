@@ -548,13 +548,13 @@
                             <a href="<?=base_url('../collector/dashboard');?>" target="_blank" class="btn btn-xs btn-default" style="font-weight: 600; text-align: left;">
                                 <i class="fa fa-list-alt text-teal"></i> Collector App
                             </a>
-                            <a href="<?=base_url('../operations/handoffs');?>" target="_blank" class="btn btn-xs btn-default" style="font-weight: 600; text-align: left;">
+                            <a href="<?=base_url('operations/handoffs');?>" target="_blank" class="btn btn-xs btn-default" style="font-weight: 600; text-align: left;">
                                 <i class="fa fa-flask text-primary"></i> Handoffs
                             </a>
-                            <a href="<?=base_url('../operations/expenses');?>" target="_blank" class="btn btn-xs btn-default" style="font-weight: 600; text-align: left;">
+                            <a href="<?=base_url('operations/expenses');?>" target="_blank" class="btn btn-xs btn-default" style="font-weight: 600; text-align: left;">
                                 <i class="fa fa-receipt text-danger"></i> Claims (<?=$pending_expenses ?? 0;?>)
                             </a>
-                            <a href="<?=base_url('../attendance/punch');?>" target="_blank" class="btn btn-xs btn-default" style="font-weight: 600; text-align: left;">
+                            <a href="<?=base_url('attendance/punch');?>" target="_blank" class="btn btn-xs btn-default" style="font-weight: 600; text-align: left;">
                                 <i class="fa fa-camera text-info"></i> GPS Punch
                             </a>
                         </div>

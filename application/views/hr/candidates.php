@@ -65,7 +65,7 @@ $selectedJobId = $selected_job_id ?? null;
                 $cnt = $stage_counts[$tKey] ?? 0;
                 $jobQuery = $selectedJobId ? '?job_id=' . $selectedJobId : '';
             ?>
-                <a href="<?=base_url('hr/candidates/' . $tKey . $jobQuery);?>" style="display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; border-radius: 12px; text-decoration: none; font-size: 13px; font-weight: 700; transition: all 0.2s; white-space: nowrap; <?=$isActive ? 'background: ' . $tInfo['color'] . '; color: #ffffff; box-shadow: 0 4px 12px ' . $tInfo['color'] . '40;' : 'background: transparent; color: #64748b;';?>">
+                <a href="<?=base_url('admin1947/hr/candidates/' . $tKey . $jobQuery);?>" style="display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; border-radius: 12px; text-decoration: none; font-size: 13px; font-weight: 700; transition: all 0.2s; white-space: nowrap; <?=$isActive ? 'background: ' . $tInfo['color'] . '; color: #ffffff; box-shadow: 0 4px 12px ' . $tInfo['color'] . '40;' : 'background: transparent; color: #64748b;';?>">
                     <i class="fa <?=$tInfo['icon'];?>" style="font-size: 13px; color: <?=$isActive ? '#ffffff' : $tInfo['color'];?>;"></i>
                     <span><?=$tInfo['label'];?></span>
                     <span style="font-size: 11px; padding: 2px 7px; border-radius: 9999px; font-weight: 800; <?=$isActive ? 'background: rgba(255,255,255,0.25); color: #ffffff;' : 'background: ' . $tInfo['bg'] . '; color: ' . $tInfo['color'] . ';';?>">
@@ -87,7 +87,7 @@ $selectedJobId = $selected_job_id ?? null;
 
         <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
             <!-- Filter by Requisition -->
-            <form action="<?=base_url('hr/candidates/' . $currentStage);?>" method="GET" style="display: inline-flex; align-items: center; gap: 8px; margin: 0;">
+            <form action="<?=base_url('admin1947/hr/candidates/' . $currentStage);?>" method="GET" style="display: inline-flex; align-items: center; gap: 8px; margin: 0;">
                 <label style="font-size: 12.5px; font-weight: 700; color: #64748b; margin: 0;">Requisition:</label>
                 <select name="job_id" onchange="this.form.submit()" style="padding: 7px 12px; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 13px; background: #fff; font-weight: 600; color: #334155; max-width: 250px;">
                     <option value="">All Requisitions (<?=count($candidates ?? []);?>)</option>
@@ -98,7 +98,7 @@ $selectedJobId = $selected_job_id ?? null;
                     <?php endforeach; endif; ?>
                 </select>
                 <?php if ($selectedJobId): ?>
-                    <a href="<?=base_url('hr/candidates/' . $currentStage);?>" class="btn btn-sm" style="color: #ef4444; font-size: 12px; padding: 6px 10px;" title="Clear filter">
+                    <a href="<?=base_url('admin1947/hr/candidates/' . $currentStage);?>" class="btn btn-sm" style="color: #ef4444; font-size: 12px; padding: 6px 10px;" title="Clear filter">
                         <i class="fa fa-times"></i> Clear
                     </a>
                 <?php endif; ?>
@@ -142,7 +142,7 @@ $selectedJobId = $selected_job_id ?? null;
                                 <?=$initial;?>
                             </div>
                             <div>
-                                <a href="<?=base_url('hr/candidate_profile/' . $cand['career_id']);?>" style="font-weight: 800; font-size: 15.5px; color: #0f172a; text-decoration: none; display: block; line-height: 1.2;">
+                                <a href="<?=base_url('admin1947/hr/candidate_profile/' . $cand['career_id']);?>" style="font-weight: 800; font-size: 15.5px; color: #0f172a; text-decoration: none; display: block; line-height: 1.2;">
                                     <?=html_escape($cand['name']);?>
                                 </a>
                                 <span style="font-size: 12px; color: #64748b; font-weight: 500;">
@@ -209,7 +209,7 @@ $selectedJobId = $selected_job_id ?? null;
                         </button>
 
                         <!-- View Dossier Profile -->
-                        <a href="<?=base_url('hr/candidate_profile/' . $cand['career_id']);?>" class="btn btn-sm btn-primary" style="background: #00a896; border: none; border-radius: 8px; font-size: 12px; font-weight: 700; padding: 6px 14px;">
+                        <a href="<?=base_url('admin1947/hr/candidate_profile/' . $cand['career_id']);?>" class="btn btn-sm btn-primary" style="background: #00a896; border: none; border-radius: 8px; font-size: 12px; font-weight: 700; padding: 6px 14px;">
                             View Profile
                         </a>
                     </div>
@@ -249,7 +249,7 @@ $selectedJobId = $selected_job_id ?? null;
                     ?>
                         <tr class="candidate-row" style="vertical-align: middle;">
                             <td style="padding: 14px 20px;">
-                                <a href="<?=base_url('hr/candidate_profile/' . $cand['career_id']);?>" style="font-weight: 700; font-size: 14px; color: #0f172a; text-decoration: none;">
+                                <a href="<?=base_url('admin1947/hr/candidate_profile/' . $cand['career_id']);?>" style="font-weight: 700; font-size: 14px; color: #0f172a; text-decoration: none;">
                                     <?=html_escape($cand['name']);?>
                                 </a>
                                 <div style="font-size: 12px; color: #64748b; margin-top: 2px;">
@@ -275,7 +275,7 @@ $selectedJobId = $selected_job_id ?? null;
                                     <button type="button" class="btn btn-sm" onclick="openMoveStageModal(<?=$cand['career_id'];?>, '<?=html_escape(addslashes($cand['name']));?>', '<?=$stage;?>')" style="background: #f8fafc; color: #334155; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 12px; font-weight: 700;">
                                         Stage <i class="fa fa-chevron-right" style="font-size: 10px;"></i>
                                     </button>
-                                    <a href="<?=base_url('hr/candidate_profile/' . $cand['career_id']);?>" class="btn btn-sm" style="background: #00a896; color: #fff; border-radius: 8px; font-size: 12px; font-weight: 700;">
+                                    <a href="<?=base_url('admin1947/hr/candidate_profile/' . $cand['career_id']);?>" class="btn btn-sm" style="background: #00a896; color: #fff; border-radius: 8px; font-size: 12px; font-weight: 700;">
                                         View Profile
                                     </a>
                                 </div>
@@ -294,9 +294,9 @@ $selectedJobId = $selected_job_id ?? null;
 <div class="modal fade" id="moveStageModal" tabindex="-1" role="dialog">
     <div class="modal-dialog modal-sm" role="document" style="max-width: 420px;">
         <div class="modal-content" style="border-radius: 16px; border: none; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2);">
-            <form action="<?=base_url('recruitment/update_stage');?>" method="POST">
+            <form action="<?=base_url('admin1947/hr/update_candidate_stage');?>" method="POST">
                 <input type="hidden" name="candidate_id" id="stage_modal_candidate_id" value="">
-                <input type="hidden" name="redirect_to" value="hr/candidates/<?=$currentStage;?><?=$selectedJobId ? '?job_id=' . $selectedJobId : '';?>">
+                <input type="hidden" name="redirect_to" value="admin1947/hr/candidates/<?=$currentStage;?><?=$selectedJobId ? '?job_id=' . $selectedJobId : '';?>">
 
                 <div class="modal-header" style="background: #0f172a; color: #ffffff; border-top-left-radius: 16px; border-top-right-radius: 16px; padding: 18px 20px;">
                     <button type="button" class="close" data-dismiss="modal" style="color: #ffffff; opacity: 0.8;">&times;</button>
@@ -346,7 +346,7 @@ $selectedJobId = $selected_job_id ?? null;
 <div class="modal fade" id="addCandidateModal" tabindex="-1" role="dialog">
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content" style="border-radius: 16px; border: none; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2);">
-            <form action="<?=base_url('recruitment/save_candidate');?>" method="POST">
+            <form action="<?=base_url('admin1947/hr/save_candidate');?>" method="POST">
                 <div class="modal-header" style="background: #0f172a; color: #ffffff; border-top-left-radius: 16px; border-top-right-radius: 16px; padding: 20px 24px;">
                     <button type="button" class="close" data-dismiss="modal" style="color: #ffffff; opacity: 0.8;">&times;</button>
                     <h4 class="modal-title" style="font-weight: 800; font-size: 17px;">

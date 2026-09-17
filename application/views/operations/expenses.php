@@ -51,7 +51,7 @@
             <button type="button" class="btn" data-toggle="modal" data-target="#addExpenseModal" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #fff; font-weight: 700; border-radius: 10px; padding: 10px 18px; font-size: 13px; border: none; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25); display: inline-flex; align-items: center; gap: 8px;">
                 <i class="fa fa-plus-circle"></i> + Submit Expense Claim
             </button>
-            <a href="<?= base_url('operations'); ?>" class="btn btn-default" style="background: #ffffff; border: 1px solid #cbd5e1; color: #334155; font-weight: 600; border-radius: 10px; padding: 10px 16px; font-size: 13px; display: inline-flex; align-items: center; gap: 6px;">
+            <a href="<?= base_url('admin1947/operations'); ?>" class="btn btn-default" style="background: #ffffff; border: 1px solid #cbd5e1; color: #334155; font-weight: 600; border-radius: 10px; padding: 10px 16px; font-size: 13px; display: inline-flex; align-items: center; gap: 6px;">
                 <i class="fa fa-tachometer"></i> Operations Hub
             </a>
         </div>
@@ -143,19 +143,19 @@
     <!-- Filter & Search Toolbar -->
     <div style="background: #ffffff; border-radius: 14px; border: 1px solid #e2e8f0; padding: 16px 20px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;">
         <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-            <a href="<?= base_url('operations/expenses'); ?>" class="btn btn-sm" style="border-radius: 8px; font-weight: 700; padding: 7px 14px; font-size: 12.5px; <?= empty($this->input->get('status')) ? 'background: #0f172a; color: #ffffff;' : 'background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0;'; ?>">
+            <a href="<?= base_url('admin1947/operations/expenses'); ?>" class="btn btn-sm" style="border-radius: 8px; font-weight: 700; padding: 7px 14px; font-size: 12.5px; <?= empty($this->input->get('status')) ? 'background: #0f172a; color: #ffffff;' : 'background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0;'; ?>">
                 All Claims (<?= $totalCount; ?>)
             </a>
-            <a href="<?= base_url('operations/expenses?status=submitted'); ?>" class="btn btn-sm" style="border-radius: 8px; font-weight: 700; padding: 7px 14px; font-size: 12.5px; <?= $this->input->get('status') === 'submitted' ? 'background: #f59e0b; color: #ffffff;' : 'background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0;'; ?>">
+            <a href="<?= base_url('admin1947/operations/expenses?status=submitted'); ?>" class="btn btn-sm" style="border-radius: 8px; font-weight: 700; padding: 7px 14px; font-size: 12.5px; <?= $this->input->get('status') === 'submitted' ? 'background: #f59e0b; color: #ffffff;' : 'background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0;'; ?>">
                 <i class="fa fa-clock-o"></i> Pending Review (<?= $pendingCount; ?>)
             </a>
-            <a href="<?= base_url('operations/expenses?status=approved'); ?>" class="btn btn-sm" style="border-radius: 8px; font-weight: 700; padding: 7px 14px; font-size: 12.5px; <?= $this->input->get('status') === 'approved' ? 'background: #0284c7; color: #ffffff;' : 'background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0;'; ?>">
+            <a href="<?= base_url('admin1947/operations/expenses?status=approved'); ?>" class="btn btn-sm" style="border-radius: 8px; font-weight: 700; padding: 7px 14px; font-size: 12.5px; <?= $this->input->get('status') === 'approved' ? 'background: #0284c7; color: #ffffff;' : 'background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0;'; ?>">
                 <i class="fa fa-check"></i> Approved (<?= $approvedCount; ?>)
             </a>
-            <a href="<?= base_url('operations/expenses?status=reimbursed'); ?>" class="btn btn-sm" style="border-radius: 8px; font-weight: 700; padding: 7px 14px; font-size: 12.5px; <?= $this->input->get('status') === 'reimbursed' ? 'background: #10b981; color: #ffffff;' : 'background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0;'; ?>">
+            <a href="<?= base_url('admin1947/operations/expenses?status=reimbursed'); ?>" class="btn btn-sm" style="border-radius: 8px; font-weight: 700; padding: 7px 14px; font-size: 12.5px; <?= $this->input->get('status') === 'reimbursed' ? 'background: #10b981; color: #ffffff;' : 'background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0;'; ?>">
                 <i class="fa fa-money"></i> Reimbursed (<?= $reimbursedCount; ?>)
             </a>
-            <a href="<?= base_url('operations/expenses?status=rejected'); ?>" class="btn btn-sm" style="border-radius: 8px; font-weight: 700; padding: 7px 14px; font-size: 12.5px; <?= $this->input->get('status') === 'rejected' ? 'background: #ef4444; color: #ffffff;' : 'background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0;'; ?>">
+            <a href="<?= base_url('admin1947/operations/expenses?status=rejected'); ?>" class="btn btn-sm" style="border-radius: 8px; font-weight: 700; padding: 7px 14px; font-size: 12.5px; <?= $this->input->get('status') === 'rejected' ? 'background: #ef4444; color: #ffffff;' : 'background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0;'; ?>">
                 <i class="fa fa-times"></i> Rejected (<?= $rejectedCount; ?>)
             </a>
         </div>
@@ -343,7 +343,7 @@
                 </div>
             </div>
 
-            <form action="<?= base_url('operations/save_expense'); ?>" method="post">
+            <form action="<?= base_url('admin1947/operations/save_expense'); ?>" method="post">
                 <input type="hidden" name="<?= $this->security->get_csrf_token_name(); ?>" value="<?= $this->security->get_csrf_hash(); ?>">
                 <div class="modal-body" style="padding: 24px; background: #ffffff;">
                     <div style="display: grid; gap: 16px;">
@@ -412,7 +412,7 @@ $(document).ready(function() {
         if (confirm(confirmMsg)) {
             var $btn = $(this);
             $btn.prop('disabled', true);
-            $.post('<?= base_url("operations/update_expense"); ?>', {
+            $.post('<?= base_url("admin1947/operations/update_expense"); ?>', {
                 expense_id: expenseId,
                 status: status,
                 '<?= $this->security->get_csrf_token_name(); ?>': '<?= $this->security->get_csrf_hash(); ?>'

@@ -278,19 +278,19 @@ $avgSalary = ($totalStaff > 0) ? round($totalPayrollBudget / $totalStaff) : 0;
 <div class="staff-filter-toolbar">
     <!-- Role Filter Pills -->
     <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center;">
-        <a href="<?= base_url('hr/directory'); ?>" class="staff-role-pill <?= empty($selected_role) ? 'active' : ''; ?>">
+        <a href="<?= base_url('admin1947/hr/directory'); ?>" class="staff-role-pill <?= empty($selected_role) ? 'active' : ''; ?>">
             All Roles (<?= $totalStaff; ?>)
         </a>
-        <a href="<?= base_url('hr/directory?role=collector'); ?>" class="staff-role-pill <?= $selected_role === 'collector' ? 'active' : ''; ?>">
+        <a href="<?= base_url('admin1947/hr/directory?role=collector'); ?>" class="staff-role-pill <?= $selected_role === 'collector' ? 'active' : ''; ?>">
             <i class="fa fa-motorcycle" style="color: #0284c7;"></i> Phlebotomists (<?= $collectorCount; ?>)
         </a>
-        <a href="<?= base_url('hr/directory?role=bde'); ?>" class="staff-role-pill <?= $selected_role === 'bde' ? 'active' : ''; ?>">
+        <a href="<?= base_url('admin1947/hr/directory?role=bde'); ?>" class="staff-role-pill <?= $selected_role === 'bde' ? 'active' : ''; ?>">
             <i class="fa fa-line-chart" style="color: #8b5cf6;"></i> BDE Executives (<?= $bdeCount; ?>)
         </a>
-        <a href="<?= base_url('hr/directory?role=hr'); ?>" class="staff-role-pill <?= $selected_role === 'hr' ? 'active' : ''; ?>">
+        <a href="<?= base_url('admin1947/hr/directory?role=hr'); ?>" class="staff-role-pill <?= $selected_role === 'hr' ? 'active' : ''; ?>">
             <i class="fa fa-shield" style="color: #00a896;"></i> HR Specialist
         </a>
-        <a href="<?= base_url('hr/directory?role=office_staff'); ?>" class="staff-role-pill <?= $selected_role === 'office_staff' ? 'active' : ''; ?>">
+        <a href="<?= base_url('admin1947/hr/directory?role=office_staff'); ?>" class="staff-role-pill <?= $selected_role === 'office_staff' ? 'active' : ''; ?>">
             <i class="fa fa-building-o" style="color: #f59e0b;"></i> Operations &amp; Lab
         </a>
     </div>
@@ -453,7 +453,7 @@ $avgSalary = ($totalStaff > 0) ? round($totalPayrollBudget / $totalStaff) : 0;
                     <i class="fa fa-power-off" style="color: <?=$isActive ? '#10b981' : '#ef4444';?>;"></i>
                 </button>
 
-                <a href="<?=base_url('attendance/roster?search=' . urlencode($e['name']));?>" class="btn btn-sm btn-default" title="View Attendance" style="border-radius: 8px; padding: 6px 10px;">
+                <a href="<?=base_url('admin1947/attendance/roster?search=' . urlencode($e['name']));?>" class="btn btn-sm btn-default" title="View Attendance" style="border-radius: 8px; padding: 6px 10px;">
                     <i class="fa fa-calendar" style="color: #f59e0b;"></i>
                 </a>
             </div>
@@ -714,7 +714,7 @@ $avgSalary = ($totalStaff > 0) ? round($totalPayrollBudget / $totalStaff) : 0;
                 </h4>
             </div>
 
-            <form id="editEmployeeForm" action="<?=base_url('hr/update_employee');?>" method="post">
+            <form id="editEmployeeForm" action="<?=base_url('admin1947/hr/update_employee');?>" method="post">
                 <input type="hidden" name="<?=$this->security->get_csrf_token_name();?>" value="<?=$this->security->get_csrf_hash();?>">
                 <input type="hidden" name="staff_id" id="editStaffId" value="">
                 
@@ -809,7 +809,7 @@ $avgSalary = ($totalStaff > 0) ? round($totalPayrollBudget / $totalStaff) : 0;
                 </div>
             </div>
 
-            <form action="<?= base_url('hr/save_employee'); ?>" method="post">
+            <form action="<?= base_url('admin1947/hr/save_employee'); ?>" method="post">
                 <input type="hidden" name="<?= $this->security->get_csrf_token_name(); ?>" value="<?= $this->security->get_csrf_hash(); ?>">
                 <div class="modal-body" style="padding: 24px; background: #ffffff;">
                     <div style="display: grid; gap: 14px;">
@@ -986,7 +986,7 @@ $(document).ready(function() {
 
         $('#modalProfileCallBtn').attr('href', 'tel:' + phone);
         $('#modalProfileEmailBtn').attr('href', 'mailto:' + email);
-        $('#modalProfileRosterBtn').attr('href', '<?=base_url("attendance/roster?search=");?>' + encodeURIComponent(name));
+        $('#modalProfileRosterBtn').attr('href', '<?=base_url("admin1947/attendance/roster?search=");?>' + encodeURIComponent(name));
 
         $('#staffProfileModal').modal('show');
     });
@@ -1023,7 +1023,7 @@ $(document).ready(function() {
     $('#editEmployeeForm').submit(function(e) {
         e.preventDefault();
         $.ajax({
-            url: '<?=base_url("hr/update_employee");?>',
+            url: '<?=base_url("admin1947/hr/update_employee");?>',
             type: 'POST',
             data: $(this).serialize(),
             dataType: 'json',
@@ -1056,7 +1056,7 @@ $(document).ready(function() {
 
         $btn.prop('disabled', true);
         $.ajax({
-            url: '<?=base_url("hr/toggle_staff_status");?>',
+            url: '<?=base_url("admin1947/hr/toggle_staff_status");?>',
             type: 'POST',
             data: postData,
             dataType: 'json',

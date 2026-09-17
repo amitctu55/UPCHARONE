@@ -33,11 +33,11 @@ $roleTitle = $candidate['job_title'] ?: ($candidate['designation'] ?: 'Applicant
     <!-- Breadcrumb & Navigation Bar -->
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
         <div style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600;">
-            <a href="<?=base_url('hr/candidates');?>" style="color: #64748b; text-decoration: none;">
+            <a href="<?=base_url('admin1947/hr/candidates');?>" style="color: #64748b; text-decoration: none;">
                 <i class="fa fa-arrow-left" style="margin-right: 4px;"></i> Candidates Pipeline
             </a>
             <span style="color: #cbd5e1;">/</span>
-            <a href="<?=base_url('hr/candidates/' . $stage);?>" style="color: <?=$stageColor;?>; text-decoration: none; text-transform: capitalize;">
+            <a href="<?=base_url('admin1947/hr/candidates/' . $stage);?>" style="color: <?=$stageColor;?>; text-decoration: none; text-transform: capitalize;">
                 <?=ucfirst($stage);?>
             </a>
             <span style="color: #cbd5e1;">/</span>
@@ -45,10 +45,10 @@ $roleTitle = $candidate['job_title'] ?: ($candidate['designation'] ?: 'Applicant
         </div>
 
         <div style="display: flex; align-items: center; gap: 10px;">
-            <a href="<?=base_url('hr/candidates');?>" class="btn btn-default" style="border-radius: 8px; font-weight: 600; font-size: 12.5px;">
+            <a href="<?=base_url('admin1947/hr/candidates');?>" class="btn btn-default" style="border-radius: 8px; font-weight: 600; font-size: 12.5px;">
                 <i class="fa fa-list"></i> Pipeline Tabs
             </a>
-            <a href="<?=base_url('hr/recruitment');?>" class="btn btn-default" style="border-radius: 8px; font-weight: 600; font-size: 12.5px;">
+            <a href="<?=base_url('admin1947/hr/recruitment');?>" class="btn btn-default" style="border-radius: 8px; font-weight: 600; font-size: 12.5px;">
                 <i class="fa fa-columns"></i> Kanban Board
             </a>
         </div>
@@ -149,7 +149,7 @@ $roleTitle = $candidate['job_title'] ?: ($candidate['designation'] ?: 'Applicant
 
                 <!-- Reject Button -->
                 <?php if ($stage !== 'rejected'): ?>
-                    <form action="<?=base_url('recruitment/update_stage');?>" method="POST" onsubmit="return confirm('Are you sure you want to mark this candidate as Rejected?');" style="margin-bottom: 10px;">
+                    <form action="<?=base_url('admin1947/hr/update_candidate_stage');?>" method="POST" onsubmit="return confirm('Are you sure you want to mark this candidate as Rejected?');" style="margin-bottom: 10px;">
                         <input type="hidden" name="candidate_id" value="<?=$candidate['career_id'];?>">
                         <input type="hidden" name="target_stage" value="rejected">
                         <input type="hidden" name="stage_note" value="Application rejected during review.">
@@ -160,7 +160,7 @@ $roleTitle = $candidate['job_title'] ?: ($candidate['designation'] ?: 'Applicant
                 <?php endif; ?>
 
                 <!-- Delete Record -->
-                <form action="<?=base_url('recruitment/delete_candidate');?>" method="POST" onsubmit="return confirm('WARNING: Are you sure you want to permanently delete this candidate record?');">
+                <form action="<?=base_url('admin1947/hr/delete_candidate');?>" method="POST" onsubmit="return confirm('WARNING: Are you sure you want to permanently delete this candidate record?');">
                     <input type="hidden" name="candidate_id" value="<?=$candidate['career_id'];?>">
                     <button type="submit" class="btn btn-link btn-block" style="color: #94a3b8; font-size: 12px; text-decoration: none; padding-top: 4px;">
                         <i class="fa fa-trash-o"></i> Delete Candidate Record
@@ -221,7 +221,7 @@ $roleTitle = $candidate['job_title'] ?: ($candidate['designation'] ?: 'Applicant
                 </div>
 
                 <!-- Fast Add Note Form -->
-                <form action="<?=base_url('recruitment/add_note');?>" method="POST" style="margin-bottom: 26px;">
+                <form action="<?=base_url('admin1947/hr/add_candidate_note');?>" method="POST" style="margin-bottom: 26px;">
                     <input type="hidden" name="candidate_id" value="<?=$candidate['career_id'];?>">
                     <input type="hidden" name="stage" value="<?=$stage;?>">
 
@@ -291,9 +291,9 @@ $roleTitle = $candidate['job_title'] ?: ($candidate['designation'] ?: 'Applicant
 <div class="modal fade" id="moveStageModal" tabindex="-1" role="dialog">
     <div class="modal-dialog modal-sm" role="document" style="max-width: 440px;">
         <div class="modal-content" style="border-radius: 16px; border: none; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2);">
-            <form action="<?=base_url('recruitment/update_stage');?>" method="POST">
+            <form action="<?=base_url('admin1947/hr/update_candidate_stage');?>" method="POST">
                 <input type="hidden" name="candidate_id" value="<?=$candidate['career_id'];?>">
-                <input type="hidden" name="redirect_to" value="hr/candidate_profile/<?=$candidate['career_id'];?>">
+                <input type="hidden" name="redirect_to" value="admin1947/hr/candidate_profile/<?=$candidate['career_id'];?>">
 
                 <div class="modal-header" style="background: #0f172a; color: #ffffff; border-top-left-radius: 16px; border-top-right-radius: 16px; padding: 18px 20px;">
                     <button type="button" class="close" data-dismiss="modal" style="color: #ffffff; opacity: 0.8;">&times;</button>
@@ -338,7 +338,7 @@ $roleTitle = $candidate['job_title'] ?: ($candidate['designation'] ?: 'Applicant
 <div class="modal fade" id="onboardStaffModal" tabindex="-1" role="dialog">
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content" style="border-radius: 16px; border: none; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2);">
-            <form action="<?=base_url('recruitment/onboard');?>" method="POST">
+            <form action="<?=base_url('admin1947/hr/onboard_candidate');?>" method="POST">
                 <input type="hidden" name="candidate_id" value="<?=$candidate['career_id'];?>">
 
                 <div class="modal-header" style="background: #0f172a; color: #ffffff; border-top-left-radius: 16px; border-top-right-radius: 16px; padding: 20px 24px;">

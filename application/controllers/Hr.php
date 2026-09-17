@@ -134,13 +134,13 @@ class Hr extends CI_Controller {
         $description = trim($this->input->post('description', TRUE));
         $requirements= trim($this->input->post('requirements', TRUE));
         $status      = in_array($this->input->post('status'), ['active', 'closed']) ? $this->input->post('status') : 'active';
-        $redirectTo  = $this->input->post('redirect_to') ?: 'hr/jobs';
+        $redirectTo  = $this->input->post('redirect_to') ?: 'admin1947/hr/jobs';
 
         if (empty($title)) {
             $resp = ['status' => 'error', 'message' => 'Job Requisition Title is required.'];
             if ($this->input->is_ajax_request()) { echo json_encode($resp); return; }
             $this->session->set_flashdata('error_msg', $resp['message']);
-            redirect('hr/jobs');
+            redirect('admin1947/hr/jobs');
             return;
         }
 
@@ -173,7 +173,7 @@ class Hr extends CI_Controller {
         }
 
         $this->session->set_flashdata('success_msg', $msg);
-        redirect('hr/jobs');
+        redirect('admin1947/hr/jobs');
     }
 
     /**
@@ -190,7 +190,7 @@ class Hr extends CI_Controller {
             }
             $this->session->set_flashdata('success_msg', $msg);
         }
-        redirect('hr/jobs');
+        redirect('admin1947/hr/jobs');
     }
 
     /**
@@ -209,7 +209,7 @@ class Hr extends CI_Controller {
 
         if (empty($name) || empty($email) || empty($mobile)) {
             $this->session->set_flashdata('error_msg', 'Candidate Name, Email, and Mobile number are required.');
-            redirect('hr/recruitment');
+            redirect('admin1947/hr/recruitment');
             return;
         }
 
@@ -234,7 +234,7 @@ class Hr extends CI_Controller {
         ]);
 
         $this->session->set_flashdata('success_msg', "Candidate '{$name}' successfully added to recruitment pipeline!");
-        redirect('hr/recruitment');
+        redirect('admin1947/hr/recruitment');
     }
 
     /**
@@ -275,7 +275,7 @@ class Hr extends CI_Controller {
         $candidate = $this->db->get_where('career', ['career_id' => $careerId])->row_array();
         if (!$candidate) {
             $this->session->set_flashdata('error_msg', 'Candidate not found.');
-            redirect('hr/recruitment');
+            redirect('admin1947/hr/recruitment');
             return;
         }
 
@@ -297,7 +297,7 @@ class Hr extends CI_Controller {
         $this->db->where('career_id', $careerId)->update('career', ['status_stage' => 'hired']);
 
         $this->session->set_flashdata('success_msg', "Candidate {$candidate['name']} successfully onboarded to active enterprise staff with ID #{$staffId}!");
-        redirect('hr/directory');
+        redirect('admin1947/hr/directory');
     }
 
     /**
@@ -314,7 +314,25 @@ class Hr extends CI_Controller {
             }
             $this->session->set_flashdata('success_msg', $msg);
         }
-        redirect('hr/recruitment');
+        redirect('admin1947/hr/recruitment');
+    }
+
+    /**
+     * Delete Candidate (from candidates pipeline dossier)
+     */
+    public function delete_candidate() {
+        $candidateId = intval($this->input->post('candidate_id') ?: $this->input->post('career_id'));
+        if ($candidateId > 0) {
+            $this->load->model('Recruitment_model');
+            $this->Recruitment_model->delete_candidate($candidateId);
+            $msg = 'Candidate application removed successfully.';
+            if ($this->input->is_ajax_request()) {
+                echo json_encode(['status' => 'success', 'message' => $msg]);
+                return;
+            }
+            $this->session->set_flashdata('success_msg', $msg);
+        }
+        redirect('admin1947/hr/candidates');
     }
 
     /**
@@ -352,7 +370,7 @@ class Hr extends CI_Controller {
 
         if (empty($name) || empty($email) || empty($phone)) {
             $this->session->set_flashdata('error_msg', 'Name, email, and phone are required.');
-            redirect('hr/directory');
+            redirect('admin1947/hr/directory');
             return;
         }
 
@@ -370,7 +388,7 @@ class Hr extends CI_Controller {
         ]);
 
         $this->session->set_flashdata('success_msg', "Employee {$name} onboarded successfully with ID #{$id}!");
-        redirect('hr/directory');
+        redirect('admin1947/hr/directory');
     }
 
     /**
@@ -394,7 +412,7 @@ class Hr extends CI_Controller {
                 return;
             }
             $this->session->set_flashdata('error_msg', 'Staff ID, name, and phone are required.');
-            redirect('hr/directory');
+            redirect('admin1947/hr/directory');
             return;
         }
 
@@ -421,7 +439,7 @@ class Hr extends CI_Controller {
         }
 
         $this->session->set_flashdata('success_msg', "Employee {$name} updated successfully.");
-        redirect('hr/directory');
+        redirect('admin1947/hr/directory');
     }
 
     /**
@@ -518,7 +536,7 @@ class Hr extends CI_Controller {
                 return;
             }
             $this->session->set_flashdata('error_msg', 'Please fill in all mandatory leave details.');
-            redirect('hr/leaves');
+            redirect('admin1947/hr/leaves');
             return;
         }
 
@@ -534,7 +552,7 @@ class Hr extends CI_Controller {
         }
 
         $this->session->set_flashdata('success_msg', 'Leave application submitted successfully.');
-        redirect('hr/leaves');
+        redirect('admin1947/hr/leaves');
     }
 
     /**
@@ -741,7 +759,7 @@ class Hr extends CI_Controller {
             $resp = ['status' => 'error', 'message' => 'Staff employee ID is required.'];
             if ($this->input->is_ajax_request()) { echo json_encode($resp); return; }
             $this->session->set_flashdata('error_msg', $resp['message']);
-            redirect('attendance/roster?date=' . $punchDate);
+            redirect('admin1947/attendance/roster?date=' . $punchDate);
             return;
         }
 
@@ -785,7 +803,7 @@ class Hr extends CI_Controller {
             return;
         }
         $this->session->set_flashdata('success_msg', $msg);
-        redirect('attendance/roster?date=' . $punchDate);
+        redirect('admin1947/attendance/roster?date=' . $punchDate);
     }
 
     /**
@@ -804,7 +822,7 @@ class Hr extends CI_Controller {
             }
             $this->session->set_flashdata('success_msg', $msg);
         }
-        redirect('attendance/roster?date=' . $punchDate);
+        redirect('admin1947/attendance/roster?date=' . $punchDate);
     }
 
     /**
@@ -850,7 +868,7 @@ class Hr extends CI_Controller {
             return;
         }
         $this->session->set_flashdata('success_msg', $msg);
-        redirect('attendance/roster?date=' . $punchDate);
+        redirect('admin1947/attendance/roster?date=' . $punchDate);
     }
 
     /**
@@ -909,14 +927,14 @@ class Hr extends CI_Controller {
         $id = intval($id);
         if (!$id) {
             $this->session->set_flashdata('error_msg', 'Candidate ID is required.');
-            redirect('hr/candidates');
+            redirect('admin1947/hr/candidates');
             return;
         }
 
         $data['candidate'] = $this->Recruitment_model->get_candidate_by_id($id);
         if (empty($data['candidate'])) {
             $this->session->set_flashdata('error_msg', 'Candidate dossier not found.');
-            redirect('hr/candidates');
+            redirect('admin1947/hr/candidates');
             return;
         }
 
@@ -943,7 +961,7 @@ class Hr extends CI_Controller {
             $resp = ['status' => 'error', 'message' => 'Invalid candidate ID or target stage.'];
             if ($this->input->is_ajax_request()) { echo json_encode($resp); return; }
             $this->session->set_flashdata('error_msg', $resp['message']);
-            redirect('hr/candidates');
+            redirect('admin1947/hr/candidates');
             return;
         }
 
@@ -956,7 +974,7 @@ class Hr extends CI_Controller {
         }
 
         $this->session->set_flashdata('success_msg', $msg);
-        $redirect_to = $this->input->post('redirect_to') ?: ('hr/candidate_profile/' . $candidate_id);
+        $redirect_to = $this->input->post('redirect_to') ?: ('admin1947/hr/candidate_profile/' . $candidate_id);
         redirect($redirect_to);
     }
 
@@ -970,7 +988,7 @@ class Hr extends CI_Controller {
             $resp = ['status' => 'error', 'message' => 'Note content cannot be empty.'];
             if ($this->input->is_ajax_request()) { echo json_encode($resp); return; }
             $this->session->set_flashdata('error_msg', $resp['message']);
-            redirect('hr/candidate_profile/' . $candidate_id);
+            redirect('admin1947/hr/candidate_profile/' . $candidate_id);
             return;
         }
 
@@ -983,7 +1001,7 @@ class Hr extends CI_Controller {
         }
 
         $this->session->set_flashdata('success_msg', $msg);
-        redirect('hr/candidate_profile/' . $candidate_id);
+        redirect('admin1947/hr/candidate_profile/' . $candidate_id);
     }
 
     public function onboard_candidate() {
@@ -994,7 +1012,7 @@ class Hr extends CI_Controller {
             $resp = ['status' => 'error', 'message' => 'Candidate record not found.'];
             if ($this->input->is_ajax_request()) { echo json_encode($resp); return; }
             $this->session->set_flashdata('error_msg', $resp['message']);
-            redirect('hr/candidates');
+            redirect('admin1947/hr/candidates');
             return;
         }
 
@@ -1029,7 +1047,7 @@ class Hr extends CI_Controller {
         if (!$res['status']) {
             if ($this->input->is_ajax_request()) { echo json_encode(['status' => 'error', 'message' => $res['message']]); return; }
             $this->session->set_flashdata('error_msg', $res['message']);
-            redirect('hr/candidate_profile/' . $candidate_id);
+            redirect('admin1947/hr/candidate_profile/' . $candidate_id);
             return;
         }
 
@@ -1041,7 +1059,7 @@ class Hr extends CI_Controller {
         }
 
         $this->session->set_flashdata('success_msg', $msg);
-        redirect('hr/candidate_profile/' . $candidate_id);
+        redirect('admin1947/hr/candidate_profile/' . $candidate_id);
     }
 }
 

@@ -125,10 +125,10 @@
         </p>
     </div>
     <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-        <a href="<?=base_url('crm/leads');?>" class="btn" style="background: #ffffff; color: #0f172a; font-weight: 700; border-radius: 10px; padding: 10px 18px; font-size: 13px; border: 1px solid #cbd5e1; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+        <a href="<?=base_url('admin1947/crm/leads');?>" class="btn" style="background: #ffffff; color: #0f172a; font-weight: 700; border-radius: 10px; padding: 10px 18px; font-size: 13px; border: 1px solid #cbd5e1; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
             <i class="fa fa-columns" style="color: #f59e0b;"></i> Open Kanban
         </a>
-        <a href="<?=base_url('crm/contacts');?>" class="btn" style="background: #ffffff; color: #0f172a; font-weight: 700; border-radius: 10px; padding: 10px 18px; font-size: 13px; border: 1px solid #cbd5e1; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+        <a href="<?=base_url('admin1947/crm/contacts');?>" class="btn" style="background: #ffffff; color: #0f172a; font-weight: 700; border-radius: 10px; padding: 10px 18px; font-size: 13px; border: 1px solid #cbd5e1; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
             <i class="fa fa-address-book" style="color: #38bdf8;"></i> All Directory
         </a>
         <button type="button" class="btn" data-toggle="modal" data-target="#registerLeadModal" style="background: linear-gradient(135deg, #0f172a 0%, #00a896 100%); color: #ffffff; font-weight: 700; border-radius: 10px; padding: 10px 20px; font-size: 13px; border: none; box-shadow: 0 4px 14px rgba(0, 168, 150, 0.3);">
@@ -380,7 +380,7 @@
                                         <i class="fa fa-phone" style="color: #00a896;"></i> Log
                                     </button>
                                     <?php if ($l['lead_stage'] === 'signed'): ?>
-                                    <a href="<?=base_url('crm/onboard_partner/' . $l['id']);?>" class="btn btn-xs btn-success" title="Onboard Partner" style="border-radius: 7px; font-weight: 700; padding: 5px 9px;">
+                                    <a href="<?=base_url('admin1947/crm/onboard_partner/' . $l['id']);?>" class="btn btn-xs btn-success" title="Onboard Partner" style="border-radius: 7px; font-weight: 700; padding: 5px 9px;">
                                         <i class="fa fa-plug"></i> Onboard
                                     </a>
                                     <?php endif; ?>
@@ -457,7 +457,7 @@
                 <h4 style="margin: 0; font-size: 15px; font-weight: 800; color: #0f172a;">
                     <i class="fa fa-history" style="color: #38bdf8; margin-right: 6px;"></i> Recent Interactions
                 </h4>
-                <a href="<?=base_url('crm/activities');?>" style="font-size: 11.5px; color: #0284c7; font-weight: 700; text-decoration: none;">
+                <a href="<?=base_url('admin1947/crm/activities');?>" style="font-size: 11.5px; color: #0284c7; font-weight: 700; text-decoration: none;">
                     View All &rarr;
                 </a>
             </div>
@@ -531,7 +531,7 @@
                 </div>
             </div>
 
-            <form id="registerLeadForm" action="<?=base_url('crm/save_lead');?>" method="post">
+            <form id="registerLeadForm" action="<?=base_url('admin1947/crm/save_lead');?>" method="post">
                 <input type="hidden" name="<?=$this->security->get_csrf_token_name();?>" value="<?=$this->security->get_csrf_hash();?>">
                 <div class="modal-body" style="padding: 24px;">
                     <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 16px; margin-bottom: 16px;">
@@ -764,7 +764,7 @@ $(document).ready(function() {
 
         $select.prop('disabled', true);
         $.ajax({
-            url: '<?=base_url("crm/update_stage");?>',
+            url: '<?=base_url("admin1947/crm/update_stage");?>',
             type: 'POST',
             data: postData,
             dataType: 'json',
@@ -801,7 +801,7 @@ $(document).ready(function() {
         e.preventDefault();
         var formData = $(this).serialize();
         $.ajax({
-            url: '<?=base_url("crm/log_activity");?>',
+            url: '<?=base_url("admin1947/crm/log_activity");?>',
             type: 'POST',
             data: formData,
             dataType: 'json',

@@ -24,18 +24,6 @@
         </div>
     </div>
 
-    <!-- Attendance Status Card -->
-    <?php if (empty($today_punch)): ?>
-        <div style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border: 1px solid #f59e0b; border-radius: 12px; padding: 12px 16px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between;">
-            <div>
-                <strong style="color: #92400e; font-size: 13px;"><i class="fa fa-exclamation-circle"></i> Morning Punch Pending</strong>
-                <div style="font-size: 11.5px; color: #b45309;">Punch in with selfie to begin fieldwork</div>
-            </div>
-            <a href="<?=base_url('attendance/punch');?>" class="btn btn-xs" style="background: #d97706; color: #ffffff; font-weight: 700; border-radius: 6px; padding: 6px 12px; text-decoration: none;">
-                Punch Now
-            </a>
-        </div>
-    <?php endif; ?>
 
     <!-- Section Header -->
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">

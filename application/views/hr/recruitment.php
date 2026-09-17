@@ -289,7 +289,7 @@
     <!-- The 5 Core Hiring Stages Interactive Summary Bar -->
     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 20px;">
         <!-- 1. Applied -->
-        <a href="<?= base_url('hr/recruitment?stage=applied'); ?>" style="text-decoration: none; display: block; background: #ffffff; border: 1px solid <?= $selected_stage==='applied' ? '#0284c7' : '#e2e8f0'; ?>; border-top: 4px solid #0284c7; border-radius: 12px; padding: 12px 14px; box-shadow: 0 2px 6px rgba(15, 23, 42, 0.02); transition: all 0.2s;">
+        <a href="<?= base_url('admin1947/hr/recruitment?stage=applied'); ?>" style="text-decoration: none; display: block; background: #ffffff; border: 1px solid <?= $selected_stage==='applied' ? '#0284c7' : '#e2e8f0'; ?>; border-top: 4px solid #0284c7; border-radius: 12px; padding: 12px 14px; box-shadow: 0 2px 6px rgba(15, 23, 42, 0.02); transition: all 0.2s;">
             <div style="display: flex; justify-content: space-between; align-items: center;">
                 <span style="font-size: 11px; font-weight: 800; color: #64748b; text-transform: uppercase;">1. Applied</span>
                 <span style="background: #e0f2fe; color: #0284c7; font-size: 10px; font-weight: 800; padding: 2px 6px; border-radius: 6px;">Inbox</span>
@@ -301,7 +301,7 @@
         </a>
 
         <!-- 2. Screened -->
-        <a href="<?= base_url('hr/recruitment?stage=screened'); ?>" style="text-decoration: none; display: block; background: #ffffff; border: 1px solid <?= $selected_stage==='screened' ? '#7c3aed' : '#e2e8f0'; ?>; border-top: 4px solid #7c3aed; border-radius: 12px; padding: 12px 14px; box-shadow: 0 2px 6px rgba(15, 23, 42, 0.02); transition: all 0.2s;">
+        <a href="<?= base_url('admin1947/hr/recruitment?stage=screened'); ?>" style="text-decoration: none; display: block; background: #ffffff; border: 1px solid <?= $selected_stage==='screened' ? '#7c3aed' : '#e2e8f0'; ?>; border-top: 4px solid #7c3aed; border-radius: 12px; padding: 12px 14px; box-shadow: 0 2px 6px rgba(15, 23, 42, 0.02); transition: all 0.2s;">
             <div style="display: flex; justify-content: space-between; align-items: center;">
                 <span style="font-size: 11px; font-weight: 800; color: #64748b; text-transform: uppercase;">2. Screened</span>
                 <span style="background: #f5f3ff; color: #7c3aed; font-size: 10px; font-weight: 800; padding: 2px 6px; border-radius: 6px;">Shortlist</span>
@@ -313,7 +313,7 @@
         </a>
 
         <!-- 3. Interviewing -->
-        <a href="<?= base_url('hr/recruitment?stage=interview_scheduled'); ?>" style="text-decoration: none; display: block; background: #ffffff; border: 1px solid <?= $selected_stage==='interview_scheduled' ? '#d97706' : '#e2e8f0'; ?>; border-top: 4px solid #d97706; border-radius: 12px; padding: 12px 14px; box-shadow: 0 2px 6px rgba(15, 23, 42, 0.02); transition: all 0.2s;">
+        <a href="<?= base_url('admin1947/hr/recruitment?stage=interview_scheduled'); ?>" style="text-decoration: none; display: block; background: #ffffff; border: 1px solid <?= $selected_stage==='interview_scheduled' ? '#d97706' : '#e2e8f0'; ?>; border-top: 4px solid #d97706; border-radius: 12px; padding: 12px 14px; box-shadow: 0 2px 6px rgba(15, 23, 42, 0.02); transition: all 0.2s;">
             <div style="display: flex; justify-content: space-between; align-items: center;">
                 <span style="font-size: 11px; font-weight: 800; color: #64748b; text-transform: uppercase;">3. Interviewing</span>
                 <span style="background: #fffbeb; color: #d97706; font-size: 10px; font-weight: 800; padding: 2px 6px; border-radius: 6px;">Active</span>
@@ -325,7 +325,7 @@
         </a>
 
         <!-- 4. Offered -->
-        <a href="<?= base_url('hr/recruitment?stage=offered'); ?>" style="text-decoration: none; display: block; background: #ffffff; border: 1px solid <?= $selected_stage==='offered' ? '#16a34a' : '#e2e8f0'; ?>; border-top: 4px solid #16a34a; border-radius: 12px; padding: 12px 14px; box-shadow: 0 2px 6px rgba(15, 23, 42, 0.02); transition: all 0.2s;">
+        <a href="<?= base_url('admin1947/hr/recruitment?stage=offered'); ?>" style="text-decoration: none; display: block; background: #ffffff; border: 1px solid <?= $selected_stage==='offered' ? '#16a34a' : '#e2e8f0'; ?>; border-top: 4px solid #16a34a; border-radius: 12px; padding: 12px 14px; box-shadow: 0 2px 6px rgba(15, 23, 42, 0.02); transition: all 0.2s;">
             <div style="display: flex; justify-content: space-between; align-items: center;">
                 <span style="font-size: 11px; font-weight: 800; color: #64748b; text-transform: uppercase;">4. Offered</span>
                 <span style="background: #f0fdf4; color: #16a34a; font-size: 10px; font-weight: 800; padding: 2px 6px; border-radius: 6px;">Proposal</span>
@@ -337,7 +337,7 @@
         </a>
 
         <!-- 5. Hired -->
-        <a href="<?= base_url('hr/recruitment?stage=hired'); ?>" style="text-decoration: none; display: block; background: #ffffff; border: 1px solid <?= $selected_stage==='hired' ? '#00a896' : '#e2e8f0'; ?>; border-top: 4px solid #00a896; border-radius: 12px; padding: 12px 14px; box-shadow: 0 2px 6px rgba(15, 23, 42, 0.02); transition: all 0.2s;">
+        <a href="<?= base_url('admin1947/hr/recruitment?stage=hired'); ?>" style="text-decoration: none; display: block; background: #ffffff; border: 1px solid <?= $selected_stage==='hired' ? '#00a896' : '#e2e8f0'; ?>; border-top: 4px solid #00a896; border-radius: 12px; padding: 12px 14px; box-shadow: 0 2px 6px rgba(15, 23, 42, 0.02); transition: all 0.2s;">
             <div style="display: flex; justify-content: space-between; align-items: center;">
                 <span style="font-size: 11px; font-weight: 800; color: #64748b; text-transform: uppercase;">5. Hired</span>
                 <span style="background: #e6fffa; color: #00a896; font-size: 10px; font-weight: 800; padding: 2px 6px; border-radius: 6px;">Placed</span>
@@ -358,7 +358,7 @@
         <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center;">
             <span style="font-size: 11px; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Filter:</span>
             
-            <a href="<?= base_url('hr/recruitment'); ?>" class="ats-chip <?= empty($selected_job_id) ? 'active' : ''; ?>">
+            <a href="<?= base_url('admin1947/hr/recruitment'); ?>" class="ats-chip <?= empty($selected_job_id) ? 'active' : ''; ?>">
                 All Positions (<?= $counts['total_applicants'] ?? 0; ?>)
             </a>
 
@@ -366,7 +366,7 @@
                 if ($j['candidate_count'] == 0 && empty($selected_job_id)) continue;
                 $isSel = ($selected_job_id == $j['job_id']);
             ?>
-                <a href="<?= base_url('hr/recruitment?job_id=' . $j['job_id'] . (!empty($selected_stage) ? '&stage='.$selected_stage : '')); ?>" class="ats-chip <?= $isSel ? 'active' : ''; ?>">
+                <a href="<?= base_url('admin1947/hr/recruitment?job_id=' . $j['job_id'] . (!empty($selected_stage) ? '&stage='.$selected_stage : '')); ?>" class="ats-chip <?= $isSel ? 'active' : ''; ?>">
                     <?= html_escape($j['title']); ?> <span style="background: rgba(0,0,0,0.12); border-radius: 10px; padding: 1px 6px; font-size: 10px;"><?= $j['candidate_count']; ?></span>
                 </a>
             <?php endforeach; ?>
@@ -755,7 +755,7 @@
                 <button type="button" class="close" data-dismiss="modal" style="color: #ffffff; opacity: 0.8; font-size: 26px; margin-top: -5px;">&times;</button>
             </div>
 
-            <form action="<?= base_url('hr/recruitment/save_job'); ?>" method="POST">
+            <form action="<?= base_url('admin1947/hr/recruitment/save_job'); ?>" method="POST">
                 <?php if (isset($this->security)): ?>
                     <input type="hidden" name="<?= $this->security->get_csrf_token_name(); ?>" value="<?= $this->security->get_csrf_hash(); ?>">
                 <?php endif; ?>
@@ -844,7 +844,7 @@
                 </h4>
             </div>
 
-            <form action="<?= base_url('hr/recruitment/save_candidate'); ?>" method="POST">
+            <form action="<?= base_url('admin1947/hr/recruitment/save_candidate'); ?>" method="POST">
                 <?php if (isset($this->security)): ?>
                     <input type="hidden" name="<?= $this->security->get_csrf_token_name(); ?>" value="<?= $this->security->get_csrf_hash(); ?>">
                 <?php endif; ?>
@@ -986,7 +986,7 @@
                 </h4>
             </div>
 
-            <form action="<?= base_url('hr/recruitment/onboard_candidate'); ?>" method="POST">
+            <form action="<?= base_url('admin1947/hr/recruitment/onboard_candidate'); ?>" method="POST">
                 <?php if (isset($this->security)): ?>
                     <input type="hidden" name="<?= $this->security->get_csrf_token_name(); ?>" value="<?= $this->security->get_csrf_hash(); ?>">
                 <?php endif; ?>
@@ -1137,7 +1137,7 @@ function showToast(msg) {
 // Silent AJAX Update (No full page reload on drag & drop)
 function updateStageSilent(careerId, stage) {
     $.ajax({
-        url: '<?= base_url("hr/recruitment/update_applicant"); ?>',
+        url: '<?= base_url("admin1947/hr/recruitment/update_applicant"); ?>',
         type: 'POST',
         data: {
             career_id: careerId,
@@ -1249,7 +1249,7 @@ function openOnboardStaffModal(candidate) {
 // Standard Stage Update (Full Page Reload)
 function updateStage(careerId, stage) {
     $.ajax({
-        url: '<?= base_url("hr/recruitment/update_applicant"); ?>',
+        url: '<?= base_url("admin1947/hr/recruitment/update_applicant"); ?>',
         type: 'POST',
         data: {
             career_id: careerId,

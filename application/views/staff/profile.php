@@ -71,9 +71,6 @@
     </div>
 
     <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
-        <a href="<?=base_url('attendance/punch');?>" class="btn-portal">
-            <i class="fa fa-camera"></i> Punch Attendance
-        </a>
         <a href="<?=base_url('staff/dashboard');?>" class="btn-portal" style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15);">
             <i class="fa fa-tachometer"></i> Go to Dashboard
         </a>

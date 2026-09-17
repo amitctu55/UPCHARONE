@@ -162,81 +162,80 @@
             </div>
 
             <?php
-            $seg1 = $this->uri->segment(1);
-            $seg2 = $this->uri->segment(2);
+            $seg1 = ($this->uri->segment(1) === 'admin1947') ? $this->uri->segment(2) : $this->uri->segment(1);
+            $seg2 = ($this->uri->segment(1) === 'admin1947') ? $this->uri->segment(3) : $this->uri->segment(2);
             ?>
             <nav class="ops-nav" style="margin-top: 10px;">
                 <div class="ops-nav-heading">Central Operations</div>
-                <a href="<?=base_url('operations');?>" class="<?=($seg1=='operations' && (empty($seg2) || $seg2=='dashboard')) ? 'active' : '';?>">
+                <a href="<?=base_url('admin1947/operations');?>" class="<?=($seg1=='operations' && (empty($seg2) || $seg2=='dashboard')) ? 'active' : '';?>">
                     <i class="fa fa-tachometer" style="color: #60a5fa;"></i> Operations Hub
                 </a>
-                <a href="<?=base_url('operations/handoffs');?>" class="<?=($seg1=='operations' && $seg2=='handoffs') ? 'active' : '';?>">
+                <a href="<?=base_url('admin1947/operations/handoffs');?>" class="<?=($seg1=='operations' && $seg2=='handoffs') ? 'active' : '';?>">
                     <i class="fa fa-flask" style="color: #fb923c;"></i> Lab / Shift Handoffs
                 </a>
-                <a href="<?=base_url('operations/expenses');?>" class="<?=($seg1=='operations' && $seg2=='expenses') ? 'active' : '';?>">
+                <a href="<?=base_url('admin1947/operations/expenses');?>" class="<?=($seg1=='operations' && $seg2=='expenses') ? 'active' : '';?>">
                     <i class="fa fa-credit-card" style="color: #4ade80;"></i> Expense Desk
                 </a>
 
                 <div class="ops-nav-heading">HR &amp; Recruitment</div>
-                <a href="<?=base_url('hr/dashboard');?>" class="<?=($seg1=='hr' && ($seg2=='dashboard' || empty($seg2))) ? 'active' : '';?>">
+                <a href="<?=base_url('admin1947/hr/dashboard');?>" class="<?=($seg1=='hr' && ($seg2=='dashboard' || empty($seg2))) ? 'active' : '';?>">
                     <i class="fa fa-th-large" style="color: #38bdf8;"></i> HR Command Hub
                 </a>
-                <a href="<?=base_url('hr/jobs');?>" class="<?=($seg1=='hr' && $seg2=='jobs') ? 'active' : '';?>">
+                <a href="<?=base_url('admin1947/hr/jobs');?>" class="<?=($seg1=='hr' && $seg2=='jobs') ? 'active' : '';?>">
                     <i class="fa fa-id-badge" style="color: #6366f1;"></i> Job Requisitions
                 </a>
-                <a href="<?=base_url('hr/candidates');?>" class="<?=($seg1=='hr' && in_array($seg2, ['candidates', 'candidate_profile'])) ? 'active' : '';?>">
+                <a href="<?=base_url('admin1947/hr/candidates');?>" class="<?=($seg1=='hr' && in_array($seg2, ['candidates', 'candidate_profile'])) ? 'active' : '';?>">
                     <i class="fa fa-filter" style="color: #ec4899;"></i> Candidate Pipeline
                 </a>
-                <a href="<?=base_url('hr/directory');?>" class="<?=($seg1=='hr' && in_array($seg2, ['directory', 'employees'])) ? 'active' : '';?>">
+                <a href="<?=base_url('admin1947/hr/directory');?>" class="<?=($seg1=='hr' && in_array($seg2, ['directory', 'employees'])) ? 'active' : '';?>">
                     <i class="fa fa-users" style="color: #34d399;"></i> Staff Directory
                 </a>
 
                 <div class="ops-nav-heading">Time &amp; Payroll</div>
-                <a href="<?=base_url('attendance/roster');?>" class="<?=(($seg1=='attendance' && $seg2=='roster') || ($seg1=='hr' && $seg2=='attendance')) ? 'active' : '';?>">
+                <a href="<?=base_url('admin1947/attendance/roster');?>" class="<?=(($seg1=='attendance' && $seg2=='roster') || ($seg1=='hr' && $seg2=='attendance')) ? 'active' : '';?>">
                     <i class="fa fa-calendar-check-o" style="color: #f59e0b;"></i> Attendance Roster
                 </a>
-                <a href="<?=base_url('attendance/punch');?>" class="<?=($seg1=='attendance' && in_array($seg2, ['punch', 'history'])) ? 'active' : '';?>">
+                <a href="<?=base_url('admin1947/attendance/punch');?>" class="<?=($seg1=='attendance' && in_array($seg2, ['punch', 'history'])) ? 'active' : '';?>">
                     <i class="fa fa-clock-o" style="color: #ec4899;"></i> Web Punch-In / Out
                 </a>
-                <a href="<?=base_url('hr/leaves');?>" class="<?=($seg1=='hr' && $seg2=='leaves') ? 'active' : '';?>">
+                <a href="<?=base_url('admin1947/hr/leaves');?>" class="<?=($seg1=='hr' && $seg2=='leaves') ? 'active' : '';?>">
                     <i class="fa fa-file-text-o" style="color: #a855f7;"></i> Leave Approvals
                 </a>
-                <a href="<?=base_url('hr/payroll');?>" class="<?=($seg1=='hr' && $seg2=='payroll') ? 'active' : '';?>">
+                <a href="<?=base_url('admin1947/hr/payroll');?>" class="<?=($seg1=='hr' && $seg2=='payroll') ? 'active' : '';?>">
                     <i class="fa fa-calculator" style="color: #fcd34d;"></i> Payroll &amp; Salaries
                 </a>
 
                 <div class="ops-nav-heading">CRM &amp; Growth</div>
-                <a href="<?=base_url('crm');?>" class="<?=($seg1=='crm' && (empty($seg2) || $seg2=='dashboard')) ? 'active' : '';?>">
+                <a href="<?=base_url('admin1947/crm');?>" class="<?=($seg1=='crm' && (empty($seg2) || $seg2=='dashboard')) ? 'active' : '';?>">
                     <i class="fa fa-line-chart" style="color: #f59e0b;"></i> CRM Command Hub
                 </a>
-                <a href="<?=base_url('crm/leads');?>" class="<?=($seg1=='crm' && $seg2=='leads') ? 'active' : '';?>">
+                <a href="<?=base_url('admin1947/crm/leads');?>" class="<?=($seg1=='crm' && $seg2=='leads') ? 'active' : '';?>">
                     <i class="fa fa-columns" style="color: #fbbf24;"></i> Leads &amp; Pipeline
                 </a>
-                <a href="<?=base_url('crm/contacts');?>" class="<?=($seg1=='crm' && $seg2=='contacts') ? 'active' : '';?>">
+                <a href="<?=base_url('admin1947/crm/contacts');?>" class="<?=($seg1=='crm' && $seg2=='contacts') ? 'active' : '';?>">
                     <i class="fa fa-address-book" style="color: #38bdf8;"></i> Partner Directory
                 </a>
-                <a href="<?=base_url('crm/activities');?>" class="<?=($seg1=='crm' && $seg2=='activities') ? 'active' : '';?>">
+                <a href="<?=base_url('admin1947/crm/activities');?>" class="<?=($seg1=='crm' && $seg2=='activities') ? 'active' : '';?>">
                     <i class="fa fa-phone-square" style="color: #34d399;"></i> Activity &amp; Follow-ups
                 </a>
 
                 <div class="ops-nav-heading">Account</div>
-                <a href="<?=base_url('staff/logout');?>">
+                <a href="<?=base_url('admin1947/login/logout');?>">
                     <i class="fa fa-sign-out" style="color: #f87171;"></i> Logout
                 </a>
             </nav>
         </div>
 
-        <div style="padding: 16px 20px; font-size: 11px; color: #64748b; border-top: 1px solid rgba(255,255,255,0.06);">
+        <div class="ops-sidebar-footer">
             Upchar Operations &copy; <?=date('Y');?>
         </div>
     </aside>
 
-    <!-- Main Content Body -->
-    <main class="ops-main-body">
-
+    <!-- Main Content Container -->
+    <main class="ops-main">
         <!-- Unified Central Operations & Logistics Suite Segmented Header Navigation -->
-        <div class="ops-suite-navbar" style="background: #ffffff; border-radius: 16px; border: 1px solid #e2e8f0; padding: 12px 20px; margin-bottom: 24px; box-shadow: 0 4px 16px -2px rgba(0,0,0,0.03); display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px;">
-            <!-- Left Module Title -->
+        <div class="ops-suite-header">
+            <!-- Left Branding & Indicator -->
             <div style="display: flex; align-items: center; gap: 12px;">
                 <div style="width: 40px; height: 40px; border-radius: 12px; background: linear-gradient(135deg, #0f172a 0%, #6366f1 100%); color: #ffffff; display: flex; align-items: center; justify-content: center; font-size: 17px; box-shadow: 0 4px 10px rgba(99, 102, 241, 0.25);">
                     <i class="fa fa-tachometer"></i>
@@ -253,19 +252,19 @@
 
             <!-- Right Connected Segmented Pills -->
             <div style="display: inline-flex; background: #f1f5f9; padding: 4px; border-radius: 12px; border: 1px solid #e2e8f0; gap: 4px; overflow-x: auto; max-width: 100%;">
-                <a href="<?=base_url('operations');?>" class="ops-suite-tab <?=($seg1=='operations' && (empty($seg2) || $seg2=='dashboard')) ? 'active' : '';?>">
+                <a href="<?=base_url('admin1947/operations');?>" class="ops-suite-tab <?=($seg1=='operations' && (empty($seg2) || $seg2=='dashboard')) ? 'active' : '';?>">
                     <i class="fa fa-tachometer" style="color: #60a5fa;"></i> Operations Hub
                 </a>
-                <a href="<?=base_url('operations/handoffs');?>" class="ops-suite-tab <?=($seg1=='operations' && $seg2=='handoffs') ? 'active' : '';?>">
+                <a href="<?=base_url('admin1947/operations/handoffs');?>" class="ops-suite-tab <?=($seg1=='operations' && $seg2=='handoffs') ? 'active' : '';?>">
                     <i class="fa fa-flask" style="color: #fb923c;"></i> Lab Sample Handoffs
                 </a>
-                <a href="<?=base_url('operations/expenses');?>" class="ops-suite-tab <?=($seg1=='operations' && $seg2=='expenses') ? 'active' : '';?>">
+                <a href="<?=base_url('admin1947/operations/expenses');?>" class="ops-suite-tab <?=($seg1=='operations' && $seg2=='expenses') ? 'active' : '';?>">
                     <i class="fa fa-credit-card" style="color: #4ade80;"></i> Expense Desk
                 </a>
-                <a href="<?=base_url('attendance/roster');?>" class="ops-suite-tab">
+                <a href="<?=base_url('admin1947/attendance/roster');?>" class="ops-suite-tab">
                     <i class="fa fa-calendar-check-o" style="color: #f59e0b;"></i> Attendance Roster
                 </a>
-                <a href="<?=base_url('hr/directory');?>" class="ops-suite-tab">
+                <a href="<?=base_url('admin1947/hr/directory');?>" class="ops-suite-tab">
                     <i class="fa fa-users" style="color: #00a896;"></i> Staff Directory
                 </a>
             </div>
