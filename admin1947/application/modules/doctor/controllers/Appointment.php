@@ -931,7 +931,6 @@ class Appointment extends CI_Controller
 
     public function data()
     {
-		die("ENTERED DATA METHOD!");
 		$id = (int)$this->input->get('appointment_id');
 		if ($id <= 0) {
 			$id = (int)$this->input->get('id');
@@ -960,7 +959,6 @@ class Appointment extends CI_Controller
 			profile_dr.city as dr_city,
 			profile_dr.gender as dr_gender,
 			COALESCE(profile_dr.verified, 0) as dr_verified,
-			profile_dr.verification_status as dr_verification_status,
 			COALESCE(ms.name, 'General Consultation') as dr_speciality,
 			COALESCE(hospital.name, clinic.name, 'Upchar Partner Clinic / Consultation Chamber') as facility_name,
 			COALESCE(hospital.address, clinic.address, '') as facility_address,
@@ -972,7 +970,7 @@ class Appointment extends CI_Controller
 			userlogin.MOBILE as user_mobile,
 			userlogin.EMAIL as user_email,
 			userlogin.GENDER as user_gender
-		")
+		", FALSE)
 		->from('appointment')
 		->join('profile_dr', '(profile_dr.id = appointment.doctor_id OR profile_dr.user_id = appointment.doctor_id)', 'left')
 		->join('userlogin as dr_ul', 'dr_ul.USERID = appointment.doctor_id', 'left')
@@ -984,12 +982,12 @@ class Appointment extends CI_Controller
 		->where('appointment.appointment_id', $id)
 		->get();
 
-		$data['data'] = $query->result();
-		$data['appointment'] = $query->row();
+		$data['data'] = $query ? $query->result() : array();
+		$data['appointment'] = $query ? $query->row() : null;
 		$data['appointment_id'] = $id;
 
 		// Fetch list of active doctors for quick assignment/re-assignment
-		$data['doctor_list'] = $this->db->select("profile_dr.id, profile_dr.user_id, profile_dr.fname, profile_dr.lname, profile_dr.mobile, profile_dr.dr_fee, profile_dr.verified, ms.name as specialization_name")
+		$data['doctor_list'] = $this->db->select("profile_dr.id, profile_dr.user_id, profile_dr.fname, profile_dr.lname, profile_dr.mobile, profile_dr.dr_fee, profile_dr.verified, ms.name as specialization_name", FALSE)
 			->from('profile_dr')
 			->join('master_specialization ms', 'ms.id = profile_dr.specialization', 'left')
 			->order_by('profile_dr.fname', 'ASC')
