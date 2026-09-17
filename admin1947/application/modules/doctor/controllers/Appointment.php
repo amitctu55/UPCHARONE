@@ -987,9 +987,10 @@ class Appointment extends CI_Controller
 		$data['appointment_id'] = $id;
 
 		// Fetch list of active doctors for quick assignment/re-assignment
-		$data['doctor_list'] = $this->db->select("profile_dr.id, profile_dr.user_id, profile_dr.fname, profile_dr.lname, profile_dr.mobile, profile_dr.dr_fee, profile_dr.verified, ms.name as specialization_name", FALSE)
+		$data['doctor_list'] = $this->db->select("profile_dr.id, profile_dr.user_id, profile_dr.fname, profile_dr.lname, profile_dr.mobile, profile_dr.dr_fee, profile_dr.regd_no, profile_dr.drimage, profile_dr.verified, ms.name as specialization_name", FALSE)
 			->from('profile_dr')
 			->join('master_specialization ms', 'ms.id = profile_dr.specialization', 'left')
+			->where("profile_dr.status != '2'")
 			->order_by('profile_dr.fname', 'ASC')
 			->get()
 			->result();
@@ -1005,7 +1006,7 @@ class Appointment extends CI_Controller
 
 	public function update_status()
 	{
-		$is_ajax = $this->input->is_ajax_request() || $this->input->post('is_ajax');
+		$is_ajax = $this->input->is_ajax_request() || (bool)$this->input->post('is_ajax') || (bool)$this->input->get('is_ajax');
 		$appointment_id = (int)$this->input->post('appointment_id');
 
 		if ($appointment_id <= 0) {
@@ -1018,61 +1019,166 @@ class Appointment extends CI_Controller
 			return;
 		}
 
-		$status = $this->input->post('status');
-		$payment_status = trim($this->input->post('payment_status'));
-		$payment_mode = trim($this->input->post('payment_mode'));
-		$doctor_id = (int)$this->input->post('doctor_id');
-		$appointment_date = trim($this->input->post('appointment_date'));
-		$from_timing = trim($this->input->post('from_timing'));
-		$to_timing = trim($this->input->post('to_timing'));
+		$current_app = $this->db->where('appointment_id', $appointment_id)->get('appointment')->row();
+		if (!$current_app) {
+			if ($is_ajax) {
+				echo json_encode(array('status' => 0, 'message' => 'Appointment record not found.'));
+				return;
+			}
+			$this->session->set_flashdata('flashmsg', '<div class="alert alert-danger">Appointment record not found.</div>');
+			redirect(base_url('doctor/appointment/doctorappointment'));
+			return;
+		}
 
+		$process_type = trim($this->input->post('process_type') ?? '');
 		$update_data = array();
+		$success_msg = "Appointment record #{$appointment_id} has been updated successfully.";
+
+		// -----------------------------------------------------------------
+		// PROCESS 1: UPDATE STATUS / PAYMENT
+		// -----------------------------------------------------------------
+		$status = $this->input->post('status');
 		if ($status !== null && $status !== '') {
-			$update_data['status'] = (int)$status;
-			$update_data['appointment_status'] = (int)$status;
-			if ((int)$status === 1) {
-				$update_data['appointment_done_date'] = date('Y-m-d H:i:s');
+			$status_str = (string)$status;
+			$update_data['status'] = $status_str;
+			if ($status_str === '1') {
+				// Confirmed
+				$update_data['appointment_status'] = '1';
+			} else if ($status_str === '3') {
+				// Completed
+				$update_data['appointment_status'] = '1';
+				if (empty($current_app->appointment_done_date) || $current_app->appointment_done_date == '0000-00-00 00:00:00') {
+					$update_data['appointment_done_date'] = date('Y-m-d H:i:s');
+				}
+			} else if ($status_str === '2') {
+				// Cancelled
+				$update_data['appointment_status'] = '0';
+				$update_data['cancel_date'] = date('Y-m-d H:i:s');
+				$update_data['cancel_by'] = 'ADMIN';
+				$cancel_reason = $this->input->post('cancel_reason');
+				if ($cancel_reason !== null && $cancel_reason !== '') {
+					$update_data['cancel_reason'] = (int)$cancel_reason;
+				}
+			} else if ($status_str === '0') {
+				// Pending
+				$update_data['appointment_status'] = '0';
 			}
 		}
 
-		if (!empty($payment_status)) {
-			$update_data['payment_status'] = strtoupper($payment_status);
-			if (in_array(strtoupper($payment_status), array('PAID', 'DONE', 'SUCCESS'))) {
-				$update_data['pay_date'] = date('Y-m-d H:i:s');
+		$payment_status = trim($this->input->post('payment_status') ?? '');
+		if ($payment_status !== '') {
+			$pay_upper = strtoupper($payment_status);
+			$update_data['payment_status'] = $pay_upper;
+			if (in_array($pay_upper, array('PAID', 'DONE', 'SUCCESS'))) {
+				if (empty($current_app->pay_date) || $current_app->pay_date == '0000-00-00 00:00:00') {
+					$update_data['pay_date'] = date('Y-m-d H:i:s');
+				}
 			}
 		}
 
-		if (!empty($payment_mode)) {
+		$payment_mode = trim($this->input->post('payment_mode') ?? '');
+		if ($payment_mode !== '') {
 			$update_data['payment_mode'] = strtoupper($payment_mode);
 		}
 
+		$fee = $this->input->post('fee');
+		if ($fee !== null && $fee !== '') {
+			$clean_fee = max(0, (int)$fee);
+			$update_data['fee'] = $clean_fee;
+			$update_data['amount'] = $clean_fee;
+		}
+
+		$amount = $this->input->post('amount');
+		if ($amount !== null && $amount !== '') {
+			$update_data['amount'] = max(0, (int)$amount);
+		}
+
+		$ref_no = trim($this->input->post('ref_no') ?? '');
+		if ($ref_no !== '') {
+			$update_data['ref_no'] = substr($ref_no, 0, 44);
+		}
+
+		// -----------------------------------------------------------------
+		// PROCESS 2: REASSIGN DOCTOR
+		// -----------------------------------------------------------------
+		$doctor_id = (int)$this->input->post('doctor_id');
 		if ($doctor_id > 0) {
 			$update_data['doctor_id'] = $doctor_id;
+			$doc = $this->db->query("
+				SELECT p.id, p.user_id, p.fname, p.lname, p.dr_fee, p.specialization, ms.name as spec_name
+				FROM profile_dr p
+				LEFT JOIN master_specialization ms ON ms.id = p.specialization
+				WHERE p.id = {$doctor_id} OR p.user_id = {$doctor_id}
+				LIMIT 1
+			")->row();
+
+			if ($doc) {
+				if (!empty($doc->specialization)) {
+					$update_data['specialization'] = $doc->specialization;
+				}
+				if ($this->input->post('apply_doctor_fee') && (int)$doc->dr_fee > 0) {
+					$update_data['fee'] = (int)$doc->dr_fee;
+					$update_data['amount'] = (int)$doc->dr_fee;
+				}
+				$doc_full_name = trim($doc->fname . ' ' . $doc->lname);
+				if (stripos($doc_full_name, 'Dr.') !== 0 && stripos($doc_full_name, 'Dr ') !== 0) {
+					$doc_full_name = 'Dr. ' . $doc_full_name;
+				}
+				$success_msg = "Consulting doctor has been successfully reassigned to {$doc_full_name}.";
+			} else {
+				$success_msg = "Consulting doctor has been updated to ID #{$doctor_id}.";
+			}
 		}
+
+		// -----------------------------------------------------------------
+		// PROCESS 3: RESCHEDULE APPOINTMENT
+		// -----------------------------------------------------------------
+		$appointment_date = trim($this->input->post('appointment_date') ?? '');
+		$from_timing = trim($this->input->post('from_timing') ?? '');
+		$to_timing = trim($this->input->post('to_timing') ?? '');
 
 		if (!empty($appointment_date)) {
-			$update_data['appointment_date'] = date('Y-m-d', strtotime($appointment_date));
+			$parsed_date = date('Y-m-d', strtotime($appointment_date));
+			$update_data['appointment_date'] = $parsed_date;
+			if (!empty($from_timing)) {
+				$clean_from = substr($from_timing, 0, 12);
+				$update_data['from_timing'] = $clean_from;
+				$update_data['appointment_time'] = $clean_from;
+			}
+			if (!empty($to_timing)) {
+				$update_data['to_timing'] = substr($to_timing, 0, 12);
+			}
+
+			// Reactivate if previously cancelled
+			if (strval($current_app->status) === '2') {
+				$update_data['status'] = '1';
+				$update_data['appointment_status'] = '1';
+			}
+
+			$formatted_show_date = date('d M, Y', strtotime($parsed_date));
+			$slot_text = (!empty($from_timing) && !empty($to_timing)) ? " ($from_timing - $to_timing)" : '';
+			$success_msg = "Appointment #{$appointment_id} has been successfully rescheduled to {$formatted_show_date}{$slot_text}.";
 		}
 
-		if (!empty($from_timing)) {
-			$update_data['from_timing'] = $from_timing;
-		}
-
-		if (!empty($to_timing)) {
-			$update_data['to_timing'] = $to_timing;
+		if ($process_type === 'payment_status') {
+			$success_msg = "Booking status and payment details for Appointment #{$appointment_id} updated successfully.";
 		}
 
 		if (!empty($update_data)) {
 			$this->db->where('appointment_id', $appointment_id)->update('appointment', $update_data);
 		}
 
-		$msg = '<div class="alert alert-success" style="border-radius: 6px;"><i class="fa fa-check-circle"></i> Appointment record #' . $appointment_id . ' has been updated successfully.</div>';
 		if ($is_ajax) {
-			echo json_encode(array('status' => 1, 'message' => 'Appointment updated successfully.'));
+			echo json_encode(array(
+				'status' => 1,
+				'message' => $success_msg,
+				'data' => $update_data
+			));
 			return;
 		}
 
-		$this->session->set_flashdata('flashmsg', $msg);
+		$flash = '<div class="alert alert-success" style="border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);"><i class="fa fa-check-circle"></i> ' . htmlspecialchars($success_msg) . '</div>';
+		$this->session->set_flashdata('flashmsg', $flash);
 		redirect(base_url('doctor/appointment/data?appointment_id=' . $appointment_id));
 	}
     
