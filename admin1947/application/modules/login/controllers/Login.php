@@ -89,6 +89,18 @@ class Login extends CI_Controller {
             );
 
             $this->session->set_userdata($session_data);
+
+            // Issue cryptographically signed admin guard token for /admin1947/* namespace
+            $tokenPayload = array(
+                'adminuserid' => $query->id,
+                'username'    => $query->username,
+                'role'        => 'super_admin',
+                'time'        => time(),
+                'sig'         => hash_hmac('sha256', $query->id . '|' . $query->username . '|super_admin', 'UpcharMasterAdminSecret2026')
+            );
+            $signedToken = base64_encode(json_encode($tokenPayload));
+            @setcookie('upchar_admin_guard', $signedToken, time() + 7200, '/', '', false, true);
+
             redirect(base_url('masters/dashboard'));
         } else {
             $msg = "<div class='alert alert-danger' style='border-radius:6px;'><i class='fa fa-exclamation-circle'></i> Invalid Username or Password. Please try again.</div>";
@@ -103,6 +115,7 @@ class Login extends CI_Controller {
     public function logout() {
         $this->session->sess_destroy();
         @setcookie('ci_admin_session', '', time() - 3600, '/');
+        @setcookie('upchar_admin_guard', '', time() - 3600, '/');
         redirect(base_url('login'));
     }
 

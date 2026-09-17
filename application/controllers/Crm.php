@@ -12,45 +12,8 @@ class Crm extends CI_Controller {
         $this->load->model('Staff_model');
         $this->load->model('Crm_model');
         $this->load->helper(['url', 'form', 'text']);
-        $this->_check_auth();
-    }
-
-    private function _check_auth() {
-        // Bridge SSO: If logged into Admin1947 or session exists, auto-authorize
-        if ($this->session->userdata('adminuserid') || $this->session->userdata('username')) {
-            if (!$this->session->userdata('staff_user_id')) {
-                $superAdmin = $this->db->get_where('staff_users', ['role' => 'super_admin', 'status' => 'active'])->row_array();
-                if ($superAdmin) {
-                    $this->session->set_userdata([
-                        'staff_user_id' => $superAdmin['id'],
-                        'staff_code'    => $superAdmin['staff_code'],
-                        'staff_name'    => $superAdmin['name'],
-                        'staff_role'    => 'super_admin',
-                        'staff_dept'    => $superAdmin['department']
-                    ]);
-                }
-            }
-            return;
-        }
-
-        $staffId = $this->session->userdata('staff_user_id');
-        $role    = $this->session->userdata('staff_role');
-        if (!$staffId || !in_array($role, ['bde', 'super_admin', 'hr', 'admin'])) {
-            // Auto login for development/demo ease if session missing
-            $superAdmin = $this->db->get_where('staff_users', ['role' => 'super_admin', 'status' => 'active'])->row_array();
-            if ($superAdmin) {
-                $this->session->set_userdata([
-                    'staff_user_id' => $superAdmin['id'],
-                    'staff_code'    => $superAdmin['staff_code'],
-                    'staff_name'    => $superAdmin['name'],
-                    'staff_role'    => 'super_admin',
-                    'staff_dept'    => $superAdmin['department']
-                ]);
-                return;
-            }
-            $this->session->set_flashdata('error_msg', 'Access restricted to BDE Leads & Administrators.');
-            redirect('staff/login');
-        }
+        $this->load->library('admin_auth_guard');
+        $this->admin_auth_guard->enforce_admin();
     }
 
     /**

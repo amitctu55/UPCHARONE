@@ -12,29 +12,8 @@ class Operations extends CI_Controller {
         $this->load->model('Staff_model');
         $this->load->model('Operations_model');
         $this->load->helper(['url', 'form']);
-        $this->_check_auth();
-    }
-
-    private function _check_auth() {
-        // Bridge SSO / Demo Mode: If logged into Admin1947 or accessing directly, auto-authorize
-        if (!$this->session->userdata('staff_user_id')) {
-            $defaultStaff = $this->db->where('status', 'active')->order_by('id', 'asc')->get('staff_users')->row_array();
-            if ($defaultStaff) {
-                $this->session->set_userdata([
-                    'staff_user_id' => $defaultStaff['id'],
-                    'staff_code'    => $defaultStaff['staff_code'],
-                    'staff_name'    => $defaultStaff['name'],
-                    'staff_email'   => $defaultStaff['email'],
-                    'staff_role'    => $defaultStaff['role'],
-                    'staff_dept'    => $defaultStaff['department']
-                ]);
-            }
-        }
-
-        if (!$this->session->userdata('staff_user_id')) {
-            $this->session->set_flashdata('error_msg', 'Please login to access Operations Desk.');
-            redirect('staff/login');
-        }
+        $this->load->library('admin_auth_guard');
+        $this->admin_auth_guard->enforce_admin();
     }
 
     /**

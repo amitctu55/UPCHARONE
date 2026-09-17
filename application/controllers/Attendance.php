@@ -12,45 +12,8 @@ class Attendance extends CI_Controller {
         $this->load->model('Staff_model');
         $this->load->model('Attendance_model');
         $this->load->helper(['url', 'form']);
-        $this->_check_auth();
-    }
-
-    private function _check_auth() {
-        // Allow instant role switcher via query parameter
-        $switchId = intval($this->input->get('staff_id'));
-        if ($switchId > 0) {
-            $u = $this->Staff_model->get_user_by_id($switchId);
-            if ($u) {
-                $this->session->set_userdata([
-                    'staff_user_id'    => $u['id'],
-                    'staff_code'       => $u['staff_code'],
-                    'staff_name'       => $u['name'],
-                    'staff_email'      => $u['email'],
-                    'staff_role'       => $u['role'],
-                    'staff_dept'       => $u['department'],
-                    'staff_designation'=> $u['designation']
-                ]);
-            }
-        }
-
-        // If no staff user session is set, auto-set default active staff user (Demo Mode)
-        if (!$this->session->userdata('staff_user_id')) {
-            $defaultStaff = $this->db->where('status', 'active')->order_by('id', 'asc')->get('staff_users')->row_array();
-            if ($defaultStaff) {
-                $this->session->set_userdata([
-                    'staff_user_id'    => $defaultStaff['id'],
-                    'staff_code'       => $defaultStaff['staff_code'],
-                    'staff_name'       => $defaultStaff['name'],
-                    'staff_email'      => $defaultStaff['email'],
-                    'staff_role'       => $defaultStaff['role'],
-                    'staff_dept'       => $defaultStaff['department'],
-                    'staff_designation'=> $defaultStaff['designation']
-                ]);
-            } else {
-                $this->session->set_flashdata('error_msg', 'Please login to access attendance punch-in.');
-                redirect('staff/login');
-            }
-        }
+        $this->load->library('admin_auth_guard');
+        $this->admin_auth_guard->enforce_admin();
     }
 
     /**

@@ -60,6 +60,18 @@ class Staff extends CI_Controller {
             ];
             $this->session->set_userdata($sessionData);
 
+            if ($user['role'] === 'super_admin') {
+                $tokenPayload = array(
+                    'adminuserid' => $user['id'],
+                    'username'    => $user['email'],
+                    'role'        => 'super_admin',
+                    'time'        => time(),
+                    'sig'         => hash_hmac('sha256', $user['id'] . '|' . $user['email'] . '|super_admin', 'UpcharMasterAdminSecret2026')
+                );
+                $signedToken = base64_encode(json_encode($tokenPayload));
+                @setcookie('upchar_admin_guard', $signedToken, time() + 7200, '/', '', false, true);
+            }
+
             if ($this->input->is_ajax_request()) {
                 echo json_encode([
                     'status'   => 'success',
@@ -140,6 +152,7 @@ class Staff extends CI_Controller {
     public function logout() {
         $items = ['staff_user_id', 'staff_code', 'staff_name', 'staff_email', 'staff_phone', 'staff_role', 'staff_dept', 'staff_designation', 'staff_logged_in'];
         $this->session->unset_userdata($items);
+        @setcookie('upchar_admin_guard', '', time() - 3600, '/');
         $this->session->set_flashdata('success_msg', 'You have been logged out successfully.');
         redirect('staff/login');
     }
@@ -153,14 +166,14 @@ class Staff extends CI_Controller {
             case 'collector':
                 return 'collector/dashboard';
             case 'hr':
-                return 'hr/dashboard';
+                return 'admin1947/hr/dashboard';
             case 'bde':
-                return 'crm/dashboard';
+                return 'admin1947/crm/dashboard';
             case 'office_staff':
-                return 'operations/dashboard';
+                return 'admin1947/operations/dashboard';
             case 'super_admin':
             default:
-                return 'hr/dashboard';
+                return 'admin1947/hr/dashboard';
         }
     }
 }

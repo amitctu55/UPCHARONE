@@ -477,4 +477,72 @@ $route['crm/log_activity']                        = 'crm/log_activity';
 $route['crm/get_lead_json']                       = 'crm/get_lead_json';
 $route['crm/onboard_partner/(:num)']              = 'crm/onboard_partner/$1';
 
+// =========================================================================
+// Secure Admin1947 Enterprise Protected Routes (/admin1947/*)
+// =========================================================================
+// 1. Operations Desk
+$route['admin1947/operations']                         = 'operations/dashboard';
+$route['admin1947/operations/dashboard']               = 'operations/dashboard';
+$route['admin1947/operations/handoffs']                = 'operations/handoffs';
+$route['admin1947/operations/verify_handoff']          = 'operations/verify_handoff';
+$route['admin1947/operations/expenses']                = 'operations/expenses';
+$route['admin1947/operations/save_expense']            = 'operations/save_expense';
+$route['admin1947/operations/update_expense']          = 'operations/update_expense';
+$route['admin1947/operations/(:any)']                  = 'operations/$1';
+
+// 2. HR & Recruitment & Payroll
+$route['admin1947/hr']                                 = 'hr/dashboard';
+$route['admin1947/hr/dashboard']                       = 'hr/dashboard';
+$route['admin1947/hr/recruitment']                     = 'hr/recruitment';
+$route['admin1947/hr/jobs']                            = 'hr/jobs';
+$route['admin1947/hr/candidates']                      = 'hr/candidates';
+$route['admin1947/hr/candidates/(:any)']               = 'hr/candidates/$1';
+$route['admin1947/hr/candidate_profile/(:num)']        = 'hr/candidate_profile/$1';
+$route['admin1947/hr/candidate_profile']               = 'hr/candidates';
+$route['admin1947/hr/update_candidate_stage']          = 'hr/update_candidate_stage';
+$route['admin1947/hr/add_candidate_note']              = 'hr/add_candidate_note';
+$route['admin1947/hr/onboard_candidate']               = 'hr/onboard_candidate';
+$route['admin1947/hr/save_job']                        = 'hr/save_job';
+$route['admin1947/hr/toggle_job_status']               = 'hr/toggle_job_status';
+$route['admin1947/hr/directory']                       = 'hr/directory';
+$route['admin1947/hr/employees']                       = 'hr/employees';
+$route['admin1947/hr/save_employee']                   = 'hr/save_employee';
+$route['admin1947/hr/update_employee']                 = 'hr/update_employee';
+$route['admin1947/hr/toggle_staff_status']             = 'hr/toggle_staff_status';
+$route['admin1947/hr/attendance']                      = 'hr/attendance';
+$route['admin1947/hr/attendance/save_record']          = 'hr/save_attendance_record';
+$route['admin1947/hr/attendance/delete_record']        = 'hr/delete_attendance_record';
+$route['admin1947/hr/attendance/bulk_mark']            = 'hr/bulk_mark_attendance';
+$route['admin1947/hr/leaves']                          = 'hr/leaves';
+$route['admin1947/hr/leaves/update']                   = 'hr/update_leave';
+$route['admin1947/hr/payroll']                         = 'hr/payroll';
+$route['admin1947/hr/(:any)']                          = 'hr/$1';
+
+// 3. Attendance
+$route['admin1947/attendance']                         = 'attendance/punch';
+$route['admin1947/attendance/punch']                   = 'attendance/punch';
+$route['admin1947/attendance/roster']                  = 'hr/attendance';
+$route['admin1947/attendance/save_record']             = 'hr/save_attendance_record';
+$route['admin1947/attendance/delete_record']           = 'hr/delete_attendance_record';
+$route['admin1947/attendance/bulk_mark']               = 'hr/bulk_mark_attendance';
+$route['admin1947/attendance/record_punch_in']         = 'attendance/record_punch_in';
+$route['admin1947/attendance/record_punch_out']        = 'attendance/record_punch_out';
+$route['admin1947/attendance/history']                 = 'attendance/history';
+$route['admin1947/attendance/reset_today_punch']       = 'attendance/reset_today_punch';
+$route['admin1947/attendance/(:any)']                  = 'attendance/$1';
+
+// 4. CRM
+$route['admin1947/crm']                                = 'crm/dashboard';
+$route['admin1947/crm/dashboard']                      = 'crm/dashboard';
+$route['admin1947/crm/leads']                          = 'crm/leads';
+$route['admin1947/crm/contacts']                       = 'crm/contacts';
+$route['admin1947/crm/activities']                     = 'crm/activities';
+$route['admin1947/crm/save_lead']                      = 'crm/save_lead';
+$route['admin1947/crm/update_stage']                   = 'crm/update_stage';
+$route['admin1947/crm/log_activity']                   = 'crm/log_activity';
+$route['admin1947/crm/get_lead_json']                  = 'crm/get_lead_json';
+$route['admin1947/crm/onboard_partner/(:num)']         = 'crm/onboard_partner/$1';
+$route['admin1947/crm/(:any)']                         = 'crm/$1';
+
+
 

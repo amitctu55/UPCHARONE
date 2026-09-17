@@ -20,6 +20,9 @@ RewriteEngine on
 
 # Fallback alias for legacy hospital uploads
 RewriteRule ^public/assets/images/hospital/(.*)$ public/assets/upload/$1 [L]
+
+# Delegate enterprise admin modules (operations, hr, attendance, crm) to primary application
+RewriteRule ^(operations|hr|attendance|crm)(.*)$ ../index.php?/admin1947/$1$2 [L,QSA]
  
 RewriteCond $1 !^(index\.php|(.*)\.swf|forums|images|css|downloads|jquery|js|robots\.txt|favicon\.ico)
 RewriteCond %{REQUEST_FILENAME} !-f
