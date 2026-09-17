@@ -212,10 +212,10 @@ class Hospitalpanel extends CI_Controller
 			return;
 		}
 
-		$data['p'] = $this->db->select('appointment.*, userlogin.FNAME as u_fname, userlogin.LNAME as u_lname, userlogin.EMAIL as u_email, userlogin.MOBILE as u_mobile, userlogin.GENDER as u_gender, userlogin.DOB, userlogin.BGROUP, userlogin.HEIGHT, userlogin.WEIGHT, userlogin.IMAGE as u_image, profile_dr.fname as dr_fname, profile_dr.lname as dr_lname, profile_dr.drimage, profile_dr.mobile as dr_mobile, profile_dr.email as dr_email, sm_checkout.orderid, sm_checkout.billingaddress, sm_checkout.billingcity, sm_checkout.billingstate, sm_checkout.billingzip, sm_checkout.billingcountry, sm_checkout.paymentmod, sm_checkout.cardname')
+		$data['p'] = $this->db->select('appointment.*, userlogin.FNAME as u_fname, userlogin.LNAME as u_lname, userlogin.EMAIL as u_email, userlogin.MOBILE as u_mobile, userlogin.GENDER as u_gender, userlogin.GENDER, userlogin.DOB, userlogin.BGROUP, userlogin.HEIGHT, userlogin.WEIGHT, userlogin.IMAGE as u_image, profile_dr.fname as dr_fname, profile_dr.lname as dr_lname, profile_dr.drimage, profile_dr.mobile as dr_mobile, profile_dr.email as dr_email, sm_checkout.orderid, sm_checkout.billingaddress, sm_checkout.billingcity, sm_checkout.billingstate, sm_checkout.billingzip, sm_checkout.billingcountry, sm_checkout.paymentmod, sm_checkout.cardname')
 			->join('userlogin', 'userlogin.USERID = appointment.user_id', 'left')
 			->join('sm_checkout', 'sm_checkout.id = appointment.checkout_id', 'left')
-			->join('profile_dr', 'profile_dr.id = appointment.doctor_id', 'left')
+			->join('profile_dr', '(profile_dr.id = appointment.doctor_id OR profile_dr.user_id = appointment.doctor_id)', 'left')
 			->where('appointment.appointment_id', $id)
 			->where('appointment.institute_id', $userid)
 			->get('appointment')

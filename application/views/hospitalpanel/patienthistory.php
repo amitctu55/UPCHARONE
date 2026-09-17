@@ -288,8 +288,11 @@
                         <?php if(!empty($p->age)): ?>
                             <span class="meta-pill"><i class="fa fa-birthday-cake"></i> <?=$p->age;?> Years</span>
                         <?php endif; ?>
-                        <?php if(!empty($p->GENDER) || !empty($p->u_gender)): ?>
-                            <span class="meta-pill"><i class="fa fa-user"></i> <?=($p->u_gender == 'F' || $p->GENDER == 'F') ? 'Female' : 'Male';?></span>
+                        <?php 
+                            $patientGender = !empty($p->u_gender) ? $p->u_gender : (!empty($p->GENDER) ? $p->GENDER : (!empty($p->gender) ? $p->gender : ''));
+                            if(!empty($patientGender)): 
+                        ?>
+                            <span class="meta-pill"><i class="fa fa-user"></i> <?=(stripos($patientGender, 'f') === 0) ? 'Female' : 'Male';?></span>
                         <?php endif; ?>
                     </div>
                 </div>
@@ -318,8 +321,10 @@
                         <!-- Attending Doctor Box -->
                         <div class="doc-consult-box">
                             <?php 
-                            $dr_photo = !empty($p->drimage) ? admin_url('public/assets/upload/'.$p->drimage) : base_url('assets/images/user.jpg');
-                            $dr_name = !empty($p->dr_fname) ? prefixdr($p->dr_fname).' '.$p->dr_lname : prefixdr($p->fname);
+                            $dr_photo = (!empty($p->drimage) && file_exists(FCPATH . 'public/assets/upload/' . $p->drimage)) ? admin_url('public/assets/upload/'.$p->drimage) : base_url('assets/images/user.jpg');
+                            $dr_first = !empty($p->dr_fname) ? $p->dr_fname : (!empty($p->fname) ? $p->fname : '');
+                            $dr_last  = !empty($p->dr_lname) ? $p->dr_lname : (!empty($p->lname) ? $p->lname : '');
+                            $dr_name  = !empty($dr_first) ? ((function_exists('prefixdr') ? prefixdr($dr_first) : 'Dr. ' . $dr_first) . ' ' . $dr_last) : 'Assigned Doctor';
                             ?>
                             <img src="<?=$dr_photo;?>" class="doc-consult-avatar" alt="Doctor">
                             <div>
