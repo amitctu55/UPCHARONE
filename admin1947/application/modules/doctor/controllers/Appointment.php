@@ -944,12 +944,13 @@ class Appointment extends CI_Controller
 
 		$query = $this->db->select("
 			appointment.*,
-			profile_dr.id as dr_id,
-			profile_dr.user_id as dr_user_id,
-			profile_dr.fname as dr_fname,
-			profile_dr.lname as dr_lname,
-			profile_dr.mobile as dr_mobile,
-			profile_dr.email as dr_email,
+			COALESCE(profile_dr.id, 0) as dr_id,
+			COALESCE(profile_dr.id, profile_dr.user_id, appointment.doctor_id) as dr_profile_id,
+			COALESCE(profile_dr.user_id, dr_ul.USERID, 0) as dr_user_id,
+			COALESCE(profile_dr.fname, dr_ul.FNAME, '') as dr_fname,
+			COALESCE(profile_dr.lname, dr_ul.LNAME, '') as dr_lname,
+			COALESCE(profile_dr.mobile, dr_ul.MOBILE, '') as dr_mobile,
+			COALESCE(profile_dr.email, dr_ul.EMAIL, '') as dr_email,
 			profile_dr.drimage as dr_image,
 			profile_dr.regd_no as dr_regd_no,
 			profile_dr.college as dr_college,
@@ -957,10 +958,10 @@ class Appointment extends CI_Controller
 			profile_dr.dr_fee as dr_base_fee,
 			profile_dr.city as dr_city,
 			profile_dr.gender as dr_gender,
-			profile_dr.verified as dr_verified,
+			COALESCE(profile_dr.verified, 0) as dr_verified,
 			profile_dr.verification_status as dr_verification_status,
-			COALESCE(ms.name, 'General Practitioner') as dr_speciality,
-			COALESCE(hospital.name, clinic.name, 'Private Clinic / Upchar Partner Center') as facility_name,
+			COALESCE(ms.name, 'General Consultation') as dr_speciality,
+			COALESCE(hospital.name, clinic.name, 'Upchar Partner Clinic / Consultation Chamber') as facility_name,
 			COALESCE(hospital.address, clinic.address, '') as facility_address,
 			COALESCE(mc.name, hospital.city, clinic.city, '') as facility_city,
 			COALESCE(hospital.mobile, clinic.mobile, '') as facility_mobile,
@@ -973,6 +974,7 @@ class Appointment extends CI_Controller
 		")
 		->from('appointment')
 		->join('profile_dr', '(profile_dr.id = appointment.doctor_id OR profile_dr.user_id = appointment.doctor_id)', 'left')
+		->join('userlogin as dr_ul', 'dr_ul.USERID = appointment.doctor_id', 'left')
 		->join('master_specialization ms', 'ms.id = profile_dr.specialization', 'left')
 		->join('hospital', '(hospital.uid = appointment.institute_id OR hospital.id = appointment.institute_id)', 'left')
 		->join('clinic', 'clinic.id = appointment.institute_id', 'left')
@@ -985,6 +987,14 @@ class Appointment extends CI_Controller
 		$data['appointment'] = $query->row();
 		$data['appointment_id'] = $id;
 
+		// Fetch list of active doctors for quick assignment/re-assignment
+		$data['doctor_list'] = $this->db->select("profile_dr.id, profile_dr.user_id, profile_dr.fname, profile_dr.lname, profile_dr.mobile, profile_dr.dr_fee, profile_dr.verified, ms.name as specialization_name")
+			->from('profile_dr')
+			->join('master_specialization ms', 'ms.id = profile_dr.specialization', 'left')
+			->order_by('profile_dr.fname', 'ASC')
+			->get()
+			->result();
+
 		$this->load->view('inc/topheaderlink');
 		$this->load->view('inc/topheader');
 		$this->load->view('userview', $data);
@@ -993,6 +1003,79 @@ class Appointment extends CI_Controller
 		$this->load->view('inc/footerlink');
 		$this->load->view('inc/table_footer');  
     }
+
+	public function update_status()
+	{
+		$is_ajax = $this->input->is_ajax_request() || $this->input->post('is_ajax');
+		$appointment_id = (int)$this->input->post('appointment_id');
+
+		if ($appointment_id <= 0) {
+			if ($is_ajax) {
+				echo json_encode(array('status' => 0, 'message' => 'Invalid appointment ID.'));
+				return;
+			}
+			$this->session->set_flashdata('flashmsg', '<div class="alert alert-danger">Invalid appointment ID.</div>');
+			redirect(base_url('doctor/appointment/doctorappointment'));
+			return;
+		}
+
+		$status = $this->input->post('status');
+		$payment_status = trim($this->input->post('payment_status'));
+		$payment_mode = trim($this->input->post('payment_mode'));
+		$doctor_id = (int)$this->input->post('doctor_id');
+		$appointment_date = trim($this->input->post('appointment_date'));
+		$from_timing = trim($this->input->post('from_timing'));
+		$to_timing = trim($this->input->post('to_timing'));
+
+		$update_data = array();
+		if ($status !== null && $status !== '') {
+			$update_data['status'] = (int)$status;
+			$update_data['appointment_status'] = (int)$status;
+			if ((int)$status === 1) {
+				$update_data['appointment_done_date'] = date('Y-m-d H:i:s');
+			}
+		}
+
+		if (!empty($payment_status)) {
+			$update_data['payment_status'] = strtoupper($payment_status);
+			if (in_array(strtoupper($payment_status), array('PAID', 'DONE', 'SUCCESS'))) {
+				$update_data['pay_date'] = date('Y-m-d H:i:s');
+			}
+		}
+
+		if (!empty($payment_mode)) {
+			$update_data['payment_mode'] = strtoupper($payment_mode);
+		}
+
+		if ($doctor_id > 0) {
+			$update_data['doctor_id'] = $doctor_id;
+		}
+
+		if (!empty($appointment_date)) {
+			$update_data['appointment_date'] = date('Y-m-d', strtotime($appointment_date));
+		}
+
+		if (!empty($from_timing)) {
+			$update_data['from_timing'] = $from_timing;
+		}
+
+		if (!empty($to_timing)) {
+			$update_data['to_timing'] = $to_timing;
+		}
+
+		if (!empty($update_data)) {
+			$this->db->where('appointment_id', $appointment_id)->update('appointment', $update_data);
+		}
+
+		$msg = '<div class="alert alert-success" style="border-radius: 6px;"><i class="fa fa-check-circle"></i> Appointment record #' . $appointment_id . ' has been updated successfully.</div>';
+		if ($is_ajax) {
+			echo json_encode(array('status' => 1, 'message' => 'Appointment updated successfully.'));
+			return;
+		}
+
+		$this->session->set_flashdata('flashmsg', $msg);
+		redirect(base_url('doctor/appointment/data?appointment_id=' . $appointment_id));
+	}
     
 
 
