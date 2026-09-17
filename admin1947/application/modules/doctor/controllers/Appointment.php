@@ -931,10 +931,7 @@ class Appointment extends CI_Controller
 
     public function data()
     {
-		ini_set('display_errors', '1');
-		ini_set('display_startup_errors', '1');
-		error_reporting(E_ALL);
-
+		die("ENTERED DATA METHOD!");
 		$id = (int)$this->input->get('appointment_id');
 		if ($id <= 0) {
 			$id = (int)$this->input->get('id');
