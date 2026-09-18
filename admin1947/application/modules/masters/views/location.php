@@ -89,7 +89,7 @@
                 <span>Locality List</span>
               </h3>
               <span style="font-size: 12px; color: #64748b; font-weight: 500;">
-                Total Records: <strong><?=(isset($config['total_rows']) ? $config['total_rows'] : count($location));?></strong>
+                Total Records: <strong><?=(isset($total_rows) ? $total_rows : (isset($config['total_rows']) ? $config['total_rows'] : (is_array($location) ? count($location) : 0)));?></strong>
               </span>
             </div>
 

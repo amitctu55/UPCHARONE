@@ -14,15 +14,19 @@ private $CI;
 public function accessCheck()  
     {  
 	
-		$access_admin_module =  $this->CI->config->item('access_admin_module');
-		$access_center_module =  $this->CI->config->item('access_center_module');
-		$access_subcenter_module =  $this->CI->config->item('access_subcenter_module');
-		$access_agency_module =  $this->CI->config->item('access_agency_module');
+		$access_public_module       = (array) $this->CI->config->item('access_public_module');
+		$access_public_controller   = (array) $this->CI->config->item('access_public_controller');
+		$access_public_action       = (array) $this->CI->config->item('access_public_action');
+
+		$access_admin_module        = (array) $this->CI->config->item('access_admin_module');
+		$access_center_module       = (array) $this->CI->config->item('access_center_module');
+		$access_subcenter_module    = (array) $this->CI->config->item('access_subcenter_module');
+		$access_agency_module       = (array) $this->CI->config->item('access_agency_module');
 		
-		$access_admin_controller =  $this->CI->config->item('access_admin_controller');
-		$access_center_controller =  $this->CI->config->item('access_center_controller');
-		$access_subcenter_controller =  $this->CI->config->item('access_subcenter_controller');
-		$access_agency_controller =  $this->CI->config->item('access_agency_controller');
+		$access_admin_controller    = (array) $this->CI->config->item('access_admin_controller');
+		$access_center_controller   = (array) $this->CI->config->item('access_center_controller');
+		$access_subcenter_controller= (array) $this->CI->config->item('access_subcenter_controller');
+		$access_agency_controller   = (array) $this->CI->config->item('access_agency_controller');
 		
 		// Check signed admin guard token to bridge session
 		if (empty($this->CI->session->userdata('code'))) {

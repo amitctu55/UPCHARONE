@@ -49,28 +49,31 @@ class Locationmodel extends CI_Model
 	
 	public function get_location($limit='10',$offset='0')
 	{	
-		$keyword 	= $this->db->escape_str($this->input->get('keyword',TRUE));
-		$mobile 	= $this->db->escape_str($this->input->get('mobile',TRUE));
-		$city_name 	= $this->db->escape_str($this->input->get('city_name',TRUE));
+		$keyword 	= $this->db->escape_str(trim($this->input->get('keyword',TRUE)));
+		$mobile 	= $this->db->escape_str(trim($this->input->get('mobile',TRUE)));
+		$city_name 	= $this->db->escape_str(trim($this->input->get('city_name',TRUE)));
 
 		if($keyword!='')
 		{
-			$this->db->where("(name LIKE '%".$keyword."%' )");
+			$this->db->where("(master_locality.name LIKE '%".$keyword."%' OR master_city.name LIKE '%".$keyword."%')");
 		}
 		if($mobile!='')
 		{
-			$this->db->where("mobile",$mobile);
+			$this->db->where("master_locality.mobile",$mobile);
 		}
 		if($city_name!='')
 		{
-			$this->db->where("city",$city_name);
+			$this->db->where("(master_locality.city_id = '".$city_name."' OR master_city.name LIKE '%".$city_name."%')");
 		}
 		$this->db->order_by("master_locality.id","asc");
 		$this->db->limit($limit,$offset);
 		$this->db->select('SQL_CALC_FOUND_ROWS master_locality.*,master_city.name as city_name',FALSE);
 		$this->db->join('master_city','master_city.id = master_locality.city_id','left');
 		$result = $this->db->get('master_locality')->result_array();
+		if (!is_array($result)) {
+			return [];
+		}
 		$result = ($limit=='1') ? @$result[0]: $result;	
-		return $result;
+		return is_array($result) ? $result : [];
 	}
 }
