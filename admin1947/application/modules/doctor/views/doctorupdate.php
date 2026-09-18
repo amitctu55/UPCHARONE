@@ -118,31 +118,85 @@
             </div>
 
             <div>
-              <label style="display: block; font-size: 12px; font-weight: 600; color: #475569; margin-bottom: 4px;">Qualifications (Degrees)</label>
-              <select class="form-control" id="qualification" name="qualification[]" multiple style="height: 90px; border-radius: 8px; border: 1px solid #CBD5E1; font-size: 13px;">
-                <?php
-                $degrees = $this->db->get_where('master_degree', array('status'=>1))->result();
-                $curQuals = isset($data_qual) && is_array($data_qual) ? $data_qual : array();
-                foreach($degrees as $d):
-                ?>
-                  <option value="<?=$d->id;?>" <?=in_array($d->id, $curQuals) ? 'selected' : '';?>><?=$d->name;?></option>
-                <?php endforeach; ?>
-              </select>
-              <small style="font-size: 11px; color: #64748b;">Hold Ctrl/Cmd to select multiple</small>
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                <label style="font-size: 12px; font-weight: 600; color: #475569; margin: 0;">Qualifications (Degrees)</label>
+                <div style="display: flex; align-items: center; gap: 6px;">
+                  <span id="qual_count_badge" style="background: #e2e8f0; color: #475569; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 12px; transition: all 0.2s ease;">
+                    0 Selected
+                  </span>
+                  <button type="button" id="qual_select_all" class="btn btn-default btn-xs" style="font-size: 10px; padding: 1px 7px; border-radius: 4px; color: #0d9488; font-weight: 600; border-color: #99f6e4;">Select All</button>
+                  <button type="button" id="qual_clear_all" class="btn btn-default btn-xs" style="font-size: 10px; padding: 1px 7px; border-radius: 4px; color: #64748b; font-weight: 600; border-color: #cbd5e1;">Clear</button>
+                </div>
+              </div>
+
+              <!-- Search Box -->
+              <div style="position: relative; margin-bottom: 6px;">
+                <i class="fa fa-search" style="position: absolute; left: 10px; top: 9px; color: #94a3b8; font-size: 11px;"></i>
+                <input type="text" id="qual_search" class="form-control" placeholder="Search degrees..." style="height: 30px; padding-left: 28px; font-size: 12px; border-radius: 6px; border: 1px solid #cbd5e1; background: #f8fafc;">
+                <span id="qual_search_clear" style="position: absolute; right: 10px; top: 6px; color: #94a3b8; font-size: 14px; cursor: pointer; display: none;">&times;</span>
+              </div>
+
+              <!-- Scrollable Checkbox Grid Container -->
+              <div id="qual_container" style="max-height: 160px; overflow-y: auto; border: 1px solid #cbd5e1; border-radius: 8px; padding: 8px; background: #ffffff; box-shadow: inset 0 1px 2px rgba(0,0,0,0.03);">
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 6px;">
+                  <?php
+                  $degrees = $this->db->order_by('name', 'ASC')->get_where('master_degree', array('status'=>1))->result();
+                  $curQuals = isset($data_qual) && is_array($data_qual) ? $data_qual : array();
+                  foreach($degrees as $d):
+                    $isChecked = in_array($d->id, $curQuals);
+                  ?>
+                    <label class="qual-item" style="display: flex; align-items: center; gap: 7px; padding: 5px 8px; border-radius: 6px; border: 1px solid <?=$isChecked ? '#0d9488' : '#e2e8f0';?>; background: <?=$isChecked ? '#f0fdfa' : '#f8fafc';?>; cursor: pointer; margin: 0; font-size: 12px; font-weight: 500; color: #1e293b; user-select: none; transition: all 0.15s ease;">
+                      <input type="checkbox" name="qualification[]" value="<?=$d->id;?>" class="qual-checkbox" <?=$isChecked ? 'checked' : '';?> style="cursor: pointer; accent-color: #0d9488; width: 14px; height: 14px; margin: 0;">
+                      <span class="qual-name" title="<?=htmlspecialchars($d->name);?>" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"><?=$d->name;?></span>
+                    </label>
+                  <?php endforeach; ?>
+                </div>
+                <div id="qual_empty_msg" style="display: none; text-align: center; color: #94a3b8; font-size: 11px; padding: 12px 6px;">
+                  <i class="fa fa-info-circle"></i> No qualification matches "<span id="qual_search_term"></span>"
+                </div>
+              </div>
+              <small style="font-size: 11px; color: #64748b; margin-top: 4px; display: block;">Select one or multiple qualifications</small>
             </div>
 
             <div>
-              <label style="display: block; font-size: 12px; font-weight: 600; color: #475569; margin-bottom: 4px;">Specializations</label>
-              <select class="form-control" id="specialisation" name="specialisation[]" multiple style="height: 90px; border-radius: 8px; border: 1px solid #CBD5E1; font-size: 13px;">
-                <?php
-                $specialties = $this->db->get_where('master_specialization', array('status'=>1))->result();
-                $curSpls = isset($data_spl) && is_array($data_spl) ? $data_spl : array();
-                foreach($specialties as $s):
-                ?>
-                  <option value="<?=$s->id;?>" <?=in_array($s->id, $curSpls) ? 'selected' : '';?>><?=$s->name;?></option>
-                <?php endforeach; ?>
-              </select>
-              <small style="font-size: 11px; color: #64748b;">Hold Ctrl/Cmd to select multiple</small>
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                <label style="font-size: 12px; font-weight: 600; color: #475569; margin: 0;">Specializations</label>
+                <div style="display: flex; align-items: center; gap: 6px;">
+                  <span id="spec_count_badge" style="background: #e2e8f0; color: #475569; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 12px; transition: all 0.2s ease;">
+                    0 Selected
+                  </span>
+                  <button type="button" id="spec_select_all" class="btn btn-default btn-xs" style="font-size: 10px; padding: 1px 7px; border-radius: 4px; color: #0d9488; font-weight: 600; border-color: #99f6e4;">Select All</button>
+                  <button type="button" id="spec_clear_all" class="btn btn-default btn-xs" style="font-size: 10px; padding: 1px 7px; border-radius: 4px; color: #64748b; font-weight: 600; border-color: #cbd5e1;">Clear</button>
+                </div>
+              </div>
+
+              <!-- Search Box -->
+              <div style="position: relative; margin-bottom: 6px;">
+                <i class="fa fa-search" style="position: absolute; left: 10px; top: 9px; color: #94a3b8; font-size: 11px;"></i>
+                <input type="text" id="spec_search" class="form-control" placeholder="Search specializations..." style="height: 30px; padding-left: 28px; font-size: 12px; border-radius: 6px; border: 1px solid #cbd5e1; background: #f8fafc;">
+                <span id="spec_search_clear" style="position: absolute; right: 10px; top: 6px; color: #94a3b8; font-size: 14px; cursor: pointer; display: none;">&times;</span>
+              </div>
+
+              <!-- Scrollable Checkbox Grid Container -->
+              <div id="spec_container" style="max-height: 160px; overflow-y: auto; border: 1px solid #cbd5e1; border-radius: 8px; padding: 8px; background: #ffffff; box-shadow: inset 0 1px 2px rgba(0,0,0,0.03);">
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 6px;">
+                  <?php
+                  $specialties = $this->db->order_by('name', 'ASC')->get_where('master_specialization', array('status'=>1))->result();
+                  $curSpls = isset($data_spl) && is_array($data_spl) ? $data_spl : array();
+                  foreach($specialties as $s):
+                    $isChecked = in_array($s->id, $curSpls);
+                  ?>
+                    <label class="spec-item" style="display: flex; align-items: center; gap: 7px; padding: 5px 8px; border-radius: 6px; border: 1px solid <?=$isChecked ? '#0d9488' : '#e2e8f0';?>; background: <?=$isChecked ? '#f0fdfa' : '#f8fafc';?>; cursor: pointer; margin: 0; font-size: 12px; font-weight: 500; color: #1e293b; user-select: none; transition: all 0.15s ease;">
+                      <input type="checkbox" name="specialisation[]" value="<?=$s->id;?>" class="spec-checkbox" <?=$isChecked ? 'checked' : '';?> style="cursor: pointer; accent-color: #0d9488; width: 14px; height: 14px; margin: 0;">
+                      <span class="spec-name" title="<?=htmlspecialchars($s->name);?>" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"><?=$s->name;?></span>
+                    </label>
+                  <?php endforeach; ?>
+                </div>
+                <div id="spec_empty_msg" style="display: none; text-align: center; color: #94a3b8; font-size: 11px; padding: 12px 6px;">
+                  <i class="fa fa-info-circle"></i> No specialization matches "<span id="spec_search_term"></span>"
+                </div>
+              </div>
+              <small style="font-size: 11px; color: #64748b; margin-top: 4px; display: block;">Select one or multiple specializations</small>
             </div>
 
             <div style="grid-column: 1 / -1;">
@@ -208,4 +262,131 @@
 if (typeof $.validate === 'function') {
   $.validate({});
 }
+
+$(document).ready(function(){
+  function updateQualCount() {
+    var count = $('.qual-checkbox:checked').length;
+    var badge = $('#qual_count_badge');
+    badge.text(count + ' Selected');
+    if (count > 0) {
+      badge.css({ 'background': '#0d9488', 'color': '#ffffff' });
+    } else {
+      badge.css({ 'background': '#e2e8f0', 'color': '#475569' });
+    }
+  }
+
+  function updateSpecCount() {
+    var count = $('.spec-checkbox:checked').length;
+    var badge = $('#spec_count_badge');
+    badge.text(count + ' Selected');
+    if (count > 0) {
+      badge.css({ 'background': '#0d9488', 'color': '#ffffff' });
+    } else {
+      badge.css({ 'background': '#e2e8f0', 'color': '#475569' });
+    }
+  }
+
+  // Checkbox change handlers
+  $(document).on('change', '.qual-checkbox', function(){
+    var isChecked = $(this).is(':checked');
+    var parent = $(this).closest('.qual-item');
+    if (isChecked) {
+      parent.css({ 'border-color': '#0d9488', 'background': '#f0fdfa' });
+    } else {
+      parent.css({ 'border-color': '#e2e8f0', 'background': '#f8fafc' });
+    }
+    updateQualCount();
+  });
+
+  $(document).on('change', '.spec-checkbox', function(){
+    var isChecked = $(this).is(':checked');
+    var parent = $(this).closest('.spec-item');
+    if (isChecked) {
+      parent.css({ 'border-color': '#0d9488', 'background': '#f0fdfa' });
+    } else {
+      parent.css({ 'border-color': '#e2e8f0', 'background': '#f8fafc' });
+    }
+    updateSpecCount();
+  });
+
+  // Select all & Clear all
+  $('#qual_select_all').click(function(){
+    $('.qual-item:visible .qual-checkbox').prop('checked', true).trigger('change');
+  });
+  $('#qual_clear_all').click(function(){
+    $('.qual-checkbox').prop('checked', false).trigger('change');
+  });
+
+  $('#spec_select_all').click(function(){
+    $('.spec-item:visible .spec-checkbox').prop('checked', true).trigger('change');
+  });
+  $('#spec_clear_all').click(function(){
+    $('.spec-checkbox').prop('checked', false).trigger('change');
+  });
+
+  // Search filter - Qualifications
+  $('#qual_search').on('input', function(){
+    var term = $(this).val().toLowerCase().trim();
+    $('#qual_search_clear').toggle(term.length > 0);
+    var matches = 0;
+    $('.qual-item').each(function(){
+      var text = $(this).find('.qual-name').text().toLowerCase();
+      if (text.indexOf(term) > -1) {
+        $(this).show();
+        matches++;
+      } else {
+        $(this).hide();
+      }
+    });
+    if (matches === 0) {
+      $('#qual_search_term').text(term);
+      $('#qual_empty_msg').show();
+    } else {
+      $('#qual_empty_msg').hide();
+    }
+  });
+  $('#qual_search_clear').click(function(){
+    $('#qual_search').val('').trigger('input');
+  });
+
+  // Search filter - Specializations
+  $('#spec_search').on('input', function(){
+    var term = $(this).val().toLowerCase().trim();
+    $('#spec_search_clear').toggle(term.length > 0);
+    var matches = 0;
+    $('.spec-item').each(function(){
+      var text = $(this).find('.spec-name').text().toLowerCase();
+      if (text.indexOf(term) > -1) {
+        $(this).show();
+        matches++;
+      } else {
+        $(this).hide();
+      }
+    });
+    if (matches === 0) {
+      $('#spec_search_term').text(term);
+      $('#spec_empty_msg').show();
+    } else {
+      $('#spec_empty_msg').hide();
+    }
+  });
+  $('#spec_search_clear').click(function(){
+    $('#spec_search').val('').trigger('input');
+  });
+
+  // Hover states for items
+  $(document).on('mouseenter', '.qual-item, .spec-item', function(){
+    if (!$(this).find('input[type="checkbox"]').is(':checked')) {
+      $(this).css('background', '#f1f5f9');
+    }
+  }).on('mouseleave', '.qual-item, .spec-item', function(){
+    if (!$(this).find('input[type="checkbox"]').is(':checked')) {
+      $(this).css('background', '#f8fafc');
+    }
+  });
+
+  // Initialize counts
+  updateQualCount();
+  updateSpecCount();
+});
 </script>

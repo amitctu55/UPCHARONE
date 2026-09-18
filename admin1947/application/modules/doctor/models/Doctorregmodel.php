@@ -61,21 +61,34 @@ class Doctorregmodel extends CI_Model
 								'source'=>'A');
 				$this->db->insert('profile_dr',$data);
 				$drid= $this->db->insert_id();
-				//$qualification = explode(',',$this->input->post('qualification'));
-				$qualification =$this->input->post('qualification');
-				foreach($qualification as $q)
-				{
-					$qualdata[]=array('user_id'=>$drid,'qualification_id'=>$q);
+				$qualdata = array();
+				$qualification = $this->input->post('qualification');
+				if (!empty($qualification) && is_array($qualification)) {
+					foreach($qualification as $q)
+					{
+						if (!empty($q)) {
+							$qualdata[] = array('user_id'=>$drid, 'qualification_id'=>$q);
+						}
+					}
+				}
+				if (!empty($qualdata)) {
+					$this->db->insert_batch('dr_qualifications', $qualdata);
+				}
+
+				$spldata = array();
+				$specialisation = $this->input->post('specialisation');
+				if (!empty($specialisation) && is_array($specialisation)) {
+					foreach($specialisation as $s)
+					{
+						if (!empty($s)) {
+							$spldata[] = array('user_id'=>$drid, 'specialization_id'=>$s);
+						}
+					}
+				}
+				if (!empty($spldata)) {
+					$this->db->insert_batch('dr_specialization', $spldata);
 				}
 			}
-			$this->db->insert_batch('dr_qualifications',$qualdata);
-			//$specialisation = explode(',',$this->input->post('specialisation'));
-			$specialisation = $this->input->post('specialisation');
-			foreach($specialisation as $s)
-			{
-				$spldata[]=array('user_id'=>$drid,'specialization_id'=>$s);
-			}
-			$this->db->insert_batch('dr_specialization',$spldata);
 			$practice = $this->input->post('clinic');
 			$fees = $this->input->post('fee');
 			$practicetype = $this->input->post('objective');
