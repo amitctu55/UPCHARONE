@@ -40,7 +40,7 @@ $selectedJobId = $selected_job_id ?? null;
         </div>
 
         <div style="display: flex; align-items: center; gap: 10px;">
-            <button type="button" class="btn btn-primary" onclick="openAddCandidateModal()" data-toggle="modal" data-target="#addCandidateModal" style="background: #00a896; color: #ffffff; border: none; border-radius: 10px; padding: 10px 22px; font-size: 13.5px; font-weight: 700; box-shadow: 0 4px 14px rgba(0, 168, 150, 0.35); display: flex; align-items: center; gap: 8px; cursor: pointer;">
+            <button type="button" class="btn btn-primary" onclick="openAddCandidateModal()" style="background: #00a896; color: #ffffff; border: none; border-radius: 10px; padding: 10px 22px; font-size: 13.5px; font-weight: 700; box-shadow: 0 4px 14px rgba(0, 168, 150, 0.35); display: flex; align-items: center; gap: 8px; cursor: pointer;">
                 <i class="fa fa-user-plus"></i> Add Candidate
             </button>
         </div>
@@ -340,126 +340,7 @@ $selectedJobId = $selected_job_id ?? null;
     </div>
 </div>
 
-<!-- ========================================== -->
-<!-- MODAL: Fast Add Candidate -->
-<!-- ========================================== -->
-<div class="modal fade" id="addCandidateModal" tabindex="-1" role="dialog">
-    <div class="modal-dialog modal-lg" role="document">
-        <div class="modal-content" style="border-radius: 16px; border: none; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2);">
-            <form action="<?=base_url('admin1947/hr/save_candidate');?>" method="POST">
-                <input type="hidden" name="redirect_to" value="admin1947/hr/candidates/<?=$currentStage;?><?=$selectedJobId ? '?job_id=' . $selectedJobId : '';?>">
-                <div class="modal-header" style="background: #0f172a; color: #ffffff; border-top-left-radius: 16px; border-top-right-radius: 16px; padding: 20px 24px;">
-                    <button type="button" class="close" data-dismiss="modal" onclick="closeAddCandidateModal()" style="color: #ffffff; opacity: 0.8;">&times;</button>
-                    <h4 class="modal-title" style="font-weight: 800; font-size: 17px;">
-                        <i class="fa fa-user-plus" style="color: #2dd4bf; margin-right: 8px;"></i> Fast Intake Candidate
-                    </h4>
-                </div>
 
-                <div class="modal-body" style="padding: 24px;">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label style="font-weight: 700; font-size: 13px; color: #334155;">Full Name *</label>
-                                <input type="text" name="name" class="form-control" placeholder="e.g. Dr. Rajesh Nair" required style="border-radius: 8px; height: 42px;">
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label style="font-weight: 700; font-size: 13px; color: #334155;">Mobile Number *</label>
-                                <input type="text" name="mobile" class="form-control" placeholder="10-digit mobile number" required style="border-radius: 8px; height: 42px;">
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label style="font-weight: 700; font-size: 13px; color: #334155;">Email Address</label>
-                                <input type="email" name="email" class="form-control" placeholder="e.g. doctor@hospital.com" style="border-radius: 8px; height: 42px;">
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label style="font-weight: 700; font-size: 13px; color: #334155;">Target Requisition Opening *</label>
-                                <select name="job_id" id="candidate_modal_job_id" class="form-control" required style="border-radius: 8px; height: 42px;">
-                                    <?php if (!empty($jobs)): foreach ($jobs as $j): ?>
-                                        <option value="<?=$j['job_id'];?>" <?=(intval($selectedJobId) == intval($j['job_id'])) ? 'selected' : '';?>>
-                                            <?=html_escape($j['title']);?> (<?=$j['department'];?>) <?=($j['status'] === 'closed') ? '— [Closed Requisition]' : '';?>
-                                        </option>
-                                    <?php endforeach; endif; ?>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label style="font-weight: 700; font-size: 13px; color: #334155;">Qualifications</label>
-                                <input type="text" name="qualification" class="form-control" placeholder="e.g. MBBS, DNB, B.Sc Nursing" style="border-radius: 8px; height: 42px;">
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label style="font-weight: 700; font-size: 13px; color: #334155;">Experience (Years &amp; Hospital)</label>
-                                <input type="text" name="experience" class="form-control" placeholder="e.g. 3.5 Yrs at Max Healthcare" style="border-radius: 8px; height: 42px;">
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label style="font-weight: 700; font-size: 13px; color: #334155;">Initial Pipeline Stage</label>
-                                <select name="status_stage" class="form-control" style="border-radius: 8px; height: 42px; font-weight: 700;">
-                                    <option value="applied" <?=$currentStage=='applied'?'selected':'';?>>Applied</option>
-                                    <option value="screened" <?=$currentStage=='screened'?'selected':'';?>>Screened</option>
-                                    <option value="interviewing" <?=$currentStage=='interviewing'?'selected':'';?>>Interviewing</option>
-                                    <option value="offered" <?=$currentStage=='offered'?'selected':'';?>>Offered</option>
-                                    <option value="hired" <?=$currentStage=='hired'?'selected':'';?>>Hired</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="form-group" style="margin-bottom: 0;">
-                        <label style="font-weight: 700; font-size: 13px; color: #334155;">Cover Note / Candidate Summary</label>
-                        <textarea name="message" class="form-control" rows="2" placeholder="Brief clinical background, key achievements, notice period..." style="border-radius: 8px;"></textarea>
-                    </div>
-                </div>
-
-                <div class="modal-footer" style="background: #f8fafc; border-bottom-left-radius: 16px; border-bottom-right-radius: 16px; padding: 16px 24px; display: flex; justify-content: space-between;">
-                    <button type="button" class="btn btn-default" data-dismiss="modal" onclick="closeAddCandidateModal()" style="border-radius: 8px; font-weight: 600;">Cancel</button>
-                    <button type="submit" class="btn btn-primary" style="background: #00a896; border: none; border-radius: 8px; padding: 8px 24px; font-weight: 700;">
-                        <i class="fa fa-save"></i> Save Candidate to Pipeline
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<script>
-function openAddCandidateModal() {
-    var selJob = '<?=$selectedJobId ? $selectedJobId : "";?>';
-    if (selJob && document.getElementById('candidate_modal_job_id')) {
-        document.getElementById('candidate_modal_job_id').value = selJob;
-    }
-    if (typeof $.fn.modal === 'function') {
-        $('#addCandidateModal').modal('show');
-    } else {
-        $('#addCandidateModal').addClass('in').show();
-        if (!$('.modal-backdrop').length) {
-            $('body').addClass('modal-open').append('<div class="modal-backdrop fade in" onclick="closeAddCandidateModal()"></div>');
-        }
-    }
-}
-
-function closeAddCandidateModal() {
-    if (typeof $.fn.modal === 'function') {
-        $('#addCandidateModal').modal('hide');
-    }
-    $('#addCandidateModal').removeClass('in').hide();
-    $('.modal-backdrop').remove();
-    $('body').removeClass('modal-open');
-}
 function openMoveStageModal(candidateId, candidateName, currentStage) {
     document.getElementById('stage_modal_candidate_id').value = candidateId;
     document.getElementById('stage_modal_candidate_name').innerText = candidateName;

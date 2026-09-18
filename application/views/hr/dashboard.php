@@ -28,6 +28,9 @@
         </div>
 
         <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+            <button type="button" onclick="openAddCandidateModal()" class="btn" style="background: #ffffff; color: #00a896; border: 1px solid #00a896; font-weight: 700; border-radius: 10px; padding: 9px 16px; font-size: 13px; display: inline-flex; align-items: center; gap: 6px; cursor: pointer;">
+                <i class="fa fa-user-plus"></i> Add Candidate
+            </button>
             <a href="<?=base_url('admin1947/hr/jobs');?>" class="btn" style="background: #ffffff; color: #0f172a; border: 1px solid #cbd5e1; font-weight: 700; border-radius: 10px; padding: 9px 16px; font-size: 13px;">
                 <i class="fa fa-plus-circle" style="color: #6366f1; margin-right: 4px;"></i> Post Requisition
             </a>

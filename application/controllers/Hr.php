@@ -35,6 +35,8 @@ class Hr extends CI_Controller {
             if ($r['attendance_status'] === 'late') $data['today_late']++;
         }
 
+        $data['jobs'] = $this->Recruitment_model->get_all_jobs();
+
         $this->load->view('hr/header', $data);
         $this->load->view('hr/dashboard', $data);
         $this->load->view('hr/footer');
@@ -209,13 +211,20 @@ class Hr extends CI_Controller {
         $designation   = trim($this->input->post('designation', TRUE));
         $qualification = trim($this->input->post('qualification', TRUE)) ?: 'Graduate';
         $experience    = trim($this->input->post('experience', TRUE)) ?: '1-2 Years';
-        $stage         = $this->input->post('status_stage', TRUE) ?: 'applied';
+        $stage         = strtolower(trim($this->input->post('status_stage', TRUE) ?: 'applied'));
         $message       = trim($this->input->post('message', TRUE));
 
         $redirectTo = $this->input->post('redirect_to') ?: ($jobId ? "admin1947/hr/candidates?job_id={$jobId}" : 'admin1947/hr/candidates');
+        $isAjax     = $this->input->is_ajax_request() || $this->input->post('is_ajax') || (isset($_SERVER['HTTP_ACCEPT']) && strpos($_SERVER['HTTP_ACCEPT'], 'application/json') !== false);
 
         if (empty($name) || empty($mobile)) {
-            $this->session->set_flashdata('error_msg', 'Candidate Name and Mobile number are required.');
+            $errMsg = 'Candidate Name and Mobile number are required.';
+            if ($isAjax) {
+                header('Content-Type: application/json');
+                echo json_encode(['status' => 'error', 'message' => $errMsg]);
+                return;
+            }
+            $this->session->set_flashdata('error_msg', $errMsg);
             redirect($redirectTo);
             return;
         }
@@ -224,6 +233,15 @@ class Hr extends CI_Controller {
             $j = $this->db->get_where('career_jobs', ['job_id' => $jobId])->row_array();
             if ($j) $designation = $j['title'];
         }
+        if (empty($designation)) {
+            $designation = 'Candidate / General';
+        }
+
+        if (in_array($stage, ['interview', 'interviewing'])) {
+            $stage = 'interview_scheduled';
+        }
+        $validStages = ['applied', 'screened', 'interview_scheduled', 'offered', 'hired', 'rejected'];
+        $finalStage = in_array($stage, $validStages) ? $stage : 'applied';
 
         $this->db->insert('career', [
             'job_id'        => $jobId > 0 ? $jobId : null,
@@ -236,11 +254,36 @@ class Hr extends CI_Controller {
             'message'       => $message,
             'resume'        => '',
             'status'        => '1',
-            'status_stage'  => in_array($stage, ['applied', 'screened', 'interview_scheduled', 'offered', 'hired', 'rejected']) ? $stage : 'applied',
+            'status_stage'  => $finalStage,
             'creat_date'    => date('Y-m-d')
         ]);
 
-        $this->session->set_flashdata('success_msg', "Candidate '{$name}' successfully added to recruitment pipeline!");
+        $candId = $this->db->insert_id();
+        if ($candId) {
+            $noteBy = $this->session->userdata('staff_name') ?: 'HR Admin';
+            $this->db->insert('career_notes', [
+                'career_id'     => $candId,
+                'note_text'     => 'Fast candidate intake registered to talent pipeline.' . ($message ? " Notes: {$message}" : ''),
+                'note_by'       => $noteBy,
+                'stage_at_time' => $finalStage,
+                'created_at'    => date('Y-m-d H:i:s')
+            ]);
+        }
+
+        $succMsg = "Candidate '{$name}' successfully added to recruitment pipeline!";
+
+        if ($isAjax) {
+            header('Content-Type: application/json');
+            echo json_encode([
+                'status'       => 'success',
+                'message'      => $succMsg,
+                'candidate_id' => $candId,
+                'redirect'     => $redirectTo
+            ]);
+            return;
+        }
+
+        $this->session->set_flashdata('success_msg', $succMsg);
         redirect($redirectTo);
     }
 
@@ -344,6 +387,7 @@ class Hr extends CI_Controller {
 
         $data['employees'] = $this->Staff_model->get_all_staff($filters, 100);
         $data['selected_role'] = $role;
+        $data['jobs'] = $this->Recruitment_model->get_all_jobs();
 
         $this->load->view('hr/header', $data);
         $this->load->view('hr/employees', $data);

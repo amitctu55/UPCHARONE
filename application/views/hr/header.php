@@ -251,25 +251,31 @@
                 </div>
             </div>
 
-            <!-- Right Connected Segmented Pills -->
-            <div style="display: inline-flex; background: #f1f5f9; padding: 4px; border-radius: 12px; border: 1px solid #e2e8f0; gap: 4px; overflow-x: auto; max-width: 100%;">
-                <a href="<?=base_url('admin1947/hr/dashboard');?>" class="hr-suite-tab <?=($seg1=='hr' && ($seg2=='dashboard' || empty($seg2))) ? 'active' : '';?>">
-                    <i class="fa fa-th-large" style="color: #38bdf8;"></i> HR Command Hub
-                </a>
-                <a href="<?=base_url('admin1947/hr/jobs');?>" class="hr-suite-tab <?=(($seg1=='hr' && $seg2=='jobs') || ($seg1=='recruitment' && $seg2=='jobs')) ? 'active' : '';?>">
-                    <i class="fa fa-id-badge" style="color: #6366f1;"></i> Job Requisitions
-                </a>
-                <a href="<?=base_url('admin1947/hr/candidates');?>" class="hr-suite-tab <?=(($seg1=='hr' && in_array($seg2, ['candidates', 'candidate_profile'])) || ($seg1=='recruitment' && in_array($seg2, ['candidates', 'profile']))) ? 'active' : '';?>">
-                    <i class="fa fa-filter" style="color: #ec4899;"></i> Candidate Pipeline
-                </a>
-                <a href="<?=base_url('admin1947/hr/recruitment');?>" class="hr-suite-tab <?=($seg1=='hr' && $seg2=='recruitment') ? 'active' : '';?>">
-                    <i class="fa fa-columns" style="color: #00a896;"></i> Kanban Board
-                </a>
-                <a href="<?=base_url('admin1947/hr/employees');?>" class="hr-suite-tab <?=($seg1=='hr' && in_array($seg2, ['directory', 'employees'])) ? 'active' : '';?>">
-                    <i class="fa fa-users" style="color: #10b981;"></i> Staff Directory
-                </a>
+            <!-- Right Actions & Connected Segmented Pills -->
+            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                <div style="display: inline-flex; background: #f1f5f9; padding: 4px; border-radius: 12px; border: 1px solid #e2e8f0; gap: 4px; overflow-x: auto; max-width: 100%;">
+                    <a href="<?=base_url('admin1947/hr/dashboard');?>" class="hr-suite-tab <?=($seg1=='hr' && ($seg2=='dashboard' || empty($seg2))) ? 'active' : '';?>">
+                        <i class="fa fa-th-large" style="color: #38bdf8;"></i> HR Command Hub
+                    </a>
+                    <a href="<?=base_url('admin1947/hr/jobs');?>" class="hr-suite-tab <?=(($seg1=='hr' && $seg2=='jobs') || ($seg1=='recruitment' && $seg2=='jobs')) ? 'active' : '';?>">
+                        <i class="fa fa-id-badge" style="color: #6366f1;"></i> Job Requisitions
+                    </a>
+                    <a href="<?=base_url('admin1947/hr/candidates');?>" class="hr-suite-tab <?=(($seg1=='hr' && in_array($seg2, ['candidates', 'candidate_profile'])) || ($seg1=='recruitment' && in_array($seg2, ['candidates', 'profile']))) ? 'active' : '';?>">
+                        <i class="fa fa-filter" style="color: #ec4899;"></i> Candidate Pipeline
+                    </a>
+                    <a href="<?=base_url('admin1947/hr/recruitment');?>" class="hr-suite-tab <?=($seg1=='hr' && $seg2=='recruitment') ? 'active' : '';?>">
+                        <i class="fa fa-columns" style="color: #00a896;"></i> Kanban Board
+                    </a>
+                    <a href="<?=base_url('admin1947/hr/employees');?>" class="hr-suite-tab <?=($seg1=='hr' && in_array($seg2, ['directory', 'employees'])) ? 'active' : '';?>">
+                        <i class="fa fa-users" style="color: #10b981;"></i> Staff Directory
+                    </a>
+                </div>
+                <button type="button" onclick="openAddCandidateModal()" class="btn" style="background: #00a896; color: #ffffff; font-weight: 700; border-radius: 10px; padding: 8px 16px; font-size: 13px; border: none; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 3px 10px rgba(0, 168, 150, 0.28); cursor: pointer; white-space: nowrap;">
+                    <i class="fa fa-user-plus"></i> + Add Candidate
+                </button>
             </div>
         </div>
+        <?php $this->load->view('hr/modal_add_candidate'); ?>
         <?php elseif ($isTimePayroll): ?>
         <!-- Unified Time, Attendance & Payroll Suite Header Navigation -->
         <div class="hr-suite-navbar" style="background: #ffffff; border-radius: 16px; border: 1px solid #e2e8f0; padding: 12px 20px; margin-bottom: 24px; box-shadow: 0 4px 16px -2px rgba(0,0,0,0.03); display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px;">

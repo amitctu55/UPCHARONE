@@ -163,6 +163,9 @@
     </div>
     
     <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+        <button type="button" onclick="openAddCandidateModal()" class="btn btn-default" style="background: #ffffff; border: 1px solid #cbd5e1; color: #0f172a; font-weight: 700; border-radius: 10px; padding: 10px 16px; font-size: 13px; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); cursor: pointer;">
+            <i class="fa fa-user-plus" style="color: #00a896;"></i> Add Candidate
+        </button>
         <button type="button" class="btn btn-default" onclick="window.print()" style="background: #ffffff; border: 1px solid #cbd5e1; color: #334155; font-weight: 700; border-radius: 10px; padding: 10px 16px; font-size: 13px; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
             <i class="fa fa-print" style="color: #64748b;"></i> Print Roster
         </button>
