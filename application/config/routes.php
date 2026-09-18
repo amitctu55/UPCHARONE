@@ -453,6 +453,7 @@ $route['admin1947/crm']                                = 'crm/dashboard';
 $route['admin1947/crm/dashboard']                      = 'crm/dashboard';
 $route['admin1947/crm/leads']                          = 'crm/leads';
 $route['admin1947/crm/contacts']                       = 'crm/contacts';
+$route['admin1947/crm/radar']                          = 'crm/radar';
 $route['admin1947/crm/activities']                     = 'crm/activities';
 $route['admin1947/crm/save_lead']                      = 'crm/save_lead';
 $route['admin1947/crm/update_stage']                   = 'crm/update_stage';

@@ -35,6 +35,7 @@ class Crm extends CI_Controller {
         $data['stage_breakdown']  = $this->Crm_model->get_stage_breakdown($bdeId);
         $data['activities']       = $this->Crm_model->get_activities(null, 8);
         $data['followups_due']    = $this->Crm_model->get_followups_due($bdeId);
+        $data['followups_radar']  = $this->Crm_model->get_followups_radar($bdeId, 30);
         $data['types_breakdown']  = $this->Crm_model->get_type_breakdown($bdeId);
 
         $this->load->view('hr/header', $data);
@@ -95,6 +96,23 @@ class Crm extends CI_Controller {
 
         $this->load->view('hr/header', $data);
         $this->load->view('crm/activities', $data);
+        $this->load->view('hr/footer');
+    }
+
+    /**
+     * Dedicated Follow-up Radar & Action Telemetry Console
+     */
+    public function radar() {
+        $bdeId = ($this->session->userdata('staff_role') === 'bde') ? $this->session->userdata('staff_user_id') : null;
+        
+        $data['title']          = 'Follow-up Radar & Action Console - Upchar CRM';
+        $data['metrics']        = $this->Crm_model->get_bde_metrics($bdeId);
+        $data['followups_due']  = $this->Crm_model->get_followups_due($bdeId);
+        $data['all_radar']      = $this->Crm_model->get_followups_radar($bdeId, 100);
+        $data['leads_dropdown'] = $this->Crm_model->get_leads($bdeId ? ['bde_id' => $bdeId] : [], 100);
+
+        $this->load->view('hr/header', $data);
+        $this->load->view('crm/radar', $data);
         $this->load->view('hr/footer');
     }
 

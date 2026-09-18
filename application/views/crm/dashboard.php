@@ -125,6 +125,37 @@
     box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04);
 }
 
+/* Horizontal Slide Bar Track for Follow-up Radar */
+.crm-radar-slide-track {
+    display: flex;
+    gap: 16px;
+    overflow-x: auto;
+    scroll-behavior: smooth;
+    padding: 6px 4px 16px 4px;
+    -webkit-overflow-scrolling: touch;
+}
+.crm-radar-slide-track::-webkit-scrollbar {
+    height: 7px;
+}
+.crm-radar-slide-track::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 10px;
+}
+.crm-radar-slide-track::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 10px;
+}
+.crm-radar-slide-track::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+.crm-radar-slide-card {
+    transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.crm-radar-slide-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 24px -4px rgba(15, 23, 42, 0.09) !important;
+}
+
 /* Full Width Table Component */
 .crm-table-box {
     background: #ffffff;
@@ -400,193 +431,267 @@
             </div>
             <?php endforeach; ?>
         </div>
-    </div>
-
+    </    <!-- ========================================================================= -->
+    <!-- 4. OPERATIONAL COMMAND: FOLLOW-UPS RADAR WITH HORIZONTAL SLIDE BAR       -->
     <!-- ========================================================================= -->
-    <!-- 4. OPERATIONAL COMMAND SPLIT: FOLLOW-UPS RADAR & NETWORK MIX             -->
-    <!-- ========================================================================= -->
-    <div style="display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 20px; margin-bottom: 24px;">
-        
-        <!-- Left: Follow-ups Due Radar (Action Oriented) -->
-        <div class="crm-widget-card">
-            <div class="crm-widget-header">
-                <div>
-                    <h3 style="margin: 0; font-size: 16px; font-weight: 800; color: #0f172a;">
-                        <i class="fa fa-calendar-check-o" style="color: #ef4444; margin-right: 6px;"></i> Immediate Follow-up Radar
-                    </h3>
-                    <small style="color: #64748b; font-size: 12px;">Scheduled provider calls, demos, and pending contract renewals</small>
+    <div class="crm-widget-card" style="margin-bottom: 24px; padding: 22px;">
+        <div class="crm-widget-header" style="margin-bottom: 16px;">
+            <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                <div style="width: 42px; height: 42px; border-radius: 12px; background: #fee2e2; color: #dc2626; display: flex; align-items: center; justify-content: center; font-size: 19px;">
+                    <i class="fa fa-crosshairs"></i>
                 </div>
-                <span class="badge" style="background: <?=count($followups_due) > 0 ? '#fee2e2' : '#ecfdf5';?>; color: <?=count($followups_due) > 0 ? '#ef4444' : '#10b981';?>; font-weight: 800; padding: 6px 12px; font-size: 11.5px; border-radius: 8px;">
-                    <?=count($followups_due);?> Due
-                </span>
+                <div>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <h3 style="margin: 0; font-size: 17.5px; font-weight: 800; color: #0f172a;">
+                            Follow-up Radar
+                        </h3>
+                        <span class="badge" style="background: <?=count($followups_due) > 0 ? '#fee2e2' : '#ecfdf5';?>; color: <?=count($followups_due) > 0 ? '#ef4444' : '#10b981';?>; font-weight: 800; padding: 4px 10px; font-size: 11px; border-radius: 8px;">
+                            <?=count($followups_due);?> Due Today / Overdue
+                        </span>
+                    </div>
+                    <small style="color: #64748b; font-size: 12.5px;">
+                        Scheduled provider calls, demonstrations, contract renewals &amp; touchpoint radar
+                    </small>
+                </div>
             </div>
 
-            <?php if (!empty($followups_due)): ?>
-                <div style="display: flex; flex-direction: column; gap: 12px;">
-                    <?php foreach (array_slice($followups_due, 0, 4) as $f): ?>
-                    <div class="crm-radar-item">
-                        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 10px;">
-                            <div>
-                                <strong style="font-size: 14px; color: #0f172a; display: block;">
-                                    <?=html_escape($f['facility_name']);?>
-                                </strong>
-                                <div style="font-size: 12px; color: #64748b; margin-top: 3px;">
-                                    <i class="fa fa-user-circle-o"></i> <?=html_escape($f['contact_person']);?> &bull; 
-                                    <i class="fa fa-map-marker"></i> <?=html_escape($f['city']);?>
-                                </div>
-                            </div>
-                            <span class="badge" style="background: #fef3c7; color: #d97706; font-size: 10px; font-weight: 800; text-transform: uppercase;">
-                                <?=str_replace('_', ' ', $f['lead_stage']);?>
+            <!-- Slide Bar Controls & Connected Page Shortcut -->
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <a href="<?=base_url('admin1947/crm/radar');?>" class="btn btn-sm btn-default" style="border-radius: 10px; font-weight: 700; font-size: 12px; color: #0284c7; border: 1px solid #cbd5e1; background: #ffffff; padding: 7px 14px;" title="Open full connected Follow-up Radar page">
+                    <i class="fa fa-external-link"></i> Full Radar Console &rarr;
+                </a>
+                <div style="display: inline-flex; gap: 4px; background: #f1f5f9; padding: 3px; border-radius: 10px; border: 1px solid #e2e8f0;">
+                    <button type="button" class="btn btn-sm btn-default" onclick="slideRadarTrack('left')" style="border-radius: 8px; border: 1px solid #cbd5e1; width: 32px; height: 32px; padding: 0; display: inline-flex; align-items: center; justify-content: center; background: #ffffff;" title="Scroll Left">
+                        <i class="fa fa-chevron-left" style="font-size: 11px; color: #475569;"></i>
+                    </button>
+                    <button type="button" class="btn btn-sm btn-default" onclick="slideRadarTrack('right')" style="border-radius: 8px; border: 1px solid #cbd5e1; width: 32px; height: 32px; padding: 0; display: inline-flex; align-items: center; justify-content: center; background: #ffffff;" title="Scroll Right">
+                        <i class="fa fa-chevron-right" style="font-size: 11px; color: #475569;"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Left to Right Slide Track -->
+        <?php
+        $radarItems = !empty($followups_radar) ? $followups_radar : $followups_due;
+        $today = date('Y-m-d');
+        ?>
+        <?php if (!empty($radarItems)): ?>
+            <div class="crm-radar-slide-track" id="crmRadarSlideTrack">
+                <?php foreach ($radarItems as $f): 
+                    $fDate = $f['next_followup_date'];
+                    $isOverdue = ($fDate < $today);
+                    $isToday = ($fDate === $today);
+                    $urgencyText = 'Upcoming';
+                    $urgencyBg = '#eff6ff';
+                    $urgencyColor = '#2563eb';
+                    $borderAccent = '#3b82f6';
+
+                    if ($isOverdue) {
+                        $diff = round((strtotime($today) - strtotime($fDate)) / 86400);
+                        $urgencyText = '🔥 Overdue (' . $diff . 'd)';
+                        $urgencyBg = '#fee2e2';
+                        $urgencyColor = '#ef4444';
+                        $borderAccent = '#ef4444';
+                    } elseif ($isToday) {
+                        $urgencyText = '⚡ Due Today';
+                        $urgencyBg = '#fef3c7';
+                        $urgencyColor = '#d97706';
+                        $borderAccent = '#f59e0b';
+                    } else {
+                        $diff = round((strtotime($fDate) - strtotime($today)) / 86400);
+                        $urgencyText = '🗓️ in ' . $diff . ' day' . ($diff > 1 ? 's' : '');
+                    }
+
+                    $fType = $f['facility_type'] ?? 'clinic';
+                    $fBadgeBg = '#f1f5f9'; $fBadgeColor = '#475569';
+                    if ($fType === 'hospital') { $fBadgeBg = '#eff6ff'; $fBadgeColor = '#2563eb'; }
+                    elseif ($fType === 'clinic') { $fBadgeBg = '#ecfdf5'; $fBadgeColor = '#059669'; }
+                    elseif ($fType === 'diagnostic_lab') { $fBadgeBg = '#f5f3ff'; $fBadgeColor = '#7c3aed'; }
+                    elseif ($fType === 'pharmacy') { $fBadgeBg = '#fffbeb'; $fBadgeColor = '#d97706'; }
+                ?>
+                <div class="crm-radar-slide-card" style="min-width: 320px; max-width: 330px; flex: 0 0 320px; background: #ffffff; border: 1px solid #e2e8f0; border-left: 4px solid <?=$borderAccent;?>; border-radius: 14px; padding: 16px; display: flex; flex-direction: column; justify-content: space-between; box-shadow: 0 2px 8px rgba(15,23,42,0.03);">
+                    <div>
+                        <!-- Header inside card -->
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                            <span style="font-size: 10.5px; font-weight: 800; padding: 3px 8px; border-radius: 6px; background: <?=$urgencyBg;?>; color: <?=$urgencyColor;?>;">
+                                <?=$urgencyText;?>
+                            </span>
+                            <span style="font-size: 10.5px; font-weight: 700; padding: 3px 7px; border-radius: 6px; background: <?=$fBadgeBg;?>; color: <?=$fBadgeColor;?>; text-transform: uppercase;">
+                                <?=str_replace('_', ' ', $fType);?>
                             </span>
                         </div>
 
+                        <!-- Facility Name -->
+                        <strong style="font-size: 14px; color: #0f172a; display: block; line-height: 1.25; margin-bottom: 4px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;" title="<?=html_escape($f['facility_name']);?>">
+                            <?=html_escape($f['facility_name']);?>
+                        </strong>
+
+                        <!-- Contact & City -->
+                        <div style="font-size: 12px; color: #64748b; margin-bottom: 8px;">
+                            <i class="fa fa-user-circle-o"></i> <?=html_escape($f['contact_person']);?> &bull;
+                            <i class="fa fa-map-marker"></i> <?=html_escape($f['city']);?>
+                        </div>
+
+                        <!-- Notes Excerpt -->
                         <?php if (!empty($f['notes'])): ?>
-                        <div style="font-size: 11.5px; color: #475569; background: #ffffff; padding: 6px 10px; border-radius: 6px; border: 1px dashed #cbd5e1; margin-top: 8px;">
-                            <i class="fa fa-comment-o" style="color: #94a3b8;"></i> <?=html_escape(substr($f['notes'], 0, 110));?><?=(strlen($f['notes']) > 110 ? '...' : '');?>
+                        <div style="font-size: 11px; color: #475569; background: #f8fafc; padding: 6px 8px; border-radius: 6px; border: 1px dashed #cbd5e1; margin-bottom: 10px; line-height: 1.3; height: 36px; overflow: hidden;" title="<?=html_escape($f['notes']);?>">
+                            <i class="fa fa-comment-o" style="color: #94a3b8;"></i> <?=html_escape($f['notes']);?>
                         </div>
+                        <?php else: ?>
+                        <div style="height: 14px;"></div>
                         <?php endif; ?>
+                    </div>
 
-                        <div style="margin-top: 10px; display: flex; justify-content: space-between; align-items: center; font-size: 12px;">
-                            <span style="color: #ef4444; font-weight: 700;">
-                                <i class="fa fa-clock-o"></i> Due: <?=date('d M Y', strtotime($f['next_followup_date']));?>
-                            </span>
-                            <div style="display: flex; gap: 6px;">
-                                <a href="tel:<?=$f['phone'];?>" class="btn btn-xs btn-default" style="border-radius: 7px; font-weight: 700; color: #0284c7;" title="Direct Call">
-                                    <i class="fa fa-phone"></i> <?=$f['phone'];?>
-                                </a>
-                                <a href="https://wa.me/91<?=$f['phone'];?>" target="_blank" class="btn btn-xs btn-default" style="border-radius: 7px; font-weight: 700; color: #16a34a;" title="WhatsApp">
-                                    <i class="fa fa-whatsapp"></i>
-                                </a>
-                                <button type="button" class="btn btn-xs btn-primary btn-log-quick-act" data-id="<?=$f['id'];?>" data-name="<?=html_escape($f['facility_name']);?>" style="border-radius: 7px; font-weight: 700; background: #00a896; border-color: #00a896;">
-                                    <i class="fa fa-check"></i> Log
-                                </button>
+                    <!-- Footer & Quick Actions -->
+                    <div style="border-top: 1px solid #f1f5f9; padding-top: 10px; display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-size: 11.5px; color: <?=$urgencyColor;?>; font-weight: 700;">
+                            <i class="fa fa-clock-o"></i> <?=date('d M Y', strtotime($f['next_followup_date']));?>
+                        </span>
+                        <div style="display: flex; gap: 5px;">
+                            <a href="tel:<?=$f['phone'];?>" class="btn btn-xs btn-default" style="border-radius: 7px; font-weight: 700; color: #0284c7; padding: 4px 8px;" title="Call">
+                                <i class="fa fa-phone"></i>
+                            </a>
+                            <a href="https://wa.me/91<?=$f['phone'];?>" target="_blank" class="btn btn-xs btn-default" style="border-radius: 7px; font-weight: 700; color: #16a34a; padding: 4px 8px;" title="WhatsApp">
+                                <i class="fa fa-whatsapp"></i>
+                            </a>
+                            <button type="button" class="btn btn-xs btn-primary btn-log-quick-act" data-id="<?=$f['id'];?>" data-name="<?=html_escape($f['facility_name']);?>" style="border-radius: 7px; font-weight: 700; background: #00a896; border-color: #00a896; padding: 4px 10px;">
+                                <i class="fa fa-check"></i> Log
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <?php endforeach; ?>
+            </div>
+        <?php else: ?>
+            <div style="text-align: center; padding: 32px 16px; color: #94a3b8; background: #f8fafc; border-radius: 12px; border: 1px dashed #e2e8f0;">
+                <div style="width: 44px; height: 44px; border-radius: 50%; background: #ecfdf5; color: #10b981; display: flex; align-items: center; justify-content: center; font-size: 20px; margin: 0 auto 10px;">
+                    <i class="fa fa-check"></i>
+                </div>
+                <strong style="font-size: 14px; color: #0f172a; display: block;">All Caught Up!</strong>
+                <span style="font-size: 12.5px;">No overdue or pending follow-ups required today.</span>
+            </div>
+        <?php endif; ?>
+    </div>
+
+    <!-- Balanced 2-Column Operational Command: Network Diversity & Recent Interactions -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 20px; margin-bottom: 24px;">
+        
+        <!-- Left: Provider Network Distribution Breakdown -->
+        <div class="crm-widget-card" style="padding: 22px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                <h4 style="margin: 0; font-size: 15px; font-weight: 800; color: #0f172a;">
+                    <i class="fa fa-pie-chart" style="color: #6366f1; margin-right: 6px;"></i> Healthcare Network Diversity
+                </h4>
+                <span style="font-size: 11.5px; color: #64748b;">By Provider Category</span>
+            </div>
+
+            <?php
+            $typesMeta = [
+                'hospital'       => ['label' => 'Hospitals & Medical Centers', 'color' => '#3b82f6', 'icon' => 'fa-hospital-o'],
+                'clinic'         => ['label' => 'Clinics & Specialist OPDs',   'color' => '#10b981', 'icon' => 'fa-user-md'],
+                'diagnostic_lab' => ['label' => 'Diagnostic & Pathology Labs', 'color' => '#8b5cf6', 'icon' => 'fa-flask'],
+                'pharmacy'       => ['label' => 'Pharmacies & Chemists',       'color' => '#f59e0b', 'icon' => 'fa-medkit']
+            ];
+            $typeCounts = [];
+            if (!empty($types_breakdown)) {
+                foreach ($types_breakdown as $tb) {
+                    $typeCounts[$tb['facility_type']] = intval($tb['count']);
+                }
+            }
+            ?>
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+                <?php foreach ($typesMeta as $tKey => $tInfo): 
+                    $cnt = $typeCounts[$tKey] ?? 0;
+                    $pct = ($metrics['total_leads'] > 0) ? round(($cnt / $metrics['total_leads']) * 100) : 0;
+                ?>
+                <div>
+                    <div style="display: flex; justify-content: space-between; font-size: 12.5px; margin-bottom: 4px;">
+                        <span style="font-weight: 700; color: #334155;">
+                            <i class="fa <?=$tInfo['icon'];?>" style="color: <?=$tInfo['color'];?>; width: 16px;"></i> <?=$tInfo['label'];?>
+                        </span>
+                        <span style="font-weight: 800; color: #0f172a;">
+                            <?=$cnt;?> <small style="color: #94a3b8; font-weight: 600;">(<?=$pct;?>%)</small>
+                        </span>
+                    </div>
+                    <div style="height: 6px; border-radius: 4px; background: #f1f5f9; overflow: hidden;">
+                        <div style="height: 100%; width: <?=$pct;?>%; background: <?=$tInfo['color'];?>; border-radius: 4px;"></div>
+                    </div>
+                </div>
+                <?php endforeach; ?>
+            </div>
+        </div>
+
+        <!-- Right: Recent Interactions Stream -->
+        <div class="crm-widget-card" style="padding: 22px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                <h4 style="margin: 0; font-size: 15px; font-weight: 800; color: #0f172a;">
+                    <i class="fa fa-history" style="color: #0284c7; margin-right: 6px;"></i> Recent Interaction Feed
+                </h4>
+                <a href="<?=base_url('admin1947/crm/activities');?>" style="font-size: 12px; color: #0284c7; font-weight: 700; text-decoration: none;">
+                    All Logs &rarr;
+                </a>
+            </div>
+
+            <?php if (!empty($activities)): ?>
+                <div style="display: flex; flex-direction: column; gap: 12px;">
+                    <?php foreach (array_slice($activities, 0, 3) as $act): ?>
+                    <div style="display: flex; gap: 12px; align-items: flex-start;">
+                        <div style="width: 32px; height: 32px; border-radius: 8px; background: #f1f5f9; color: #00a896; display: flex; align-items: center; justify-content: center; font-size: 13px; flex-shrink: 0; margin-top: 2px;">
+                            <?php
+                            $actIcons = [
+                                'call' => 'fa-phone', 'meeting' => 'fa-users', 'site_visit' => 'fa-building',
+                                'whatsapp' => 'fa-whatsapp', 'email' => 'fa-envelope-o', 'proposal' => 'fa-file-text-o', 'note' => 'fa-pencil'
+                            ];
+                            ?>
+                            <i class="fa <?=$actIcons[$act['activity_type']] ?? 'fa-comment-o';?>"></i>
+                        </div>
+                        <div style="flex-grow: 1; min-width: 0;">
+                            <div style="display: flex; justify-content: space-between; align-items: baseline;">
+                                <strong style="font-size: 12.5px; color: #0f172a; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">
+                                    <?=html_escape($act['facility_name']);?>
+                                </strong>
+                                <small style="color: #94a3b8; font-size: 10.5px; flex-shrink: 0; margin-left: 6px;">
+                                    <?=date('d M, H:i', strtotime($act['created_at']));?>
+                                </small>
                             </div>
+                            <p style="margin: 2px 0 0; font-size: 11.5px; color: #475569; line-height: 1.3;">
+                                <?=html_escape($act['summary']);?>
+                            </p>
                         </div>
                     </div>
                     <?php endforeach; ?>
                 </div>
             <?php else: ?>
-                <div style="text-align: center; padding: 40px 16px; color: #94a3b8;">
-                    <div style="width: 50px; height: 50px; border-radius: 50%; background: #ecfdf5; color: #10b981; display: flex; align-items: center; justify-content: center; font-size: 22px; margin: 0 auto 12px;">
-                        <i class="fa fa-check"></i>
-                    </div>
-                    <strong style="font-size: 14px; color: #0f172a; display: block;">All Caught Up!</strong>
-                    <span style="font-size: 12.5px;">No overdue or pending follow-ups required today.</span>
+                <div style="text-align: center; padding: 24px 10px; color: #94a3b8; font-size: 12px;">
+                    No recent interaction history recorded.
                 </div>
             <?php endif; ?>
         </div>
 
-        <!-- Right: Network Diversity & Recent Interactions -->
-        <div style="display: flex; flex-direction: column; gap: 20px;">
-            
-            <!-- Provider Network Distribution Breakdown -->
-            <div class="crm-widget-card" style="padding: 20px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
-                    <h4 style="margin: 0; font-size: 14.5px; font-weight: 800; color: #0f172a;">
-                        <i class="fa fa-pie-chart" style="color: #6366f1; margin-right: 6px;"></i> Healthcare Network Diversity
-                    </h4>
-                    <span style="font-size: 11.5px; color: #64748b;">By Provider Category</span>
-                </div>
-
-                <?php
-                $typesMeta = [
-                    'hospital'       => ['label' => 'Hospitals & Medical Centers', 'color' => '#3b82f6', 'icon' => 'fa-hospital-o'],
-                    'clinic'         => ['label' => 'Clinics & Specialist OPDs',   'color' => '#10b981', 'icon' => 'fa-user-md'],
-                    'diagnostic_lab' => ['label' => 'Diagnostic & Pathology Labs', 'color' => '#8b5cf6', 'icon' => 'fa-flask'],
-                    'pharmacy'       => ['label' => 'Pharmacies & Chemists',       'color' => '#f59e0b', 'icon' => 'fa-medkit']
-                ];
-                $typeCounts = [];
-                if (!empty($types_breakdown)) {
-                    foreach ($types_breakdown as $tb) {
-                        $typeCounts[$tb['facility_type']] = intval($tb['count']);
-                    }
-                }
-                ?>
-                <div style="display: flex; flex-direction: column; gap: 10px;">
-                    <?php foreach ($typesMeta as $tKey => $tInfo): 
-                        $cnt = $typeCounts[$tKey] ?? 0;
-                        $pct = ($metrics['total_leads'] > 0) ? round(($cnt / $metrics['total_leads']) * 100) : 0;
-                    ?>
-                    <div>
-                        <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px;">
-                            <span style="font-weight: 700; color: #334155;">
-                                <i class="fa <?=$tInfo['icon'];?>" style="color: <?=$tInfo['color'];?>; width: 16px;"></i> <?=$tInfo['label'];?>
-                            </span>
-                            <span style="font-weight: 800; color: #0f172a;">
-                                <?=$cnt;?> <small style="color: #94a3b8; font-weight: 600;">(<?=$pct;?>%)</small>
-                            </span>
-                        </div>
-                        <div style="height: 6px; border-radius: 4px; background: #f1f5f9; overflow: hidden;">
-                            <div style="height: 100%; width: <?=$pct;?>%; background: <?=$tInfo['color'];?>; border-radius: 4px;"></div>
-                        </div>
-                    </div>
-                    <?php endforeach; ?>
-                </div>
-            </div>
-
-            <!-- Recent Interactions Stream -->
-            <div class="crm-widget-card" style="padding: 20px; flex-grow: 1;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
-                    <h4 style="margin: 0; font-size: 14.5px; font-weight: 800; color: #0f172a;">
-                        <i class="fa fa-history" style="color: #0284c7; margin-right: 6px;"></i> Recent Interaction Feed
-                    </h4>
-                    <a href="<?=base_url('admin1947/crm/activities');?>" style="font-size: 11.5px; color: #0284c7; font-weight: 700; text-decoration: none;">
-                        All Logs &rarr;
-                    </a>
-                </div>
-
-                <?php if (!empty($activities)): ?>
-                    <div style="display: flex; flex-direction: column; gap: 12px;">
-                        <?php foreach (array_slice($activities, 0, 3) as $act): ?>
-                        <div style="display: flex; gap: 12px; align-items: flex-start;">
-                            <div style="width: 32px; height: 32px; border-radius: 8px; background: #f1f5f9; color: #00a896; display: flex; align-items: center; justify-content: center; font-size: 13px; flex-shrink: 0; margin-top: 2px;">
-                                <?php
-                                $actIcons = [
-                                    'call' => 'fa-phone', 'meeting' => 'fa-users', 'site_visit' => 'fa-building',
-                                    'whatsapp' => 'fa-whatsapp', 'email' => 'fa-envelope-o', 'proposal' => 'fa-file-text-o', 'note' => 'fa-pencil'
-                                ];
-                                ?>
-                                <i class="fa <?=$actIcons[$act['activity_type']] ?? 'fa-comment-o';?>"></i>
-                            </div>
-                            <div style="flex-grow: 1; min-width: 0;">
-                                <div style="display: flex; justify-content: space-between; align-items: baseline;">
-                                    <strong style="font-size: 12.5px; color: #0f172a; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">
-                                        <?=html_escape($act['facility_name']);?>
-                                    </strong>
-                                    <small style="color: #94a3b8; font-size: 10.5px; flex-shrink: 0; margin-left: 6px;">
-                                        <?=date('d M, H:i', strtotime($act['created_at']));?>
-                                    </small>
-                                </div>
-                                <p style="margin: 2px 0 0; font-size: 11.5px; color: #475569; line-height: 1.3;">
-                                    <?=html_escape($act['summary']);?>
-                                </p>
-                            </div>
-                        </div>
-                        <?php endforeach; ?>
-                    </div>
-                <?php else: ?>
-                    <div style="text-align: center; padding: 24px 10px; color: #94a3b8; font-size: 12px;">
-                        No recent interaction history recorded.
-                    </div>
-                <?php endif; ?>
-            </div>
-
-        </div>
     </div>
 
     <!-- ========================================================================= -->
-    <!-- 5. FULL-WIDTH HEALTHCARE PARTNER DIRECTORY & ACTIVE PIPELINE TABLE         -->
+    <!-- 5. ACTIVE PARTNER ACCOUNTS: INSTANT STAGE TRANSITIONS & TELEMETRY        -->
     <!-- ========================================================================= -->
     <div class="crm-table-box">
         <!-- Interactive Table Controls Toolbar -->
         <div class="crm-table-toolbar">
             <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                <div style="width: 42px; height: 42px; border-radius: 12px; background: rgba(0, 168, 150, 0.12); color: #00a896; display: flex; align-items: center; justify-content: center; font-size: 18px;">
+                    <i class="fa fa-building"></i>
+                </div>
                 <div>
-                    <h3 style="margin: 0; font-size: 16.5px; font-weight: 800; color: #0f172a;">
-                        <i class="fa fa-building" style="color: #00a896; margin-right: 6px;"></i> Healthcare Partner Accounts
-                    </h3>
-                    <small style="color: #64748b; font-size: 12px;">
-                        Showing <span id="visibleLeadsCount"><?=count($recent_leads);?></span> of <?=count($recent_leads);?> active partner records
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <h3 style="margin: 0; font-size: 17.5px; font-weight: 800; color: #0f172a;">
+                            Active Partner Accounts
+                        </h3>
+                        <span style="background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0; font-size: 11px; font-weight: 800; padding: 2px 8px; border-radius: 9999px;">
+                            Live Telemetry
+                        </span>
+                    </div>
+                    <small style="color: #64748b; font-size: 12.5px;">
+                        Instant stage transitions and account telemetry &bull; Showing <span id="visibleLeadsCount"><?=count($recent_leads);?></span> of <?=count($recent_leads);?> active partner records
                     </small>
                 </div>
             </div>
@@ -630,8 +735,8 @@
         </div>
 
         <!-- The Responsive Data Table -->
-        <div class="table-responsive" style="margin: 0; border: none;">
-            <table class="table" id="crmLeadsTable" style="margin: 0; vertical-align: middle; font-size: 13px;">
+        <div class="table-responsive" style="margin: 0; border: none; overflow-x: auto;">
+            <table class="table" id="crmLeadsTable" style="margin: 0; vertical-align: middle; font-size: 13px; min-width: 980px;">
                 <thead>
                     <tr style="background: #f8fafc; font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: 0.6px; border-top: none;">
                         <th style="padding: 14px 18px; font-weight: 800;">Healthcare Facility</th>
@@ -653,69 +758,61 @@
                         elseif ($fType === 'pharmacy') { $badgeBg = '#fffbeb'; $badgeColor = '#d97706'; $typeIcon = 'fa-medkit'; }
 
                         $isDue = !empty($l['next_followup_date']) && $l['next_followup_date'] <= date('Y-m-d') && !in_array($l['lead_stage'], ['signed', 'lost']);
-                        $searchText = strtolower($l['facility_name'] . ' ' . $l['contact_person'] . ' ' . $l['phone'] . ' ' . ($l['city'] ?? '') . ' ' . ($l['notes'] ?? ''));
+                        $contactNum = preg_replace('/[^0-9]/', '', $l['contact_phone'] ?? '');
                     ?>
-                    <tr class="crm-lead-row" 
-                        id="leadRow_<?=$l['id'];?>"
-                        data-type="<?=$fType;?>"
-                        data-stage="<?=$l['lead_stage'];?>"
-                        data-search="<?=$searchText;?>"
-                        style="border-bottom: 1px solid #f1f5f9; transition: background 0.15s;">
-                        
-                        <!-- Facility Identity -->
+                    <tr class="crm-lead-row" data-type="<?=$fType;?>" data-stage="<?=$l['lead_stage'];?>" data-search="<?=strtolower(html_escape($l['facility_name'].' '.$l['city'].' '.$l['contact_person'].' '.$l['contact_phone']));?>">
+                        <!-- Facility Info & Health Telemetry -->
                         <td style="padding: 14px 18px;">
                             <div style="display: flex; align-items: center; gap: 12px;">
-                                <div style="width: 38px; height: 38px; border-radius: 12px; background: <?=$badgeBg;?>; color: <?=$badgeColor;?>; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 15px; flex-shrink: 0; box-shadow: 0 2px 6px rgba(0,0,0,0.02);">
+                                <div style="width: 38px; height: 38px; border-radius: 10px; background: <?=$badgeBg;?>; color: <?=$badgeColor;?>; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0;">
                                     <i class="fa <?=$typeIcon;?>"></i>
                                 </div>
-                                <div>
-                                    <strong style="color: #0f172a; font-size: 13.5px; display: block; line-height: 1.25;">
+                                <div style="min-width: 0;">
+                                    <strong style="font-size: 13.5px; color: #0f172a; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px;">
                                         <?=html_escape($l['facility_name']);?>
                                     </strong>
-                                    <?php if (!empty($l['source'])): ?>
-                                    <small style="font-size: 11px; color: #94a3b8; margin-top: 2px; display: block;">
-                                        Source: <?=html_escape($l['source']);?>
-                                    </small>
-                                    <?php endif; ?>
+                                    <span style="font-size: 11px; color: #94a3b8; display: flex; align-items: center; gap: 6px; margin-top: 1px;">
+                                        <span>ID #<?=$l['id'];?></span> &bull; 
+                                        <span><?=!empty($l['bde_name']) ? html_escape($l['bde_name']) : 'Unassigned';?></span>
+                                    </span>
                                 </div>
                             </div>
                         </td>
 
-                        <!-- Facility Type & Location -->
+                        <!-- Facility Type Badge & City -->
                         <td style="padding: 14px 16px;">
-                            <span class="crm-badge-facility" style="background: <?=$badgeBg;?>; color: <?=$badgeColor;?>;">
-                                <i class="fa <?=$typeIcon;?>"></i> <?=ucwords(str_replace('_', ' ', $fType));?>
+                            <span class="badge" style="background: <?=$badgeBg;?>; color: <?=$badgeColor;?>; font-size: 11px; font-weight: 700; border-radius: 6px; padding: 4px 8px;">
+                                <?=ucwords(str_replace('_', ' ', $fType));?>
                             </span>
-                            <div style="font-size: 12px; color: #64748b; margin-top: 4px; font-weight: 600;">
-                                <i class="fa fa-map-marker" style="color: #94a3b8;"></i> <?=html_escape($l['city'] ?: 'Lucknow, UP');?>
+                            <div style="font-size: 11.5px; color: #64748b; margin-top: 3px; font-weight: 600;">
+                                <i class="fa fa-map-marker" style="color: #cbd5e1;"></i> <?=html_escape($l['city'] ?? 'Location N/A');?>
                             </div>
                         </td>
 
-                        <!-- Contact & Comms Links -->
+                        <!-- Contact Person & Communication Connect -->
                         <td style="padding: 14px 16px;">
-                            <strong style="font-size: 13px; color: #1e293b; display: block;">
-                                <?=html_escape($l['contact_person']);?>
-                            </strong>
-                            <div style="display: flex; align-items: center; gap: 8px; margin-top: 4px;">
-                                <a href="tel:<?=$l['phone'];?>" style="font-size: 12px; color: #0284c7; text-decoration: none; font-weight: 700;">
-                                    <i class="fa fa-phone"></i> <?=$l['phone'];?>
-                                </a>
-                                <a href="https://wa.me/91<?=$l['phone'];?>" target="_blank" style="color: #16a34a; font-size: 13px;" title="Chat on WhatsApp">
-                                    <i class="fa fa-whatsapp"></i>
-                                </a>
+                            <div style="font-weight: 700; color: #1e293b; font-size: 12.5px;">
+                                <?=html_escape($l['contact_person'] ?? 'N/A');?>
+                            </div>
+                            <div style="display: flex; gap: 8px; align-items: center; margin-top: 3px;">
+                                <span style="font-size: 11.5px; color: #64748b;"><?=html_escape($l['contact_phone'] ?? '--');?></span>
+                                <?php if (!empty($contactNum)): ?>
+                                    <a href="https://wa.me/91<?=$contactNum;?>" target="_blank" style="color: #22c55e; font-size: 13px;" title="Chat on WhatsApp">
+                                        <i class="fa fa-whatsapp"></i>
+                                    </a>
+                                    <a href="tel:<?=$l['contact_phone'];?>" style="color: #0284c7; font-size: 12px;" title="Call Facility">
+                                        <i class="fa fa-phone"></i>
+                                    </a>
+                                <?php endif; ?>
                             </div>
                         </td>
 
-                        <!-- Deal Economics -->
+                        <!-- Deal Economics & Target Revenue -->
                         <td style="padding: 14px 16px;">
-                            <strong style="color: #15803d; font-size: 14px; display: block; line-height: 1.2;">
-                                ₹<?=number_format($l['est_monthly_revenue'], 0);?><small style="font-size: 11px; color: #64748b; font-weight: normal;">/mo</small>
-                            </strong>
-                            <div style="font-size: 11px; color: #64748b; margin-top: 3px;">
-                                <span class="badge" style="background: #f1f5f9; color: #475569; font-weight: 700; font-size: 10px;">
-                                    <?=$l['commission_pct'];?>% rev share
-                                </span>
+                            <div style="font-weight: 800; color: #0f172a; font-size: 13px;">
+                                &#8377;<?=number_format((float)($l['deal_value'] ?? 0));?>
                             </div>
+                            <small style="color: #94a3b8; font-size: 10.5px;">Projected ARR</small>
                         </td>
 
                         <!-- Follow-up Status -->
@@ -748,12 +845,12 @@
 
                         <!-- Quick Actions -->
                         <td style="padding: 14px 18px; text-align: right; white-space: nowrap;">
-                            <div style="display: flex; gap: 6px; justify-content: flex-end;">
+                            <div class="crm-actions-cluster" style="display: flex; gap: 6px; justify-content: flex-end; align-items: center;">
                                 <button type="button" class="btn btn-xs btn-default btn-log-quick-act" data-id="<?=$l['id'];?>" data-name="<?=html_escape($l['facility_name']);?>" title="Log Call or Update" style="border-radius: 8px; font-weight: 700; padding: 6px 10px;">
                                     <i class="fa fa-pencil" style="color: #00a896;"></i> Log
                                 </button>
                                 <?php if ($l['lead_stage'] === 'signed'): ?>
-                                <a href="<?=base_url('admin1947/crm/onboard_partner/' . $l['id']);?>" class="btn btn-xs btn-success" title="Onboard into Enterprise Platform" style="border-radius: 8px; font-weight: 700; padding: 6px 12px; background: #00a896; border-color: #00a896; box-shadow: 0 2px 6px rgba(0, 168, 150, 0.3);">
+                                <a href="<?=base_url('admin1947/crm/onboard_partner/' . $l['id']);?>" class="btn btn-xs btn-success btn-onboard-partner" title="Onboard into Enterprise Platform" style="border-radius: 8px; font-weight: 700; padding: 6px 12px; background: #00a896; border-color: #00a896; box-shadow: 0 2px 6px rgba(0, 168, 150, 0.3);">
                                     <i class="fa fa-plug"></i> Onboard
                                 </a>
                                 <?php endif; ?>
@@ -1008,6 +1105,15 @@ function showToast(msg) {
     $('#crmGlobalToast').fadeIn(200).delay(2600).fadeOut(250);
 }
 
+// Follow-up Radar Horizontal Slide Handler
+function slideRadarTrack(direction) {
+    var track = document.getElementById('crmRadarSlideTrack');
+    if (track) {
+        var scrollAmt = (direction === 'left') ? -360 : 360;
+        track.scrollBy({ left: scrollAmt, behavior: 'smooth' });
+    }
+}
+
 // Stage Filter click handler (from ribbon tiles)
 function filterByStage(stageKey) {
     activeStage = stageKey;
@@ -1096,11 +1202,29 @@ $(document).ready(function() {
                 $select.prop('disabled', false);
                 if (res.status === 'success') {
                     showToast(res.message);
-                    $select.closest('tr').data('stage', newStage);
+                    var $row = $select.closest('tr');
+                    $row.data('stage', newStage);
                     $select.css({'border-color': '#10b981', 'background': '#ecfdf5'});
                     setTimeout(function() {
                         $select.css({'border-color': '#cbd5e1', 'background': '#f8fafc'});
                     }, 1400);
+
+                    // Dynamic Onboard button behavior on instant stage transitions
+                    var $actionsCluster = $row.find('.crm-actions-cluster');
+                    if ($actionsCluster.length) {
+                        if (newStage === 'signed') {
+                            if (!$actionsCluster.find('.btn-onboard-partner').length) {
+                                var onboardUrl = '<?=base_url("admin1947/crm/onboard_partner/");?>' + leadId;
+                                $actionsCluster.append(
+                                    '<a href="' + onboardUrl + '" class="btn btn-xs btn-success btn-onboard-partner" title="Onboard into Enterprise Platform" style="border-radius: 8px; font-weight: 700; padding: 6px 12px; background: #00a896; border-color: #00a896; box-shadow: 0 2px 6px rgba(0, 168, 150, 0.3);"><i class="fa fa-plug"></i> Onboard</a>'
+                                );
+                            }
+                        } else {
+                            $actionsCluster.find('.btn-onboard-partner').fadeOut(180, function() {
+                                $(this).remove();
+                            });
+                        }
+                    }
                 } else {
                     alert(res.message || 'Error updating stage.');
                 }

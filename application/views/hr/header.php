@@ -339,8 +339,11 @@
                 <a href="<?=base_url('admin1947/crm/contacts');?>" class="hr-suite-tab <?=($seg1=='crm' && $seg2=='contacts') ? 'active' : '';?>">
                     <i class="fa fa-address-book" style="color: #38bdf8;"></i> Partner Directory
                 </a>
+                <a href="<?=base_url('admin1947/crm/radar');?>" class="hr-suite-tab <?=($seg1=='crm' && $seg2=='radar') ? 'active' : '';?>">
+                    <i class="fa fa-crosshairs" style="color: #ef4444;"></i> Follow-up Radar
+                </a>
                 <a href="<?=base_url('admin1947/crm/activities');?>" class="hr-suite-tab <?=($seg1=='crm' && $seg2=='activities') ? 'active' : '';?>">
-                    <i class="fa fa-phone-square" style="color: #34d399;"></i> Activities &amp; Follow-ups
+                    <i class="fa fa-phone-square" style="color: #34d399;"></i> Activity Stream
                 </a>
             </div>
         </div>

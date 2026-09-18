@@ -476,6 +476,28 @@ class Crm_model extends CI_Model {
     }
 
     /**
+     * Get All Active Follow-ups for Radar Deck (Due Today, Overdue & Scheduled Upcoming)
+     */
+    public function get_followups_radar($bdeId = null, $limit = 50) {
+        if (!$this->db->table_exists('staff_crm_leads')) return [];
+
+        $this->db->select('l.*, u.name as bde_name');
+        $this->db->from('staff_crm_leads l');
+        if ($this->db->table_exists('staff_users')) {
+            $this->db->join('staff_users u', 'u.id = l.bde_id', 'left');
+        }
+        $this->db->where('l.next_followup_date IS NOT NULL');
+        $this->db->where('l.next_followup_date !=', '0000-00-00');
+        $this->db->where_not_in('l.lead_stage', ['signed', 'lost']);
+        if ($bdeId) {
+            $this->db->where('l.bde_id', $bdeId);
+        }
+        $this->db->order_by('l.next_followup_date', 'ASC');
+        $q = $this->db->get('', $limit);
+        return ($q && is_object($q)) ? $q->result_array() : [];
+    }
+
+    /**
      * Get Executive CRM Metrics
      */
     public function get_bde_metrics($bdeId = null) {
