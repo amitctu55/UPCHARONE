@@ -74,7 +74,7 @@ class Staff_model extends CI_Model {
         // 4. staff_crm_leads Table
         $this->db->query("CREATE TABLE IF NOT EXISTS `staff_crm_leads` (
             `id` INT AUTO_INCREMENT PRIMARY KEY,
-            `bde_id` INT NOT NULL,
+            `bde_id` INT NULL DEFAULT NULL,
             `facility_name` VARCHAR(150) NOT NULL,
             `facility_type` ENUM('hospital', 'clinic', 'diagnostic_lab', 'pharmacy') DEFAULT 'clinic',
             `contact_person` VARCHAR(100) NOT NULL,
@@ -82,6 +82,8 @@ class Staff_model extends CI_Model {
             `email` VARCHAR(100) NULL,
             `address` TEXT NULL,
             `city` VARCHAR(80) DEFAULT 'Lucknow',
+            `source` VARCHAR(60) DEFAULT 'Direct Visit',
+            `priority` ENUM('urgent', 'high', 'medium', 'low') DEFAULT 'medium',
             `lead_stage` ENUM('new', 'contacted', 'meeting_scheduled', 'proposal_sent', 'signed', 'lost') DEFAULT 'new',
             `est_monthly_revenue` DECIMAL(10,2) DEFAULT 0.00,
             `commission_pct` DECIMAL(5,2) DEFAULT 10.00,
@@ -91,6 +93,31 @@ class Staff_model extends CI_Model {
             `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             KEY `idx_bde_stage` (`bde_id`, `lead_stage`)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+
+        // 4.1. staff_crm_activities Table
+        $this->db->query("CREATE TABLE IF NOT EXISTS `staff_crm_activities` (
+            `id` INT AUTO_INCREMENT PRIMARY KEY,
+            `lead_id` INT NOT NULL,
+            `staff_id` INT NULL DEFAULT NULL,
+            `activity_type` ENUM('call', 'meeting', 'site_visit', 'whatsapp', 'email', 'proposal', 'note') DEFAULT 'call',
+            `summary` VARCHAR(255) NOT NULL,
+            `notes` TEXT NULL,
+            `followup_date` DATE NULL,
+            `status` ENUM('completed', 'scheduled') DEFAULT 'completed',
+            `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            KEY `idx_lead_id` (`lead_id`),
+            KEY `idx_staff_id` (`staff_id`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+
+        if ($this->db->table_exists('staff_crm_leads')) {
+            $crm_fields = $this->db->list_fields('staff_crm_leads');
+            if (!in_array('source', $crm_fields)) {
+                @$this->db->query("ALTER TABLE `staff_crm_leads` ADD COLUMN `source` VARCHAR(60) DEFAULT 'Direct Visit' AFTER `city`;");
+            }
+            if (!in_array('priority', $crm_fields)) {
+                @$this->db->query("ALTER TABLE `staff_crm_leads` ADD COLUMN `priority` ENUM('urgent', 'high', 'medium', 'low') DEFAULT 'medium' AFTER `source`;");
+            }
+        }
 
         // 5. staff_expense_claims Table
         $this->db->query("CREATE TABLE IF NOT EXISTS `staff_expense_claims` (
