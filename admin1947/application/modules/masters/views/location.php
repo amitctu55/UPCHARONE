@@ -94,28 +94,54 @@
             </div>
 
             <div class="master-card-body" style="padding: 16px 20px;">
-              <!-- Search & Records Per Page Toolbar -->
-              <form action="<?=base_url('masters/location')?>" method="get" id="search_form" class="master-toolbar">
-                <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                  <span style="font-size: 13px; font-weight: 600; color: #475569;">Show:</span>
-                  <div style="width: 90px;">
-                    <?php echo display_record_per_page();?>
+              <!-- Search & Filters Toolbar -->
+              <form action="<?=base_url('masters/location')?>" method="get" id="search_form" class="master-toolbar" style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+                <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                  <div style="display: flex; align-items: center; gap: 6px;">
+                    <span style="font-size: 13px; font-weight: 600; color: #475569;">Show:</span>
+                    <div style="width: 80px;">
+                      <?php echo display_record_per_page();?>
+                    </div>
+                  </div>
+
+                  <!-- City Filter Dropdown -->
+                  <div style="min-width: 140px;">
+                    <select name="city_id" class="form-control" style="border-radius: 6px; height: 34px; font-size: 13px;">
+                      <option value="">-- All Cities --</option>
+                      <?php
+                      $allCities = $this->db->order_by('name', 'asc')->get_where('master_city', array('status'=>'1'))->result();
+                      $selectedCity = $this->input->get('city_id');
+                      foreach($allCities as $c):
+                      ?>
+                        <option value="<?=$c->id;?>" <?=($selectedCity == $c->id) ? 'selected' : '';?>><?=htmlspecialchars($c->name);?></option>
+                      <?php endforeach; ?>
+                    </select>
+                  </div>
+
+                  <!-- Status Filter Dropdown -->
+                  <div style="min-width: 120px;">
+                    <select name="status" class="form-control" style="border-radius: 6px; height: 34px; font-size: 13px;">
+                      <option value="">-- All Status --</option>
+                      <option value="1" <?=($this->input->get('status') === '1') ? 'selected' : '';?>>Active</option>
+                      <option value="0" <?=($this->input->get('status') === '0') ? 'selected' : '';?>>Inactive</option>
+                    </select>
                   </div>
                 </div>
 
-                <div style="display: flex; align-items: center; gap: 8px; flex-grow: 1; max-width: 380px;">
+                <!-- Search Input & Action Buttons -->
+                <div style="display: flex; align-items: center; gap: 8px; flex-grow: 1; max-width: 380px; justify-content: flex-end;">
                   <div class="input-group input-group-sm" style="width: 100%;">
                     <input type="text" class="form-control" name="keyword" placeholder="Search locality name..." 
-                           value="<?=$this->input->get_post('keyword');?>" style="border-radius: 6px 0 0 6px; height: 34px;">
+                           value="<?=htmlspecialchars($this->input->get_post('keyword'));?>" style="border-radius: 6px 0 0 6px; height: 34px;">
                     <span class="input-group-btn">
                       <button type="submit" class="btn btn-primary" style="border-radius: 0 6px 6px 0; height: 34px; background: #00a896; border-color: #00a896;">
-                        <i class="fa fa-search"></i>
+                        <i class="fa fa-filter"></i> Filter
                       </button>
                     </span>
                   </div>
-                  <?php if($this->input->get_post('keyword')!=''): ?>
-                    <a href="<?=base_url('masters/location')?>" class="btn btn-sm btn-default" title="Clear Search" style="border-radius: 6px; height: 34px; line-height: 22px;">
-                      <i class="fa fa-times text-danger"></i>
+                  <?php if($this->input->get('keyword')!='' || $this->input->get('city_id')!='' || ($this->input->get('status')!==null && $this->input->get('status')!='')): ?>
+                    <a href="<?=base_url('masters/location')?>" class="btn btn-sm btn-default" title="Reset Filters" style="border-radius: 6px; height: 34px; line-height: 22px; white-space: nowrap;">
+                      <i class="fa fa-times text-danger"></i> Reset
                     </a>
                   <?php endif; ?>
                 </div>

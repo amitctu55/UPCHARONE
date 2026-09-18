@@ -49,32 +49,26 @@ class Degreemodel extends CI_Model{
 	
 	public function get_degree($limit='10',$offset='0')
 	{	
-		
-		$keyword 	= $this->db->escape_str($this->input->get('keyword',TRUE));
-		$mobile 	= $this->db->escape_str($this->input->get('mobile',TRUE));
-		$city_name 	= $this->db->escape_str($this->input->get('city_name',TRUE));
-	
-		
+		$keyword 	= $this->db->escape_str(trim($this->input->get('keyword',TRUE)));
+		$status 	= $this->input->get('status',TRUE);
 		
 		if($keyword!='')
 		{
-			$this->db->where("(name LIKE '%".$keyword."%' )");
+			$this->db->where("(master_degree.name LIKE '%".$keyword."%' )");
 		}
-		if($mobile!='')
+		if($status !== NULL && $status !== '')
 		{
-			$this->db->where("mobile",$mobile);
+			$this->db->where("master_degree.status", $status);
 		}
-		if($city_name!='')
-		{
-			$this->db->where("city",$city_name);
-		}
-		$this->db->order_by('id','asc');
+		$this->db->order_by('master_degree.id','asc');
 		$this->db->limit($limit,$offset);
 		$this->db->select('SQL_CALC_FOUND_ROWS *',FALSE);
-		//$this->db->join('hospitallogin','hospitallogin.USERID = hospital.uid','left');
 		$result = $this->db->get('master_degree')->result_array();
+		if (!is_array($result)) {
+			return [];
+		}
 		$result = ($limit=='1') ? @$result[0]: $result;	
-		return $result;
+		return is_array($result) ? $result : [];
 	}
 
 }
