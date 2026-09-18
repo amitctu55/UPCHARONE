@@ -237,8 +237,9 @@ defined('BASEPATH') OR exit('No direct script access allowed');
                                     </button>
 
                                     <form action="<?=base_url('admin1947/hr/toggle_job_status');?>" method="POST" style="display: inline-block; margin: 0;">
+                                        <input type="hidden" name="<?=$this->security->get_csrf_token_name();?>" value="<?=$this->security->get_csrf_hash();?>">
                                         <input type="hidden" name="job_id" value="<?=$job['job_id'];?>">
-                                        <button type="submit" class="btn btn-sm" style="background: #f8fafc; color: #64748b; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 12px;" title="Toggle Open/Close">
+                                        <button type="submit" class="btn btn-sm" style="background: #f8fafc; color: <?=($job['status']==='1' || $job['status']==='active') ? '#10b981' : '#64748b';?>; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 12px;" title="Toggle Open / Close Requisition">
                                             <i class="fa fa-power-off"></i>
                                         </button>
                                     </form>

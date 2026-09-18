@@ -414,6 +414,7 @@ $route['admin1947/hr/onboard_candidate']               = 'hr/onboard_candidate';
 $route['admin1947/hr/delete_candidate']                = 'hr/delete_candidate';
 $route['admin1947/hr/save_job']                        = 'hr/save_job';
 $route['admin1947/hr/toggle_job_status']               = 'hr/toggle_job_status';
+$route['admin1947/hr/toggle_job_status/(:num)']        = 'hr/toggle_job_status/$1';
 $route['admin1947/hr/directory']                       = 'hr/directory';
 $route['admin1947/hr/employees']                       = 'hr/employees';
 $route['admin1947/hr/save_employee']                   = 'hr/save_employee';

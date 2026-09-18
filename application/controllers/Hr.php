@@ -177,13 +177,13 @@ class Hr extends CI_Controller {
     }
 
     /**
-     * AJAX / POST: Toggle Job Status (Active / Closed)
+     * AJAX / POST / GET: Toggle Job Status (Active / Closed)
      */
-    public function toggle_job_status() {
-        $jobId = intval($this->input->post('job_id') ?: $this->input->get('job_id'));
+    public function toggle_job_status($id = null) {
+        $jobId = intval($id ?: ($this->input->post('job_id') ?: $this->input->get('job_id')));
         if ($jobId > 0) {
             $this->Recruitment_model->toggle_job_status($jobId);
-            $msg = "Job requisition status updated.";
+            $msg = "Job requisition status updated successfully.";
             if ($this->input->is_ajax_request()) {
                 echo json_encode(['status' => 'success', 'message' => $msg]);
                 return;

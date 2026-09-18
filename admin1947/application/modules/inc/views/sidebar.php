@@ -469,7 +469,7 @@ if ($this->session->userdata('adminuserid') || $this->session->userdata('userid'
           </span>
         </a>
         <ul class="treeview-menu" <?php if($pageurl1=='crm'){ ?> style="display: block;" <?php }?>>
-          <li><a href="<?=base_url('crm/dashboard');?>" target="_blank"><i class="fa fa-line-chart"></i> Revenue Dashboard</a></li>
+          <li><a href="<?=base_url('crm');?>" target="_blank"><i class="fa fa-tachometer"></i> CRM Command Hub</a></li>
           <li><a href="<?=base_url('crm/leads');?>" target="_blank"><i class="fa fa-columns"></i> Kanban Lead Pipeline</a></li>
           <li><a href="<?=base_url('crm/contacts');?>" target="_blank"><i class="fa fa-address-book"></i> Partner Directory</a></li>
           <li><a href="<?=base_url('crm/activities');?>" target="_blank"><i class="fa fa-phone-square"></i> Activity &amp; Follow-ups</a></li>
