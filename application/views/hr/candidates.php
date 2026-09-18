@@ -40,7 +40,7 @@ $selectedJobId = $selected_job_id ?? null;
         </div>
 
         <div style="display: flex; align-items: center; gap: 10px;">
-            <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#addCandidateModal" style="background: #00a896; color: #ffffff; border: none; border-radius: 10px; padding: 10px 22px; font-size: 13.5px; font-weight: 700; box-shadow: 0 4px 14px rgba(0, 168, 150, 0.35); display: flex; align-items: center; gap: 8px;">
+            <button type="button" class="btn btn-primary" onclick="openAddCandidateModal()" data-toggle="modal" data-target="#addCandidateModal" style="background: #00a896; color: #ffffff; border: none; border-radius: 10px; padding: 10px 22px; font-size: 13.5px; font-weight: 700; box-shadow: 0 4px 14px rgba(0, 168, 150, 0.35); display: flex; align-items: center; gap: 8px; cursor: pointer;">
                 <i class="fa fa-user-plus"></i> Add Candidate
             </button>
         </div>
@@ -220,7 +220,7 @@ $selectedJobId = $selected_job_id ?? null;
                 <i class="fa fa-users" style="font-size: 44px; margin-bottom: 12px; display: block; color: #cbd5e1;"></i>
                 <h4 style="font-size: 16px; font-weight: 700; color: #475569; margin: 0 0 6px;">No candidates in <?=ucfirst($currentStage);?> stage</h4>
                 <p style="font-size: 13px; color: #94a3b8; margin: 0 0 16px;">Try switching tabs, clearing the job filter, or adding a new candidate.</p>
-                <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#addCandidateModal" style="background: #00a896; border: none; border-radius: 10px; font-weight: 700; padding: 8px 20px;">
+                <button type="button" class="btn btn-primary" onclick="openAddCandidateModal()" data-toggle="modal" data-target="#addCandidateModal" style="background: #00a896; border: none; border-radius: 10px; font-weight: 700; padding: 8px 20px; cursor: pointer;">
                     <i class="fa fa-user-plus"></i> Add New Candidate
                 </button>
             </div>
@@ -347,8 +347,9 @@ $selectedJobId = $selected_job_id ?? null;
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content" style="border-radius: 16px; border: none; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2);">
             <form action="<?=base_url('admin1947/hr/save_candidate');?>" method="POST">
+                <input type="hidden" name="redirect_to" value="admin1947/hr/candidates/<?=$currentStage;?><?=$selectedJobId ? '?job_id=' . $selectedJobId : '';?>">
                 <div class="modal-header" style="background: #0f172a; color: #ffffff; border-top-left-radius: 16px; border-top-right-radius: 16px; padding: 20px 24px;">
-                    <button type="button" class="close" data-dismiss="modal" style="color: #ffffff; opacity: 0.8;">&times;</button>
+                    <button type="button" class="close" data-dismiss="modal" onclick="closeAddCandidateModal()" style="color: #ffffff; opacity: 0.8;">&times;</button>
                     <h4 class="modal-title" style="font-weight: 800; font-size: 17px;">
                         <i class="fa fa-user-plus" style="color: #2dd4bf; margin-right: 8px;"></i> Fast Intake Candidate
                     </h4>
@@ -380,10 +381,10 @@ $selectedJobId = $selected_job_id ?? null;
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label style="font-weight: 700; font-size: 13px; color: #334155;">Target Requisition Opening *</label>
-                                <select name="job_id" class="form-control" required style="border-radius: 8px; height: 42px;">
+                                <select name="job_id" id="candidate_modal_job_id" class="form-control" required style="border-radius: 8px; height: 42px;">
                                     <?php if (!empty($jobs)): foreach ($jobs as $j): ?>
-                                        <option value="<?=$j['job_id'];?>" <?=$selectedJobId == $j['job_id'] ? 'selected' : '';?>>
-                                            <?=html_escape($j['title']);?> (<?=$j['department'];?>)
+                                        <option value="<?=$j['job_id'];?>" <?=(intval($selectedJobId) == intval($j['job_id'])) ? 'selected' : '';?>>
+                                            <?=html_escape($j['title']);?> (<?=$j['department'];?>) <?=($j['status'] === 'closed') ? '— [Closed Requisition]' : '';?>
                                         </option>
                                     <?php endforeach; endif; ?>
                                 </select>
@@ -425,7 +426,7 @@ $selectedJobId = $selected_job_id ?? null;
                 </div>
 
                 <div class="modal-footer" style="background: #f8fafc; border-bottom-left-radius: 16px; border-bottom-right-radius: 16px; padding: 16px 24px; display: flex; justify-content: space-between;">
-                    <button type="button" class="btn btn-default" data-dismiss="modal" style="border-radius: 8px; font-weight: 600;">Cancel</button>
+                    <button type="button" class="btn btn-default" data-dismiss="modal" onclick="closeAddCandidateModal()" style="border-radius: 8px; font-weight: 600;">Cancel</button>
                     <button type="submit" class="btn btn-primary" style="background: #00a896; border: none; border-radius: 8px; padding: 8px 24px; font-weight: 700;">
                         <i class="fa fa-save"></i> Save Candidate to Pipeline
                     </button>
@@ -436,6 +437,29 @@ $selectedJobId = $selected_job_id ?? null;
 </div>
 
 <script>
+function openAddCandidateModal() {
+    var selJob = '<?=$selectedJobId ? $selectedJobId : "";?>';
+    if (selJob && document.getElementById('candidate_modal_job_id')) {
+        document.getElementById('candidate_modal_job_id').value = selJob;
+    }
+    if (typeof $.fn.modal === 'function') {
+        $('#addCandidateModal').modal('show');
+    } else {
+        $('#addCandidateModal').addClass('in').show();
+        if (!$('.modal-backdrop').length) {
+            $('body').addClass('modal-open').append('<div class="modal-backdrop fade in" onclick="closeAddCandidateModal()"></div>');
+        }
+    }
+}
+
+function closeAddCandidateModal() {
+    if (typeof $.fn.modal === 'function') {
+        $('#addCandidateModal').modal('hide');
+    }
+    $('#addCandidateModal').removeClass('in').hide();
+    $('.modal-backdrop').remove();
+    $('body').removeClass('modal-open');
+}
 function openMoveStageModal(candidateId, candidateName, currentStage) {
     document.getElementById('stage_modal_candidate_id').value = candidateId;
     document.getElementById('stage_modal_candidate_name').innerText = candidateName;

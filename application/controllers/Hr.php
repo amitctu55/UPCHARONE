@@ -212,9 +212,11 @@ class Hr extends CI_Controller {
         $stage         = $this->input->post('status_stage', TRUE) ?: 'applied';
         $message       = trim($this->input->post('message', TRUE));
 
-        if (empty($name) || empty($email) || empty($mobile)) {
-            $this->session->set_flashdata('error_msg', 'Candidate Name, Email, and Mobile number are required.');
-            redirect('admin1947/hr/recruitment');
+        $redirectTo = $this->input->post('redirect_to') ?: ($jobId ? "admin1947/hr/candidates?job_id={$jobId}" : 'admin1947/hr/candidates');
+
+        if (empty($name) || empty($mobile)) {
+            $this->session->set_flashdata('error_msg', 'Candidate Name and Mobile number are required.');
+            redirect($redirectTo);
             return;
         }
 
@@ -239,7 +241,7 @@ class Hr extends CI_Controller {
         ]);
 
         $this->session->set_flashdata('success_msg', "Candidate '{$name}' successfully added to recruitment pipeline!");
-        redirect('admin1947/hr/recruitment');
+        redirect($redirectTo);
     }
 
     /**
@@ -917,8 +919,20 @@ class Hr extends CI_Controller {
         
         $data['stage_counts'] = $this->Recruitment_model->get_stage_counts($job_id);
         $data['candidates'] = $this->Recruitment_model->get_candidates($stage, $job_id, $search);
-        $data['jobs'] = $this->Recruitment_model->get_all_jobs('active');
+        $data['jobs'] = $this->Recruitment_model->get_all_jobs();
         $data['selected_job'] = $job_id ? $this->Recruitment_model->get_job_by_id($job_id) : null;
+        if (!empty($data['selected_job']) && !empty($data['jobs'])) {
+            $found = false;
+            foreach ($data['jobs'] as $j) {
+                if ($j['job_id'] == $data['selected_job']['job_id']) {
+                    $found = true;
+                    break;
+                }
+            }
+            if (!$found) {
+                array_unshift($data['jobs'], $data['selected_job']);
+            }
+        }
 
         $this->load->view('hr/header', $data);
         $this->load->view('hr/candidates', $data);
