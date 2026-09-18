@@ -507,6 +507,10 @@ $config['csrf_exclude_uris'] = array(
 	'hr/.*',
 	'crm/.*',
 	'operations/.*',
+	'admin1947/hr/.*',
+	'admin1947/crm/.*',
+	'admin1947/operations/.*',
+	'admin1947/attendance/.*',
 	'api/.*',
 	'pharmacy/.*',
 	'delivery/.*'

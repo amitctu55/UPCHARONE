@@ -180,15 +180,20 @@ class Hr extends CI_Controller {
      * AJAX / POST / GET: Toggle Job Status (Active / Closed)
      */
     public function toggle_job_status($id = null) {
-        $jobId = intval($id ?: ($this->input->post('job_id') ?: $this->input->get('job_id')));
+        $jobId = intval($id ?: ($this->input->post('job_id') ?: ($this->input->get('job_id') ?: ($this->input->post('id') ?: $this->input->get('id')))));
         if ($jobId > 0) {
-            $this->Recruitment_model->toggle_job_status($jobId);
-            $msg = "Job requisition status updated successfully.";
-            if ($this->input->is_ajax_request()) {
-                echo json_encode(['status' => 'success', 'message' => $msg]);
+            $new_status = $this->Recruitment_model->toggle_job_status($jobId);
+            $msg = "Job requisition status updated successfully" . ($new_status ? " to " . ucfirst($new_status) : "") . ".";
+            if ($this->input->is_ajax_request() || $this->input->post('is_ajax') || $this->input->get('is_ajax')) {
+                echo json_encode(['status' => 'success', 'new_status' => $new_status, 'message' => $msg]);
                 return;
             }
             $this->session->set_flashdata('success_msg', $msg);
+        } else {
+            if ($this->input->is_ajax_request() || $this->input->post('is_ajax') || $this->input->get('is_ajax')) {
+                echo json_encode(['status' => 'error', 'message' => 'Invalid or missing Job ID.']);
+                return;
+            }
         }
         redirect('admin1947/hr/jobs');
     }

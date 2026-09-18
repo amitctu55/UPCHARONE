@@ -57,9 +57,10 @@ class Recruitment_model extends CI_Model {
     public function toggle_job_status($job_id) {
         $job = $this->get_job_by_id($job_id);
         if (!$job) return false;
-        $new_status = ($job['status'] === 'active') ? 'closed' : 'active';
+        $new_status = ($job['status'] === 'active' || $job['status'] === '1') ? 'closed' : 'active';
         $this->db->where('job_id', $job_id);
-        return $this->db->update('career_jobs', ['status' => $new_status]);
+        $ok = $this->db->update('career_jobs', ['status' => $new_status, 'updated_at' => date('Y-m-d H:i:s')]);
+        return $ok ? $new_status : false;
     }
 
     /**

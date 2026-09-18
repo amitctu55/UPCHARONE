@@ -144,7 +144,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
                 </thead>
                 <tbody>
                     <?php if (!empty($jobs)): foreach ($jobs as $job): 
-                        $isActive = ($job['status'] === 'active');
+                        $isActive = ($job['status'] === 'active' || $job['status'] === '1');
                         $deptColor = '#0284c7';
                         if (stripos($job['department'], 'lab') !== false) $deptColor = '#00a896';
                         elseif (stripos($job['department'], 'nurs') !== false) $deptColor = '#ec4899';
@@ -213,13 +213,13 @@ defined('BASEPATH') OR exit('No direct script access allowed');
                             </td>
 
                             <!-- Status -->
-                            <td style="padding: 16px; text-align: center;">
+                            <td style="padding: 16px; text-align: center;" id="job-status-cell-<?=$job['job_id'];?>">
                                 <?php if ($isActive): ?>
-                                    <span style="background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0; padding: 4px 10px; border-radius: 9999px; font-size: 11.5px; font-weight: 700; display: inline-flex; align-items: center; gap: 4px;">
+                                    <span class="job-status-badge" style="background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0; padding: 4px 10px; border-radius: 9999px; font-size: 11.5px; font-weight: 700; display: inline-flex; align-items: center; gap: 4px;">
                                         <span style="width: 6px; height: 6px; border-radius: 50%; background: #10b981;"></span> Active
                                     </span>
                                 <?php else: ?>
-                                    <span style="background: #f1f5f9; color: #64748b; border: 1px solid #cbd5e1; padding: 4px 10px; border-radius: 9999px; font-size: 11.5px; font-weight: 700;">
+                                    <span class="job-status-badge" style="background: #f1f5f9; color: #64748b; border: 1px solid #cbd5e1; padding: 4px 10px; border-radius: 9999px; font-size: 11.5px; font-weight: 700;">
                                         Closed
                                     </span>
                                 <?php endif; ?>
@@ -236,13 +236,9 @@ defined('BASEPATH') OR exit('No direct script access allowed');
                                         <i class="fa fa-pencil"></i>
                                     </button>
 
-                                    <form action="<?=base_url('admin1947/hr/toggle_job_status');?>" method="POST" style="display: inline-block; margin: 0;">
-                                        <input type="hidden" name="<?=$this->security->get_csrf_token_name();?>" value="<?=$this->security->get_csrf_hash();?>">
-                                        <input type="hidden" name="job_id" value="<?=$job['job_id'];?>">
-                                        <button type="submit" class="btn btn-sm" style="background: #f8fafc; color: <?=($job['status']==='1' || $job['status']==='active') ? '#10b981' : '#64748b';?>; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 12px;" title="Toggle Open / Close Requisition">
-                                            <i class="fa fa-power-off"></i>
-                                        </button>
-                                    </form>
+                                    <button type="button" class="btn btn-sm btn-toggle-job" data-id="<?=$job['job_id'];?>" style="background: #f8fafc; color: <?=$isActive ? '#10b981' : '#64748b';?>; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 12px; transition: all 0.2s;" title="Toggle Open / Close Requisition">
+                                        <i class="fa fa-power-off"></i>
+                                    </button>
                                 </div>
                             </td>
                         </tr>
@@ -583,4 +579,74 @@ function filterJobsTable() {
 
     document.getElementById('jobsCountBadge').innerText = visibleCount + ' Openings';
 }
+
+// Toast notification helper
+function showJobToast(msg, isSuccess) {
+    var $t = $('#jobLiveToast');
+    var $icon = $('#jobLiveToastIcon');
+    $('#jobLiveToastMsg').text(msg);
+    if (isSuccess) {
+        $t.css('border-color', '#10b981');
+        $icon.removeClass('fa-exclamation-circle text-danger').addClass('fa-check-circle').css('color', '#10b981');
+    } else {
+        $t.css('border-color', '#ef4444');
+        $icon.removeClass('fa-check-circle').addClass('fa-exclamation-circle').css('color', '#ef4444');
+    }
+    $t.fadeIn(200);
+    setTimeout(function() {
+        $t.fadeOut(300);
+    }, 2800);
+}
+
+// AJAX Toggle Job Status
+$(document).on('click', '.btn-toggle-job', function(e) {
+    e.preventDefault();
+    var $btn = $(this);
+    var jid = $btn.data('id');
+    var $icon = $btn.find('i');
+    
+    $icon.addClass('fa-spin');
+    $btn.prop('disabled', true);
+
+    $.ajax({
+        url: '<?=base_url("admin1947/hr/toggle_job_status");?>',
+        type: 'POST',
+        data: {
+            job_id: jid,
+            is_ajax: 1
+        },
+        dataType: 'json',
+        success: function(res) {
+            $icon.removeClass('fa-spin');
+            $btn.prop('disabled', false);
+            if (res && res.status === 'success') {
+                var $cell = $('#job-status-cell-' + jid);
+                var $row = $btn.closest('.job-row');
+                if (res.new_status === 'active') {
+                    $btn.css('color', '#10b981');
+                    $row.attr('data-status', 'active');
+                    $cell.html('<span class="job-status-badge" style="background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0; padding: 4px 10px; border-radius: 9999px; font-size: 11.5px; font-weight: 700; display: inline-flex; align-items: center; gap: 4px;"><span style="width: 6px; height: 6px; border-radius: 50%; background: #10b981;"></span> Active</span>');
+                } else {
+                    $btn.css('color', '#64748b');
+                    $row.attr('data-status', 'closed');
+                    $cell.html('<span class="job-status-badge" style="background: #f1f5f9; color: #64748b; border: 1px solid #cbd5e1; padding: 4px 10px; border-radius: 9999px; font-size: 11.5px; font-weight: 700;">Closed</span>');
+                }
+                showJobToast(res.message || 'Job requisition status updated', true);
+            } else {
+                showJobToast(res ? res.message : 'Error updating status', false);
+            }
+        },
+        error: function() {
+            $icon.removeClass('fa-spin');
+            $btn.prop('disabled', false);
+            showJobToast('Server connection error. Please try again.', false);
+        }
+    });
+});
 </script>
+
+<!-- Floating Toast Notification -->
+<div id="jobLiveToast" style="display: none; position: fixed; bottom: 24px; right: 24px; z-index: 99999; background: #0f172a; color: #ffffff; padding: 12px 20px; border-radius: 10px; font-weight: 700; font-size: 13px; box-shadow: 0 10px 25px rgba(0,0,0,0.25); border-left: 4px solid #10b981; display: none; align-items: center; gap: 10px;">
+    <i id="jobLiveToastIcon" class="fa fa-check-circle" style="color: #10b981; font-size: 16px;"></i>
+    <span id="jobLiveToastMsg">Status updated</span>
+</div>
