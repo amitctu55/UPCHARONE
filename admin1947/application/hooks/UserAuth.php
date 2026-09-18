@@ -24,8 +24,27 @@ public function accessCheck()
 		$access_subcenter_controller =  $this->CI->config->item('access_subcenter_controller');
 		$access_agency_controller =  $this->CI->config->item('access_agency_controller');
 		
-		$access_public_controller =  $this->CI->config->item('access_public_controller');
-		
+		// Check signed admin guard token to bridge session
+		if (empty($this->CI->session->userdata('code'))) {
+			$cookieToken = $this->CI->input->cookie('upchar_admin_guard', TRUE);
+			if ($cookieToken) {
+				$decoded = json_decode(base64_decode($cookieToken), TRUE);
+				if (is_array($decoded) && !empty($decoded['adminuserid']) && !empty($decoded['sig'])) {
+					$expectedSig = hash_hmac('sha256', $decoded['adminuserid'] . '|' . $decoded['username'] . '|' . $decoded['role'], 'UpcharMasterAdminSecret2026');
+					if (hash_equals($expectedSig, $decoded['sig'])) {
+						$this->CI->session->set_userdata([
+							'adminuserid'      => $decoded['adminuserid'],
+							'userid'           => $decoded['adminuserid'],
+							'username'         => $decoded['username'],
+							'code'             => '1',
+							'active_auth_role' => 'admin',
+							'logged_in'        => TRUE
+						]);
+					}
+				}
+			}
+		}
+
 		$usertype = $this->CI->session->userdata('code');
 		
 		$module     =  $this->CI->router->fetch_module();
