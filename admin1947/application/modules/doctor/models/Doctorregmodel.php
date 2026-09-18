@@ -891,22 +891,92 @@ class Doctorregmodel extends CI_Model
 	   return $qq;
 	}
   
+	private function _ensure_advertisement_schema()
+	{
+		static $schema_checked = false;
+		if ($schema_checked) {
+			return;
+		}
+		$schema_checked = true;
+
+		try {
+			if (!$this->db->table_exists('advertisement')) {
+				$this->db->query("CREATE TABLE IF NOT EXISTS `advertisement` (
+				  `id` int(11) NOT NULL AUTO_INCREMENT,
+				  `title` varchar(255) DEFAULT NULL,
+				  `category` enum('medicine','medical_store','hospital','pathology','equipment','general') DEFAULT 'general',
+				  `sponsor_badge` varchar(100) DEFAULT 'Sponsored Partner',
+				  `short_description` varchar(300) DEFAULT NULL,
+				  `long_description` varchar(500) DEFAULT NULL,
+				  `image` varchar(250) DEFAULT NULL,
+				  `page` varchar(250) DEFAULT NULL,
+				  `link_url` varchar(255) DEFAULT NULL,
+				  `placement` varchar(100) DEFAULT 'public_dashboard',
+				  `clicks` int(11) DEFAULT '0',
+				  `impressions` int(11) DEFAULT '0',
+				  `price_paid` decimal(10,2) DEFAULT '0.00',
+				  `contact_info` varchar(200) DEFAULT NULL,
+				  `status` enum('0','1') DEFAULT '1',
+				  `creat_date` datetime DEFAULT NULL,
+				  PRIMARY KEY (`id`)
+				) ENGINE=InnoDB DEFAULT CHARSET=utf8;");
+			} else {
+				if (!$this->db->field_exists('category', 'advertisement')) {
+					$this->db->query("ALTER TABLE `advertisement` ADD COLUMN `category` enum('medicine','medical_store','hospital','pathology','equipment','general') DEFAULT 'general' AFTER `title`");
+				}
+				if (!$this->db->field_exists('sponsor_badge', 'advertisement')) {
+					$this->db->query("ALTER TABLE `advertisement` ADD COLUMN `sponsor_badge` varchar(100) DEFAULT 'Sponsored Partner'");
+				}
+				if (!$this->db->field_exists('short_description', 'advertisement')) {
+					$this->db->query("ALTER TABLE `advertisement` ADD COLUMN `short_description` varchar(300) DEFAULT NULL");
+				}
+				if (!$this->db->field_exists('long_description', 'advertisement')) {
+					$this->db->query("ALTER TABLE `advertisement` ADD COLUMN `long_description` varchar(500) DEFAULT NULL");
+				}
+				if (!$this->db->field_exists('link_url', 'advertisement')) {
+					$this->db->query("ALTER TABLE `advertisement` ADD COLUMN `link_url` varchar(255) DEFAULT NULL");
+				}
+				if (!$this->db->field_exists('placement', 'advertisement')) {
+					$this->db->query("ALTER TABLE `advertisement` ADD COLUMN `placement` varchar(100) DEFAULT 'public_dashboard'");
+				}
+				if (!$this->db->field_exists('status', 'advertisement')) {
+					$this->db->query("ALTER TABLE `advertisement` ADD COLUMN `status` enum('0','1') DEFAULT '1'");
+				}
+			}
+		} catch (Throwable $e) {
+			log_message('error', 'Error in _ensure_advertisement_schema: ' . $e->getMessage());
+		}
+	}
+
 	public function get_advertisements($category = null)
 	{
-		if (!empty($category)) {
-			$this->db->where('category', $category);
+		$this->_ensure_advertisement_schema();
+		try {
+			if (!empty($category) && $this->db->field_exists('category', 'advertisement')) {
+				$this->db->where('category', $category);
+			}
+			$this->db->order_by('id', 'DESC');
+			$q = $this->db->get('advertisement');
+			return ($q && is_object($q)) ? $q->result() : array();
+		} catch (Throwable $e) {
+			return array();
 		}
-		$this->db->order_by('id', 'DESC');
-		return $this->db->get('advertisement')->result();
 	}
 
 	public function get_advertisement_by_id($id)
 	{
-		return $this->db->get_where('advertisement', array('id' => $id))->row();
+		$this->_ensure_advertisement_schema();
+		try {
+			$q = $this->db->get_where('advertisement', array('id' => $id));
+			return ($q && is_object($q)) ? $q->row() : null;
+		} catch (Throwable $e) {
+			return null;
+		}
 	}
 
 	public function advertisment($image = '')
 	{
+		$this->_ensure_advertisement_schema();
 		$id           = $this->input->post('eid') ? base64_decode($this->input->post('eid')) : null;
 		$title        = trim($this->input->post('title') ?: $this->input->post('short'));
 		$category     = $this->input->post('category') ?: 'general';

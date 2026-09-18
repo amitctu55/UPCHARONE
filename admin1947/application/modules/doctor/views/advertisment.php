@@ -70,7 +70,7 @@
             <!-- Category Filter Tabs -->
             <div style="margin-bottom: 18px; display: flex; gap: 8px; flex-wrap: wrap;">
                 <a href="<?=base_url('doctor/clinicreg/advertisment');?>" class="btn btn-sm <?=empty($selected_cat) ? 'btn-primary' : 'btn-default';?>" style="font-weight: 700; border-radius: 6px;">
-                    All Sponsored Ads (<?=count($advertisements);?>)
+                    All Sponsored Ads (<?=(is_array($advertisements) ? count($advertisements) : 0);?>)
                 </a>
                 <a href="<?=base_url('doctor/clinicreg/advertisment?category=medicine');?>" class="btn btn-sm <?=$selected_cat==='medicine' ? 'btn-primary' : 'btn-default';?>" style="font-weight: 700; border-radius: 6px;">
                     <i class="fa fa-medkit"></i> Sponsored Medicines
@@ -190,7 +190,7 @@
                 <div class="col-md-7">
                     <div class="ad-card-box">
                         <div class="ad-header-bar" style="background: #0f172a;">
-                            <span><i class="fa fa-list"></i> Active Sponsored Showcase Space (<?=count($advertisements);?>)</span>
+                            <span><i class="fa fa-list"></i> Active Sponsored Showcase Space (<?=(is_array($advertisements) ? count($advertisements) : 0);?>)</span>
                             <a href="<?=base_url();?>" target="_blank" class="btn btn-xs btn-info" style="font-weight: 700;">
                                 <i class="fa fa-external-link"></i> View Public Dashboard
                             </a>

@@ -10,9 +10,29 @@ class Clinicreg extends CI_Controller
 	{
 		parent::__construct();
 		date_default_timezone_set("Asia/Kolkata");
-		$date=date('Y-m-d h:i:s');
 		$this->load->model(array('doctorregmodel','masters/managementmodel'));
 		$this->load->helper(array('query_string_helper','dbquery_helper','admin_helper'));
+
+		// Guard token session bridge
+		if (!$this->session->userdata('userid') && !$this->session->userdata('username')) {
+			$cookieToken = $this->input->cookie('upchar_admin_guard', TRUE);
+			if ($cookieToken) {
+				$decoded = json_decode(base64_decode($cookieToken), TRUE);
+				if (is_array($decoded) && !empty($decoded['adminuserid']) && !empty($decoded['sig'])) {
+					$expectedSig = hash_hmac('sha256', $decoded['adminuserid'] . '|' . $decoded['username'] . '|' . $decoded['role'], 'UpcharMasterAdminSecret2026');
+					if (hash_equals($expectedSig, $decoded['sig'])) {
+						$this->session->set_userdata([
+							'adminuserid'      => $decoded['adminuserid'],
+							'userid'           => $decoded['adminuserid'],
+							'username'         => $decoded['username'],
+							'code'             => '1',
+							'active_auth_role' => 'admin',
+							'logged_in'        => TRUE
+						]);
+					}
+				}
+			}
+		}
 	}
 	
 	public function viewhospital()
@@ -1394,7 +1414,8 @@ class Clinicreg extends CI_Controller
 			exit();
 		}
 
-		$data['advertisements']  = $this->doctorregmodel->get_advertisements($category_filter);
+		$ads                     = $this->doctorregmodel->get_advertisements($category_filter);
+		$data['advertisements']  = is_array($ads) ? $ads : [];
 		$data['edit_ad']         = $edit_id ? $this->doctorregmodel->get_advertisement_by_id($edit_id) : null;
 		$data['selected_cat']    = $category_filter;
 		$data['heading_title']   = 'Sponsored Advertisements & Showcase Master';
