@@ -408,23 +408,24 @@ $pageurl3 = $this->uri->segment(3);
 
       <li class="header">ENTERPRISE MANAGEMENT</li>
 
-      <!-- HR & Staff Management -->
-      <li class="treeview <?php if($pageurl1=='hr' || ($pageurl1=='doctor' && $pageurl2=='career')){ ?> active menu-open <?php }?>">
+      <!-- HR & Workforce Operations -->
+      <li class="treeview <?php if($pageurl1=='hr' || $pageurl1=='attendance' || ($pageurl1=='doctor' && $pageurl2=='career')){ ?> active menu-open <?php }?>">
         <a href="#">
           <i class="fa fa-users" style="color: #38bdf8;"></i> <span>HR &amp; Recruitment</span>
           <span class="pull-right-container">
             <i class="fa fa-angle-left pull-right"></i>
           </span>
         </a>
-        <ul class="treeview-menu" <?php if($pageurl1=='hr' || ($pageurl1=='doctor' && $pageurl2=='career')){ ?> style="display: block;" <?php }?>>
+        <ul class="treeview-menu" <?php if($pageurl1=='hr' || $pageurl1=='attendance' || ($pageurl1=='doctor' && $pageurl2=='career')){ ?> style="display: block;" <?php }?>>
+          <li><a href="<?=base_url('hr/dashboard');?>" target="_blank"><i class="fa fa-tachometer"></i> HR Command Hub</a></li>
+          <li><a href="<?=base_url('hr/employees');?>" target="_blank"><i class="fa fa-user-plus"></i> Staff Directory</a></li>
+          <li><a href="<?=base_url('hr/attendance');?>" target="_blank"><i class="fa fa-calendar-check-o"></i> Daily Attendance Roster</a></li>
+          <li><a href="<?=base_url('hr/leaves');?>" target="_blank"><i class="fa fa-calendar-times-o"></i> Leave Approvals Desk</a></li>
+          <li><a href="<?=base_url('hr/payroll');?>" target="_blank"><i class="fa fa-money"></i> Monthly Payroll Engine</a></li>
+          <li><a href="<?=base_url('hr/recruitment');?>" target="_blank"><i class="fa fa-briefcase"></i> Recruitment &amp; ATS</a></li>
           <li class="<?php if($pageurl1=='doctor' && $pageurl2=='career'){ ?>active<?php }?>">
-            <a href="<?=base_url('doctor/career');?>"><i class="fa fa-briefcase" style="color: #00a896;"></i> Career &amp; Hiring Portal</a>
+            <a href="<?=base_url('doctor/career');?>"><i class="fa fa-id-badge" style="color: #00a896;"></i> Career &amp; Hiring Portal</a>
           </li>
-          <li><a href="<?=base_url('../hr/dashboard');?>" target="_blank"><i class="fa fa-tachometer"></i> HR Command Hub</a></li>
-          <li><a href="<?=base_url('../hr/employees');?>" target="_blank"><i class="fa fa-user-plus"></i> Staff Directory</a></li>
-          <li><a href="<?=base_url('../hr/attendance');?>" target="_blank"><i class="fa fa-calendar-check-o"></i> Daily Attendance Roster</a></li>
-          <li><a href="<?=base_url('../hr/leaves');?>" target="_blank"><i class="fa fa-calendar-times-o"></i> Leave Approvals Desk</a></li>
-          <li><a href="<?=base_url('../hr/payroll');?>" target="_blank"><i class="fa fa-money"></i> Monthly Payroll Engine</a></li>
         </ul>
       </li>
 
@@ -436,30 +437,12 @@ $pageurl3 = $this->uri->segment(3);
             <i class="fa fa-angle-left pull-right"></i>
           </span>
         </a>
-        <ul class="treeview-menu">
+        <ul class="treeview-menu" <?php if($pageurl1=='collector' || $pageurl1=='operations'){ ?> style="display: block;" <?php }?>>
           <li><a href="<?=base_url('operations/dashboard');?>" target="_blank"><i class="fa fa-dashboard"></i> Operations Hub</a></li>
-          <li><a href="<?=base_url('../collector/dashboard');?>" target="_blank"><i class="fa fa-motorcycle"></i> Collector Pickup Queue</a></li>
           <li><a href="<?=base_url('operations/handoffs');?>" target="_blank"><i class="fa fa-flask"></i> Lab Sample Handoffs</a></li>
           <li><a href="<?=base_url('operations/expenses');?>" target="_blank"><i class="fa fa-receipt"></i> Expense Claims Desk</a></li>
           <li><a href="<?=base_url('attendance/punch');?>" target="_blank"><i class="fa fa-camera"></i> GPS Attendance Punch</a></li>
-        </ul>
-      </li>
-
-      <!-- HR & Workforce Operations -->
-      <li class="treeview <?php if($pageurl1=='hr' || $pageurl1=='attendance'){ ?> active menu-open <?php }?>">
-        <a href="#">
-          <i class="fa fa-users" style="color: #38bdf8;"></i> <span>HR &amp; Workforce Desk</span>
-          <span class="pull-right-container">
-            <i class="fa fa-angle-left pull-right"></i>
-          </span>
-        </a>
-        <ul class="treeview-menu">
-          <li><a href="<?=base_url('hr/dashboard');?>" target="_blank"><i class="fa fa-id-badge"></i> HR Command Hub</a></li>
-          <li><a href="<?=base_url('attendance/roster');?>" target="_blank"><i class="fa fa-calendar-check-o"></i> Staff Daily Roster</a></li>
-          <li><a href="<?=base_url('hr/recruitment');?>" target="_blank"><i class="fa fa-briefcase"></i> Recruitment &amp; Jobs</a></li>
-          <li><a href="<?=base_url('hr/employees');?>" target="_blank"><i class="fa fa-address-book-o"></i> Employee Directory</a></li>
-          <li><a href="<?=base_url('hr/leaves');?>" target="_blank"><i class="fa fa-plane"></i> Leave Approvals</a></li>
-          <li><a href="<?=base_url('hr/payroll');?>" target="_blank"><i class="fa fa-money"></i> Payroll Engine</a></li>
+          <li><a href="<?=base_url('../collector/dashboard');?>" target="_blank"><i class="fa fa-motorcycle"></i> Collector Pickup Queue</a></li>
         </ul>
       </li>
 
@@ -471,9 +454,11 @@ $pageurl3 = $this->uri->segment(3);
             <i class="fa fa-angle-left pull-right"></i>
           </span>
         </a>
-        <ul class="treeview-menu">
+        <ul class="treeview-menu" <?php if($pageurl1=='crm'){ ?> style="display: block;" <?php }?>>
           <li><a href="<?=base_url('crm/dashboard');?>" target="_blank"><i class="fa fa-line-chart"></i> Revenue Dashboard</a></li>
           <li><a href="<?=base_url('crm/leads');?>" target="_blank"><i class="fa fa-columns"></i> Kanban Lead Pipeline</a></li>
+          <li><a href="<?=base_url('crm/contacts');?>" target="_blank"><i class="fa fa-address-book"></i> Partner Directory</a></li>
+          <li><a href="<?=base_url('crm/activities');?>" target="_blank"><i class="fa fa-phone-square"></i> Activity &amp; Follow-ups</a></li>
         </ul>
       </li>
 

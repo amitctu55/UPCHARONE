@@ -168,12 +168,12 @@
                 <a href="<?=base_url('admin1947/hr/recruitment');?>" class="<?=($seg1=='hr' && $seg2=='recruitment') ? 'active' : '';?>">
                     <i class="fa fa-columns" style="color: #00a896;"></i> Kanban Board
                 </a>
-                <a href="<?=base_url('admin1947/hr/directory');?>" class="<?=($seg1=='hr' && in_array($seg2, ['directory', 'employees'])) ? 'active' : '';?>">
+                <a href="<?=base_url('admin1947/hr/employees');?>" class="<?=($seg1=='hr' && in_array($seg2, ['directory', 'employees'])) ? 'active' : '';?>">
                     <i class="fa fa-users" style="color: #34d399;"></i> Staff Directory
                 </a>
 
                 <div class="hr-nav-heading">Time &amp; Payroll</div>
-                <a href="<?=base_url('admin1947/attendance/roster');?>" class="<?=(($seg1=='attendance' && $seg2=='roster') || ($seg1=='hr' && $seg2=='attendance')) ? 'active' : '';?>">
+                <a href="<?=base_url('admin1947/hr/attendance');?>" class="<?=(($seg1=='attendance' && $seg2=='roster') || ($seg1=='hr' && $seg2=='attendance')) ? 'active' : '';?>">
                     <i class="fa fa-calendar-check-o" style="color: #f59e0b;"></i> Attendance Roster
                 </a>
                 <a href="<?=base_url('admin1947/attendance/punch');?>" class="<?=($seg1=='attendance' && in_array($seg2, ['punch', 'history'])) ? 'active' : '';?>">
@@ -264,7 +264,7 @@
                 <a href="<?=base_url('admin1947/hr/recruitment');?>" class="hr-suite-tab <?=($seg1=='hr' && $seg2=='recruitment') ? 'active' : '';?>">
                     <i class="fa fa-columns" style="color: #00a896;"></i> Kanban Board
                 </a>
-                <a href="<?=base_url('admin1947/hr/directory');?>" class="hr-suite-tab <?=($seg1=='hr' && in_array($seg2, ['directory', 'employees'])) ? 'active' : '';?>">
+                <a href="<?=base_url('admin1947/hr/employees');?>" class="hr-suite-tab <?=($seg1=='hr' && in_array($seg2, ['directory', 'employees'])) ? 'active' : '';?>">
                     <i class="fa fa-users" style="color: #10b981;"></i> Staff Directory
                 </a>
             </div>
@@ -289,7 +289,7 @@
 
             <!-- Right Connected Segmented Pills -->
             <div style="display: inline-flex; background: #f1f5f9; padding: 4px; border-radius: 12px; border: 1px solid #e2e8f0; gap: 4px; overflow-x: auto; max-width: 100%;">
-                <a href="<?=base_url('admin1947/attendance/roster');?>" class="hr-suite-tab <?=(($seg1=='attendance' && ($seg2=='roster' || empty($seg2))) || ($seg1=='hr' && $seg2=='attendance')) ? 'active' : '';?>">
+                <a href="<?=base_url('admin1947/hr/attendance');?>" class="hr-suite-tab <?=(($seg1=='attendance' && ($seg2=='roster' || empty($seg2))) || ($seg1=='hr' && $seg2=='attendance')) ? 'active' : '';?>">
                     <i class="fa fa-calendar-check-o" style="color: #f59e0b;"></i> Attendance Roster
                 </a>
                 <a href="<?=base_url('admin1947/attendance/punch');?>" class="hr-suite-tab <?=($seg1=='attendance' && in_array($seg2, ['punch', 'history'])) ? 'active' : '';?>">

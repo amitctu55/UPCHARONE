@@ -509,16 +509,16 @@
                             <strong style="color: #d97706;"><?=number_format($pending_leaves ?? 0);?></strong>
                         </div>
                         <div style="margin-top: 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 6px;">
-                            <a href="<?=base_url('../hr/dashboard');?>" target="_blank" class="btn btn-xs btn-default" style="font-weight: 600; text-align: left;">
+                            <a href="<?=base_url('hr/dashboard');?>" target="_blank" class="btn btn-xs btn-default" style="font-weight: 600; text-align: left;">
                                 <i class="fa fa-tachometer text-primary"></i> HR Hub
                             </a>
-                            <a href="<?=base_url('../hr/employees');?>" target="_blank" class="btn btn-xs btn-default" style="font-weight: 600; text-align: left;">
+                            <a href="<?=base_url('hr/employees');?>" target="_blank" class="btn btn-xs btn-default" style="font-weight: 600; text-align: left;">
                                 <i class="fa fa-user-plus text-success"></i> Directory
                             </a>
-                            <a href="<?=base_url('../hr/attendance');?>" target="_blank" class="btn btn-xs btn-default" style="font-weight: 600; text-align: left;">
+                            <a href="<?=base_url('hr/attendance');?>" target="_blank" class="btn btn-xs btn-default" style="font-weight: 600; text-align: left;">
                                 <i class="fa fa-calendar-check-o text-info"></i> Roster
                             </a>
-                            <a href="<?=base_url('../hr/payroll');?>" target="_blank" class="btn btn-xs btn-default" style="font-weight: 600; text-align: left;">
+                            <a href="<?=base_url('hr/payroll');?>" target="_blank" class="btn btn-xs btn-default" style="font-weight: 600; text-align: left;">
                                 <i class="fa fa-money text-warning"></i> Payroll
                             </a>
                         </div>
@@ -581,10 +581,10 @@
                             <strong style="color: #16a34a;">Active</strong>
                         </div>
                         <div style="margin-top: 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 6px;">
-                            <a href="<?=base_url('../crm/dashboard');?>" target="_blank" class="btn btn-xs btn-default" style="font-weight: 600; text-align: left;">
+                            <a href="<?=base_url('crm/dashboard');?>" target="_blank" class="btn btn-xs btn-default" style="font-weight: 600; text-align: left;">
                                 <i class="fa fa-line-chart text-danger"></i> CRM Metrics
                             </a>
-                            <a href="<?=base_url('../crm/leads');?>" target="_blank" class="btn btn-xs btn-default" style="font-weight: 600; text-align: left;">
+                            <a href="<?=base_url('crm/leads');?>" target="_blank" class="btn btn-xs btn-default" style="font-weight: 600; text-align: left;">
                                 <i class="fa fa-columns text-primary"></i> Kanban Board
                             </a>
                         </div>
