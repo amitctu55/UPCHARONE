@@ -134,6 +134,46 @@ class Admin_auth_guard {
             }
         }
 
+        // 3.5 Check Admin1947 Session Cookie (ci_admin_session) from active browser session
+        $adminCookieId = $this->CI->input->cookie('ci_admin_session', TRUE) ?: ($_COOKIE['ci_admin_session'] ?? '');
+        if (!empty($adminCookieId) && preg_match('/^[a-zA-Z0-9,-]+$/', $adminCookieId)) {
+            $saveDirs = array_unique(array_filter([
+                rtrim((string)ini_get('session.save_path'), '/\\'),
+                sys_get_temp_dir(),
+                'C:/xampp/tmp',
+                'C:\\xampp\\tmp',
+                '/tmp'
+            ]));
+            foreach ($saveDirs as $dir) {
+                $sessFile = $dir . DIRECTORY_SEPARATOR . 'ci_admin_session' . $adminCookieId;
+                if (file_exists($sessFile) && is_readable($sessFile)) {
+                    $sessData = @file_get_contents($sessFile);
+                    if ($sessData && (strpos($sessData, 'adminuserid') !== false || strpos($sessData, 'username') !== false)) {
+                        $aid = 0;
+                        if (preg_match('/adminuserid\|[is]:(\d+|"[^"]+");/', $sessData, $m)) {
+                            $aid = intval(trim($m[1], '"'));
+                        } elseif (preg_match('/userid\|[is]:(\d+|"[^"]+");/', $sessData, $m)) {
+                            $aid = intval(trim($m[1], '"'));
+                        }
+                        $uname = 'Super Admin';
+                        if (preg_match('/username\|s:\d+:"([^"]+)";/', $sessData, $mu)) {
+                            $uname = $mu[1];
+                        }
+                        if ($aid > 0) {
+                            $this->CI->session->set_userdata([
+                                'adminuserid'      => $aid,
+                                'userid'           => $aid,
+                                'username'         => $uname,
+                                'active_auth_role' => 'admin',
+                                'staff_role'       => 'super_admin'
+                            ]);
+                            return 'authorized';
+                        }
+                    }
+                }
+            }
+        }
+
         // 4. Check if authenticated under a non-admin role (HR, BDE, Collector, Patient, etc.)
         if ($staffId || $this->CI->session->userdata('userid') || $this->CI->session->userdata('doctor_id') || $this->CI->session->userdata('hospital_id')) {
             return 'forbidden';

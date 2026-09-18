@@ -72,9 +72,8 @@ class Login extends CI_Controller {
         $query = $this->db->get()->row();
 
         if (!empty($query)) {
-            // Strictly enforce single session: Flush patient / partner session keys and patient cookies
+            // Strictly enforce single session: Flush patient / partner session keys
             $this->session->unset_userdata(array('useremail', 'signupuserid', 'forgotuserid', 'doctor_id', 'hospital_id', 'pathology_id', 'clinic_id'));
-            @setcookie('ci_session', '', time() - 3600, '/');
 
             $session_data = array(
                 'adminuserid'    => $query->id,
