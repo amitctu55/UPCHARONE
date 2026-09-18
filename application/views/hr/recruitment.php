@@ -755,7 +755,8 @@
                 <button type="button" class="close" data-dismiss="modal" style="color: #ffffff; opacity: 0.8; font-size: 26px; margin-top: -5px;">&times;</button>
             </div>
 
-            <form action="<?= base_url('admin1947/hr/recruitment/save_job'); ?>" method="POST">
+            <form action="<?= base_url('admin1947/hr/save_job'); ?>" method="POST">
+                <input type="hidden" name="redirect_to" value="admin1947/hr/recruitment">
                 <?php if (isset($this->security)): ?>
                     <input type="hidden" name="<?= $this->security->get_csrf_token_name(); ?>" value="<?= $this->security->get_csrf_hash(); ?>">
                 <?php endif; ?>
@@ -844,7 +845,8 @@
                 </h4>
             </div>
 
-            <form action="<?= base_url('admin1947/hr/recruitment/save_candidate'); ?>" method="POST">
+            <form action="<?= base_url('admin1947/hr/save_candidate'); ?>" method="POST">
+                <input type="hidden" name="redirect_to" value="admin1947/hr/recruitment">
                 <?php if (isset($this->security)): ?>
                     <input type="hidden" name="<?= $this->security->get_csrf_token_name(); ?>" value="<?= $this->security->get_csrf_hash(); ?>">
                 <?php endif; ?>
@@ -986,7 +988,8 @@
                 </h4>
             </div>
 
-            <form action="<?= base_url('admin1947/hr/recruitment/onboard_candidate'); ?>" method="POST">
+            <form action="<?= base_url('admin1947/hr/onboard_candidate'); ?>" method="POST">
+                <input type="hidden" name="redirect_to" value="admin1947/hr/recruitment">
                 <?php if (isset($this->security)): ?>
                     <input type="hidden" name="<?= $this->security->get_csrf_token_name(); ?>" value="<?= $this->security->get_csrf_hash(); ?>">
                 <?php endif; ?>
@@ -1137,14 +1140,24 @@ function showToast(msg) {
 // Silent AJAX Update (No full page reload on drag & drop)
 function updateStageSilent(careerId, stage) {
     $.ajax({
-        url: '<?= base_url("admin1947/hr/recruitment/update_applicant"); ?>',
+        url: '<?= base_url("admin1947/hr/update_candidate_stage"); ?>',
         type: 'POST',
         data: {
             career_id: careerId,
-            status_stage: stage
+            status_stage: stage,
+            ajax: 1
         },
         dataType: 'json',
-        error: function() {
+        success: function(resp) {
+            if (resp && resp.status === 'success') {
+                // Success: update counters if needed
+                recalculateStageCounters();
+            } else if (resp && resp.message) {
+                alert(resp.message);
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('Stage update error:', xhr.responseText, error);
             alert('Failed to save candidate stage update on server.');
         }
     });
@@ -1249,11 +1262,12 @@ function openOnboardStaffModal(candidate) {
 // Standard Stage Update (Full Page Reload)
 function updateStage(careerId, stage) {
     $.ajax({
-        url: '<?= base_url("admin1947/hr/recruitment/update_applicant"); ?>',
+        url: '<?= base_url("admin1947/hr/update_candidate_stage"); ?>',
         type: 'POST',
         data: {
             career_id: careerId,
-            status_stage: stage
+            status_stage: stage,
+            ajax: 1
         },
         dataType: 'json',
         success: function(resp) {
@@ -1263,7 +1277,8 @@ function updateStage(careerId, stage) {
                 alert(resp.message || 'Failed to update stage');
             }
         },
-        error: function() {
+        error: function(xhr, status, error) {
+            console.error('Server error updating candidate stage:', xhr.responseText, error);
             alert('Server error updating candidate stage.');
         }
     });

@@ -245,27 +245,16 @@ class Hr extends CI_Controller {
     }
 
     /**
-     * AJAX: Update Applicant ATS Stage
+     * AJAX: Update Applicant ATS Stage (Alias)
      */
     public function update_applicant_status() {
-        $careerId = intval($this->input->post('career_id'));
-        $stage    = trim($this->input->post('status_stage', TRUE));
-
-        $validStages = ['applied', 'screened', 'interview_scheduled', 'offered', 'rejected', 'hired'];
-        if (!$careerId || !in_array($stage, $validStages)) {
-            echo json_encode(['status' => 'error', 'message' => 'Invalid applicant or stage']);
-            return;
-        }
-
-        $this->db->where('career_id', $careerId)->update('career', [
-            'status_stage' => $stage
-        ]);
-
-        echo json_encode([
-            'status'  => 'success',
-            'message' => "Candidate moved to stage: " . ucwords(str_replace('_', ' ', $stage))
-        ]);
+        return $this->update_candidate_stage();
     }
+
+    public function update_applicant() {
+        return $this->update_candidate_stage();
+    }
+
 
     /**
      * Convert Hired Candidate to Active Staff Employee
@@ -975,20 +964,51 @@ class Hr extends CI_Controller {
         $note = trim($this->input->post('stage_note', TRUE));
         $author = $this->session->userdata('staff_name') ?: 'HR Lead';
 
-        $valid = ['applied', 'screened', 'interviewing', 'offered', 'hired', 'rejected'];
+        $valid = ['applied', 'screened', 'interviewing', 'interview_scheduled', 'interview', 'offered', 'hired', 'rejected'];
+        $is_ajax = $this->input->is_ajax_request() 
+            || empty($this->input->post('redirect_to')) 
+            || $this->input->post('ajax')
+            || (isset($_SERVER['HTTP_ACCEPT']) && strpos($_SERVER['HTTP_ACCEPT'], 'application/json') !== false);
+
         if (!$candidate_id || !in_array($target_stage, $valid)) {
-            $resp = ['status' => 'error', 'message' => 'Invalid candidate ID or target stage.'];
-            if ($this->input->is_ajax_request()) { echo json_encode($resp); return; }
+            $resp = ['status' => 'error', 'message' => 'Invalid candidate ID or target stage: ' . $target_stage];
+            if ($is_ajax) {
+                header('Content-Type: application/json');
+                echo json_encode($resp);
+                return;
+            }
             $this->session->set_flashdata('error_msg', $resp['message']);
             redirect('admin1947/hr/candidates');
             return;
         }
 
-        $this->Recruitment_model->update_candidate_stage($candidate_id, $target_stage, $note, $author);
-        $msg = "Candidate advanced to " . ucfirst($target_stage) . " stage.";
+        // Canonicalize stage name
+        if ($target_stage === 'interview') {
+            $target_stage = 'interview_scheduled';
+        }
 
-        if ($this->input->is_ajax_request()) {
-            echo json_encode(['status' => 'success', 'message' => $msg, 'stage' => $target_stage]);
+        $updated = $this->Recruitment_model->update_candidate_stage($candidate_id, $target_stage, $note, $author);
+        if (!$updated) {
+            $resp = ['status' => 'error', 'message' => 'Candidate record not found or could not be updated.'];
+            if ($is_ajax) {
+                header('Content-Type: application/json');
+                echo json_encode($resp);
+                return;
+            }
+            $this->session->set_flashdata('error_msg', $resp['message']);
+            redirect('admin1947/hr/candidates');
+            return;
+        }
+
+        $msg = "Candidate advanced to " . ucwords(str_replace('_', ' ', $target_stage)) . " stage.";
+
+        if ($is_ajax) {
+            header('Content-Type: application/json');
+            echo json_encode([
+                'status'  => 'success', 
+                'message' => $msg, 
+                'stage'   => $target_stage
+            ]);
             return;
         }
 

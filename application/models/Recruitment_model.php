@@ -88,8 +88,11 @@ class Recruitment_model extends CI_Model {
         $total = 0;
         foreach ($res as $row) {
             $st = strtolower(trim($row['status_stage']));
+            if ($st === 'interview_scheduled' || $st === 'interview') {
+                $st = 'interviewing';
+            }
             if (isset($counts[$st])) {
-                $counts[$st] = (int)$row['cnt'];
+                $counts[$st] += (int)$row['cnt'];
             }
             $total += (int)$row['cnt'];
         }
@@ -106,7 +109,12 @@ class Recruitment_model extends CI_Model {
         $this->db->join('career_jobs j', 'j.job_id = c.job_id', 'left');
 
         if (!empty($stage) && $stage !== 'all') {
-            $this->db->where('c.status_stage', strtolower($stage));
+            $stageLower = strtolower($stage);
+            if ($stageLower === 'interviewing' || $stageLower === 'interview_scheduled' || $stageLower === 'interview') {
+                $this->db->where_in('c.status_stage', ['interviewing', 'interview_scheduled', 'interview']);
+            } else {
+                $this->db->where('c.status_stage', $stageLower);
+            }
         }
 
         if (!empty($job_id)) {
