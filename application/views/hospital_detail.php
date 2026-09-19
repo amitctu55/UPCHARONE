@@ -1,5 +1,529 @@
 <?php include ("includes/header.php"); ?>
 
+<!-- Owl Carousel 2 CSS for Doctor Slider -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/assets/owl.carousel.min.css" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/assets/owl.theme.default.min.css" />
+
+<style>
+/* Header Flex & View Switcher */
+.hosp-section-header-flex {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 18px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #E2E8F0;
+}
+.hosp-count-badge {
+    background: #E6FFFA;
+    color: #00A896;
+    border: 1px solid #A7F3D0;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 20px;
+    margin-left: 6px;
+    display: inline-block;
+    vertical-align: middle;
+}
+.doctor-view-switcher {
+    display: inline-flex;
+    align-items: center;
+    background: #F1F5F9;
+    border: 1px solid #CBD5E1;
+    border-radius: 8px;
+    padding: 3px;
+    gap: 3px;
+}
+.doctor-view-switcher .view-btn {
+    border: none;
+    background: transparent;
+    color: #64748B;
+    font-size: 12.5px;
+    font-weight: 600;
+    padding: 6px 13px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s ease;
+    outline: none;
+}
+.doctor-view-switcher .view-btn:hover {
+    color: #00A896;
+    background: rgba(255, 255, 255, 0.6);
+}
+.doctor-view-switcher .view-btn.active {
+    background: #FFFFFF;
+    color: #00A896;
+    font-weight: 700;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+
+/* ========================================================= */
+/* 1. SLIDER VIEW (Owl Carousel Slider for Doctors List)     */
+/* ========================================================= */
+.associated-doctors-container.view-mode-slider {
+    display: block;
+    width: 100%;
+    position: relative;
+    padding: 4px 2px 10px 2px;
+}
+.associated-doctors-container.view-mode-slider.owl-carousel .owl-stage {
+    display: flex !important;
+    align-items: stretch !important;
+    padding: 8px 0;
+}
+.associated-doctors-container.view-mode-slider.owl-carousel .owl-item {
+    display: flex !important;
+    flex-direction: column !important;
+    height: auto !important;
+}
+.associated-doctors-container.view-mode-slider .associated-doctor-card {
+    width: 100% !important;
+    height: 100% !important;
+    box-sizing: border-box !important;
+    margin: 0 !important;
+    background: #FFFFFF !important;
+    border: 1.5px solid #E2E8F0 !important;
+    border-radius: 14px !important;
+    padding: 18px 16px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+    transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease !important;
+}
+.associated-doctors-container.view-mode-slider .associated-doctor-card:hover {
+    transform: translateY(-4px) !important;
+    box-shadow: 0 12px 24px -4px rgba(0, 168, 150, 0.16) !important;
+    border-color: #00A896 !important;
+}
+.associated-doctors-container.view-mode-slider .doc-list-left {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    text-align: center !important;
+    width: 100% !important;
+    margin-bottom: 12px !important;
+}
+.associated-doctors-container.view-mode-slider .associated-doctor-avatar {
+    width: 72px !important;
+    height: 72px !important;
+    border-radius: 50% !important;
+    border: 3px solid #00A896 !important;
+    object-fit: cover !important;
+    margin: 0 auto 10px auto !important;
+    box-shadow: 0 4px 10px rgba(0, 168, 150, 0.15) !important;
+}
+.associated-doctors-container.view-mode-slider .doc-list-details {
+    width: 100% !important;
+}
+.associated-doctors-container.view-mode-slider .associated-doctor-name {
+    font-size: 15.5px !important;
+    font-weight: 700 !important;
+    color: #0F172A !important;
+    margin: 0 0 4px 0 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+}
+.associated-doctors-container.view-mode-slider .doc-badges-row {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 4px !important;
+    margin-bottom: 10px !important;
+}
+.associated-doctors-container.view-mode-slider .associated-doctor-spec {
+    display: inline-block !important;
+    background: #E6FFFA !important;
+    color: #00A896 !important;
+    font-size: 12px !important;
+    font-weight: 700 !important;
+    padding: 2px 9px !important;
+    border-radius: 4px !important;
+    max-width: 100% !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+}
+.associated-doctors-container.view-mode-slider .associated-doctor-qual {
+    font-size: 11.5px !important;
+    color: #64748B !important;
+    margin: 0 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+}
+.associated-doctors-container.view-mode-slider .associated-doctor-meta {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    padding: 8px 10px !important;
+    background: #F8FAFC !important;
+    border: 1px solid #E2E8F0 !important;
+    border-radius: 8px !important;
+    font-size: 11.5px !important;
+    color: #334155 !important;
+    margin-bottom: 12px !important;
+    width: 100% !important;
+}
+.associated-doctors-container.view-mode-slider .doc-list-actions {
+    display: flex !important;
+    gap: 8px !important;
+    width: 100% !important;
+}
+.associated-doctors-container.view-mode-slider .btn-doc-profile {
+    flex: 1 !important;
+    padding: 8px 10px !important;
+    font-size: 12.5px !important;
+    font-weight: 600 !important;
+    text-align: center !important;
+    border-radius: 6px !important;
+}
+.associated-doctors-container.view-mode-slider .btn-doc-book {
+    flex: 1.2 !important;
+    padding: 8px 10px !important;
+    font-size: 12.5px !important;
+    font-weight: 600 !important;
+    text-align: center !important;
+    border-radius: 6px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 4px !important;
+}
+
+/* Owl Navigation Controls */
+.associated-doctors-container.owl-carousel .owl-nav {
+    display: flex !important;
+    justify-content: space-between !important;
+    position: absolute !important;
+    top: 48% !important;
+    left: -18px !important;
+    right: -18px !important;
+    transform: translateY(-50%) !important;
+    pointer-events: none !important;
+    z-index: 25 !important;
+    margin: 0 !important;
+}
+.associated-doctors-container.owl-carousel .owl-nav button.owl-prev,
+.associated-doctors-container.owl-carousel .owl-nav button.owl-next {
+    width: 38px !important;
+    height: 38px !important;
+    border-radius: 50% !important;
+    background: #FFFFFF !important;
+    border: 1.5px solid #CBD5E1 !important;
+    color: #00A896 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 14px !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12) !important;
+    pointer-events: auto !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+    outline: none !important;
+}
+.associated-doctors-container.owl-carousel .owl-nav button.owl-prev:hover,
+.associated-doctors-container.owl-carousel .owl-nav button.owl-next:hover {
+    background: #00A896 !important;
+    border-color: #00A896 !important;
+    color: #FFFFFF !important;
+    transform: scale(1.1) !important;
+}
+.associated-doctors-container.owl-carousel .owl-dots {
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    gap: 6px !important;
+    margin-top: 14px !important;
+}
+.associated-doctors-container.owl-carousel .owl-dots .owl-dot span {
+    width: 8px !important;
+    height: 8px !important;
+    border-radius: 4px !important;
+    background: #CBD5E1 !important;
+    margin: 0 !important;
+    transition: all 0.25s ease !important;
+}
+.associated-doctors-container.owl-carousel .owl-dots .owl-dot.active span {
+    width: 22px !important;
+    background: #00A896 !important;
+}
+
+/* ========================================================= */
+/* 2. LIST VIEW (List Form with Scroll Subwindow)            */
+/* ========================================================= */
+.associated-doctors-container.view-mode-list {
+    display: block !important;
+    max-height: 620px !important;
+    overflow-y: auto !important;
+    padding-right: 6px !important;
+    margin-top: 8px !important;
+}
+.associated-doctors-container.view-mode-list::-webkit-scrollbar {
+    width: 6px;
+}
+.associated-doctors-container.view-mode-list::-webkit-scrollbar-track {
+    background: #F1F5F9;
+    border-radius: 4px;
+}
+.associated-doctors-container.view-mode-list::-webkit-scrollbar-thumb {
+    background: #CBD5E1;
+    border-radius: 4px;
+}
+.associated-doctors-container.view-mode-list::-webkit-scrollbar-thumb:hover {
+    background: #00A896;
+}
+
+.associated-doctors-container.view-mode-list .associated-doctor-card {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    background: #FFFFFF !important;
+    border: 1px solid #E2E8F0 !important;
+    border-radius: 12px !important;
+    padding: 14px 18px !important;
+    margin-bottom: 12px !important;
+    gap: 16px !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+    transition: all 0.2s ease !important;
+}
+.associated-doctors-container.view-mode-list .associated-doctor-card:hover {
+    border-color: #00A896 !important;
+    box-shadow: 0 6px 18px rgba(0, 168, 150, 0.12) !important;
+    transform: translateX(3px) !important;
+}
+.associated-doctors-container.view-mode-list .doc-list-left {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    text-align: left !important;
+    gap: 14px !important;
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    margin-bottom: 0 !important;
+}
+.associated-doctors-container.view-mode-list .associated-doctor-avatar {
+    width: 62px !important;
+    height: 62px !important;
+    border-radius: 50% !important;
+    border: 2.5px solid #00A896 !important;
+    object-fit: cover !important;
+    flex-shrink: 0 !important;
+    margin: 0 !important;
+}
+.associated-doctors-container.view-mode-list .doc-list-details {
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+}
+.associated-doctors-container.view-mode-list .associated-doctor-name {
+    font-size: 16px !important;
+    font-weight: 700 !important;
+    color: #0F172A !important;
+    margin: 0 0 3px 0 !important;
+}
+.associated-doctors-container.view-mode-list .doc-badges-row {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    flex-wrap: wrap !important;
+    gap: 6px !important;
+    margin-bottom: 6px !important;
+}
+.associated-doctors-container.view-mode-list .associated-doctor-spec {
+    display: inline-block !important;
+    background: #E6FFFA !important;
+    color: #00A896 !important;
+    font-size: 11.5px !important;
+    font-weight: 700 !important;
+    padding: 2px 8px !important;
+    border-radius: 4px !important;
+}
+.associated-doctors-container.view-mode-list .associated-doctor-qual {
+    font-size: 12px !important;
+    color: #64748B !important;
+    margin: 0 !important;
+}
+.associated-doctors-container.view-mode-list .associated-doctor-meta {
+    display: inline-flex !important;
+    align-items: center !important;
+    flex-wrap: wrap !important;
+    gap: 12px !important;
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    font-size: 12px !important;
+    color: #475569 !important;
+    width: auto !important;
+}
+.associated-doctors-container.view-mode-list .doc-list-actions {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 6px !important;
+    flex-shrink: 0 !important;
+    min-width: 130px !important;
+    width: auto !important;
+}
+.associated-doctors-container.view-mode-list .btn-doc-profile {
+    padding: 7px 12px !important;
+    font-size: 12.5px !important;
+    font-weight: 600 !important;
+    text-align: center !important;
+    border-radius: 6px !important;
+}
+.associated-doctors-container.view-mode-list .btn-doc-book {
+    padding: 7px 12px !important;
+    font-size: 12.5px !important;
+    font-weight: 600 !important;
+    text-align: center !important;
+    border-radius: 6px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 4px !important;
+}
+
+/* ========================================================= */
+/* 3. GRID VIEW (Responsive Cards Grid)                      */
+/* ========================================================= */
+.associated-doctors-container.view-mode-grid {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)) !important;
+    gap: 16px !important;
+    max-height: none !important;
+    margin-top: 10px !important;
+}
+.associated-doctors-container.view-mode-grid .associated-doctor-card {
+    background: #FFFFFF !important;
+    border: 1px solid #E2E8F0 !important;
+    border-radius: 14px !important;
+    padding: 16px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+    transition: all 0.2s ease !important;
+}
+.associated-doctors-container.view-mode-grid .associated-doctor-card:hover {
+    border-color: #00A896 !important;
+    box-shadow: 0 8px 20px rgba(0, 168, 150, 0.12) !important;
+    transform: translateY(-2px) !important;
+}
+.associated-doctors-container.view-mode-grid .doc-list-left {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    text-align: center !important;
+    width: 100% !important;
+    margin-bottom: 12px !important;
+}
+.associated-doctors-container.view-mode-grid .associated-doctor-avatar {
+    width: 68px !important;
+    height: 68px !important;
+    border-radius: 50% !important;
+    border: 2.5px solid #00A896 !important;
+    object-fit: cover !important;
+    margin: 0 auto 10px auto !important;
+}
+.associated-doctors-container.view-mode-grid .doc-list-details {
+    width: 100% !important;
+}
+.associated-doctors-container.view-mode-grid .associated-doctor-name {
+    font-size: 15px !important;
+    font-weight: 700 !important;
+    color: #0F172A !important;
+    margin: 0 0 4px 0 !important;
+}
+.associated-doctors-container.view-mode-grid .doc-badges-row {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 4px !important;
+    margin-bottom: 10px !important;
+}
+.associated-doctors-container.view-mode-grid .associated-doctor-spec {
+    display: inline-block !important;
+    background: #E6FFFA !important;
+    color: #00A896 !important;
+    font-size: 11.5px !important;
+    font-weight: 700 !important;
+    padding: 2px 8px !important;
+    border-radius: 4px !important;
+}
+.associated-doctors-container.view-mode-grid .associated-doctor-qual {
+    font-size: 11.5px !important;
+    color: #64748B !important;
+    margin: 0 !important;
+}
+.associated-doctors-container.view-mode-grid .associated-doctor-meta {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    padding: 8px 10px !important;
+    background: #F8FAFC !important;
+    border: 1px solid #E2E8F0 !important;
+    border-radius: 8px !important;
+    font-size: 11.5px !important;
+    color: #334155 !important;
+    margin-bottom: 12px !important;
+    width: 100% !important;
+}
+.associated-doctors-container.view-mode-grid .doc-list-actions {
+    display: flex !important;
+    gap: 8px !important;
+    width: 100% !important;
+}
+.associated-doctors-container.view-mode-grid .btn-doc-profile {
+    flex: 1 !important;
+    padding: 8px 10px !important;
+    font-size: 12.5px !important;
+    font-weight: 600 !important;
+    text-align: center !important;
+    border-radius: 6px !important;
+}
+.associated-doctors-container.view-mode-grid .btn-doc-book {
+    flex: 1.2 !important;
+    padding: 8px 10px !important;
+    font-size: 12.5px !important;
+    font-weight: 600 !important;
+    text-align: center !important;
+    border-radius: 6px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 4px !important;
+}
+
+@media (max-width: 767px) {
+    .associated-doctors-container.view-mode-list .associated-doctor-card {
+        flex-direction: column !important;
+        align-items: stretch !important;
+    }
+    .associated-doctors-container.view-mode-list .doc-list-actions {
+        flex-direction: row !important;
+        width: 100% !important;
+    }
+    .hosp-section-header-flex {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+    }
+    .doctor-view-switcher {
+        width: 100% !important;
+        justify-content: space-between !important;
+    }
+    .doctor-view-switcher .view-btn {
+        flex: 1 !important;
+        justify-content: center !important;
+    }
+}
+</style>
+
 <!-- Floating Search & Filter Bar -->
 <div class="container" style="margin-top: 24px;">
     <form action='<?=base_url();?>search' method='GET'>
@@ -187,13 +711,31 @@ $hospEmail = !empty($hospital->email) ? $hospital->email : 'support@upchar.info'
                 </div>
             </div>
 
-            <!-- Associated Specialists & Doctors Grid -->
+            <!-- Associated Specialists & Doctors -->
             <div class="hosp-profile-card">
-                <h3 class="hosp-profile-section-title">
-                    <i class="fas fa-user-md" style="color: #00A896;"></i> Associated Specialists & Doctors <?=(!empty($clinic)) ? '('.count($clinic).')' : '';?>
-                </h3>
+                <div class="hosp-section-header-flex">
+                    <h3 class="hosp-profile-section-title" style="margin: 0; padding: 0; border: none;">
+                        <i class="fas fa-user-md" style="color: #00A896;"></i> Associated Specialists &amp; Doctors
+                        <?php if (!empty($clinic)): ?>
+                        <span class="hosp-count-badge"><?=count($clinic);?> Doctors</span>
+                        <?php endif; ?>
+                    </h3>
+                    <?php if (!empty($clinic)): ?>
+                    <div class="doctor-view-switcher">
+                        <button type="button" class="view-btn active" data-mode="slider" title="Slider Carousel View">
+                            <i class="fas fa-sliders-h"></i> Slider
+                        </button>
+                        <button type="button" class="view-btn" data-mode="list" title="List View">
+                            <i class="fas fa-list-ul"></i> List
+                        </button>
+                        <button type="button" class="view-btn" data-mode="grid" title="Grid View">
+                            <i class="fas fa-th-large"></i> Grid
+                        </button>
+                    </div>
+                    <?php endif; ?>
+                </div>
 
-                <div class="associated-doctors-grid" style="max-height: none !important; height: auto !important; overflow: visible !important;">
+                <div id="associatedDoctorsContainer" class="associated-doctors-container view-mode-slider owl-carousel owl-theme">
                     <?php if (!empty($clinic)) { foreach($clinic as $doc) { 
                         $docImg = (!empty($doc->drimage) && file_exists('admin1947/public/assets/upload/'.$doc->drimage)) 
                                   ? admin_url().'public/assets/upload/'.$doc->drimage 
@@ -219,16 +761,16 @@ $hospEmail = !empty($hospital->email) ? $hospital->email : 'support@upchar.info'
                         $docExp = (!empty($doc->exp) && $doc->exp > 0) ? $doc->exp : 8;
                     ?>
                     <div class="associated-doctor-card">
-                        <div>
-                            <div class="associated-doctor-top">
-                                <img src="<?=$docImg;?>" alt="<?=$docPrefix.$doc->fname.' '.$doc->lname;?>" class="associated-doctor-avatar">
-                                <div>
-                                    <h4 class="associated-doctor-name"><?=$docPrefix.$doc->fname.' '.$doc->lname;?></h4>
-                                    <div class="associated-doctor-spec"><?=$specName;?></div>
-                                    <p class="associated-doctor-qual"><?=$qualName;?></p>
-                                </div>
-                            </div>
+                        <div class="doc-list-left">
+                            <img src="<?=$docImg;?>" alt="<?=$docPrefix.$doc->fname.' '.$doc->lname;?>" class="associated-doctor-avatar">
+                        </div>
 
+                        <div class="doc-list-details">
+                            <h4 class="associated-doctor-name"><?=$docPrefix.$doc->fname.' '.$doc->lname;?></h4>
+                            <div class="doc-badges-row">
+                                <span class="associated-doctor-spec"><?=$specName;?></span>
+                                <span class="associated-doctor-qual"><?=$qualName;?></span>
+                            </div>
                             <div class="associated-doctor-meta">
                                 <span><i class="fas fa-briefcase" style="color: #00A896;"></i> <strong><?=$docExp;?>+ Yrs</strong> Exp</span>
                                 <span><i class="fas fa-rupee-sign" style="color: #05668D;"></i> <strong>₹<?=$docFee;?></strong> Fee</span>
@@ -236,17 +778,17 @@ $hospEmail = !empty($hospital->email) ? $hospital->email : 'support@upchar.info'
                             </div>
                         </div>
 
-                        <div style="display: flex; gap: 8px;">
-                            <a href="<?=base_url('doctor/'.$doc->id);?>" class="btn btn-secondary" style="flex: 1; padding: 8px 10px; font-size: 13px; text-align: center;">
+                        <div class="doc-list-actions">
+                            <a href="<?=base_url('doctor/'.$doc->id);?>" class="btn btn-secondary btn-doc-profile">
                                 View Profile
                             </a>
-                            <a href="javascript:void(0);" class="btn btn-primary-cta getappointment btn-book-appointment" data-doctor-id="<?=$doc->id;?>" data-hospital-id="<?=$hospital->id;?>" data-did="<?=$doc->id;?>" data-upchar-did="<?=$doc->id;?>" data-toggle="modal" data-target="#myModal" style="flex: 1.2; padding: 8px 10px; font-size: 13px; text-align: center; display: flex; align-items: center; justify-content: center; gap: 4px;">
+                            <a href="javascript:void(0);" class="btn btn-primary-cta getappointment btn-book-appointment btn-doc-book" data-doctor-id="<?=$doc->id;?>" data-hospital-id="<?=$hospital->id;?>" data-did="<?=$doc->id;?>" data-upchar-did="<?=$doc->id;?>" data-toggle="modal" data-target="#myModal">
                                 <i class="fas fa-calendar-check"></i> Book
                             </a>
                         </div>
                     </div>
                     <?php } } else { ?>
-                    <p style="color: #64748B; font-size: 14px;">No doctors currently listed for this facility.</p>
+                    <p style="color: #64748B; font-size: 14px; padding: 10px;">No doctors currently listed for this facility.</p>
                     <?php } ?>
                 </div>
             </div>
@@ -499,6 +1041,78 @@ $(document).ready(function() {
                 $alertBox.html('<div class="alert alert-danger" style="border-radius: 8px; margin: 0; padding: 10px 14px; font-size: 13px;"><i class="fas fa-times-circle"></i> ' + errText + '</div>').slideDown(200);
             }
         });
+    });
+});
+</script>
+
+<!-- Owl Carousel 2 JS for Doctor Slider -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/owl.carousel.min.js"></script>
+<script>
+$(document).ready(function() {
+    var $container = $('#associatedDoctorsContainer');
+    if (!$container.length) return;
+
+    // Cache the pristine original cards HTML
+    var originalDocHtml = $container.html();
+    var savedMode = localStorage.getItem('upchar_hosp_doc_mode') || 'slider';
+
+    function setDoctorMode(mode) {
+        // Destroy existing owl carousel instance if initialized
+        if ($container.hasClass('owl-loaded')) {
+            $container.trigger('destroy.owl.carousel');
+            $container.removeClass('owl-carousel owl-loaded owl-drag owl-theme');
+        }
+
+        // Restore pristine HTML
+        $container.html(originalDocHtml);
+
+        // Update button active state
+        $('.doctor-view-switcher .view-btn').removeClass('active');
+        $('.doctor-view-switcher .view-btn[data-mode="' + mode + '"]').addClass('active');
+        localStorage.setItem('upchar_hosp_doc_mode', mode);
+
+        if (mode === 'slider') {
+            $container.removeClass('view-mode-list view-mode-grid').addClass('view-mode-slider owl-carousel owl-theme');
+            var docCount = $container.find('.associated-doctor-card').length;
+            $container.owlCarousel({
+                loop: (docCount > 3),
+                margin: 16,
+                nav: (docCount > 1),
+                dots: (docCount > 1),
+                autoplay: false,
+                autoplayHoverPause: true,
+                responsive: {
+                    0: {
+                        items: 1
+                    },
+                    576: {
+                        items: 2
+                    },
+                    992: {
+                        items: 3
+                    }
+                },
+                navText: [
+                    '<i class="fas fa-chevron-left"></i>',
+                    '<i class="fas fa-chevron-right"></i>'
+                ]
+            });
+        } else if (mode === 'list') {
+            $container.removeClass('view-mode-slider view-mode-grid owl-carousel owl-theme').addClass('view-mode-list');
+        } else {
+            // Grid mode
+            $container.removeClass('view-mode-slider view-mode-list owl-carousel owl-theme').addClass('view-mode-grid');
+        }
+    }
+
+    // Initialize with saved or default mode (slider)
+    setDoctorMode(savedMode);
+
+    // Event listener for switcher buttons
+    $(document).on('click', '.doctor-view-switcher .view-btn', function(e) {
+        e.preventDefault();
+        var selectedMode = $(this).data('mode');
+        setDoctorMode(selectedMode);
     });
 });
 </script>
