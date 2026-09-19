@@ -955,7 +955,18 @@
 </div>
 <?php endif; ?>
 
-<!-- CLIENT JAVASCRIPT HANDLERS FOR THE 3 PROCESSES -->
+<!-- CLIENT JAVASCRIPT HANDLERS & MODAL STYLES FOR THE 3 PROCESSES -->
+<style>
+.modal {
+  z-index: 10500 !important;
+}
+.modal-backdrop {
+  z-index: 10400 !important;
+}
+.modal-backdrop.fade.in {
+  opacity: 0.5 !important;
+}
+</style>
 <script>
 (function() {
   function startDossierApp() {
@@ -967,9 +978,10 @@
     jQuery(function($) {
       'use strict';
 
-      // Fix modal backdrop stacking in AdminLTE
-      $('.modal').on('show.bs.modal', function() {
-        $(this).appendTo('body');
+      // Always clean up any orphaned modal backdrop when any modal is hidden
+      $(document).on('hidden.bs.modal', '.modal', function() {
+        $('.modal-backdrop').remove();
+        $('body').removeClass('modal-open').css('padding-right', '');
       });
 
       // Explicit fail-safe click handlers for modal trigger buttons
@@ -1000,10 +1012,10 @@
           $t.css({ background: '#7f1d1d', color: '#fef2f2', border: '1px solid #ef4444' });
           $icon.attr('class', 'fa fa-exclamation-triangle text-danger').css('color', '#f87171');
         }
-        $t.fadeIn(250);
+        $t.stop(true, true).fadeIn(250);
         setTimeout(function() {
           $t.fadeOut(400);
-        }, 4000);
+        }, 5000);
       }
 
       // 1. UPDATE STATUS & PAYMENT MODAL LOGIC
@@ -1114,7 +1126,7 @@
           var $alert = $(alertId);
           var originalBtnHtml = $btn.html();
 
-          $btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Saving...');
+          $btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Saving changes...');
           $alert.hide().removeClass('alert-danger alert-success');
 
           var formData = $form.serialize();
@@ -1122,34 +1134,66 @@
             formData += '&is_ajax=1';
           }
 
+          var postUrl = $form.attr('action');
+          if (!postUrl || postUrl.indexOf('http') !== 0) {
+            postUrl = window.location.origin + '/admin1947/doctor/appointment/update_status';
+          }
+          // Safeguard against mixed content blocking
+          if (window.location.protocol === 'https:' && postUrl.indexOf('http://') === 0) {
+            postUrl = postUrl.replace('http://', 'https://');
+          }
+
           $.ajax({
-            url: $form.attr('action'),
+            url: postUrl,
             type: 'POST',
             data: formData,
             dataType: 'json',
             success: function(resp) {
-              if (resp && resp.status == 1) {
+              if (typeof resp === 'string') {
+                try { resp = JSON.parse(resp); } catch(e) {}
+              }
+
+              if (resp && (resp.status === 1 || resp.status === '1')) {
                 showToast(resp.message || 'Updated successfully!', true);
                 $alert.addClass('alert-success').html('<i class="fa fa-check"></i> ' + (resp.message || 'Saved successfully!')).show();
                 setTimeout(function() {
                   $(modalId).modal('hide');
+                  $('.modal-backdrop').remove();
+                  $('body').removeClass('modal-open').css('padding-right', '');
                   window.location.reload();
-                }, 600);
+                }, 700);
               } else {
                 $btn.prop('disabled', false).html(originalBtnHtml);
-                var err = (resp && resp.message) ? resp.message : 'An error occurred. Please try again.';
+                var err = (resp && resp.message) ? resp.message : 'An error occurred while saving. Please check details.';
                 $alert.addClass('alert-danger').html('<i class="fa fa-exclamation-circle"></i> ' + err).show();
                 showToast(err, false);
               }
             },
             error: function(xhr, status, error) {
               $btn.prop('disabled', false).html(originalBtnHtml);
-              var errMsg = 'Server error (' + xhr.status + '). Falling back to standard submission...';
+              var errMsg = 'Unable to complete update.';
+              if (xhr.responseJSON && xhr.responseJSON.message) {
+                errMsg = xhr.responseJSON.message;
+              } else if (xhr.responseText) {
+                try {
+                  var parsed = JSON.parse(xhr.responseText);
+                  if (parsed && parsed.message) {
+                    errMsg = parsed.message;
+                  }
+                } catch(e) {
+                  if (xhr.status === 0) {
+                    errMsg = 'Network or mixed-content connection error. Please refresh the page.';
+                  } else {
+                    errMsg = 'Server responded with error code ' + xhr.status + ' (' + error + ').';
+                  }
+                }
+              } else if (xhr.status === 0) {
+                errMsg = 'Network connection failed. Please check your internet connection.';
+              } else {
+                errMsg = 'Request failed (' + xhr.status + '): ' + (error || 'Server error');
+              }
               $alert.addClass('alert-danger').html('<i class="fa fa-exclamation-circle"></i> ' + errMsg).show();
               showToast(errMsg, false);
-              setTimeout(function() {
-                $form.off('submit').submit();
-              }, 1000);
             }
           });
         });

@@ -58,8 +58,23 @@ public function accessCheck()
 		$msg="<div class='alert alert-danger'><strong>Access Denied!</strong>You Do not have sufficient previlage to view the requested page.You can Navigate from here.</div>";
 		
 		if($usertype == ''){
-			if(  !in_array($controller,$access_public_controller)  )
+			if(  !in_array($controller,$access_public_controller)  ) {
+				$is_ajax = $this->CI->input->is_ajax_request() || (bool)$this->CI->input->post('is_ajax') || (bool)$this->CI->input->get('is_ajax');
+				if ($is_ajax) {
+					if (ob_get_length()) { @ob_clean(); }
+					$this->CI->output
+						->set_status_header(401)
+						->set_content_type('application/json', 'utf-8')
+						->set_output(json_encode(array(
+							'status' => 0,
+							'session_expired' => 1,
+							'message' => 'Your session has expired. Please reload the page and log in to continue.'
+						)));
+					$this->CI->output->_display();
+					exit;
+				}
 				redirect(base_url().'login');
+			}
 			
 			
 		}else if($usertype == 'A' || $usertype == '1'){

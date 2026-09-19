@@ -1011,7 +1011,11 @@ class Appointment extends CI_Controller
 
 		if ($appointment_id <= 0) {
 			if ($is_ajax) {
-				echo json_encode(array('status' => 0, 'message' => 'Invalid appointment ID.'));
+				if (ob_get_length()) { @ob_clean(); }
+				$this->output
+					->set_status_header(200)
+					->set_content_type('application/json', 'utf-8')
+					->set_output(json_encode(array('status' => 0, 'message' => 'Invalid appointment ID.')));
 				return;
 			}
 			$this->session->set_flashdata('flashmsg', '<div class="alert alert-danger">Invalid appointment ID.</div>');
@@ -1022,7 +1026,11 @@ class Appointment extends CI_Controller
 		$current_app = $this->db->where('appointment_id', $appointment_id)->get('appointment')->row();
 		if (!$current_app) {
 			if ($is_ajax) {
-				echo json_encode(array('status' => 0, 'message' => 'Appointment record not found.'));
+				if (ob_get_length()) { @ob_clean(); }
+				$this->output
+					->set_status_header(200)
+					->set_content_type('application/json', 'utf-8')
+					->set_output(json_encode(array('status' => 0, 'message' => "Appointment record #{$appointment_id} not found.")));
 				return;
 			}
 			$this->session->set_flashdata('flashmsg', '<div class="alert alert-danger">Appointment record not found.</div>');
@@ -1165,15 +1173,34 @@ class Appointment extends CI_Controller
 		}
 
 		if (!empty($update_data)) {
-			$this->db->where('appointment_id', $appointment_id)->update('appointment', $update_data);
+			$ok = $this->db->where('appointment_id', $appointment_id)->update('appointment', $update_data);
+			if (!$ok) {
+				$db_err = $this->db->error();
+				$err_msg = !empty($db_err['message']) ? $db_err['message'] : 'Database update failed.';
+				if ($is_ajax) {
+					if (ob_get_length()) { @ob_clean(); }
+					$this->output
+						->set_status_header(200)
+						->set_content_type('application/json', 'utf-8')
+						->set_output(json_encode(array('status' => 0, 'message' => $err_msg)));
+					return;
+				}
+				$this->session->set_flashdata('flashmsg', '<div class="alert alert-danger">' . htmlspecialchars($err_msg) . '</div>');
+				redirect(base_url('doctor/appointment/data?appointment_id=' . $appointment_id));
+				return;
+			}
 		}
 
 		if ($is_ajax) {
-			echo json_encode(array(
-				'status' => 1,
-				'message' => $success_msg,
-				'data' => $update_data
-			));
+			if (ob_get_length()) { @ob_clean(); }
+			$this->output
+				->set_status_header(200)
+				->set_content_type('application/json', 'utf-8')
+				->set_output(json_encode(array(
+					'status' => 1,
+					'message' => $success_msg,
+					'data' => $update_data
+				)));
 			return;
 		}
 
