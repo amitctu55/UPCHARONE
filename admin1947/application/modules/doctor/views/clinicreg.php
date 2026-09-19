@@ -113,19 +113,19 @@
 
                 <div class="col-md-4 form-group" style="margin-bottom: 20px;">
                   <label for="email" style="font-weight: 600; font-size: 13px; color: #334155;">Official Email (Login ID) <span style="color:#ef4444;">*</span></label>
-                  <input type="email" class="form-control" id="email" name="email" placeholder="admin@hospital.com" value="<?=set_value('email');?>" required style="border-color: #cbd5e1; border-radius: 6px; height: 40px;">
+                  <input type="email" class="form-control" id="email" name="email" placeholder="admin@hospital.com" pattern="[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}" value="<?=set_value('email');?>" required title="Please enter a valid official email address" style="border-color: #cbd5e1; border-radius: 6px; height: 40px;">
                   <span style="color:#ef4444; font-size: 12px;"><?=form_error('email');?></span>
                 </div>
 
                 <div class="col-md-4 form-group" style="margin-bottom: 20px;">
                   <label for="mobile" style="font-weight: 600; font-size: 13px; color: #334155;">Contact / Emergency Mobile <span style="color:#ef4444;">*</span></label>
-                  <input type="text" class="form-control" id="mobile" name="mobile" placeholder="10-digit mobile number" maxlength="10" value="<?=set_value('mobile');?>" required style="border-color: #cbd5e1; border-radius: 6px; height: 40px;">
+                  <input type="text" class="form-control" id="mobile" name="mobile" placeholder="10-digit mobile number" maxlength="10" minlength="10" pattern="[0-9]{10}" oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 10);" value="<?=set_value('mobile');?>" required title="Please enter exactly 10 numeric digits" style="border-color: #cbd5e1; border-radius: 6px; height: 40px;">
                   <span style="color:#ef4444; font-size: 12px;"><?=form_error('mobile');?></span>
                 </div>
 
                 <div class="col-md-4 form-group" style="margin-bottom: 20px;">
                   <label for="password" style="font-weight: 600; font-size: 13px; color: #334155;">Portal Password <span style="color:#ef4444;">*</span></label>
-                  <input type="password" class="form-control" id="password" name="password" placeholder="Create secure password" value="<?=set_value('password', 'Upchar@2026');?>" required style="border-color: #cbd5e1; border-radius: 6px; height: 40px;">
+                  <input type="password" class="form-control" id="password" name="password" placeholder="Create secure password" minlength="6" value="<?=set_value('password', 'Upchar@2026');?>" required title="Password must be at least 6 characters" style="border-color: #cbd5e1; border-radius: 6px; height: 40px;">
                   <span style="color:#ef4444; font-size: 12px;"><?=form_error('password');?></span>
                 </div>
               </div>
@@ -417,8 +417,28 @@ function previewFile(input, previewSelector) {
 }
 
 $(document).ready(function(){
-  // Tab navigation buttons
-  $('.next-step-btn').click(function(){
+  // Tab navigation buttons with mandatory validation check
+  $('.next-step-btn').click(function(e){
+    var currentPane = $(this).closest('.tab-pane');
+    var isValid = true;
+    var firstInvalid = null;
+
+    currentPane.find('input, select, textarea').each(function(){
+      if (!this.checkValidity()) {
+        isValid = false;
+        if (!firstInvalid) {
+          firstInvalid = this;
+        }
+      }
+    });
+
+    if (!isValid && firstInvalid) {
+      e.preventDefault();
+      firstInvalid.reportValidity();
+      $(firstInvalid).focus();
+      return false;
+    }
+
     var target = $(this).data('next');
     $('#clinicTabNav a[href="' + target + '"]').tab('show');
     $('html, body').animate({ scrollTop: $('#clinicTabNav').offset().top - 80 }, 200);
@@ -428,6 +448,32 @@ $(document).ready(function(){
     var target = $(this).data('prev');
     $('#clinicTabNav a[href="' + target + '"]').tab('show');
     $('html, body').animate({ scrollTop: $('#clinicTabNav').offset().top - 80 }, 200);
+  });
+
+  // Cross-tab form submit validation
+  $('#clinic-reg-form').on('submit', function(e){
+    var form = this;
+    var invalidField = null;
+
+    $(form).find('input, select, textarea').each(function(){
+      if (!this.checkValidity() && !invalidField) {
+        invalidField = this;
+      }
+    });
+
+    if (invalidField) {
+      e.preventDefault();
+      var pane = $(invalidField).closest('.tab-pane');
+      if (pane.length && !pane.hasClass('active')) {
+        var tabId = pane.attr('id');
+        $('#clinicTabNav a[href="#' + tabId + '"]').tab('show');
+      }
+      setTimeout(function(){
+        invalidField.reportValidity();
+        $(invalidField).focus();
+      }, 250);
+      return false;
+    }
   });
 
   // State -> City Dynamic Filter

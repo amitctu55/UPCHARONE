@@ -107,11 +107,11 @@ class Appointment extends CI_Controller
 			ORDER BY p.fname ASC
 		")->result();
 
-		$this->db->select('appointment.*, profile_dr.id as dr_profile_id, profile_dr.user_id as dr_user_id, profile_dr.fname as dr_fname, profile_dr.lname as dr_lname, profile_dr.mobile as dr_mobile, profile_dr.drimage as dr_image, profile_dr.verified as dr_verified, COALESCE(ms.name, "General Practitioner") as dr_speciality, COALESCE(hospital.name, clinic.name, "Consultation Facility") as hospital_name, COALESCE(hospital.city, clinic.city, "") as hospital_city')
-			->join('profile_dr', '(profile_dr.id = appointment.doctor_id OR profile_dr.user_id = appointment.doctor_id)', 'left')
+		$this->db->select("appointment.*, profile_dr.id as dr_profile_id, profile_dr.user_id as dr_user_id, profile_dr.fname as dr_fname, profile_dr.lname as dr_lname, profile_dr.mobile as dr_mobile, profile_dr.drimage as dr_image, profile_dr.verified as dr_verified, COALESCE(ms.name, 'General Practitioner') as dr_speciality, COALESCE(hospital.name, clinic.name, 'Consultation Facility') as hospital_name, COALESCE(hospital.city, clinic.city, '') as hospital_city", FALSE)
+			->join('profile_dr', 'profile_dr.id = (CASE WHEN EXISTS(SELECT 1 FROM profile_dr p1 WHERE p1.id = appointment.doctor_id) THEN appointment.doctor_id ELSE (SELECT p2.id FROM profile_dr p2 WHERE p2.user_id = appointment.doctor_id LIMIT 1) END)', 'left')
 			->join('master_specialization ms', 'ms.id = profile_dr.specialization', 'left')
-			->join('hospital', '(hospital.uid = appointment.institute_id OR hospital.id = appointment.institute_id)', 'left')
-			->join('clinic', 'clinic.id = appointment.institute_id', 'left');
+			->join('hospital', "(hospital.id = appointment.institute_id AND (appointment.institution_type = 'H' OR appointment.institution_type = '' OR appointment.institution_type IS NULL))", 'left')
+			->join('clinic', "(clinic.id = appointment.institute_id AND appointment.institution_type = 'C')", 'left');
 
 		if (!empty($doctorId)) {
 			$cleanId = intval($doctorId);
@@ -223,9 +223,9 @@ class Appointment extends CI_Controller
 							WHERE doctor_id IS NOT NULL AND doctor_id != '' AND doctor_id != '0'
 							GROUP BY doctor_id, institute_id
 						) agg
-						JOIN profile_dr p ON (p.id = agg.doctor_id OR p.user_id = agg.doctor_id)
+						JOIN profile_dr p ON p.id = (CASE WHEN EXISTS(SELECT 1 FROM profile_dr p1 WHERE p1.id = agg.doctor_id) THEN agg.doctor_id ELSE (SELECT p2.id FROM profile_dr p2 WHERE p2.user_id = agg.doctor_id LIMIT 1) END)
 						LEFT JOIN master_specialization ms ON ms.id = p.specialization
-						JOIN hospital h ON (h.uid = agg.institute_id OR h.id = agg.institute_id)
+						LEFT JOIN hospital h ON h.id = agg.institute_id
 						ORDER BY agg.total_appointments DESC
 					");
 					if ($hd_q && is_object($hd_q)) {
@@ -972,11 +972,11 @@ class Appointment extends CI_Controller
 			userlogin.GENDER as user_gender
 		", FALSE)
 		->from('appointment')
-		->join('profile_dr', '(profile_dr.id = appointment.doctor_id OR profile_dr.user_id = appointment.doctor_id)', 'left')
+		->join('profile_dr', 'profile_dr.id = (CASE WHEN EXISTS(SELECT 1 FROM profile_dr p1 WHERE p1.id = appointment.doctor_id) THEN appointment.doctor_id ELSE (SELECT p2.id FROM profile_dr p2 WHERE p2.user_id = appointment.doctor_id LIMIT 1) END)', 'left')
 		->join('userlogin as dr_ul', 'dr_ul.USERID = appointment.doctor_id', 'left')
 		->join('master_specialization ms', 'ms.id = profile_dr.specialization', 'left')
-		->join('hospital', '(hospital.uid = appointment.institute_id OR hospital.id = appointment.institute_id)', 'left')
-		->join('clinic', 'clinic.id = appointment.institute_id', 'left')
+		->join('hospital', "(hospital.id = appointment.institute_id AND (appointment.institution_type = 'H' OR appointment.institution_type = '' OR appointment.institution_type IS NULL))", 'left')
+		->join('clinic', "(clinic.id = appointment.institute_id AND appointment.institution_type = 'C')", 'left')
 		->join('master_city mc', 'mc.id = hospital.city', 'left')
 		->join('userlogin', 'userlogin.USERID = appointment.user_id', 'left')
 		->where('appointment.appointment_id', $id)

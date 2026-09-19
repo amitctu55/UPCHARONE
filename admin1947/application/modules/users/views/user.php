@@ -46,17 +46,17 @@
 
               <div class="form-group" style="margin-bottom: 15px;">
                 <label for="usermobile" style="font-weight: 600; font-size: 13px; color: #334155;">Mobile Number <span style="color: #ef4444;">*</span></label>
-                <input type="text" class="form-control" id="usermobile" name="usermobile" placeholder="10-digit mobile" maxlength="10" required style="border-radius: 8px; height: 38px;">
+                <input type="text" class="form-control" id="usermobile" name="usermobile" placeholder="10-digit mobile" maxlength="10" minlength="10" pattern="[0-9]{10}" oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 10);" required title="Please enter exactly 10 numeric digits" style="border-radius: 8px; height: 38px;">
               </div>
 
               <div class="form-group" style="margin-bottom: 15px;">
                 <label for="useremail" style="font-weight: 600; font-size: 13px; color: #334155;">Email Address <span style="color: #ef4444;">*</span></label>
-                <input type="email" class="form-control" id="useremail" name="useremail" placeholder="admin@upchar.com" required style="border-radius: 8px; height: 38px;">
+                <input type="email" class="form-control" id="useremail" name="useremail" placeholder="admin@upchar.com" pattern="[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}" required title="Please enter a valid email address (e.g. name@example.com)" style="border-radius: 8px; height: 38px;">
               </div>
 
               <div class="form-group" style="margin-bottom: 15px;">
                 <label for="userdob" style="font-weight: 600; font-size: 13px; color: #334155;">Date of Birth</label>
-                <input type="date" class="form-control" id="userdob" name="userdob" style="border-radius: 8px; height: 38px;">
+                <input type="date" class="form-control" id="userdob" name="userdob" min="1920-01-01" max="<?=date('Y-m-d');?>" style="border-radius: 8px; height: 38px;">
               </div>
 
               <div class="form-group" style="margin-bottom: 15px;">
@@ -65,15 +65,16 @@
               </div>
 
               <div class="form-group" style="margin-bottom: 15px;">
-                <label for="resetpassword" style="font-weight: 600; font-size: 13px; color: #334155;">Login Password <span style="color: #ef4444;">*</span></label>
-                <input type="password" class="form-control" id="resetpassword" name="resetpassword" placeholder="Account password" style="border-radius: 8px; height: 38px;">
+                <label for="resetpassword" style="font-weight: 600; font-size: 13px; color: #334155;">Login Password <span id="pwd-required-star" style="color: #ef4444;">*</span></label>
+                <input type="password" class="form-control" id="resetpassword" name="resetpassword" placeholder="Account password" required minlength="6" style="border-radius: 8px; height: 38px;">
+                <small id="pwd-help-text" class="text-muted" style="font-size: 11px; display: block; margin-top: 4px;">Minimum 6 characters. Leave blank when editing to retain existing password.</small>
               </div>
 
               <div style="display: flex; gap: 10px; justify-content: flex-end; border-top: 1px solid #e2e8f0; padding-top: 16px;">
                 <button type="reset" id="user-reset-btn" class="btn btn-default" style="border-radius: 8px; font-weight: 600; padding: 8px 18px;">
                   <i class="fa fa-refresh"></i> Reset
                 </button>
-                <button type="submit" class="btn btn-primary" style="background: #00a896; border-color: #00a896; border-radius: 8px; font-weight: 600; padding: 8px 22px;">
+                <button type="submit" name="submit" value="save" class="btn btn-primary" style="background: #00a896; border-color: #00a896; border-radius: 8px; font-weight: 600; padding: 8px 22px;">
                   <i class="fa fa-check"></i> Save User
                 </button>
               </div>
@@ -167,6 +168,8 @@ $(document).ready(function(){
     $('#usermobile').val(mobile);
     $('#useremail').val(email);
     $('#useraddress').val(address);
+    $('#resetpassword').val('').prop('required', false);
+    $('#pwd-required-star').hide();
     $('#user-form-title').text('Edit Admin User');
 
     $('html, body').animate({ scrollTop: $('#user-admin-form').offset().top - 100 }, 300);
@@ -178,7 +181,8 @@ $(document).ready(function(){
     $('#usermobile').val('');
     $('#useremail').val('');
     $('#useraddress').val('');
-    $('#resetpassword').val('');
+    $('#resetpassword').val('').prop('required', true);
+    $('#pwd-required-star').show();
     $('#user-form-title').text('Create Admin User');
   });
 

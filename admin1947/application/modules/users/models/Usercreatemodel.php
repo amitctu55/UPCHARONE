@@ -3,77 +3,82 @@ class Usercreatemodel extends CI_Model{
 	
 	
 	
-	public function checkusername()
+	public function checkusername($exclude_id = null)
 	{
-			$username=$this->input->post('userid');
-			$this->db->where('username',$username);
+			$username = $this->input->post('userid') ?: ($this->input->post('useremail') ?: $this->input->post('username'));
+			$this->db->where('username', $username);
+			if ($exclude_id) {
+				$this->db->where('id !=', $exclude_id);
+			}
 			$count = $this->db->count_all_results('login');
-			return ($count) ?  false : true;
+			return ($count > 0) ? false : true;
 	}
+
 	public function usercreateinsert()
 	{
-			$date=date('Y-m-d h:i:s');
+			$date = date('Y-m-d H:i:s');
 			
-			$username=$this->input->post('username');
-			$usermobile=$this->input->post('usermobile');
-			$userdob=$this->input->post('userdob');
-			$activeradio=$this->input->post('activeradio');
-			$useraddress=$this->input->post('useraddress');
-			$useremail=$this->input->post('useremail');
-			$userrole=$this->input->post('userrole');
-			$userid=$this->input->post('userid');
-			$pwd=md5($this->input->post('resetpassword'));
+			$username = trim($this->input->post('username'));
+			$usermobile = trim($this->input->post('usermobile'));
+			$userdob = trim($this->input->post('userdob'));
+			$activeradio = $this->input->post('activeradio') !== null ? $this->input->post('activeradio') : '1';
+			$useraddress = trim($this->input->post('useraddress'));
+			$useremail = trim($this->input->post('useremail'));
+			$userrole = $this->input->post('userrole') ?: 'staff';
+			$userid = $this->input->post('userid') ?: ($useremail ?: $username);
+			$pwd = md5($this->input->post('resetpassword'));
 			
-			$data=array(
-						'username'	=>$userid,
-						'password'	=>$pwd,
-						'role'		=>$userrole,
-						'name'		=>$username,
-						'address'	=>$useraddress,
-						'dob'		=>$userdob,
-						'mobile'	=>$usermobile,
-						'email'		=>$useremail,
-						'status'	=>$activeradio,
-						'permisions'=>$date);
-			//echo "<pre>";print_r($data);die;
-			$this->db->insert('login',$data);
-			
-		return ($this->db->affected_rows() != 1) ? false : true;
+			$data = array(
+						'username'   => $userid,
+						'password'   => $pwd,
+						'role'       => $userrole,
+						'name'       => $username,
+						'address'    => $useraddress,
+						'dob'        => $userdob,
+						'mobile'     => $usermobile,
+						'email'      => $useremail,
+						'status'     => $activeradio,
+						'permisions' => $date
+			);
+			$this->db->insert('login', $data);
+			return ($this->db->affected_rows() != 1) ? false : true;
 	}
 	
 	public function usercreateedit($id)
 	{		
-			$username=$this->input->post('username');
-			$usermobile=$this->input->post('usermobile');
-			$userdob=$this->input->post('userdob');
-			$activeradio=$this->input->post('activeradio');
-			$useraddress=$this->input->post('useraddress');
-			$useremail=$this->input->post('useremail');
-			$userrole=$this->input->post('userrole');
-			$userid=$this->input->post('userid');
+			$date = date('Y-m-d H:i:s');
+			$username = trim($this->input->post('username'));
+			$usermobile = trim($this->input->post('usermobile'));
+			$userdob = trim($this->input->post('userdob'));
+			$activeradio = $this->input->post('activeradio') !== null ? $this->input->post('activeradio') : '1';
+			$useraddress = trim($this->input->post('useraddress'));
+			$useremail = trim($this->input->post('useremail'));
+			$userrole = $this->input->post('userrole') ?: 'staff';
+			$userid = $this->input->post('userid') ?: ($useremail ?: $username);
 			
-			$pwdtemp=$this->input->post('resetpassword');
-			if($pwdtemp=='' || $pwdtemp==null)
+			$pwdtemp = $this->input->post('resetpassword');
+			if(empty($pwdtemp))
 			{
-				$pwd=$this->db->get_where('login',array('id'=>$id))->row('password');
+				$pwd = $this->db->get_where('login', array('id' => $id))->row('password');
 			}
 			else{
-				$pwd=md5($this->input->post('resetpassword'));
+				$pwd = md5($pwdtemp);
 			}
 			
-			$data =  array( 'password' 	=>$pwd,
-							'role'		=>$userrole,
-							'name'		=>$username,
-							'address'	=>$useraddress,
-							'dob'		=>$userdob,
-							'mobile'	=>$usermobile,
-							'email'		=>$useremail,
-							'status'	=>$activeradio,
-							'permisions'=>$date
-						);
-			//echo "<pre>"; print_r($data); die;
-			$this->db->where('id',$id);
-			$r=$this->db->update('login',$data);
+			$data = array(
+							'username'   => $userid,
+							'password'   => $pwd,
+							'role'       => $userrole,
+							'name'       => $username,
+							'address'    => $useraddress,
+							'dob'        => $userdob,
+							'mobile'     => $usermobile,
+							'email'      => $useremail,
+							'status'     => $activeradio,
+							'permisions' => $date
+			);
+			$this->db->where('id', $id);
+			$r = $this->db->update('login', $data);
 			return (!$r) ? false : true;
 	}
 	

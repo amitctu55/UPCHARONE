@@ -39,6 +39,7 @@ class Location extends CI_Controller
 		$config['limit']	    =  ( $pagesize > 0 ) ? $pagesize : 10;	
 		$offset                 =  ( $this->input->get_post('per_page') > 0 ) ? (int)$this->input->get_post('per_page') : 0;	
 		$base_url               =  current_url_query_string(array('filter'=>'result'),array('per_page'));
+		$data['cities']         =  $this->db->select('id, name')->where('status', '1')->order_by('name', 'ASC')->get('master_city')->result();
 		$data['location'] 		=  $this->locationmodel->get_location($config['limit'],$offset);
 		if (!is_array($data['location'])) {
 			$data['location'] = [];
@@ -54,6 +55,14 @@ class Location extends CI_Controller
 		$this->load->view('inc/headersetting');
 		$this->load->view('inc/footerlink');
 		$this->load->view('inc/table_footer');
+	}
+
+	public function get_cities_ajax()
+	{
+		$cities = $this->db->select('id, name')->where('status', '1')->order_by('name', 'ASC')->get('master_city')->result_array();
+		header('Content-Type: application/json');
+		echo json_encode($cities);
+		exit();
 	}
     public function create()
 	{

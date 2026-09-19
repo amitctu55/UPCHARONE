@@ -4,44 +4,76 @@ class Pathlabregmodel extends CI_Model{
 	     
 	 
 	
-	public function traineereginsert($drimage,$id_proof='',$med_reg_proof='')
+	public function traineereginsert($drimage = '', $id_proof = '', $med_reg_proof = '')
 	{
-			$date=date('Y-m-d h:i:s');
+		$date = date('Y-m-d H:i:s');
+		
+		$city = $this->input->post('city');
+		$fname = trim($this->input->post('name'));	
+		$email = trim($this->input->post('email'));
+		$mobile = trim($this->input->post('mobile'));
+		$location = trim($this->input->post('location'));
+		$address = trim($this->input->post('address'));
+		$website = trim($this->input->post('website'));
+		$about = trim($this->input->post('about'));
+		$rawPwd = $this->input->post('password');
+		$password = !empty($rawPwd) ? md5($rawPwd) : md5('Upchar@2026');
+
+		// Create login account
+		$loginData = array(
+			'FNAME'      => $fname,
+			'EMAIL'      => $email,
+			'MOBILE'     => $mobile,
+			'PASSWORD'   => $password,
+			'STATUS'     => '1',
+			'APPROVED'   => '1',
+			'REG_DATE'   => $date
+		);
+		$this->db->insert('pathlogin', $loginData);
+		$uid = $this->db->insert_id();
+
+		$data = array(
+			'uid'           => $uid ?: 0,
+			'name'          => $fname,
+			'city'          => $city,
+			'drimage'       => $drimage ?: 'dummyhosp.jpg',
+			'id_proof'      => $id_proof,
+			'med_reg_proof' => $med_reg_proof,
+			'mobile'        => $mobile,
+			'email'         => $email,
+			'creat_date'    => $date,
+			'location'      => $location,
+			'address'       => $address,
+			'website'       => $website,
+			'about'         => $about,
+			'approved'      => '1',
+			'verified'      => '1',
+			'status'        => '1'
+		);
 			
-			$city=$this->input->post('city');
-			$fname=$this->input->post('name');	
-			$email=$this->input->post('email');
-			$mobile=$this->input->post('mobile');
-			$location=$this->input->post('location');
-			$address=$this->input->post('address');
-			$website=$this->input->post('website');
-			$about=$this->input->post('about');
-			
-			
-		$data=array('name'=>$fname,'city'=>$city,'drimage'=>$drimage,'id_proof'=>$id_proof,'med_reg_proof'=>$med_reg_proof,'mobile'=>$mobile,'email'=>$email,'creat_date'=>$date,'location'=>$location,'address'=>$address,'website'=>$website,'about'=>$about);
-			
-	       $this->db->insert('pathlab',$data);
-		//return $query->result();
-	      return ($this->db->affected_rows() != 1) ? false : true;
+		$this->db->insert('pathlab', $data);
+		return ($this->db->affected_rows() != 1) ? false : true;
 	}
 
-
-	
-     public function pathlab_duplicacy_check()
+	public function pathlab_duplicacy_check()
 	{
-		$email=$this->input->post('email');
-		$mobile=$this->input->post('mobile');
-		$mobile_count = $this->db->where('mobile',$mobile)->count_all_results('pathlab');
-		$email_count = $this->db->where('email',$email)->count_all_results('pathlab');
-		//return 'OK';
-		if($mobile_count ==0 && $email_count==0)
+		$email = trim($this->input->post('email'));
+		$mobile = trim($this->input->post('mobile'));
+		if (empty($email) && empty($mobile)) {
+			return 'EMPTY';
+		}
+		$mobile_count = !empty($mobile) ? $this->db->where('mobile', $mobile)->where('status !=', '2')->count_all_results('pathlab') : 0;
+		$email_count = !empty($email) ? $this->db->where('email', $email)->where('status !=', '2')->count_all_results('pathlab') : 0;
+		
+		if($mobile_count == 0 && $email_count == 0)
 			return 'OK';
-		else if($mobile_count >0 && $email_count>0)
+		else if($mobile_count > 0 && $email_count > 0)
 			return 'BOTH';
-		else if($mobile_count ==0)
+		else if($mobile_count > 0)
 			return 'MOBILE';
-		else if($email_count==0)
+		else if($email_count > 0)
 			return 'EMAIL';
+		return 'OK';
 	}
 
 

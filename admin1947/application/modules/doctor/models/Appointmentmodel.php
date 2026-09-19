@@ -77,8 +77,9 @@ class Appointmentmodel extends CI_Model
 		$this->db->order_by('appointment_id','desc');
 		$this->db->limit($limit,$offset);
 		$this->db->select('SQL_CALC_FOUND_ROWS profile_dr.*,hospital.*,appointment.*',FALSE);
-		$this->db->join('profile_dr','profile_dr.id=appointment.doctor_id','left');
-		$this->db->join('hospital','hospital.id=appointment.institute_id','left');
+		$this->db->join('profile_dr', 'profile_dr.id = (CASE WHEN EXISTS(SELECT 1 FROM profile_dr p1 WHERE p1.id = appointment.doctor_id) THEN appointment.doctor_id ELSE (SELECT p2.id FROM profile_dr p2 WHERE p2.user_id = appointment.doctor_id LIMIT 1) END)', 'left');
+		$this->db->join('hospital', "(hospital.id = appointment.institute_id AND (appointment.institution_type = 'H' OR appointment.institution_type = '' OR appointment.institution_type IS NULL))", 'left');
+		$this->db->join('clinic', "(clinic.id = appointment.institute_id AND appointment.institution_type = 'C')", 'left');
 		$result = $this->db->get('appointment')->result();
 		return $result;
 	}
@@ -159,8 +160,9 @@ class Appointmentmodel extends CI_Model
 		$this->db->order_by('appointment_id','desc');
 		//$this->db->limit($limit,$offset);
 		$this->db->select('SQL_CALC_FOUND_ROWS profile_dr.*,hospital.*,appointment.*',FALSE);
-		$this->db->join('profile_dr','profile_dr.id=appointment.doctor_id');
-		$this->db->join('hospital','hospital.id=appointment.institute_id');
+		$this->db->join('profile_dr', 'profile_dr.id = (CASE WHEN EXISTS(SELECT 1 FROM profile_dr p1 WHERE p1.id = appointment.doctor_id) THEN appointment.doctor_id ELSE (SELECT p2.id FROM profile_dr p2 WHERE p2.user_id = appointment.doctor_id LIMIT 1) END)', 'left');
+		$this->db->join('hospital', "(hospital.id = appointment.institute_id AND (appointment.institution_type = 'H' OR appointment.institution_type = '' OR appointment.institution_type IS NULL))", 'left');
+		$this->db->join('clinic', "(clinic.id = appointment.institute_id AND appointment.institution_type = 'C')", 'left');
 		$result = $this->db->get('appointment')->result_array();
 		return $result;
 	}
@@ -206,9 +208,10 @@ class Appointmentmodel extends CI_Model
 		$this->db->where("appointment.appointment_date>",date('Y-m-d'));
 		$this->db->order_by('appointment_id','desc');
 		$this->db->limit($limit,$offset);
-		$this->db->select('SQL_CALC_FOUND_ROWS appointment.*,hospital.*,profile_dr.*',FALSE);
-		$this->db->join('profile_dr','profile_dr.id=appointment.doctor_id','left');
-		$this->db->join('hospital','hospital.id=appointment.institute_id','left');
+		$this->db->select('SQL_CALC_FOUND_ROWS appointment.*,hospital.*,profile_dr.*, COALESCE(hospital.name, clinic.name, "") as facility_name',FALSE);
+		$this->db->join('profile_dr', 'profile_dr.id = (CASE WHEN EXISTS(SELECT 1 FROM profile_dr p1 WHERE p1.id = appointment.doctor_id) THEN appointment.doctor_id ELSE (SELECT p2.id FROM profile_dr p2 WHERE p2.user_id = appointment.doctor_id LIMIT 1) END)', 'left');
+		$this->db->join('hospital', "(hospital.id = appointment.institute_id AND (appointment.institution_type = 'H' OR appointment.institution_type = '' OR appointment.institution_type IS NULL))", 'left');
+		$this->db->join('clinic', "(clinic.id = appointment.institute_id AND appointment.institution_type = 'C')", 'left');
 		$result = $this->db->get('appointment')->result();
 		return $result;
 	}
@@ -254,9 +257,10 @@ class Appointmentmodel extends CI_Model
 		$this->db->where("appointment.appointment_date",date('Y-m-d'));
 		$this->db->order_by('appointment_id','desc');
 		$this->db->limit($limit,$offset);
-		$this->db->select('SQL_CALC_FOUND_ROWS appointment.*,hospital.*,profile_dr.*',FALSE);
-		$this->db->join('profile_dr','profile_dr.id=appointment.doctor_id','left');
-		$this->db->join('hospital','hospital.id=appointment.institute_id','left');
+		$this->db->select('SQL_CALC_FOUND_ROWS appointment.*,hospital.*,profile_dr.*, COALESCE(hospital.name, clinic.name, "") as facility_name',FALSE);
+		$this->db->join('profile_dr', 'profile_dr.id = (CASE WHEN EXISTS(SELECT 1 FROM profile_dr p1 WHERE p1.id = appointment.doctor_id) THEN appointment.doctor_id ELSE (SELECT p2.id FROM profile_dr p2 WHERE p2.user_id = appointment.doctor_id LIMIT 1) END)', 'left');
+		$this->db->join('hospital', "(hospital.id = appointment.institute_id AND (appointment.institution_type = 'H' OR appointment.institution_type = '' OR appointment.institution_type IS NULL))", 'left');
+		$this->db->join('clinic', "(clinic.id = appointment.institute_id AND appointment.institution_type = 'C')", 'left');
 		$result = $this->db->get('appointment')->result();
 		return $result;
 	}
@@ -267,9 +271,10 @@ class Appointmentmodel extends CI_Model
 		{
 			$this->db->where("appointment_id",$appointment_id);
 		}
-		$this->db->select('profile_dr.fname,profile_dr.email as dr_email,hospital.name,appointment.*');
-		$this->db->join('profile_dr','profile_dr.id=appointment.doctor_id');
-		$this->db->join('hospital','hospital.id=appointment.institute_id');
+		$this->db->select('profile_dr.fname,profile_dr.email as dr_email,COALESCE(hospital.name, clinic.name, "") as name,appointment.*');
+		$this->db->join('profile_dr', 'profile_dr.id = (CASE WHEN EXISTS(SELECT 1 FROM profile_dr p1 WHERE p1.id = appointment.doctor_id) THEN appointment.doctor_id ELSE (SELECT p2.id FROM profile_dr p2 WHERE p2.user_id = appointment.doctor_id LIMIT 1) END)', 'left');
+		$this->db->join('hospital', "(hospital.id = appointment.institute_id AND (appointment.institution_type = 'H' OR appointment.institution_type = '' OR appointment.institution_type IS NULL))", 'left');
+		$this->db->join('clinic', "(clinic.id = appointment.institute_id AND appointment.institution_type = 'C')", 'left');
 		$result = $this->db->get('appointment')->row_array();
 		return $result;
 	}
@@ -345,10 +350,11 @@ class Appointmentmodel extends CI_Model
 			$this->db->where('appointment.book_date <=', $session_to);
 		}
 		
-		$this->db->select('appointment.institute_id, COUNT(appointment.appointment_id) as count, SUM(COALESCE(appointment.amount, appointment.fee, 0)) as total, SUM(CASE WHEN appointment.payment_status = "DONE" THEN COALESCE(appointment.amount, appointment.fee, 0) ELSE 0 END) as received_amount, appointment.payment_status, COALESCE(hospital.name, "Direct / Clinic Booking") as hospital_name, COALESCE(master_city.name, "General") as city_name');
+		$this->db->select('appointment.institute_id, COUNT(appointment.appointment_id) as count, SUM(COALESCE(appointment.amount, appointment.fee, 0)) as total, SUM(CASE WHEN appointment.payment_status = "DONE" THEN COALESCE(appointment.amount, appointment.fee, 0) ELSE 0 END) as received_amount, appointment.payment_status, COALESCE(hospital.name, clinic.name, "Direct / Clinic Booking") as hospital_name, COALESCE(master_city.name, hospital.city, clinic.city, "General") as city_name');
 		$this->db->group_by("appointment.institute_id");
 		$this->db->order_by("total", "DESC");
-		$this->db->join('hospital', '(hospital.uid = appointment.institute_id OR hospital.id = appointment.institute_id)', 'left');
+		$this->db->join('hospital', "(hospital.id = appointment.institute_id AND (appointment.institution_type = 'H' OR appointment.institution_type = '' OR appointment.institution_type IS NULL))", 'left');
+		$this->db->join('clinic', "(clinic.id = appointment.institute_id AND appointment.institution_type = 'C')", 'left');
 		$this->db->join('master_city', 'master_city.id = hospital.city', 'left');
 		$result = $this->db->get('appointment')->result();
 		return $result;
@@ -367,11 +373,11 @@ class Appointmentmodel extends CI_Model
 				
 		if(!empty($hospital_name))
 		{
-			$this->db->where("(appointment.institute_id = '".$hospital_name."' OR hospital.id = '".$hospital_name."' OR hospital.uid = '".$hospital_name."')");
+			$this->db->where("(appointment.institute_id = '".$hospital_name."' OR hospital.id = '".$hospital_name."')");
 		}
 		if(!empty($doctor_name))
 		{
-			$this->db->where("appointment.doctor_id", $doctor_name);
+			$this->db->where("(profile_dr.fname LIKE '%".$doctor_name."%' OR profile_dr.lname LIKE '%".$doctor_name."%')");
 		}
 		if(!empty($payment_mode))
 		{
@@ -399,9 +405,10 @@ class Appointmentmodel extends CI_Model
 		}
 		
 		$this->db->order_by('appointment.appointment_id', 'DESC');
-		$this->db->select('appointment.*, COALESCE(hospital.name, "Direct / Clinic Booking") as hospital_name, profile_dr.fname as dr_fname, profile_dr.lname as dr_lname, profile_dr.mobile as dr_mobile, master_city.name as city_name');
-		$this->db->join('hospital', '(hospital.uid = appointment.institute_id OR hospital.id = appointment.institute_id)', 'left');
-		$this->db->join('profile_dr', 'profile_dr.id = appointment.doctor_id', 'left');
+		$this->db->select('appointment.*, COALESCE(hospital.name, clinic.name, "Direct / Clinic Booking") as hospital_name, profile_dr.fname as dr_fname, profile_dr.lname as dr_lname, profile_dr.mobile as dr_mobile, COALESCE(master_city.name, hospital.city, clinic.city, "") as city_name');
+		$this->db->join('profile_dr', 'profile_dr.id = (CASE WHEN EXISTS(SELECT 1 FROM profile_dr p1 WHERE p1.id = appointment.doctor_id) THEN appointment.doctor_id ELSE (SELECT p2.id FROM profile_dr p2 WHERE p2.user_id = appointment.doctor_id LIMIT 1) END)', 'left');
+		$this->db->join('hospital', "(hospital.id = appointment.institute_id AND (appointment.institution_type = 'H' OR appointment.institution_type = '' OR appointment.institution_type IS NULL))", 'left');
+		$this->db->join('clinic', "(clinic.id = appointment.institute_id AND appointment.institution_type = 'C')", 'left');
 		$this->db->join('master_city', 'master_city.id = hospital.city', 'left');
 		$result = $this->db->get('appointment')->result();
 		return $result;
@@ -576,9 +583,10 @@ class Appointmentmodel extends CI_Model
 			$this->db->where("appointment.doctor_id", $doctor_id);
 		}
 		$this->db->order_by('appointment.appointment_id', 'DESC');
-		$this->db->select('appointment.*, hospital.name as hospital_name, profile_dr.fname as dr_fname, profile_dr.lname as dr_lname, profile_dr.mobile as dr_mobile');
-		$this->db->join('hospital', '(hospital.uid = appointment.institute_id OR hospital.id = appointment.institute_id)', 'left');
-		$this->db->join('profile_dr', 'profile_dr.id = appointment.doctor_id', 'left');
+		$this->db->select('appointment.*, COALESCE(hospital.name, clinic.name, "") as hospital_name, profile_dr.fname as dr_fname, profile_dr.lname as dr_lname, profile_dr.mobile as dr_mobile');
+		$this->db->join('profile_dr', 'profile_dr.id = (CASE WHEN EXISTS(SELECT 1 FROM profile_dr p1 WHERE p1.id = appointment.doctor_id) THEN appointment.doctor_id ELSE (SELECT p2.id FROM profile_dr p2 WHERE p2.user_id = appointment.doctor_id LIMIT 1) END)', 'left');
+		$this->db->join('hospital', "(hospital.id = appointment.institute_id AND (appointment.institution_type = 'H' OR appointment.institution_type = '' OR appointment.institution_type IS NULL))", 'left');
+		$this->db->join('clinic', "(clinic.id = appointment.institute_id AND appointment.institution_type = 'C')", 'left');
 		$result = $this->db->get('appointment')->result();
 		return $result;
 	}

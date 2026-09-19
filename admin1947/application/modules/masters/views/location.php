@@ -48,10 +48,12 @@
                 <select class="form-control" id="city_select" name="city" required style="border-radius: 8px; height: 40px;">
                   <option value="">-- Choose Target City --</option>
                   <?php
-                  $citylist = $this->db->get_where('master_city', array('status'=>'1'))->result();
+                  $citylist = !empty($cities) ? $cities : $this->db->select('id, name')->where('status', '1')->order_by('name', 'ASC')->get('master_city')->result();
                   foreach($citylist as $c):
+                    $cId = is_object($c) ? $c->id : $c['id'];
+                    $cName = is_object($c) ? $c->name : $c['name'];
                   ?>
-                    <option value="<?=$c->id;?>"><?=htmlspecialchars($c->name);?></option>
+                    <option value="<?=$cId;?>"><?=htmlspecialchars($cName);?></option>
                   <?php endforeach; ?>
                 </select>
                 <small class="text-muted" style="font-size: 11.5px; margin-top: 4px; display: block;">Select the city to which this locality belongs.</small>
@@ -258,6 +260,24 @@
 <script>
 $(document).ready(function(){
   var deleteId = null;
+
+  // Auto fetch cities if select options are missing or empty
+  if ($('#city_select option').length <= 1) {
+    $.ajax({
+      url: '<?=base_url('masters/location/get_cities_ajax')?>',
+      type: 'GET',
+      dataType: 'json',
+      success: function(cities) {
+        if (cities && cities.length > 0) {
+          var opts = '<option value="">-- Choose Target City --</option>';
+          $.each(cities, function(i, city) {
+            opts += '<option value="' + city.id + '">' + city.name + '</option>';
+          });
+          $('#city_select').html(opts);
+        }
+      }
+    });
+  }
 
   // Edit / Populate Form
   $('.select-edit-btn').click(function(){

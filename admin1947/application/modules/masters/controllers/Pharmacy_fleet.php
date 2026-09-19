@@ -74,9 +74,9 @@ class Pharmacy_fleet extends CI_Controller {
 
                 // Paginated Query
                 $this->db->select('dr.*, 
-                    (SELECT COUNT(*) FROM medicine_orders mo WHERE mo.rider_id = dr.id AND mo.order_status IN ("ASSIGNED", "IN_TRANSIT")) as active_deliveries,
-                    (SELECT mo.order_code FROM medicine_orders mo WHERE mo.rider_id = dr.id AND mo.order_status IN ("ASSIGNED", "IN_TRANSIT") LIMIT 1) as active_order_code,
-                    (SELECT SUM(mo.total_amount) FROM medicine_orders mo WHERE mo.rider_id = dr.id AND mo.payment_mode = "COD" AND mo.order_status = "IN_TRANSIT") as cod_in_hand');
+                    (SELECT COUNT(*) FROM medicine_orders mo WHERE mo.rider_id = dr.id AND mo.order_status IN (\'ASSIGNED\', \'IN_TRANSIT\')) as active_deliveries,
+                    (SELECT mo.order_code FROM medicine_orders mo WHERE mo.rider_id = dr.id AND mo.order_status IN (\'ASSIGNED\', \'IN_TRANSIT\') LIMIT 1) as active_order_code,
+                    (SELECT SUM(mo.total_amount) FROM medicine_orders mo WHERE mo.rider_id = dr.id AND mo.payment_mode = \'COD\' AND mo.order_status = \'IN_TRANSIT\') as cod_in_hand');
                 $this->db->from('delivery_riders dr');
                 if (!empty($keyword)) {
                     $this->db->group_start();
@@ -165,7 +165,7 @@ class Pharmacy_fleet extends CI_Controller {
                 $totalRows = $this->db->count_all_results();
 
                 // Paginated Query
-                $this->db->select('ps.*, h.name as hospital_name, CONCAT("Dr. ", d.fname, " ", d.lname) as doctor_name');
+                $this->db->select("ps.*, h.name as hospital_name, CONCAT('Dr. ', d.fname, ' ', d.lname) as doctor_name");
                 $this->db->from('pharmacy_stores ps');
                 $this->db->join('hospital h', 'h.id = ps.hospital_id', 'left');
                 $this->db->join('profile_dr d', 'd.id = ps.associated_doctor_id', 'left');

@@ -46,7 +46,7 @@
           </div>
         </div>
         <div style="margin-top: 8px;">
-          <button type="button" class="btn btn-sm" style="background: #00a896; color: white; border-radius: 20px; padding: 6px 16px; font-weight: 600;" data-toggle="modal" data-target="#modal-link-abha">
+          <button type="button" class="btn btn-sm btn-link-new-abha" style="background: #00a896; color: white; border-radius: 20px; padding: 6px 16px; font-weight: 600;" data-toggle="modal" data-target="#modal-link-abha">
             <i class="fa fa-plus-circle"></i> Link New ABHA
           </button>
           <a href="<?=base_url('abdm?tab=gateway');?>" class="btn btn-sm btn-default" style="border-radius: 20px; padding: 6px 14px; font-weight: 600; margin-left: 6px;">
@@ -165,7 +165,7 @@
               </div>
             </div>
             <div class="col-md-6 text-right">
-              <button class="btn btn-success" data-toggle="modal" data-target="#modal-link-abha" style="border-radius: 6px;">
+              <button class="btn btn-success btn-link-new-abha" data-toggle="modal" data-target="#modal-link-abha" style="border-radius: 6px;">
                 <i class="fa fa-plus"></i> Link New ABHA ID
               </button>
             </div>
@@ -479,12 +479,16 @@
       </div>
       <form action="<?=base_url('abdm/link_abha');?>" method="POST">
         <div class="modal-body" style="padding: 20px;">
+          <div class="form-group" style="margin-bottom: 12px;">
+            <label for="patient_filter_input" style="font-size: 12px; color: #475569; margin-bottom: 4px;">Search / Filter Patient</label>
+            <input type="text" id="patient_filter_input" class="form-control input-sm" placeholder="Type name or mobile to filter..." style="border-radius: 6px;">
+          </div>
           <div class="form-group">
             <label for="modal_user_id">Select Patient <span class="text-danger">*</span></label>
-            <select name="user_id" id="modal_user_id" class="form-control" required>
+            <select name="user_id" id="modal_user_id" class="form-control" required style="border-radius: 6px; height: 38px;">
               <option value="">-- Choose Registered Patient --</option>
               <?php
-              $patients = $this->db->select("USERID as id, CONCAT(FNAME, ' ', COALESCE(LNAME, '')) as NAME, MOBILE")->from('userlogin')->limit(50)->get()->result_array();
+              $patients = $this->db->select("USERID as id, CONCAT(FNAME, ' ', COALESCE(LNAME, '')) as NAME, MOBILE")->from('userlogin')->order_by('USERID', 'DESC')->limit(100)->get()->result_array();
               foreach($patients as $p):
               ?>
                 <option value="<?=$p['id'];?>"><?=htmlspecialchars($p['NAME']);?> (<?=$p['MOBILE'];?>)</option>
@@ -494,10 +498,10 @@
           <div class="form-group">
             <label for="modal_abha_address">Desired ABHA Address <span class="text-danger">*</span></label>
             <div class="input-group">
-              <input type="text" name="abha_address" id="modal_abha_address" class="form-control" placeholder="e.g. john.doe" required>
-              <span class="input-group-addon" style="background: #f1f5f9; font-weight: 600;">@abdm</span>
+              <input type="text" name="abha_address" id="modal_abha_address" class="form-control" placeholder="e.g. john.doe" required style="border-radius: 6px 0 0 6px; height: 38px;">
+              <span class="input-group-addon" style="background: #f1f5f9; font-weight: 600; border-radius: 0 6px 6px 0;">@abdm</span>
             </div>
-            <p class="help-block" style="font-size: 12px;">A 14-digit Ayushman Bharat health ID number will be generated automatically.</p>
+            <p class="help-block" style="font-size: 12px; margin-top: 4px;">A 14-digit Ayushman Bharat health ID number will be generated automatically.</p>
           </div>
         </div>
         <div class="modal-footer">
@@ -511,6 +515,44 @@
 
 <script>
 $(document).ready(function() {
+  // Explicit click handler to guarantee modal launch regardless of Bootstrap data-api state
+  $(document).on('click', '[data-target="#modal-link-abha"], .btn-link-new-abha', function(e) {
+    e.preventDefault();
+    $('#modal-link-abha').modal('show');
+  });
+
+  // Client-side instant filter for patient select dropdown
+  $('#patient_filter_input').on('input', function() {
+    var query = $(this).val().toLowerCase().trim();
+    var hasMatches = false;
+    $('#modal_user_id option').each(function() {
+      if (!this.value) return;
+      var text = $(this).text().toLowerCase();
+      var match = text.indexOf(query) > -1;
+      $(this).toggle(match);
+      if (match) hasMatches = true;
+    });
+
+    // If query is >= 3 chars and no local matches, search via AJAX
+    if (!hasMatches && query.length >= 3) {
+      $.ajax({
+        url: '<?=base_url("abdm/search_patients_ajax");?>',
+        type: 'GET',
+        data: { term: query },
+        dataType: 'json',
+        success: function(patients) {
+          if (patients && patients.length > 0) {
+            $.each(patients, function(idx, p) {
+              if ($('#modal_user_id option[value="' + p.id + '"]').length === 0) {
+                $('#modal_user_id').append('<option value="' + p.id + '">' + p.name + ' (' + p.mobile + ')</option>');
+              }
+            });
+          }
+        }
+      });
+    }
+  });
+
   $('#btn_ping_gateway').click(function() {
     var btn = $(this);
     btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Pinging NHA Gateway...');

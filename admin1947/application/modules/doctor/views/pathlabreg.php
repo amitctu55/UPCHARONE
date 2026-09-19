@@ -68,7 +68,7 @@
               <div class="row">
                 <div class="col-md-6 form-group" style="margin-bottom: 18px;">
                   <label for="name" style="font-weight: 600; font-size: 13px; color: #334155;">Pathology / Diagnostic Center Name <span style="color:#ef4444;">*</span></label>
-                  <input type="text" class="form-control" id="name" name="name" placeholder="e.g. SRL Diagnostics, Dr. Lal PathLabs" value="<?=set_value('name');?>" required>
+                  <input type="text" class="form-control" id="name" name="name" placeholder="e.g. SRL Diagnostics, Dr. Lal PathLabs" value="<?=set_value('name');?>" required minlength="3" title="Please enter Pathology / Diagnostic Center Name">
                   <span style="color:#ef4444; font-size: 12px;"><?=form_error('name');?></span>
                 </div>
 
@@ -79,19 +79,19 @@
 
                 <div class="col-md-4 form-group" style="margin-bottom: 18px;">
                   <label for="email" style="font-weight: 600; font-size: 13px; color: #334155;">Lab Email Address <span style="color:#ef4444;">*</span></label>
-                  <input type="email" class="form-control" id="email" name="email" placeholder="lab@example.com" value="<?=set_value('email');?>" required>
+                  <input type="email" class="form-control" id="email" name="email" placeholder="lab@example.com" pattern="[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}" value="<?=set_value('email');?>" required title="Please enter a valid laboratory email address">
                   <span style="color:#ef4444; font-size: 12px;"><?=form_error('email');?></span>
                 </div>
 
                 <div class="col-md-4 form-group" style="margin-bottom: 18px;">
                   <label for="mobile" style="font-weight: 600; font-size: 13px; color: #334155;">Mobile / Phone <span style="color:#ef4444;">*</span></label>
-                  <input type="text" class="form-control" id="mobile" name="mobile" placeholder="10-digit mobile" maxlength="10" value="<?=set_value('mobile');?>" required>
+                  <input type="text" class="form-control" id="mobile" name="mobile" placeholder="10-digit mobile" maxlength="10" minlength="10" pattern="[0-9]{10}" oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 10);" value="<?=set_value('mobile');?>" required title="Please enter a 10-digit mobile number">
                   <span style="color:#ef4444; font-size: 12px;"><?=form_error('mobile');?></span>
                 </div>
 
                 <div class="col-md-4 form-group" style="margin-bottom: 18px;">
                   <label for="password" style="font-weight: 600; font-size: 13px; color: #334155;">Account Password <span style="color:#ef4444;">*</span></label>
-                  <input type="password" class="form-control" id="password" name="password" placeholder="Account password" value="<?=set_value('password');?>" required>
+                  <input type="password" class="form-control" id="password" name="password" placeholder="Account password" minlength="6" value="<?=set_value('password');?>" required title="Password must be at least 6 characters">
                   <span style="color:#ef4444; font-size: 12px;"><?=form_error('password');?></span>
                 </div>
               </div>
@@ -229,7 +229,27 @@ function previewFile(input, previewSelector) {
 }
 
 $(document).ready(function(){
-  $('.next-step-btn').click(function(){
+  $('.next-step-btn').click(function(e){
+    var currentPane = $(this).closest('.tab-pane');
+    var isValid = true;
+    var firstInvalid = null;
+
+    currentPane.find('input, select, textarea').each(function(){
+      if (!this.checkValidity()) {
+        isValid = false;
+        if (!firstInvalid) {
+          firstInvalid = this;
+        }
+      }
+    });
+
+    if (!isValid && firstInvalid) {
+      e.preventDefault();
+      firstInvalid.reportValidity();
+      $(firstInvalid).focus();
+      return false;
+    }
+
     var target = $(this).data('next');
     $('#pathTabNav a[href="' + target + '"]').tab('show');
     $('html, body').animate({ scrollTop: $('#pathTabNav').offset().top - 80 }, 200);
@@ -239,6 +259,32 @@ $(document).ready(function(){
     var target = $(this).data('prev');
     $('#pathTabNav a[href="' + target + '"]').tab('show');
     $('html, body').animate({ scrollTop: $('#pathTabNav').offset().top - 80 }, 200);
+  });
+
+  // Cross-tab form submit validation
+  $('#pathlab-reg-form').on('submit', function(e){
+    var form = this;
+    var invalidField = null;
+
+    $(form).find('input, select, textarea').each(function(){
+      if (!this.checkValidity() && !invalidField) {
+        invalidField = this;
+      }
+    });
+
+    if (invalidField) {
+      e.preventDefault();
+      var pane = $(invalidField).closest('.tab-pane');
+      if (pane.length && !pane.hasClass('active')) {
+        var tabId = pane.attr('id');
+        $('#pathTabNav a[href="#' + tabId + '"]').tab('show');
+      }
+      setTimeout(function(){
+        invalidField.reportValidity();
+        $(invalidField).focus();
+      }, 250);
+      return false;
+    }
   });
 });
 </script>

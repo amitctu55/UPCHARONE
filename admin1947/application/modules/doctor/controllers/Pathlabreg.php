@@ -26,101 +26,82 @@ class Pathlabreg extends CI_Controller
 
 	public function create()
 	{
-		
-		if(isset($_POST['submit'])){
-			    
-			    $uploadimage='';
-             
-             $check = $this->Pathlabregmodel->pathlab_duplicacy_check();
-			if($check !='OK')
-			{
-				if($check == 'MOBILE')
-					$emsg='Mobile Already Exist';
-				else if($check == 'EMAIL')
-					$emsg='Email Already Exist';
-				else if($check == 'BOTH')
-					$emsg='Email and Mobile Already Exist';
-				
-				$msg="<div class='alert alert-danger'><strong>Failed!</strong> $emsg</div>";
-				$this->session->set_flashdata('flashmsg',$msg);
-				
-				redirect(base_url().'doctor/pathlabreg');
+		if(isset($_POST['submit']) || $this->input->post('name')){
+			$this->load->library('form_validation');
+			$this->form_validation->set_rules('name', 'Pathology / Diagnostic Center Name', 'trim|required|min_length[3]|max_length[255]');
+			$this->form_validation->set_rules('email', 'Email Address', 'trim|required|valid_email');
+			$this->form_validation->set_rules('mobile', 'Mobile Number', 'trim|required|regex_match[/^[0-9]{10}$/]');
+			$this->form_validation->set_rules('password', 'Account Password', 'trim|required|min_length[6]');
+
+			if ($this->form_validation->run() == FALSE) {
+				$msg = "<div class='alert alert-danger'><strong>Validation Error:</strong><br>" . validation_errors() . "</div>";
+				$this->session->set_flashdata('flashmsg', $msg);
+				redirect(base_url('doctor/pathlabreg'));
 				exit();
 			}
-			else
-			{
 
-				$uploadimage=$_FILES['uploadimage']['name'];
-				$extsign = pathinfo($_FILES['uploadimage']['name'],PATHINFO_EXTENSION);
+			$check = $this->Pathlabregmodel->pathlab_duplicacy_check();
+			if($check != 'OK')
+			{
+				if($check == 'MOBILE')
+					$emsg = 'Mobile Number Already Exists';
+				else if($check == 'EMAIL')
+					$emsg = 'Email Address Already Exists';
+				else if($check == 'BOTH')
+					$emsg = 'Email Address and Mobile Number Already Exist';
+				else
+					$emsg = 'Required fields missing';
 				
-				$uploadimage2=$_FILES['idproof']['name'];
-				$extsign2 = pathinfo($_FILES['idproof']['name'],PATHINFO_EXTENSION);
+				$msg = "<div class='alert alert-danger'><strong>Failed!</strong> $emsg</div>";
+				$this->session->set_flashdata('flashmsg', $msg);
 				
-				$uploadimage3=$_FILES['regproof']['name'];
-				$extsign3 = pathinfo($_FILES['regproof']['name'],PATHINFO_EXTENSION);
-				
-				if($uploadimage != '') 
-				{	
-					$rname=rand(1111111,999999999);
-					$date=date('Y-m-d');
-					$uploadimage=$typename.'_profile_pic_'.$rname.$date.'.'.$extsign;
-					$rname=rand(1111111,999999999);
-					$uploadimage2=$typename.'_id_proof_'.$rname.$date.'.'.$extsign2;
-					$rname=rand(1111111,999999999);
-					$uploadimage3=$typename.'_reg_proof_'.$rname.$date.'.'.$extsign3;
-					
-					$config['upload_path']          = './public/assets/upload/';
-					$config['allowed_types'] = 'jpg|png|jpeg|JPG|PNG|JPEG';
-					$config['max_size']             = 2048;
-					$config['quality'] = '60%';
-					$config['file_name']  = $uploadimage;
-					$this->load->library('upload', $config);
-					
-					if ( ! $this->upload->do_upload('uploadimage'))
-					{
-						$error = $this->upload->display_errors();
-						$flashmsg='<div class="alert alert-danger">
-						  <strong>Failed!</strong>'.$error.'
-						</div>';
-						$this->session->set_flashdata('flashmsg',$flashmsg);
-						redirect(base_url().'doctor/pathlabreg');
-						exit();
-						
-					}
-					else{
-						
-					$config['file_name']  = $uploadimage2;
-					$this->load->library('upload', $config);
-					$this->upload->do_upload('idproof');
-					
-					$config['file_name']  = $uploadimage3;
-					$this->load->library('upload', $config);
-					$this->upload->do_upload('regproof');
-					
-						
-						if($this->Pathlabregmodel->traineereginsert($uploadimage,$uploadimage2,$uploadimage3)) 
-						{
-							$msg="<div class='alert alert-success'><strong>Success!</strong> Data Added Successfully</div>";
-							$this->session->set_flashdata('flashmsg',$msg);
-							
-						
-						}
-						else{
-							$msg="<div class='alert alert-danger'><strong>Failed!</strong> Something went wrong. Please try again.</div>";
-							$this->session->set_flashdata('flashmsg',$msg);
-						}
-						
-						
-						}
-					
-				}
-				
-			
+				redirect(base_url('doctor/pathlabreg'));
+				exit();
+			}
+
+			$uploadimage = '';
+			$uploadimage2 = '';
+			$uploadimage3 = '';
+			$typename = 'pathlab';
+
+			$config['upload_path']   = './public/assets/upload/';
+			$config['allowed_types'] = 'jpg|png|jpeg|JPG|PNG|JPEG|pdf|PDF';
+			$config['max_size']      = 5120;
+			$this->load->library('upload', $config);
+
+			if(!empty($_FILES['uploadimage']['name'])) {
+				$ext = pathinfo($_FILES['uploadimage']['name'], PATHINFO_EXTENSION);
+				$uploadimage = $typename . '_profile_pic_' . rand(1111111,999999999) . date('Y-m-d') . '.' . $ext;
+				$config['file_name'] = $uploadimage;
+				$this->upload->initialize($config);
+				$this->upload->do_upload('uploadimage');
+			}
+			if(!empty($_FILES['idproof']['name'])) {
+				$ext2 = pathinfo($_FILES['idproof']['name'], PATHINFO_EXTENSION);
+				$uploadimage2 = $typename . '_id_proof_' . rand(1111111,999999999) . date('Y-m-d') . '.' . $ext2;
+				$config['file_name'] = $uploadimage2;
+				$this->upload->initialize($config);
+				$this->upload->do_upload('idproof');
+			}
+			if(!empty($_FILES['regproof']['name'])) {
+				$ext3 = pathinfo($_FILES['regproof']['name'], PATHINFO_EXTENSION);
+				$uploadimage3 = $typename . '_reg_proof_' . rand(1111111,999999999) . date('Y-m-d') . '.' . $ext3;
+				$config['file_name'] = $uploadimage3;
+				$this->upload->initialize($config);
+				$this->upload->do_upload('regproof');
+			}
+
+			if($this->Pathlabregmodel->traineereginsert($uploadimage, $uploadimage2, $uploadimage3)) 
+			{
+				$msg = "<div class='alert alert-success'><strong>Success!</strong> Pathology Lab Registered Successfully</div>";
+				$this->session->set_flashdata('flashmsg', $msg);
+			}
+			else {
+				$msg = "<div class='alert alert-danger'><strong>Failed!</strong> Something went wrong. Please try again.</div>";
+				$this->session->set_flashdata('flashmsg', $msg);
+			}
 		}
-	
-     }
-		redirect(base_url().'doctor/pathlabreg');
-	
+		redirect(base_url('doctor/pathlabreg'));
 	}
 	
           

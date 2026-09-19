@@ -1,5 +1,6 @@
-var base_url ='https://psdp.fddiindia.com/';
-var base_url ='http://localhost/fddi/';
+if (typeof base_url === 'undefined' || !base_url || base_url.indexOf('fddi') !== -1) {
+    var base_url = (window.location.origin ? window.location.origin : '') + '/demo/upchar/admin1947/';
+}
 $(document).ready(function(){
     $(".state").change(function(){
 			var stateid=this.value; 

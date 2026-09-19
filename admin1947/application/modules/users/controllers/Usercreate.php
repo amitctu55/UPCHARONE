@@ -24,9 +24,44 @@ class Usercreate extends CI_Controller
 	
 	public function create()
 	{ 
-		if(isset($_POST['submit'])){
-			$id=base64_decode($this->input->post('eid'));
-			if($id=='')
+		if(isset($_POST['submit']) || $this->input->post('username')){
+			$rawId = $this->input->post('eid');
+			$id = (!empty($rawId) && !is_numeric($rawId)) ? base64_decode($rawId) : (int)$rawId;
+			
+			$username = trim($this->input->post('username'));
+			$usermobile = trim($this->input->post('usermobile'));
+			$useremail = trim($this->input->post('useremail'));
+			$userdob = trim($this->input->post('userdob'));
+			$password = $this->input->post('resetpassword');
+
+			$errors = [];
+			if (empty($username)) {
+				$errors[] = "Full Name is required.";
+			}
+			if (empty($usermobile) || !preg_match('/^[0-9]{10}$/', $usermobile)) {
+				$errors[] = "Mobile Number must be exactly 10 numeric digits.";
+			}
+			if (empty($useremail) || !filter_var($useremail, FILTER_VALIDATE_EMAIL)) {
+				$errors[] = "A valid Email Address is required.";
+			}
+			if (!empty($userdob)) {
+				$dobTime = strtotime($userdob);
+				if (!$dobTime || $dobTime > time() || $dobTime < strtotime('1920-01-01')) {
+					$errors[] = "Please provide a valid Date of Birth (between 1920 and today).";
+				}
+			}
+			if (empty($id) && empty($password)) {
+				$errors[] = "Password is required for creating a new user.";
+			}
+
+			if (!empty($errors)) {
+				$msg = "<div class='alert alert-danger'><strong>Validation Error:</strong><br>" . implode('<br>', $errors) . "</div>";
+				$this->session->set_flashdata('flashmsg', $msg);
+				redirect(base_url('users/usercreate'));
+				return;
+			}
+
+			if(empty($id))
 			{
 				if($this->usercreatemodel->checkusername())
 				{
@@ -43,19 +78,27 @@ class Usercreate extends CI_Controller
 				}
 				else
 				{
-					$msg="<div class='alert alert-danger'><strong>Failed!</strong> Username already exist..</div>";
+					$msg="<div class='alert alert-danger'><strong>Failed!</strong> Username / Email already exists.</div>";
 					$this->session->set_flashdata('flashmsg',$msg);
 				}
 			}
 			else
 			{	
-				if($this->usercreatemodel->usercreateedit($id))
+				if($this->usercreatemodel->checkusername($id))
 				{
-					$msg="<div class='alert alert-success'><strong>Success!</strong> Data Updated Successfully</div>";
-					$this->session->set_flashdata('flashmsg',$msg);
+					if($this->usercreatemodel->usercreateedit($id))
+					{
+						$msg="<div class='alert alert-success'><strong>Success!</strong> Data Updated Successfully</div>";
+						$this->session->set_flashdata('flashmsg',$msg);
+					}
+					else{
+						$msg="<div class='alert alert-danger'><strong>Failed!</strong> Something went wrong. Please try again.</div>";
+						$this->session->set_flashdata('flashmsg',$msg);
+					}
 				}
-				else{
-					$msg="<div class='alert alert-danger'><strong>Failed!</strong> Something went wrong. Please try again.</div>";
+				else
+				{
+					$msg="<div class='alert alert-danger'><strong>Failed!</strong> Username / Email already exists for another account.</div>";
 					$this->session->set_flashdata('flashmsg',$msg);
 				}
 			}
