@@ -4,6 +4,19 @@
   $aid = $app ? ($app->appointment_id ?? $appointment_id ?? 0) : ($appointment_id ?? 0);
 ?>
 <style>
+/* Fix Bootstrap modals inside AdminLTE to ensure they always appear on top and are fully clickable */
+.modal {
+  z-index: 10500 !important;
+  overflow-y: auto !important;
+}
+.modal-backdrop {
+  z-index: 10400 !important;
+}
+.modal-dialog {
+  z-index: 10501 !important;
+  margin-top: 50px !important;
+}
+
 @media print {
   .main-header,
   .main-sidebar,
@@ -111,17 +124,17 @@
         <?php if($app): ?>
         <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
           <!-- Quick Edit Status / Payment Modal Trigger -->
-          <button type="button" class="btn btn-sm btn-warning" data-toggle="modal" data-target="#updateStatusModal" style="border-radius: 6px; font-weight: 600; background: #f59e0b; border-color: #d97706; color: #ffffff; padding: 6px 13px;">
+          <button type="button" class="btn btn-sm btn-warning btn-trigger-status-modal" data-toggle="modal" data-target="#updateStatusModal" style="border-radius: 6px; font-weight: 600; background: #f59e0b; border-color: #d97706; color: #ffffff; padding: 6px 13px;">
             <i class="fa fa-pencil-square-o"></i> Update Status / Payment
           </button>
 
           <!-- Reassign Doctor Modal Trigger -->
-          <button type="button" class="btn btn-sm btn-default" data-toggle="modal" data-target="#reassignDoctorModal" style="border-radius: 6px; font-weight: 600; background: #f8fafc; border-color: #cbd5e1; color: #334155; padding: 6px 13px;">
+          <button type="button" class="btn btn-sm btn-default btn-trigger-doctor-modal" data-toggle="modal" data-target="#reassignDoctorModal" style="border-radius: 6px; font-weight: 600; background: #f8fafc; border-color: #cbd5e1; color: #334155; padding: 6px 13px;">
             <i class="fa fa-user-md" style="color: #00a896;"></i> Reassign Doctor
           </button>
 
           <!-- Reschedule Modal Trigger -->
-          <button type="button" class="btn btn-sm btn-default" data-toggle="modal" data-target="#rescheduleModal" style="border-radius: 6px; font-weight: 600; background: #f8fafc; border-color: #cbd5e1; color: #334155; padding: 6px 13px;">
+          <button type="button" class="btn btn-sm btn-default btn-trigger-reschedule-modal" data-toggle="modal" data-target="#rescheduleModal" style="border-radius: 6px; font-weight: 600; background: #f8fafc; border-color: #cbd5e1; color: #334155; padding: 6px 13px;">
             <i class="fa fa-calendar" style="color: #0284c7;"></i> Reschedule
           </button>
 
@@ -130,11 +143,9 @@
             <i class="fa fa-print"></i> Print Slip
           </button>
 
-          <?php if(!empty($app->doctor_id)): ?>
-            <a href="<?=base_url('doctor/appointment/doctorappointment?doctor=' . ($app->dr_profile_id ?? $app->doctor_id));?>" class="btn btn-sm btn-primary" style="border-radius: 6px; font-weight: 600; background: #00a896; border-color: #00a896; padding: 6px 13px;">
-              <i class="fa fa-stethoscope"></i> Doctor Schedule
-            </a>
-          <?php endif; ?>
+          <a href="<?=base_url('doctor/appointment/doctorappointment' . (!empty($app->doctor_id) ? ('?doctor=' . ($app->dr_profile_id ?? $app->doctor_id)) : ''));?>" class="btn btn-sm btn-primary" style="border-radius: 6px; font-weight: 600; background: #00a896; border-color: #00a896; padding: 6px 13px;" title="View Doctor Schedule">
+            <i class="fa fa-stethoscope"></i> Doctor Schedule
+          </a>
         </div>
         <?php endif; ?>
       </div>
@@ -944,220 +955,218 @@
 </div>
 <?php endif; ?>
 
-<!-- Print Stylesheet -->
-<style>
-@media print {
-  body {
-    background: #ffffff !important;
-    font-size: 12px !important;
-    color: #000000 !important;
-  }
-  .main-header, .main-sidebar, .sidebar, .control-sidebar, .main-footer, .no-print, .breadcrumb, .modal, #appointmentToast {
-    display: none !important;
-  }
-  .content-wrapper {
-    margin-left: 0 !important;
-    padding: 0 !important;
-    background: #ffffff !important;
-  }
-  .print-only-header {
-    display: block !important;
-  }
-  .master-card, .col-md-6, .col-md-3, div[style*="background: #ffffff"] {
-    box-shadow: none !important;
-    border: 1px solid #cccccc !important;
-  }
-}
-</style>
-
 <!-- CLIENT JAVASCRIPT HANDLERS FOR THE 3 PROCESSES -->
 <script>
-(function($) {
-  'use strict';
-
-  // Toast Helper
-  function showToast(message, isSuccess) {
-    var $t = $('#appointmentToast');
-    var $icon = $('#toastIcon');
-    var $msg = $('#toastMsg');
-    
-    $msg.text(message);
-    if (isSuccess) {
-      $t.css({ background: '#065f46', color: '#ecfdf5', border: '1px solid #10b981' });
-      $icon.attr('class', 'fa fa-check-circle text-success').css('color', '#34d399');
-    } else {
-      $t.css({ background: '#7f1d1d', color: '#fef2f2', border: '1px solid #ef4444' });
-      $icon.attr('class', 'fa fa-exclamation-triangle text-danger').css('color', '#f87171');
+(function() {
+  function startDossierApp() {
+    if (typeof jQuery === 'undefined' || typeof jQuery.fn.modal === 'undefined') {
+      setTimeout(startDossierApp, 50);
+      return;
     }
-    $t.fadeIn(250);
-    setTimeout(function() {
-      $t.fadeOut(400);
-    }, 4000);
-  }
 
-  // -------------------------------------------------------------
-  // 1. UPDATE STATUS & PAYMENT MODAL LOGIC
-  // -------------------------------------------------------------
-  $('#selectBookingStatus').on('change', function() {
-    if ($(this).val() === '2') {
-      $('#cancelReasonGroup').slideDown(200);
-    } else {
-      $('#cancelReasonGroup').slideUp(200);
-    }
-  });
+    jQuery(function($) {
+      'use strict';
 
-  // -------------------------------------------------------------
-  // 2. REASSIGN DOCTOR FILTER & PREVIEW LOGIC
-  // -------------------------------------------------------------
-  var $docSelect = $('#doctorSelectEl');
-  var allDocOptions = [];
+      // Fix modal backdrop stacking in AdminLTE
+      $('.modal').on('show.bs.modal', function() {
+        $(this).appendTo('body');
+      });
 
-  // Cache options on page load
-  $docSelect.find('option').each(function() {
-    allDocOptions.push({
-      value: $(this).val(),
-      text: $(this).text(),
-      name: $(this).data('name') || '',
-      spec: $(this).data('spec') || '',
-      fee: $(this).data('fee') || 0,
-      id: $(this).data('id') || '',
-      userId: $(this).data('userId') || '',
-      selected: $(this).is(':selected')
-    });
-  });
+      // Explicit fail-safe click handlers for modal trigger buttons
+      $(document).on('click', '[data-target="#updateStatusModal"], .btn-trigger-status-modal', function(e) {
+        e.preventDefault();
+        $('#updateStatusModal').modal('show');
+      });
+      $(document).on('click', '[data-target="#reassignDoctorModal"], .btn-trigger-doctor-modal', function(e) {
+        e.preventDefault();
+        $('#reassignDoctorModal').modal('show');
+      });
+      $(document).on('click', '[data-target="#rescheduleModal"], .btn-trigger-reschedule-modal', function(e) {
+        e.preventDefault();
+        $('#rescheduleModal').modal('show');
+      });
 
-  // Real-time doctor filter
-  $('#doctorFilterBox').on('input', function() {
-    var query = $.trim($(this).val()).toLowerCase();
-    var matchCount = 0;
-    $docSelect.empty();
-
-    for (var i = 0; i < allDocOptions.length; i++) {
-      var doc = allDocOptions[i];
-      var haystack = (doc.text + ' ' + doc.name + ' ' + doc.spec + ' ' + doc.id + ' ' + doc.userId).toLowerCase();
-      if (!query || haystack.indexOf(query) !== -1) {
-        matchCount++;
-        var $opt = $('<option></option>')
-          .val(doc.value)
-          .text(doc.text)
-          .data('name', doc.name)
-          .data('spec', doc.spec)
-          .data('fee', doc.fee)
-          .data('id', doc.id);
-        if (doc.selected) {
-          $opt.prop('selected', true);
+      // Toast Helper
+      function showToast(message, isSuccess) {
+        var $t = $('#appointmentToast');
+        var $icon = $('#toastIcon');
+        var $msg = $('#toastMsg');
+        
+        $msg.text(message);
+        if (isSuccess) {
+          $t.css({ background: '#065f46', color: '#ecfdf5', border: '1px solid #10b981' });
+          $icon.attr('class', 'fa fa-check-circle text-success').css('color', '#34d399');
+        } else {
+          $t.css({ background: '#7f1d1d', color: '#fef2f2', border: '1px solid #ef4444' });
+          $icon.attr('class', 'fa fa-exclamation-triangle text-danger').css('color', '#f87171');
         }
-        $docSelect.append($opt);
-      }
-    }
-    $('#docCountBadge').text(matchCount + ' Doctors Matching');
-    if (matchCount === 0) {
-      $docSelect.append('<option value="" disabled>No matching doctors found</option>');
-    }
-  });
-
-  // Doctor select change
-  $docSelect.on('change', function() {
-    var $sel = $(this).find('option:selected');
-    if (!$sel.length || !$sel.val()) return;
-    
-    var dname = $sel.data('name') || $sel.text();
-    var dspec = $sel.data('spec') || 'General Specialist';
-    var dfee = parseFloat($sel.data('fee') || 0);
-
-    $('#previewDocName').text(dname);
-    $('#previewDocSpec').text(dspec);
-    $('#previewDocFee').text('₹' + dfee.toFixed(2));
-    $('#previewDocFeeText').text('₹' + dfee.toFixed(2));
-  });
-
-  // -------------------------------------------------------------
-  // 3. RESCHEDULE MODAL PRESETS LOGIC
-  // -------------------------------------------------------------
-  $('.btn-date-preset').on('click', function(e) {
-    e.preventDefault();
-    var days = parseInt($(this).data('days') || 0, 10);
-    var d = new Date();
-    d.setDate(d.getDate() + days);
-    
-    var yyyy = d.getFullYear();
-    var mm = String(d.getMonth() + 1).padStart(2, '0');
-    var dd = String(d.getDate()).padStart(2, '0');
-    $('#rescheduleDateInput').val(yyyy + '-' + mm + '-' + dd);
-
-    $('.btn-date-preset').removeClass('btn-primary').addClass('btn-default');
-    $(this).removeClass('btn-default').addClass('btn-primary');
-  });
-
-  $('.btn-slot-preset').on('click', function(e) {
-    e.preventDefault();
-    var from = $(this).data('from');
-    var to = $(this).data('to');
-    $('#fromTimingInput').val(from);
-    $('#toTimingInput').val(to);
-
-    $('.btn-slot-preset').removeClass('btn-info').addClass('btn-default').css({ background: '#ffffff', color: '#334155' });
-    $(this).removeClass('btn-default').addClass('btn-info').css({ background: '#0284c7', color: '#ffffff', borderColor: '#0284c7' });
-  });
-
-  // -------------------------------------------------------------
-  // 4. UNIFIED AJAX FORM SUBMISSIONS FOR ALL 3 PROCESSES
-  // -------------------------------------------------------------
-  function bindAjaxForm(formId, btnId, alertId, modalId) {
-    $(formId).on('submit', function(e) {
-      e.preventDefault();
-      var $form = $(this);
-      var $btn = $(btnId);
-      var $alert = $(alertId);
-      var originalBtnHtml = $btn.html();
-
-      $btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Saving...');
-      $alert.hide().removeClass('alert-danger alert-success');
-
-      var formData = $form.serialize();
-      if (formData.indexOf('is_ajax=') === -1) {
-        formData += '&is_ajax=1';
+        $t.fadeIn(250);
+        setTimeout(function() {
+          $t.fadeOut(400);
+        }, 4000);
       }
 
-      $.ajax({
-        url: $form.attr('action'),
-        type: 'POST',
-        data: formData,
-        dataType: 'json',
-        success: function(resp) {
-          if (resp && resp.status == 1) {
-            showToast(resp.message || 'Updated successfully!', true);
-            $alert.addClass('alert-success').html('<i class="fa fa-check"></i> ' + (resp.message || 'Saved successfully!')).show();
-            setTimeout(function() {
-              $(modalId).modal('hide');
-              window.location.reload();
-            }, 600);
-          } else {
-            $btn.prop('disabled', false).html(originalBtnHtml);
-            var err = (resp && resp.message) ? resp.message : 'An error occurred. Please try again.';
-            $alert.addClass('alert-danger').html('<i class="fa fa-exclamation-circle"></i> ' + err).show();
-            showToast(err, false);
-          }
-        },
-        error: function(xhr, status, error) {
-          $btn.prop('disabled', false).html(originalBtnHtml);
-          var errMsg = 'Server error (' + xhr.status + '). Falling back to standard submission...';
-          $alert.addClass('alert-danger').html('<i class="fa fa-exclamation-circle"></i> ' + errMsg).show();
-          showToast(errMsg, false);
-          // Fallback to normal form submit after 1 second if AJAX failed
-          setTimeout(function() {
-            $form.off('submit').submit();
-          }, 1000);
+      // 1. UPDATE STATUS & PAYMENT MODAL LOGIC
+      $('#selectBookingStatus').on('change', function() {
+        if ($(this).val() === '2') {
+          $('#cancelReasonGroup').slideDown(200);
+        } else {
+          $('#cancelReasonGroup').slideUp(200);
         }
       });
+
+      // 2. REASSIGN DOCTOR FILTER & PREVIEW LOGIC
+      var $docSelect = $('#doctorSelectEl');
+      var allDocOptions = [];
+
+      // Cache options on page load
+      $docSelect.find('option').each(function() {
+        allDocOptions.push({
+          value: $(this).val(),
+          text: $(this).text(),
+          name: $(this).data('name') || '',
+          spec: $(this).data('spec') || '',
+          fee: $(this).data('fee') || 0,
+          id: $(this).data('id') || '',
+          userId: $(this).data('userId') || '',
+          selected: $(this).is(':selected')
+        });
+      });
+
+      // Real-time doctor filter
+      $('#doctorFilterBox').on('input', function() {
+        var query = $.trim($(this).val()).toLowerCase();
+        var matchCount = 0;
+        $docSelect.empty();
+
+        for (var i = 0; i < allDocOptions.length; i++) {
+          var doc = allDocOptions[i];
+          var haystack = (doc.text + ' ' + doc.name + ' ' + doc.spec + ' ' + doc.id + ' ' + doc.userId).toLowerCase();
+          if (!query || haystack.indexOf(query) !== -1) {
+            matchCount++;
+            var $opt = $('<option></option>')
+              .val(doc.value)
+              .text(doc.text)
+              .data('name', doc.name)
+              .data('spec', doc.spec)
+              .data('fee', doc.fee)
+              .data('id', doc.id);
+            if (doc.selected) {
+              $opt.prop('selected', true);
+            }
+            $docSelect.append($opt);
+          }
+        }
+        $('#docCountBadge').text(matchCount + ' Doctors Matching');
+        if (matchCount === 0) {
+          $docSelect.append('<option value="" disabled>No matching doctors found</option>');
+        }
+      });
+
+      // Doctor select change
+      $docSelect.on('change', function() {
+        var $sel = $(this).find('option:selected');
+        if (!$sel.length || !$sel.val()) return;
+        
+        var dname = $sel.data('name') || $sel.text();
+        var dspec = $sel.data('spec') || 'General Specialist';
+        var dfee = parseFloat($sel.data('fee') || 0);
+
+        $('#previewDocName').text(dname);
+        $('#previewDocSpec').text(dspec);
+        $('#previewDocFee').text('₹' + dfee.toFixed(2));
+        $('#previewDocFeeText').text('₹' + dfee.toFixed(2));
+      });
+
+      // 3. RESCHEDULE MODAL PRESETS LOGIC
+      $('.btn-date-preset').on('click', function(e) {
+        e.preventDefault();
+        var days = parseInt($(this).data('days') || 0, 10);
+        var d = new Date();
+        d.setDate(d.getDate() + days);
+        
+        var yyyy = d.getFullYear();
+        var mm = String(d.getMonth() + 1).padStart(2, '0');
+        var dd = String(d.getDate()).padStart(2, '0');
+        $('#rescheduleDateInput').val(yyyy + '-' + mm + '-' + dd);
+
+        $('.btn-date-preset').removeClass('btn-primary').addClass('btn-default');
+        $(this).removeClass('btn-default').addClass('btn-primary');
+      });
+
+      $('.btn-slot-preset').on('click', function(e) {
+        e.preventDefault();
+        var from = $(this).data('from');
+        var to = $(this).data('to');
+        $('#fromTimingInput').val(from);
+        $('#toTimingInput').val(to);
+
+        $('.btn-slot-preset').removeClass('btn-info').addClass('btn-default').css({ background: '#ffffff', color: '#334155' });
+        $(this).removeClass('btn-default').addClass('btn-info').css({ background: '#0284c7', color: '#ffffff', borderColor: '#0284c7' });
+      });
+
+      // 4. UNIFIED AJAX FORM SUBMISSIONS FOR ALL 3 PROCESSES
+      function bindAjaxForm(formId, btnId, alertId, modalId) {
+        $(formId).on('submit', function(e) {
+          e.preventDefault();
+          var $form = $(this);
+          var $btn = $(btnId);
+          var $alert = $(alertId);
+          var originalBtnHtml = $btn.html();
+
+          $btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Saving...');
+          $alert.hide().removeClass('alert-danger alert-success');
+
+          var formData = $form.serialize();
+          if (formData.indexOf('is_ajax=') === -1) {
+            formData += '&is_ajax=1';
+          }
+
+          $.ajax({
+            url: $form.attr('action'),
+            type: 'POST',
+            data: formData,
+            dataType: 'json',
+            success: function(resp) {
+              if (resp && resp.status == 1) {
+                showToast(resp.message || 'Updated successfully!', true);
+                $alert.addClass('alert-success').html('<i class="fa fa-check"></i> ' + (resp.message || 'Saved successfully!')).show();
+                setTimeout(function() {
+                  $(modalId).modal('hide');
+                  window.location.reload();
+                }, 600);
+              } else {
+                $btn.prop('disabled', false).html(originalBtnHtml);
+                var err = (resp && resp.message) ? resp.message : 'An error occurred. Please try again.';
+                $alert.addClass('alert-danger').html('<i class="fa fa-exclamation-circle"></i> ' + err).show();
+                showToast(err, false);
+              }
+            },
+            error: function(xhr, status, error) {
+              $btn.prop('disabled', false).html(originalBtnHtml);
+              var errMsg = 'Server error (' + xhr.status + '). Falling back to standard submission...';
+              $alert.addClass('alert-danger').html('<i class="fa fa-exclamation-circle"></i> ' + errMsg).show();
+              showToast(errMsg, false);
+              setTimeout(function() {
+                $form.off('submit').submit();
+              }, 1000);
+            }
+          });
+        });
+      }
+
+      // Bind the 3 process forms
+      bindAjaxForm('#formUpdateStatus', '#btnSubmitStatus', '#statusModalAlert', '#updateStatusModal');
+      bindAjaxForm('#formReassignDoctor', '#btnSubmitDoctor', '#doctorModalAlert', '#reassignDoctorModal');
+      bindAjaxForm('#formReschedule', '#btnSubmitReschedule', '#rescheduleModalAlert', '#rescheduleModal');
     });
   }
 
-  // Bind the 3 process forms
-  bindAjaxForm('#formUpdateStatus', '#btnSubmitStatus', '#statusModalAlert', '#updateStatusModal');
-  bindAjaxForm('#formReassignDoctor', '#btnSubmitDoctor', '#doctorModalAlert', '#reassignDoctorModal');
-  bindAjaxForm('#formReschedule', '#btnSubmitReschedule', '#rescheduleModalAlert', '#rescheduleModal');
-
-})(jQuery);
+  if (document.readyState === 'complete' || document.readyState === 'interactive') {
+    startDossierApp();
+  } else {
+    document.addEventListener('DOMContentLoaded', startDossierApp);
+  }
+})();
 </script>
 
