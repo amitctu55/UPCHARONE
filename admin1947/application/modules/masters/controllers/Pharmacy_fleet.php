@@ -7,7 +7,9 @@ defined('BASEPATH') OR exit('No direct script access allowed');
  * Delivery Fleet Roster, Live Dispatch, and Financial Settlements.
  *
  * Implements:
+ * - Self-healing schema provisioning (_ensure_tables) for zero-downtime production deployment
  * - Server-side tab rendering (?tab=pharmacy|fleet|dispatch|settlements)
+ * - Safe defensive database querying (verifies table and column existence)
  * - CodeIgniter Pagination with page_query_string = TRUE (10 rows per page)
  * - Lightweight database querying (only active tab records fetched)
  * - Dedicated POST endpoints for Add Pharmacy, Onboard Rider, and Record Settlement
@@ -21,13 +23,326 @@ class Pharmacy_fleet extends CI_Controller {
         $this->load->library('pagination');
         $this->load->database();
 
-        // Ensure admin session access
-        if (!$this->session->userdata('adminuserid') && !$this->session->userdata('userid') && !$this->session->userdata('username')) {
-            $this->session->set_userdata('username', 'Super Admin');
-            $this->session->set_userdata('adminuserid', 1);
-            $this->session->set_userdata('code', 'A');
-        } elseif (!$this->session->userdata('code')) {
-            $this->session->set_userdata('code', 'A');
+        // 1. Self-healing schema synchronization: ensure tables and columns exist
+        $this->_ensure_tables();
+
+        // 2. Admin session & guard token bridge
+        if (!$this->session->userdata('userid') && !$this->session->userdata('username')) {
+            $cookieToken = $this->input->cookie('upchar_admin_guard', TRUE);
+            if ($cookieToken) {
+                $decoded = json_decode(base64_decode($cookieToken), TRUE);
+                if (is_array($decoded) && !empty($decoded['adminuserid']) && !empty($decoded['sig'])) {
+                    $expectedSig = hash_hmac('sha256', $decoded['adminuserid'] . '|' . $decoded['username'] . '|' . $decoded['role'], 'UpcharMasterAdminSecret2026');
+                    if (hash_equals($expectedSig, $decoded['sig'])) {
+                        $this->session->set_userdata([
+                            'adminuserid'      => $decoded['adminuserid'],
+                            'userid'           => $decoded['adminuserid'],
+                            'username'         => $decoded['username'],
+                            'code'             => '1',
+                            'active_auth_role' => 'admin',
+                            'logged_in'        => TRUE
+                        ]);
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Self-healing Database Schema Synchronizer
+     * Automatically provisions missing tables and columns on production / staging environments
+     */
+    private function _ensure_tables() {
+        try {
+            if (!$this->db) {
+                return;
+            }
+
+            // 1. pharmacy_stores table
+            $this->db->query("CREATE TABLE IF NOT EXISTS `pharmacy_stores` (
+                `id` INT(11) UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+                `hospital_id` INT(11) UNSIGNED NULL,
+                `associated_doctor_id` INT(11) UNSIGNED NULL,
+                `store_name` VARCHAR(255) NOT NULL,
+                `drug_license_no` VARCHAR(100) NULL,
+                `gstin` VARCHAR(50) NULL,
+                `phone` VARCHAR(20) NULL,
+                `email` VARCHAR(100) NULL,
+                `address` TEXT NULL,
+                `city` VARCHAR(100) DEFAULT 'Varanasi',
+                `pincode` VARCHAR(10) NULL,
+                `latitude` DECIMAL(10, 8) DEFAULT 25.31760000,
+                `longitude` DECIMAL(11, 8) DEFAULT 82.97390000,
+                `commission_rate` DECIMAL(5, 2) DEFAULT 8.00,
+                `delivery_radius_km` DECIMAL(4, 1) DEFAULT 5.0,
+                `operating_hours` VARCHAR(100) DEFAULT '09:00 AM - 10:00 PM',
+                `max_queue_limit` INT DEFAULT 25,
+                `is_emergency_closed` TINYINT(1) DEFAULT 0,
+                `is_verified` TINYINT(1) DEFAULT 1,
+                `pharmacist_name` VARCHAR(100) NULL,
+                `store_photo` VARCHAR(255) NULL,
+                `drug_license_file` VARCHAR(255) NULL,
+                `gst_certificate` VARCHAR(255) NULL,
+                `is_active` TINYINT(1) DEFAULT 1,
+                `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+                `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                INDEX `idx_ps_city` (`city`),
+                INDEX `idx_ps_active` (`is_active`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+
+            // Ensure additive columns in pharmacy_stores if table existed previously with older schema
+            if ($this->db->table_exists('pharmacy_stores')) {
+                if (!$this->db->field_exists('delivery_radius_km', 'pharmacy_stores')) {
+                    @$this->db->query("ALTER TABLE `pharmacy_stores` ADD COLUMN `delivery_radius_km` DECIMAL(4, 1) DEFAULT 5.0");
+                }
+                if (!$this->db->field_exists('operating_hours', 'pharmacy_stores')) {
+                    @$this->db->query("ALTER TABLE `pharmacy_stores` ADD COLUMN `operating_hours` VARCHAR(100) DEFAULT '09:00 AM - 10:00 PM'");
+                }
+                if (!$this->db->field_exists('max_queue_limit', 'pharmacy_stores')) {
+                    @$this->db->query("ALTER TABLE `pharmacy_stores` ADD COLUMN `max_queue_limit` INT DEFAULT 25");
+                }
+                if (!$this->db->field_exists('is_emergency_closed', 'pharmacy_stores')) {
+                    @$this->db->query("ALTER TABLE `pharmacy_stores` ADD COLUMN `is_emergency_closed` TINYINT(1) DEFAULT 0");
+                }
+                if (!$this->db->field_exists('is_verified', 'pharmacy_stores')) {
+                    @$this->db->query("ALTER TABLE `pharmacy_stores` ADD COLUMN `is_verified` TINYINT(1) DEFAULT 1");
+                }
+                if (!$this->db->field_exists('commission_rate', 'pharmacy_stores')) {
+                    @$this->db->query("ALTER TABLE `pharmacy_stores` ADD COLUMN `commission_rate` DECIMAL(5, 2) DEFAULT 8.00");
+                }
+                if (!$this->db->field_exists('drug_license_no', 'pharmacy_stores')) {
+                    @$this->db->query("ALTER TABLE `pharmacy_stores` ADD COLUMN `drug_license_no` VARCHAR(100) NULL");
+                }
+                if (!$this->db->field_exists('gstin', 'pharmacy_stores')) {
+                    @$this->db->query("ALTER TABLE `pharmacy_stores` ADD COLUMN `gstin` VARCHAR(50) NULL");
+                }
+                if (!$this->db->field_exists('phone', 'pharmacy_stores')) {
+                    @$this->db->query("ALTER TABLE `pharmacy_stores` ADD COLUMN `phone` VARCHAR(20) NULL");
+                }
+                if (!$this->db->field_exists('email', 'pharmacy_stores')) {
+                    @$this->db->query("ALTER TABLE `pharmacy_stores` ADD COLUMN `email` VARCHAR(100) NULL");
+                }
+                if (!$this->db->field_exists('address', 'pharmacy_stores')) {
+                    @$this->db->query("ALTER TABLE `pharmacy_stores` ADD COLUMN `address` TEXT NULL");
+                }
+                if (!$this->db->field_exists('city', 'pharmacy_stores')) {
+                    @$this->db->query("ALTER TABLE `pharmacy_stores` ADD COLUMN `city` VARCHAR(100) DEFAULT 'Varanasi'");
+                }
+                if (!$this->db->field_exists('hospital_id', 'pharmacy_stores')) {
+                    @$this->db->query("ALTER TABLE `pharmacy_stores` ADD COLUMN `hospital_id` INT(11) UNSIGNED NULL");
+                }
+                if (!$this->db->field_exists('associated_doctor_id', 'pharmacy_stores')) {
+                    @$this->db->query("ALTER TABLE `pharmacy_stores` ADD COLUMN `associated_doctor_id` INT(11) UNSIGNED NULL");
+                }
+            }
+
+            // 2. delivery_riders table
+            $this->db->query("CREATE TABLE IF NOT EXISTS `delivery_riders` (
+                `id` INT(11) UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+                `name` VARCHAR(100) NULL,
+                `rider_name` VARCHAR(100) NULL,
+                `phone` VARCHAR(20) NOT NULL,
+                `email` VARCHAR(100) NULL,
+                `driving_license_no` VARCHAR(50) NULL,
+                `vehicle_type` VARCHAR(50) DEFAULT 'Bike',
+                `vehicle_number` VARCHAR(50) NOT NULL,
+                `current_lat` DECIMAL(10, 8) DEFAULT 25.31760000,
+                `current_lng` DECIMAL(11, 8) DEFAULT 82.97390000,
+                `current_latitude` DECIMAL(10, 8) DEFAULT 25.31760000,
+                `current_longitude` DECIMAL(11, 8) DEFAULT 82.97390000,
+                `status` ENUM('AVAILABLE', 'BUSY', 'OFFLINE') DEFAULT 'AVAILABLE',
+                `is_verified` TINYINT(1) DEFAULT 1,
+                `is_active` TINYINT(1) DEFAULT 1,
+                `total_completed_orders` INT DEFAULT 0,
+                `wallet_balance` DECIMAL(10, 2) DEFAULT 0.00,
+                `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+                `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                INDEX `idx_dr_status` (`status`, `is_active`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+
+            // Ensure additive columns in delivery_riders if table existed previously with older schema
+            if ($this->db->table_exists('delivery_riders')) {
+                if (!$this->db->field_exists('name', 'delivery_riders')) {
+                    @$this->db->query("ALTER TABLE `delivery_riders` ADD COLUMN `name` VARCHAR(100) NULL AFTER `id`");
+                }
+                if (!$this->db->field_exists('rider_name', 'delivery_riders')) {
+                    @$this->db->query("ALTER TABLE `delivery_riders` ADD COLUMN `rider_name` VARCHAR(100) NULL AFTER `name`");
+                }
+                if (!$this->db->field_exists('email', 'delivery_riders')) {
+                    @$this->db->query("ALTER TABLE `delivery_riders` ADD COLUMN `email` VARCHAR(100) NULL");
+                }
+                if (!$this->db->field_exists('driving_license_no', 'delivery_riders')) {
+                    @$this->db->query("ALTER TABLE `delivery_riders` ADD COLUMN `driving_license_no` VARCHAR(50) NULL");
+                }
+                if (!$this->db->field_exists('vehicle_type', 'delivery_riders')) {
+                    @$this->db->query("ALTER TABLE `delivery_riders` ADD COLUMN `vehicle_type` VARCHAR(50) DEFAULT 'Bike'");
+                }
+                if (!$this->db->field_exists('current_latitude', 'delivery_riders')) {
+                    @$this->db->query("ALTER TABLE `delivery_riders` ADD COLUMN `current_latitude` DECIMAL(10, 8) DEFAULT 25.31760000");
+                }
+                if (!$this->db->field_exists('current_longitude', 'delivery_riders')) {
+                    @$this->db->query("ALTER TABLE `delivery_riders` ADD COLUMN `current_longitude` DECIMAL(11, 8) DEFAULT 82.97390000");
+                }
+                if (!$this->db->field_exists('current_lat', 'delivery_riders')) {
+                    @$this->db->query("ALTER TABLE `delivery_riders` ADD COLUMN `current_lat` DECIMAL(10, 8) DEFAULT 25.31760000");
+                }
+                if (!$this->db->field_exists('current_lng', 'delivery_riders')) {
+                    @$this->db->query("ALTER TABLE `delivery_riders` ADD COLUMN `current_lng` DECIMAL(11, 8) DEFAULT 82.97390000");
+                }
+                if (!$this->db->field_exists('is_verified', 'delivery_riders')) {
+                    @$this->db->query("ALTER TABLE `delivery_riders` ADD COLUMN `is_verified` TINYINT(1) DEFAULT 1");
+                }
+                if (!$this->db->field_exists('total_completed_orders', 'delivery_riders')) {
+                    @$this->db->query("ALTER TABLE `delivery_riders` ADD COLUMN `total_completed_orders` INT DEFAULT 0");
+                }
+                if (!$this->db->field_exists('wallet_balance', 'delivery_riders')) {
+                    @$this->db->query("ALTER TABLE `delivery_riders` ADD COLUMN `wallet_balance` DECIMAL(10, 2) DEFAULT 0.00");
+                }
+                // Sync name / rider_name
+                @$this->db->query("UPDATE `delivery_riders` SET `name` = `rider_name` WHERE (`name` IS NULL OR `name` = '') AND `rider_name` IS NOT NULL AND `rider_name` != ''");
+                @$this->db->query("UPDATE `delivery_riders` SET `rider_name` = `name` WHERE (`rider_name` IS NULL OR `rider_name` = '') AND `name` IS NOT NULL AND `name` != ''");
+            }
+
+            // 3. medicine_orders table
+            $this->db->query("CREATE TABLE IF NOT EXISTS `medicine_orders` (
+                `id` INT(11) UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+                `order_code` VARCHAR(50) NOT NULL,
+                `user_id` INT(11) UNSIGNED NULL DEFAULT 0,
+                `pharmacy_id` INT(11) UNSIGNED NULL DEFAULT 0,
+                `prescription_id` INT(11) UNSIGNED NULL DEFAULT 0,
+                `rider_id` INT(11) UNSIGNED NULL DEFAULT 0,
+                `item_total` DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
+                `delivery_fee` DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
+                `total_amount` DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
+                `order_status` ENUM('PLACED', 'PENDING_RX', 'CONFIRMED', 'PACKED', 'ASSIGNED', 'IN_TRANSIT', 'DELIVERED', 'CANCELLED') DEFAULT 'PLACED',
+                `payment_mode` ENUM('COD', 'ONLINE', 'WALLET') DEFAULT 'COD',
+                `payment_status` ENUM('PENDING', 'PAID', 'REFUNDED') DEFAULT 'PENDING',
+                `delivery_otp` VARCHAR(10) DEFAULT '1234',
+                `customer_name` VARCHAR(100) NULL,
+                `customer_phone` VARCHAR(20) NULL,
+                `rider_assigned_at` DATETIME NULL,
+                `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+                `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                INDEX `idx_mo_order_code` (`order_code`),
+                INDEX `idx_mo_status` (`order_status`),
+                INDEX `idx_mo_rider` (`rider_id`),
+                INDEX `idx_mo_pharmacy` (`pharmacy_id`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+
+            // 4. pharmacy_settlements table
+            $this->db->query("CREATE TABLE IF NOT EXISTS `pharmacy_settlements` (
+                `id` INT AUTO_INCREMENT PRIMARY KEY,
+                `pharmacy_id` INT NOT NULL,
+                `settlement_period_start` DATE NOT NULL,
+                `settlement_period_end` DATE NOT NULL,
+                `gross_sales` DECIMAL(12, 2) NOT NULL DEFAULT 0.00,
+                `upchar_commission` DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
+                `net_payout` DECIMAL(12, 2) NOT NULL DEFAULT 0.00,
+                `utr_number` VARCHAR(100) DEFAULT NULL,
+                `settlement_status` ENUM('PENDING', 'PROCESSED', 'FAILED') DEFAULT 'PENDING',
+                `processed_at` DATETIME NULL,
+                `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+                INDEX `idx_ps_pharmacy` (`pharmacy_id`),
+                INDEX `idx_ps_status` (`settlement_status`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+
+            // 5. order_delivery_assignments table
+            $this->db->query("CREATE TABLE IF NOT EXISTS `order_delivery_assignments` (
+                `id` INT AUTO_INCREMENT PRIMARY KEY,
+                `order_id` INT NOT NULL,
+                `rider_id` INT NOT NULL,
+                `assigned_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+                `picked_up_at` DATETIME NULL,
+                `delivered_at` DATETIME NULL,
+                `delivery_status` ENUM('ASSIGNED', 'PICKED_UP', 'DELIVERED', 'FAILED', 'REASSIGNED') DEFAULT 'ASSIGNED',
+                `rider_payout_amount` DECIMAL(8, 2) DEFAULT 35.00,
+                `cod_collected_amount` DECIMAL(10, 2) DEFAULT 0.00,
+                INDEX `idx_oda_order` (`order_id`),
+                INDEX `idx_oda_rider` (`rider_id`),
+                INDEX `idx_oda_status` (`delivery_status`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+
+            // Seed initial records if pharmacy_stores has 0 records
+            if ($this->db->table_exists('pharmacy_stores') && $this->db->count_all('pharmacy_stores') == 0) {
+                $this->db->insert_batch('pharmacy_stores', [
+                    [
+                        'store_name'         => 'Apex Care Medicos & Chemist',
+                        'drug_license_no'    => 'DL-UP-VNS-20B-10842',
+                        'gstin'              => '09AAACA1122D1Z4',
+                        'phone'              => '9838112233',
+                        'email'              => 'apex.medicos@upchar.info',
+                        'address'            => 'Ground Floor, Near Apex Hospital, Sigra',
+                        'city'               => 'Varanasi',
+                        'pincode'            => '221002',
+                        'latitude'           => 25.31760000,
+                        'longitude'          => 82.97390000,
+                        'commission_rate'    => 10.00,
+                        'delivery_radius_km' => 6.0,
+                        'operating_hours'    => '08:00 AM - 11:00 PM',
+                        'is_active'          => 1,
+                        'created_at'         => date('Y-m-d H:i:s')
+                    ],
+                    [
+                        'store_name'         => 'Sanjivani 24x7 Chemist & Druggists',
+                        'drug_license_no'    => 'DL-UP-VNS-21-44589',
+                        'gstin'              => '09BBACB2233E2Z5',
+                        'phone'              => '9450223344',
+                        'email'              => 'sanjivani.vns@upchar.info',
+                        'address'            => 'Plot 42, Maldahiya Crossing',
+                        'city'               => 'Varanasi',
+                        'pincode'            => '221001',
+                        'latitude'           => 25.32620000,
+                        'longitude'          => 82.98600000,
+                        'commission_rate'    => 8.00,
+                        'delivery_radius_km' => 8.0,
+                        'operating_hours'    => '24 Hours Open',
+                        'is_active'          => 1,
+                        'created_at'         => date('Y-m-d H:i:s')
+                    ]
+                ]);
+            }
+
+            // Seed initial records if delivery_riders has 0 records
+            if ($this->db->table_exists('delivery_riders') && $this->db->count_all('delivery_riders') == 0) {
+                $this->db->insert_batch('delivery_riders', [
+                    [
+                        'name'               => 'Rahul Sharma',
+                        'rider_name'         => 'Rahul Sharma',
+                        'phone'              => '9876543210',
+                        'email'              => 'rahul.rider@upchar.info',
+                        'driving_license_no' => 'UP652018000412',
+                        'vehicle_type'       => 'Bike',
+                        'vehicle_number'     => 'UP 65 BT 1024',
+                        'current_lat'        => 25.31800000,
+                        'current_lng'        => 82.97400000,
+                        'current_latitude'   => 25.31800000,
+                        'current_longitude'  => 82.97400000,
+                        'status'             => 'AVAILABLE',
+                        'is_verified'        => 1,
+                        'is_active'          => 1,
+                        'created_at'         => date('Y-m-d H:i:s')
+                    ],
+                    [
+                        'name'               => 'Amit Verma',
+                        'rider_name'         => 'Amit Verma',
+                        'phone'              => '9876543211',
+                        'email'              => 'amit.rider@upchar.info',
+                        'driving_license_no' => 'UP652019000889',
+                        'vehicle_type'       => 'Scooter',
+                        'vehicle_number'     => 'UP 65 CK 5588',
+                        'current_lat'        => 25.32600000,
+                        'current_lng'        => 82.98500000,
+                        'current_latitude'   => 25.32600000,
+                        'current_longitude'  => 82.98500000,
+                        'status'             => 'AVAILABLE',
+                        'is_verified'        => 1,
+                        'is_active'          => 1,
+                        'created_at'         => date('Y-m-d H:i:s')
+                    ]
+                ]);
+            }
+        } catch (\Throwable $e) {
+            log_message('error', 'Pharmacy_fleet _ensure_tables error: ' . $e->getMessage());
         }
     }
 
@@ -57,130 +372,204 @@ class Pharmacy_fleet extends CI_Controller {
         $totalRows = 0;
         $records = [];
 
-        // 1. Server-side Tab Querying: Fetch ONLY the active tab data to eliminate bottlenecks
-        switch ($tab) {
-            case 'fleet':
-                // Total Count for Pagination
-                $this->db->from('delivery_riders dr');
-                if (!empty($keyword)) {
-                    $this->db->group_start();
-                    $this->db->like('dr.name', $keyword);
-                    $this->db->or_like('dr.rider_name', $keyword);
-                    $this->db->or_like('dr.phone', $keyword);
-                    $this->db->or_like('dr.vehicle_number', $keyword);
-                    $this->db->group_end();
-                }
-                $totalRows = $this->db->count_all_results();
+        try {
+            // 1. Server-side Tab Querying: Fetch ONLY active tab data
+            switch ($tab) {
+                case 'fleet':
+                    if ($this->db->table_exists('delivery_riders')) {
+                        // Total Count for Pagination
+                        $this->db->from('delivery_riders dr');
+                        if (!empty($keyword)) {
+                            $this->db->group_start();
+                            if ($this->db->field_exists('name', 'delivery_riders')) {
+                                $this->db->like('dr.name', $keyword);
+                            }
+                            if ($this->db->field_exists('rider_name', 'delivery_riders')) {
+                                $this->db->or_like('dr.rider_name', $keyword);
+                            }
+                            $this->db->or_like('dr.phone', $keyword);
+                            $this->db->or_like('dr.vehicle_number', $keyword);
+                            $this->db->group_end();
+                        }
+                        $totalRows = (int)$this->db->count_all_results();
 
-                // Paginated Query
-                $this->db->select('dr.*, 
-                    (SELECT COUNT(*) FROM medicine_orders mo WHERE mo.rider_id = dr.id AND mo.order_status IN (\'ASSIGNED\', \'IN_TRANSIT\')) as active_deliveries,
-                    (SELECT mo.order_code FROM medicine_orders mo WHERE mo.rider_id = dr.id AND mo.order_status IN (\'ASSIGNED\', \'IN_TRANSIT\') LIMIT 1) as active_order_code,
-                    (SELECT SUM(mo.total_amount) FROM medicine_orders mo WHERE mo.rider_id = dr.id AND mo.payment_mode = \'COD\' AND mo.order_status = \'IN_TRANSIT\') as cod_in_hand');
-                $this->db->from('delivery_riders dr');
-                if (!empty($keyword)) {
-                    $this->db->group_start();
-                    $this->db->like('dr.name', $keyword);
-                    $this->db->or_like('dr.rider_name', $keyword);
-                    $this->db->or_like('dr.phone', $keyword);
-                    $this->db->or_like('dr.vehicle_number', $keyword);
-                    $this->db->group_end();
-                }
-                $this->db->order_by('dr.id', 'ASC');
-                $this->db->limit($perPage, $page);
-                $records = $this->db->get()->result_array();
-                break;
+                        // Paginated Query
+                        if ($this->db->table_exists('medicine_orders')) {
+                            $this->db->select('dr.*, 
+                                (SELECT COUNT(*) FROM medicine_orders mo WHERE mo.rider_id = dr.id AND mo.order_status IN (\'ASSIGNED\', \'IN_TRANSIT\')) as active_deliveries,
+                                (SELECT mo.order_code FROM medicine_orders mo WHERE mo.rider_id = dr.id AND mo.order_status IN (\'ASSIGNED\', \'IN_TRANSIT\') LIMIT 1) as active_order_code,
+                                (SELECT SUM(mo.total_amount) FROM medicine_orders mo WHERE mo.rider_id = dr.id AND mo.payment_mode = \'COD\' AND mo.order_status = \'IN_TRANSIT\') as cod_in_hand');
+                        } else {
+                            $this->db->select('dr.*, 0 as active_deliveries, NULL as active_order_code, 0.00 as cod_in_hand');
+                        }
+                        $this->db->from('delivery_riders dr');
+                        if (!empty($keyword)) {
+                            $this->db->group_start();
+                            if ($this->db->field_exists('name', 'delivery_riders')) {
+                                $this->db->like('dr.name', $keyword);
+                            }
+                            if ($this->db->field_exists('rider_name', 'delivery_riders')) {
+                                $this->db->or_like('dr.rider_name', $keyword);
+                            }
+                            $this->db->or_like('dr.phone', $keyword);
+                            $this->db->or_like('dr.vehicle_number', $keyword);
+                            $this->db->group_end();
+                        }
+                        $this->db->order_by('dr.id', 'ASC');
+                        $this->db->limit($perPage, $page);
+                        $records = (array)$this->db->get()->result_array();
+                    }
+                    break;
 
-            case 'dispatch':
-                // Total Count for Pagination
-                $this->db->from('medicine_orders mo');
-                $this->db->join('pharmacy_stores ps', 'ps.id = mo.pharmacy_id', 'left');
-                if (!empty($keyword)) {
-                    $this->db->group_start();
-                    $this->db->like('mo.order_code', $keyword);
-                    $this->db->or_like('mo.customer_name', $keyword);
-                    $this->db->or_like('mo.customer_phone', $keyword);
-                    $this->db->or_like('ps.store_name', $keyword);
-                    $this->db->group_end();
-                }
-                $totalRows = $this->db->count_all_results();
+                case 'dispatch':
+                    if ($this->db->table_exists('medicine_orders')) {
+                        // Total Count for Pagination
+                        $this->db->from('medicine_orders mo');
+                        if ($this->db->table_exists('pharmacy_stores')) {
+                            $this->db->join('pharmacy_stores ps', 'ps.id = mo.pharmacy_id', 'left');
+                        }
+                        if (!empty($keyword)) {
+                            $this->db->group_start();
+                            $this->db->like('mo.order_code', $keyword);
+                            $this->db->or_like('mo.customer_name', $keyword);
+                            $this->db->or_like('mo.customer_phone', $keyword);
+                            if ($this->db->table_exists('pharmacy_stores')) {
+                                $this->db->or_like('ps.store_name', $keyword);
+                            }
+                            $this->db->group_end();
+                        }
+                        $totalRows = (int)$this->db->count_all_results();
 
-                // Paginated Query
-                $this->db->select('mo.*, ps.store_name, dr.name as rider_name, dr.phone as rider_phone');
-                $this->db->from('medicine_orders mo');
-                $this->db->join('pharmacy_stores ps', 'ps.id = mo.pharmacy_id', 'left');
-                $this->db->join('delivery_riders dr', 'dr.id = mo.rider_id', 'left');
-                if (!empty($keyword)) {
-                    $this->db->group_start();
-                    $this->db->like('mo.order_code', $keyword);
-                    $this->db->or_like('mo.customer_name', $keyword);
-                    $this->db->or_like('mo.customer_phone', $keyword);
-                    $this->db->or_like('ps.store_name', $keyword);
-                    $this->db->group_end();
-                }
-                $this->db->order_by('mo.id', 'DESC');
-                $this->db->limit($perPage, $page);
-                $records = $this->db->get()->result_array();
-                break;
+                        // Paginated Query
+                        $selectCols = 'mo.*';
+                        if ($this->db->table_exists('pharmacy_stores')) {
+                            $selectCols .= ', ps.store_name';
+                        }
+                        if ($this->db->table_exists('delivery_riders')) {
+                            $selectCols .= ', dr.name as rider_name, dr.phone as rider_phone';
+                        }
+                        $this->db->select($selectCols);
+                        $this->db->from('medicine_orders mo');
+                        if ($this->db->table_exists('pharmacy_stores')) {
+                            $this->db->join('pharmacy_stores ps', 'ps.id = mo.pharmacy_id', 'left');
+                        }
+                        if ($this->db->table_exists('delivery_riders')) {
+                            $this->db->join('delivery_riders dr', 'dr.id = mo.rider_id', 'left');
+                        }
+                        if (!empty($keyword)) {
+                            $this->db->group_start();
+                            $this->db->like('mo.order_code', $keyword);
+                            $this->db->or_like('mo.customer_name', $keyword);
+                            $this->db->or_like('mo.customer_phone', $keyword);
+                            if ($this->db->table_exists('pharmacy_stores')) {
+                                $this->db->or_like('ps.store_name', $keyword);
+                            }
+                            $this->db->group_end();
+                        }
+                        $this->db->order_by('mo.id', 'DESC');
+                        $this->db->limit($perPage, $page);
+                        $records = (array)$this->db->get()->result_array();
+                    }
+                    break;
 
-            case 'settlements':
-                // Total Count for Pagination
-                $this->db->from('pharmacy_settlements pset');
-                $this->db->join('pharmacy_stores ps', 'ps.id = pset.pharmacy_id', 'left');
-                if (!empty($keyword)) {
-                    $this->db->group_start();
-                    $this->db->like('ps.store_name', $keyword);
-                    $this->db->or_like('pset.utr_number', $keyword);
-                    $this->db->group_end();
-                }
-                $totalRows = $this->db->count_all_results();
+                case 'settlements':
+                    if ($this->db->table_exists('pharmacy_settlements')) {
+                        // Total Count for Pagination
+                        $this->db->from('pharmacy_settlements pset');
+                        if ($this->db->table_exists('pharmacy_stores')) {
+                            $this->db->join('pharmacy_stores ps', 'ps.id = pset.pharmacy_id', 'left');
+                        }
+                        if (!empty($keyword)) {
+                            $this->db->group_start();
+                            if ($this->db->table_exists('pharmacy_stores')) {
+                                $this->db->like('ps.store_name', $keyword);
+                            }
+                            $this->db->or_like('pset.utr_number', $keyword);
+                            $this->db->group_end();
+                        }
+                        $totalRows = (int)$this->db->count_all_results();
 
-                // Paginated Query
-                $this->db->select('pset.*, ps.store_name, ps.gstin, ps.phone as store_phone');
-                $this->db->from('pharmacy_settlements pset');
-                $this->db->join('pharmacy_stores ps', 'ps.id = pset.pharmacy_id', 'left');
-                if (!empty($keyword)) {
-                    $this->db->group_start();
-                    $this->db->like('ps.store_name', $keyword);
-                    $this->db->or_like('pset.utr_number', $keyword);
-                    $this->db->group_end();
-                }
-                $this->db->order_by('pset.id', 'DESC');
-                $this->db->limit($perPage, $page);
-                $records = $this->db->get()->result_array();
-                break;
+                        // Paginated Query
+                        $selectCols = 'pset.*';
+                        if ($this->db->table_exists('pharmacy_stores')) {
+                            $selectCols .= ', ps.store_name, ps.gstin, ps.phone as store_phone';
+                        }
+                        $this->db->select($selectCols);
+                        $this->db->from('pharmacy_settlements pset');
+                        if ($this->db->table_exists('pharmacy_stores')) {
+                            $this->db->join('pharmacy_stores ps', 'ps.id = pset.pharmacy_id', 'left');
+                        }
+                        if (!empty($keyword)) {
+                            $this->db->group_start();
+                            if ($this->db->table_exists('pharmacy_stores')) {
+                                $this->db->like('ps.store_name', $keyword);
+                            }
+                            $this->db->or_like('pset.utr_number', $keyword);
+                            $this->db->group_end();
+                        }
+                        $this->db->order_by('pset.id', 'DESC');
+                        $this->db->limit($perPage, $page);
+                        $records = (array)$this->db->get()->result_array();
+                    }
+                    break;
 
-            case 'pharmacy':
-            default:
-                // Total Count for Pagination
-                $this->db->from('pharmacy_stores ps');
-                if (!empty($keyword)) {
-                    $this->db->group_start();
-                    $this->db->like('ps.store_name', $keyword);
-                    $this->db->or_like('ps.phone', $keyword);
-                    $this->db->or_like('ps.drug_license_no', $keyword);
-                    $this->db->or_like('ps.gstin', $keyword);
-                    $this->db->group_end();
-                }
-                $totalRows = $this->db->count_all_results();
+                case 'pharmacy':
+                default:
+                    if ($this->db->table_exists('pharmacy_stores')) {
+                        // Total Count for Pagination
+                        $this->db->from('pharmacy_stores ps');
+                        if (!empty($keyword)) {
+                            $this->db->group_start();
+                            $this->db->like('ps.store_name', $keyword);
+                            $this->db->or_like('ps.phone', $keyword);
+                            if ($this->db->field_exists('drug_license_no', 'pharmacy_stores')) {
+                                $this->db->or_like('ps.drug_license_no', $keyword);
+                            }
+                            if ($this->db->field_exists('gstin', 'pharmacy_stores')) {
+                                $this->db->or_like('ps.gstin', $keyword);
+                            }
+                            $this->db->group_end();
+                        }
+                        $totalRows = (int)$this->db->count_all_results();
 
-                // Paginated Query
-                $this->db->select("ps.*, h.name as hospital_name, CONCAT('Dr. ', d.fname, ' ', d.lname) as doctor_name");
-                $this->db->from('pharmacy_stores ps');
-                $this->db->join('hospital h', 'h.id = ps.hospital_id', 'left');
-                $this->db->join('profile_dr d', 'd.id = ps.associated_doctor_id', 'left');
-                if (!empty($keyword)) {
-                    $this->db->group_start();
-                    $this->db->like('ps.store_name', $keyword);
-                    $this->db->or_like('ps.phone', $keyword);
-                    $this->db->or_like('ps.drug_license_no', $keyword);
-                    $this->db->or_like('ps.gstin', $keyword);
-                    $this->db->group_end();
-                }
-                $this->db->order_by('ps.id', 'DESC');
-                $this->db->limit($perPage, $page);
-                $records = $this->db->get()->result_array();
-                break;
+                        // Paginated Query
+                        $selectCols = "ps.*";
+                        if ($this->db->table_exists('hospital')) {
+                            $selectCols .= ", h.name as hospital_name";
+                        }
+                        if ($this->db->table_exists('profile_dr')) {
+                            $selectCols .= ", CONCAT('Dr. ', d.fname, ' ', d.lname) as doctor_name";
+                        }
+                        $this->db->select($selectCols);
+                        $this->db->from('pharmacy_stores ps');
+                        if ($this->db->table_exists('hospital')) {
+                            $this->db->join('hospital h', 'h.id = ps.hospital_id', 'left');
+                        }
+                        if ($this->db->table_exists('profile_dr')) {
+                            $this->db->join('profile_dr d', 'd.id = ps.associated_doctor_id', 'left');
+                        }
+                        if (!empty($keyword)) {
+                            $this->db->group_start();
+                            $this->db->like('ps.store_name', $keyword);
+                            $this->db->or_like('ps.phone', $keyword);
+                            if ($this->db->field_exists('drug_license_no', 'pharmacy_stores')) {
+                                $this->db->or_like('ps.drug_license_no', $keyword);
+                            }
+                            if ($this->db->field_exists('gstin', 'pharmacy_stores')) {
+                                $this->db->or_like('ps.gstin', $keyword);
+                            }
+                            $this->db->group_end();
+                        }
+                        $this->db->order_by('ps.id', 'DESC');
+                        $this->db->limit($perPage, $page);
+                        $records = (array)$this->db->get()->result_array();
+                    }
+                    break;
+            }
+        } catch (\Throwable $e) {
+            log_message('error', 'Pharmacy_fleet querying exception: ' . $e->getMessage());
+            $records = [];
+            $totalRows = 0;
         }
 
         // 2. CodeIgniter Pagination Configuration
@@ -214,21 +603,29 @@ class Pharmacy_fleet extends CI_Controller {
         $this->pagination->initialize($config);
         $data['pagination'] = $this->pagination->create_links();
 
-        // 3. Lightweight KPI Stats Summary
-        $data['total_stores']        = $this->db->count_all('pharmacy_stores');
-        $data['total_riders']        = $this->db->count_all('delivery_riders');
-        $data['active_riders_count'] = $this->db->where('status !=', 'OFFLINE')->where('is_active', 1)->count_all_results('delivery_riders');
-        $data['active_orders_count'] = $this->db->where_in('order_status', ['PACKED', 'ASSIGNED', 'IN_TRANSIT'])->count_all_results('medicine_orders');
-        $data['total_settlements']   = $this->db->count_all('pharmacy_settlements');
+        // 3. Lightweight KPI Stats Summary (Defensive counts)
+        $data['total_stores']        = $this->db->table_exists('pharmacy_stores') ? (int)$this->db->count_all('pharmacy_stores') : 0;
+        $data['total_riders']        = $this->db->table_exists('delivery_riders') ? (int)$this->db->count_all('delivery_riders') : 0;
+        $data['active_riders_count'] = $this->db->table_exists('delivery_riders') ? 
+            (int)$this->db->where('status !=', 'OFFLINE')->where('is_active', 1)->count_all_results('delivery_riders') : 0;
+        $data['active_orders_count'] = $this->db->table_exists('medicine_orders') ? 
+            (int)$this->db->where_in('order_status', ['PACKED', 'ASSIGNED', 'IN_TRANSIT'])->count_all_results('medicine_orders') : 0;
+        $data['total_settlements']   = $this->db->table_exists('pharmacy_settlements') ? 
+            (int)$this->db->count_all('pharmacy_settlements') : 0;
 
-        // 4. Modal Dropdowns (loaded only as needed)
-        $data['all_doctors']   = $this->db->select('id, fname, lname')->order_by('fname', 'ASC')->get_where('profile_dr', ['approved' => '1', 'verified' => '1'])->result_array();
-        $data['all_hospitals'] = $this->db->select('id, name, city')->order_by('name', 'ASC')->get_where('hospital', ['status' => '1'])->result_array();
-        $data['all_stores']    = $this->db->select('id, store_name, commission_rate')->order_by('store_name', 'ASC')->get('pharmacy_stores')->result_array();
-        $data['all_riders']    = $this->db->select('id, name, rider_name, vehicle_number, status')->where('is_active', 1)->get('delivery_riders')->result_array();
-        $data['active_orders'] = $this->db->select('id, order_code, order_status, total_amount')
-            ->where_in('order_status', ['PACKED', 'ASSIGNED', 'IN_TRANSIT'])
-            ->order_by('id', 'DESC')->limit(30)->get('medicine_orders')->result_array();
+        // 4. Modal Dropdowns (loaded defensively)
+        $data['all_doctors']   = $this->db->table_exists('profile_dr') ? 
+            (array)$this->db->select('id, fname, lname')->order_by('fname', 'ASC')->get_where('profile_dr', ['approved' => '1', 'verified' => '1'])->result_array() : [];
+        $data['all_hospitals'] = $this->db->table_exists('hospital') ? 
+            (array)$this->db->select('id, name, city')->order_by('name', 'ASC')->get_where('hospital', ['status' => '1'])->result_array() : [];
+        $data['all_stores']    = $this->db->table_exists('pharmacy_stores') ? 
+            (array)$this->db->select('id, store_name, commission_rate')->order_by('store_name', 'ASC')->get('pharmacy_stores')->result_array() : [];
+        $data['all_riders']    = $this->db->table_exists('delivery_riders') ? 
+            (array)$this->db->select('id, name, rider_name, vehicle_number, status')->where('is_active', 1)->get('delivery_riders')->result_array() : [];
+        $data['active_orders'] = $this->db->table_exists('medicine_orders') ? 
+            (array)$this->db->select('id, order_code, order_status, total_amount')
+                ->where_in('order_status', ['PACKED', 'ASSIGNED', 'IN_TRANSIT'])
+                ->order_by('id', 'DESC')->limit(30)->get('medicine_orders')->result_array() : [];
 
         // 5. Data payload passed to view
         $data['active_tab']    = $tab;
@@ -239,11 +636,14 @@ class Pharmacy_fleet extends CI_Controller {
         $data['heading_title'] = 'Pharmacy & Delivery Fleet Control Panel';
         $data['module']        = 'Masters';
 
+        // 6. Complete standard layout load
         $this->load->view('inc/topheaderlink');
         $this->load->view('inc/topheader');
-        $this->load->view('inc/sidebar');
         $this->load->view('masters/pharmacy_fleet_view', $data);
+        $this->load->view('inc/sidebar');
+        $this->load->view('inc/headersetting');
         $this->load->view('inc/footerlink');
+        $this->load->view('inc/table_footer');
     }
 
     /* =========================================================================
@@ -298,20 +698,24 @@ class Pharmacy_fleet extends CI_Controller {
 
         // GET Request: Render Full-Page Dedicated Form View
         $data['store'] = [];
-        if ($id > 0) {
-            $data['store'] = $this->db->get_where('pharmacy_stores', ['id' => $id])->row_array();
+        if ($id > 0 && $this->db->table_exists('pharmacy_stores')) {
+            $data['store'] = (array)$this->db->get_where('pharmacy_stores', ['id' => $id])->row_array();
         }
 
-        $data['all_doctors']   = $this->db->select('id, fname, lname')->order_by('fname', 'ASC')->get_where('profile_dr', ['approved' => '1', 'verified' => '1'])->result_array();
-        $data['all_hospitals'] = $this->db->select('id, name, city')->order_by('name', 'ASC')->get_where('hospital', ['status' => '1'])->result_array();
+        $data['all_doctors']   = $this->db->table_exists('profile_dr') ? 
+            (array)$this->db->select('id, fname, lname')->order_by('fname', 'ASC')->get_where('profile_dr', ['approved' => '1', 'verified' => '1'])->result_array() : [];
+        $data['all_hospitals'] = $this->db->table_exists('hospital') ? 
+            (array)$this->db->select('id, name, city')->order_by('name', 'ASC')->get_where('hospital', ['status' => '1'])->result_array() : [];
         $data['heading_title'] = $id > 0 ? 'Edit Partner Pharmacy' : 'Add New Partner Pharmacy';
         $data['module']        = 'Masters';
 
         $this->load->view('inc/topheaderlink');
         $this->load->view('inc/topheader');
-        $this->load->view('inc/sidebar');
         $this->load->view('masters/add_pharmacy_view', $data);
+        $this->load->view('inc/sidebar');
+        $this->load->view('inc/headersetting');
         $this->load->view('inc/footerlink');
+        $this->load->view('inc/table_footer');
     }
 
     /**
@@ -331,7 +735,7 @@ class Pharmacy_fleet extends CI_Controller {
         $value   = (int)$this->input->post('value');
 
         $allowedFields = ['is_active', 'is_verified', 'is_emergency_closed'];
-        if ($storeId > 0 && in_array($field, $allowedFields)) {
+        if ($storeId > 0 && in_array($field, $allowedFields) && $this->db->table_exists('pharmacy_stores')) {
             $this->db->where('id', $storeId)->update('pharmacy_stores', [
                 $field       => $value ? 1 : 0,
                 'updated_at' => date('Y-m-d H:i:s')
@@ -401,8 +805,8 @@ class Pharmacy_fleet extends CI_Controller {
 
         // GET Request: Render Full-Page Dedicated Form View
         $data['rider'] = [];
-        if ($id > 0) {
-            $data['rider'] = $this->db->get_where('delivery_riders', ['id' => $id])->row_array();
+        if ($id > 0 && $this->db->table_exists('delivery_riders')) {
+            $data['rider'] = (array)$this->db->get_where('delivery_riders', ['id' => $id])->row_array();
         }
 
         $data['heading_title'] = $id > 0 ? 'Edit Delivery Rider' : 'Onboard New Delivery Rider';
@@ -410,9 +814,11 @@ class Pharmacy_fleet extends CI_Controller {
 
         $this->load->view('inc/topheaderlink');
         $this->load->view('inc/topheader');
-        $this->load->view('inc/sidebar');
         $this->load->view('masters/onboard_rider_view', $data);
+        $this->load->view('inc/sidebar');
+        $this->load->view('inc/headersetting');
         $this->load->view('inc/footerlink');
+        $this->load->view('inc/table_footer');
     }
 
     /**
@@ -463,16 +869,19 @@ class Pharmacy_fleet extends CI_Controller {
         }
 
         // GET Request: Render Full-Page Dedicated Form View
-        $data['all_stores']        = $this->db->select('id, store_name, commission_rate')->order_by('store_name', 'ASC')->get('pharmacy_stores')->result_array();
+        $data['all_stores']        = $this->db->table_exists('pharmacy_stores') ? 
+            (array)$this->db->select('id, store_name, commission_rate')->order_by('store_name', 'ASC')->get('pharmacy_stores')->result_array() : [];
         $data['selected_store_id'] = (int)$this->input->get('store_id');
         $data['heading_title']     = 'Process Pharmacy Settlement';
         $data['module']            = 'Masters';
 
         $this->load->view('inc/topheaderlink');
         $this->load->view('inc/topheader');
-        $this->load->view('inc/sidebar');
         $this->load->view('masters/record_settlement_view', $data);
+        $this->load->view('inc/sidebar');
+        $this->load->view('inc/headersetting');
         $this->load->view('inc/footerlink');
+        $this->load->view('inc/table_footer');
     }
 
     /**
@@ -494,7 +903,7 @@ class Pharmacy_fleet extends CI_Controller {
             $newRiderId = (int)$this->input->post('new_rider_id');
             $reason = trim($this->input->post('reason') ?: 'Manual Dispatch Reassignment');
 
-            if ($order_id && $newRiderId) {
+            if ($order_id && $newRiderId && $this->db->table_exists('medicine_orders') && $this->db->table_exists('delivery_riders')) {
                 $order = $this->db->get_where('medicine_orders', ['id' => $order_id])->row();
                 $rider = $this->db->get_where('delivery_riders', ['id' => $newRiderId])->row();
 
@@ -513,16 +922,19 @@ class Pharmacy_fleet extends CI_Controller {
 
                     $this->db->where('id', $newRiderId)->update('delivery_riders', ['status' => 'BUSY']);
 
-                    $this->db->insert('order_delivery_assignments', [
-                        'order_id'            => $order_id,
-                        'rider_id'            => $newRiderId,
-                        'assigned_at'         => date('Y-m-d H:i:s'),
-                        'delivery_status'     => 'REASSIGNED',
-                        'rider_payout_amount' => 35.00
-                    ]);
+                    if ($this->db->table_exists('order_delivery_assignments')) {
+                        $this->db->insert('order_delivery_assignments', [
+                            'order_id'            => $order_id,
+                            'rider_id'            => $newRiderId,
+                            'assigned_at'         => date('Y-m-d H:i:s'),
+                            'delivery_status'     => 'REASSIGNED',
+                            'rider_payout_amount' => 35.00
+                        ]);
+                    }
 
-                    $this->session->set_flashdata('success', "Order #{$order->order_code} successfully dispatched/reassigned to {$rider->name}.");
-                    $this->session->set_flashdata('success_msg', "Order #{$order->order_code} successfully dispatched/reassigned to {$rider->name}.");
+                    $riderDisplayName = $rider->name ?: $rider->rider_name ?: 'Rider #' . $rider->id;
+                    $this->session->set_flashdata('success', "Order #{$order->order_code} successfully dispatched/reassigned to {$riderDisplayName}.");
+                    $this->session->set_flashdata('success_msg', "Order #{$order->order_code} successfully dispatched/reassigned to {$riderDisplayName}.");
                 }
             }
 
@@ -532,26 +944,31 @@ class Pharmacy_fleet extends CI_Controller {
 
         // GET Request: Render Full-Page Dedicated Form View
         $data['selected_order'] = [];
-        if ($order_id > 0) {
-            $data['selected_order'] = $this->db->select('mo.*, ps.store_name')
-                ->from('medicine_orders mo')
-                ->join('pharmacy_stores ps', 'ps.id = mo.pharmacy_id', 'left')
-                ->where('mo.id', $order_id)
-                ->get()->row_array();
+        if ($order_id > 0 && $this->db->table_exists('medicine_orders')) {
+            $q = $this->db->select('mo.*' . ($this->db->table_exists('pharmacy_stores') ? ', ps.store_name' : ''))
+                ->from('medicine_orders mo');
+            if ($this->db->table_exists('pharmacy_stores')) {
+                $q->join('pharmacy_stores ps', 'ps.id = mo.pharmacy_id', 'left');
+            }
+            $data['selected_order'] = (array)$q->where('mo.id', $order_id)->get()->row_array();
         }
 
-        $data['all_riders']    = $this->db->select('id, name, rider_name, vehicle_number, status')->where('is_active', 1)->get('delivery_riders')->result_array();
-        $data['active_orders'] = $this->db->select('mo.id, mo.order_code, mo.customer_name, mo.order_status, mo.total_amount')
-            ->where_in('order_status', ['PACKED', 'ASSIGNED', 'IN_TRANSIT', 'PLACED', 'CONFIRMED'])
-            ->order_by('id', 'DESC')->limit(50)->get('medicine_orders mo')->result_array();
+        $data['all_riders']    = $this->db->table_exists('delivery_riders') ? 
+            (array)$this->db->select('id, name, rider_name, vehicle_number, status')->where('is_active', 1)->get('delivery_riders')->result_array() : [];
+        $data['active_orders'] = $this->db->table_exists('medicine_orders') ? 
+            (array)$this->db->select('mo.id, mo.order_code, mo.customer_name, mo.order_status, mo.total_amount')
+                ->where_in('order_status', ['PACKED', 'ASSIGNED', 'IN_TRANSIT', 'PLACED', 'CONFIRMED'])
+                ->order_by('id', 'DESC')->limit(50)->get('medicine_orders mo')->result_array() : [];
         $data['heading_title'] = 'Manual Order Dispatch & Reassignment';
         $data['module']        = 'Masters';
 
         $this->load->view('inc/topheaderlink');
         $this->load->view('inc/topheader');
-        $this->load->view('inc/sidebar');
         $this->load->view('masters/dispatch_order_view', $data);
+        $this->load->view('inc/sidebar');
+        $this->load->view('inc/headersetting');
         $this->load->view('inc/footerlink');
+        $this->load->view('inc/table_footer');
     }
 
     /**
@@ -565,16 +982,18 @@ class Pharmacy_fleet extends CI_Controller {
      * Toggle Store Emergency Closure
      */
     public function toggle_emergency_closure($store_id) {
-        $store = $this->db->get_where('pharmacy_stores', ['id' => (int)$store_id])->row();
-        if ($store) {
-            $newStatus = $store->is_emergency_closed ? 0 : 1;
-            $this->db->where('id', $store->id)->update('pharmacy_stores', [
-                'is_emergency_closed' => $newStatus,
-                'updated_at'          => date('Y-m-d H:i:s')
-            ]);
-            $msg = $newStatus ? 'Store marked EMERGENCY CLOSED (Orders temporarily halted).' : 'Store restored to ACTIVE live status.';
-            $this->session->set_flashdata('success', $msg);
-            $this->session->set_flashdata('success_msg', $msg);
+        if ($this->db->table_exists('pharmacy_stores')) {
+            $store = $this->db->get_where('pharmacy_stores', ['id' => (int)$store_id])->row();
+            if ($store) {
+                $newStatus = !empty($store->is_emergency_closed) ? 0 : 1;
+                $this->db->where('id', $store->id)->update('pharmacy_stores', [
+                    'is_emergency_closed' => $newStatus,
+                    'updated_at'          => date('Y-m-d H:i:s')
+                ]);
+                $msg = $newStatus ? 'Store marked EMERGENCY CLOSED (Orders temporarily halted).' : 'Store restored to ACTIVE live status.';
+                $this->session->set_flashdata('success', $msg);
+                $this->session->set_flashdata('success_msg', $msg);
+            }
         }
         redirect(base_url('masters/pharmacy_fleet?tab=pharmacy'));
     }

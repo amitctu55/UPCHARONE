@@ -39,7 +39,7 @@
           </span>
           <div class="info-box-content">
             <span class="info-box-text">Partner Pharmacies</span>
-            <span class="info-box-number"><?=$total_stores;?> <small>Verified</small></span>
+            <span class="info-box-number"><?= $total_stores ?? 0; ?> <small>Verified</small></span>
           </div>
         </div>
       </div>
@@ -51,7 +51,7 @@
           </span>
           <div class="info-box-content">
             <span class="info-box-text">Fleet Riders</span>
-            <span class="info-box-number"><?=$active_riders_count;?> / <?=$total_riders;?> <small>Active</small></span>
+            <span class="info-box-number"><?= $active_riders_count ?? 0; ?> / <?= $total_riders ?? 0; ?> <small>Active</small></span>
           </div>
         </div>
       </div>
@@ -63,7 +63,7 @@
           </span>
           <div class="info-box-content">
             <span class="info-box-text">Active Deliveries</span>
-            <span class="info-box-number"><?=$active_orders_count;?> <small>En-Route</small></span>
+            <span class="info-box-number"><?= $active_orders_count ?? 0; ?> <small>En-Route</small></span>
           </div>
         </div>
       </div>
@@ -75,7 +75,7 @@
           </span>
           <div class="info-box-content">
             <span class="info-box-text">Settlements</span>
-            <span class="info-box-number"><?=$total_settlements;?> <small>Ledgers</small></span>
+            <span class="info-box-number"><?= $total_settlements ?? 0; ?> <small>Ledgers</small></span>
           </div>
         </div>
       </div>
@@ -90,22 +90,22 @@
           <ul class="nav nav-tabs server-nav-tabs">
             <li class="<?= ($active_tab == 'pharmacy') ? 'active' : ''; ?>">
               <a href="<?= base_url('masters/pharmacy_fleet?tab=pharmacy'); ?>">
-                <i class="fa fa-medkit"></i> Partner Pharmacies <span class="badge"><?=$total_stores;?></span>
+                <i class="fa fa-medkit"></i> Partner Pharmacies <span class="badge"><?= $total_stores ?? 0; ?></span>
               </a>
             </li>
             <li class="<?= ($active_tab == 'fleet') ? 'active' : ''; ?>">
               <a href="<?= base_url('masters/pharmacy_fleet?tab=fleet'); ?>">
-                <i class="fa fa-motorcycle"></i> Delivery Fleet &amp; Riders <span class="badge"><?=$total_riders;?></span>
+                <i class="fa fa-motorcycle"></i> Delivery Fleet &amp; Riders <span class="badge"><?= $total_riders ?? 0; ?></span>
               </a>
             </li>
             <li class="<?= ($active_tab == 'dispatch') ? 'active' : ''; ?>">
               <a href="<?= base_url('masters/pharmacy_fleet?tab=dispatch'); ?>">
-                <i class="fa fa-truck"></i> Live Dispatch Queue <span class="badge"><?=$active_orders_count;?></span>
+                <i class="fa fa-truck"></i> Live Dispatch Queue <span class="badge"><?= $active_orders_count ?? 0; ?></span>
               </a>
             </li>
             <li class="<?= ($active_tab == 'settlements') ? 'active' : ''; ?>">
               <a href="<?= base_url('masters/pharmacy_fleet?tab=settlements'); ?>">
-                <i class="fa fa-file-text-o"></i> Financial Settlements <span class="badge"><?=$total_settlements;?></span>
+                <i class="fa fa-file-text-o"></i> Financial Settlements <span class="badge"><?= $total_settlements ?? 0; ?></span>
               </a>
             </li>
           </ul>
@@ -173,19 +173,19 @@
               <?php if (!empty($records)): foreach($records as $st): ?>
               <tr>
                 <td>
-                  <strong><?= htmlspecialchars($st['store_name']); ?></strong>
+                  <strong><?= htmlspecialchars($st['store_name'] ?? ''); ?></strong>
                   <?php if (!empty($st['is_emergency_closed'])): ?>
                     <span class="badge" style="background: #dc2626; font-size: 10px; margin-left: 4px;">EMERGENCY CLOSED</span>
                   <?php endif; ?>
                   <br>
                   <small class="text-muted">
-                    <i class="fa fa-phone"></i> <?= htmlspecialchars($st['phone']); ?> | 
-                    <?= htmlspecialchars($st['address'] ?: 'Varanasi'); ?>, <?= htmlspecialchars($st['city']); ?>
+                    <i class="fa fa-phone"></i> <?= htmlspecialchars($st['phone'] ?? ''); ?> | 
+                    <?= htmlspecialchars(($st['address'] ?? '') ?: 'Varanasi'); ?>, <?= htmlspecialchars($st['city'] ?? ''); ?>
                   </small>
                 </td>
                 <td>
-                  <code><?= htmlspecialchars($st['drug_license_no'] ?: 'N/A'); ?></code><br>
-                  <small class="text-muted">GST: <?= htmlspecialchars($st['gstin'] ?: 'Not Provided'); ?></small>
+                  <code><?= htmlspecialchars(($st['drug_license_no'] ?? '') ?: 'N/A'); ?></code><br>
+                  <small class="text-muted">GST: <?= htmlspecialchars(($st['gstin'] ?? '') ?: 'Not Provided'); ?></small>
                 </td>
                 <td>
                   <?php if (!empty($st['doctor_name'])): ?>
@@ -199,24 +199,24 @@
                   <?php endif; ?>
                 </td>
                 <td>
-                  <strong><?= $st['delivery_radius_km'] ?: '5.0'; ?> km</strong> radius | <strong><?= $st['commission_rate']; ?>%</strong> fee
-                  <div style="font-size: 11px; color: #64748b;">Hrs: <?= htmlspecialchars($st['operating_hours'] ?: '9AM - 10PM'); ?></div>
+                  <strong><?= ($st['delivery_radius_km'] ?? '') ?: '5.0'; ?> km</strong> radius | <strong><?= $st['commission_rate'] ?? '8.0'; ?>%</strong> fee
+                  <div style="font-size: 11px; color: #64748b;">Hrs: <?= htmlspecialchars(($st['operating_hours'] ?? '') ?: '9AM - 10PM'); ?></div>
                 </td>
                 <td>
-                  <?php if ($st['is_emergency_closed']): ?>
+                  <?php if (!empty($st['is_emergency_closed'])): ?>
                     <span class="status-pill" style="background: #fee2e2; color: #dc2626;">Halted</span>
                   <?php else: ?>
                     <span class="status-pill status-active"><i class="fa fa-check-circle"></i> Active &amp; Live</span>
                   <?php endif; ?>
                 </td>
                 <td>
-                  <a href="<?= base_url('masters/pharmacy_fleet/add_pharmacy/' . $st['id']); ?>" class="btn-sm-action">
+                  <a href="<?= base_url('masters/pharmacy_fleet/add_pharmacy/' . ($st['id'] ?? '')); ?>" class="btn-sm-action">
                     <i class="fa fa-edit"></i> Edit
                   </a>
-                  <a href="<?= base_url('masters/pharmacy_fleet/toggle_emergency_closure/' . $st['id']); ?>" class="btn-sm-action" style="<?= $st['is_emergency_closed'] ? 'color: #16a34a;' : 'color: #dc2626;'; ?>">
-                    <i class="fa fa-power-off"></i> <?= $st['is_emergency_closed'] ? 'Reopen' : 'Halt'; ?>
+                  <a href="<?= base_url('masters/pharmacy_fleet/toggle_emergency_closure/' . ($st['id'] ?? '')); ?>" class="btn-sm-action" style="<?= !empty($st['is_emergency_closed']) ? 'color: #16a34a;' : 'color: #dc2626;'; ?>">
+                    <i class="fa fa-power-off"></i> <?= !empty($st['is_emergency_closed']) ? 'Reopen' : 'Halt'; ?>
                   </a>
-                  <a href="<?= base_url('../pharmacy/orders?store_id=' . $st['id']); ?>" target="_blank" class="btn-sm-action" title="Open Chemist Portal">
+                  <a href="<?= base_url('../pharmacy/orders?store_id=' . ($st['id'] ?? '')); ?>" target="_blank" class="btn-sm-action" title="Open Chemist Portal">
                     <i class="fa fa-external-link"></i> Orders
                   </a>
                 </td>
@@ -249,12 +249,12 @@
               <?php if (!empty($records)): foreach($records as $r): ?>
               <tr>
                 <td>
-                  <strong><?= htmlspecialchars($r['name'] ?: $r['rider_name']); ?></strong><br>
-                  <small class="text-muted"><i class="fa fa-phone"></i> +91 <?= htmlspecialchars($r['phone']); ?></small>
+                  <strong><?= htmlspecialchars(($r['name'] ?? '') ?: ($r['rider_name'] ?? '')); ?></strong><br>
+                  <small class="text-muted"><i class="fa fa-phone"></i> +91 <?= htmlspecialchars($r['phone'] ?? ''); ?></small>
                 </td>
                 <td>
-                  <strong><?= htmlspecialchars($r['vehicle_type'] ?: 'Bike'); ?></strong> (<?= htmlspecialchars($r['vehicle_number']); ?>)<br>
-                  <small class="text-muted">DL: <?= htmlspecialchars($r['driving_license_no'] ?: 'Verified'); ?></small>
+                  <strong><?= htmlspecialchars(($r['vehicle_type'] ?? '') ?: 'Bike'); ?></strong> (<?= htmlspecialchars($r['vehicle_number'] ?? ''); ?>)<br>
+                  <small class="text-muted">DL: <?= htmlspecialchars(($r['driving_license_no'] ?? '') ?: 'Verified'); ?></small>
                 </td>
                 <td>
                   <?php 
@@ -276,18 +276,18 @@
                   <?php endif; ?>
                 </td>
                 <td>
-                  <strong style="color: #0f172a;">₹<?= number_format($r['cod_in_hand'] ?: 0, 2); ?></strong>
+                  <strong style="color: #0f172a;">₹<?= number_format((float)($r['cod_in_hand'] ?? 0), 2); ?></strong>
                 </td>
                 <td>
-                  <a href="<?= base_url('masters/pharmacy_fleet/onboard_rider/' . $r['id']); ?>" class="btn-sm-action">
+                  <a href="<?= base_url('masters/pharmacy_fleet/onboard_rider/' . ($r['id'] ?? '')); ?>" class="btn-sm-action">
                     <i class="fa fa-edit"></i> Edit
                   </a>
-                  <?php if ($r['status'] === 'BUSY'): ?>
-                    <a href="<?= base_url('masters/pharmacy_fleet/reassign_order?rider_id=' . $r['id']); ?>" class="btn-sm-action">
+                  <?php if (($r['status'] ?? '') === 'BUSY'): ?>
+                    <a href="<?= base_url('masters/pharmacy_fleet/reassign_order?rider_id=' . ($r['id'] ?? '')); ?>" class="btn-sm-action">
                       <i class="fa fa-exchange"></i> Reassign
                     </a>
                   <?php else: ?>
-                    <a href="<?= base_url('masters/pharmacy_fleet/reassign_order?rider_id=' . $r['id']); ?>" class="btn-sm-assign" style="text-decoration: none; color: #fff;">
+                    <a href="<?= base_url('masters/pharmacy_fleet/reassign_order?rider_id=' . ($r['id'] ?? '')); ?>" class="btn-sm-assign" style="text-decoration: none; color: #fff;">
                       <i class="fa fa-plus"></i> Assign
                     </a>
                   <?php endif; ?>
@@ -322,41 +322,41 @@
               <?php if (!empty($records)): foreach($records as $ord): ?>
               <tr>
                 <td>
-                  <strong style="font-size: 14px; font-family: monospace;">#<?= htmlspecialchars($ord['order_code']); ?></strong><br>
-                  <small class="text-muted"><?= date('d M, Y h:i A', strtotime($ord['created_at'])); ?></small>
+                  <strong style="font-size: 14px; font-family: monospace;">#<?= htmlspecialchars($ord['order_code'] ?? ''); ?></strong><br>
+                  <small class="text-muted"><?= !empty($ord['created_at']) ? date('d M, Y h:i A', strtotime($ord['created_at'])) : ''; ?></small>
                 </td>
                 <td>
-                  <strong><?= htmlspecialchars($ord['customer_name']); ?></strong><br>
-                  <small><i class="fa fa-phone"></i> <?= htmlspecialchars($ord['customer_phone']); ?></small>
+                  <strong><?= htmlspecialchars($ord['customer_name'] ?? ''); ?></strong><br>
+                  <small><i class="fa fa-phone"></i> <?= htmlspecialchars($ord['customer_phone'] ?? ''); ?></small>
                 </td>
                 <td>
-                  <?= htmlspecialchars($ord['store_name'] ?: 'Partner Pharmacy'); ?>
+                  <?= htmlspecialchars(($ord['store_name'] ?? '') ?: 'Partner Pharmacy'); ?>
                 </td>
                 <td>
                   <?php if (!empty($ord['rider_name'])): ?>
                     <span class="doctor-tag"><i class="fa fa-motorcycle"></i> <?= htmlspecialchars($ord['rider_name']); ?></span>
-                    <small class="text-muted" style="display:block;"><?= htmlspecialchars($ord['rider_phone']); ?></small>
+                    <small class="text-muted" style="display:block;"><?= htmlspecialchars($ord['rider_phone'] ?? ''); ?></small>
                   <?php else: ?>
                     <span class="status-pill" style="background:#fee2e2; color:#dc2626;">Unassigned</span>
                   <?php endif; ?>
                 </td>
                 <td>
                   <?php
-                  $os = strtoupper($ord['order_status']);
+                  $os = strtoupper($ord['order_status'] ?? '');
                   if (in_array($os, ['PLACED', 'PENDING_RX'])) echo '<span class="status-pill status-delivering">New Order</span>';
                   elseif ($os === 'CONFIRMED') echo '<span class="status-pill status-idle">Confirmed</span>';
                   elseif (in_array($os, ['PACKED', 'ASSIGNED'])) echo '<span class="status-pill status-idle">Packed &bull; Ready</span>';
                   elseif ($os === 'IN_TRANSIT') echo '<span class="status-pill status-delivering"><i class="fa fa-motorcycle"></i> Out for Delivery</span>';
                   elseif ($os === 'DELIVERED') echo '<span class="status-pill status-active"><i class="fa fa-check"></i> Delivered</span>';
-                  else echo '<span class="status-pill">' . $os . '</span>';
+                  else echo '<span class="status-pill">' . ($os ?: 'PENDING') . '</span>';
                   ?>
                 </td>
                 <td>
-                  <strong>₹<?= number_format($ord['total_amount'], 2); ?></strong><br>
-                  <small class="text-muted"><?= $ord['payment_mode']; ?> (<?= $ord['payment_status']; ?>)</small>
+                  <strong>₹<?= number_format((float)($ord['total_amount'] ?? 0), 2); ?></strong><br>
+                  <small class="text-muted"><?= $ord['payment_mode'] ?? 'COD'; ?> (<?= $ord['payment_status'] ?? 'PENDING'; ?>)</small>
                 </td>
                 <td>
-                  <a href="<?= base_url('masters/pharmacy_fleet/reassign_order/' . $ord['id']); ?>" class="btn-sm-action">
+                  <a href="<?= base_url('masters/pharmacy_fleet/reassign_order/' . ($ord['id'] ?? '')); ?>" class="btn-sm-action">
                     <i class="fa fa-exchange"></i> Reassign Rider
                   </a>
                 </td>
@@ -390,20 +390,20 @@
               <?php if (!empty($records)): foreach($records as $set): ?>
               <tr>
                 <td>
-                  <strong><?= htmlspecialchars($set['store_name']); ?></strong><br>
-                  <small class="text-muted">GST: <?= htmlspecialchars($set['gstin'] ?: 'Not Provided'); ?></small>
+                  <strong><?= htmlspecialchars($set['store_name'] ?? ''); ?></strong><br>
+                  <small class="text-muted">GST: <?= htmlspecialchars(($set['gstin'] ?? '') ?: 'Not Provided'); ?></small>
                 </td>
                 <td>
-                  <?= date('d M Y', strtotime($set['settlement_period_start'])); ?> &rarr; 
-                  <?= date('d M Y', strtotime($set['settlement_period_end'])); ?>
+                  <?= !empty($set['settlement_period_start']) ? date('d M Y', strtotime($set['settlement_period_start'])) : ''; ?> &rarr; 
+                  <?= !empty($set['settlement_period_end']) ? date('d M Y', strtotime($set['settlement_period_end'])) : ''; ?>
                 </td>
-                <td>₹<?= number_format($set['gross_sales'], 2); ?></td>
-                <td style="color: #0284c7; font-weight: 600;">₹<?= number_format($set['upchar_commission'], 2); ?></td>
-                <td><strong style="color: #16a34a; font-size: 14px;">₹<?= number_format($set['net_payout'], 2); ?></strong></td>
-                <td><code><?= $set['utr_number'] ?: 'Pending'; ?></code></td>
+                <td>₹<?= number_format((float)($set['gross_sales'] ?? 0), 2); ?></td>
+                <td style="color: #0284c7; font-weight: 600;">₹<?= number_format((float)($set['upchar_commission'] ?? 0), 2); ?></td>
+                <td><strong style="color: #16a34a; font-size: 14px;">₹<?= number_format((float)($set['net_payout'] ?? 0), 2); ?></strong></td>
+                <td><code><?= ($set['utr_number'] ?? '') ?: 'Pending'; ?></code></td>
                 <td>
-                  <span class="status-pill <?= $set['settlement_status'] === 'PROCESSED' ? 'status-active' : 'status-delivering'; ?>">
-                    <?= $set['settlement_status']; ?>
+                  <span class="status-pill <?= ($set['settlement_status'] ?? '') === 'PROCESSED' ? 'status-active' : 'status-delivering'; ?>">
+                    <?= $set['settlement_status'] ?? 'PENDING'; ?>
                   </span>
                 </td>
               </tr>
