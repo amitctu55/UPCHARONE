@@ -120,7 +120,7 @@ class Appointment extends CI_Controller
 				FROM profile_dr p
 				LEFT JOIN master_specialization ms ON ms.id = p.specialization
 				LEFT JOIN master_city mc ON mc.id = p.city
-				WHERE (p.id = {$cleanId} OR p.user_id = {$cleanId}) AND p.verified = '1'
+				WHERE (p.id = {$cleanId} OR p.user_id = {$cleanId}) AND p.status != '2'
 				ORDER BY (p.id = {$cleanId}) DESC
 				LIMIT 1
 			")->row();
@@ -157,7 +157,7 @@ class Appointment extends CI_Controller
 				// Filter appointments strictly to this doctor
 				$this->db->where("(appointment.doctor_id = '{$docId}' OR appointment.doctor_id = '{$userId}')");
 			} else {
-				$this->session->set_flashdata('flashmsg', "<div class='alert alert-warning'><strong>Notice:</strong> Doctor #{$cleanId} is not verified or not found in our records. Only verified doctors and their appointments can be viewed.</div>");
+				$this->session->set_flashdata('flashmsg', "<div class='alert alert-warning'><strong>Notice:</strong> Doctor #{$cleanId} was not found in active records.</div>");
 				redirect(base_url('doctor/appointment/doctorappointment'));
 			}
 		} else {
@@ -1113,7 +1113,7 @@ class Appointment extends CI_Controller
 			")->row();
 
 			if ($doc) {
-				if (!empty($doc->specialization)) {
+				if (!empty($doc->specialization) && $this->db->field_exists('specialization', 'appointment')) {
 					$update_data['specialization'] = $doc->specialization;
 				}
 				if ($this->input->post('apply_doctor_fee') && (int)$doc->dr_fee > 0) {

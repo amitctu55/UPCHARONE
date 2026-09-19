@@ -3,6 +3,61 @@
   $app = !empty($appointment) ? $appointment : (!empty($data[0]) ? $data[0] : null);
   $aid = $app ? ($app->appointment_id ?? $appointment_id ?? 0) : ($appointment_id ?? 0);
 ?>
+<style>
+@media print {
+  .main-header,
+  .main-sidebar,
+  .main-footer,
+  .control-sidebar,
+  .content-header,
+  .no-print,
+  .breadcrumb,
+  .modal,
+  .modal-backdrop,
+  #appointmentToast {
+    display: none !important;
+  }
+
+  body, html {
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+  .content-wrapper, .right-side, .main-footer {
+    margin-left: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    border: none !important;
+  }
+  .content {
+    padding: 10px 0 !important;
+  }
+
+  .print-only-header {
+    display: block !important;
+    margin-bottom: 15px !important;
+  }
+
+  div, section, table, td, th {
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+
+  .col-md-6 {
+    width: 50% !important;
+    float: left !important;
+  }
+  .col-md-3 {
+    width: 25% !important;
+    float: left !important;
+  }
+
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}
+</style>
+
 <div class="content-wrapper">
   <!-- Print Header Only -->
   <div class="print-only-header" style="display: none;">
