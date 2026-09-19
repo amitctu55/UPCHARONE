@@ -124,17 +124,17 @@
         <?php if($app): ?>
         <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
           <!-- Quick Edit Status / Payment Modal Trigger -->
-          <button type="button" class="btn btn-sm btn-warning btn-trigger-status-modal" data-toggle="modal" data-target="#updateStatusModal" style="border-radius: 6px; font-weight: 600; background: #f59e0b; border-color: #d97706; color: #ffffff; padding: 6px 13px;">
+          <button type="button" class="btn btn-sm btn-warning btn-open-modal" data-open-modal="#updateStatusModal" style="border-radius: 6px; font-weight: 600; background: #f59e0b; border-color: #d97706; color: #ffffff; padding: 6px 13px;">
             <i class="fa fa-pencil-square-o"></i> Update Status / Payment
           </button>
 
           <!-- Reassign Doctor Modal Trigger -->
-          <button type="button" class="btn btn-sm btn-default btn-trigger-doctor-modal" data-toggle="modal" data-target="#reassignDoctorModal" style="border-radius: 6px; font-weight: 600; background: #f8fafc; border-color: #cbd5e1; color: #334155; padding: 6px 13px;">
+          <button type="button" class="btn btn-sm btn-default btn-open-modal" data-open-modal="#reassignDoctorModal" style="border-radius: 6px; font-weight: 600; background: #f8fafc; border-color: #cbd5e1; color: #334155; padding: 6px 13px;">
             <i class="fa fa-user-md" style="color: #00a896;"></i> Reassign Doctor
           </button>
 
           <!-- Reschedule Modal Trigger -->
-          <button type="button" class="btn btn-sm btn-default btn-trigger-reschedule-modal" data-toggle="modal" data-target="#rescheduleModal" style="border-radius: 6px; font-weight: 600; background: #f8fafc; border-color: #cbd5e1; color: #334155; padding: 6px 13px;">
+          <button type="button" class="btn btn-sm btn-default btn-open-modal" data-open-modal="#rescheduleModal" style="border-radius: 6px; font-weight: 600; background: #f8fafc; border-color: #cbd5e1; color: #334155; padding: 6px 13px;">
             <i class="fa fa-calendar" style="color: #0284c7;"></i> Reschedule
           </button>
 
@@ -268,7 +268,7 @@
                   <strong style="font-size: 14px; color: #1e293b;">
                     <?=function_exists('formatedate') ? formatedate($adate) : $adate;?>
                   </strong>
-                  <button type="button" class="btn btn-xs btn-default" data-toggle="modal" data-target="#rescheduleModal" style="border-radius: 4px; font-weight: 600; color: #0284c7; border-color: #bae6fd; background: #f0f9ff; font-size: 11px; padding: 2px 7px;" title="Reschedule Slot">
+                  <button type="button" class="btn btn-xs btn-default btn-open-modal" data-open-modal="#rescheduleModal" style="border-radius: 4px; font-weight: 600; color: #0284c7; border-color: #bae6fd; background: #f0f9ff; font-size: 11px; padding: 2px 7px;" title="Reschedule Slot">
                     <i class="fa fa-calendar"></i> Reschedule
                   </button>
                 </div>
@@ -290,7 +290,7 @@
                     <strong style="font-size: 16px; color: #0f172a;">&#8377;<?=number_format($feeAmount, 2);?></strong>
                     <?=$payBadge;?>
                   </div>
-                  <button type="button" class="btn btn-xs btn-default" data-toggle="modal" data-target="#updateStatusModal" style="border-radius: 4px; font-weight: 600; color: #15803d; border-color: #bbf7d0; background: #f0fdf4; font-size: 11px; padding: 2px 7px;" title="Update Payment">
+                  <button type="button" class="btn btn-xs btn-default btn-open-modal" data-open-modal="#updateStatusModal" style="border-radius: 4px; font-weight: 600; color: #15803d; border-color: #bbf7d0; background: #f0fdf4; font-size: 11px; padding: 2px 7px;" title="Update Payment">
                     <i class="fa fa-pencil"></i>
                   </button>
                 </div>
@@ -409,7 +409,7 @@
                     </div>
                   </div>
                   <div>
-                    <button type="button" class="btn btn-xs btn-default" data-toggle="modal" data-target="#reassignDoctorModal" style="border-radius: 6px; font-weight: 600; color: #0284c7; border-color: #cbd5e1; padding: 5px 10px;" title="Reassign Doctor">
+                    <button type="button" class="btn btn-xs btn-default btn-open-modal" data-open-modal="#reassignDoctorModal" style="border-radius: 6px; font-weight: 600; color: #0284c7; border-color: #cbd5e1; padding: 5px 10px;" title="Reassign Doctor">
                       <i class="fa fa-refresh"></i> Change
                     </button>
                   </div>
@@ -573,7 +573,7 @@
                 </div>
 
                 <div style="margin-top: 10px; padding-top: 12px; border-top: 1px dashed #e2e8f0; display: flex; justify-content: flex-end;">
-                  <button type="button" class="btn btn-sm btn-default" data-toggle="modal" data-target="#updateStatusModal" style="border-radius: 6px; font-weight: 600; color: #15803d; border-color: #bbf7d0; background: #f0fdf4;">
+                  <button type="button" class="btn btn-sm btn-default btn-open-modal" data-open-modal="#updateStatusModal" style="border-radius: 6px; font-weight: 600; color: #15803d; border-color: #bbf7d0; background: #f0fdf4;">
                     <i class="fa fa-money"></i> Update Payment & Status
                   </button>
                 </div>
@@ -984,18 +984,19 @@
         $('body').removeClass('modal-open').css('padding-right', '');
       });
 
-      // Explicit fail-safe click handlers for modal trigger buttons
-      $(document).on('click', '[data-target="#updateStatusModal"], .btn-trigger-status-modal', function(e) {
+      // Dedicated collision-free modal open handler
+      $(document).on('click', '.btn-open-modal, [data-open-modal]', function(e) {
         e.preventDefault();
-        $('#updateStatusModal').modal('show');
-      });
-      $(document).on('click', '[data-target="#reassignDoctorModal"], .btn-trigger-doctor-modal', function(e) {
-        e.preventDefault();
-        $('#reassignDoctorModal').modal('show');
-      });
-      $(document).on('click', '[data-target="#rescheduleModal"], .btn-trigger-reschedule-modal', function(e) {
-        e.preventDefault();
-        $('#rescheduleModal').modal('show');
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        var targetSelector = $(this).attr('data-open-modal');
+        if (targetSelector && $(targetSelector).length) {
+          $(targetSelector).modal({
+            backdrop: 'static',
+            keyboard: true,
+            show: true
+          });
+        }
       });
 
       // Toast Helper
@@ -1160,8 +1161,8 @@
                   $(modalId).modal('hide');
                   $('.modal-backdrop').remove();
                   $('body').removeClass('modal-open').css('padding-right', '');
-                  window.location.reload();
-                }, 700);
+                  window.location.href = window.location.href.split('#')[0];
+                }, 800);
               } else {
                 $btn.prop('disabled', false).html(originalBtnHtml);
                 var err = (resp && resp.message) ? resp.message : 'An error occurred while saving. Please check details.';
