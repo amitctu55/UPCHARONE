@@ -225,6 +225,13 @@ class Login extends CI_Controller {
             return;
         }
 
+        if (!$this->db || !$this->db->conn_id) {
+            $msg = "<div class='alert alert-danger' style='border-radius:6px;'><i class='fa fa-database'></i> Database connection failed. Please check database configuration.</div>";
+            $this->session->set_flashdata('flashmsg', $msg);
+            redirect(base_url('login'));
+            return;
+        }
+
         if ($authenticated && !empty($user)) {
             // Strictly enforce single session: Flush patient / partner session keys
             $this->session->unset_userdata(array('useremail', 'signupuserid', 'forgotuserid', 'doctor_id', 'hospital_id', 'pathology_id', 'clinic_id'));
@@ -263,7 +270,12 @@ class Login extends CI_Controller {
 
             redirect(base_url('masters/dashboard'));
         } else {
-            $msg = "<div class='alert alert-danger' style='border-radius:6px;'><i class='fa fa-exclamation-circle'></i> Invalid Username, Email, or Password. Please try again.</div>";
+            $user_exists = (!empty($candidates) || (!empty($staffCandidates) && count($staffCandidates) > 0));
+            if ($user_exists) {
+                $msg = "<div class='alert alert-danger' style='border-radius:6px;'><i class='fa fa-key'></i> Incorrect password entered for <strong>" . htmlspecialchars($login_identifier) . "</strong>. Please verify your password.</div>";
+            } else {
+                $msg = "<div class='alert alert-danger' style='border-radius:6px;'><i class='fa fa-user-xmark'></i> No administrator account found matching <strong>" . htmlspecialchars($login_identifier) . "</strong>. Please verify your username, email, or mobile.</div>";
+            }
             $this->session->set_flashdata('flashmsg', $msg);
             redirect(base_url('login'));
         }

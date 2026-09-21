@@ -145,7 +145,32 @@ if ($is_local) {
 		'encrypt' => FALSE,
 		'compress' => FALSE,
 		'stricton' => FALSE,
-		'failover' => array(),
+		'failover' => array(
+			array(
+				'hostname' => 'localhost',
+				'username' => 'upchar5510',
+				'password' => 'Ranu@28010',
+				'database' => 'upchar_live',
+				'dbdriver' => 'mysqli',
+				'pconnect' => FALSE,
+				'db_debug' => FALSE,
+				'cache_on' => FALSE,
+				'char_set' => 'utf8',
+				'dbcollat' => 'utf8_general_ci',
+			),
+			array(
+				'hostname' => 'localhost',
+				'username' => 'upchar5510',
+				'password' => 'Ranu@28010',
+				'database' => 'upchar_app',
+				'dbdriver' => 'mysqli',
+				'pconnect' => FALSE,
+				'db_debug' => FALSE,
+				'cache_on' => FALSE,
+				'char_set' => 'utf8',
+				'dbcollat' => 'utf8_general_ci',
+			)
+		),
 		'save_queries' => TRUE
 	);
 }
