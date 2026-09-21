@@ -51,11 +51,11 @@ class Login extends CI_Controller {
      * Core Login Authentication Processor
      */
     protected function process_login() {
-        $username = trim($this->input->post('name', TRUE));
-        $password_plain = $this->input->post('password');
+        $login_identifier = trim($this->input->post('name', TRUE));
+        $password_plain = trim($this->input->post('password'));
 
-        if (empty($username) || empty($password_plain)) {
-            $msg = "<div class='alert alert-danger' style='border-radius:6px;'><i class='fa fa-exclamation-triangle'></i> Please enter both username and password.</div>";
+        if (empty($login_identifier) || empty($password_plain)) {
+            $msg = "<div class='alert alert-danger' style='border-radius:6px;'><i class='fa fa-exclamation-triangle'></i> Please enter both username/email/mobile and password.</div>";
             $this->session->set_flashdata('flashmsg', $msg);
             redirect(base_url('login'));
             return;
@@ -63,26 +63,64 @@ class Login extends CI_Controller {
 
         $password_hash = md5($password_plain);
 
+        // 1. Check primary admin `login` table by username, email, or mobile
         $this->db->select('*')
                  ->from('login')
-                 ->where('username', $username)
-                 ->where('password', $password_hash)
+                 ->group_start()
+                     ->where('username', $login_identifier)
+                     ->or_where('email', $login_identifier)
+                     ->or_where('mobile', $login_identifier)
+                 ->group_end()
                  ->where('status', '1');
 
-        $query = $this->db->get()->row();
+        $user = $this->db->get()->row();
 
-        if (!empty($query)) {
+        // Verify password (MD5 legacy hash or password_verify bcrypt)
+        $authenticated = false;
+        if (!empty($user)) {
+            if ($user->password === $password_hash || password_verify($password_plain, $user->password)) {
+                $authenticated = true;
+            }
+        }
+
+        // 2. If not found in `login`, check `staff_users` table
+        if (!$authenticated && $this->db->table_exists('staff_users')) {
+            $this->db->select('*')
+                     ->from('staff_users')
+                     ->group_start()
+                         ->where('email', $login_identifier)
+                         ->or_where('phone', $login_identifier)
+                         ->or_where('staff_code', $login_identifier)
+                     ->group_end()
+                     ->where('status', 'active');
+            $staff = $this->db->get()->row();
+            if (!empty($staff)) {
+                if ($staff->password_hash === $password_hash || password_verify($password_plain, $staff->password_hash)) {
+                    $authenticated = true;
+                    // Adapt staff to user object
+                    $user = (object) [
+                        'id'       => $staff->id,
+                        'username' => $staff->staff_code,
+                        'name'     => $staff->name,
+                        'password' => $staff->password_hash,
+                        'role'     => ($staff->role === 'super_admin' ? '1' : 'A')
+                    ];
+                }
+            }
+        }
+
+        if ($authenticated && !empty($user)) {
             // Strictly enforce single session: Flush patient / partner session keys
             $this->session->unset_userdata(array('useremail', 'signupuserid', 'forgotuserid', 'doctor_id', 'hospital_id', 'pathology_id', 'clinic_id'));
 
             $session_data = array(
-                'adminuserid'    => $query->id,
-                'userid'         => $query->id,
-                'username'       => $query->username,
-                'name'           => $query->name ?? $query->username,
-                'pwd'            => $query->password,
-                'code'           => $query->role,
-                'institution_id' => $query->id,
+                'adminuserid'    => $user->id,
+                'userid'         => $user->id,
+                'username'       => $user->username,
+                'name'           => $user->name ?? $user->username,
+                'pwd'            => $user->password,
+                'code'           => $user->role,
+                'institution_id' => $user->id,
                 'active_auth_role' => 'admin',
                 'logged_in'      => TRUE
             );
@@ -91,18 +129,18 @@ class Login extends CI_Controller {
 
             // Issue cryptographically signed admin guard token for /admin1947/* namespace
             $tokenPayload = array(
-                'adminuserid' => $query->id,
-                'username'    => $query->username,
+                'adminuserid' => $user->id,
+                'username'    => $user->username,
                 'role'        => 'super_admin',
                 'time'        => time(),
-                'sig'         => hash_hmac('sha256', $query->id . '|' . $query->username . '|super_admin', 'UpcharMasterAdminSecret2026')
+                'sig'         => hash_hmac('sha256', $user->id . '|' . $user->username . '|super_admin', 'UpcharMasterAdminSecret2026')
             );
             $signedToken = base64_encode(json_encode($tokenPayload));
             @setcookie('upchar_admin_guard', $signedToken, time() + 7200, '/', '', false, true);
 
             redirect(base_url('masters/dashboard'));
         } else {
-            $msg = "<div class='alert alert-danger' style='border-radius:6px;'><i class='fa fa-exclamation-circle'></i> Invalid Username or Password. Please try again.</div>";
+            $msg = "<div class='alert alert-danger' style='border-radius:6px;'><i class='fa fa-exclamation-circle'></i> Invalid Username, Email, or Password. Please try again.</div>";
             $this->session->set_flashdata('flashmsg', $msg);
             redirect(base_url('login'));
         }
