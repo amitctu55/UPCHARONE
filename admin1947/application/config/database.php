@@ -95,7 +95,34 @@ if ($is_local) {
 		'encrypt' => FALSE,
 		'compress' => FALSE,
 		'stricton' => FALSE,
-		'failover' => array(),
+		'failover' => array(
+			array(
+				'hostname' => '127.0.0.1',
+				'port'     => 3307,
+				'username' => 'root',
+				'password' => '',
+				'database' => 'upchar5510_db',
+				'dbdriver' => 'mysqli',
+				'pconnect' => FALSE,
+				'db_debug' => TRUE,
+				'cache_on' => FALSE,
+				'char_set' => 'utf8',
+				'dbcollat' => 'utf8_general_ci',
+			),
+			array(
+				'hostname' => 'localhost',
+				'port'     => 3306,
+				'username' => 'root',
+				'password' => '',
+				'database' => 'upchar5510_db',
+				'dbdriver' => 'mysqli',
+				'pconnect' => FALSE,
+				'db_debug' => TRUE,
+				'cache_on' => FALSE,
+				'char_set' => 'utf8',
+				'dbcollat' => 'utf8_general_ci',
+			)
+		),
 		'save_queries' => TRUE
 	);
 } else {
