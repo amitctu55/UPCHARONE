@@ -85,7 +85,7 @@ public function accessCheck()
 			}
 			
 			
-		}else if($usertype == 'A' || $usertype == '1'){
+		}else if($usertype == 'A' || $usertype == '1' || is_numeric($usertype) || $usertype == 'admin' || $usertype == 'super_admin'){
 			
 			if( !in_array($controller,$access_admin_controller) && !in_array($controller,$access_public_controller) && !in_array($module,$access_admin_module)  ){
 			
