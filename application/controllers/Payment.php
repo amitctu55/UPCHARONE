@@ -434,6 +434,51 @@ class Payment extends CI_Controller {
     }
 
     /**
+     * Prepare complete receipt and order breakdown data
+     */
+    private function _prepare_receipt_data($order) {
+        $data = array();
+        $userId = $order['user_id'];
+        $data['order']        = $order;
+        $data['user_balance'] = $this->Wallet_model->get_balance($userId);
+        $data['cashback_pts'] = round(($order['amount'] * 0.05), 2);
+
+        // Fetch patient user
+        $data['patient'] = $this->db->get_where('userlogin', array('USERID' => $userId))->row_array();
+
+        // Purpose-specific details
+        $data['booking']     = null;
+        $data['appointment'] = null;
+        $data['lab']         = null;
+        $data['doctor']      = null;
+        $data['institute']   = null;
+        $data['tests']       = array();
+
+        if ($order['purpose'] === 'LAB_TEST' && !empty($order['reference_id'])) {
+            $data['booking'] = $this->db->get_where('path_book', array('booking_id' => $order['reference_id']))->row_array();
+            if ($data['booking']) {
+                $data['tests'] = $this->db->get_where('path_book_test', array('booking_id' => $data['booking']['booking_id']))->result_array();
+                if (!empty($data['booking']['pathlab_id'])) {
+                    $data['lab'] = $this->db->get_where('pathlab', array('id' => $data['booking']['pathlab_id']))->row_array();
+                }
+            }
+        } else if ($order['purpose'] === 'APPOINTMENT' && !empty($order['reference_id'])) {
+            $data['appointment'] = $this->db->get_where('appointment', array('appointment_id' => $order['reference_id']))->row_array();
+            if ($data['appointment']) {
+                if (!empty($data['appointment']['doctor_id'])) {
+                    $data['doctor'] = $this->db->get_where('profile_dr', array('id' => $data['appointment']['doctor_id']))->row_array();
+                }
+                if (!empty($data['appointment']['institute_id'])) {
+                    $table = (!empty($data['appointment']['institution_type']) && $data['appointment']['institution_type'] == 'C') ? 'clinic' : 'hospital';
+                    $data['institute'] = $this->db->get_where($table, array('id' => $data['appointment']['institute_id']))->row_array();
+                }
+            }
+        }
+
+        return $data;
+    }
+
+    /**
      * Payment Success Page
      */
     public function success($order_ref = '') {
@@ -443,14 +488,25 @@ class Payment extends CI_Controller {
             return;
         }
 
-        $userId = $order['user_id'];
-        $data['order']        = $order;
-        $data['user_balance'] = $this->Wallet_model->get_balance($userId);
-        $data['cashback_pts'] = round(($order['amount'] * 0.05), 2);
+        $data = $this->_prepare_receipt_data($order);
 
         $this->load->view('includes/header', $data);
         $this->load->view('payment/success', $data);
         $this->load->view('includes/footer');
+    }
+
+    /**
+     * Dedicated Printable Tax Invoice & Receipt Page
+     */
+    public function receipt($order_ref = '') {
+        $order = $this->Payment_model->get_order_by_ref($order_ref);
+        if (!$order) {
+            redirect(base_url());
+            return;
+        }
+
+        $data = $this->_prepare_receipt_data($order);
+        $this->load->view('payment/receipt', $data);
     }
 
     /**

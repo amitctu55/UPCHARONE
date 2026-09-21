@@ -521,17 +521,27 @@ class Home extends CI_Controller
 		$data['referral_code']     = $this->Referral_model->get_or_create_code($user_id);
 		$data['payments_data']     = $this->Payment_model->get_orders_by_user($user_id, 20, 0);
 
-		// Fetch Lab Bookings
+		// Fetch Lab Bookings with Lab details, tests, and reports
+		$this->db->select('path_book.*, pathlab.name as lab_name, pathlab.address as lab_address, master_city.name as city_name');
 		$this->db->from('path_book');
+		$this->db->join('pathlab', 'pathlab.id = path_book.pathlab_id', 'left');
+		$this->db->join('master_city', 'master_city.id = pathlab.city', 'left');
 		$this->db->group_start();
-		$this->db->where('user_id', $user_id);
+		$this->db->where('path_book.user_id', $user_id);
 		if (!empty($user_mobile)) {
-			$this->db->or_where('patient_mobile', $user_mobile);
+			$this->db->or_where('path_book.patient_mobile', $user_mobile);
 		}
 		$this->db->group_end();
-		$this->db->order_by('booking_id', 'DESC');
+		$this->db->order_by('path_book.booking_id', 'DESC');
 		$this->db->limit(20);
-		$data['lab_bookings'] = $this->db->get()->result_array();
+		$lab_bookings = $this->db->get()->result_array();
+
+		foreach ($lab_bookings as &$lb) {
+			$lb['tests']   = $this->db->get_where('path_book_test', array('booking_id' => $lb['booking_id']))->result_array();
+			$lb['reports'] = $this->db->where('booking_id', $lb['booking_id'])->order_by('report_id', 'desc')->get('path_reports')->result_array();
+		}
+		unset($lb);
+		$data['lab_bookings'] = $lab_bookings;
 
 		$data['sponsored_ads'] = $this->db->where('status', '1')->order_by('id', 'DESC')->get('advertisement')->result();
 
@@ -2344,8 +2354,52 @@ class Home extends CI_Controller
 
 	public function profile()
 	{
-		$userid = $this->session->userdata('userid') ?: $this->session->userdata('user_id') ?: $this->session->userdata('USERID');
-		if (!$userid) {
+		$userid    = $this->session->userdata('userid') ?: $this->session->userdata('user_id') ?: $this->session->userdata('USERID');
+		$useremail = $this->session->userdata('useremail');
+		$username  = $this->session->userdata('username');
+
+		// 1. Resolve user from userlogin table
+		$user = null;
+		if (!empty($userid)) {
+			$user = $this->db->get_where('userlogin', array('USERID' => $userid))->row();
+		}
+
+		// 2. If not found by USERID, resolve by session email
+		if (!$user && !empty($useremail)) {
+			$user = $this->db->get_where('userlogin', array('EMAIL' => $useremail))->row();
+			if ($user) {
+				$userid = $user->USERID;
+				$this->session->set_userdata('userid', $userid);
+			}
+		}
+
+		// 3. If still not found, resolve by username/mobile
+		if (!$user && !empty($username)) {
+			$user = $this->db->group_start()
+				->where('EMAIL', $username)
+				->or_where('MOBILE', $username)
+				->or_where('FNAME', $username)
+				->group_end()
+				->get('userlogin')->row();
+			if ($user) {
+				$userid = $user->USERID;
+				$this->session->set_userdata('userid', $userid);
+			}
+		}
+
+		// 4. If logged in as admin in same browser session, check admin's email in userlogin
+		if (!$user && $this->session->userdata('adminuserid')) {
+			$adminRow = $this->db->get_where('login', array('id' => $this->session->userdata('adminuserid')))->row();
+			if ($adminRow && !empty($adminRow->email)) {
+				$user = $this->db->get_where('userlogin', array('EMAIL' => $adminRow->email))->row();
+				if ($user) {
+					$userid = $user->USERID;
+					$this->session->set_userdata('userid', $userid);
+				}
+			}
+		}
+
+		if (!$user && !$userid && !$useremail && !$username) {
 			$this->session->set_userdata('last_page', base_url('profile'));
 			$this->session->set_flashdata('flashmsg', '<div class="alert alert-warning">Please login to view your profile.</div>');
 			redirect('login');
@@ -2367,7 +2421,7 @@ class Home extends CI_Controller
 			KEY `idx_primary_user` (`primary_user_id`)
 		) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
 
-		if (isset($_POST['submit'])) {
+		if (isset($_POST['submit']) || $this->input->post('action') === 'update_profile') {
 			$this->Userlogin_Model->profile();
 			$this->session->set_flashdata('flashmsg', "<div class='alert alert-success'>Profile details updated successfully!</div>");
 			redirect('profile');
@@ -2408,16 +2462,23 @@ class Home extends CI_Controller
 		}
 
 		$data['specialization'] = $this->db->order_by('name','asc')->where('status','1')->get('master_specialization')->result();
-		$user = $this->db->get_where('userlogin', array('USERID' => $userid))->row();
+
+		// Refresh user object from database
+		if (!empty($userid)) {
+			$user = $this->db->get_where('userlogin', array('USERID' => $userid))->row();
+		}
 
 		if (!$user) {
 			$user = (object) array(
-				'FNAME'  => '',
-				'EMAIL'  => '',
+				'USERID' => $userid ?: 0,
+				'FNAME'  => !empty($username) ? $username : '',
+				'EMAIL'  => !empty($useremail) ? $useremail : '',
 				'MOBILE' => '',
 				'DOB'    => '',
 				'GENDER' => '',
-				'BGROUP' => ''
+				'BGROUP' => '',
+				'HEIGHT' => '',
+				'WEIGHT' => ''
 			);
 		}
 

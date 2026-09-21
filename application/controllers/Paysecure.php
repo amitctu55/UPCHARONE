@@ -6,76 +6,114 @@ class Paysecure extends CI_Controller {
 
 	function __construct()
 	{
-	parent::__construct();
+		parent::__construct();
+		date_default_timezone_set("Asia/Kolkata");
 		$this->load->model('User_Model');
 		$this->load->model('Financial_Model');
-	//$this->load->library('Sm_lib');
-	/* 	if(isset($_POST['merchant_id']) && isset($_POST['mlousr']) ){
-
-			$this->session->set_userdata('WEB_USERNAME',base64_decode($_POST['mlousr']));
-			$this->session->set_userdata('WEB_PASSWORD','user');
-		}
-
-
-		if($this->session->userdata('WEB_USERNAME')!="" and ( $this->session->userdata('WEB_PASSWORD')!="" || $this->session->userdata('WEB_GID')!="" || $this->session->userdata('WEB_FBID')!="" ))
-		{
-
-		}
-		else
-		{
-			redirect(base_url().'login');
-		}
-
-	$this->load->library('Mylomart_lib');
-	//$this->load->model('adminmodel'); */
-
-	/* if($this->session->userdata('SM_UID')!="" )
-		{
-
-		}
-		else
-		{
-			redirect(base_url().'social');
-		} */
+		$this->load->model('Payment_model');
+		$this->load->model('Wallet_model');
+		$this->load->model('Referral_model');
+		$this->load->library('Razorpay_lib');
+		$this->load->helper(array('url', 'form', 'settings'));
 	}
-
-
 
 	public function index(){
 		echo 'Server Access Denied !!';
-
 	}
+
 	public function membership_order()
 	{
-
 		$data['plans']=$this->db->get_where('membership_plan',array('STATUS'=>'1','PLAN_VALIDTILL >='=> date('Y-m-d'), 'PLAN_TYPE'=>'A'))->result();
 		$this->load->view('package',$data);
 	}
 
-
 	public function acheckout()
 	{
-		$this->load->model('Wallet_model');
-		$gatewayData=$this->session->userdata('SecurePay');
-		$AppointmentCheckout=$this->session->userdata('AppointmentCheckout');
-		if(isset($gatewayData) && count($gatewayData))
-		{
-			$userId = $this->session->userdata('USERID') ?: $this->session->userdata('userid') ?: $this->session->userdata('WEB_UID') ?: $this->session->userdata('user_id');
-			if (!$userId) {
-				$this->session->set_userdata('last_page', base_url('paysecure/acheckout'));
-				$this->session->set_flashdata('flashmsg', '<div class="alert alert-warning">Please login to complete your appointment booking.</div>');
-				redirect(base_url('login'));
-				return;
-			}
-			$user_points = $this->Wallet_model->get_balance($userId);
-			$data['user_points'] = $user_points;
-			$data['gatewayData']=$gatewayData;
-			$data['AppointmentCheckout']=$AppointmentCheckout;
-			$this->load->view('secure/appointmentcheckout',$data);
-		}else
-		{
+		$userId = $this->session->userdata('USERID') ?: $this->session->userdata('userid') ?: $this->session->userdata('WEB_UID') ?: $this->session->userdata('user_id');
+		$AppointmentCheckout = $this->session->userdata('AppointmentCheckout') ?: $this->input->get('aid');
+		$gatewayData = $this->session->userdata('SecurePay');
+
+		// If user is not logged in and no appointment found, redirect to login
+		if (!$userId && !$AppointmentCheckout) {
+			$this->session->set_userdata('last_page', base_url('paysecure/acheckout'));
+			$this->session->set_flashdata('flashmsg', '<div class="alert alert-warning">Please login to complete your appointment booking.</div>');
 			redirect(base_url('login'));
+			return;
 		}
+
+		// Reconstruct appointment details if needed
+		$appointment_data = null;
+		if ($AppointmentCheckout) {
+			$appointment_data = $this->db->get_where('appointment', array('appointment_id' => $AppointmentCheckout))->row();
+		}
+
+		// If still empty but user is logged in, find their most recent pending/unpaid booking
+		if (!$appointment_data && $userId) {
+			$latest = $this->db->where('user_id', $userId)
+			                   ->order_by('appointment_id', 'DESC')
+			                   ->get('appointment', 1)->row();
+			if ($latest) {
+				$AppointmentCheckout = $latest->appointment_id;
+				$appointment_data = $latest;
+			}
+		}
+
+		if (!$appointment_data) {
+			$this->session->set_flashdata('flashmsg', '<div class="alert alert-info">No pending appointment found to checkout.</div>');
+			redirect(base_url('myappointents'));
+			return;
+		}
+
+		// Sync gatewayData
+		if (!$gatewayData || empty($gatewayData['Amount'])) {
+			$gatewayData = array(
+				'Order_Id'          => 'UPCH-APPT-' . $appointment_data->appointment_id,
+				'Amount'            => $appointment_data->fee ?: 100.00,
+				'billing_cust_name' => $appointment_data->appointment_name,
+				'billing_cust_tel'  => $appointment_data->appointment_mobile,
+				'billing_cust_email'=> $appointment_data->appointment_email,
+				'Service'           => 'Doctor OPD Consultation'
+			);
+			$this->session->set_userdata('SecurePay', $gatewayData);
+			$this->session->set_userdata('AppointmentCheckout', $AppointmentCheckout);
+		}
+
+		// Load Doctor details
+		$doctor_data = null;
+		if (!empty($appointment_data->doctor_id)) {
+			$doctor_data = $this->db->get_where('profile_dr', array('user_id' => $appointment_data->doctor_id))->row();
+			if (!$doctor_data) {
+				$doctor_data = $this->db->get_where('profile_dr', array('id' => $appointment_data->doctor_id))->row();
+			}
+		}
+
+		// Load Hospital / Clinic details
+		$hospital_data = null;
+		if (!empty($appointment_data->institute_id)) {
+			$inst_table = (isset($appointment_data->institution_type) && $appointment_data->institution_type == 'C') ? 'clinic' : 'hospital';
+			$hospital_data = $this->db->get_where($inst_table, array('id' => $appointment_data->institute_id))->row();
+		}
+
+		$user_points  = $userId ? $this->Wallet_model->get_balance($userId) : 0;
+		$point_ratio  = floatval($this->Wallet_model->get_setting('point_to_inr_ratio', 1.00));
+		$cashback_pct = floatval($this->Wallet_model->get_setting('cashback_percentage', 5.00));
+		$rzp_key_id   = $this->razorpay_lib->get_key_id();
+
+		$data = array(
+			'user_id'             => $userId,
+			'user_points'         => $user_points,
+			'point_ratio'         => $point_ratio,
+			'cashback_pct'        => $cashback_pct,
+			'gatewayData'         => $gatewayData,
+			'AppointmentCheckout' => $AppointmentCheckout,
+			'appointment_data'    => $appointment_data,
+			'doctor_data'         => $doctor_data,
+			'hospital_data'       => $hospital_data,
+			'rzp_key_id'          => $rzp_key_id,
+			'user_row'            => $userId ? $this->db->get_where('userlogin', array('USERID' => $userId))->row_array() : null
+		);
+
+		$this->load->view('secure/appointmentcheckout', $data);
 	}
 
 	public function pay_via_points()
@@ -216,33 +254,244 @@ class Paysecure extends CI_Controller {
 	}
 
 	function securePay()
-	{	
-	$this->output->set_header("HTTP/1.0 200 OK");
-	$this->output->set_header("HTTP/1.1 200 OK");
-	$this->output->set_header('Last-Modified: '.gmdate('D, d M Y H:i:s', time()).' GMT');
-	$this->output->set_header("Expires: Mon, 26 Jul 1997 05:00:00 GMT");
-	$this->output->set_header("Cache-Control: no-store, no-cache, must-revalidate");
-	$this->output->set_header("Cache-Control: post-check=0, pre-check=0");
-	$this->output->set_header("Pragma: no-cache");
-	$this->output->set_header("Expires: Mon, 26 Jul 1997 05:00:00 GMT");
+	{
+		// Redirect directly to unified Razorpay checkout
+		redirect(base_url('paysecure/acheckout'));
+	}
 
-	$data=$this->session->userdata('SecurePay');
-	$oid=isset($data['Order_Id']) ? $data['Order_Id'] : '';
-	$this->db->where('orderid',$oid);
-	$c1=$this->db->count_all_results('sm_checkout');
-
-	$count=$c1;
-
-		if($data && $count==0)
-		{
-			$this->load->view('secure/securePayment',$data);
+	public function initiate_razorpay()
+	{
+		header('Content-Type: application/json');
+		$userId = $this->session->userdata('USERID') ?: $this->session->userdata('userid') ?: $this->session->userdata('WEB_UID') ?: $this->session->userdata('user_id');
+		if (!$userId) {
+			echo json_encode(array('status' => 'error', 'message' => 'Please login to continue payment.'));
+			return;
 		}
-		else
-		{
-			redirect(base_url());
-			//redirect('package');
+
+		$appointmentId = $this->input->post('appointment_id') ?: $this->session->userdata('AppointmentCheckout');
+		$pointsToUse   = floatval($this->input->post('wallet_points_to_use') ?: 0);
+
+		if (!$appointmentId) {
+			echo json_encode(array('status' => 'error', 'message' => 'Appointment reference not found.'));
+			return;
 		}
-	//$this->session->unset_userdata('SecurePay');
+
+		$appointment = $this->db->get_where('appointment', array('appointment_id' => $appointmentId))->row();
+		if (!$appointment) {
+			echo json_encode(array('status' => 'error', 'message' => 'Appointment not found.'));
+			return;
+		}
+
+		$grossAmount = floatval($appointment->fee);
+		if ($grossAmount <= 0) {
+			$grossAmount = 100.00; // default minimum
+		}
+
+		$point_ratio = floatval($this->Wallet_model->get_setting('point_to_inr_ratio', 1.00));
+		$walletDiscount = 0.00;
+
+		if ($pointsToUse > 0) {
+			$userBalance = $this->Wallet_model->get_balance($userId);
+			$maxPointsNeeded = ($point_ratio > 0) ? ($grossAmount / $point_ratio) : $grossAmount;
+			$pointsToUse = min($pointsToUse, $userBalance, $maxPointsNeeded);
+			$walletDiscount = round($pointsToUse * $point_ratio, 2);
+		}
+
+		$gatewayAmount = max(0.00, round($grossAmount - $walletDiscount, 2));
+
+		if ($gatewayAmount <= 0.00) {
+			echo json_encode(array(
+				'status'       => 'points_only',
+				'redirect_url' => base_url('paysecure/pay_via_points')
+			));
+			return;
+		}
+
+		$internalRef = 'UPCH-ORD-' . date('Ymd') . '-' . strtoupper(substr(md5(uniqid((string)$appointmentId, true)), 0, 6));
+
+		// Create Razorpay Standard Order
+		$notes = array(
+			'appointment_id'     => (string)$appointmentId,
+			'patient_name'       => (string)$appointment->appointment_name,
+			'patient_mobile'     => (string)$appointment->appointment_mobile,
+			'doctor_id'          => (string)$appointment->doctor_id,
+			'internal_order_ref' => $internalRef
+		);
+
+		$rzpRes = $this->razorpay_lib->create_order($gatewayAmount, $internalRef, $notes);
+
+		if (!empty($rzpRes['success'])) {
+			$rzpOrderId = $rzpRes['data']['id'];
+
+			// Save internal order record in razorpay_orders
+			$this->Payment_model->create_razorpay_order(array(
+				'internal_order_ref' => $internalRef,
+				'razorpay_order_id'  => $rzpOrderId,
+				'user_id'            => $userId,
+				'amount'             => $grossAmount,
+				'currency'           => 'INR',
+				'purpose'            => 'APPOINTMENT',
+				'reference_id'       => $appointmentId,
+				'wallet_points_used' => $pointsToUse,
+				'wallet_amount_used' => $walletDiscount,
+				'gateway_amount'     => $gatewayAmount
+			));
+
+			// Sync with sm_order
+			$this->db->where('ORDER_ID', 'UPCH-APPT-' . $appointmentId)->delete('sm_order');
+			$this->db->insert('sm_order', array(
+				'ORDER_ID'       => $internalRef,
+				'USER_ID'        => $userId,
+				'USER_TYPE'      => 'USER',
+				'ITEM_TYPE'      => 'APPOINTMENT',
+				'ITEM_ID'        => $appointmentId,
+				'PAYMENT_STATUS' => 'PENDING',
+				'TOTAL'          => $gatewayAmount,
+				'DATE'           => date('Y-m-d'),
+				'TIME'           => date('H:i:s')
+			));
+
+			$userRow = $this->db->get_where('userlogin', array('USERID' => $userId))->row_array();
+
+			echo json_encode(array(
+				'status'             => 'success',
+				'internal_order_ref' => $internalRef,
+				'razorpay_order_id'  => $rzpOrderId,
+				'amount_paise'       => (int)round($gatewayAmount * 100),
+				'amount_inr'         => $gatewayAmount,
+				'key_id'             => $this->razorpay_lib->get_key_id(),
+				'user_name'          => !empty($appointment->appointment_name) ? $appointment->appointment_name : (!empty($userRow['NAME']) ? $userRow['NAME'] : 'Valued Patient'),
+				'user_email'         => !empty($appointment->appointment_email) ? $appointment->appointment_email : (!empty($userRow['EMAIL']) ? $userRow['EMAIL'] : 'patient@upchar.com'),
+				'user_mobile'        => !empty($appointment->appointment_mobile) ? $appointment->appointment_mobile : (!empty($userRow['MOBILE']) ? $userRow['MOBILE'] : '9999999999')
+			));
+		} else {
+			$errMsg = isset($rzpRes['data']['error']['description']) ? $rzpRes['data']['error']['description'] : 'Gateway order creation failed.';
+			echo json_encode(array('status' => 'error', 'message' => $errMsg));
+		}
+	}
+
+	public function verify_razorpay()
+	{
+		header('Content-Type: application/json');
+		$rzpOrderId   = $this->input->post('razorpay_order_id');
+		$rzpPaymentId = $this->input->post('razorpay_payment_id');
+		$rzpSignature = $this->input->post('razorpay_signature');
+		$internalRef  = $this->input->post('internal_order_ref');
+
+		if (empty($rzpOrderId) || empty($rzpPaymentId) || empty($rzpSignature)) {
+			echo json_encode(array('status' => 'error', 'message' => 'Missing payment verification tokens.'));
+			return;
+		}
+
+		$isValid = $this->razorpay_lib->verify_signature($rzpOrderId, $rzpPaymentId, $rzpSignature);
+		if (!$isValid) {
+			$this->Payment_model->update_order_status($internalRef, 'FAILED', $rzpPaymentId, array('error_reason' => 'Signature verification failed'));
+			echo json_encode(array('status' => 'error', 'message' => 'Razorpay payment signature verification failed.'));
+			return;
+		}
+
+		$order = $this->Payment_model->get_order_by_ref($internalRef);
+		if (!$order) {
+			$order = $this->Payment_model->get_order_by_razorpay_id($rzpOrderId);
+		}
+
+		if (!$order) {
+			echo json_encode(array('status' => 'error', 'message' => 'Order reference not found in system.'));
+			return;
+		}
+
+		$userId        = intval($order['user_id']);
+		$appointmentId = $order['reference_id'];
+		$amount        = floatval($order['amount']);
+		$date          = date('Y-m-d H:i:s');
+
+		// Deduct points if hybrid payment
+		if ($order['wallet_points_used'] > 0) {
+			$this->Wallet_model->debit_points(
+				$userId,
+				$order['wallet_points_used'],
+				'APPOINTMENT_HYBRID_PAYMENT',
+				$appointmentId,
+				'Partial points payment for Appointment #' . $appointmentId
+			);
+		}
+
+		// Update razorpay_orders
+		$this->Payment_model->update_order_status($order['internal_order_ref'], 'PAID', $rzpPaymentId);
+
+		// Record in sm_checkout for legacy sync
+		$userRow = $this->db->get_where('userlogin', array('USERID' => $userId))->row_array();
+		$paymentData = array(
+			'userid'        => $userId,
+			'checkoutid'    => '0',
+			'orderid'       => $order['internal_order_ref'],
+			'trakingid'     => $rzpPaymentId,
+			'bankrefno'     => $rzpOrderId,
+			'orderstatus'   => 'Success',
+			'paymentmod'    => 'RAZORPAY',
+			'currency'      => 'INR',
+			'amount'        => $order['gateway_amount'],
+			'billingname'   => isset($userRow['NAME']) ? $userRow['NAME'] : 'Patient',
+			'billingtel'    => isset($userRow['MOBILE']) ? $userRow['MOBILE'] : '',
+			'billingemail'  => isset($userRow['EMAIL']) ? $userRow['EMAIL'] : '',
+			'status'        => '1',
+			'date'          => $date
+		);
+		$this->db->insert('sm_checkout', $paymentData);
+		$checkoutId = $this->db->insert_id();
+
+		// Update sm_order
+		$this->db->where('ORDER_ID', $order['internal_order_ref'])->update('sm_order', array(
+			'PAYMENT_STATUS' => 'DONE'
+		));
+
+		// Update appointment
+		$this->db->where('appointment_id', $appointmentId)->update('appointment', array(
+			'checkout_id'         => $checkoutId,
+			'payment_status'      => 'PAID',
+			'payment_mode'        => 'RAZORPAY',
+			'ref_no'              => $order['internal_order_ref'],
+			'status'              => '1',
+			'appointment_status'  => '1',
+			'pay_date'            => $date,
+			'user_id'             => $userId
+		));
+
+		// Record in Double-Entry Financial Ledger (Escrow)
+		$appointment_data = $this->db->get_where('appointment', array('appointment_id' => $appointmentId))->row();
+		if ($appointment_data) {
+			$payee_id = (!empty($appointment_data->doctor_id)) ? $appointment_data->doctor_id : ((!empty($appointment_data->institute_id)) ? $appointment_data->institute_id : 1);
+			$payee_type = (!empty($appointment_data->doctor_id)) ? 'DOCTOR' : 'HOSPITAL';
+			$this->Financial_Model->record_transaction($order['internal_order_ref'], 'PATIENT', $userId, $payee_type, $payee_id, $amount, 'RAZORPAY');
+
+			// Cashback Points
+			$cashbackPct = floatval($this->Wallet_model->get_setting('cashback_percentage', 5.00));
+			if ($cashbackPct > 0) {
+				$cashbackPoints = round(($amount * ($cashbackPct / 100)), 2);
+				if ($cashbackPoints > 0) {
+					$this->Wallet_model->credit_points($userId, $cashbackPoints, 'APPOINTMENT_CASHBACK', $appointmentId, 'Cashback reward for Appointment #' . $appointmentId, 'WALLET');
+				}
+			}
+
+			// Award Referral Bonus
+			$this->Referral_model->complete_first_booking_reward($userId);
+
+			// Send SMS confirmation
+			if (!empty($appointment_data->appointment_mobile)) {
+				$msg = "Your Appointment #$appointmentId is CONFIRMED with Upchar! Payment of Rs $amount received via Razorpay (Txn: $rzpPaymentId). Details at https://www.upchar.info";
+				sendsms($msg, $appointment_data->appointment_mobile);
+			}
+		}
+
+		// Clear sessions
+		$this->session->unset_userdata('SecurePay');
+		$this->session->unset_userdata('AppointmentCheckout');
+
+		echo json_encode(array(
+			'status'       => 'success',
+			'message'      => 'Payment verified successfully!',
+			'redirect_url' => base_url('payment/success/' . $order['internal_order_ref'])
+		));
 	}
 
 	

@@ -47,9 +47,10 @@ class Mytest extends CI_Controller {
      */
     public function index() {
         $selected_city     = $this->input->get('city', TRUE) ?: $this->input->get('location', TRUE);
+        $selected_lab      = $this->input->get('lab_id', TRUE);
         $keyword           = trim($this->input->get('keyword', TRUE) ?: $this->input->get('pathology_name', TRUE));
         $selected_category = $this->input->get('category', TRUE) ?: $this->input->get('spl', TRUE);
-        $active_tab        = $this->input->get('tab', TRUE) ?: 'tests'; // Default to tests catalog tab for mytest
+        $active_tab        = $this->input->get('tab', TRUE) ?: 'all'; // 'all', 'tests', 'labs', 'packages', 'scans'
 
         // 1. Fetch Master Dropdowns & Filters
         $data['cities'] = $this->db->select('c.id, c.name, COUNT(p.id) as lab_count')
@@ -89,6 +90,10 @@ class Mytest extends CI_Controller {
             $this->db->group_end();
         }
 
+        if (!empty($selected_lab)) {
+            $this->db->where('p.id', intval($selected_lab));
+        }
+
         if (!empty($keyword)) {
             $this->db->group_start();
             $this->db->like('p.name', $keyword);
@@ -121,7 +126,7 @@ class Mytest extends CI_Controller {
         }
 
         // 3. Fetch All Individual Diagnostic Tests
-        $this->db->select('pt.*, pc.category_name, pl.name as lab_name, pl.city as lab_city_id, c.name as city_name, pl.location as lab_location');
+        $this->db->select('pt.*, pc.category_name, pl.name as lab_name, pl.city as lab_city_id, c.name as city_name, pl.location as lab_location, pl.nabl_accredited');
         $this->db->from('pathtest pt');
         $this->db->join('path_category pc', 'pc.category_id = pt.category_id', 'left');
         $this->db->join('pathlab pl', 'pl.id = pt.path_id', 'left');
@@ -130,6 +135,9 @@ class Mytest extends CI_Controller {
 
         if (!empty($selected_city)) {
             $this->db->where('pl.city', intval($selected_city));
+        }
+        if (!empty($selected_lab)) {
+            $this->db->where('pt.path_id', intval($selected_lab));
         }
         if (!empty($selected_category)) {
             $this->db->where('pt.category_id', intval($selected_category));
@@ -163,6 +171,7 @@ class Mytest extends CI_Controller {
         $data['cart']                 = $cart;
         $data['cart_count']           = count($cart);
         $data['selected_city']        = $selected_city;
+        $data['selected_lab']         = $selected_lab;
         $data['selected_category']    = $selected_category;
         $data['keyword']              = $keyword;
         $data['active_tab']           = $active_tab;
@@ -172,6 +181,98 @@ class Mytest extends CI_Controller {
 
         $this->load->view('mytest', $data);
     }
+
+    /**
+     * AJAX Booking Endpoint for Single Test / Instant Home Collection
+     */
+    public function quick_book() {
+        if ($this->input->server('REQUEST_METHOD') !== 'POST') {
+            echo json_encode(['status' => 'error', 'message' => 'Invalid request method.']);
+            return;
+        }
+
+        $test_id        = intval($this->input->post('test_id'));
+        $lab_id         = intval($this->input->post('lab_id'));
+        $patient_name   = trim($this->input->post('patient_name', TRUE));
+        $patient_mobile = trim($this->input->post('patient_mobile', TRUE));
+        $patient_email  = trim($this->input->post('patient_email', TRUE));
+        $patient_age    = trim($this->input->post('patient_age', TRUE));
+        $patient_gender = trim($this->input->post('patient_gender', TRUE));
+        $booking_date   = trim($this->input->post('booking_date', TRUE)) ?: date('Y-m-d');
+        $time_slot      = trim($this->input->post('time_slot', TRUE)) ?: 'Morning (07:00 AM - 11:00 AM)';
+        $visit_type     = trim($this->input->post('visit_type', TRUE)) ?: 'HOME_COLLECTION';
+        $patient_address= trim($this->input->post('patient_address', TRUE));
+        $notes          = trim($this->input->post('notes', TRUE));
+
+        if (empty($patient_name) || empty($patient_mobile)) {
+            echo json_encode(['status' => 'error', 'message' => 'Please provide patient name and mobile number.']);
+            return;
+        }
+
+        // Fetch Test Details
+        $test = $this->db->where('test_id', $test_id)->get('pathtest')->row();
+        $test_name = $test ? $test->test_name : 'Diagnostic Blood Checkup';
+        $test_amount = $test ? floatval($test->amount) : 350.00;
+        $short_name = $test ? $test->short_name : 'CBC';
+
+        if (!$lab_id && $test) {
+            $lab_id = $test->path_id;
+        }
+
+        $lab = $this->db->where('id', $lab_id)->get('pathlab')->row();
+        $lab_name = $lab ? $lab->name : 'Upchar Accredited Partner Lab';
+
+        $user_id = $this->session->userdata('user_id') ?: $this->session->userdata('patient_id');
+
+        // Insert into path_book
+        $book_data = [
+            'user_id'         => $user_id ? intval($user_id) : NULL,
+            'patient_name'    => $patient_name,
+            'patient_mobile'  => $patient_mobile,
+            'patient_email'   => $patient_email,
+            'patient_age'     => $patient_age,
+            'patient_gender'  => $patient_gender,
+            'patient_address' => $patient_address,
+            'notes'           => $notes,
+            'pathlab_id'      => strval($lab_id),
+            'total_amount'    => $test_amount,
+            'payment_mode'    => 'COD',
+            'payment_status'  => '0',
+            'time_slot'       => $time_slot,
+            'visit_type'      => $visit_type,
+            'order_stage'     => 'BOOKED',
+            'book_date'       => date('Y-m-d H:i:s', strtotime($booking_date . ' ' . date('H:i:s'))),
+            'status'          => '1'
+        ];
+
+        $this->db->insert('path_book', $book_data);
+        $booking_id = $this->db->insert_id();
+
+        if ($booking_id) {
+            $test_item = [
+                'booking_id' => $booking_id,
+                'pathlab_id' => strval($lab_id),
+                'test_id'    => strval($test_id),
+                'test_name'  => $test_name,
+                'short_name' => $short_name,
+                'amount'     => intval($test_amount),
+                'status'     => '1'
+            ];
+            $this->db->insert('path_book_test', $test_item);
+
+            echo json_encode([
+                'status'        => 'success',
+                'booking_id'    => $booking_id,
+                'reference_no'  => "UPC-LAB-" . str_pad($booking_id, 5, '0', STR_PAD_LEFT),
+                'redirect_url'  => base_url('mytest/order_success/' . $booking_id),
+                'message'       => "Booking successfully confirmed! Reference ID: #UPC-LAB-" . str_pad($booking_id, 5, '0', STR_PAD_LEFT)
+            ]);
+            return;
+        }
+
+        echo json_encode(['status' => 'error', 'message' => 'Failed to process booking. Please try again.']);
+    }
+
 
     /**
      * AJAX: Add Test to Pathology Cart
@@ -295,8 +396,16 @@ class Mytest extends CI_Controller {
      * Checkout Page: Patient Details, Timing, Collection & Payment Method
      */
     public function checkout() {
-        $add_test_id = intval($this->input->get('test_id') ?: $this->input->get('add'));
+        $add_test_id    = intval($this->input->get('test_id') ?: $this->input->get('add'));
+        $remove_test_id = intval($this->input->get('remove'));
         $cart = $this->session->userdata('path_cart') ?: [];
+
+        if ($remove_test_id > 0 && isset($cart[$remove_test_id])) {
+            unset($cart[$remove_test_id]);
+            $this->session->set_userdata('path_cart', $cart);
+            redirect('mytest/checkout');
+            return;
+        }
 
         if ($add_test_id > 0 && !isset($cart[$add_test_id])) {
             $this->db->select('pt.*, pc.category_name, pl.name as lab_name, c.name as city_name');
@@ -331,16 +440,42 @@ class Mytest extends CI_Controller {
         // Fetch popular tests for quick add if cart is light
         $popular_tests = $this->db->where('status', '1')->order_by('test_id', 'asc')->limit(6)->get('pathtest')->result();
 
-        // Enforce Login before booking diagnostic tests
-        $user_id = $this->session->userdata('USERID') ?: $this->session->userdata('userid') ?: $this->session->userdata('user_id');
-        if (!$user_id) {
+        // Enforce Login before booking diagnostic tests with robust resolution
+        $user_id   = $this->session->userdata('USERID') ?: $this->session->userdata('userid') ?: $this->session->userdata('user_id');
+        $useremail = $this->session->userdata('useremail');
+        $username  = $this->session->userdata('username');
+
+        $user = null;
+        if (!empty($user_id)) {
+            $user = $this->db->get_where('userlogin', array('USERID' => $user_id))->row();
+        }
+        if (!$user && !empty($useremail)) {
+            $user = $this->db->get_where('userlogin', array('EMAIL' => $useremail))->row();
+            if ($user) {
+                $user_id = $user->USERID;
+                $this->session->set_userdata('userid', $user_id);
+            }
+        }
+        if (!$user && !empty($username)) {
+            $user = $this->db->group_start()
+                ->where('EMAIL', $username)
+                ->or_where('MOBILE', $username)
+                ->or_where('FNAME', $username)
+                ->group_end()
+                ->get('userlogin')->row();
+            if ($user) {
+                $user_id = $user->USERID;
+                $this->session->set_userdata('userid', $user_id);
+            }
+        }
+
+        if (!$user && !$user_id) {
             $this->session->set_userdata('last_page', base_url('mytest/checkout'));
             $this->session->set_flashdata('flashmsg', '<div class="alert alert-warning">Please login to complete your diagnostic test booking.</div>');
             redirect('login');
             return;
         }
 
-        $user = $this->db->where('USERID', $user_id)->get('userlogin')->row();
         $totals = $this->_calculate_cart_totals($cart);
 
         // Compute age from DOB if present
@@ -360,6 +495,7 @@ class Mytest extends CI_Controller {
         $data['collection_fee'] = 0.00; // Free Home Sample Collection
         $data['final_total']    = $totals['subtotal'];
         $data['user']           = $user;
+        $data['dependents']     = !empty($user_id) ? $this->db->get_where('patient_dependents', array('primary_user_id' => $user_id))->result() : [];
         $data['patient_name']   = $user ? trim($user->FNAME . ' ' . $user->LNAME) : '';
         $data['patient_mobile'] = $user ? $user->MOBILE : '';
         $data['patient_email']  = $user ? $user->EMAIL : '';
@@ -517,7 +653,7 @@ class Mytest extends CI_Controller {
      */
     public function order_success($booking_id) {
         $booking_id = intval($booking_id);
-        $booking = $this->db->select('b.*, pl.name as lab_name, pl.address as lab_address, pl.mobile as lab_mobile')
+        $booking = $this->db->select('b.*, pl.name as lab_name, pl.address as lab_address, pl.mobile as lab_mobile, pl.city as lab_city, pl.nabl_accredited, pl.license_number')
                             ->from('path_book b')
                             ->join('pathlab pl', 'pl.id = b.pathlab_id', 'left')
                             ->where('b.booking_id', $booking_id)
@@ -532,8 +668,23 @@ class Mytest extends CI_Controller {
 
         $tests = $this->db->where('booking_id', $booking_id)->get('path_book_test')->result();
 
+        // Fetch collector / phlebotomist if assigned
+        $collector = null;
+        if (!empty($booking->assigned_collector_id)) {
+            $collector = $this->db->get_where('staff', array('id' => (int)$booking->assigned_collector_id))->row();
+        }
+
+        // Fetch specimen custody tracking if exists
+        $custody = $this->db->get_where('sample_custody_tracking', array('booking_id' => $booking_id))->row();
+
+        // Fetch reports if available
+        $reports = $this->db->get_where('path_reports', array('booking_id' => $booking_id))->result();
+
         $data['booking']      = $booking;
         $data['tests']        = $tests;
+        $data['collector']    = $collector;
+        $data['custody']      = $custody;
+        $data['reports']      = $reports;
         $data['reference_no'] = "UPC-LAB-" . str_pad($booking_id, 5, '0', STR_PAD_LEFT);
 
         $this->load->view('mytest_order_success', $data);

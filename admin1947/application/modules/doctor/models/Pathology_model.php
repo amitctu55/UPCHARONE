@@ -66,6 +66,71 @@ class Pathology_model extends CI_Model
 	{
 		$this->db->query("delete from path_lab_test where id='".$id."'");
 	}
+
+	public function get_assign_test_row($id)
+	{
+		$this->db->select('path_lab_test.*, pathlab.name as lab_name, pathtest.test_name');
+		$this->db->join('pathtest', 'path_lab_test.test_id = pathtest.test_id', 'left');
+		$this->db->join('pathlab', 'pathlab.id = path_lab_test.path_lab_id', 'left');
+		$this->db->where('path_lab_test.id', (int)$id);
+		$q = $this->db->get('path_lab_test');
+		return ($q && is_object($q)) ? $q->row_array() : null;
+	}
+
+	public function update_assign_test($id)
+	{
+		$tid   = $this->input->post('test_id');
+		$pid   = $this->input->post('path_lab_id');
+		$price = (int)$this->input->post('lab_price');
+		$comm  = $this->input->post('comment');
+		$stat  = $this->input->post('status') !== null ? $this->input->post('status') : '1';
+
+		$data = array(
+			'test_id'      => (int)$tid,
+			'path_lab_id'  => (int)$pid,
+			'lab_price'    => (int)$price,
+			'comment'      => $comm,
+			'status'       => $stat,
+			'updated_date' => date('Y-m-d H:i:s')
+		);
+		$this->db->where('id', (int)$id);
+		return $this->db->update('path_lab_test', $data);
+	}
+
+	public function toggle_status_assign($id)
+	{
+		$row = $this->db->get_where('path_lab_test', array('id' => (int)$id))->row();
+		if ($row) {
+			$new_status = ($row->status == '1') ? '0' : '1';
+			$this->db->where('id', (int)$id)->update('path_lab_test', array(
+				'status'       => $new_status,
+				'updated_date' => date('Y-m-d H:i:s')
+			));
+			return $new_status;
+		}
+		return false;
+	}
+
+	public function bulk_update_status($ids, $status)
+	{
+		if (!empty($ids) && is_array($ids)) {
+			$this->db->where_in('id', $ids);
+			return $this->db->update('path_lab_test', array(
+				'status'       => $status,
+				'updated_date' => date('Y-m-d H:i:s')
+			));
+		}
+		return false;
+	}
+
+	public function bulk_delete_assign($ids)
+	{
+		if (!empty($ids) && is_array($ids)) {
+			$this->db->where_in('id', $ids);
+			return $this->db->delete('path_lab_test');
+		}
+		return false;
+	}
 	
 	public  function get_test($page=array())
 	{		
@@ -220,9 +285,199 @@ class Pathology_model extends CI_Model
 						'creat_date'				=>date('Y-m-d h:i:s'),
 						'created_by'				=>getUserId(),
 					);
-		$this->db->where('parameter_id',$parameter_id);
-		$this->db->update('path_parameter',$data);
-		return $parameter_id;
+		$this->db->where('parameter_id', $unit_id);
+		$this->db->update('path_parameter', $data);
+		return $unit_id;
 	}
-	
-}
+
+	public function insert_master_test($data = array())
+	{
+		if (empty($data)) {
+			$data = array(
+				'test_name'          => trim($this->input->post('test_name')),
+				'short_name'         => trim($this->input->post('short_name') ?: $this->input->post('test_name')),
+				'code'               => trim($this->input->post('code') ?: ('UP-' . strtoupper(substr(preg_replace('/[^a-zA-Z0-9]/', '', $this->input->post('test_name')), 0, 4)) . '-' . rand(10,99))),
+				'department'         => trim($this->input->post('department') ?: 'Biochemistry'),
+				'specimen_type'      => trim($this->input->post('specimen_type') ?: 'Whole Blood EDTA'),
+				'container_color'    => trim($this->input->post('container_color') ?: 'Purple (EDTA)'),
+				'fasting_required'   => $this->input->post('fasting_required') ? 1 : 0,
+				'standard_tat_hours' => (int)($this->input->post('standard_tat_hours') ?: 24),
+				'amount'             => (float)($this->input->post('amount') ?: 0),
+				'method'             => trim($this->input->post('method') ?: 'Automated Analyzer'),
+				'category_id'        => (int)($this->input->post('category_id') ?: 1),
+				'path_id'            => (int)($this->input->post('path_id') ?: 0),
+				'test_type'          => trim($this->input->post('department') ?: 'Pathology'),
+				'status'             => '1',
+				'approved'           => '1',
+				'creat_date'         => date('Y-m-d H:i:s')
+			);
+		}
+		$this->db->insert('pathtest', $data);
+		return $this->db->insert_id();
+	}
+
+	public function get_lab_commission_rate($lab_id)
+	{
+		$row = $this->db->select('commission_rate')->get_where('pathlab', array('id' => (int)$lab_id))->row();
+		return $row ? (float)$row->commission_rate : 15.00;
+	}
+
+	public function get_dashboard_metrics()
+	{
+		$stats = array();
+		$stats['total_labs']        = $this->db->count_all('pathlab');
+		$stats['approved_labs']     = $this->db->where('approved', '1')->count_all_results('pathlab');
+		$stats['total_tests']       = $this->db->count_all('pathtest');
+		$stats['total_assignments'] = $this->db->count_all('path_lab_test');
+		$stats['active_assignments']= $this->db->where('status', '1')->count_all_results('path_lab_test');
+		
+		// Bookings & Logistics
+		$stats['total_bookings']     = $this->db->count_all('path_book');
+		$stats['pending_collection'] = $this->db->group_start()->where('order_stage', 'BOOKED')->or_where('order_stage', 'PENDING')->or_where('order_stage IS NULL')->group_end()->count_all_results('path_book');
+		$stats['in_transit']         = $this->db->where('order_stage', 'IN_TRANSIT')->count_all_results('path_book');
+		$stats['received_at_lab']    = $this->db->group_start()->where('order_stage', 'RECEIVED_AT_LAB')->or_where('order_stage', 'SAMPLE_COLLECTED')->group_end()->count_all_results('path_book');
+		$stats['completed_reports']  = $this->db->group_start()->where('order_stage', 'REPORT_READY')->or_where('order_stage', 'COMPLETED')->group_end()->count_all_results('path_book');
+		$stats['active_phlebos']     = $this->db->count_all('staff');
+
+		// Recent footprints
+		$this->db->order_by('id', 'DESC');
+		$this->db->limit(10);
+		$stats['recent_footprints'] = $this->db->get('system_audit_footprints')->result();
+
+		return $stats;
+	}
+
+	public function get_custody_bookings($limit = 20, $offset = 0, $filters = array())
+	{
+		$this->db->select('path_book.*, pathlab.name as lab_name, staff.name as phlebo_name, staff.surname as phlebo_surname, staff.contact_no as phlebo_mobile, sample_custody_tracking.id as custody_id, sample_custody_tracking.barcode_number, sample_custody_tracking.collection_temperature_c, sample_custody_tracking.status as custody_status, sample_custody_tracking.handover_verification_otp, sample_custody_tracking.sample_condition_on_receipt');
+		$this->db->from('path_book');
+		$this->db->join('pathlab', 'pathlab.id = path_book.pathlab_id', 'left');
+		$this->db->join('staff', 'staff.id = path_book.assigned_collector_id', 'left');
+		$this->db->join('sample_custody_tracking', 'sample_custody_tracking.booking_id = path_book.booking_id', 'left');
+
+		if (!empty($filters['stage'])) {
+			$this->db->where('path_book.order_stage', $filters['stage']);
+		}
+		if (!empty($filters['keyword'])) {
+			$kw = $this->db->escape_str($filters['keyword']);
+			$this->db->where("(path_book.patient_name LIKE '%{$kw}%' OR path_book.booking_id LIKE '%{$kw}%' OR path_book.patient_mobile LIKE '%{$kw}%' OR sample_custody_tracking.barcode_number LIKE '%{$kw}%')");
+		}
+
+		$this->db->order_by('path_book.booking_id', 'DESC');
+		$this->db->limit($limit, $offset);
+		return $this->db->get()->result();
+	}
+
+	public function count_custody_bookings($filters = array())
+	{
+		$this->db->from('path_book');
+		$this->db->join('sample_custody_tracking', 'sample_custody_tracking.booking_id = path_book.booking_id', 'left');
+
+		if (!empty($filters['stage'])) {
+			$this->db->where('path_book.order_stage', $filters['stage']);
+		}
+		if (!empty($filters['keyword'])) {
+			$kw = $this->db->escape_str($filters['keyword']);
+			$this->db->where("(path_book.patient_name LIKE '%{$kw}%' OR path_book.booking_id LIKE '%{$kw}%' OR path_book.patient_mobile LIKE '%{$kw}%' OR sample_custody_tracking.barcode_number LIKE '%{$kw}%')");
+		}
+		return $this->db->count_all_results();
+	}
+
+	public function assign_phlebotomist($booking_id, $staff_id, $barcode = null, $temp = null)
+	{
+		$bId = (int)$booking_id;
+		$sId = (int)$staff_id;
+
+		if (empty($barcode)) {
+			$barcode = 'BC-' . rand(100000, 999999);
+		}
+		$otp = (string)rand(1000, 9999);
+
+		// Update path_book
+		$this->db->where('booking_id', $bId)->update('path_book', array(
+			'assigned_collector_id' => $sId,
+			'vial_barcode'          => $barcode,
+			'order_stage'           => 'IN_TRANSIT',
+			'collection_status'     => 'assigned'
+		));
+
+		// Check or insert sample_custody_tracking
+		$existing = $this->db->get_where('sample_custody_tracking', array('booking_id' => $bId))->row();
+		if ($existing) {
+			$this->db->where('id', $existing->id)->update('sample_custody_tracking', array(
+				'phlebotomist_user_id'     => $sId,
+				'barcode_number'           => $barcode,
+				'collected_at'             => date('Y-m-d H:i:s'),
+				'collection_temperature_c' => $temp ? (float)$temp : 4.5,
+				'handover_verification_otp'=> $otp,
+				'status'                   => 'in_transit'
+			));
+			$custodyId = $existing->id;
+		} else {
+			$this->db->insert('sample_custody_tracking', array(
+				'booking_id'               => $bId,
+				'barcode_number'           => $barcode,
+				'phlebotomist_user_id'     => $sId,
+				'sample_type'              => 'Whole Blood & Serum',
+				'collected_at'             => date('Y-m-d H:i:s'),
+				'collection_temperature_c' => $temp ? (float)$temp : 4.5,
+				'handover_verification_otp'=> $otp,
+				'status'                   => 'in_transit',
+				'created_at'               => date('Y-m-d H:i:s')
+			));
+			$custodyId = $this->db->insert_id();
+		}
+
+		return array(
+			'custody_id' => $custodyId,
+			'barcode'    => $barcode,
+			'otp'        => $otp
+		);
+	}
+
+	public function verify_lab_handover($booking_id, $receiver_name = 'Lab Technician', $otp = null, $condition = 'intact')
+	{
+		$bId = (int)$booking_id;
+		$cond = in_array($condition, ['intact', 'hemolyzed', 'lipemic', 'leaked', 'quantity_insufficient']) ? $condition : 'intact';
+
+		$this->db->where('booking_id', $bId)->update('sample_custody_tracking', array(
+			'handover_to_lab_at'          => date('Y-m-d H:i:s'),
+			'lab_receiver_name'           => $receiver_name,
+			'sample_condition_on_receipt' => $cond,
+			'status'                      => ($cond == 'intact') ? 'accepted_by_lab' : 'rejected_by_lab'
+		));
+
+		$newStage = ($cond == 'intact') ? 'RECEIVED_AT_LAB' : 'SAMPLE_REJECTED';
+		$this->db->where('booking_id', $bId)->update('path_book', array(
+			'order_stage'       => $newStage,
+			'collection_status' => 'handed_to_lab'
+		));
+
+		return true;
+	}
+
+	public function get_booking_timeline($booking_id)
+	{
+		$bId = (int)$booking_id;
+		$booking = $this->db->select('path_book.*, pathlab.name as lab_name, pathlab.address as lab_address, staff.name as phlebo_name, staff.surname as phlebo_surname, staff.contact_no as phlebo_mobile')
+			->from('path_book')
+			->join('pathlab', 'pathlab.id = path_book.pathlab_id', 'left')
+			->join('staff', 'staff.id = path_book.assigned_collector_id', 'left')
+			->where('path_book.booking_id', $bId)
+			->get()
+			->row();
+
+		if (!$booking) return null;
+
+		$custody = $this->db->get_where('sample_custody_tracking', array('booking_id' => $bId))->row();
+		$reports = $this->db->get_where('path_reports', array('booking_id' => $bId))->result();
+		$footprints = $this->db->order_by('id', 'ASC')->get_where('system_audit_footprints', array('entity_type' => 'booking', 'entity_id' => $bId))->result();
+
+		return array(
+			'booking'    => $booking,
+			'custody'    => $custody,
+			'reports'    => $reports,
+			'footprints' => $footprints
+		);
+	}
+}

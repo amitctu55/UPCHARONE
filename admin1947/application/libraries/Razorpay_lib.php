@@ -19,10 +19,16 @@ class Razorpay_lib {
     public function __construct() {
         $this->ci =& get_instance();
         $this->ci->config->load('razorpay', TRUE);
+        $this->ci->load->helper('settings');
 
-        $this->key_id               = $this->ci->config->item('razorpay_key_id', 'razorpay');
-        $this->key_secret           = $this->ci->config->item('razorpay_key_secret', 'razorpay');
-        $this->webhook_secret       = $this->ci->config->item('razorpay_webhook_secret', 'razorpay');
+        // Dynamically load active credentials from system_settings configured in Admin
+        $setting_key_id = function_exists('get_system_setting') ? get_system_setting('razorpay_key_id') : null;
+        $setting_key_secret = function_exists('get_system_setting') ? get_system_setting('razorpay_key_secret') : null;
+        $setting_webhook_secret = function_exists('get_system_setting') ? get_system_setting('razorpay_webhook_secret') : null;
+
+        $this->key_id               = !empty($setting_key_id) ? $setting_key_id : $this->ci->config->item('razorpay_key_id', 'razorpay');
+        $this->key_secret           = !empty($setting_key_secret) ? $setting_key_secret : $this->ci->config->item('razorpay_key_secret', 'razorpay');
+        $this->webhook_secret       = !empty($setting_webhook_secret) ? $setting_webhook_secret : $this->ci->config->item('razorpay_webhook_secret', 'razorpay');
         $this->razorpayx_key_id     = $this->ci->config->item('razorpayx_key_id', 'razorpay');
         $this->razorpayx_key_secret = $this->ci->config->item('razorpayx_key_secret', 'razorpay');
         $this->razorpayx_account    = $this->ci->config->item('razorpayx_account_number', 'razorpay');

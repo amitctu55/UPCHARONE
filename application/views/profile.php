@@ -1,417 +1,921 @@
 <?php 
 // Safely extract properties with fallback defaults
-$userObj = !empty($data) ? $data : (!empty($user) ? $user : null);
-$fname  = isset($userObj->FNAME) ? $userObj->FNAME : '';
-$email  = isset($userObj->EMAIL) ? $userObj->EMAIL : '';
-$mobile = isset($userObj->MOBILE) ? $userObj->MOBILE : '';
-$dob    = isset($userObj->DOB) ? $userObj->DOB : '';
-$gender = isset($userObj->GENDER) ? $userObj->GENDER : '';
-$bgroup = isset($userObj->BGROUP) ? $userObj->BGROUP : '';
-?>
+$userObj = !empty($user) ? $user : (!empty($data) && is_object($data) ? $data : null);
 
-<!-- Patient Topbar Header -->
-<div class="patient-topbar">
-    <div>
-        <h2 class="patient-topbar-title">My Profile &amp; Preferences</h2>
-        <p style="margin: 4px 0 0 0; color: #64748b; font-size: 13.5px;">
-            Manage your personal patient account information, contact numbers, and family medical details.
-        </p>
-    </div>
-    <div>
-        <a href="<?=base_url('change_password');?>" class="btn" style="background: #ffffff; color: #475569; font-weight: 600; border-radius: 8px; padding: 9px 18px; border: 1px solid #cbd5e1; text-decoration: none; font-size: 13px;">
-            <i class="fa fa-key" style="margin-right: 6px; color: #f59e0b;"></i> Change Password
-        </a>
-    </div>
-</div>
-
-<!-- Flash Alert Messages -->
-<?php if($this->session->flashdata('flashmsg')): ?>
-    <div style="margin-bottom: 20px;">
-        <?=$this->session->flashdata('flashmsg');?>
-    </div>
-<?php endif; ?>
-
-<style>
-.profile-card-box {
-    background: #ffffff;
-    border-radius: 16px;
-    border: 1px solid #e2e8f0;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
-    padding: 30px;
-    margin-bottom: 30px;
+function get_prop($obj, $prop) {
+    if (!$obj || !is_object($obj)) return '';
+    $u = strtoupper($prop);
+    $l = strtolower($prop);
+    if (isset($obj->$u)) return trim((string)$obj->$u);
+    if (isset($obj->$l)) return trim((string)$obj->$l);
+    if (isset($obj->$prop)) return trim((string)$obj->$prop);
+    return '';
 }
 
-.profile-section-heading {
-    font-size: 16px;
+$fname   = get_prop($userObj, 'FNAME');
+$lname   = get_prop($userObj, 'LNAME');
+$email   = get_prop($userObj, 'EMAIL');
+$mobile  = get_prop($userObj, 'MOBILE');
+$dob     = get_prop($userObj, 'DOB');
+$gender  = get_prop($userObj, 'GENDER');
+$bgroup  = get_prop($userObj, 'BGROUP');
+$height  = get_prop($userObj, 'HEIGHT');
+$weight  = get_prop($userObj, 'WEIGHT');
+$image   = get_prop($userObj, 'IMAGE') ?: get_prop($userObj, 'PROFILEIMG');
+$userid  = get_prop($userObj, 'USERID') ?: ($this->session->userdata('userid') ?: 0);
+
+$displayName = !empty($fname) ? $fname : (!empty($this->session->userdata('username')) ? $this->session->userdata('username') : 'Valued Patient');
+if (!empty($lname) && stripos($displayName, $lname) === false) {
+    $displayName .= ' ' . $lname;
+}
+
+// Check if user has minimum profile filled
+$hasProfileData = (!empty($fname) || !empty($email) || !empty($mobile));
+
+// Dependents list
+$dep_list = !empty($dependents) ? $dependents : [];
+$dep_count = count($dep_list);
+
+// BMI calculation
+$bmi = null;
+$bmiLabel = '';
+$bmiColor = '#10b981';
+if (!empty($height) && !empty($weight)) {
+    preg_match('/(\d+(\.\d+)?)/', $height, $h_m);
+    preg_match('/(\d+(\.\d+)?)/', $weight, $w_m);
+    if (!empty($h_m[1]) && !empty($w_m[1])) {
+        $h_val = floatval($h_m[1]);
+        $w_val = floatval($w_m[1]);
+        $h_mtr = ($h_val > 50) ? ($h_val / 100) : ($h_val * 0.3048);
+        if ($h_mtr > 0.5) {
+            $bmi = round($w_val / ($h_mtr * $h_mtr), 1);
+            if ($bmi < 18.5) { $bmiLabel = 'Underweight'; $bmiColor = '#f59e0b'; }
+            elseif ($bmi <= 24.9) { $bmiLabel = 'Normal'; $bmiColor = '#10b981'; }
+            elseif ($bmi <= 29.9) { $bmiLabel = 'Overweight'; $bmiColor = '#f97316'; }
+            else { $bmiLabel = 'Obese'; $bmiColor = '#ef4444'; }
+        }
+    }
+}
+?>
+
+<style>
+/* ==========================================================
+   COMPACT FULL-STACK DEVELOPER PATIENT PROFILE DASHBOARD
+   Ultra-clean, High-density, Space-efficient
+   ========================================================== */
+.prof-container {
+    max-width: 1140px;
+    margin: 0 auto;
+}
+
+/* Compact Header Bar */
+.prof-compact-header {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+}
+
+.prof-user-strip {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.prof-avatar-sm {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: #00a896;
+    color: #ffffff;
+    font-size: 19px;
     font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    text-transform: uppercase;
+}
+
+.prof-name-title {
+    font-size: 17px;
+    font-weight: 800;
     color: #0f172a;
-    margin-bottom: 20px;
+    margin: 0 0 2px 0;
     display: flex;
     align-items: center;
     gap: 8px;
-    border-bottom: 1px solid #f1f5f9;
-    padding-bottom: 12px;
+    flex-wrap: wrap;
 }
 
-.profile-field-label {
-    font-size: 13px;
+.prof-badge-verified {
+    font-size: 11px;
+    font-weight: 700;
+    color: #059669;
+    background: #ecfdf5;
+    padding: 2px 8px;
+    border-radius: 6px;
+    border: 1px solid #a7f3d0;
+}
+
+.prof-id-pill {
+    font-size: 11px;
     font-weight: 600;
-    color: #334155;
-    margin-bottom: 6px;
-    display: block;
+    color: #64748b;
+    background: #f1f5f9;
+    padding: 2px 7px;
+    border-radius: 4px;
 }
 
-.profile-input-control {
-    height: 44px;
-    border-radius: 8px;
-    border: 1px solid #cbd5e1;
-    font-size: 14px;
-    padding: 10px 14px;
-    color: #1e293b;
-    background-color: #ffffff;
-    transition: all 0.2s ease;
-    width: 100%;
+.prof-meta-line {
+    font-size: 12.5px;
+    color: #64748b;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+    margin-top: 2px;
 }
 
-.profile-input-control:focus {
-    border-color: var(--upchar-teal);
-    box-shadow: 0 0 0 3px rgba(0, 168, 150, 0.15);
-    outline: none;
+.prof-meta-line span {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
 }
 
-.btn-save-profile {
-    background-color: var(--upchar-teal);
-    color: #ffffff;
-    font-weight: 700;
-    font-size: 14px;
-    padding: 11px 32px;
-    border-radius: 8px;
-    border: none;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    box-shadow: 0 2px 8px rgba(0, 168, 150, 0.3);
+/* Header Buttons */
+.prof-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
-.btn-save-profile:hover {
-    background-color: var(--upchar-teal-dark);
-    color: #ffffff;
-    box-shadow: 0 4px 14px rgba(0, 168, 150, 0.4);
-}
-
-/* Inline Add Member Panel */
-.inline-add-member-panel {
-    display: none;
-    background: #f0fdfa;
-    border: 1.5px solid #99f6e4;
-    border-radius: 14px;
-    padding: 22px 24px;
-    margin-bottom: 24px;
-    box-shadow: 0 4px 14px rgba(0, 168, 150, 0.08);
-    animation: fadeInSlideDown 0.3s ease-out;
-}
-
-@keyframes fadeInSlideDown {
-    from {
-        opacity: 0;
-        transform: translateY(-10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.btn-toggle-add-dep {
-    background: #f0fdfa;
-    color: var(--upchar-teal);
-    font-weight: 700;
-    border: 1.5px solid #99f6e4;
-    border-radius: 8px;
-    padding: 7px 16px;
-    font-size: 13px;
-    cursor: pointer;
+.btn-prof-sm {
+    height: 34px;
+    padding: 0 14px;
+    font-size: 12.5px;
+    font-weight: 600;
+    border-radius: 6px;
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    transition: all 0.2s ease;
+    cursor: pointer;
+    text-decoration: none !important;
+    transition: all 0.15s ease;
+    border: 1px solid transparent;
 }
 
-.btn-toggle-add-dep:hover, .btn-toggle-add-dep.active {
-    background: var(--upchar-teal);
+.btn-prof-primary {
+    background: #00a896;
     color: #ffffff;
-    border-color: var(--upchar-teal);
+}
+.btn-prof-primary:hover {
+    background: #028072;
+    color: #ffffff;
+}
+
+.btn-prof-outline {
+    background: #ffffff;
+    border-color: #cbd5e1;
+    color: #334155;
+}
+.btn-prof-outline:hover {
+    background: #f8fafc;
+    color: #0f172a;
+    border-color: #94a3b8;
+}
+
+/* Compact Nav Tabs */
+.prof-nav-tabs {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 14px;
+    border-bottom: 1px solid #e2e8f0;
+    padding-bottom: 2px;
+}
+
+.prof-tab-btn {
+    background: transparent;
+    border: none;
+    padding: 8px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #64748b;
+    border-radius: 6px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    transition: all 0.15s ease;
+}
+
+.prof-tab-btn:hover {
+    color: #0f172a;
+    background: #f1f5f9;
+}
+
+.prof-tab-btn.active {
+    color: #00a896;
+    background: #f0fdfa;
+    font-weight: 700;
+}
+
+.prof-tab-badge {
+    background: #e2e8f0;
+    color: #475569;
+    font-size: 11px;
+    padding: 1px 6px;
+    border-radius: 10px;
+    font-weight: 700;
+}
+
+.prof-tab-btn.active .prof-tab-badge {
+    background: #00a896;
+    color: #ffffff;
+}
+
+/* Compact Cards */
+.prof-compact-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 18px 20px;
+    margin-bottom: 16px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+}
+
+.prof-card-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.prof-card-head h4 {
+    margin: 0;
+    font-size: 14.5px;
+    font-weight: 700;
+    color: #0f172a;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Compact Info Grid */
+.prof-grid-compact {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px 14px;
+}
+
+@media (max-width: 991px) {
+    .prof-grid-compact { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 575px) {
+    .prof-grid-compact { grid-template-columns: 1fr; }
+}
+
+.prof-cell {
+    background: #f8fafc;
+    border: 1px solid #edf2f7;
+    border-radius: 8px;
+    padding: 10px 12px;
+}
+
+.prof-cell-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: #64748b;
+    margin-bottom: 2px;
+}
+
+.prof-cell-val {
+    font-size: 13.5px;
+    font-weight: 700;
+    color: #0f172a;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.prof-cell-val.empty {
+    color: #94a3b8;
+    font-weight: 500;
+    font-style: italic;
+    font-size: 12.5px;
+}
+
+/* Compact Form Controls */
+.prof-form-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: #334155;
+    margin-bottom: 4px;
+    display: block;
+}
+
+.prof-input {
+    height: 36px;
+    border-radius: 6px;
+    border: 1px solid #cbd5e1;
+    font-size: 13px;
+    padding: 6px 10px;
+    color: #0f172a;
+    width: 100%;
+    background-color: #ffffff;
+    transition: border-color 0.15s ease;
+}
+
+.prof-input:focus {
+    border-color: #00a896;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(0, 168, 150, 0.15);
+}
+
+/* Compact Gender Selector */
+.prof-gender-group {
+    display: flex;
+    gap: 6px;
+}
+
+.prof-gender-btn {
+    flex: 1;
+    position: relative;
+}
+
+.prof-gender-btn input {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.prof-gender-btn label {
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    background: #f8fafc;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: #475569;
+    cursor: pointer;
+    margin: 0;
+    transition: all 0.15s ease;
+}
+
+.prof-gender-btn input:checked + label {
+    background: #f0fdfa;
+    border-color: #00a896;
+    color: #00a896;
+    font-weight: 700;
+}
+
+/* Compact Dependents Table */
+.prof-table-compact {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+.prof-table-compact th {
+    background: #f8fafc;
+    color: #475569;
+    font-weight: 700;
+    padding: 8px 12px;
+    border-bottom: 1.5px solid #e2e8f0;
+    text-align: left;
+    font-size: 11.5px;
+    text-transform: uppercase;
+}
+
+.prof-table-compact td {
+    padding: 10px 12px;
+    border-bottom: 1px solid #f1f5f9;
+    color: #1e293b;
+    vertical-align: middle;
+}
+
+.prof-table-compact tr:hover td {
+    background: #f8fafc;
+}
+
+/* Compact Inline Panel */
+.dep-inline-box {
+    display: none;
+    background: #f0fdfa;
+    border: 1px solid #99f6e4;
+    border-radius: 8px;
+    padding: 14px 16px;
+    margin-bottom: 14px;
 }
 </style>
 
-<div class="row">
-    <div class="col-lg-8 col-md-10 col-12">
+<div class="prof-container">
+
+    <!-- Flash Alert -->
+    <?php if($this->session->flashdata('flashmsg')): ?>
+        <div style="margin-bottom: 12px;">
+            <?=$this->session->flashdata('flashmsg');?>
+        </div>
+    <?php endif; ?>
+
+    <!-- ======================================================== -->
+    <!-- 1. COMPACT USER STRIP & ACTION HEADER                   -->
+    <!-- ======================================================== -->
+    <div class="prof-compact-header">
         
-        <!-- Personal Details Card -->
-        <div class="profile-card-box">
-            
-            <div class="profile-section-heading">
-                <i class="fa fa-user-circle" style="color: var(--upchar-teal); font-size: 20px;"></i>
-                <span>Personal &amp; Contact Details</span>
+        <div class="prof-user-strip">
+            <div class="prof-avatar-sm">
+                <?=strtoupper(substr($displayName, 0, 1));?>
             </div>
-
-            <form action="" method="post">
-                <input type="hidden" name="<?=$this->security->get_csrf_token_name();?>" value="<?=$this->security->get_csrf_hash();?>">
-                <div class="row g-3">
-                    
-                    <!-- Full Name -->
-                    <div class="col-md-6 col-12 mb-3" style="margin-bottom: 16px;">
-                        <label class="profile-field-label">Full Name *</label>
-                        <input type="text" class="profile-input-control" placeholder="Enter your full name" name="name" required value="<?=html_escape($fname);?>">
-                    </div>
-
-                    <!-- Email Address -->
-                    <div class="col-md-6 col-12 mb-3" style="margin-bottom: 16px;">
-                        <label class="profile-field-label">Email Address *</label>
-                        <input type="email" class="profile-input-control" placeholder="patient@example.com" name="email" required value="<?=html_escape($email);?>">
-                    </div>
-
-                    <!-- Mobile Number -->
-                    <div class="col-md-6 col-12 mb-3" style="margin-bottom: 16px;">
-                        <label class="profile-field-label">Mobile Number *</label>
-                        <input type="text" class="profile-input-control" placeholder="10-digit mobile" name="mobile" required value="<?=html_escape($mobile);?>">
-                    </div>
-
-                    <!-- Date of Birth -->
-                    <div class="col-md-6 col-12 mb-3" style="margin-bottom: 16px;">
-                        <label class="profile-field-label">Date of Birth</label>
-                        <input type="date" class="profile-input-control" name="dob" value="<?=html_escape($dob);?>">
-                    </div>
-
-                    <!-- Gender Radio -->
-                    <div class="col-md-6 col-12 mb-3" style="margin-bottom: 16px;">
-                        <label class="profile-field-label">Gender</label>
-                        <div style="display: flex; gap: 24px; align-items: center; height: 44px;">
-                            <label style="font-size: 13.5px; font-weight: 600; color: #0f172a; cursor: pointer; margin: 0; display: inline-flex; align-items: center; gap: 6px;">
-                                <input type="radio" name="gender" value="M" <?=($gender == 'M' || $gender == 'Male') ? 'checked' : '';?> style="accent-color: var(--upchar-teal);"> Male
-                            </label>
-                            <label style="font-size: 13.5px; font-weight: 600; color: #0f172a; cursor: pointer; margin: 0; display: inline-flex; align-items: center; gap: 6px;">
-                                <input type="radio" name="gender" value="F" <?=($gender == 'F' || $gender == 'Female') ? 'checked' : '';?> style="accent-color: var(--upchar-teal);"> Female
-                            </label>
-                        </div>
-                    </div>
-
-                    <!-- Blood Group -->
-                    <div class="col-md-6 col-12 mb-3" style="margin-bottom: 16px;">
-                        <label class="profile-field-label">Blood Group</label>
-                        <input type="text" class="profile-input-control" placeholder="e.g. O+, A+, B-" name="bgroup" value="<?=html_escape($bgroup);?>">
-                    </div>
-
+            <div>
+                <div class="prof-name-title">
+                    <span><?=html_escape($displayName);?></span>
+                    <span class="prof-badge-verified"><i class="fa fa-check-circle"></i> Verified</span>
+                    <span class="prof-id-pill">UPC-<?=str_pad($userid ?: '1', 5, '0', STR_PAD_LEFT);?></span>
                 </div>
-
-                <div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid #f1f5f9; display: flex; justify-content: flex-end;">
-                    <button type="submit" name="submit" class="btn-save-profile">
-                        <i class="fa fa-save" style="margin-right: 6px;"></i> Save Profile Changes
-                    </button>
+                <div class="prof-meta-line">
+                    <span><i class="fa fa-envelope-o" style="color: #00a896;"></i> <?=html_escape(!empty($email) ? $email : 'No email added');?></span>
+                    <span><i class="fa fa-phone" style="color: #00a896;"></i> <?=html_escape(!empty($mobile) ? $mobile : 'No mobile added');?></span>
+                    <?php if(!empty($bgroup)): ?>
+                        <span><i class="fa fa-tint" style="color: #ef4444;"></i> Blood: <strong><?=html_escape($bgroup);?></strong></span>
+                    <?php endif; ?>
+                    <?php if($bmi !== null): ?>
+                        <span><i class="fa fa-heartbeat" style="color: <?=$bmiColor;?>;"></i> BMI: <strong><?=$bmi;?></strong> (<?=$bmiLabel;?>)</span>
+                    <?php endif; ?>
                 </div>
-            </form>
-
+            </div>
         </div>
 
-        <!-- Family & Dependent Profiles Card -->
-        <div class="profile-card-box">
-            <div class="profile-section-heading" style="justify-content: space-between; flex-wrap: wrap; gap: 10px;">
-                <div style="display: flex; align-items: center; gap: 8px;">
-                    <i class="fa fa-users" style="color: var(--upchar-teal); font-size: 20px;"></i>
-                    <span>Family &amp; Dependent Profiles</span>
-                </div>
-                <button type="button" class="btn-toggle-add-dep" id="toggleAddMemberBtn" onclick="toggleAddMemberInline()">
-                    <i class="fa fa-plus" id="toggleAddMemberIcon"></i> 
-                    <span id="toggleAddMemberText">Add Family Member</span>
-                </button>
-            </div>
+        <div class="prof-header-actions">
+            <button type="button" id="profTopEditBtn" onclick="toggleEditMode(true)" class="btn-prof-sm btn-prof-primary">
+                <i class="fa fa-pencil"></i> Edit Profile
+            </button>
+            <a href="<?=base_url('updateprofile');?>" class="btn-prof-sm btn-prof-outline" title="Update Profile Picture">
+                <i class="fa fa-camera"></i> Photo
+            </a>
+            <a href="<?=base_url('change_password');?>" class="btn-prof-sm btn-prof-outline" title="Change Login Password">
+                <i class="fa fa-lock"></i> Password
+            </a>
+        </div>
+
+    </div>
+
+    <!-- ======================================================== -->
+    <!-- 2. COMPACT NAVIGATION TABS                               -->
+    <!-- ======================================================== -->
+    <div class="prof-nav-tabs">
+        <button type="button" class="prof-tab-btn active" id="tabBtnProfile" onclick="switchProfTab('profile')">
+            <i class="fa fa-user-circle-o"></i> Personal &amp; Medical Info
+        </button>
+        <button type="button" class="prof-tab-btn" id="tabBtnDependents" onclick="switchProfTab('dependents')">
+            <i class="fa fa-users"></i> Family Dependents
+            <span class="prof-tab-badge"><?=$dep_count;?></span>
+        </button>
+    </div>
+
+    <!-- ======================================================== -->
+    <!-- TAB 1: PERSONAL & MEDICAL DETAILS                        -->
+    <!-- ======================================================== -->
+    <div id="profTabProfileContent">
+        
+        <div class="prof-compact-card">
             
-            <p style="font-size: 13px; color: #64748b; margin-top: -10px; margin-bottom: 18px;">
-                Add children, spouse, or elderly parents under your account to easily book consultations and lab tests on their behalf.
-            </p>
-
-            <!-- Inline Expandable Form (Opens Directly Below) -->
-            <div class="inline-add-member-panel" id="inlineAddMemberSection">
-                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; border-bottom: 1px solid #ccfbf1; padding-bottom: 10px;">
-                    <h4 style="margin: 0; font-size: 15px; font-weight: 700; color: #0f172a; display: flex; align-items: center; gap: 8px;">
-                        <i class="fa fa-user-plus" style="color: var(--upchar-teal);"></i> Enter Family Member Details
-                    </h4>
-                    <button type="button" onclick="toggleAddMemberInline()" style="background: transparent; border: none; font-size: 18px; color: #64748b; cursor: pointer;">
-                        &times;
+            <div class="prof-card-head">
+                <h4>
+                    <i class="fa fa-id-card-o" style="color: #00a896;"></i> 
+                    <span id="profCardTitle">Patient Information</span>
+                </h4>
+                <div>
+                    <button type="button" id="profInlineEditBtn" onclick="toggleEditMode(true)" class="btn-prof-sm btn-prof-outline">
+                        <i class="fa fa-pencil" style="color: #00a896;"></i> Edit Details
                     </button>
+                    <span id="profEditingBadge" style="display: none; background: #fef3c7; color: #b45309; font-size: 11.5px; font-weight: 700; padding: 4px 10px; border-radius: 4px; border: 1px solid #fde68a;">
+                        <i class="fa fa-pencil"></i> Editing Mode Active
+                    </span>
                 </div>
+            </div>
 
-                <form action="<?=base_url('profile');?>" method="post" id="inlineAddMemberForm">
-                    <input type="hidden" name="<?=$this->security->get_csrf_token_name();?>" value="<?=$this->security->get_csrf_hash();?>">
-                    <input type="hidden" name="action" value="add_dependent">
+            <!-- VIEW MODE (Compact Grid) -->
+            <div id="profViewBox" style="<?=!$hasProfileData ? 'display: none;' : '';?>">
+                <div class="prof-grid-compact">
                     
-                    <div class="row">
-                        <!-- Full Name -->
-                        <div class="col-md-6 col-12 mb-3" style="margin-bottom: 14px;">
-                            <label class="profile-field-label">Full Name *</label>
-                            <input type="text" class="profile-input-control" name="dep_name" placeholder="Member's full name" required>
-                        </div>
-
-                        <!-- Relationship -->
-                        <div class="col-md-6 col-12 mb-3" style="margin-bottom: 14px;">
-                            <label class="profile-field-label">Relationship *</label>
-                            <select class="profile-input-control" name="dep_rel" required>
-                                <option value="SPOUSE">Spouse</option>
-                                <option value="CHILD">Child / Dependent</option>
-                                <option value="PARENT">Parent (Father / Mother)</option>
-                                <option value="SIBLING">Sibling (Brother / Sister)</option>
-                                <option value="OTHER">Other Relative</option>
-                            </select>
-                        </div>
-
-                        <!-- Gender -->
-                        <div class="col-md-4 col-12 mb-3" style="margin-bottom: 14px;">
-                            <label class="profile-field-label">Gender *</label>
-                            <select class="profile-input-control" name="dep_gender">
-                                <option value="M">Male</option>
-                                <option value="F">Female</option>
-                                <option value="O">Other</option>
-                            </select>
-                        </div>
-
-                        <!-- Date of Birth -->
-                        <div class="col-md-4 col-12 mb-3" style="margin-bottom: 14px;">
-                            <label class="profile-field-label">Date of Birth</label>
-                            <input type="date" class="profile-input-control" name="dep_dob">
-                        </div>
-
-                        <!-- Blood Group -->
-                        <div class="col-md-4 col-12 mb-3" style="margin-bottom: 14px;">
-                            <label class="profile-field-label">Blood Group</label>
-                            <input type="text" class="profile-input-control" name="dep_bgroup" placeholder="e.g. O+, B+, A+">
-                        </div>
-
-                        <!-- Medical History / Notes -->
-                        <div class="col-12 mb-3" style="margin-bottom: 16px;">
-                            <label class="profile-field-label">Known Allergies / Chronic Medical Conditions</label>
-                            <textarea class="profile-input-control" style="height: 65px; resize: vertical;" name="dep_history" placeholder="e.g. Penicillin allergy, diabetes, hypertension, asthma"></textarea>
+                    <div class="prof-cell">
+                        <div class="prof-cell-label">Full Name</div>
+                        <div class="prof-cell-val">
+                            <?=!empty($fname) ? html_escape($fname) : '<span class="empty">Not provided</span>';?>
                         </div>
                     </div>
 
-                    <div style="display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid #ccfbf1; padding-top: 14px;">
-                        <button type="button" class="btn btn-default" onclick="toggleAddMemberInline()" style="border-radius: 8px; font-weight: 600; padding: 8px 18px; font-size: 13px;">
-                            Cancel
-                        </button>
-                        <button type="submit" class="btn-save-profile" style="padding: 8px 22px; font-size: 13px;">
-                            <i class="fa fa-check"></i> Save Family Member
+                    <div class="prof-cell">
+                        <div class="prof-cell-label">Email Address</div>
+                        <div class="prof-cell-val">
+                            <?php if(!empty($email)): ?>
+                                <?=html_escape($email);?>
+                                <span style="color: #16a34a; font-size: 11px;"><i class="fa fa-check-circle"></i></span>
+                            <?php else: ?>
+                                <span class="empty">Not registered</span>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+
+                    <div class="prof-cell">
+                        <div class="prof-cell-label">Mobile Number</div>
+                        <div class="prof-cell-val">
+                            <?php if(!empty($mobile)): ?>
+                                <?=html_escape($mobile);?>
+                                <span style="color: #0284c7; font-size: 11px;"><i class="fa fa-mobile"></i></span>
+                            <?php else: ?>
+                                <span class="empty">Not registered</span>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+
+                    <div class="prof-cell">
+                        <div class="prof-cell-label">Date of Birth</div>
+                        <div class="prof-cell-val">
+                            <?=!empty($dob) ? date('d M, Y', strtotime($dob)) : '<span class="empty">Not specified</span>';?>
+                        </div>
+                    </div>
+
+                    <div class="prof-cell">
+                        <div class="prof-cell-label">Gender</div>
+                        <div class="prof-cell-val">
+                            <?php 
+                                if ($gender === 'M' || $gender === 'Male') echo '<i class="fa fa-mars" style="color: #0284c7;"></i> Male';
+                                elseif ($gender === 'F' || $gender === 'Female') echo '<i class="fa fa-venus" style="color: #ec4899;"></i> Female';
+                                elseif (!empty($gender)) echo html_escape($gender);
+                                else echo '<span class="empty">Not specified</span>';
+                            ?>
+                        </div>
+                    </div>
+
+                    <div class="prof-cell">
+                        <div class="prof-cell-label">Blood Group</div>
+                        <div class="prof-cell-val">
+                            <?php if(!empty($bgroup)): ?>
+                                <span style="color: #dc2626; font-weight: 800; background: #fee2e2; padding: 1px 7px; border-radius: 4px;">
+                                    <i class="fa fa-tint"></i> <?=html_escape($bgroup);?>
+                                </span>
+                            <?php else: ?>
+                                <span class="empty">Not set</span>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+
+                    <div class="prof-cell">
+                        <div class="prof-cell-label">Height</div>
+                        <div class="prof-cell-val">
+                            <?=!empty($height) ? html_escape($height) : '<span class="empty">Not provided</span>';?>
+                        </div>
+                    </div>
+
+                    <div class="prof-cell">
+                        <div class="prof-cell-label">Weight</div>
+                        <div class="prof-cell-val">
+                            <?=!empty($weight) ? html_escape($weight) : '<span class="empty">Not provided</span>';?>
+                        </div>
+                    </div>
+
+                </div>
+
+                <div style="margin-top: 14px; padding-top: 10px; border-top: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+                    <span style="font-size: 12px; color: #64748b;">
+                        <i class="fa fa-shield" style="color: #00a896;"></i> Data encrypted &amp; shared only with your treating doctors.
+                    </span>
+                    <button type="button" onclick="toggleEditMode(true)" class="btn-prof-sm btn-prof-primary">
+                        <i class="fa fa-pencil"></i> Edit Details
+                    </button>
+                </div>
+            </div>
+
+            <!-- EDIT MODE (Compact Form) -->
+            <div id="profEditBox" style="<?=$hasProfileData ? 'display: none;' : '';?>">
+                <form action="<?=base_url('profile');?>" method="post" id="profForm">
+                    <?php if ($this->config->item('csrf_protection')): ?>
+                        <input type="hidden" name="<?=$this->security->get_csrf_token_name();?>" value="<?=$this->security->get_csrf_hash();?>">
+                    <?php endif; ?>
+                    <input type="hidden" name="action" value="update_profile">
+
+                    <div class="row">
+                        <div class="col-md-3 col-sm-6 col-12" style="margin-bottom: 12px;">
+                            <label class="prof-form-label">Full Name <span style="color: #ef4444;">*</span></label>
+                            <input type="text" class="prof-input" name="name" placeholder="Full name" required value="<?=html_escape($fname);?>">
+                        </div>
+
+                        <div class="col-md-3 col-sm-6 col-12" style="margin-bottom: 12px;">
+                            <label class="prof-form-label">Email Address <span style="color: #ef4444;">*</span></label>
+                            <input type="email" class="prof-input" name="email" placeholder="patient@example.com" required value="<?=html_escape($email);?>">
+                        </div>
+
+                        <div class="col-md-3 col-sm-6 col-12" style="margin-bottom: 12px;">
+                            <label class="prof-form-label">Mobile Number <span style="color: #ef4444;">*</span></label>
+                            <input type="text" class="prof-input" name="mobile" placeholder="10-digit mobile" required value="<?=html_escape($mobile);?>">
+                        </div>
+
+                        <div class="col-md-3 col-sm-6 col-12" style="margin-bottom: 12px;">
+                            <label class="prof-form-label">Date of Birth</label>
+                            <input type="date" class="prof-input" name="dob" value="<?=html_escape($dob);?>">
+                        </div>
+
+                        <div class="col-md-3 col-sm-6 col-12" style="margin-bottom: 12px;">
+                            <label class="prof-form-label">Gender</label>
+                            <div class="prof-gender-group">
+                                <div class="prof-gender-btn">
+                                    <input type="radio" name="gender" id="g_m" value="M" <?=($gender == 'M' || $gender == 'Male') ? 'checked' : '';?>>
+                                    <label for="g_m"><i class="fa fa-mars"></i> Male</label>
+                                </div>
+                                <div class="prof-gender-btn">
+                                    <input type="radio" name="gender" id="g_f" value="F" <?=($gender == 'F' || $gender == 'Female') ? 'checked' : '';?>>
+                                    <label for="g_f"><i class="fa fa-venus"></i> Female</label>
+                                </div>
+                                <div class="prof-gender-btn">
+                                    <input type="radio" name="gender" id="g_o" value="O" <?=($gender == 'O' || $gender == 'Other') ? 'checked' : '';?>>
+                                    <label for="g_o">Other</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-3 col-sm-6 col-12" style="margin-bottom: 12px;">
+                            <label class="prof-form-label">Blood Group</label>
+                            <select class="prof-input" name="bgroup">
+                                <option value="">-- Select --</option>
+                                <?php 
+                                    $bg_items = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
+                                    foreach ($bg_items as $bg):
+                                ?>
+                                    <option value="<?=$bg;?>" <?=(strtoupper(trim($bgroup)) === $bg) ? 'selected' : '';?>><?=$bg;?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+
+                        <div class="col-md-3 col-sm-6 col-12" style="margin-bottom: 12px;">
+                            <label class="prof-form-label">Height</label>
+                            <input type="text" class="prof-input" name="height" placeholder="e.g. 175 cm / 5'9&quot;" value="<?=html_escape($height);?>">
+                        </div>
+
+                        <div class="col-md-3 col-sm-6 col-12" style="margin-bottom: 12px;">
+                            <label class="prof-form-label">Weight</label>
+                            <input type="text" class="prof-input" name="weight" placeholder="e.g. 68 kg" value="<?=html_escape($weight);?>">
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #f1f5f9; display: flex; justify-content: flex-end; align-items: center; gap: 8px;">
+                        <?php if($hasProfileData): ?>
+                            <button type="button" onclick="toggleEditMode(false)" class="btn-prof-sm btn-prof-outline">
+                                <i class="fa fa-times"></i> Cancel
+                            </button>
+                        <?php endif; ?>
+                        <button type="submit" name="submit" value="1" class="btn-prof-sm btn-prof-primary">
+                            <i class="fa fa-check"></i> Save Changes
                         </button>
                     </div>
                 </form>
             </div>
 
-            <!-- Existing Dependents List -->
-            <?php if (!empty($dependents)): ?>
-                <div class="row">
-                    <?php foreach ($dependents as $dep): ?>
-                    <div class="col-md-6 col-12 mb-3" style="margin-bottom: 14px;">
-                        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; transition: all 0.2s;">
-                            <div>
-                                <div style="font-weight: 700; font-size: 14.5px; color: #0f172a; display: flex; align-items: center; flex-wrap: wrap; gap: 6px;">
-                                    <?=html_escape($dep->name);?>
-                                    <span class="badge" style="background: #e0f2fe; color: #0369a1; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 12px;">
-                                        <?=html_escape($dep->relationship);?>
-                                    </span>
-                                </div>
-                                <div style="font-size: 12.5px; color: #64748b; margin-top: 6px; display: flex; flex-wrap: wrap; gap: 10px;">
-                                    <span><i class="fa fa-venus-mars" style="color: #0284c7;"></i> <?=($dep->gender == 'F') ? 'Female' : 'Male';?></span>
-                                    <?php if (!empty($dep->dob)): ?>
-                                        <span><i class="fa fa-birthday-cake" style="color: #f59e0b;"></i> <?=html_escape($dep->dob);?></span>
-                                    <?php endif; ?>
-                                    <?php if (!empty($dep->blood_group)): ?>
-                                        <span style="font-weight: 700; color: #ef4444;"><i class="fa fa-tint"></i> <?=html_escape($dep->blood_group);?></span>
-                                    <?php endif; ?>
-                                </div>
-                                <?php if (!empty($dep->medical_history)): ?>
-                                <div style="font-size: 12px; color: #475569; margin-top: 8px; background: #ffffff; padding: 6px 10px; border-radius: 8px; border: 1px solid #e2e8f0;">
-                                    <strong><i class="fa fa-info-circle" style="color: var(--upchar-teal);"></i> Notes:</strong> <?=html_escape($dep->medical_history);?>
-                                </div>
-                                <?php endif; ?>
-                            </div>
-                            <a href="<?=base_url('profile?del_dep='.$dep->id);?>" onclick="return confirm('Are you sure you want to remove this family member?');" class="btn btn-xs" style="color: #ef4444; background: #fee2e2; border-radius: 6px; padding: 6px 9px;" title="Remove Member">
-                                <i class="fa fa-trash"></i>
-                            </a>
+        </div>
+
+    </div>
+
+    <!-- ======================================================== -->
+    <!-- TAB 2: FAMILY DEPENDENTS                                 -->
+    <!-- ======================================================== -->
+    <div id="profTabDependentsContent" style="display: none;">
+        
+        <div class="prof-compact-card">
+            <div class="prof-card-head">
+                <h4>
+                    <i class="fa fa-users" style="color: #00a896;"></i> 
+                    Family Members &amp; Dependents
+                </h4>
+                <button type="button" id="depAddTriggerBtn" onclick="toggleDepAddForm()" class="btn-prof-sm btn-prof-primary">
+                    <i class="fa fa-plus" id="depAddIcon"></i> <span id="depAddText">Add Member</span>
+                </button>
+            </div>
+
+            <!-- Inline Add Dependent Form -->
+            <div class="dep-inline-box" id="depAddBox">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <strong style="font-size: 13.5px; color: #0f172a;"><i class="fa fa-user-plus" style="color: #00a896;"></i> New Family Dependent</strong>
+                    <button type="button" onclick="toggleDepAddForm()" style="background: none; border: none; font-size: 18px; color: #64748b; cursor: pointer;">&times;</button>
+                </div>
+
+                <form action="<?=base_url('profile');?>" method="post">
+                    <?php if ($this->config->item('csrf_protection')): ?>
+                        <input type="hidden" name="<?=$this->security->get_csrf_token_name();?>" value="<?=$this->security->get_csrf_hash();?>">
+                    <?php endif; ?>
+                    <input type="hidden" name="action" value="add_dependent">
+
+                    <div class="row">
+                        <div class="col-md-4 col-sm-6 col-12" style="margin-bottom: 10px;">
+                            <label class="prof-form-label">Full Name <span style="color: #ef4444;">*</span></label>
+                            <input type="text" class="prof-input" name="dep_name" placeholder="Member's name" required>
+                        </div>
+                        <div class="col-md-4 col-sm-6 col-12" style="margin-bottom: 10px;">
+                            <label class="prof-form-label">Relationship <span style="color: #ef4444;">*</span></label>
+                            <select class="prof-input" name="dep_rel" required>
+                                <option value="SPOUSE">Spouse</option>
+                                <option value="CHILD">Child</option>
+                                <option value="PARENT">Parent</option>
+                                <option value="SIBLING">Sibling</option>
+                                <option value="OTHER">Other</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4 col-sm-6 col-12" style="margin-bottom: 10px;">
+                            <label class="prof-form-label">Gender</label>
+                            <select class="prof-input" name="dep_gender">
+                                <option value="M">Male</option>
+                                <option value="F">Female</option>
+                                <option value="O">Other</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4 col-sm-6 col-12" style="margin-bottom: 10px;">
+                            <label class="prof-form-label">Date of Birth</label>
+                            <input type="date" class="prof-input" name="dep_dob">
+                        </div>
+                        <div class="col-md-4 col-sm-6 col-12" style="margin-bottom: 10px;">
+                            <label class="prof-form-label">Blood Group</label>
+                            <input type="text" class="prof-input" name="dep_bgroup" placeholder="e.g. B+, O+">
+                        </div>
+                        <div class="col-md-4 col-sm-6 col-12" style="margin-bottom: 10px;">
+                            <label class="prof-form-label">Medical Notes / Allergies</label>
+                            <input type="text" class="prof-input" name="dep_history" placeholder="e.g. Asthma, Penicillin allergy">
                         </div>
                     </div>
-                    <?php endforeach; ?>
+
+                    <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 6px;">
+                        <button type="button" onclick="toggleDepAddForm()" class="btn-prof-sm btn-prof-outline">Cancel</button>
+                        <button type="submit" class="btn-prof-sm btn-prof-primary"><i class="fa fa-check"></i> Save Member</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Dependents Table or Empty State -->
+            <?php if (!empty($dep_list)): ?>
+                <div style="overflow-x: auto;">
+                    <table class="prof-table-compact">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Relation</th>
+                                <th>Gender</th>
+                                <th>DOB</th>
+                                <th>Blood</th>
+                                <th>Medical Notes</th>
+                                <th style="text-align: right;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($dep_list as $dep): ?>
+                            <tr>
+                                <td>
+                                    <strong><?=html_escape($dep->name);?></strong>
+                                </td>
+                                <td>
+                                    <span style="background: #e0f2fe; color: #0369a1; font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 4px;">
+                                        <?=html_escape($dep->relationship);?>
+                                    </span>
+                                </td>
+                                <td><?=($dep->gender == 'F') ? 'Female' : 'Male';?></td>
+                                <td><?=!empty($dep->dob) ? date('d M, Y', strtotime($dep->dob)) : '-';?></td>
+                                <td>
+                                    <?=!empty($dep->blood_group) ? '<strong style="color: #dc2626;">'.html_escape($dep->blood_group).'</strong>' : '-';?>
+                                </td>
+                                <td>
+                                    <?=!empty($dep->medical_history) ? html_escape($dep->medical_history) : '<span style="color: #94a3b8;">None</span>';?>
+                                </td>
+                                <td style="text-align: right;">
+                                    <a href="<?=base_url('profile?del_dep='.$dep->id);?>" onclick="return confirm('Remove this dependent?');" class="btn-prof-sm" style="background: #fee2e2; color: #ef4444; padding: 4px 8px; height: 28px;" title="Remove">
+                                        <i class="fa fa-trash"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
                 </div>
             <?php else: ?>
-                <div style="background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 12px; padding: 24px; text-align: center; color: #64748b; font-size: 13.5px;" id="noDependentsBox">
-                    <i class="fa fa-users" style="font-size: 28px; color: #94a3b8; margin-bottom: 8px; display: block;"></i>
-                    No family members added yet. Click <strong>Add Family Member</strong> above to link your dependents.
+                <div style="text-align: center; padding: 24px; color: #64748b; background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 8px;">
+                    <i class="fa fa-users" style="font-size: 24px; color: #94a3b8; margin-bottom: 6px; display: block;"></i>
+                    <span style="font-size: 13px;">No family dependents linked yet.</span>
+                    <div style="margin-top: 8px;">
+                        <button type="button" onclick="toggleDepAddForm()" class="btn-prof-sm btn-prof-primary">
+                            <i class="fa fa-plus"></i> Add Your First Family Member
+                        </button>
+                    </div>
                 </div>
             <?php endif; ?>
+
         </div>
+
     </div>
 
-    <!-- Right Side Summary Card -->
-    <div class="col-lg-4 col-md-12 col-12">
-        <div style="background: #ffffff; border-radius: 16px; border: 1px solid #e2e8f0; padding: 24px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03); margin-bottom: 25px;">
-            <div style="text-align: center; margin-bottom: 18px;">
-                <div style="width: 80px; height: 80px; border-radius: 50%; background: #f0fdfa; border: 3px solid var(--upchar-teal); color: var(--upchar-teal); display: flex; align-items: center; justify-content: center; font-size: 32px; font-weight: 700; margin: 0 auto 12px auto; box-shadow: 0 4px 12px rgba(0,168,150,0.15);">
-                    <?=strtoupper(substr($fname ?: 'P', 0, 1));?>
-                </div>
-                <h4 style="font-size: 17px; font-weight: 800; color: #0f172a; margin: 0 0 6px 0;">
-                    <?=html_escape($fname ?: 'Patient Account');?>
-                </h4>
-                <span class="badge" style="background: #d1fae5; color: #065f46; font-size: 11.5px; font-weight: 700; padding: 5px 12px; border-radius: 20px;">
-                    <i class="fa fa-check-circle"></i> Active Patient Account
-                </span>
-            </div>
-
-            <div style="border-top: 1px solid #f1f5f9; padding-top: 16px; display: flex; flex-direction: column; gap: 12px; font-size: 13px; color: #475569;">
-                <div style="display: flex; align-items: center; gap: 10px;">
-                    <i class="fa fa-envelope-o" style="width: 18px; color: var(--upchar-teal); font-size: 15px;"></i>
-                    <span><?=html_escape($email ?: 'No email registered');?></span>
-                </div>
-                <div style="display: flex; align-items: center; gap: 10px;">
-                    <i class="fa fa-phone" style="width: 18px; color: var(--upchar-teal); font-size: 15px;"></i>
-                    <span><?=html_escape($mobile ?: 'No mobile registered');?></span>
-                </div>
-                <div style="display: flex; align-items: center; gap: 10px;">
-                    <i class="fa fa-calendar" style="width: 18px; color: var(--upchar-teal); font-size: 15px;"></i>
-                    <span>DOB: <?=html_escape($dob ?: 'Not specified');?></span>
-                </div>
-                <div style="display: flex; align-items: center; gap: 10px;">
-                    <i class="fa fa-tint" style="width: 18px; color: #ef4444; font-size: 15px;"></i>
-                    <span>Blood Group: <strong><?=html_escape($bgroup ?: 'Not set');?></strong></span>
-                </div>
-            </div>
-
-            <div style="border-top: 1px solid #f1f5f9; margin-top: 18px; padding-top: 16px;">
-                <a href="<?=base_url('updateprofile');?>" class="btn btn-block" style="background: #f8fafc; border: 1px solid #cbd5e1; color: #334155; font-weight: 600; font-size: 13px; border-radius: 8px; width: 100%; text-align: center; display: block; padding: 9px 0; text-decoration: none;">
-                    <i class="fa fa-camera" style="margin-right: 6px; color: var(--upchar-teal);"></i> Update Photo
-                </a>
-            </div>
-        </div>
-    </div>
 </div>
 
+<!-- ======================================================== -->
+<!-- 3. COMPACT INTERACTIVE SCRIPTS                           -->
+<!-- ======================================================== -->
 <script>
-function toggleAddMemberInline() {
-    var panel = document.getElementById('inlineAddMemberSection');
-    var btn = document.getElementById('toggleAddMemberBtn');
-    var icon = document.getElementById('toggleAddMemberIcon');
-    var text = document.getElementById('toggleAddMemberText');
+function switchProfTab(tabName) {
+    var tabProfile = document.getElementById('profTabProfileContent');
+    var tabDep     = document.getElementById('profTabDependentsContent');
+    var btnProfile = document.getElementById('tabBtnProfile');
+    var btnDep     = document.getElementById('tabBtnDependents');
 
-    if (panel.style.display === 'none' || panel.style.display === '') {
-        panel.style.display = 'block';
-        btn.classList.add('active');
-        icon.className = 'fa fa-times';
-        text.innerText = 'Close Form';
-        // Auto focus first input
-        setTimeout(function() {
-            var input = panel.querySelector('input[name="dep_name"]');
-            if (input) input.focus();
-        }, 100);
+    if (tabName === 'dependents') {
+        tabProfile.style.display = 'none';
+        tabDep.style.display     = 'block';
+        btnProfile.classList.remove('active');
+        btnDep.classList.add('active');
     } else {
-        panel.style.display = 'none';
-        btn.classList.remove('active');
-        icon.className = 'fa fa-plus';
-        text.innerText = 'Add Family Member';
+        tabProfile.style.display = 'block';
+        tabDep.style.display     = 'none';
+        btnProfile.classList.add('active');
+        btnDep.classList.remove('active');
     }
 }
+
+function toggleEditMode(enable) {
+    var viewBox   = document.getElementById('profViewBox');
+    var editBox   = document.getElementById('profEditBox');
+    var badge     = document.getElementById('profEditingBadge');
+    var inlineBtn = document.getElementById('profInlineEditBtn');
+    var topBtn    = document.getElementById('profTopEditBtn');
+    var title     = document.getElementById('profCardTitle');
+
+    // Make sure we are on the profile tab
+    switchProfTab('profile');
+
+    if (enable) {
+        if (viewBox) viewBox.style.display = 'none';
+        if (editBox) editBox.style.display = 'block';
+        if (badge) badge.style.display = 'inline-block';
+        if (inlineBtn) inlineBtn.style.display = 'none';
+        if (title) title.innerText = 'Edit Patient Information';
+        if (topBtn) {
+            topBtn.innerHTML = '<i class="fa fa-times"></i> Cancel Edit';
+            topBtn.onclick = function() { toggleEditMode(false); };
+            topBtn.className = 'btn-prof-sm btn-prof-outline';
+        }
+        var nameInp = editBox.querySelector('input[name="name"]');
+        if (nameInp) nameInp.focus();
+    } else {
+        if (viewBox) viewBox.style.display = 'block';
+        if (editBox) editBox.style.display = 'none';
+        if (badge) badge.style.display = 'none';
+        if (inlineBtn) inlineBtn.style.display = 'inline-flex';
+        if (title) title.innerText = 'Patient Information';
+        if (topBtn) {
+            topBtn.innerHTML = '<i class="fa fa-pencil"></i> Edit Profile';
+            topBtn.onclick = function() { toggleEditMode(true); };
+            topBtn.className = 'btn-prof-sm btn-prof-primary';
+        }
+    }
+}
+
+function toggleDepAddForm() {
+    var box  = document.getElementById('depAddBox');
+    var icon = document.getElementById('depAddIcon');
+    var text = document.getElementById('depAddText');
+
+    if (box.style.display === 'none' || box.style.display === '') {
+        box.style.display = 'block';
+        if (icon) icon.className = 'fa fa-times';
+        if (text) text.innerText = 'Cancel';
+        var inp = box.querySelector('input[name="dep_name"]');
+        if (inp) inp.focus();
+    } else {
+        box.style.display = 'none';
+        if (icon) icon.className = 'fa fa-plus';
+        if (text) text.innerText = 'Add Member';
+    }
+}
+
+// Auto open edit mode if URL has ?edit=1
+document.addEventListener('DOMContentLoaded', function() {
+    var urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('edit') === '1') {
+        toggleEditMode(true);
+    } else if (urlParams.get('tab') === 'dependents') {
+        switchProfTab('dependents');
+    }
+});
 </script>

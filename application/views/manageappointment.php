@@ -567,14 +567,15 @@ $ref_code      = isset($referral_code) ? $referral_code : 'UPCH-PATIENT-50';
                     $mobile     = isset($p->appointment_mobile) ? $p->appointment_mobile : 'N/A';
                     $amount     = isset($p->amount) && $p->amount > 0 ? $p->amount : (isset($p->fee) ? $p->fee : 500);
                     $pay_status = isset($p->payment_status) ? strtoupper($p->payment_status) : 'UNPAID';
-                    $is_paid    = ($pay_status == 'PAID' || $pay_status == 'DONE');
-                    $is_video   = (!empty($p->room_id) || (isset($p->appointment_type) && $p->appointment_type == 'video'));
+                    $is_paid      = ($pay_status == 'PAID' || $pay_status == 'DONE');
+                    $is_cancelled = ($p->status == '2' || $p->appointment_status == '2' || $pay_status == 'REFUNDED');
+                    $is_video     = (!empty($p->room_id) || (isset($p->appointment_type) && $p->appointment_type == 'video'));
                 ?>
 
-                <div class="appt-item-card">
+                <div class="appt-item-card" style="<?=$is_cancelled ? 'opacity: 0.85; border-color: #fecaca;' : '';?>">
                     <div class="appt-item-header">
                         <div style="display: flex; align-items: center; gap: 10px;">
-                            <span class="appt-ref-tag">#APPT-<?=$appt_id;?></span>
+                            <span class="appt-ref-tag" style="<?=$is_cancelled ? 'background: #fef2f2; border-color: #fecaca; color: #dc2626;' : '';?>">#APPT-<?=$appt_id;?></span>
                             <span style="font-weight: 700; font-size: 14px; color: var(--text-main);">
                                 <i class="fa fa-calendar" style="color: var(--primary-teal); margin-right: 4px;"></i>
                                 <?=$appt_date;?> &nbsp;|&nbsp; 
@@ -584,12 +585,23 @@ $ref_code      = isset($referral_code) ? $referral_code : 'UPCH-PATIENT-50';
                         </div>
 
                         <div style="display: flex; align-items: center; gap: 8px;">
-                            <span class="badge-appt badge-appt-confirmed">
-                                <i class="fa fa-check-circle"></i> Confirmed
-                            </span>
-                            <span class="badge-appt <?=$is_paid ? 'badge-appt-paid' : 'badge-appt-unpaid';?>">
-                                <i class="fa fa-credit-card"></i> <?=$is_paid ? 'Paid' : 'Payment Pending';?>
-                            </span>
+                            <?php if ($is_cancelled): ?>
+                                <span class="badge-appt badge-appt-cancelled">
+                                    <i class="fa fa-times-circle"></i> Cancelled
+                                </span>
+                                <?php if ($pay_status == 'REFUNDED'): ?>
+                                    <span class="badge-appt" style="background: #f3e8ff; color: #7c3aed; border: 1px solid #e9d5ff;">
+                                        <i class="fa fa-undo"></i> Refund Credited
+                                    </span>
+                                <?php endif; ?>
+                            <?php else: ?>
+                                <span class="badge-appt badge-appt-confirmed">
+                                    <i class="fa fa-check-circle"></i> Confirmed
+                                </span>
+                                <span class="badge-appt <?=$is_paid ? 'badge-appt-paid' : 'badge-appt-unpaid';?>">
+                                    <i class="fa fa-credit-card"></i> <?=$is_paid ? 'Paid' : 'Payment Pending';?>
+                                </span>
+                            <?php endif; ?>
                         </div>
                     </div>
 
@@ -633,7 +645,14 @@ $ref_code      = isset($referral_code) ? $referral_code : 'UPCH-PATIENT-50';
 
                     <div class="appt-actions-footer">
                         <div style="font-size: 13px; color: var(--text-muted);">
-                            <?php if ($is_paid): ?>
+                            <?php if ($is_cancelled): ?>
+                                <span style="color: #dc2626; font-weight: 700;">
+                                    <i class="fa fa-ban"></i> Appointment Cancelled
+                                    <?php if (!empty($p->cancel_date) && $p->cancel_date != '0000-00-00 00:00:00'): ?>
+                                        <small style="color: #64748b; font-weight: 500;">(<?=date('d M Y, h:i A', strtotime($p->cancel_date));?>)</small>
+                                    <?php endif; ?>
+                                </span>
+                            <?php elseif ($is_paid): ?>
                                 <span style="color: #16a34a; font-weight: 600;"><i class="fa fa-shield"></i> Payment Secured via UPCHAR Gateway</span>
                             <?php else: ?>
                                 <span style="color: #d97706; font-weight: 600;"><i class="fa fa-info-circle"></i> Pay online using Points or Gateway</span>
@@ -641,20 +660,31 @@ $ref_code      = isset($referral_code) ? $referral_code : 'UPCH-PATIENT-50';
                         </div>
 
                         <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-                            <?php if ($is_video): ?>
-                                <a href="<?=base_url('videocall/'.($p->room_id ?: 'upchar_consult_'.$appt_id));?>" target="_blank" class="btn-appt-video">
-                                    <i class="fa fa-video-camera"></i> Launch Video Room
-                                </a>
-                            <?php endif; ?>
-
-                            <?php if (!$is_paid): ?>
-                                <a href="<?=base_url('payment/checkout?purpose=APPOINTMENT&reference_id='.$appt_id.'&amount='.$amount.'&item_name='.urlencode('Consultation with '.$doctor));?>" class="btn-appt-pay">
-                                    <i class="fa fa-bolt"></i> Pay ₹<?=number_format($amount, 2);?> Now
-                                </a>
+                            <?php if ($is_cancelled): ?>
+                                <?php if ($pay_status == 'REFUNDED'): ?>
+                                    <a href="#wallet" onclick="switchDashboardTab('wallet')" style="display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 700; color: #7c3aed; background: #f3e8ff; border: 1px solid #e9d5ff; padding: 6px 14px; border-radius: 8px; text-decoration: none;">
+                                        <i class="fa fa-google-wallet"></i> View Wallet Refund
+                                    </a>
+                                <?php endif; ?>
                             <?php else: ?>
-                                <button type="button" class="btn-appt-cancel" onclick="cancelAppointment('<?=$appt_id;?>', '<?=$p->appointment_date;?>')">
-                                    <i class="fa fa-times"></i> Cancel &amp; Refund
-                                </button>
+                                <?php if ($is_video): ?>
+                                    <a href="<?=base_url('videocall/'.($p->room_id ?: 'upchar_consult_'.$appt_id));?>" target="_blank" class="btn-appt-video">
+                                        <i class="fa fa-video-camera"></i> Launch Video Room
+                                    </a>
+                                <?php endif; ?>
+
+                                <?php if (!$is_paid): ?>
+                                    <a href="<?=base_url('payment/checkout?purpose=APPOINTMENT&reference_id='.$appt_id.'&amount='.$amount.'&item_name='.urlencode('Consultation with '.$doctor));?>" class="btn-appt-pay">
+                                        <i class="fa fa-bolt"></i> Pay ₹<?=number_format($amount, 2);?> Now
+                                    </a>
+                                    <button type="button" class="btn-appt-cancel" onclick="cancelAppointment('<?=$appt_id;?>', '<?=$p->appointment_date;?>')">
+                                        <i class="fa fa-times"></i> Cancel
+                                    </button>
+                                <?php else: ?>
+                                    <button type="button" class="btn-appt-cancel" onclick="cancelAppointment('<?=$appt_id;?>', '<?=$p->appointment_date;?>')">
+                                        <i class="fa fa-times"></i> Cancel &amp; Refund
+                                    </button>
+                                <?php endif; ?>
                             <?php endif; ?>
                         </div>
                     </div>
@@ -753,39 +783,121 @@ $ref_code      = isset($referral_code) ? $referral_code : 'UPCH-PATIENT-50';
     <!-- ========================================== -->
     <div id="section-diagnostics" style="display: none;">
         <?php if (!empty($lab_bookings)): ?>
-            <?php foreach ($lab_bookings as $lb): ?>
-                <div class="appt-item-card">
-                    <div class="appt-item-header">
+            <?php foreach ($lab_bookings as $lb): 
+                $bid        = $lb['booking_id'];
+                $stage      = !empty($lb['order_stage']) ? $lb['order_stage'] : (!empty($lb['status']) ? $lb['status'] : 'BOOKED');
+                $isReportReady = ($stage === 'REPORT_READY' || $stage === 'COMPLETED' || !empty($lb['report_file']) || !empty($lb['reports']));
+                $hasReports = !empty($lb['reports']);
+                $reportUrl  = !empty($lb['report_file']) ? base_url($lb['report_file']) : (!empty($lb['reports'][0]['report_file']) ? base_url($lb['reports'][0]['report_file']) : '');
+                $testsList  = !empty($lb['tests']) ? $lb['tests'] : [];
+            ?>
+                <div class="appt-item-card" style="border: 1px solid #e2e8f0; border-radius: 14px; padding: 20px; margin-bottom: 20px; background: #ffffff; box-shadow: 0 2px 10px rgba(0,0,0,0.03);">
+                    
+                    <!-- Header -->
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; border-bottom: 1px solid #f1f5f9; padding-bottom: 14px; margin-bottom: 14px;">
                         <div style="display: flex; align-items: center; gap: 10px;">
-                            <span class="appt-ref-tag" style="background: #eff6ff; color: #2563eb; border-color: #bfdbfe;">
-                                #LAB-<?=$lb['booking_id'];?>
+                            <span class="appt-ref-tag" style="background: #f0fdfa; color: #00a896; border: 1.5px solid #00a896; font-weight: 800; padding: 4px 10px; border-radius: 6px; font-size: 13px;">
+                                #LAB-<?=$bid;?>
                             </span>
-                            <span style="font-weight: 700; font-size: 14px;">
-                                <i class="fa fa-calendar" style="color: #2563eb; margin-right: 4px;"></i>
+                            <span style="font-weight: 700; font-size: 13.5px; color: #334155;">
+                                <i class="fa fa-calendar" style="color: #00a896; margin-right: 4px;"></i>
                                 <?=date('d M Y', strtotime($lb['book_date']));?>
+                                <?php if (!empty($lb['time_slot'])): ?>
+                                    <span style="color: #64748b; font-weight: 500; margin-left: 6px;">(<?=htmlspecialchars($lb['time_slot']);?>)</span>
+                                <?php endif; ?>
                             </span>
                         </div>
+
                         <div>
-                            <span class="badge-appt badge-appt-confirmed">
-                                <i class="fa fa-flask"></i> <?=htmlspecialchars($lb['status'] ?? 'CONFIRMED');?>
+                            <?php if ($isReportReady): ?>
+                                <span class="badge" style="background: #dcfce7; color: #166534; font-weight: 800; font-size: 12px; padding: 6px 12px; border-radius: 20px; border: 1px solid #bbf7d0;">
+                                    <i class="fa fa-check-circle"></i> REPORT READY
+                                </span>
+                            <?php elseif ($stage === 'PROCESSING'): ?>
+                                <span class="badge" style="background: #fef3c7; color: #92400e; font-weight: 700; font-size: 12px; padding: 6px 12px; border-radius: 20px; border: 1px solid #fde68a;">
+                                    <i class="fa fa-cogs"></i> IN PROCESSING
+                                </span>
+                            <?php elseif ($stage === 'COLLECTED'): ?>
+                                <span class="badge" style="background: #e0f2fe; color: #0369a1; font-weight: 700; font-size: 12px; padding: 6px 12px; border-radius: 20px; border: 1px solid #bae6fd;">
+                                    <i class="fa fa-tint"></i> SAMPLE COLLECTED
+                                </span>
+                            <?php else: ?>
+                                <span class="badge" style="background: #f1f5f9; color: #475569; font-weight: 700; font-size: 12px; padding: 6px 12px; border-radius: 20px; border: 1px solid #cbd5e1;">
+                                    <i class="fa fa-clock-o"></i> BOOKED
+                                </span>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+
+                    <!-- Details Grid -->
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; margin-bottom: 16px;">
+                        <div>
+                            <div style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase;">Patient Name</div>
+                            <div style="font-size: 14px; font-weight: 700; color: #0f172a; margin-top: 2px;">
+                                <i class="fa fa-user" style="color: #00a896; margin-right: 4px;"></i> <?=htmlspecialchars($lb['patient_name'] ?? $user_name);?>
+                            </div>
+                        </div>
+
+                        <div>
+                            <div style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase;">Diagnostic Laboratory</div>
+                            <div style="font-size: 14px; font-weight: 700; color: #0f172a; margin-top: 2px;">
+                                <i class="fa fa-hospital-o" style="color: #00a896; margin-right: 4px;"></i> <?=htmlspecialchars($lb['lab_name'] ?: 'Upchar Diagnostic Lab');?>
+                            </div>
+                        </div>
+
+                        <div>
+                            <div style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase;">Collection Mode</div>
+                            <div style="font-size: 13.5px; font-weight: 600; color: #334155; margin-top: 2px;">
+                                <?=($lb['visit_type'] === 'VISIT_LAB') ? '<i class="fa fa-building text-info"></i> Lab Walk-in' : '<i class="fa fa-home" style="color: #16a34a;"></i> Free Home Pickup';?>
+                            </div>
+                        </div>
+
+                        <div>
+                            <div style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase;">Total Amount</div>
+                            <div style="font-size: 16px; font-weight: 800; color: #00a896; margin-top: 2px;">
+                                ₹<?=number_format($lb['total_amount'] ?? 0, 2);?>
+                                <span style="font-size: 11px; font-weight: 600; color: #64748b;">(<?=$lb['payment_status'] == '1' ? 'Paid' : 'Pay on Collection';?>)</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Booked Tests List -->
+                    <?php if (!empty($testsList)): ?>
+                        <div style="background: #f8fafc; border-radius: 8px; padding: 10px 14px; margin-bottom: 16px; border: 1px solid #e2e8f0;">
+                            <div style="font-size: 11.5px; font-weight: 700; color: #64748b; text-transform: uppercase; margin-bottom: 6px;">
+                                <i class="fa fa-flask" style="color: #00a896;"></i> Tests Included (<?=count($testsList);?>)
+                            </div>
+                            <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                                <?php foreach ($testsList as $t): ?>
+                                    <span style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; padding: 4px 10px; font-size: 12px; font-weight: 600; color: #1e293b;">
+                                        <?=htmlspecialchars($t['test_name']);?>
+                                    </span>
+                                <?php endforeach; ?>
+                            </div>
+                        </div>
+                    <?php endif; ?>
+
+                    <!-- Action Bar: Download Report & Receipt -->
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; padding-top: 12px; border-top: 1px solid #f1f5f9;">
+                        <div>
+                            <?php if ($isReportReady && !empty($reportUrl)): ?>
+                                <a href="<?=$reportUrl;?>" target="_blank" class="btn" style="background: #00a896; color: #ffffff; font-weight: 700; border-radius: 8px; padding: 8px 18px; font-size: 13px; display: inline-flex; align-items: center; gap: 6px; text-decoration: none; box-shadow: 0 2px 8px rgba(0, 168, 150, 0.3);">
+                                    <i class="fa fa-download"></i> Download PDF Diagnostic Report
+                                </a>
+                            <?php else: ?>
+                                <span style="font-size: 12px; color: #64748b;">
+                                    <i class="fa fa-hourglass-half" style="color: #f59e0b;"></i> Diagnostic report is being processed by the lab pathologist.
+                                </span>
+                            <?php endif; ?>
+                        </div>
+
+                        <div>
+                            <span style="font-size: 12px; color: #94a3b8;">
+                                <i class="fa fa-shield"></i> NABL &amp; CAP Verified
                             </span>
                         </div>
                     </div>
 
-                    <div class="appt-details-grid">
-                        <div class="appt-info-cell">
-                            <div class="info-label">Patient Name</div>
-                            <div class="info-value"><?=htmlspecialchars($lb['patient_name'] ?? $user_name);?></div>
-                        </div>
-                        <div class="appt-info-cell">
-                            <div class="info-label">Total Amount</div>
-                            <div class="info-value" style="color: #0d7a6e;">₹<?=number_format($lb['total_amount'] ?? 0, 2);?></div>
-                        </div>
-                        <div class="appt-info-cell">
-                            <div class="info-label">Sample Status</div>
-                            <div class="info-value"><?=htmlspecialchars($lb['sample_status'] ?? 'Scheduled');?></div>
-                        </div>
-                    </div>
                 </div>
             <?php endforeach; ?>
         <?php else: ?>

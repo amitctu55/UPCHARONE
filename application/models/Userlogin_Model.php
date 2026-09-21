@@ -10,21 +10,80 @@ function __construct() {
 	}
     public function profile()
     {
-        $userid = $this->session->userdata('userid') ?: $this->session->userdata('USERID');
-        $udata = array(
-            'FNAME'  => $this->input->post('name', TRUE),
-            'GENDER' => $this->input->post('gender', TRUE),
-            'EMAIL'  => $this->input->post('email', TRUE),
-            'MOBILE' => $this->input->post('mobile', TRUE),
-            'DOB'    => $this->input->post('dob', TRUE),
-            'BGROUP' => $this->input->post('bgroup', TRUE)
-        );
-        if ($userid) {
-            $this->db->where('USERID', $userid)->update('userlogin', $udata);
-            if (!empty($udata['FNAME'])) {
-                $this->session->set_userdata('username', $udata['FNAME']);
+        $userid    = $this->session->userdata('userid') ?: $this->session->userdata('USERID');
+        $useremail = $this->session->userdata('useremail');
+        $username  = $this->session->userdata('username');
+
+        // Resolve valid userlogin record
+        $targetUser = null;
+        if (!empty($userid)) {
+            $targetUser = $this->db->get_where('userlogin', array('USERID' => $userid))->row();
+        }
+        if (!$targetUser && !empty($useremail)) {
+            $targetUser = $this->db->get_where('userlogin', array('EMAIL' => $useremail))->row();
+            if ($targetUser) {
+                $userid = $targetUser->USERID;
+                $this->session->set_userdata('userid', $userid);
             }
         }
+        if (!$targetUser && !empty($username)) {
+            $targetUser = $this->db->group_start()
+                ->where('EMAIL', $username)
+                ->or_where('MOBILE', $username)
+                ->or_where('FNAME', $username)
+                ->group_end()
+                ->get('userlogin')->row();
+            if ($targetUser) {
+                $userid = $targetUser->USERID;
+                $this->session->set_userdata('userid', $userid);
+            }
+        }
+        if (!$targetUser && $this->session->userdata('adminuserid')) {
+            $adminRow = $this->db->get_where('login', array('id' => $this->session->userdata('adminuserid')))->row();
+            if ($adminRow && !empty($adminRow->email)) {
+                $targetUser = $this->db->get_where('userlogin', array('EMAIL' => $adminRow->email))->row();
+                if ($targetUser) {
+                    $userid = $targetUser->USERID;
+                    $this->session->set_userdata('userid', $userid);
+                }
+            }
+        }
+
+        $udata = array(
+            'FNAME'  => trim($this->input->post('name', TRUE)),
+            'GENDER' => $this->input->post('gender', TRUE),
+            'EMAIL'  => trim($this->input->post('email', TRUE)),
+            'MOBILE' => trim($this->input->post('mobile', TRUE)),
+            'DOB'    => trim($this->input->post('dob', TRUE)),
+            'BGROUP' => trim($this->input->post('bgroup', TRUE))
+        );
+
+        if ($this->input->post('height') !== null) {
+            $udata['HEIGHT'] = trim($this->input->post('height', TRUE));
+        }
+        if ($this->input->post('weight') !== null) {
+            $udata['WEIGHT'] = trim($this->input->post('weight', TRUE));
+        }
+
+        if ($targetUser && !empty($userid)) {
+            $this->db->where('USERID', $userid)->update('userlogin', $udata);
+        } else {
+            // Auto-provision patient record if none exists yet
+            $udata['STATUS']   = '1';
+            $udata['APPROVED'] = '1';
+            $udata['REG_DATE'] = date('Y-m-d H:i:s');
+            $this->db->insert('userlogin', $udata);
+            $userid = $this->db->insert_id();
+            $this->session->set_userdata('userid', $userid);
+        }
+
+        if (!empty($udata['FNAME'])) {
+            $this->session->set_userdata('username', $udata['FNAME']);
+        }
+        if (!empty($udata['EMAIL'])) {
+            $this->session->set_userdata('useremail', $udata['EMAIL']);
+        }
+
         return true;
     }
 

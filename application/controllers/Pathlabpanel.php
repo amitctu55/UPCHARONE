@@ -1134,12 +1134,120 @@ thank you for being a part of Upchar.";
 		if(is_array($data['booking']) && !empty($data['booking']))
 		{
 			$data['booking_test'] 	=	$this->Pathlab_Model->get_booking_test(array('booking_id'=>$booking_id));
+			$data['reports']        =   $this->db->where('booking_id', $booking_id)->order_by('report_id', 'desc')->get('path_reports')->result_array();
 		}
 		else
 		{
 			redirect('pathlabpanel/test_booking/','');
 		}
 		$this->load->view('pathlabpanel/booking_details',$data);
+	}
+
+	/**
+	 * Lab Partner Portal: Upload Diagnostic PDF / Image Test Report
+	 */
+	public function upload_report()
+	{
+		$booking_id  = intval($this->input->post('booking_id'));
+		$report_title = trim($this->input->post('report_title', TRUE)) ?: 'Diagnostic Test Report';
+		$notes        = trim($this->input->post('notes', TRUE));
+		$pathlab_id   = $this->did;
+
+		$booking = $this->db->get_where('path_book', array('booking_id' => $booking_id, 'pathlab_id' => $pathlab_id))->row();
+		if (!$booking) {
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-danger'>Invalid order or permission denied.</div>");
+			redirect('pathlabpanel/test_booking');
+			return;
+		}
+
+		$uploadPath = './public/assets/upload/path_reports/';
+		if (!is_dir($uploadPath)) {
+			mkdir($uploadPath, 0777, true);
+		}
+
+		$config['upload_path']   = $uploadPath;
+		$config['allowed_types'] = 'pdf|PDF|jpg|jpeg|png|PNG|doc|docx';
+		$config['max_size']      = 20480; // 20 MB max
+		$config['encrypt_name']  = TRUE;
+
+		$this->load->library('upload', $config);
+
+		if (!$this->upload->do_upload('report_file')) {
+			$error = $this->upload->display_errors('', '');
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-danger'><strong>Report Upload Failed:</strong> $error</div>");
+			redirect('pathlabpanel/booking_details/' . $booking_id);
+			return;
+		}
+
+		$fileData = $this->upload->data();
+		$relativePath = 'public/assets/upload/path_reports/' . $fileData['file_name'];
+		$fileSizeKb = round($fileData['file_size']) . ' KB';
+
+		// 1. Insert into path_reports
+		$reportData = array(
+			'booking_id'          => $booking_id,
+			'pathlab_id'          => $pathlab_id,
+			'user_id'             => $booking->user_id,
+			'patient_name'        => $booking->patient_name,
+			'report_title'        => $report_title,
+			'report_file'         => $relativePath,
+			'file_size'           => $fileSizeKb,
+			'uploaded_by_user_id' => $this->session->userdata('pathuserid'),
+			'notes'               => $notes,
+			'status'              => 'published',
+			'created_at'          => date('Y-m-d H:i:s')
+		);
+		$this->db->insert('path_reports', $reportData);
+
+		// 2. Update path_book
+		$this->db->where('booking_id', $booking_id)->update('path_book', array(
+			'report_file'        => $relativePath,
+			'report_uploaded_at' => date('Y-m-d H:i:s'),
+			'order_stage'        => 'REPORT_READY',
+			'status'             => 'COMPLETED'
+		));
+
+		// 3. Release escrow if order exists
+		$order = $this->db->where(array('ITEM_TYPE' => 'P', 'ITEM_ID' => $booking_id))->get('sm_order')->row();
+		if ($order) {
+			$this->Financial_Model->release_escrow($order->ORDER_ID);
+		}
+
+		$this->session->set_flashdata('flashmsg', "<div class='alert alert-success'><strong>Report Uploaded Successfully!</strong> Order #$booking_id marked as Completed and Diagnostic Report is now accessible to the patient.</div>");
+		redirect('pathlabpanel/booking_details/' . $booking_id);
+	}
+
+	/**
+	 * Lab Partner Portal: Delete Uploaded Report
+	 */
+	public function delete_report($report_id = null)
+	{
+		$report_id = intval($report_id ?: $this->input->get_post('report_id'));
+		$pathlab_id = $this->did;
+
+		$report = $this->db->get_where('path_reports', array('report_id' => $report_id, 'pathlab_id' => $pathlab_id))->row();
+		if ($report) {
+			$booking_id = $report->booking_id;
+			if (!empty($report->report_file) && file_exists(FCPATH . $report->report_file)) {
+				@unlink(FCPATH . $report->report_file);
+			}
+			$this->db->where('report_id', $report_id)->delete('path_reports');
+
+			// Check if other reports exist for this booking
+			$remaining = $this->db->get_where('path_reports', array('booking_id' => $booking_id))->row();
+			if (!$remaining) {
+				$this->db->where('booking_id', $booking_id)->update('path_book', array(
+					'report_file' => NULL
+				));
+			}
+
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-success'>Report deleted successfully.</div>");
+			redirect('pathlabpanel/booking_details/' . $booking_id);
+			return;
+		}
+
+		$this->session->set_flashdata('flashmsg', "<div class='alert alert-danger'>Report not found or permission denied.</div>");
+		redirect('pathlabpanel/test_booking');
 	}
 	
 	public function report()
@@ -1177,8 +1285,11 @@ thank you for being a part of Upchar.";
 
 		$booking = $this->db->get_where('path_book', array('booking_id' => $booking_id, 'pathlab_id' => $pathlab_id))->row();
 		if ($booking) {
-			$this->db->where('booking_id', $booking_id)->update('path_book', array('status' => $new_status));
-			if ($new_status == 'COMPLETED' || $new_status == 'REPORT_ISSUED') {
+			$this->db->where('booking_id', $booking_id)->update('path_book', array(
+				'status'      => $new_status,
+				'order_stage' => $new_status
+			));
+			if ($new_status == 'COMPLETED' || $new_status == 'REPORT_ISSUED' || $new_status == 'REPORT_READY') {
 				// Release escrow if order exists
 				$order = $this->db->where(array('ITEM_TYPE' => 'P', 'ITEM_ID' => $booking_id))->get('sm_order')->row();
 				if ($order) {

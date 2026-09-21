@@ -167,24 +167,39 @@ try {
           </span>
         </a>
         <ul class="treeview-menu" <?php if($is_pathology_active){ ?> style="display: block;" <?php }?>>
-          <li class="<?php if($pageurl1=='doctor' && $pageurl2=='pathlabreg'){ ?>active<?php }?>">
-            <a href="<?=base_url('doctor/pathlabreg/index');?>">
-              <i class="fa fa-building"></i> Partner Pathology Labs
+          <li class="<?php if($pageurl1=='doctor' && $pageurl2=='pathology' && $pageurl3=='dashboard'){ ?>active<?php }?>">
+            <a href="<?=base_url('doctor/pathology/dashboard');?>">
+              <i class="fa fa-dashboard text-aqua"></i> Pathology Dashboard
             </a>
           </li>
-          <li class="<?php if($pageurl1=='doctor' && $pageurl2=='pathology' && $pageurl3=='assign_test'){ ?>active<?php }?>">
-            <a href="<?=base_url('doctor/pathology/assign_test');?>">
-              <i class="fa fa-list"></i> Diagnostic Test Catalog
+          <li class="<?php if($pageurl1=='doctor' && $pageurl2=='pathlabreg'){ ?>active<?php }?>">
+            <a href="<?=base_url('doctor/pathlabreg/index');?>">
+              <i class="fa fa-building text-green"></i> Partner Pathology Labs
             </a>
           </li>
           <li class="<?php if($pageurl1=='doctor' && $pageurl2=='pathology' && in_array($pageurl3, ['add', 'insert'])){ ?>active<?php }?>">
             <a href="<?=base_url('doctor/pathology/add');?>">
-              <i class="fa fa-plus-circle"></i> Add Diagnostic Test
+              <i class="fa fa-plus-circle text-yellow"></i> Master Test Creator
+            </a>
+          </li>
+          <li class="<?php if($pageurl1=='doctor' && $pageurl2=='pathology' && $pageurl3=='assign_test'){ ?>active<?php }?>">
+            <a href="<?=base_url('doctor/pathology/assign_test');?>">
+              <i class="fa fa-calculator text-primary"></i> Assign Test &amp; Pricing
             </a>
           </li>
           <li class="<?php if($pageurl1=='doctor' && $pageurl2=='pathology' && in_array($pageurl3, ['index', ''])){ ?>active<?php }?>">
             <a href="<?=base_url('doctor/pathology/index');?>">
-              <i class="fa fa-heartbeat"></i> Pathology Test Master
+              <i class="fa fa-th-list text-purple"></i> Assigned Tests Directory
+            </a>
+          </li>
+          <li class="<?php if($pageurl1=='doctor' && $pageurl2=='pathology' && in_array($pageurl3, ['custody', 'custody_timeline'])){ ?>active<?php }?>">
+            <a href="<?=base_url('doctor/pathology/custody');?>">
+              <i class="fa fa-truck text-red"></i> Chain-of-Custody Desk
+            </a>
+          </li>
+          <li class="<?php if($pageurl1=='doctor' && $pageurl2=='pathology' && $pageurl3=='audit_logs'){ ?>active<?php }?>">
+            <a href="<?=base_url('doctor/pathology/audit_logs');?>">
+              <i class="fa fa-history text-muted"></i> System Audit Footprints
             </a>
           </li>
         </ul>

@@ -222,7 +222,36 @@ class Payment_model extends CI_Model {
      * Get order by internal reference
      */
     public function get_order_by_ref($internal_ref) {
-        return $this->db->get_where('razorpay_orders', array('internal_order_ref' => $internal_ref))->row_array();
+        $order = $this->db->get_where('razorpay_orders', array('internal_order_ref' => $internal_ref))->row_array();
+        if ($order) {
+            return $order;
+        }
+
+        // If reference is formatted like APPT-123 or APPT_123
+        if (stripos($internal_ref, 'APPT-') === 0 || stripos($internal_ref, 'APPT_') === 0) {
+            $ref_id = preg_replace('/[^0-9]/', '', $internal_ref);
+            if ($ref_id) {
+                return $this->db->where('purpose', 'APPOINTMENT')
+                                ->where('reference_id', $ref_id)
+                                ->order_by('id', 'DESC')
+                                ->get('razorpay_orders')
+                                ->row_array();
+            }
+        }
+
+        // If reference is formatted like LAB-123 or BOOK-123
+        if (stripos($internal_ref, 'LAB-') === 0 || stripos($internal_ref, 'BOOK-') === 0) {
+            $ref_id = preg_replace('/[^0-9]/', '', $internal_ref);
+            if ($ref_id) {
+                return $this->db->where('purpose', 'LAB_TEST')
+                                ->where('reference_id', $ref_id)
+                                ->order_by('id', 'DESC')
+                                ->get('razorpay_orders')
+                                ->row_array();
+            }
+        }
+
+        return null;
     }
 
     /**

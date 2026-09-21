@@ -186,8 +186,23 @@
                                         </span>
                                     </td>
                                     <td style="text-align: center; vertical-align: middle;">
-                                        <span class="badge-status-pill <?=$isActive ? 'badge-active' : 'badge-pending';?>">
-                                            <?=$isActive ? 'Active' : 'De-Active';?>
+                                        <?php 
+                                            $stage = !empty($val['order_stage']) ? $val['order_stage'] : (!empty($val['status']) ? $val['status'] : 'ORDERED');
+                                            $stageClass = 'badge-pending';
+                                            $stageLabel = 'Booked';
+                                            if ($stage == 'COLLECTED') {
+                                                $stageClass = 'badge-active';
+                                                $stageLabel = 'Sample Collected';
+                                            } elseif ($stage == 'PROCESSING') {
+                                                $stageClass = 'badge-pending';
+                                                $stageLabel = 'In Processing';
+                                            } elseif ($stage == 'REPORT_READY' || $stage == 'COMPLETED') {
+                                                $stageClass = 'badge-paid';
+                                                $stageLabel = 'Report Ready';
+                                            }
+                                        ?>
+                                        <span class="badge-status-pill <?=$stageClass;?>">
+                                            <?=$stageLabel;?>
                                         </span>
                                     </td>
                                     <td style="text-align: center; vertical-align: middle;">

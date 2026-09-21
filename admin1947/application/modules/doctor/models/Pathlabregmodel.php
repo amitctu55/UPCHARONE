@@ -16,10 +16,18 @@ class Pathlabregmodel extends CI_Model{
 		$address = trim($this->input->post('address'));
 		$website = trim($this->input->post('website'));
 		$about = trim($this->input->post('about'));
-		$rawPwd = $this->input->post('password');
-		$password = !empty($rawPwd) ? md5($rawPwd) : md5('Upchar@2026');
+		$commission = $this->input->post('commission_rate') !== null && $this->input->post('commission_rate') !== '' 
+			? (float)$this->input->post('commission_rate') : 15.00;
+		$nabl = $this->input->post('nabl_accredited') ? 1 : 0;
+		$license = trim($this->input->post('license_number') ?? '');
 
-		// Create login account
+		$rawPwd = trim($this->input->post('password') ?? '');
+		if (empty($rawPwd)) {
+			$rawPwd = 'Lab@' . rand(10000, 99999);
+		}
+		$password = md5($rawPwd);
+
+		// Create login account in pathlogin
 		$loginData = array(
 			'FNAME'      => $fname,
 			'EMAIL'      => $email,
@@ -33,26 +41,70 @@ class Pathlabregmodel extends CI_Model{
 		$uid = $this->db->insert_id();
 
 		$data = array(
-			'uid'           => $uid ?: 0,
-			'name'          => $fname,
-			'city'          => $city,
-			'drimage'       => $drimage ?: 'dummyhosp.jpg',
-			'id_proof'      => $id_proof,
-			'med_reg_proof' => $med_reg_proof,
-			'mobile'        => $mobile,
-			'email'         => $email,
-			'creat_date'    => $date,
-			'location'      => $location,
-			'address'       => $address,
-			'website'       => $website,
-			'about'         => $about,
-			'approved'      => '1',
-			'verified'      => '1',
-			'status'        => '1'
+			'uid'               => $uid ?: 0,
+			'name'              => $fname,
+			'city'              => $city,
+			'drimage'           => $drimage ?: 'dummyhosp.jpg',
+			'id_proof'          => $id_proof,
+			'med_reg_proof'     => $med_reg_proof,
+			'mobile'            => $mobile,
+			'email'             => $email,
+			'creat_date'        => $date,
+			'location'          => $location,
+			'address'           => $address,
+			'website'           => $website,
+			'about'             => $about,
+			'commission_rate'   => $commission,
+			'nabl_accredited'   => $nabl,
+			'license_number'    => $license,
+			'raw_password_temp' => $rawPwd,
+			'approved'          => '1',
+			'verified'          => '1',
+			'status'            => '1'
 		);
 			
 		$this->db->insert('pathlab', $data);
-		return ($this->db->affected_rows() != 1) ? false : true;
+		$labId = $this->db->insert_id();
+
+		if ($labId) {
+			return array(
+				'id'       => $labId,
+				'name'     => $fname,
+				'email'    => $email,
+				'mobile'   => $mobile,
+				'password' => $rawPwd,
+				'uid'      => $uid
+			);
+		}
+		return false;
+	}
+
+	public function reset_lab_credentials($labId, $newPlainPassword = null)
+	{
+		$lab = $this->db->get_where('pathlab', array('id' => $labId))->row();
+		if (!$lab) return false;
+
+		if (empty($newPlainPassword)) {
+			$newPlainPassword = 'Lab@' . rand(10000, 99999);
+		}
+		$md5Pwd = md5($newPlainPassword);
+
+		// Update pathlab
+		$this->db->where('id', $labId)->update('pathlab', array('raw_password_temp' => $newPlainPassword));
+
+		// Update pathlogin
+		if ($lab->uid > 0) {
+			$this->db->where('id', $lab->uid)->update('pathlogin', array('PASSWORD' => $md5Pwd));
+		}
+		if (!empty($lab->email)) {
+			$this->db->where('EMAIL', $lab->email)->update('pathlogin', array('PASSWORD' => $md5Pwd));
+		}
+
+		return array(
+			'id'       => $labId,
+			'email'    => $lab->email,
+			'password' => $newPlainPassword
+		);
 	}
 
 	public function pathlab_duplicacy_check()
