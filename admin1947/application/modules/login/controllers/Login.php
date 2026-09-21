@@ -113,8 +113,25 @@ class Login extends CI_Controller {
      */
     public function logout() {
         $this->session->sess_destroy();
-        @setcookie('ci_admin_session', '', time() - 3600, '/');
-        @setcookie('upchar_admin_guard', '', time() - 3600, '/');
+
+        // Thoroughly clear all admin auth and session cookies across domain variations
+        $cookies = array('upchar_admin_guard', 'ci_session', 'ci_admin_session');
+        $host = isset($_SERVER['HTTP_HOST']) ? explode(':', $_SERVER['HTTP_HOST'])[0] : '';
+        $domains = array('', $host);
+        $parts = explode('.', $host);
+        if (count($parts) >= 2) {
+            $domains[] = '.' . implode('.', array_slice($parts, -2));
+        }
+
+        foreach ($cookies as $cname) {
+            foreach ($domains as $dom) {
+                @setcookie($cname, '', time() - 86400, '/', $dom);
+                @setcookie($cname, '', time() - 86400, '/admin1947/', $dom);
+                @setcookie($cname, '', time() - 86400, '');
+            }
+            unset($_COOKIE[$cname]);
+        }
+
         redirect(base_url('login'));
     }
 

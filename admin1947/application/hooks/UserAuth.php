@@ -28,8 +28,16 @@ public function accessCheck()
 		$access_subcenter_controller= (array) $this->CI->config->item('access_subcenter_controller');
 		$access_agency_controller   = (array) $this->CI->config->item('access_agency_controller');
 		
-		// Check signed admin guard token to bridge session
-		if (empty($this->CI->session->userdata('code'))) {
+		$module     =  $this->CI->router->fetch_module();
+		$controller =  $this->CI->router->fetch_class();
+		$method     =  $this->CI->router->fetch_method();
+
+		$is_logout_request = in_array(strtolower($method), array('logout', 'signout')) || 
+		                     (strtolower($controller) === 'other' && strtolower($method) === 'signout') ||
+		                     (strtolower($controller) === 'login' && in_array(strtolower($method), array('logout', 'signout')));
+
+		// Check signed admin guard token to bridge session (skip on signout/logout)
+		if (!$is_logout_request && empty($this->CI->session->userdata('code'))) {
 			$cookieToken = $this->CI->input->cookie('upchar_admin_guard', TRUE);
 			if ($cookieToken) {
 				$decoded = json_decode(base64_decode($cookieToken), TRUE);

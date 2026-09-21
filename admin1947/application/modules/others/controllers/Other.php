@@ -28,7 +28,26 @@ class Other extends CI_Controller {
 	public function signout()
 	{
 		$this->session->sess_destroy();
-		redirect(base_url().'login');
+
+		// Thoroughly delete all admin authentication cookies across all domains & paths
+		$cookies = array('upchar_admin_guard', 'ci_session', 'ci_admin_session');
+		$host = isset($_SERVER['HTTP_HOST']) ? explode(':', $_SERVER['HTTP_HOST'])[0] : '';
+		$domains = array('', $host);
+		$parts = explode('.', $host);
+		if (count($parts) >= 2) {
+			$domains[] = '.' . implode('.', array_slice($parts, -2));
+		}
+
+		foreach ($cookies as $cname) {
+			foreach ($domains as $dom) {
+				@setcookie($cname, '', time() - 86400, '/', $dom);
+				@setcookie($cname, '', time() - 86400, '/admin1947/', $dom);
+				@setcookie($cname, '', time() - 86400, '');
+			}
+			unset($_COOKIE[$cname]);
+		}
+
+		redirect(base_url('login'));
 	}
 	
 	/* public function getdistrict()
