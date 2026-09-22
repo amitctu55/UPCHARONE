@@ -24,10 +24,11 @@ $weight  = get_prop($userObj, 'WEIGHT');
 $image   = get_prop($userObj, 'IMAGE') ?: get_prop($userObj, 'PROFILEIMG');
 $userid  = get_prop($userObj, 'USERID') ?: ($this->session->userdata('userid') ?: 0);
 
-$displayName = !empty($fname) ? $fname : (!empty($this->session->userdata('username')) ? $this->session->userdata('username') : 'Valued Patient');
-if (!empty($lname) && stripos($displayName, $lname) === false) {
-    $displayName .= ' ' . $lname;
+$fullName = trim($fname . ' ' . $lname);
+if (empty($fullName)) {
+    $fullName = !empty($fname) ? $fname : (!empty($this->session->userdata('username')) ? $this->session->userdata('username') : '');
 }
+$displayName = !empty($fullName) ? $fullName : 'Valued Patient';
 
 // Check if user has minimum profile filled
 $hasProfileData = (!empty($fname) || !empty($email) || !empty($mobile));
@@ -443,18 +444,18 @@ if (!empty($height) && !empty($weight)) {
     <div class="prof-compact-header">
         
         <div class="prof-user-strip">
-            <div class="prof-avatar-sm">
+            <div class="prof-avatar-sm" id="header_avatar_char">
                 <?=strtoupper(substr($displayName, 0, 1));?>
             </div>
             <div>
                 <div class="prof-name-title">
-                    <span><?=html_escape($displayName);?></span>
+                    <span id="header_display_name"><?=html_escape($displayName);?></span>
                     <span class="prof-badge-verified"><i class="fa fa-check-circle"></i> Verified</span>
                     <span class="prof-id-pill">UPC-<?=str_pad($userid ?: '1', 5, '0', STR_PAD_LEFT);?></span>
                 </div>
                 <div class="prof-meta-line">
-                    <span><i class="fa fa-envelope-o" style="color: #00a896;"></i> <?=html_escape(!empty($email) ? $email : 'No email added');?></span>
-                    <span><i class="fa fa-phone" style="color: #00a896;"></i> <?=html_escape(!empty($mobile) ? $mobile : 'No mobile added');?></span>
+                    <span id="header_email_span"><i class="fa fa-envelope-o" style="color: #00a896;"></i> <?=html_escape(!empty($email) ? $email : 'No email added');?></span>
+                    <span id="header_mobile_span"><i class="fa fa-phone" style="color: #00a896;"></i> <?=html_escape(!empty($mobile) ? $mobile : 'No mobile added');?></span>
                     <?php if(!empty($bgroup)): ?>
                         <span><i class="fa fa-tint" style="color: #ef4444;"></i> Blood: <strong><?=html_escape($bgroup);?></strong></span>
                     <?php endif; ?>
@@ -520,14 +521,14 @@ if (!empty($height) && !empty($weight)) {
                     
                     <div class="prof-cell">
                         <div class="prof-cell-label">Full Name</div>
-                        <div class="prof-cell-val">
-                            <?=!empty($fname) ? html_escape($fname) : '<span class="empty">Not provided</span>';?>
+                        <div class="prof-cell-val" id="view_fname">
+                            <?=!empty($fullName) ? html_escape($fullName) : (!empty($fname) ? html_escape($fname) : '<span class="empty">Not provided</span>');?>
                         </div>
                     </div>
 
                     <div class="prof-cell">
                         <div class="prof-cell-label">Email Address</div>
-                        <div class="prof-cell-val">
+                        <div class="prof-cell-val" id="view_email">
                             <?php if(!empty($email)): ?>
                                 <?=html_escape($email);?>
                                 <span style="color: #16a34a; font-size: 11px;"><i class="fa fa-check-circle"></i></span>
@@ -539,7 +540,7 @@ if (!empty($height) && !empty($weight)) {
 
                     <div class="prof-cell">
                         <div class="prof-cell-label">Mobile Number</div>
-                        <div class="prof-cell-val">
+                        <div class="prof-cell-val" id="view_mobile">
                             <?php if(!empty($mobile)): ?>
                                 <?=html_escape($mobile);?>
                                 <span style="color: #0284c7; font-size: 11px;"><i class="fa fa-mobile"></i></span>
@@ -551,14 +552,14 @@ if (!empty($height) && !empty($weight)) {
 
                     <div class="prof-cell">
                         <div class="prof-cell-label">Date of Birth</div>
-                        <div class="prof-cell-val">
+                        <div class="prof-cell-val" id="view_dob">
                             <?=!empty($dob) ? date('d M, Y', strtotime($dob)) : '<span class="empty">Not specified</span>';?>
                         </div>
                     </div>
 
                     <div class="prof-cell">
                         <div class="prof-cell-label">Gender</div>
-                        <div class="prof-cell-val">
+                        <div class="prof-cell-val" id="view_gender">
                             <?php 
                                 if ($gender === 'M' || $gender === 'Male') echo '<i class="fa fa-mars" style="color: #0284c7;"></i> Male';
                                 elseif ($gender === 'F' || $gender === 'Female') echo '<i class="fa fa-venus" style="color: #ec4899;"></i> Female';
@@ -570,7 +571,7 @@ if (!empty($height) && !empty($weight)) {
 
                     <div class="prof-cell">
                         <div class="prof-cell-label">Blood Group</div>
-                        <div class="prof-cell-val">
+                        <div class="prof-cell-val" id="view_bgroup">
                             <?php if(!empty($bgroup)): ?>
                                 <span style="color: #dc2626; font-weight: 800; background: #fee2e2; padding: 1px 7px; border-radius: 4px;">
                                     <i class="fa fa-tint"></i> <?=html_escape($bgroup);?>
@@ -583,14 +584,14 @@ if (!empty($height) && !empty($weight)) {
 
                     <div class="prof-cell">
                         <div class="prof-cell-label">Height</div>
-                        <div class="prof-cell-val">
+                        <div class="prof-cell-val" id="view_height">
                             <?=!empty($height) ? html_escape($height) : '<span class="empty">Not provided</span>';?>
                         </div>
                     </div>
 
                     <div class="prof-cell">
                         <div class="prof-cell-label">Weight</div>
-                        <div class="prof-cell-val">
+                        <div class="prof-cell-val" id="view_weight">
                             <?=!empty($weight) ? html_escape($weight) : '<span class="empty">Not provided</span>';?>
                         </div>
                     </div>
@@ -609,31 +610,35 @@ if (!empty($height) && !empty($weight)) {
 
             <!-- EDIT MODE (Compact Form) -->
             <div id="profEditBox" style="<?=$hasProfileData ? 'display: none;' : '';?>">
+                <!-- Inline Feedback Alert -->
+                <div id="profEditAlert" style="display: none; margin-bottom: 12px;"></div>
+
                 <form action="<?=base_url('profile');?>" method="post" id="profForm">
                     <?php if ($this->config->item('csrf_protection')): ?>
                         <input type="hidden" name="<?=$this->security->get_csrf_token_name();?>" value="<?=$this->security->get_csrf_hash();?>">
                     <?php endif; ?>
                     <input type="hidden" name="action" value="update_profile">
+                    <input type="hidden" name="userid" value="<?=$userid;?>">
 
                     <div class="row">
                         <div class="col-md-3 col-sm-6 col-12" style="margin-bottom: 12px;">
                             <label class="prof-form-label">Full Name <span style="color: #ef4444;">*</span></label>
-                            <input type="text" class="prof-input" name="name" placeholder="Full name" required value="<?=html_escape($fname);?>">
+                            <input type="text" class="prof-input" name="name" id="inp_name" placeholder="Full name" required value="<?=html_escape(!empty($fullName) ? $fullName : $fname);?>">
                         </div>
 
                         <div class="col-md-3 col-sm-6 col-12" style="margin-bottom: 12px;">
-                            <label class="prof-form-label">Email Address <span style="color: #ef4444;">*</span></label>
-                            <input type="email" class="prof-input" name="email" placeholder="patient@example.com" required value="<?=html_escape($email);?>">
+                            <label class="prof-form-label">Email Address <span style="font-size: 11px; font-weight: 500; color: #64748b;">(or Mobile)</span></label>
+                            <input type="email" class="prof-input" name="email" id="inp_email" placeholder="patient@example.com" value="<?=html_escape($email);?>">
                         </div>
 
                         <div class="col-md-3 col-sm-6 col-12" style="margin-bottom: 12px;">
-                            <label class="prof-form-label">Mobile Number <span style="color: #ef4444;">*</span></label>
-                            <input type="text" class="prof-input" name="mobile" placeholder="10-digit mobile" required value="<?=html_escape($mobile);?>">
+                            <label class="prof-form-label">Mobile Number <span style="font-size: 11px; font-weight: 500; color: #64748b;">(or Email)</span></label>
+                            <input type="tel" class="prof-input" name="mobile" id="inp_mobile" placeholder="10-digit mobile" maxlength="15" value="<?=html_escape($mobile);?>">
                         </div>
 
                         <div class="col-md-3 col-sm-6 col-12" style="margin-bottom: 12px;">
                             <label class="prof-form-label">Date of Birth</label>
-                            <input type="date" class="prof-input" name="dob" value="<?=html_escape($dob);?>">
+                            <input type="date" class="prof-input" name="dob" id="inp_dob" value="<?=html_escape($dob);?>">
                         </div>
 
                         <div class="col-md-3 col-sm-6 col-12" style="margin-bottom: 12px;">
@@ -656,7 +661,7 @@ if (!empty($height) && !empty($weight)) {
 
                         <div class="col-md-3 col-sm-6 col-12" style="margin-bottom: 12px;">
                             <label class="prof-form-label">Blood Group</label>
-                            <select class="prof-input" name="bgroup">
+                            <select class="prof-input" name="bgroup" id="inp_bgroup">
                                 <option value="">-- Select --</option>
                                 <?php 
                                     $bg_items = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
@@ -669,12 +674,12 @@ if (!empty($height) && !empty($weight)) {
 
                         <div class="col-md-3 col-sm-6 col-12" style="margin-bottom: 12px;">
                             <label class="prof-form-label">Height</label>
-                            <input type="text" class="prof-input" name="height" placeholder="e.g. 175 cm / 5'9&quot;" value="<?=html_escape($height);?>">
+                            <input type="text" class="prof-input" name="height" id="inp_height" placeholder="e.g. 175 cm / 5'9&quot;" value="<?=html_escape($height);?>">
                         </div>
 
                         <div class="col-md-3 col-sm-6 col-12" style="margin-bottom: 12px;">
                             <label class="prof-form-label">Weight</label>
-                            <input type="text" class="prof-input" name="weight" placeholder="e.g. 68 kg" value="<?=html_escape($weight);?>">
+                            <input type="text" class="prof-input" name="weight" id="inp_weight" placeholder="e.g. 68 kg" value="<?=html_escape($weight);?>">
                         </div>
                     </div>
 
@@ -684,8 +689,8 @@ if (!empty($height) && !empty($weight)) {
                                 <i class="fa fa-times"></i> Cancel
                             </button>
                         <?php endif; ?>
-                        <button type="submit" name="submit" value="1" class="btn-prof-sm btn-prof-primary">
-                            <i class="fa fa-check"></i> Save Changes
+                        <button type="submit" id="profSubmitBtn" name="submit" value="1" class="btn-prof-sm btn-prof-primary">
+                            <i class="fa fa-check"></i> <span>Save Changes</span>
                         </button>
                     </div>
                 </form>
@@ -917,5 +922,158 @@ document.addEventListener('DOMContentLoaded', function() {
     } else if (urlParams.get('tab') === 'dependents') {
         switchProfTab('dependents');
     }
+
+    var profForm = document.getElementById('profForm');
+    if (profForm) {
+        profForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            var alertBox = document.getElementById('profEditAlert');
+            if (alertBox) {
+                alertBox.style.display = 'none';
+                alertBox.innerHTML = '';
+            }
+
+            var nameInp = document.getElementById('inp_name');
+            var emailInp = document.getElementById('inp_email');
+            var mobInp = document.getElementById('inp_mobile');
+
+            var nameVal = nameInp ? nameInp.value.trim() : '';
+            var emailVal = emailInp ? emailInp.value.trim() : '';
+            var mobVal = mobInp ? mobInp.value.trim() : '';
+
+            if (!nameVal) {
+                showProfAlert('Please enter your full name.', 'danger');
+                if (nameInp) nameInp.focus();
+                return;
+            }
+
+            if (!emailVal && !mobVal) {
+                showProfAlert('Please provide at least a Mobile number or an Email address so we can reach you.', 'danger');
+                if (mobInp) mobInp.focus();
+                return;
+            }
+
+            var submitBtn = document.getElementById('profSubmitBtn');
+            var origBtnHtml = submitBtn ? submitBtn.innerHTML : '';
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> <span>Saving...</span>';
+            }
+
+            var formData = new FormData(profForm);
+            formData.append('ajax', '1');
+
+            fetch(profForm.getAttribute('action') || window.location.href, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(function(res) {
+                return res.json();
+            })
+            .then(function(data) {
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = origBtnHtml;
+                }
+
+                if (data && data.status === 'success') {
+                    showProfAlert('<i class="fa fa-check-circle"></i> ' + (data.message || 'Profile details updated successfully!'), 'success');
+
+                    // Instantly update header & view mode cells
+                    if (data.display_name) {
+                        var vName = document.getElementById('view_fname');
+                        if (vName) vName.innerText = data.display_name;
+                        var hName = document.getElementById('header_display_name');
+                        if (hName) hName.innerText = data.display_name;
+                        var hAv = document.getElementById('header_avatar_char');
+                        if (hAv) hAv.innerText = data.display_name.charAt(0).toUpperCase();
+                    }
+                    if (data.user) {
+                        var u = data.user;
+                        var vEmail = document.getElementById('view_email');
+                        if (vEmail) {
+                            vEmail.innerHTML = u.EMAIL ? (escapeHtml(u.EMAIL) + ' <span style="color: #16a34a; font-size: 11px;"><i class="fa fa-check-circle"></i></span>') : '<span class="empty">Not registered</span>';
+                        }
+                        var hEmail = document.getElementById('header_email_span');
+                        if (hEmail) {
+                            hEmail.innerHTML = '<i class="fa fa-envelope-o" style="color: #00a896;"></i> ' + (u.EMAIL ? escapeHtml(u.EMAIL) : 'No email added');
+                        }
+
+                        var vMob = document.getElementById('view_mobile');
+                        if (vMob) {
+                            vMob.innerHTML = u.MOBILE ? (escapeHtml(u.MOBILE) + ' <span style="color: #0284c7; font-size: 11px;"><i class="fa fa-mobile"></i></span>') : '<span class="empty">Not registered</span>';
+                        }
+                        var hMob = document.getElementById('header_mobile_span');
+                        if (hMob) {
+                            hMob.innerHTML = '<i class="fa fa-phone" style="color: #00a896;"></i> ' + (u.MOBILE ? escapeHtml(u.MOBILE) : 'No mobile added');
+                        }
+
+                        var vDob = document.getElementById('view_dob');
+                        if (vDob) {
+                            vDob.innerText = u.DOB ? u.DOB : 'Not specified';
+                        }
+                        var vGen = document.getElementById('view_gender');
+                        if (vGen) {
+                            if (u.GENDER === 'M') vGen.innerHTML = '<i class="fa fa-mars" style="color: #0284c7;"></i> Male';
+                            else if (u.GENDER === 'F') vGen.innerHTML = '<i class="fa fa-venus" style="color: #ec4899;"></i> Female';
+                            else if (u.GENDER === 'O') vGen.innerText = 'Other';
+                            else vGen.innerHTML = '<span class="empty">Not specified</span>';
+                        }
+                        var vBg = document.getElementById('view_bgroup');
+                        if (vBg) {
+                            vBg.innerHTML = u.BGROUP ? ('<span style="color: #dc2626; font-weight: 800; background: #fee2e2; padding: 1px 7px; border-radius: 4px;"><i class="fa fa-tint"></i> ' + escapeHtml(u.BGROUP) + '</span>') : '<span class="empty">Not set</span>';
+                        }
+                        var vH = document.getElementById('view_height');
+                        if (vH) vH.innerText = u.HEIGHT ? u.HEIGHT : 'Not provided';
+                        var vW = document.getElementById('view_weight');
+                        if (vW) vW.innerText = u.WEIGHT ? u.WEIGHT : 'Not provided';
+                    }
+
+                    setTimeout(function() {
+                        toggleEditMode(false);
+                        window.scrollTo({top: 0, behavior: 'smooth'});
+                    }, 800);
+                } else {
+                    var err = (data && data.message) ? data.message : 'An error occurred while updating profile. Please try again.';
+                    showProfAlert('<i class="fa fa-exclamation-triangle"></i> ' + err, 'danger');
+                }
+            })
+            .catch(function(err) {
+                console.warn('Profile AJAX update fallback to standard submit:', err);
+                // Fallback to normal form submit if fetch fails
+                if (profForm) {
+                    profForm.submit();
+                }
+            });
+        });
+    }
 });
+
+function showProfAlert(msg, type) {
+    var alertBox = document.getElementById('profEditAlert');
+    if (!alertBox) return;
+    var bg = (type === 'success') ? '#dcfce7' : '#fee2e2';
+    var col = (type === 'success') ? '#15803d' : '#b91c1c';
+    var border = (type === 'success') ? '#bbf7d0' : '#fecaca';
+    alertBox.style.background = bg;
+    alertBox.style.color = col;
+    alertBox.style.border = '1px solid ' + border;
+    alertBox.style.borderRadius = '6px';
+    alertBox.style.padding = '10px 14px';
+    alertBox.style.fontSize = '13px';
+    alertBox.style.fontWeight = '600';
+    alertBox.style.display = 'block';
+    alertBox.innerHTML = msg;
+}
+
+function escapeHtml(str) {
+    if (!str) return '';
+    return String(str).replace(/[&<>"']/g, function(m) {
+        return {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[m];
+    });
+}
 </script>

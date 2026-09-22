@@ -8,9 +8,13 @@ function __construct() {
 
 
 	}
-    public function profile()
+    public function profile($userid = null)
     {
-        $userid    = $this->session->userdata('userid') ?: $this->session->userdata('USERID');
+        // 1. Resolve user id from argument, POST, or session keys
+        if (empty($userid)) {
+            $userid = intval($this->input->post('userid')) 
+                   ?: ($this->session->userdata('userid') ?: $this->session->userdata('user_id') ?: $this->session->userdata('USERID'));
+        }
         $useremail = $this->session->userdata('useremail');
         $username  = $this->session->userdata('username');
 
@@ -49,22 +53,90 @@ function __construct() {
             }
         }
 
+        if (!$targetUser && empty($userid)) {
+            return array('status' => 'error', 'message' => 'Unable to identify patient account. Please login again.');
+        }
+
+        // Process Form Inputs
+        $fullName = trim($this->input->post('name', TRUE));
+        $email    = trim($this->input->post('email', TRUE));
+        $mobile   = trim($this->input->post('mobile', TRUE));
+        $gender   = trim($this->input->post('gender', TRUE));
+        $dob      = trim($this->input->post('dob', TRUE));
+        $bgroup   = trim($this->input->post('bgroup', TRUE));
+        $height   = $this->input->post('height', TRUE) !== null ? trim($this->input->post('height', TRUE)) : null;
+        $weight   = $this->input->post('weight', TRUE) !== null ? trim($this->input->post('weight', TRUE)) : null;
+
+        // Intelligent Name Splitting for FNAME & LNAME
+        $fname = $fullName;
+        $lname = '';
+        if (!empty($fullName)) {
+            $parts = preg_split('/\s+/', $fullName, 2);
+            $fname = $parts[0];
+            $lname = isset($parts[1]) ? $parts[1] : '';
+        }
+
+        // Validate Mobile format & duplicates if provided
+        $cleanMobile = null;
+        if (!empty($mobile)) {
+            $cleanMobile = preg_replace('/[^0-9]/', '', $mobile);
+            if (strlen($cleanMobile) == 12 && substr($cleanMobile, 0, 2) === '91') {
+                $cleanMobile = substr($cleanMobile, 2);
+            }
+            if (strlen($cleanMobile) < 10) {
+                return array('status' => 'error', 'message' => 'Please provide a valid 10-digit mobile number.');
+            }
+            // Check collision with another user
+            if (!empty($userid)) {
+                $dupMob = $this->db->group_start()
+                    ->where('MOBILE', $cleanMobile)
+                    ->or_where('MOBILE', $mobile)
+                    ->group_end()
+                    ->where('USERID !=', $userid)
+                    ->get('userlogin')->row();
+                if ($dupMob) {
+                    return array('status' => 'error', 'message' => 'Mobile number ' . html_escape($cleanMobile) . ' is already registered with another account.');
+                }
+            }
+        }
+
+        // Validate Email format & duplicates if provided
+        $cleanEmail = null;
+        if (!empty($email)) {
+            if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                return array('status' => 'error', 'message' => 'Please enter a valid email address.');
+            }
+            $cleanEmail = strtolower($email);
+            if (!empty($userid)) {
+                $dupEmail = $this->db->where('LOWER(EMAIL)', $cleanEmail)
+                    ->where('USERID !=', $userid)
+                    ->get('userlogin')->row();
+                if ($dupEmail) {
+                    return array('status' => 'error', 'message' => 'Email address ' . html_escape($email) . ' is already registered with another account.');
+                }
+            }
+        }
+
+        // Construct Database Array
         $udata = array(
-            'FNAME'  => trim($this->input->post('name', TRUE)),
-            'GENDER' => $this->input->post('gender', TRUE),
-            'EMAIL'  => trim($this->input->post('email', TRUE)),
-            'MOBILE' => trim($this->input->post('mobile', TRUE)),
-            'DOB'    => trim($this->input->post('dob', TRUE)),
-            'BGROUP' => trim($this->input->post('bgroup', TRUE))
+            'FNAME'       => !empty($fname) ? $fname : ($targetUser ? $targetUser->FNAME : ''),
+            'LNAME'       => !empty($lname) ? $lname : ($targetUser && empty($fullName) ? $targetUser->LNAME : ''),
+            'GENDER'      => !empty($gender) ? $gender : null,
+            'EMAIL'       => !empty($cleanEmail) ? $cleanEmail : null,
+            'MOBILE'      => !empty($cleanMobile) ? $cleanMobile : null,
+            'DOB'         => !empty($dob) ? $dob : null,
+            'BGROUP'      => !empty($bgroup) ? $bgroup : null,
+            'UPDATE_DATE' => date('Y-m-d')
         );
 
-        if ($this->input->post('height') !== null) {
-            $udata['HEIGHT'] = trim($this->input->post('height', TRUE));
+        if ($height !== null) {
+            $udata['HEIGHT'] = !empty($height) ? $height : null;
         }
-        if ($this->input->post('weight') !== null) {
-            $udata['WEIGHT'] = trim($this->input->post('weight', TRUE));
+        if ($weight !== null) {
+            $udata['WEIGHT'] = !empty($weight) ? $weight : null;
         }
 
+        // Execute Update or Provision
         if ($targetUser && !empty($userid)) {
             $this->db->where('USERID', $userid)->update('userlogin', $udata);
         } else {
@@ -74,17 +146,29 @@ function __construct() {
             $udata['REG_DATE'] = date('Y-m-d H:i:s');
             $this->db->insert('userlogin', $udata);
             $userid = $this->db->insert_id();
-            $this->session->set_userdata('userid', $userid);
         }
 
-        if (!empty($udata['FNAME'])) {
-            $this->session->set_userdata('username', $udata['FNAME']);
+        // Synchronize Session
+        $this->session->set_userdata('userid', $userid);
+        $this->session->set_userdata('user_id', $userid);
+        $this->session->set_userdata('USERID', $userid);
+        $fullNameDisplay = trim($udata['FNAME'] . ' ' . $udata['LNAME']);
+        if (!empty($fullNameDisplay)) {
+            $this->session->set_userdata('username', $fullNameDisplay);
         }
-        if (!empty($udata['EMAIL'])) {
-            $this->session->set_userdata('useremail', $udata['EMAIL']);
+        if (!empty($cleanEmail)) {
+            $this->session->set_userdata('useremail', $cleanEmail);
+        }
+        if (!empty($cleanMobile)) {
+            $this->session->set_userdata('mobile', $cleanMobile);
         }
 
-        return true;
+        return array(
+            'status'       => 'success', 
+            'message'      => 'Profile details updated successfully!',
+            'user'         => $udata,
+            'display_name' => $fullNameDisplay
+        );
     }
 
 public function updateprofile(){

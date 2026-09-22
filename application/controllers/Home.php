@@ -2429,8 +2429,18 @@ class Home extends CI_Controller
 		) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
 
 		if (isset($_POST['submit']) || $this->input->post('action') === 'update_profile') {
-			$this->Userlogin_Model->profile();
-			$this->session->set_flashdata('flashmsg', "<div class='alert alert-success'>Profile details updated successfully!</div>");
+			$res = $this->Userlogin_Model->profile($userid);
+			$is_ajax = $this->input->is_ajax_request() || $this->input->post('ajax');
+			if ($is_ajax) {
+				$this->output->set_content_type('application/json')->set_output(json_encode($res));
+				return;
+			}
+			if (is_array($res) && isset($res['status']) && $res['status'] === 'error') {
+				$this->session->set_flashdata('flashmsg', "<div class='alert alert-danger'>" . html_escape($res['message']) . "</div>");
+			} else {
+				$msg = (is_array($res) && !empty($res['message'])) ? $res['message'] : 'Profile details updated successfully!';
+				$this->session->set_flashdata('flashmsg', "<div class='alert alert-success'>" . html_escape($msg) . "</div>");
+			}
 			redirect('profile');
 			return;
 		}
