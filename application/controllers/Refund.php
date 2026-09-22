@@ -109,6 +109,148 @@ class Refund extends CI_Controller {
     }
 
     /**
+     * GET/POST: Calculate real-time cancellation fee & refund quote before confirming
+     */
+    public function quote() {
+        header('Content-Type: application/json; charset=utf-8');
+
+        $currentUser = $this->_get_current_user();
+        if (!$currentUser) {
+            echo json_encode(array('status' => 'error', 'message' => 'User not authenticated. Please log in.'));
+            return;
+        }
+
+        $order_ref = trim($this->input->get_post('order_ref'));
+        if (empty($order_ref)) {
+            echo json_encode(array('status' => 'error', 'message' => 'Order reference is required.'));
+            return;
+        }
+
+        $appt_id = null;
+        if (stripos($order_ref, 'APPT-') === 0 || stripos($order_ref, 'APPT_') === 0 || (is_numeric($order_ref) && strlen($order_ref) <= 8)) {
+            $appt_id = intval(preg_replace('/[^0-9]/', '', $order_ref));
+        }
+
+        if ($appt_id) {
+            $app = $this->db->get_where('appointment', array('appointment_id' => $appt_id))->row_array();
+            if (!$app) {
+                echo json_encode(array('status' => 'error', 'message' => 'Appointment #' . $appt_id . ' not found.'));
+                return;
+            }
+
+            if (!$this->_is_authorized($app['user_id'], $app['appointment_mobile'], $app['appointment_email'], $currentUser)) {
+                echo json_encode(array('status' => 'error', 'message' => 'Unauthorized access to appointment #' . $appt_id . '.'));
+                return;
+            }
+
+            if ($app['status'] == '2' || $app['appointment_status'] == '2' || strtoupper(trim($app['payment_status'] ?? '')) === 'REFUNDED') {
+                echo json_encode(array('status' => 'error', 'message' => 'Appointment #' . $appt_id . ' is already cancelled.'));
+                return;
+            }
+
+            // Linked order check
+            $order = $this->db->where('purpose', 'APPOINTMENT')
+                              ->where('reference_id', $appt_id)
+                              ->order_by('id', 'DESC')
+                              ->get('razorpay_orders')
+                              ->row_array();
+
+            $pay_status = strtoupper(trim($app['payment_status'] ?: 'UNPAID'));
+            $is_paid    = ($pay_status === 'PAID' || $pay_status === 'DONE' || ($order && $order['status'] === 'PAID'));
+            $amount     = floatval(!empty($app['amount']) ? $app['amount'] : (!empty($app['fee']) ? $app['fee'] : ($order ? $order['amount'] : 0)));
+
+            $policy_mode = $this->Wallet_model->get_setting('cancellation_policy_mode', 'TIERED');
+
+            if ($is_paid && $amount > 0) {
+                $app_datetime      = $app['appointment_date'] . ' ' . (!empty($app['from_timing']) ? $app['from_timing'] : (!empty($app['appointment_time']) ? $app['appointment_time'] : '10:00:00'));
+                $refund_percent    = $this->Refund_model->calculate_refund_percentage($app_datetime);
+                $deduction_percent = max(0, 100 - $refund_percent);
+                $deduction_amount  = round(($amount * ($deduction_percent / 100)), 2);
+                $refund_amount     = round($amount - $deduction_amount, 2);
+
+                $policy_text = '';
+                if ($policy_mode === 'FLAT') {
+                    $policy_text = 'Flat Admin Cancellation Fee (' . $deduction_percent . '%)';
+                } else {
+                    $app_time = strtotime($app_datetime);
+                    $diff_hrs = ($app_time - time()) / 3600;
+                    if ($diff_hrs >= 24) {
+                        $policy_text = 'Tier 1 (> 24 hrs prior): ' . $deduction_percent . '% cancellation fee';
+                    } else if ($diff_hrs >= 12) {
+                        $policy_text = 'Tier 2 (12-24 hrs prior): ' . $deduction_percent . '% cancellation fee';
+                    } else {
+                        $policy_text = 'Tier 3 (< 12 hrs prior): ' . $deduction_percent . '% cancellation fee';
+                    }
+                }
+
+                echo json_encode(array(
+                    'status'            => 'success',
+                    'order_ref'         => 'APPT-' . $appt_id,
+                    'is_paid'           => true,
+                    'gross_amount'      => $amount,
+                    'deduction_percent' => $deduction_percent,
+                    'deduction_amount'  => $deduction_amount,
+                    'refund_amount'     => $refund_amount,
+                    'refund_to'         => 'Upchar Wallet (Instant Credit)',
+                    'policy_mode'       => $policy_mode,
+                    'policy_text'       => $policy_text,
+                    'appt_date'         => date('d M Y', strtotime($app['appointment_date'])),
+                    'appt_time'         => (!empty($app['from_timing']) ? $app['from_timing'] : 'Scheduled')
+                ));
+                return;
+            } else {
+                echo json_encode(array(
+                    'status'            => 'success',
+                    'order_ref'         => 'APPT-' . $appt_id,
+                    'is_paid'           => false,
+                    'gross_amount'      => $amount,
+                    'deduction_percent' => 0,
+                    'deduction_amount'  => 0,
+                    'refund_amount'     => 0,
+                    'policy_text'       => 'Appointment is unpaid. No cancellation fee will be charged.',
+                    'appt_date'         => date('d M Y', strtotime($app['appointment_date'])),
+                    'appt_time'         => (!empty($app['from_timing']) ? $app['from_timing'] : 'Scheduled')
+                ));
+                return;
+            }
+        }
+
+        // Lab Booking Quote
+        $booking_id = null;
+        if (stripos($order_ref, 'LAB-') === 0 || stripos($order_ref, 'BOOK-') === 0) {
+            $booking_id = intval(preg_replace('/[^0-9]/', '', $order_ref));
+        }
+
+        if ($booking_id) {
+            $lb = $this->db->get_where('path_book', array('booking_id' => $booking_id))->row_array();
+            if ($lb) {
+                if (!$this->_is_authorized($lb['user_id'], $lb['patient_mobile'], $lb['patient_email'], $currentUser)) {
+                    echo json_encode(array('status' => 'error', 'message' => 'Unauthorized access to diagnostic order #' . $booking_id));
+                    return;
+                }
+
+                $is_paid = ($lb['payment_status'] == '1' || strtoupper($lb['payment_status']) === 'PAID');
+                $amount  = floatval(!empty($lb['total_amount']) ? $lb['total_amount'] : 0);
+
+                echo json_encode(array(
+                    'status'            => 'success',
+                    'order_ref'         => 'LAB-' . $booking_id,
+                    'is_paid'           => $is_paid,
+                    'gross_amount'      => $amount,
+                    'deduction_percent' => 0,
+                    'deduction_amount'  => 0,
+                    'refund_amount'     => $is_paid ? $amount : 0,
+                    'refund_to'         => 'Upchar Wallet (Instant Credit)',
+                    'policy_text'       => 'Diagnostic Test Cancellation (100% Wallet Refund)'
+                ));
+                return;
+            }
+        }
+
+        echo json_encode(array('status' => 'error', 'message' => 'Invalid order reference.'));
+    }
+
+    /**
      * POST: Initiate a Refund or Cancellation for an Order / Appointment / Lab Booking
      */
     public function initiate() {
@@ -153,6 +295,9 @@ class Refund extends CI_Controller {
                     return;
                 }
 
+                // Beneficiary user who should receive wallet credit
+                $beneficiaryUserId = (!empty($app['user_id']) && intval($app['user_id']) > 0) ? intval($app['user_id']) : $userId;
+
                 // Check for linked gateway payment order
                 $order = $this->db->where('purpose', 'APPOINTMENT')
                                   ->where('reference_id', $appt_id)
@@ -175,7 +320,7 @@ class Refund extends CI_Controller {
                     if ($refund_amount > 0) {
                         $res = $this->Refund_model->create_refund(
                             'APPT-' . $appt_id,
-                            $userId,
+                            $beneficiaryUserId,
                             $refund_amount,
                             $refund_to,
                             $reason . ' (' . $deduction_percent . '% deduction applied)',
@@ -192,7 +337,7 @@ class Refund extends CI_Controller {
                         'payment_status'     => ($refund_amount > 0) ? 'REFUNDED' : $app['payment_status'],
                         'cancel_date'        => date('Y-m-d H:i:s'),
                         'cancel_by'          => 'U',
-                        'cancel_reason'      => $reason . ($deduction_percent > 0 ? " ({$deduction_percent}% deduction applied)" : "")
+                        'cancel_reason'      => $reason . ($deduction_percent > 0 ? " ({$deduction_percent}% cancellation fee: -₹{$deduction_amount}, ₹{$refund_amount} refunded)" : "")
                     ));
 
                     // If linked razorpay order exists, update its status as well

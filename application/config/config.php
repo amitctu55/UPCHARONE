@@ -499,6 +499,7 @@ $config['csrf_exclude_uris'] = array(
 	'coupon/.*',
 	'Coupon/.*',
 	'refund/.*',
+	'Refund/.*',
 	'payout/.*',
 	'admin_payment/.*',
 	'attendance/.*',

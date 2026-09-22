@@ -521,6 +521,13 @@ class Home extends CI_Controller
 		$data['referral_code']     = $this->Referral_model->get_or_create_code($user_id);
 		$data['payments_data']     = $this->Payment_model->get_orders_by_user($user_id, 20, 0);
 
+		// Cancellation policy configuration
+		$data['cancellation_policy_mode']        = $this->Wallet_model->get_setting('cancellation_policy_mode', 'TIERED');
+		$data['cancellation_deduction_tier_24h'] = floatval($this->Wallet_model->get_setting('cancellation_deduction_tier_24h', 10.00));
+		$data['cancellation_deduction_tier_12h'] = floatval($this->Wallet_model->get_setting('cancellation_deduction_tier_12h', 20.00));
+		$data['cancellation_deduction_tier_0h']  = floatval($this->Wallet_model->get_setting('cancellation_deduction_tier_0h', 30.00));
+		$data['cancellation_deduction_flat']      = floatval($this->Wallet_model->get_setting('cancellation_deduction_flat', 20.00));
+
 		// Fetch Lab Bookings with Lab details, tests, and reports
 		$this->db->select('path_book.*, pathlab.name as lab_name, pathlab.address as lab_address, master_city.name as city_name');
 		$this->db->from('path_book');
