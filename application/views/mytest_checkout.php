@@ -1050,6 +1050,28 @@
                             <?php endforeach; ?>
                         </div>
 
+                        <!-- Coupon / Promo Code Input Card -->
+                        <div class="coupon-box" style="background: #FFFFFF; border: 1.5px dashed #CBD5E1; border-radius: 12px; padding: 14px; margin-bottom: 16px;">
+                            <div style="font-size: 13px; font-weight: 700; color: #0F172A; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between;">
+                                <span><i class="fas fa-tag" style="color: #00A896;"></i> Apply Promo / Coupon Code</span>
+                                <span id="labAppliedBadge" style="display:none; background: #DCFCE7; color: #166534; font-size: 11px; padding: 2px 8px; border-radius: 12px; font-weight: 700;">Applied</span>
+                            </div>
+                            <div style="display: flex; gap: 6px;">
+                                <input type="text" id="labCouponInput" name="applied_coupon_code" class="form-control" placeholder="e.g. LABCARE20, HEALTH50" style="text-transform: uppercase; font-weight: 700; font-size: 12.5px; border-radius: 8px; border: 1px solid #CBD5E1; height: 38px;">
+                                <button type="button" id="btnApplyLabCoupon" class="btn" style="background: #00A896; color: #FFF; font-weight: 700; font-size: 12.5px; border-radius: 8px; padding: 6px 14px; white-space: nowrap;">Apply</button>
+                                <button type="button" id="btnRemoveLabCoupon" class="btn btn-outline-danger" style="display:none; border-radius: 8px; padding: 6px 10px;" title="Remove Coupon"><i class="fas fa-times"></i></button>
+                            </div>
+                            <div id="labCouponFeedback" style="font-size: 12px; margin-top: 6px; display: none;"></div>
+
+                            <!-- Quick Pick Promo Chips -->
+                            <div style="margin-top: 10px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center;">
+                                <span style="font-size: 11px; color: #64748B; font-weight: 600;">Offers:</span>
+                                <span class="coupon-chip" onclick="quickApplyLabCoupon('LABCARE20')" style="cursor: pointer; background: #E0F2FE; color: #0369A1; border: 1px solid #BAE6FD; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 6px;" title="20% Off Pathology">LABCARE20 (20% OFF)</span>
+                                <span class="coupon-chip" onclick="quickApplyLabCoupon('HEALTH50')" style="cursor: pointer; background: #FEF3C7; color: #92400E; border: 1px solid #FDE68A; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 6px;" title="Flat ₹50 Off">HEALTH50 (₹50 OFF)</span>
+                                <span class="coupon-chip" onclick="quickApplyLabCoupon('UPCHAR10')" style="cursor: pointer; background: #F0FDF4; color: #166534; border: 1px solid #BBF7D0; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 6px;" title="10% Off All Services">UPCHAR10 (10% OFF)</span>
+                            </div>
+                        </div>
+
                         <!-- Price Breakdown -->
                         <div class="price-breakdown">
                             <div class="price-row">
@@ -1060,6 +1082,11 @@
                             <div class="price-row discount">
                                 <span>Direct Lab Discount:</span>
                                 <span id="checkoutSavings">- ₹<?=number_format($savings);?></span>
+                            </div>
+
+                            <div class="price-row discount" id="labCouponDiscountRow" style="display: none; color: #16A34A; font-weight: 700;">
+                                <span><i class="fas fa-tag"></i> Coupon Discount (<span id="labCouponCodeLabel"></span>):</span>
+                                <span id="labCouponDiscountAmount">- ₹0</span>
                             </div>
 
                             <div class="price-row">
@@ -1077,6 +1104,15 @@
                             <div class="price-row total">
                                 <span>Total Payable:</span>
                                 <span class="grand-amount" id="checkoutFinalTotal">₹<?=number_format($final_total);?></span>
+                            </div>
+                        </div>
+
+                        <!-- Cashback Rewards Box -->
+                        <div style="background: #ECFDF5; border: 1px dashed #10B981; border-radius: 10px; padding: 10px 12px; margin-bottom: 14px; display: flex; align-items: center; gap: 8px;">
+                            <i class="fas fa-coins" style="color: #059669; font-size: 18px;"></i>
+                            <div style="font-size: 12px; color: #065F46; line-height: 1.35;">
+                                <strong>Earn 5% Cashback in Upchar Wallet Points</strong><br/>
+                                Credited upon booking completion for extra savings on future services.
                             </div>
                         </div>
 
@@ -1219,6 +1255,72 @@
                 }
             }, 'json').fail(function() {
                 window.location.href = '<?=base_url("mytest/checkout?remove=");?>' + testId;
+            });
+        });
+
+        // Coupon handling
+        let labGrossTotal = <?=json_encode($final_total);?>;
+        let labCouponDiscount = 0;
+
+        window.quickApplyLabCoupon = function(code) {
+            $('#labCouponInput').val(code);
+            $('#btnApplyLabCoupon').trigger('click');
+        };
+
+        $('#btnApplyLabCoupon').click(function() {
+            const code = $('#labCouponInput').val().trim();
+            const fb = $('#labCouponFeedback');
+            if (!code) {
+                fb.css('color', '#EF4444').text('Please enter a coupon code.').show();
+                return;
+            }
+
+            const btn = $(this);
+            btn.prop('disabled', true).text('Applying...');
+
+            $.ajax({
+                url: '<?=base_url("coupon/apply");?>',
+                type: 'POST',
+                dataType: 'json',
+                data: {
+                    coupon_code: code,
+                    service_type: 'LAB_TEST',
+                    amount: labGrossTotal
+                },
+                success: function(resp) {
+                    btn.prop('disabled', false).text('Apply');
+                    if (resp.status === 'success') {
+                        labCouponDiscount = parseFloat(resp.discount_amount) || 0;
+                        const newTotal = Math.max(0, labGrossTotal - labCouponDiscount);
+
+                        $('#labAppliedBadge').show();
+                        $('#btnRemoveLabCoupon').show();
+                        $('#labCouponInput').prop('readonly', true);
+                        $('#labCouponCodeLabel').text(resp.coupon_code);
+                        $('#labCouponDiscountAmount').text('- ₹' + labCouponDiscount.toLocaleString());
+                        $('#labCouponDiscountRow').show();
+                        $('#checkoutFinalTotal').text('₹' + newTotal.toLocaleString());
+                        fb.css('color', '#16A34A').text(resp.message).show();
+                    } else {
+                        fb.css('color', '#EF4444').text(resp.message || 'Invalid coupon code.').show();
+                    }
+                },
+                error: function() {
+                    btn.prop('disabled', false).text('Apply');
+                    fb.css('color', '#EF4444').text('Error validating coupon. Please try again.').show();
+                }
+            });
+        });
+
+        $('#btnRemoveLabCoupon').click(function() {
+            $.post('<?=base_url("coupon/remove");?>', function() {
+                labCouponDiscount = 0;
+                $('#labCouponInput').prop('readonly', false).val('');
+                $('#labAppliedBadge').hide();
+                $('#btnRemoveLabCoupon').hide();
+                $('#labCouponDiscountRow').hide();
+                $('#labCouponFeedback').hide();
+                $('#checkoutFinalTotal').text('₹' + labGrossTotal.toLocaleString());
             });
         });
 

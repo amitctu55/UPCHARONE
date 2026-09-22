@@ -337,7 +337,9 @@ class Financial_Model extends CI_Model {
             COALESCE(SUM(total_platform_deduction), 0) as total_deductions,
             COALESCE(SUM(net_facility_share), 0) as net_hospital_share,
             COALESCE(SUM(CASE WHEN payout_status IN ("settled", "processed") THEN net_facility_share ELSE 0 END), 0) as settled_payouts,
-            COALESCE(SUM(CASE WHEN payout_status IN ("pending", "queued") THEN net_facility_share ELSE 0 END), 0) as pending_payouts
+            COALESCE(SUM(CASE WHEN payout_status IN ("pending", "queued") THEN net_facility_share ELSE 0 END), 0) as pending_payouts,
+            COALESCE(SUM(CASE WHEN payment_status = "refunded" THEN gross_amount ELSE 0 END), 0) as refunded_amount,
+            COALESCE(SUM(CASE WHEN payment_status = "refunded" THEN 1 ELSE 0 END), 0) as refunded_count
         ');
         $this->db->where('facility_type', strtolower($facility_type));
         $this->db->where('facility_id', intval($facility_id));
@@ -359,7 +361,21 @@ class Financial_Model extends CI_Model {
             }
         }
 
-        return $this->db->get('financial_transactions')->row();
+        $summary = $this->db->get('financial_transactions')->row();
+
+        // Also query direct appointment cancellations for this facility
+        $inst_type = (strtolower($facility_type) === 'clinic') ? 'C' : 'H';
+        $appt_cancellations = $this->db->select('COUNT(appointment_id) as cancel_count, COALESCE(SUM(fee), 0) as cancel_amount')
+                                       ->where(array('institute_id' => intval($facility_id), 'institution_type' => $inst_type, 'appointment_status' => '2'))
+                                       ->get('appointment')
+                                       ->row();
+
+        if ($summary) {
+            $summary->refunded_count  = max(intval($summary->refunded_count ?? 0), intval($appt_cancellations->cancel_count ?? 0));
+            $summary->refunded_amount = max(floatval($summary->refunded_amount ?? 0), floatval($appt_cancellations->cancel_amount ?? 0));
+        }
+
+        return $summary;
     }
 
     /**

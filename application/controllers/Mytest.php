@@ -9,6 +9,8 @@ class Mytest extends CI_Controller {
         $this->load->helper(array('url', 'html', 'form', 'security', 'settings'));
         $this->load->database();
         $this->load->library('session');
+        $this->load->model('Coupon_model');
+        $this->load->model('Wallet_model');
         $this->_ensure_table_schema();
     }
 
@@ -552,6 +554,27 @@ class Mytest extends CI_Controller {
             return;
         }
 
+        // Validate Coupon
+        $coupon_code = trim($this->input->post('applied_coupon_code', TRUE));
+        if (empty($coupon_code)) {
+            $sess_coupon = $this->session->userdata('applied_coupon');
+            if ($sess_coupon && !empty($sess_coupon['coupon_code'])) {
+                $coupon_code = $sess_coupon['coupon_code'];
+            }
+        }
+
+        $coupon_discount = 0.00;
+        $applied_coupon_id = null;
+        if (!empty($coupon_code)) {
+            $cRes = $this->Coupon_model->validate_coupon($coupon_code, $user_id, 'LAB_TEST', $totals['subtotal']);
+            if ($cRes['valid']) {
+                $coupon_discount = floatval($cRes['discount_amount']);
+                $applied_coupon_id = $cRes['coupon_id'];
+            }
+        }
+
+        $net_total = max(0.00, round($totals['subtotal'] - $coupon_discount, 2));
+
         // Determine primary lab ID
         $first_item = reset($cart);
         $primary_lab_id = isset($first_item['lab_id']) ? $first_item['lab_id'] : 29;
@@ -574,7 +597,7 @@ class Mytest extends CI_Controller {
             'patient_age'     => $patient_age,
             'patient_gender'  => $patient_gender,
             'pathlab_id'      => strval($primary_lab_id),
-            'total_amount'    => $totals['subtotal'],
+            'total_amount'    => $net_total,
             'payment_mode'    => $payment_mode,
             'payment_status'  => $payment_status,
             'pay_date'        => ($payment_status === '1') ? date('Y-m-d H:i:s') : null,
@@ -590,6 +613,23 @@ class Mytest extends CI_Controller {
         $booking_id = $this->db->insert_id();
 
         if ($booking_id) {
+            // Record coupon usage
+            if ($applied_coupon_id) {
+                $this->Coupon_model->record_usage($applied_coupon_id, $user_id, 'UPC-LAB-' . $booking_id, 'LAB_TEST', $totals['subtotal'], $coupon_discount);
+                $this->session->unset_userdata('applied_coupon');
+            }
+
+            // Award Cashback Points if paid online immediately
+            if ($payment_status === '1') {
+                $cashback_pct = floatval($this->Wallet_model->get_setting('cashback_percentage', 5.00));
+                if ($cashback_pct > 0) {
+                    $cb_pts = round(($net_total * ($cashback_pct / 100)), 2);
+                    if ($cb_pts > 0) {
+                        $this->Wallet_model->credit_points($user_id, $cb_pts, 'LABTEST_CASHBACK', $booking_id, 'Cashback for Lab Test Booking #' . $booking_id, 'WALLET');
+                    }
+                }
+            }
+
             // 2. Insert all items into path_book_test
             foreach ($cart as $item) {
                 $test_item = [
@@ -624,7 +664,7 @@ class Mytest extends CI_Controller {
                             . "<b>Collection Type:</b> " . ($visit_type === 'HOME_COLLECTION' ? 'Doorstep Home Sample Collection (Free)' : 'Visit Center') . "<br>"
                             . "<b>Collection Address:</b> {$patient_address}<br>"
                             . "<b>Payment Status:</b> {$pay_display}<br>"
-                            . "<b>Total Amount:</b> ₹" . number_format($totals['subtotal'], 2) . "<br><br>"
+                            . "<b>Total Amount:</b> ₹" . number_format($net_total, 2) . ($coupon_discount > 0 ? " (Includes ₹" . number_format($coupon_discount, 2) . " Coupon Discount)" : "") . "<br><br>"
                             . "<b>Selected Tests:</b><br>{$test_list_html}<br>"
                             . "Our certified phlebotomist will arrive during your chosen time slot. Please observe any fasting instructions.<br><br>"
                             . "Warm regards,<br><b>Upchar Diagnostics Team</b>";
@@ -636,7 +676,7 @@ class Mytest extends CI_Controller {
             $this->session->unset_userdata('path_cart');
 
             if ($payment_mode === 'ONLINE_UPI' || $payment_mode === 'ONLINE_CARD' || $payment_mode === 'RAZORPAY') {
-                redirect(base_url('payment/checkout?purpose=LAB_TEST&reference_id=' . $booking_id . '&amount=' . $totals['subtotal'] . '&item_name=' . urlencode('Diagnostic Pathology Lab Tests (Booking #' . $booking_id . ')')));
+                redirect(base_url('payment/checkout?purpose=LAB_TEST&reference_id=' . $booking_id . '&amount=' . $net_total . '&item_name=' . urlencode('Diagnostic Pathology Lab Tests (Booking #' . $booking_id . ')')));
                 return;
             }
 

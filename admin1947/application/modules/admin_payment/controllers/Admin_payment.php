@@ -42,6 +42,13 @@ class Admin_payment extends CI_Controller {
         $data['referral_referrer']  = floatval($this->Wallet_model->get_setting('referral_bonus_referrer', 50.00));
         $data['referral_referee']   = floatval($this->Wallet_model->get_setting('referral_bonus_referee', 25.00));
 
+        // Cancellation & Refund Policy Settings
+        $data['cancellation_policy_mode'] = $this->Wallet_model->get_setting('cancellation_policy_mode', 'TIERED');
+        $data['cancellation_tier_24h']     = floatval($this->Wallet_model->get_setting('cancellation_deduction_tier_24h', 10.00));
+        $data['cancellation_tier_12h']     = floatval($this->Wallet_model->get_setting('cancellation_deduction_tier_12h', 20.00));
+        $data['cancellation_tier_0h']      = floatval($this->Wallet_model->get_setting('cancellation_deduction_tier_0h', 30.00));
+        $data['cancellation_flat']         = floatval($this->Wallet_model->get_setting('cancellation_deduction_flat', 20.00));
+
         // Orders list
         $data['orders'] = $this->db->order_by('id', 'DESC')->limit(100)->get('razorpay_orders')->result_array();
 
@@ -83,7 +90,20 @@ class Admin_payment extends CI_Controller {
         $this->Wallet_model->set_setting('referral_bonus_referrer', $referral_referrer, 'Points for referrer');
         $this->Wallet_model->set_setting('referral_bonus_referee', $referral_referee, 'Points for referee');
 
-        $this->session->set_flashdata('flashmsg', '<div class="alert alert-success">Upchar Wallet & Reward configurations updated successfully!</div>');
+        // Cancellation deduction settings
+        $policy_mode = $this->input->post('cancellation_policy_mode') ?: 'TIERED';
+        $tier_24h    = floatval($this->input->post('cancellation_deduction_tier_24h'));
+        $tier_12h    = floatval($this->input->post('cancellation_deduction_tier_12h'));
+        $tier_0h     = floatval($this->input->post('cancellation_deduction_tier_0h'));
+        $flat        = floatval($this->input->post('cancellation_deduction_flat'));
+
+        $this->Wallet_model->set_setting('cancellation_policy_mode', $policy_mode, 'Cancellation policy calculation mode: TIERED or FLAT');
+        $this->Wallet_model->set_setting('cancellation_deduction_tier_24h', $tier_24h, 'Deduction % if cancelled > 24 hours prior');
+        $this->Wallet_model->set_setting('cancellation_deduction_tier_12h', $tier_12h, 'Deduction % if cancelled 12-24 hours prior');
+        $this->Wallet_model->set_setting('cancellation_deduction_tier_0h', $tier_0h, 'Deduction % if cancelled < 12 hours prior');
+        $this->Wallet_model->set_setting('cancellation_deduction_flat', $flat, 'Flat deduction % for cancellations');
+
+        $this->session->set_flashdata('flashmsg', '<div class="alert alert-success">Upchar Wallet & Cancellation Policy configurations updated successfully!</div>');
         redirect(base_url('admin_payment?tab=wallet_settings'));
     }
 

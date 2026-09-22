@@ -126,6 +126,7 @@
 .kpi-card.green::before { background: #10b981; }
 .kpi-card.amber::before { background: #f59e0b; }
 .kpi-card.purple::before { background: #8b5cf6; }
+.kpi-card.rose::before { background: #ef4444; }
 
 .kpi-title {
     font-size: 12px;
@@ -441,6 +442,15 @@
                 <div class="kpi-value" style="color: #d97706;">₹<?=number_format($summary->pending_payouts ?? 0, 2);?></div>
                 <div class="kpi-sub">
                     <i class="fa fa-clock-o"></i> Queued for Next Bank Batch
+                </div>
+            </div>
+
+            <!-- Cancelled & Refunded -->
+            <div class="kpi-card rose">
+                <div class="kpi-title">Cancelled &amp; Refunded</div>
+                <div class="kpi-value" style="color: #ef4444;">₹<?=number_format($summary->refunded_amount ?? 0, 2);?></div>
+                <div class="kpi-sub">
+                    <i class="fa fa-undo"></i> <?=$summary->refunded_count ?? 0;?> Cancelled Encounters
                 </div>
             </div>
         </div>

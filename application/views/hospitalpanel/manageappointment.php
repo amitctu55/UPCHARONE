@@ -556,6 +556,16 @@
                     <i class="fa fa-exclamation-circle"></i>
                 </div>
             </a>
+
+            <a href="<?=base_url('hospitalpanel/manageappointment?appointment_status=2');?>" class="kpi-card">
+                <div class="kpi-text">
+                    <h3 style="color: #dc2626;"><?=$cancelled_count;?></h3>
+                    <span>Cancelled &amp; Refunded</span>
+                </div>
+                <div class="kpi-badge-icon" style="background: #fee2e2; color: #dc2626;">
+                    <i class="fa fa-times-circle"></i>
+                </div>
+            </a>
         </div>
 
         <!-- Filter & Search Section -->
@@ -574,6 +584,7 @@
                 <a href="<?=base_url('hospitalpanel/manageappointment?day_category=ThisWeek');?>" class="filter-pill <?=$curr_day=='ThisWeek' ? 'active' : '';?>">Next 7 Days</a>
                 <a href="<?=base_url('hospitalpanel/manageappointment?day_category=Upcomming');?>" class="filter-pill <?=$curr_day=='Upcomming' ? 'active' : '';?>">All Upcoming</a>
                 <a href="<?=base_url('hospitalpanel/manageappointment?day_category=Past');?>" class="filter-pill <?=$curr_day=='Past' ? 'active' : '';?>">Past Visits</a>
+                <a href="<?=base_url('hospitalpanel/manageappointment?appointment_status=2');?>" class="filter-pill <?=$this->input->get_post('appointment_status')==='2' ? 'active' : '';?>" style="<?=$this->input->get_post('appointment_status')==='2' ? 'background: #fee2e2; color: #991b1b; border-color: #fca5a5;' : '';?>"><i class="fa fa-ban"></i> Cancelled &amp; Refunded (<?=$cancelled_count;?>)</a>
             </div>
 
             <!-- Advanced Form Filters -->
@@ -608,6 +619,7 @@
                             <option value="">All Payment Statuses</option>
                             <option value="DONE" <?=$this->input->get_post('payment_status')=='DONE' ? 'selected' : '';?>>Paid</option>
                             <option value="UNPAID" <?=$this->input->get_post('payment_status')=='UNPAID' ? 'selected' : '';?>>Unpaid</option>
+                            <option value="REFUNDED" <?=$this->input->get_post('payment_status')=='REFUNDED' ? 'selected' : '';?>>Refunded / Cancelled</option>
                         </select>
                     </div>
 
@@ -618,6 +630,7 @@
                             <option value="">All Visit Statuses</option>
                             <option value="0" <?=$this->input->get_post('appointment_status')==='0' ? 'selected' : '';?>>Pending / In Queue</option>
                             <option value="1" <?=$this->input->get_post('appointment_status')==='1' ? 'selected' : '';?>>Completed / Visited</option>
+                            <option value="2" <?=$this->input->get_post('appointment_status')==='2' ? 'selected' : '';?>>Cancelled &amp; Refunded</option>
                         </select>
                     </div>
 
@@ -733,7 +746,9 @@
 
                                     <!-- Payment Status -->
                                     <td>
-                                        <?php if($p->payment_status == 'DONE'): ?>
+                                        <?php if($p->payment_status == 'REFUNDED'): ?>
+                                            <span class="badge-status" style="background: #fef2f2; color: #991b1b; border: 1px solid #fecaca;"><i class="fa fa-undo"></i> Refunded</span>
+                                        <?php elseif($p->payment_status == 'DONE'): ?>
                                             <span class="badge-status badge-paid"><i class="fa fa-check"></i> Paid</span>
                                         <?php else: ?>
                                             <span class="badge-status badge-unpaid"><i class="fa fa-clock-o"></i> Unpaid</span>
@@ -742,7 +757,15 @@
 
                                     <!-- Appointment Status -->
                                     <td>
-                                        <?php if($p->appointment_status == '1'): ?>
+                                        <?php if($p->appointment_status == '2'): ?>
+                                            <span class="badge-status" style="background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5;"><i class="fa fa-ban"></i> Cancelled</span>
+                                            <?php if(!empty($p->cancel_date)): ?>
+                                                <div style="font-size: 11px; color: #94a3b8; margin-top: 2px;"><i class="fa fa-clock-o"></i> <?=date('d M, h:i A', strtotime($p->cancel_date));?></div>
+                                            <?php endif; ?>
+                                            <?php if(!empty($p->cancel_reason)): ?>
+                                                <div style="font-size: 11px; color: #b91c1c; margin-top: 2px; max-width: 170px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="<?=html_escape($p->cancel_reason);?>"><i class="fa fa-info-circle"></i> <?=html_escape($p->cancel_reason);?></div>
+                                            <?php endif; ?>
+                                        <?php elseif($p->appointment_status == '1'): ?>
                                             <span class="badge-status badge-done"><i class="fa fa-check-circle"></i> Visited / Done</span>
                                         <?php else: ?>
                                             <span class="badge-status badge-pending"><i class="fa fa-hourglass-start"></i> In Queue</span>
@@ -753,18 +776,25 @@
                                     <td style="text-align: right;">
                                         <div class="action-btn-group" style="justify-content: flex-end;">
                                             
-                                            <!-- Complete visit action -->
-                                            <?php if($p->appointment_status != '1'): ?>
-                                                <a href="<?=base_url('hospitalpanel/complete_appointment?aid='.$p->appointment_id);?>" onclick="return confirm('Mark Appointment #<?=$p->appointment_id;?> as Visited/Completed?');" class="btn-action-sm btn-action-done" title="Mark Patient Visit Complete">
-                                                    <i class="fa fa-check"></i> Visited
-                                                </a>
-                                            <?php endif; ?>
+                                            <?php if($p->appointment_status == '2'): ?>
+                                                <!-- Cancelled encounter -->
+                                                <span style="font-size: 11px; font-weight: 700; color: #991b1b; background: #fef2f2; padding: 4px 8px; border-radius: 6px; border: 1px solid #fecaca;">
+                                                    <i class="fa fa-ban"></i> Cancelled
+                                                </span>
+                                            <?php else: ?>
+                                                <!-- Complete visit action -->
+                                                <?php if($p->appointment_status != '1'): ?>
+                                                    <a href="<?=base_url('hospitalpanel/complete_appointment?aid='.$p->appointment_id);?>" onclick="return confirm('Mark Appointment #<?=$p->appointment_id;?> as Visited/Completed?');" class="btn-action-sm btn-action-done" title="Mark Patient Visit Complete">
+                                                        <i class="fa fa-check"></i> Visited
+                                                    </a>
+                                                <?php endif; ?>
 
-                                            <!-- Mark paid action -->
-                                            <?php if($p->payment_status != 'DONE'): ?>
-                                                <a href="<?=base_url('hospitalpanel/mark_paid?aid='.$p->appointment_id);?>" onclick="return confirm('Confirm fee payment collection for Appointment #<?=$p->appointment_id;?>?');" class="btn-action-sm btn-action-pay" title="Mark Fee as Paid">
-                                                    <i class="fa fa-money"></i> Pay
-                                                </a>
+                                                <!-- Mark paid action -->
+                                                <?php if($p->payment_status != 'DONE'): ?>
+                                                    <a href="<?=base_url('hospitalpanel/mark_paid?aid='.$p->appointment_id);?>" onclick="return confirm('Confirm fee payment collection for Appointment #<?=$p->appointment_id;?>?');" class="btn-action-sm btn-action-pay" title="Mark Fee as Paid">
+                                                        <i class="fa fa-money"></i> Pay
+                                                    </a>
+                                                <?php endif; ?>
                                             <?php endif; ?>
 
                                             <!-- View / Patient History -->

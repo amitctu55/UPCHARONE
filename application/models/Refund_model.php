@@ -25,6 +25,8 @@ class Refund_model extends CI_Model {
             `razorpay_refund_id` varchar(50) DEFAULT NULL,
             `user_id` int(11) NOT NULL,
             `refund_amount` decimal(10,2) NOT NULL,
+            `deduction_amount` decimal(10,2) NOT NULL DEFAULT 0.00,
+            `deduction_percent` decimal(5,2) NOT NULL DEFAULT 0.00,
             `refund_to` enum('WALLET','GATEWAY') NOT NULL,
             `reason` text DEFAULT NULL,
             `initiated_by` enum('SYSTEM','ADMIN','PATIENT') NOT NULL DEFAULT 'SYSTEM',
@@ -36,10 +38,18 @@ class Refund_model extends CI_Model {
             KEY `idx_order_ref` (`original_order_ref`),
             KEY `idx_user_refunds` (`user_id`, `status`)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+
+        // Add deduction columns if upgrading existing table
+        if (!$this->db->field_exists('deduction_amount', 'payment_refunds')) {
+            $this->db->query("ALTER TABLE `payment_refunds` ADD COLUMN `deduction_amount` decimal(10,2) NOT NULL DEFAULT 0.00 AFTER `refund_amount`;");
+        }
+        if (!$this->db->field_exists('deduction_percent', 'payment_refunds')) {
+            $this->db->query("ALTER TABLE `payment_refunds` ADD COLUMN `deduction_percent` decimal(5,2) NOT NULL DEFAULT 0.00 AFTER `deduction_amount`;");
+        }
     }
 
     /**
-     * Calculate Refund Percentage based on time before appointment
+     * Calculate Refund Percentage based on time before appointment and admin settings
      *
      * @param string $appointment_datetime (Y-m-d H:i:s or Y-m-d)
      * @param bool   $is_doctor_noshow
@@ -47,28 +57,41 @@ class Refund_model extends CI_Model {
      */
     public function calculate_refund_percentage($appointment_datetime, $is_doctor_noshow = false) {
         if ($is_doctor_noshow) {
-            return 100; // 100% if doctor cancels or doesn't show
+            return 100; // 100% full refund with 0% deduction if doctor/facility cancels
         }
+
+        $policy_mode = $this->Wallet_model->get_setting('cancellation_policy_mode', 'TIERED');
+
+        if ($policy_mode === 'FLAT') {
+            $flat_deduction = floatval($this->Wallet_model->get_setting('cancellation_deduction_flat', 20.00));
+            return intval(max(0, min(100, 100 - $flat_deduction)));
+        }
+
+        // Tiered Mode: deduction % based on hours remaining before consultation
+        $tier_24h_deduction = floatval($this->Wallet_model->get_setting('cancellation_deduction_tier_24h', 10.00)); // Default 10% deduction
+        $tier_12h_deduction = floatval($this->Wallet_model->get_setting('cancellation_deduction_tier_12h', 20.00)); // Default 20% deduction
+        $tier_0h_deduction  = floatval($this->Wallet_model->get_setting('cancellation_deduction_tier_0h', 30.00));  // Default 30% deduction
 
         $app_time = strtotime($appointment_datetime);
         $now      = time();
         $diff_hrs = ($app_time - $now) / 3600;
 
         if ($diff_hrs >= 24) {
-            return 100; // > 24 hours prior: 100% refund
+            $deduction = $tier_24h_deduction;
         } else if ($diff_hrs >= 12 && $diff_hrs < 24) {
-            return 75;  // 12 to 24 hours prior: 75% refund
-        } else if ($diff_hrs > 0 && $diff_hrs < 12) {
-            return 50;  // < 12 hours prior: 50% refund
+            $deduction = $tier_12h_deduction;
         } else {
-            return 0;   // Post-appointment time: 0% refund
+            // Under 12 hours or same day
+            $deduction = $tier_0h_deduction;
         }
+
+        return intval(max(0, min(100, 100 - $deduction)));
     }
 
     /**
-     * Create and Initiate a Refund
+     * Create and Initiate a Refund with deduction tracking
      */
-    public function create_refund($order_ref, $user_id, $amount, $refund_to = 'WALLET', $reason = '', $initiated_by = 'SYSTEM') {
+    public function create_refund($order_ref, $user_id, $amount, $refund_to = 'WALLET', $reason = '', $initiated_by = 'SYSTEM', $deduction_amount = 0.00, $deduction_percent = 0.00) {
         $user_id = intval($user_id);
         $amount  = floatval($amount);
 
@@ -83,6 +106,8 @@ class Refund_model extends CI_Model {
             'original_order_ref' => $order_ref,
             'user_id'            => $user_id,
             'refund_amount'      => $amount,
+            'deduction_amount'   => floatval($deduction_amount),
+            'deduction_percent'  => floatval($deduction_percent),
             'refund_to'          => strtoupper($refund_to), // WALLET or GATEWAY
             'reason'             => $reason ?: 'Appointment cancellation refund',
             'initiated_by'       => $initiated_by,

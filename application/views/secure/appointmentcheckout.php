@@ -603,6 +603,33 @@
                         <span class="val" style="color: var(--upchar-slate-500);">₹0.00 (Exempt)</span>
                     </div>
 
+                    <!-- Promo / Coupon Code Box -->
+                    <div class="coupon-box" style="background: #f8fafc; border: 1.5px dashed #cbd5e1; border-radius: 12px; padding: 14px; margin-bottom: 16px;">
+                        <div style="font-size: 13.5px; font-weight: 700; color: var(--upchar-slate-900); margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between;">
+                            <span><i class="fa fa-tag" style="color: var(--upchar-teal);"></i> Apply Coupon Code</span>
+                            <span id="appliedCouponBadge" style="display:none; background: #dcfce7; color: #166534; font-size: 11px; padding: 2px 8px; border-radius: 12px; font-weight: 700;">Applied</span>
+                        </div>
+                        <div class="input-group" style="display: flex; gap: 6px;">
+                            <input type="text" id="inputCouponCode" class="form-control" placeholder="Enter code (e.g. DOC15, HEALTH50)" style="text-transform: uppercase; font-weight: 700; font-size: 13px; border-radius: 8px; border: 1px solid #cbd5e1;">
+                            <button type="button" id="btnApplyCoupon" class="btn" style="background: var(--upchar-teal); color: #fff; font-weight: 700; font-size: 13px; border-radius: 8px; padding: 6px 14px;">Apply</button>
+                            <button type="button" id="btnRemoveCoupon" class="btn btn-outline-danger" style="display:none; border-radius: 8px; font-size: 12px; padding: 6px 10px;" title="Remove Coupon"><i class="fa fa-times"></i></button>
+                        </div>
+                        <div id="couponFeedback" style="font-size: 12px; margin-top: 6px; display: none;"></div>
+                        
+                        <!-- Quick Pick Coupons -->
+                        <div style="margin-top: 10px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center;">
+                            <span style="font-size: 11px; color: #64748b; font-weight: 600;">Offers:</span>
+                            <span class="coupon-pill" onclick="quickApplyCoupon('DOC15')" style="cursor: pointer; background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 6px;" title="15% Off Doctor Consultations">DOC15 (15% OFF)</span>
+                            <span class="coupon-pill" onclick="quickApplyCoupon('HEALTH50')" style="cursor: pointer; background: #fef3c7; color: #92400e; border: 1px solid #fde68a; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 6px;" title="Flat ₹50 Off">HEALTH50 (₹50 OFF)</span>
+                            <span class="coupon-pill" onclick="quickApplyCoupon('UPCHAR10')" style="cursor: pointer; background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 6px;" title="10% Off All Services">UPCHAR10 (10% OFF)</span>
+                        </div>
+                    </div>
+
+                    <div id="couponDiscountRow" class="summary-item" style="display: none; color: #16a34a;">
+                        <span class="label" style="color: #16a34a; font-weight: 700;"><i class="fa fa-tag"></i> Coupon Discount (<span id="couponCodeLabel"></span>)</span>
+                        <span class="val" id="couponDiscountVal">-₹0.00</span>
+                    </div>
+
                     <!-- Upchar Points Wallet Box -->
                     <div class="points-redeem-card">
                         <div class="points-header">
@@ -628,16 +655,27 @@
                                     Redeem <?=number_format($user_points, 2);?> Points (Save ₹<?=number_format($user_points, 2);?>)
                                 </label>
                             </div>
-                        <?php else: ?>
-                            <div style="font-size: 12px; color: #92400e;">
-                                Earn 5% Cashback in Upchar Points on this booking!
-                            </div>
                         <?php endif; ?>
                     </div>
 
                     <div id="pointsDiscountRow" class="summary-item" style="display: none; color: #b45309;">
                         <span class="label" style="color: #b45309; font-weight: 700;"><i class="fa fa-star"></i> Points Redeemed</span>
                         <span class="val" id="pointsDiscountVal">-₹0.00</span>
+                    </div>
+
+                    <!-- Cashback Rewards Banner -->
+                    <?php 
+                        $cashbackRate = !empty($cashback_pct) ? $cashback_pct : 5.00;
+                        $estimatedCashback = round(($fee * $cashbackRate) / 100, 2);
+                    ?>
+                    <div class="cashback-banner" style="background: #ecfdf5; border: 1px dashed #10b981; border-radius: 10px; padding: 12px 14px; margin-bottom: 16px; display: flex; align-items: center; gap: 10px;">
+                        <div style="width: 34px; height: 34px; border-radius: 50%; background: #d1fae5; color: #059669; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0;">
+                            <i class="fa fa-gift"></i>
+                        </div>
+                        <div style="font-size: 12.5px; color: #065f46; line-height: 1.4;">
+                            <strong>Earn <?=number_format($cashbackRate, 0);?>% Cashback (~₹<?=number_format($estimatedCashback, 2);?>)</strong><br/>
+                            Credited straight to your Upchar Points Wallet on consultation completion.
+                        </div>
                     </div>
 
                     <div class="summary-divider"></div>
@@ -721,7 +759,25 @@ $(document).ready(function() {
     const patientMobile = <?=json_encode($appointment_data->appointment_mobile);?>;
 
     let pointsToUse = 0;
+    let couponDiscount = 0;
+    let appliedCouponCode = '';
     let netPayable = grossFee;
+
+    function recalculateTotal() {
+        if ($('#usePointsToggle').is(':checked')) {
+            const remainingFee = Math.max(0, grossFee - couponDiscount);
+            pointsToUse = Math.min(userPoints, remainingFee);
+            $('#pointsDiscountRow').show();
+            $('#pointsDiscountVal').text('-₹' + pointsToUse.toFixed(2));
+        } else {
+            pointsToUse = 0;
+            $('#pointsDiscountRow').hide();
+        }
+
+        netPayable = Math.max(0, grossFee - couponDiscount - pointsToUse);
+        $('#finalPayableAmt').text('₹' + netPayable.toFixed(2));
+        $('#btnPayText').text('Pay ₹' + netPayable.toFixed(2) + ' via Razorpay');
+    }
 
     function showAlert(msg, isSuccess) {
         const el = $('#checkoutAlert');
@@ -734,6 +790,73 @@ $(document).ready(function() {
     function hideAlert() {
         $('#checkoutAlert').hide();
     }
+
+    // Quick Apply Coupon
+    window.quickApplyCoupon = function(code) {
+        $('#inputCouponCode').val(code);
+        $('#btnApplyCoupon').trigger('click');
+    };
+
+    // Apply Coupon via AJAX
+    $('#btnApplyCoupon').click(function() {
+        const code = $('#inputCouponCode').val().trim();
+        const fb = $('#couponFeedback');
+        if (!code) {
+            fb.css('color', '#dc2626').text('Please enter a coupon code.').show();
+            return;
+        }
+
+        const btn = $(this);
+        btn.prop('disabled', true).text('Applying...');
+
+        $.ajax({
+            url: "<?=base_url('coupon/apply');?>",
+            type: "POST",
+            dataType: "json",
+            data: {
+                coupon_code: code,
+                service_type: 'APPOINTMENT',
+                amount: grossFee
+            },
+            success: function(resp) {
+                btn.prop('disabled', false).text('Apply');
+                if (resp.status === 'success') {
+                    couponDiscount = parseFloat(resp.discount_amount) || 0;
+                    appliedCouponCode = resp.coupon_code;
+
+                    $('#appliedCouponBadge').show();
+                    $('#btnRemoveCoupon').show();
+                    $('#inputCouponCode').prop('readonly', true);
+                    $('#couponCodeLabel').text(resp.coupon_code);
+                    $('#couponDiscountVal').text('-₹' + couponDiscount.toFixed(2));
+                    $('#couponDiscountRow').show();
+                    fb.css('color', '#16a34a').text(resp.message).show();
+
+                    recalculateTotal();
+                } else {
+                    fb.css('color', '#dc2626').text(resp.message || 'Invalid coupon code.').show();
+                }
+            },
+            error: function() {
+                btn.prop('disabled', false).text('Apply');
+                fb.css('color', '#dc2626').text('Error validating coupon. Please try again.').show();
+            }
+        });
+    });
+
+    // Remove Coupon
+    $('#btnRemoveCoupon').click(function() {
+        $.post("<?=base_url('coupon/remove');?>", function() {
+            couponDiscount = 0;
+            appliedCouponCode = '';
+            $('#inputCouponCode').prop('readonly', false).val('');
+            $('#appliedCouponBadge').hide();
+            $('#btnRemoveCoupon').hide();
+            $('#couponDiscountRow').hide();
+            $('#couponFeedback').hide();
+            recalculateTotal();
+        });
+    });
 
     // Toggle Payment Method Tiles
     $('input[name="payment_mode"]').change(function() {
@@ -752,18 +875,7 @@ $(document).ready(function() {
 
     // Points Redemption Checkbox
     $('#usePointsToggle').change(function() {
-        if ($(this).is(':checked')) {
-            pointsToUse = Math.min(userPoints, grossFee);
-            netPayable = Math.max(0, grossFee - pointsToUse);
-            $('#pointsDiscountRow').show();
-            $('#pointsDiscountVal').text('-₹' + pointsToUse.toFixed(2));
-        } else {
-            pointsToUse = 0;
-            netPayable = grossFee;
-            $('#pointsDiscountRow').hide();
-        }
-        $('#finalPayableAmt').text('₹' + netPayable.toFixed(2));
-        $('#btnPayText').text('Pay ₹' + netPayable.toFixed(2) + ' via Razorpay');
+        recalculateTotal();
     });
 
     // Pay on Counter Trigger
@@ -782,7 +894,7 @@ $(document).ready(function() {
         const originalHtml = btn.html();
 
         if (netPayable <= 0) {
-            // If points cover 100%, route directly to points payment
+            // If covered 100%, route directly to points payment
             window.location.href = "<?=base_url('paysecure/pay_via_points');?>";
             return;
         }
@@ -796,7 +908,8 @@ $(document).ready(function() {
             dataType: "json",
             data: {
                 appointment_id: apptId,
-                wallet_points_to_use: pointsToUse
+                wallet_points_to_use: pointsToUse,
+                coupon_code: appliedCouponCode
             },
             success: function(resp) {
                 if (resp.status === 'points_only') {

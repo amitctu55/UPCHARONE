@@ -332,6 +332,31 @@
                     </div>
 
                     <?php if ($purpose !== 'WALLET_RECHARGE'): ?>
+                        <!-- Coupon / Promo Box -->
+                        <div class="coupon-box" style="background: #f8fafc; border: 1.5px dashed #cbd5e1; border-radius: 10px; padding: 12px 14px; margin-bottom: 14px;">
+                            <div style="font-size: 13px; font-weight: 700; color: #0f172a; margin-bottom: 6px; display: flex; align-items: center; justify-content: space-between;">
+                                <span><i class="fa fa-tag" style="color: var(--checkout-teal);"></i> Have a Promo Code?</span>
+                                <span id="uni-coupon-applied-badge" style="display:none; background: #dcfce7; color: #166534; font-size: 10.5px; padding: 2px 7px; border-radius: 10px; font-weight: 700;">Applied</span>
+                            </div>
+                            <div style="display: flex; gap: 6px;">
+                                <input type="text" id="uni-coupon-input" class="form-control" placeholder="Enter coupon (e.g. UPCHAR10, HEALTH50)" style="text-transform: uppercase; font-weight: 700; font-size: 12px; height: 36px; border-radius: 6px; border: 1px solid #cbd5e1;">
+                                <button type="button" id="btn-apply-uni-coupon" class="btn" style="background: var(--checkout-teal); color: #fff; font-weight: 700; font-size: 12px; padding: 4px 12px; border-radius: 6px; white-space: nowrap;">Apply</button>
+                                <button type="button" id="btn-remove-uni-coupon" class="btn btn-outline-danger" style="display:none; border-radius: 6px; padding: 4px 8px; font-size: 11px;" title="Remove Coupon"><i class="fa fa-times"></i></button>
+                            </div>
+                            <div id="uni-coupon-feedback" style="font-size: 11.5px; margin-top: 5px; display: none;"></div>
+                            
+                            <div style="margin-top: 8px; display: flex; flex-wrap: wrap; gap: 4px; align-items: center;">
+                                <span style="font-size: 10.5px; color: #64748b; font-weight: 600;">Promo:</span>
+                                <span onclick="quickApplyUniCoupon('UPCHAR10')" style="cursor: pointer; background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; font-size: 10.5px; font-weight: 700; padding: 1px 6px; border-radius: 4px;">UPCHAR10 (10% OFF)</span>
+                                <span onclick="quickApplyUniCoupon('HEALTH50')" style="cursor: pointer; background: #fef3c7; color: #92400e; border: 1px solid #fde68a; font-size: 10.5px; font-weight: 700; padding: 1px 6px; border-radius: 4px;">HEALTH50 (₹50 OFF)</span>
+                            </div>
+                        </div>
+
+                        <div class="summary-line-item" id="row-coupon-deduction" style="display: none; color: #16a34a; font-weight: 700;">
+                            <span class="label"><i class="fa fa-tag"></i> Coupon (<span id="lbl-coupon-code"></span>):</span>
+                            <span class="value" id="val-coupon-applied">- ₹0.00</span>
+                        </div>
+
                         <!-- Upchar Points Redemption Widget for Appointments / Lab tests -->
                         <div class="wallet-points-redemption-box">
                             <div class="wallet-box-top">
@@ -445,24 +470,34 @@
     const csrfHash         = '<?=$this->security->get_csrf_hash();?>';
 
     let pointsUsed = 0;
+    let uniCouponDiscount = 0;
+    let appliedUniCoupon = '';
     let netPayable = totalGrossAmount;
     let selectedMode = 'GATEWAY';
 
-    function updatePointsUsage(val) {
-        pointsUsed = parseFloat(val) || 0;
-        const discount = pointsUsed * pointRatio;
-        netPayable = Math.max(0, totalGrossAmount - discount);
+    function recalculateCheckoutSummary() {
+        const discountFromPts = pointsUsed * pointRatio;
+        netPayable = Math.max(0, totalGrossAmount - uniCouponDiscount - discountFromPts);
 
         document.getElementById('lbl-points-used').innerText = pointsUsed;
-        document.getElementById('lbl-points-discount').innerText = '₹' + discount.toFixed(2);
+        document.getElementById('lbl-points-discount').innerText = '₹' + discountFromPts.toFixed(2);
         document.getElementById('val-net-payable').innerText = '₹' + netPayable.toFixed(2);
 
-        const deductionRow = document.getElementById('row-points-deduction');
-        if (pointsUsed > 0 && deductionRow) {
-            deductionRow.style.display = 'flex';
-            document.getElementById('val-points-applied').innerText = '- ₹' + discount.toFixed(2);
-        } else if (deductionRow) {
-            deductionRow.style.display = 'none';
+        const ptDeductionRow = document.getElementById('row-points-deduction');
+        if (pointsUsed > 0 && ptDeductionRow) {
+            ptDeductionRow.style.display = 'flex';
+            document.getElementById('val-points-applied').innerText = '- ₹' + discountFromPts.toFixed(2);
+        } else if (ptDeductionRow) {
+            ptDeductionRow.style.display = 'none';
+        }
+
+        const cpDeductionRow = document.getElementById('row-coupon-deduction');
+        if (uniCouponDiscount > 0 && cpDeductionRow) {
+            cpDeductionRow.style.display = 'flex';
+            document.getElementById('lbl-coupon-code').innerText = appliedUniCoupon;
+            document.getElementById('val-coupon-applied').innerText = '- ₹' + uniCouponDiscount.toFixed(2);
+        } else if (cpDeductionRow) {
+            cpDeductionRow.style.display = 'none';
         }
 
         if (netPayable === 0) {
@@ -474,6 +509,103 @@
         document.getElementById('btn-pay-text').innerText = (netPayable === 0) 
             ? 'Pay with ' + pointsUsed + ' Upchar Points' 
             : 'Pay ₹' + netPayable.toFixed(2) + ' Securely';
+    }
+
+    function updatePointsUsage(val) {
+        pointsUsed = parseFloat(val) || 0;
+        recalculateCheckoutSummary();
+    }
+
+    // Quick Apply Coupon
+    window.quickApplyUniCoupon = function(code) {
+        const input = document.getElementById('uni-coupon-input');
+        if (input) {
+            input.value = code;
+            document.getElementById('btn-apply-uni-coupon').click();
+        }
+    };
+
+    // Apply Coupon via AJAX
+    const btnApplyUni = document.getElementById('btn-apply-uni-coupon');
+    if (btnApplyUni) {
+        btnApplyUni.addEventListener('click', function() {
+            const codeInput = document.getElementById('uni-coupon-input');
+            const code = codeInput ? codeInput.value.trim() : '';
+            const fb = document.getElementById('uni-coupon-feedback');
+
+            if (!code) {
+                fb.style.color = '#dc2626';
+                fb.innerText = 'Please enter a coupon code.';
+                fb.style.display = 'block';
+                return;
+            }
+
+            btnApplyUni.disabled = true;
+            btnApplyUni.innerText = 'Applying...';
+
+            const cData = new FormData();
+            cData.append('coupon_code', code);
+            cData.append('service_type', orderPurpose);
+            cData.append('amount', totalGrossAmount);
+            cData.append(csrfName, csrfHash);
+
+            fetch('<?=base_url("coupon/apply");?>', {
+                method: 'POST',
+                body: cData
+            })
+            .then(r => r.json())
+            .then(res => {
+                btnApplyUni.disabled = false;
+                btnApplyUni.innerText = 'Apply';
+
+                if (res.status === 'success') {
+                    uniCouponDiscount = parseFloat(res.discount_amount) || 0;
+                    appliedUniCoupon = res.coupon_code;
+
+                    document.getElementById('uni-coupon-applied-badge').style.display = 'inline-block';
+                    document.getElementById('btn-remove-uni-coupon').style.display = 'inline-block';
+                    codeInput.readOnly = true;
+
+                    fb.style.color = '#16a34a';
+                    fb.innerText = res.message;
+                    fb.style.display = 'block';
+
+                    recalculateCheckoutSummary();
+                } else {
+                    fb.style.color = '#dc2626';
+                    fb.innerText = res.message || 'Invalid coupon code.';
+                    fb.style.display = 'block';
+                }
+            })
+            .catch(() => {
+                btnApplyUni.disabled = false;
+                btnApplyUni.innerText = 'Apply';
+                fb.style.color = '#dc2626';
+                fb.innerText = 'Error validating coupon.';
+                fb.style.display = 'block';
+            });
+        });
+    }
+
+    // Remove Coupon
+    const btnRemoveUni = document.getElementById('btn-remove-uni-coupon');
+    if (btnRemoveUni) {
+        btnRemoveUni.addEventListener('click', function() {
+            fetch('<?=base_url("coupon/remove");?>', { method: 'POST' })
+            .then(() => {
+                uniCouponDiscount = 0;
+                appliedUniCoupon = '';
+                const codeInput = document.getElementById('uni-coupon-input');
+                if (codeInput) {
+                    codeInput.readOnly = false;
+                    codeInput.value = '';
+                }
+                document.getElementById('uni-coupon-applied-badge').style.display = 'none';
+                btnRemoveUni.style.display = 'none';
+                document.getElementById('uni-coupon-feedback').style.display = 'none';
+                recalculateCheckoutSummary();
+            });
+        });
     }
 
     function selectMethod(mode) {
@@ -511,6 +643,7 @@
         formData.append('purpose', orderPurpose);
         formData.append('reference_id', referenceId);
         formData.append('wallet_points_to_use', pointsUsed);
+        formData.append('coupon_code', appliedUniCoupon);
         formData.append(csrfName, csrfHash);
 
         fetch('<?=base_url("payment/create_order");?>', {

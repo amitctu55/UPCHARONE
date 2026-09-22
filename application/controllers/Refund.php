@@ -165,15 +165,11 @@ class Refund extends CI_Controller {
                 $amount     = floatval(!empty($app['amount']) ? $app['amount'] : (!empty($app['fee']) ? $app['fee'] : ($order ? $order['amount'] : 0)));
 
                 if ($is_paid && $amount > 0) {
-                    $app_datetime   = $app['appointment_date'] . ' ' . (!empty($app['from_timing']) ? $app['from_timing'] : (!empty($app['appointment_time']) ? $app['appointment_time'] : '10:00:00'));
-                    $refund_percent = $this->Refund_model->calculate_refund_percentage($app_datetime);
-                    
-                    // If refunding to Upchar Wallet, ensure guaranteed 100% refund for patient satisfaction
-                    if ($refund_to === 'WALLET') {
-                        $refund_percent = ($refund_percent > 0) ? $refund_percent : 100;
-                    }
-
-                    $refund_amount  = round(($amount * ($refund_percent / 100)), 2);
+                    $app_datetime      = $app['appointment_date'] . ' ' . (!empty($app['from_timing']) ? $app['from_timing'] : (!empty($app['appointment_time']) ? $app['appointment_time'] : '10:00:00'));
+                    $refund_percent    = $this->Refund_model->calculate_refund_percentage($app_datetime);
+                    $deduction_percent = max(0, 100 - $refund_percent);
+                    $deduction_amount  = round(($amount * ($deduction_percent / 100)), 2);
+                    $refund_amount     = round($amount - $deduction_amount, 2);
 
                     $res = null;
                     if ($refund_amount > 0) {
@@ -182,8 +178,10 @@ class Refund extends CI_Controller {
                             $userId,
                             $refund_amount,
                             $refund_to,
-                            $reason . ' (' . $refund_percent . '% refund policy applied)',
-                            'PATIENT'
+                            $reason . ' (' . $deduction_percent . '% deduction applied)',
+                            'PATIENT',
+                            $deduction_amount,
+                            $deduction_percent
                         );
                     }
 
@@ -194,7 +192,7 @@ class Refund extends CI_Controller {
                         'payment_status'     => ($refund_amount > 0) ? 'REFUNDED' : $app['payment_status'],
                         'cancel_date'        => date('Y-m-d H:i:s'),
                         'cancel_by'          => 'U',
-                        'cancel_reason'      => $reason
+                        'cancel_reason'      => $reason . ($deduction_percent > 0 ? " ({$deduction_percent}% deduction applied)" : "")
                     ));
 
                     // If linked razorpay order exists, update its status as well
@@ -203,18 +201,21 @@ class Refund extends CI_Controller {
                     }
 
                     $msg = 'Appointment #' . $appt_id . ' has been cancelled successfully.';
-                    if ($res && !empty($res['message'])) {
-                        $msg .= ' ' . $res['message'];
-                    } else if ($refund_amount > 0) {
-                        $msg .= ' ₹' . number_format($refund_amount, 2) . ' credited to your Upchar Wallet.';
+                    if ($refund_amount > 0) {
+                        $msg .= ' ₹' . number_format($refund_amount, 2) . ' refunded to your Upchar Wallet.';
+                        if ($deduction_percent > 0) {
+                            $msg .= ' (' . $deduction_percent . '% cancellation deduction of ₹' . number_format($deduction_amount, 2) . ' applied as per policy).';
+                        }
                     }
 
                     echo json_encode(array(
-                        'status'         => 'success',
-                        'refund_ref'     => $res ? ($res['refund_ref'] ?? '') : '',
-                        'refund_amount'  => $refund_amount,
-                        'refund_percent' => $refund_percent,
-                        'message'        => $msg
+                        'status'            => 'success',
+                        'refund_ref'        => $res ? ($res['refund_ref'] ?? '') : '',
+                        'refund_amount'     => $refund_amount,
+                        'refund_percent'    => $refund_percent,
+                        'deduction_amount'  => $deduction_amount,
+                        'deduction_percent' => $deduction_percent,
+                        'message'           => $msg
                     ));
                     return;
                 } else {
@@ -379,11 +380,12 @@ class Refund extends CI_Controller {
                 if ($app && !empty($app['appointment_date'])) {
                     $app_datetime = $app['appointment_date'] . ' ' . (!empty($app['from_timing']) ? $app['from_timing'] : '10:00:00');
                     $refund_percent = $this->Refund_model->calculate_refund_percentage($app_datetime);
-                    if ($refund_to === 'WALLET') $refund_percent = ($refund_percent > 0) ? $refund_percent : 100;
                 }
             }
 
-            $refund_amount = round(($original_amount * ($refund_percent / 100)), 2);
+            $deduction_percent = max(0, 100 - $refund_percent);
+            $deduction_amount  = round(($original_amount * ($deduction_percent / 100)), 2);
+            $refund_amount     = round($original_amount - $deduction_amount, 2);
 
             $res = null;
             if ($refund_amount > 0) {
@@ -392,8 +394,10 @@ class Refund extends CI_Controller {
                     $userId,
                     $refund_amount,
                     $refund_to,
-                    $reason . ' (' . $refund_percent . '% refund policy applied)',
-                    'PATIENT'
+                    $reason . ' (' . $deduction_percent . '% deduction applied)',
+                    'PATIENT',
+                    $deduction_amount,
+                    $deduction_percent
                 );
             }
 
@@ -406,7 +410,7 @@ class Refund extends CI_Controller {
                     'payment_status'     => ($refund_amount > 0) ? 'REFUNDED' : $order['status'],
                     'cancel_date'        => date('Y-m-d H:i:s'),
                     'cancel_by'          => 'U',
-                    'cancel_reason'      => $reason
+                    'cancel_reason'      => $reason . ($deduction_percent > 0 ? " ({$deduction_percent}% deduction applied)" : "")
                 ));
             }
 
@@ -417,20 +421,22 @@ class Refund extends CI_Controller {
                     'payment_status' => ($refund_amount > 0) ? 'REFUNDED' : 'PAID',
                     'cancel_date'    => date('Y-m-d H:i:s'),
                     'cancel_by'      => 'U',
-                    'cancel_reason'  => $reason
+                    'cancel_reason'  => $reason . ($deduction_percent > 0 ? " ({$deduction_percent}% deduction applied)" : "")
                 ));
             }
 
             $success_msg = ($res && !empty($res['message'])) 
                 ? $res['message'] 
-                : ('Order cancelled successfully' . ($refund_amount > 0 ? '. Refund of ₹' . number_format($refund_amount, 2) . ' processed.' : '.'));
+                : ('Order cancelled successfully' . ($refund_amount > 0 ? '. Refund of ₹' . number_format($refund_amount, 2) . ' processed to wallet' . ($deduction_percent > 0 ? ' (' . $deduction_percent . '% deduction applied).' : '.') : '.'));
 
             echo json_encode(array(
-                'status'         => 'success',
-                'refund_ref'     => $res ? ($res['refund_ref'] ?? '') : '',
-                'refund_amount'  => $refund_amount,
-                'refund_percent' => $refund_percent,
-                'message'        => $success_msg
+                'status'            => 'success',
+                'refund_ref'        => $res ? ($res['refund_ref'] ?? '') : '',
+                'refund_amount'     => $refund_amount,
+                'refund_percent'    => $refund_percent,
+                'deduction_amount'  => $deduction_amount,
+                'deduction_percent' => $deduction_percent,
+                'message'           => $success_msg
             ));
             return;
         }

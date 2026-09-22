@@ -12,6 +12,7 @@ class Payment extends CI_Controller {
         date_default_timezone_set("Asia/Kolkata");
         $this->load->model('Payment_model');
         $this->load->model('Wallet_model');
+        $this->load->model('Coupon_model');
         $this->load->model('Referral_model');
         $this->load->model('Refund_model');
         $this->load->model('Financial_Model');
@@ -87,11 +88,27 @@ class Payment extends CI_Controller {
         $purpose       = $this->input->post('purpose') ?: 'APPOINTMENT';
         $reference_id  = $this->input->post('reference_id') ?: null;
         $points_to_use = ($purpose === 'WALLET_RECHARGE') ? 0 : floatval($this->input->post('wallet_points_to_use') ?: 0);
+        $coupon_code   = trim($this->input->post('coupon_code') ?: '');
 
         if ($amount <= 0) {
             echo json_encode(array('status' => 'error', 'message' => 'Invalid order amount.'));
             return;
         }
+
+        // Coupon calculation
+        $service_type = ($purpose === 'APPOINTMENT') ? 'APPOINTMENT' : (($purpose === 'LAB_TEST') ? 'LAB_TEST' : (($purpose === 'MEDICART') ? 'MEDICINE' : 'ALL'));
+        $coupon_discount = 0.00;
+        $applied_coupon_id = null;
+
+        if (!empty($coupon_code)) {
+            $cRes = $this->Coupon_model->validate_coupon($coupon_code, $userId, $service_type, $amount);
+            if ($cRes['valid']) {
+                $coupon_discount = floatval($cRes['discount_amount']);
+                $applied_coupon_id = $cRes['coupon_id'];
+            }
+        }
+
+        $amount_after_coupon = max(0.00, round($amount - $coupon_discount, 2));
 
         $point_ratio = floatval($this->Wallet_model->get_setting('point_to_inr_ratio', 1.00));
         $wallet_discount_inr = 0.00;
@@ -102,11 +119,24 @@ class Payment extends CI_Controller {
                 echo json_encode(array('status' => 'error', 'message' => 'Insufficient Upchar Points balance.'));
                 return;
             }
-            $wallet_discount_inr = min($amount, $points_to_use * $point_ratio);
+            $max_points_needed = ($point_ratio > 0) ? ($amount_after_coupon / $point_ratio) : $amount_after_coupon;
+            $points_to_use = min($points_to_use, $user_balance, $max_points_needed);
+            $wallet_discount_inr = min($amount_after_coupon, $points_to_use * $point_ratio);
         }
 
-        $gateway_amount = max(0.00, $amount - $wallet_discount_inr);
+        $gateway_amount = max(0.00, round($amount_after_coupon - $wallet_discount_inr, 2));
         $internal_ref   = $this->Payment_model->generate_order_ref();
+
+        // Remember applied coupon for fulfillment
+        if ($applied_coupon_id) {
+            $this->session->set_userdata('order_coupon_' . $internal_ref, array(
+                'coupon_id'       => $applied_coupon_id,
+                'coupon_code'     => $coupon_code,
+                'discount_amount' => $coupon_discount,
+                'service_type'    => $service_type,
+                'gross_amount'    => $amount
+            ));
+        }
 
         $rzp_order_id = null;
 
@@ -400,6 +430,21 @@ class Payment extends CI_Controller {
                 'txn_id'         => $order['internal_order_ref'],
                 'updated_at'     => date('Y-m-d H:i:s')
             ));
+        }
+
+        // Record coupon usage if applied
+        $sessKey = 'order_coupon_' . $order['internal_order_ref'];
+        $chkCoupon = $this->session->userdata($sessKey);
+        if ($chkCoupon && !empty($chkCoupon['coupon_id'])) {
+            $this->Coupon_model->record_usage(
+                $chkCoupon['coupon_id'],
+                $userId,
+                $order['internal_order_ref'],
+                $chkCoupon['service_type'],
+                $chkCoupon['gross_amount'],
+                $chkCoupon['discount_amount']
+            );
+            $this->session->unset_userdata($sessKey);
         }
 
         // Clear session checkout tokens if any

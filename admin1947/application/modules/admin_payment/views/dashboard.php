@@ -239,6 +239,64 @@
                                     <span class="help-block">Welcome bonus points credited to invited friend</span>
                                 </div>
                             </div>
+
+                            <hr style="border-top: 1px solid #e2e8f0; margin: 25px 0 15px 0;">
+                            <h4 style="margin: 0 0 15px 15px; color: #0d7a6e; font-weight: 700;"><i class="fa fa-undo"></i> Patient Cancellation &amp; Refund Policy Settings</h4>
+
+                            <div class="form-group">
+                                <label class="col-sm-4 control-label">Cancellation Policy Mode</label>
+                                <div class="col-sm-8">
+                                    <select name="cancellation_policy_mode" class="form-control" id="cancelModeSelect">
+                                        <option value="TIERED" <?php echo ($cancellation_policy_mode === 'TIERED') ? 'selected' : ''; ?>>Time-Tiered Deduction (Recommended: 10%, 20%, 30%)</option>
+                                        <option value="FLAT" <?php echo ($cancellation_policy_mode === 'FLAT') ? 'selected' : ''; ?>>Flat Fixed Deduction % (Applies across all cancellations)</option>
+                                    </select>
+                                    <span class="help-block">Choose whether deduction scales with proximity to appointment time or uses a fixed flat rate</span>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="col-sm-4 control-label">Early Cancellation (&gt; 24h prior)</label>
+                                <div class="col-sm-8">
+                                    <div class="input-group">
+                                        <input type="number" step="1" min="0" max="100" name="cancellation_deduction_tier_24h" class="form-control" value="<?php echo $cancellation_tier_24h; ?>" required>
+                                        <span class="input-group-addon">% Deduction</span>
+                                    </div>
+                                    <span class="help-block">Patient receives <strong><?php echo (100 - $cancellation_tier_24h); ?>% wallet refund</strong> if cancelled more than 24 hours in advance</span>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="col-sm-4 control-label">Standard Notice (12 to 24h prior)</label>
+                                <div class="col-sm-8">
+                                    <div class="input-group">
+                                        <input type="number" step="1" min="0" max="100" name="cancellation_deduction_tier_12h" class="form-control" value="<?php echo $cancellation_tier_12h; ?>" required>
+                                        <span class="input-group-addon">% Deduction</span>
+                                    </div>
+                                    <span class="help-block">Patient receives <strong><?php echo (100 - $cancellation_tier_12h); ?>% wallet refund</strong> if cancelled between 12 and 24 hours prior</span>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="col-sm-4 control-label">Short Notice (&lt; 12h or Same-Day)</label>
+                                <div class="col-sm-8">
+                                    <div class="input-group">
+                                        <input type="number" step="1" min="0" max="100" name="cancellation_deduction_tier_0h" class="form-control" value="<?php echo $cancellation_tier_0h; ?>" required>
+                                        <span class="input-group-addon">% Deduction</span>
+                                    </div>
+                                    <span class="help-block">Patient receives <strong><?php echo (100 - $cancellation_tier_0h); ?>% wallet refund</strong> if cancelled with under 12 hours notice</span>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="col-sm-4 control-label">Flat Deduction Rate (%)</label>
+                                <div class="col-sm-8">
+                                    <div class="input-group">
+                                        <input type="number" step="1" min="0" max="100" name="cancellation_deduction_flat" class="form-control" value="<?php echo $cancellation_flat; ?>" required>
+                                        <span class="input-group-addon">% Flat Deduction</span>
+                                    </div>
+                                    <span class="help-block">Used only when Policy Mode is set to "Flat Fixed Deduction"</span>
+                                </div>
+                            </div>
                         </div>
                         <div class="box-footer">
                             <button type="submit" class="btn btn-success"><i class="fa fa-save"></i> Save Configurations</button>

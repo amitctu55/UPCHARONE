@@ -290,6 +290,8 @@ class Hospitalpanel extends CI_Controller
 		$data['completed_count'] = $this->db->where(array('institute_id' => $userid, 'institution_type' => 'H', 'appointment_status' => '1', 'status !=' => '0'))->count_all_results('appointment');
 		$data['paid_count']      = $this->db->where(array('institute_id' => $userid, 'institution_type' => 'H', 'payment_status' => 'DONE', 'status !=' => '0'))->count_all_results('appointment');
 		$data['unpaid_count']    = $this->db->where(array('institute_id' => $userid, 'institution_type' => 'H', 'payment_status' => 'UNPAID', 'status !=' => '0'))->count_all_results('appointment');
+		$data['cancelled_count'] = $this->db->where(array('institute_id' => $userid, 'institution_type' => 'H', 'appointment_status' => '2'))->count_all_results('appointment');
+		$data['refunded_count']  = $this->db->where(array('institute_id' => $userid, 'institution_type' => 'H', 'payment_status' => 'REFUNDED'))->count_all_results('appointment');
 
 		// Doctors associated with this hospital
 		$data['hospital_doctors'] = $this->db->select('profile_dr.id, profile_dr.fname, profile_dr.lname')

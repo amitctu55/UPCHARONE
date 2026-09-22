@@ -12,6 +12,7 @@ class Paysecure extends CI_Controller {
 		$this->load->model('Financial_Model');
 		$this->load->model('Payment_model');
 		$this->load->model('Wallet_model');
+		$this->load->model('Coupon_model');
 		$this->load->model('Referral_model');
 		$this->load->library('Razorpay_lib');
 		$this->load->helper(array('url', 'form', 'settings'));
@@ -147,7 +148,20 @@ class Paysecure extends CI_Controller {
 			return;
 		}
 
-		$pointsNeeded = $this->Wallet_model->money_to_points($amount);
+		// Check if coupon discount applied
+		$appliedCoupon = $this->session->userdata('applied_coupon');
+		$couponDiscount = 0.00;
+		$appliedCouponId = null;
+		if ($appliedCoupon && !empty($appliedCoupon['coupon_code'])) {
+			$cRes = $this->Coupon_model->validate_coupon($appliedCoupon['coupon_code'], $userId, 'APPOINTMENT', $amount);
+			if ($cRes['valid']) {
+				$couponDiscount = floatval($cRes['discount_amount']);
+				$appliedCouponId = $cRes['coupon_id'];
+			}
+		}
+
+		$netAmountToPay = max(0.00, round($amount - $couponDiscount, 2));
+		$pointsNeeded = $this->Wallet_model->money_to_points($netAmountToPay);
 		$userBalance = $this->Wallet_model->get_balance($userId);
 
 		if ($userBalance < $pointsNeeded) {
@@ -157,10 +171,16 @@ class Paysecure extends CI_Controller {
 		}
 
 		// Debit Points
-		$desc = 'Payment for Doctor Appointment #' . $appointmentId;
+		$desc = 'Payment for Doctor Appointment #' . $appointmentId . ($couponDiscount > 0 ? " (Coupon Discount: -₹{$couponDiscount})" : '');
 		$txn_ref = $this->Wallet_model->debit_points($userId, $pointsNeeded, 'APPOINTMENT_PAYMENT', $appointmentId, $desc);
 
 		if ($txn_ref) {
+			// Record coupon usage if applied
+			if ($appliedCouponId) {
+				$this->Coupon_model->record_usage($appliedCouponId, $userId, $txn_ref, 'APPOINTMENT', $amount, $couponDiscount);
+				$this->session->unset_userdata('applied_coupon');
+			}
+
 			// Update Appointment record
 			$updateData = array(
 				'payment_status'     => 'PAID',
@@ -177,7 +197,7 @@ class Paysecure extends CI_Controller {
 			// Award Cashback Points
 			$cashbackPct = floatval($this->Wallet_model->get_setting('cashback_percentage', 5.00));
 			if ($cashbackPct > 0) {
-				$cashbackPoints = round(($amount * ($cashbackPct / 100)), 2);
+				$cashbackPoints = round(($netAmountToPay * ($cashbackPct / 100)), 2);
 				if ($cashbackPoints > 0) {
 					$this->Wallet_model->credit_points($userId, $cashbackPoints, 'APPOINTMENT_CASHBACK', $appointmentId, 'Cashback reward for Appointment #' . $appointmentId, 'WALLET');
 				}
@@ -187,7 +207,7 @@ class Paysecure extends CI_Controller {
 			$this->session->unset_userdata('SecurePay');
 			$this->session->unset_userdata('AppointmentCheckout');
 
-			$this->session->set_flashdata('flashmsg', '<div class="alert alert-success"><strong>Payment Successful!</strong> Paid ₹' . $amount . ' using ' . $pointsNeeded . ' Upchar Points. Appointment #' . $appointmentId . ' Confirmed!</div>');
+			$this->session->set_flashdata('flashmsg', '<div class="alert alert-success"><strong>Payment Successful!</strong> Paid ₹' . $netAmountToPay . ' using ' . $pointsNeeded . ' Upchar Points. Appointment #' . $appointmentId . ' Confirmed!</div>');
 			redirect(base_url('myappointents'));
 		} else {
 			$this->session->set_flashdata('flashmsg', '<div class="alert alert-danger">Wallet payment transaction failed. Please try again.</div>');
@@ -198,22 +218,7 @@ class Paysecure extends CI_Controller {
 	{	
 		$gatewayData=$this->session->userdata('SecurePay');
 		$AppointmentCheckout=$this->session->userdata('AppointmentCheckout');
-		if(isset($gatewayData) && count($gatewayData))
-		{
-			$userId = $this->session->userdata('USERID') ?: $this->session->userdata('userid') ?: $this->session->userdata('WEB_UID') ?: $this->session->userdata('user_id');
-			if (!$userId) {
-				$this->session->set_userdata('last_page', base_url('paysecure/acheckout_hospital'));
-				$this->session->set_flashdata('flashmsg', '<div class="alert alert-warning">Please login to complete your appointment booking.</div>');
-				redirect(base_url('login'));
-				return;
-			}
-			$data['gatewayData']=$gatewayData;
-			$data['AppointmentCheckout']=$AppointmentCheckout;
-			$this->load->view('secure/appointmentcheckout_hospital',$data);
-		}else
-		{
-			redirect(base_url('login'));
-		}
+		$this->load->view('secure/appointmentcheckout_hospital');
 	}
 
 
@@ -271,6 +276,7 @@ class Paysecure extends CI_Controller {
 
 		$appointmentId = $this->input->post('appointment_id') ?: $this->session->userdata('AppointmentCheckout');
 		$pointsToUse   = floatval($this->input->post('wallet_points_to_use') ?: 0);
+		$couponCode    = trim($this->input->post('coupon_code') ?: '');
 
 		if (!$appointmentId) {
 			echo json_encode(array('status' => 'error', 'message' => 'Appointment reference not found.'));
@@ -288,17 +294,30 @@ class Paysecure extends CI_Controller {
 			$grossAmount = 100.00; // default minimum
 		}
 
+		// Coupon Discount Calculation
+		$couponDiscount = 0.00;
+		$appliedCouponId = null;
+		if (!empty($couponCode)) {
+			$cRes = $this->Coupon_model->validate_coupon($couponCode, $userId, 'APPOINTMENT', $grossAmount);
+			if ($cRes['valid']) {
+				$couponDiscount = floatval($cRes['discount_amount']);
+				$appliedCouponId = $cRes['coupon_id'];
+			}
+		}
+
+		$amountAfterCoupon = max(0.00, round($grossAmount - $couponDiscount, 2));
+
 		$point_ratio = floatval($this->Wallet_model->get_setting('point_to_inr_ratio', 1.00));
 		$walletDiscount = 0.00;
 
 		if ($pointsToUse > 0) {
 			$userBalance = $this->Wallet_model->get_balance($userId);
-			$maxPointsNeeded = ($point_ratio > 0) ? ($grossAmount / $point_ratio) : $grossAmount;
+			$maxPointsNeeded = ($point_ratio > 0) ? ($amountAfterCoupon / $point_ratio) : $amountAfterCoupon;
 			$pointsToUse = min($pointsToUse, $userBalance, $maxPointsNeeded);
 			$walletDiscount = round($pointsToUse * $point_ratio, 2);
 		}
 
-		$gatewayAmount = max(0.00, round($grossAmount - $walletDiscount, 2));
+		$gatewayAmount = max(0.00, round($amountAfterCoupon - $walletDiscount, 2));
 
 		if ($gatewayAmount <= 0.00) {
 			echo json_encode(array(
@@ -310,12 +329,24 @@ class Paysecure extends CI_Controller {
 
 		$internalRef = 'UPCH-ORD-' . date('Ymd') . '-' . strtoupper(substr(md5(uniqid((string)$appointmentId, true)), 0, 6));
 
+		// Save coupon in session for verification
+		if ($appliedCouponId) {
+			$this->session->set_userdata('checkout_coupon', array(
+				'coupon_id'       => $appliedCouponId,
+				'coupon_code'     => $couponCode,
+				'discount_amount' => $couponDiscount,
+				'order_ref'       => $internalRef
+			));
+		}
+
 		// Create Razorpay Standard Order
 		$notes = array(
 			'appointment_id'     => (string)$appointmentId,
 			'patient_name'       => (string)$appointment->appointment_name,
 			'patient_mobile'     => (string)$appointment->appointment_mobile,
 			'doctor_id'          => (string)$appointment->doctor_id,
+			'coupon_code'        => (string)$couponCode,
+			'coupon_discount'    => (string)$couponDiscount,
 			'internal_order_ref' => $internalRef
 		);
 
@@ -457,6 +488,21 @@ class Paysecure extends CI_Controller {
 			'pay_date'            => $date,
 			'user_id'             => $userId
 		));
+
+		// Record coupon usage if applied
+		$chkCoupon = $this->session->userdata('checkout_coupon');
+		if ($chkCoupon && !empty($chkCoupon['coupon_id'])) {
+			$this->Coupon_model->record_usage(
+				$chkCoupon['coupon_id'],
+				$userId,
+				$order['internal_order_ref'],
+				'APPOINTMENT',
+				$amount,
+				$chkCoupon['discount_amount']
+			);
+			$this->session->unset_userdata('checkout_coupon');
+			$this->session->unset_userdata('applied_coupon');
+		}
 
 		// Record in Double-Entry Financial Ledger (Escrow)
 		$appointment_data = $this->db->get_where('appointment', array('appointment_id' => $appointmentId))->row();
