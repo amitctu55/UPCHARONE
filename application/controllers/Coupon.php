@@ -16,9 +16,9 @@ class Coupon extends CI_Controller {
         header('Content-Type: application/json');
 
         $userId = $this->session->userdata('USERID') ?: $this->session->userdata('userid') ?: $this->session->userdata('user_id');
-        $code = trim($this->input->post('coupon_code', TRUE));
-        $serviceType = trim($this->input->post('service_type', TRUE)) ?: 'ALL';
-        $amount = floatval($this->input->post('amount', TRUE));
+        $code = trim($this->input->get_post('coupon_code', TRUE) ?: '');
+        $serviceType = trim($this->input->get_post('service_type', TRUE) ?: 'ALL');
+        $amount = floatval($this->input->get_post('amount', TRUE) ?: 0);
 
         if (empty($code)) {
             echo json_encode(['status' => 'error', 'message' => 'Please enter a coupon code.']);

@@ -816,7 +816,8 @@ $(document).ready(function() {
             data: {
                 coupon_code: code,
                 service_type: 'APPOINTMENT',
-                amount: grossFee
+                amount: grossFee,
+                "<?=$this->security->get_csrf_token_name();?>": "<?=$this->security->get_csrf_hash();?>"
             },
             success: function(resp) {
                 btn.prop('disabled', false).text('Apply');
@@ -837,9 +838,14 @@ $(document).ready(function() {
                     fb.css('color', '#dc2626').text(resp.message || 'Invalid coupon code.').show();
                 }
             },
-            error: function() {
+            error: function(xhr) {
                 btn.prop('disabled', false).text('Apply');
-                fb.css('color', '#dc2626').text('Error validating coupon. Please try again.').show();
+                let errText = 'Error validating coupon. Please try again.';
+                try {
+                    const parsed = JSON.parse(xhr.responseText);
+                    if (parsed && parsed.message) errText = parsed.message;
+                } catch(e) {}
+                fb.css('color', '#dc2626').text(errText).show();
             }
         });
     });

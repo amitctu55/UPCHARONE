@@ -496,6 +496,8 @@ $config['csrf_exclude_uris'] = array(
 	'Wallet/.*',
 	'payment/.*',
 	'Payment/.*',
+	'coupon/.*',
+	'Coupon/.*',
 	'refund/.*',
 	'payout/.*',
 	'admin_payment/.*',

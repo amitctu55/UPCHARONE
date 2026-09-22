@@ -1285,7 +1285,8 @@
                 data: {
                     coupon_code: code,
                     service_type: 'LAB_TEST',
-                    amount: labGrossTotal
+                    amount: labGrossTotal,
+                    "<?=$this->security->get_csrf_token_name();?>": "<?=$this->security->get_csrf_hash();?>"
                 },
                 success: function(resp) {
                     btn.prop('disabled', false).text('Apply');
@@ -1305,9 +1306,14 @@
                         fb.css('color', '#EF4444').text(resp.message || 'Invalid coupon code.').show();
                     }
                 },
-                error: function() {
+                error: function(xhr) {
                     btn.prop('disabled', false).text('Apply');
-                    fb.css('color', '#EF4444').text('Error validating coupon. Please try again.').show();
+                    let errText = 'Error validating coupon. Please try again.';
+                    try {
+                        const parsed = JSON.parse(xhr.responseText);
+                        if (parsed && parsed.message) errText = parsed.message;
+                    } catch(e) {}
+                    fb.css('color', '#EF4444').text(errText).show();
                 }
             });
         });
