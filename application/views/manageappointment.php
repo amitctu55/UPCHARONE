@@ -1036,8 +1036,17 @@ function switchDashboardTab(tab) {
 }
 
 function cancelAppointment(apptId, apptDate) {
-    if (!confirm('Are you sure you want to cancel appointment #' + apptId + '? Any refund will be credited instantly to your Upchar Wallet as per cancellation policy.')) {
+    if (!confirm('Are you sure you want to cancel appointment #' + apptId + '? Any paid amount will be refunded directly to your Upchar Wallet as per cancellation policy.')) {
         return;
+    }
+
+    // Disable clicked button if event is present
+    var btn = event && event.target ? event.target.closest('button') : null;
+    var originalBtnHtml = '';
+    if (btn) {
+        originalBtnHtml = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Cancelling...';
     }
 
     const formData = new FormData();
@@ -1051,11 +1060,60 @@ function cancelAppointment(apptId, apptDate) {
     })
     .then(res => res.json())
     .then(data => {
-        alert(data.message || 'Appointment cancellation initiated.');
-        window.location.reload();
+        if (data.status === 'success') {
+            alert('✓ ' + (data.message || 'Appointment cancelled successfully.'));
+            window.location.reload();
+        } else {
+            alert(data.message || 'Unable to cancel appointment.');
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = originalBtnHtml;
+            }
+        }
     })
     .catch(err => {
-        alert('Cancellation submitted.');
+        alert('Cancellation request completed.');
+        window.location.reload();
+    });
+}
+
+function cancelLabBooking(bookingId) {
+    if (!confirm('Are you sure you want to cancel diagnostic order #' + bookingId + '? Any paid amount will be refunded directly to your Upchar Wallet.')) {
+        return;
+    }
+
+    var btn = event && event.target ? event.target.closest('button') : null;
+    var originalBtnHtml = '';
+    if (btn) {
+        originalBtnHtml = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Cancelling...';
+    }
+
+    const formData = new FormData();
+    formData.append('order_ref', 'LAB-' + bookingId);
+    formData.append('refund_to', 'WALLET');
+    formData.append('reason', 'Patient requested cancellation of diagnostic booking');
+
+    fetch('<?=base_url("refund/initiate");?>', {
+        method: 'POST',
+        body: formData
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.status === 'success') {
+            alert('✓ ' + (data.message || 'Diagnostic booking cancelled successfully.'));
+            window.location.reload();
+        } else {
+            alert(data.message || 'Unable to cancel diagnostic booking.');
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = originalBtnHtml;
+            }
+        }
+    })
+    .catch(err => {
+        alert('Diagnostic cancellation request completed.');
         window.location.reload();
     });
 }
