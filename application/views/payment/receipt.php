@@ -134,6 +134,12 @@
             text-transform: uppercase;
         }
 
+        .invoice-type-tag .receipt-status-badge.badge-refunded {
+            background: #fef2f2;
+            color: #991b1b;
+            border-color: #fecaca;
+        }
+
         /* Meta Grid */
         .receipt-meta-grid {
             display: grid;
@@ -337,15 +343,31 @@
         $wallet_used    = floatval($order['wallet_amount_used'] > 0 ? $order['wallet_amount_used'] : $order['wallet_points_used']);
         $gateway_paid   = floatval($order['gateway_amount'] > 0 ? $order['gateway_amount'] : ($total_amount - $wallet_used));
         $pay_date       = !empty($order['updated_at']) ? date('d M Y, h:i A', strtotime($order['updated_at'])) : date('d M Y, h:i A', strtotime($order['created_at']));
-        $receipt_no     = 'UPCH/REC/' . date('Ym', strtotime($order['created_at'])) . '/' . str_pad($order['id'], 6, '0', STR_PAD_LEFT);
+        $receipt_no     = 'UPCH/REC/' . date('Ym', strtotime($order['created_at'])) . '/' . str_pad(intval($order['id'] ?: ($order['reference_id'] ?? 1)), 6, '0', STR_PAD_LEFT);
     ?>
 
     <!-- Top Action Bar -->
     <div class="receipt-action-bar">
-        <div>
-            <a href="<?=base_url('payment/success/' . $order['internal_order_ref']);?>" class="btn-action btn-back">
-                <i class="fa fa-arrow-left"></i> Back to Confirmation
-            </a>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <?php if ($order['purpose'] === 'APPOINTMENT'): ?>
+                <a href="<?=base_url('myappointments');?>" class="btn-action btn-back">
+                    <i class="fa fa-calendar-check-o"></i> My Appointments
+                </a>
+            <?php elseif ($order['purpose'] === 'LAB_TEST'): ?>
+                <a href="<?=base_url('mytest');?>" class="btn-action btn-back">
+                    <i class="fa fa-flask"></i> My Diagnostics
+                </a>
+            <?php else: ?>
+                <a href="<?=base_url('wallet');?>" class="btn-action btn-back">
+                    <i class="fa fa-google-wallet"></i> My Wallet
+                </a>
+            <?php endif; ?>
+
+            <?php if (!empty($order['internal_order_ref']) && stripos($order['internal_order_ref'], 'UPCH-ORD') === 0): ?>
+                <a href="<?=base_url('payment/success/' . $order['internal_order_ref']);?>" class="btn-action btn-back">
+                    <i class="fa fa-arrow-left"></i> Order Summary
+                </a>
+            <?php endif; ?>
         </div>
         <div style="display: flex; gap: 10px;">
             <button type="button" onclick="window.print()" class="btn-action btn-print">
@@ -373,8 +395,12 @@
 
             <div class="invoice-type-tag">
                 <h2>TAX INVOICE &amp; RECEIPT</h2>
-                <div class="receipt-status-badge">
-                    <i class="fa fa-check-circle"></i> Payment Confirmed
+                <div class="receipt-status-badge <?=($order['status'] === 'REFUNDED' ? 'badge-refunded' : '');?>">
+                    <?php if ($order['status'] === 'REFUNDED'): ?>
+                        <i class="fa fa-undo"></i> Cancelled &amp; Refunded
+                    <?php else: ?>
+                        <i class="fa fa-check-circle"></i> Payment Confirmed
+                    <?php endif; ?>
                 </div>
             </div>
         </div>
@@ -488,7 +514,15 @@
                     <tr>
                         <td class="text-center">1</td>
                         <td>
-                            <strong>Medical Consultation: <?=html_escape(!empty($doctor['fname']) ? 'Dr. ' . $doctor['fname'] . ' ' . $doctor['lname'] : 'Doctor Consultation');?></strong>
+                            <?php
+                                $d_name = trim(($doctor['fname'] ?? '') . ' ' . ($doctor['lname'] ?? ''));
+                                if (!empty($d_name)) {
+                                    $d_display = (stripos($d_name, 'dr') === 0) ? $d_name : ('Dr. ' . $d_name);
+                                } else {
+                                    $d_display = 'Doctor Consultation';
+                                }
+                            ?>
+                            <strong>Medical Consultation: <?=html_escape($d_display);?></strong>
                             <div style="font-size: 11.5px; color: #64748b;">
                                 Facility: <?=html_escape($institute['name'] ?? 'Upchar Partner Clinic / Hospital');?>
                             </div>

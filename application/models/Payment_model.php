@@ -219,39 +219,231 @@ class Payment_model extends CI_Model {
     }
 
     /**
-     * Get order by internal reference
+     * Get order by internal reference, gateway reference, appointment ref_no, or wallet txn_ref
      */
     public function get_order_by_ref($internal_ref) {
+        $internal_ref = trim($internal_ref);
+        if (empty($internal_ref)) {
+            return null;
+        }
+
+        // 1. Direct match on razorpay_orders by internal_order_ref
         $order = $this->db->get_where('razorpay_orders', array('internal_order_ref' => $internal_ref))->row_array();
         if ($order) {
             return $order;
         }
 
-        // If reference is formatted like APPT-123 or APPT_123
+        // 1b. Match razorpay_orders by razorpay_payment_id or razorpay_order_id
+        $order = $this->db->where('razorpay_payment_id', $internal_ref)
+                          ->or_where('razorpay_order_id', $internal_ref)
+                          ->get('razorpay_orders')
+                          ->row_array();
+        if ($order) {
+            return $order;
+        }
+
+        // 2. Check if reference is formatted like APPT-123 or APPT_123
         if (stripos($internal_ref, 'APPT-') === 0 || stripos($internal_ref, 'APPT_') === 0) {
             $ref_id = preg_replace('/[^0-9]/', '', $internal_ref);
             if ($ref_id) {
-                return $this->db->where('purpose', 'APPOINTMENT')
-                                ->where('reference_id', $ref_id)
-                                ->order_by('id', 'DESC')
-                                ->get('razorpay_orders')
-                                ->row_array();
+                $order = $this->db->where('purpose', 'APPOINTMENT')
+                                  ->where('reference_id', $ref_id)
+                                  ->order_by('id', 'DESC')
+                                  ->get('razorpay_orders')
+                                  ->row_array();
+                if ($order) return $order;
+
+                $app = $this->db->get_where('appointment', array('appointment_id' => $ref_id))->row_array();
+                if ($app) {
+                    return $this->_synthesize_order_from_appointment($app);
+                }
             }
         }
 
-        // If reference is formatted like LAB-123 or BOOK-123
+        // 3. Check if reference is formatted like LAB-123 or BOOK-123
         if (stripos($internal_ref, 'LAB-') === 0 || stripos($internal_ref, 'BOOK-') === 0) {
             $ref_id = preg_replace('/[^0-9]/', '', $internal_ref);
             if ($ref_id) {
-                return $this->db->where('purpose', 'LAB_TEST')
-                                ->where('reference_id', $ref_id)
-                                ->order_by('id', 'DESC')
-                                ->get('razorpay_orders')
-                                ->row_array();
+                $order = $this->db->where('purpose', 'LAB_TEST')
+                                  ->where('reference_id', $ref_id)
+                                  ->order_by('id', 'DESC')
+                                  ->get('razorpay_orders')
+                                  ->row_array();
+                if ($order) return $order;
+
+                $lb = $this->db->get_where('path_book', array('booking_id' => $ref_id))->row_array();
+                if ($lb) {
+                    return $this->_synthesize_order_from_lab_booking($lb);
+                }
+            }
+        }
+
+        // 4. Check appointment by ref_no (e.g. TXN-UP-... or custom ref)
+        $app = $this->db->get_where('appointment', array('ref_no' => $internal_ref))->row_array();
+        if ($app) {
+            $order = $this->db->where('purpose', 'APPOINTMENT')
+                              ->where('reference_id', $app['appointment_id'])
+                              ->order_by('id', 'DESC')
+                              ->get('razorpay_orders')
+                              ->row_array();
+            if ($order) return $order;
+            return $this->_synthesize_order_from_appointment($app);
+        }
+
+        // 5. Check path_book by ref_no
+        $lb = $this->db->get_where('path_book', array('ref_no' => $internal_ref))->row_array();
+        if ($lb) {
+            $order = $this->db->where('purpose', 'LAB_TEST')
+                              ->where('reference_id', $lb['booking_id'])
+                              ->order_by('id', 'DESC')
+                              ->get('razorpay_orders')
+                              ->row_array();
+            if ($order) return $order;
+            return $this->_synthesize_order_from_lab_booking($lb);
+        }
+
+        // 6. Check wallet_transactions by txn_ref (e.g. TXN-UP-...)
+        $txn = $this->db->get_where('wallet_transactions', array('txn_ref' => $internal_ref))->row_array();
+        if ($txn) {
+            if ($txn['source'] === 'APPOINTMENT_PAYMENT' && !empty($txn['reference_id'])) {
+                $app = $this->db->get_where('appointment', array('appointment_id' => $txn['reference_id']))->row_array();
+                if ($app) {
+                    $order = $this->db->where('purpose', 'APPOINTMENT')
+                                      ->where('reference_id', $app['appointment_id'])
+                                      ->order_by('id', 'DESC')
+                                      ->get('razorpay_orders')
+                                      ->row_array();
+                    if ($order) return $order;
+                    return $this->_synthesize_order_from_appointment($app, $txn);
+                }
+            } elseif ($txn['source'] === 'LAB_TEST_PAYMENT' && !empty($txn['reference_id'])) {
+                $lb = $this->db->get_where('path_book', array('booking_id' => $txn['reference_id']))->row_array();
+                if ($lb) {
+                    $order = $this->db->where('purpose', 'LAB_TEST')
+                                      ->where('reference_id', $lb['booking_id'])
+                                      ->order_by('id', 'DESC')
+                                      ->get('razorpay_orders')
+                                      ->row_array();
+                    if ($order) return $order;
+                    return $this->_synthesize_order_from_lab_booking($lb, $txn);
+                }
+            }
+
+            // General Wallet recharge / debit transaction
+            return array(
+                'id'                  => $txn['transaction_id'],
+                'internal_order_ref'  => $txn['txn_ref'],
+                'razorpay_order_id'   => $txn['gateway_txn_id'] ?: $txn['txn_ref'],
+                'razorpay_payment_id' => $txn['gateway_txn_id'] ?: $txn['txn_ref'],
+                'user_id'             => $txn['user_id'],
+                'amount'              => floatval($txn['amount_money']),
+                'currency'            => 'INR',
+                'purpose'             => ($txn['type'] === 'CREDIT') ? 'WALLET_RECHARGE' : 'WALLET_TRANSACTION',
+                'reference_id'        => $txn['reference_id'] ?: $txn['transaction_id'],
+                'wallet_points_used'  => ($txn['type'] === 'DEBIT') ? floatval($txn['amount_points']) : 0.00,
+                'wallet_amount_used'  => ($txn['type'] === 'DEBIT') ? floatval($txn['amount_money']) : 0.00,
+                'gateway_amount'      => ($txn['type'] === 'CREDIT' && $txn['payment_gateway'] !== 'WALLET') ? floatval($txn['amount_money']) : 0.00,
+                'signature_verified'  => 1,
+                'status'              => ($txn['status'] === 'SUCCESS') ? 'PAID' : 'FAILED',
+                'metadata_json'       => json_encode(array('description' => $txn['description'], 'source' => $txn['source'])),
+                'created_at'          => $txn['created_at'],
+                'updated_at'          => $txn['created_at']
+            );
+        }
+
+        // 7. Numeric lookup (pure appointment ID or lab booking ID)
+        if (is_numeric($internal_ref)) {
+            $num_id = intval($internal_ref);
+            $app = $this->db->get_where('appointment', array('appointment_id' => $num_id))->row_array();
+            if ($app) {
+                return $this->_synthesize_order_from_appointment($app);
+            }
+            $lb = $this->db->get_where('path_book', array('booking_id' => $num_id))->row_array();
+            if ($lb) {
+                return $this->_synthesize_order_from_lab_booking($lb);
             }
         }
 
         return null;
+    }
+
+    /**
+     * Synthesize a standardized order structure from an appointment record
+     */
+    public function _synthesize_order_from_appointment($app, $txn = null) {
+        $amount = floatval(!empty($app['amount']) ? $app['amount'] : (!empty($app['fee']) ? $app['fee'] : 0));
+        $is_wallet = ($app['payment_mode'] === 'UPCHAR_POI' || $app['payment_mode'] === 'WALLET');
+        $wallet_used = $txn ? floatval($txn['amount_money']) : ($is_wallet ? $amount : 0.00);
+        $points_used = $txn ? floatval($txn['amount_points']) : ($is_wallet ? $amount : 0.00);
+        $gateway_amt = $is_wallet ? 0.00 : $amount;
+
+        $order_status = 'PAID';
+        if ($app['status'] == '2' || $app['appointment_status'] == '2' || $app['payment_status'] === 'REFUNDED') {
+            $order_status = 'REFUNDED';
+        }
+
+        return array(
+            'id'                  => intval($app['appointment_id']),
+            'internal_order_ref'  => !empty($app['ref_no']) ? $app['ref_no'] : ('UPCH-APPT-' . $app['appointment_id']),
+            'razorpay_order_id'   => !empty($app['ref_no']) ? $app['ref_no'] : '',
+            'razorpay_payment_id' => !empty($app['ref_no']) ? $app['ref_no'] : '',
+            'user_id'             => intval($app['user_id']),
+            'amount'              => $amount,
+            'currency'            => 'INR',
+            'purpose'             => 'APPOINTMENT',
+            'reference_id'        => strval($app['appointment_id']),
+            'wallet_points_used'  => $points_used,
+            'wallet_amount_used'  => $wallet_used,
+            'gateway_amount'      => $gateway_amt,
+            'signature_verified'  => 1,
+            'status'              => $order_status,
+            'metadata_json'       => json_encode(array(
+                'payment_mode'     => $app['payment_mode'],
+                'doctor_id'        => $app['doctor_id'],
+                'appointment_date' => $app['appointment_date']
+            )),
+            'created_at'          => !empty($app['book_date']) ? $app['book_date'] : (!empty($app['pay_date']) ? $app['pay_date'] : date('Y-m-d H:i:s')),
+            'updated_at'          => !empty($app['pay_date']) ? $app['pay_date'] : (!empty($app['book_date']) ? $app['book_date'] : date('Y-m-d H:i:s'))
+        );
+    }
+
+    /**
+     * Synthesize a standardized order structure from a lab booking record
+     */
+    public function _synthesize_order_from_lab_booking($lb, $txn = null) {
+        $amount = floatval(!empty($lb['total_amount']) ? $lb['total_amount'] : (!empty($lb['paid_amount']) ? $lb['paid_amount'] : 0));
+        $is_wallet = (isset($lb['payment_method']) && ($lb['payment_method'] === 'WALLET' || $lb['payment_method'] === 'UPCHAR_POINTS'));
+        $wallet_used = $txn ? floatval($txn['amount_money']) : ($is_wallet ? $amount : 0.00);
+        $points_used = $txn ? floatval($txn['amount_points']) : ($is_wallet ? $amount : 0.00);
+        $gateway_amt = $is_wallet ? 0.00 : $amount;
+
+        $order_status = 'PAID';
+        if ($lb['status'] == '2' || $lb['order_stage'] === 'CANCELLED' || (isset($lb['payment_status']) && $lb['payment_status'] === 'REFUNDED')) {
+            $order_status = 'REFUNDED';
+        }
+
+        return array(
+            'id'                  => intval($lb['booking_id']),
+            'internal_order_ref'  => !empty($lb['ref_no']) ? $lb['ref_no'] : (!empty($lb['booking_ref']) ? $lb['booking_ref'] : ('UPCH-LAB-' . $lb['booking_id'])),
+            'razorpay_order_id'   => !empty($lb['ref_no']) ? $lb['ref_no'] : '',
+            'razorpay_payment_id' => !empty($lb['ref_no']) ? $lb['ref_no'] : '',
+            'user_id'             => intval($lb['user_id']),
+            'amount'              => $amount,
+            'currency'            => 'INR',
+            'purpose'             => 'LAB_TEST',
+            'reference_id'        => strval($lb['booking_id']),
+            'wallet_points_used'  => $points_used,
+            'wallet_amount_used'  => $wallet_used,
+            'gateway_amount'      => $gateway_amt,
+            'signature_verified'  => 1,
+            'status'              => $order_status,
+            'metadata_json'       => json_encode(array(
+                'pathlab_id'   => $lb['pathlab_id'],
+                'booking_date' => $lb['booking_date']
+            )),
+            'created_at'          => !empty($lb['created_at']) ? $lb['created_at'] : date('Y-m-d H:i:s'),
+            'updated_at'          => !empty($lb['updated_at']) ? $lb['updated_at'] : date('Y-m-d H:i:s')
+        );
     }
 
     /**

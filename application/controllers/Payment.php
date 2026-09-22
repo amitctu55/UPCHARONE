@@ -472,7 +472,31 @@ class Payment extends CI_Controller {
                 if (!empty($data['appointment']['institute_id'])) {
                     $table = (!empty($data['appointment']['institution_type']) && $data['appointment']['institution_type'] == 'C') ? 'clinic' : 'hospital';
                     $data['institute'] = $this->db->get_where($table, array('id' => $data['appointment']['institute_id']))->row_array();
+                } elseif (!empty($data['appointment']['practice_id'])) {
+                    $practice = $this->db->get_where('dr_practice', array('id' => $data['appointment']['practice_id']))->row_array();
+                    if ($practice && !empty($practice['institution_id'])) {
+                        $table = ($practice['type'] == 'C') ? 'clinic' : 'hospital';
+                        $data['institute'] = $this->db->get_where($table, array('id' => $practice['institution_id']))->row_array();
+                    }
                 }
+            }
+        }
+
+        // Fallback patient user resolution
+        if (empty($data['patient'])) {
+            if (!empty($data['appointment']['user_id'])) {
+                $data['patient'] = $this->db->get_where('userlogin', array('USERID' => $data['appointment']['user_id']))->row_array();
+            }
+            if (empty($data['patient']) && !empty($data['booking']['user_id'])) {
+                $data['patient'] = $this->db->get_where('userlogin', array('USERID' => $data['booking']['user_id']))->row_array();
+            }
+            if (empty($data['patient']) && !empty($data['appointment']['appointment_mobile'])) {
+                $clean_mob = substr(preg_replace('/[^0-9]/', '', $data['appointment']['appointment_mobile']), -10);
+                $data['patient'] = $this->db->like('MOBILE', $clean_mob)->get('userlogin')->row_array();
+            }
+            if (empty($data['patient']) && !empty($data['booking']['patient_mobile'])) {
+                $clean_mob = substr(preg_replace('/[^0-9]/', '', $data['booking']['patient_mobile']), -10);
+                $data['patient'] = $this->db->like('MOBILE', $clean_mob)->get('userlogin')->row_array();
             }
         }
 
