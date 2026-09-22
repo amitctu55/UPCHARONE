@@ -2518,18 +2518,48 @@ class Home extends CI_Controller
 			return;
 		}
 
-		if (isset($_POST['submit'])) {
-			$data['src'] = $this->Userlogin_Model->updateprofile();
-			$this->session->set_flashdata('flashmsg', "<div class='alert alert-success'>Profile photo updated successfully!</div>");
+		$is_ajax = $this->input->is_ajax_request() || $this->input->post('ajax');
+
+		// 1. Photo Upload Action
+		if (isset($_POST['upload_photo']) || (!empty($_FILES['file']['name']) && isset($_POST['submit']))) {
+			$res = $this->Userlogin_Model->updateprofile($userid);
+			if ($is_ajax) {
+				$this->output->set_content_type('application/json')->set_output(json_encode($res));
+				return;
+			}
+			if (is_array($res) && isset($res['status']) && $res['status'] === 'error') {
+				$this->session->set_flashdata('flashmsg', "<div class='alert alert-danger'>" . html_escape($res['message']) . "</div>");
+			} else {
+				$this->session->set_flashdata('flashmsg', "<div class='alert alert-success'>Profile photo updated successfully!</div>");
+			}
+			redirect('updateprofile');
+			return;
 		}
 
+		// 2. Personal & Medical Details Update Action
+		if (isset($_POST['submit_profile']) || $this->input->post('action') === 'update_profile' || (isset($_POST['submit']) && empty($_FILES['file']['name']))) {
+			$res = $this->Userlogin_Model->profile($userid);
+			if ($is_ajax) {
+				$this->output->set_content_type('application/json')->set_output(json_encode($res));
+				return;
+			}
+			if (is_array($res) && isset($res['status']) && $res['status'] === 'error') {
+				$this->session->set_flashdata('flashmsg', "<div class='alert alert-danger'>" . html_escape($res['message']) . "</div>");
+			} else {
+				$msg = (is_array($res) && !empty($res['message'])) ? $res['message'] : 'Profile details updated successfully!';
+				$this->session->set_flashdata('flashmsg', "<div class='alert alert-success'>" . html_escape($msg) . "</div>");
+			}
+			redirect('updateprofile');
+			return;
+		}
+
+		$user = $this->db->get_where('userlogin', array('USERID' => $userid))->row();
+		$data['user'] = $user;
+		$data['data'] = $user;
 		$data['specialization'] = $this->db->order_by('name','asc')->where('status','1')->get('master_specialization')->result();
-		$user_img = $this->db->select('IMAGE')->get_where('userlogin', array('USERID' => $userid))->row('IMAGE');
+		$user_img = $user ? ($user->IMAGE ?: $user->PROFILEIMG) : '';
 		$data['src'] = $user_img ?: '';
-
-		if (empty($data['src'])) {
-			$data['imagerequired'] = 'required';
-		}
+		$data['imagerequired'] = empty($data['src']) ? 'required' : '';
 
 		$this->load->view('patient_header', $data);
 		$this->load->view('updateprofile', $data);

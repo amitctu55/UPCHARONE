@@ -171,52 +171,74 @@ function __construct() {
         );
     }
 
-public function updateprofile(){
-		
-	    $userid =$this->session->userdata('userid');
-		$uploadimage=$_FILES['file']['name'];
-		$extsign = strtolower(pathinfo($_FILES['file']['name'], PATHINFO_EXTENSION));
-		$allowed_exts = array('jpg', 'jpeg', 'png', 'webp');
-		
-		if (!empty($uploadimage)) 
-		{	
-			if (!in_array($extsign, $allowed_exts)) {
-				$flashmsg = '<div class="alert alert-danger"><strong>Invalid File Type!</strong> Only JPG, PNG, and WEBP images are allowed.</div>';
-				$this->session->set_flashdata('flashmsg', $flashmsg);
-				redirect('updateprofile');
-				return;
-			}
+    public function updateprofile($userid = null)
+    {
+        if (empty($userid)) {
+            $userid = intval($this->input->post('userid')) 
+                   ?: ($this->session->userdata('userid') ?: $this->session->userdata('user_id') ?: $this->session->userdata('USERID'));
+        }
 
-			$rname = rand(1111111,999999999);
-			$date  = date('Ymd');
-			$uploadimage = 'pic_'.$rname.$date.'.'.$extsign;
-			$upload_dir = FCPATH . 'admin1947/public/assets/upload/';
-			
-			if (!is_dir($upload_dir)) {
-				@mkdir($upload_dir, 0755, true);
-			}
+        if (empty($userid)) {
+            return array('status' => 'error', 'message' => 'Unable to identify patient account. Please login again.');
+        }
 
-			$config['upload_path']   = $upload_dir;
-			$config['allowed_types'] = 'jpg|jpeg|png|webp';
-			$config['max_size']      = 5120; // 5MB max limit
-			$config['file_name']     = $uploadimage;
-			$this->load->library('upload', $config);
-			
-			if (!$this->upload->do_upload('file'))
-			{
-				$error = $this->upload->display_errors();
-				$flashmsg='<div class="alert alert-danger"><strong>Upload Failed!</strong> '.$error.'</div>';
-				$this->session->set_flashdata('flashmsg',$flashmsg);
-				redirect('updateprofile');
-				return;
-			} else {
-				$udata = array('IMAGE' => $uploadimage);
-				$this->db->where('userid', $userid)->update('userlogin', $udata);
-				return $uploadimage;
-			}
-		}
-		redirect('profile');	
-	}
+        if (empty($_FILES['file']['name'])) {
+            return array('status' => 'error', 'message' => 'Please select an image file to upload.');
+        }
+
+        $uploadimage = $_FILES['file']['name'];
+        $extsign = strtolower(pathinfo($uploadimage, PATHINFO_EXTENSION));
+        $allowed_exts = array('jpg', 'jpeg', 'png', 'webp');
+
+        if (!in_array($extsign, $allowed_exts)) {
+            return array('status' => 'error', 'message' => 'Invalid file format. Only JPG, PNG, and WEBP images are allowed.');
+        }
+
+        $upload_dir = FCPATH . 'admin1947/public/assets/upload/';
+        if (!is_dir($upload_dir)) {
+            @mkdir($upload_dir, 0755, true);
+        }
+
+        $rname = rand(1111111, 999999999);
+        $date  = date('Ymd');
+        $newFilename = 'pic_' . $rname . $date . '.' . $extsign;
+
+        $config = array(
+            'upload_path'   => $upload_dir,
+            'allowed_types' => 'jpg|jpeg|png|webp',
+            'max_size'      => 5120, // 5MB max
+            'file_name'     => $newFilename,
+            'overwrite'     => TRUE
+        );
+
+        $this->load->library('upload');
+        $this->upload->initialize($config);
+
+        if (!$this->upload->do_upload('file')) {
+            $error = $this->upload->display_errors('', '');
+            return array('status' => 'error', 'message' => 'Upload failed: ' . $error);
+        }
+
+        // Successfully uploaded: update userlogin record
+        $udata = array(
+            'IMAGE'       => $newFilename,
+            'PROFILEIMG'  => $newFilename,
+            'UPDATE_DATE' => date('Y-m-d')
+        );
+
+        $this->db->where('USERID', $userid)->update('userlogin', $udata);
+
+        // Update session
+        $this->session->set_userdata('image', $newFilename);
+        $this->session->set_userdata('profileimg', $newFilename);
+
+        return array(
+            'status'   => 'success',
+            'message'  => 'Profile photo updated successfully!',
+            'filename' => $newFilename,
+            'url'      => base_url('admin1947/public/assets/upload/' . $newFilename)
+        );
+    }
 
 
 function change_password($id)
