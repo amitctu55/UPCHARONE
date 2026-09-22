@@ -513,7 +513,7 @@ class Home extends CI_Controller
 		$user_mobile = $user_row ? $user_row['MOBILE'] : '';
 
 		$data['user_data']         = $user_row;
-		$data['appointments_data'] = $this->Appointment_model->get_user_appointments($user_id);
+		$data['appointments_data'] = $this->Appointment_model->get_user_appointments($user_id, $user_mobile);
 		$data['wallet']            = $this->Wallet_model->get_or_create_wallet($user_id);
 		$data['wallet_history']    = $this->Wallet_model->get_transactions($user_id, 20, 0);
 		$data['point_ratio']       = floatval($this->Wallet_model->get_setting('point_to_inr_ratio', 1.00));

@@ -9,46 +9,168 @@ class Pathology extends CI_Controller
 		date_default_timezone_set("Asia/Kolkata");
 		$this->load->helper(array('query_string_helper','dbquery_helper','admin_helper','text'));
 		$this->load->model(array('doctor/pathology_model', 'doctor/Audit_footprint_model', 'masters/managementmodel'));
+		$this->_ensure_tables();
 	}
 
 	private function _ensure_tables()
 	{
 		try {
-			if ($this->db) {
-				if (!$this->db->table_exists('path_lab_test')) {
-					$this->db->query("CREATE TABLE IF NOT EXISTS `path_lab_test` (
-						`id` int(11) NOT NULL AUTO_INCREMENT,
-						`test_id` int(11) DEFAULT 0,
-						`path_lab_id` int(11) DEFAULT 0,
-						`lab_price` decimal(10,2) DEFAULT 0.00,
-						`comment` text DEFAULT NULL,
-						`status` varchar(10) DEFAULT '1',
-						`created_date` datetime DEFAULT NULL,
-						`updated_date` datetime DEFAULT NULL,
-						PRIMARY KEY (`id`),
-						KEY `test_id` (`test_id`),
-						KEY `path_lab_id` (`path_lab_id`)
-					) ENGINE=InnoDB DEFAULT CHARSET=utf8;");
+			if (!$this->db) {
+				return;
+			}
+
+			// 1. path_lab_test mapping table
+			if (!$this->db->table_exists('path_lab_test')) {
+				$this->db->query("CREATE TABLE IF NOT EXISTS `path_lab_test` (
+					`id` int(11) NOT NULL AUTO_INCREMENT,
+					`test_id` int(11) DEFAULT 0,
+					`path_lab_id` int(11) DEFAULT 0,
+					`lab_price` decimal(10,2) DEFAULT 0.00,
+					`comment` text DEFAULT NULL,
+					`status` varchar(10) DEFAULT '1',
+					`created_date` datetime DEFAULT NULL,
+					`updated_date` datetime DEFAULT NULL,
+					PRIMARY KEY (`id`),
+					KEY `test_id` (`test_id`),
+					KEY `path_lab_id` (`path_lab_id`)
+				) ENGINE=InnoDB DEFAULT CHARSET=utf8;");
+			}
+
+			// 2. pathtest master catalog table
+			if (!$this->db->table_exists('pathtest')) {
+				$this->db->query("CREATE TABLE IF NOT EXISTS `pathtest` (
+					`test_id` int(11) NOT NULL AUTO_INCREMENT,
+					`test_name` varchar(255) DEFAULT '',
+					`short_name` varchar(100) DEFAULT '',
+					`code` varchar(50) DEFAULT '',
+					`department` varchar(100) DEFAULT 'Biochemistry',
+					`container_color` varchar(50) DEFAULT 'Purple (EDTA)',
+					`specimen_type` varchar(100) DEFAULT 'Whole Blood',
+					`fasting_required` tinyint(1) DEFAULT 0,
+					`standard_tat_hours` int(11) DEFAULT 24,
+					`method` varchar(255) DEFAULT '',
+					`amount` decimal(10,2) DEFAULT 0.00,
+					`status` varchar(10) DEFAULT '1',
+					PRIMARY KEY (`test_id`)
+				) ENGINE=InnoDB DEFAULT CHARSET=utf8;");
+			}
+
+			// 3. system_audit_footprints ledger table
+			if (!$this->db->table_exists('system_audit_footprints')) {
+				$this->db->query("CREATE TABLE IF NOT EXISTS `system_audit_footprints` (
+					`id` BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+					`entity_type` VARCHAR(50) NOT NULL COMMENT 'lab, test_mapping, booking, specimen, master_test',
+					`entity_id` INT UNSIGNED NOT NULL,
+					`action` VARCHAR(50) NOT NULL,
+					`user_id` INT UNSIGNED NULL,
+					`user_role` VARCHAR(50) NULL,
+					`ip_address` VARCHAR(45) NOT NULL,
+					`user_agent` TEXT,
+					`payload_before` LONGTEXT NULL,
+					`payload_after` LONGTEXT NULL,
+					`remarks` VARCHAR(255) NULL,
+					`created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+					INDEX `idx_entity` (`entity_type`, `entity_id`),
+					INDEX `idx_user` (`user_id`),
+					INDEX `idx_action` (`action`)
+				) ENGINE=InnoDB DEFAULT CHARSET=utf8;");
+			}
+
+			// 4. sample_custody_tracking chain-of-custody table
+			if (!$this->db->table_exists('sample_custody_tracking')) {
+				$this->db->query("CREATE TABLE IF NOT EXISTS `sample_custody_tracking` (
+					`id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+					`booking_id` INT UNSIGNED NOT NULL,
+					`barcode_number` VARCHAR(100) NOT NULL,
+					`phlebotomist_user_id` INT UNSIGNED NULL,
+					`sample_type` VARCHAR(100) NOT NULL DEFAULT 'Blood',
+					`collected_at` DATETIME NULL,
+					`collection_temperature_c` DECIMAL(4, 1) DEFAULT NULL,
+					`phlebotomist_signature_url` VARCHAR(255) DEFAULT NULL,
+					`handover_to_lab_at` DATETIME NULL,
+					`lab_receiver_name` VARCHAR(150) NULL,
+					`handover_verification_otp` VARCHAR(10) NULL,
+					`sample_condition_on_receipt` ENUM('intact', 'hemolyzed', 'lipemic', 'leaked', 'quantity_insufficient') DEFAULT 'intact',
+					`status` ENUM('pending', 'collected', 'in_transit', 'accepted_by_lab', 'rejected_by_lab') DEFAULT 'pending',
+					`created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+					INDEX `idx_booking` (`booking_id`),
+					INDEX `idx_barcode` (`barcode_number`)
+				) ENGINE=InnoDB DEFAULT CHARSET=utf8;");
+			}
+
+			// 5. staff logistics/phlebotomists table
+			if (!$this->db->table_exists('staff')) {
+				$this->db->query("CREATE TABLE IF NOT EXISTS `staff` (
+					`id` INT(11) NOT NULL AUTO_INCREMENT PRIMARY KEY,
+					`employee_id` VARCHAR(50) NULL,
+					`name` VARCHAR(100) NOT NULL,
+					`surname` VARCHAR(100) NULL,
+					`email` VARCHAR(150) NULL,
+					`contact_no` VARCHAR(20) NULL,
+					`designation` VARCHAR(100) DEFAULT 'Phlebotomist',
+					`department` VARCHAR(100) DEFAULT 'Logistics',
+					`status` TINYINT(1) DEFAULT 1,
+					`is_active` TINYINT(1) DEFAULT 1,
+					`created_at` DATETIME DEFAULT CURRENT_TIMESTAMP
+				) ENGINE=InnoDB DEFAULT CHARSET=utf8;");
+			}
+
+			// 6. Ensure columns on pathlab
+			if ($this->db->table_exists('pathlab')) {
+				$labFields = $this->db->list_fields('pathlab');
+				if (!in_array('commission_rate', $labFields)) {
+					$this->db->query("ALTER TABLE `pathlab` ADD COLUMN `commission_rate` DECIMAL(5,2) DEFAULT 15.00 AFTER `status`");
 				}
-				if (!$this->db->table_exists('pathtest')) {
-					$this->db->query("CREATE TABLE IF NOT EXISTS `pathtest` (
-						`test_id` int(11) NOT NULL AUTO_INCREMENT,
-						`test_name` varchar(255) DEFAULT '',
-						`short_name` varchar(100) DEFAULT '',
-						`code` varchar(50) DEFAULT '',
-						`department` varchar(100) DEFAULT 'Biochemistry',
-						`container_color` varchar(50) DEFAULT 'Purple (EDTA)',
-						`specimen_type` varchar(100) DEFAULT 'Whole Blood',
-						`fasting_required` tinyint(1) DEFAULT 0,
-						`standard_tat_hours` int(11) DEFAULT 24,
-						`method` varchar(255) DEFAULT '',
-						`amount` decimal(10,2) DEFAULT 0.00,
-						`status` varchar(10) DEFAULT '1',
-						PRIMARY KEY (`test_id`)
-					) ENGINE=InnoDB DEFAULT CHARSET=utf8;");
+				if (!in_array('nabl_accredited', $labFields)) {
+					$this->db->query("ALTER TABLE `pathlab` ADD COLUMN `nabl_accredited` TINYINT(1) DEFAULT 0 AFTER `commission_rate`");
+				}
+				if (!in_array('license_number', $labFields)) {
+					$this->db->query("ALTER TABLE `pathlab` ADD COLUMN `license_number` VARCHAR(100) DEFAULT NULL AFTER `nabl_accredited`");
+				}
+				if (!in_array('raw_password_temp', $labFields)) {
+					$this->db->query("ALTER TABLE `pathlab` ADD COLUMN `raw_password_temp` VARCHAR(100) DEFAULT NULL AFTER `license_number`");
 				}
 			}
-		} catch (Throwable $e) {}
+
+			// 7. Ensure columns on pathtest
+			if ($this->db->table_exists('pathtest')) {
+				$testFields = $this->db->list_fields('pathtest');
+				if (!in_array('department', $testFields)) {
+					$this->db->query("ALTER TABLE `pathtest` ADD COLUMN `department` VARCHAR(100) DEFAULT 'Biochemistry'");
+				}
+				if (!in_array('container_color', $testFields)) {
+					$this->db->query("ALTER TABLE `pathtest` ADD COLUMN `container_color` VARCHAR(50) DEFAULT 'Purple (EDTA)'");
+				}
+				if (!in_array('specimen_type', $testFields)) {
+					$this->db->query("ALTER TABLE `pathtest` ADD COLUMN `specimen_type` VARCHAR(100) DEFAULT 'Whole Blood'");
+				}
+				if (!in_array('fasting_required', $testFields)) {
+					$this->db->query("ALTER TABLE `pathtest` ADD COLUMN `fasting_required` TINYINT(1) DEFAULT 0");
+				}
+				if (!in_array('standard_tat_hours', $testFields)) {
+					$this->db->query("ALTER TABLE `pathtest` ADD COLUMN `standard_tat_hours` INT UNSIGNED DEFAULT 24");
+				}
+			}
+
+			// 8. Ensure columns on path_book
+			if ($this->db->table_exists('path_book')) {
+				$bookFields = $this->db->list_fields('path_book');
+				if (!in_array('order_stage', $bookFields)) {
+					$this->db->query("ALTER TABLE `path_book` ADD COLUMN `order_stage` VARCHAR(50) DEFAULT 'BOOKED'");
+				}
+				if (!in_array('assigned_collector_id', $bookFields)) {
+					$this->db->query("ALTER TABLE `path_book` ADD COLUMN `assigned_collector_id` INT DEFAULT NULL");
+				}
+				if (!in_array('vial_barcode', $bookFields)) {
+					$this->db->query("ALTER TABLE `path_book` ADD COLUMN `vial_barcode` VARCHAR(100) DEFAULT NULL");
+				}
+				if (!in_array('collection_status', $bookFields)) {
+					$this->db->query("ALTER TABLE `path_book` ADD COLUMN `collection_status` VARCHAR(50) DEFAULT 'pending'");
+				}
+			}
+		} catch (Throwable $e) {
+			log_message('error', 'Pathology self-healing schema: ' . $e->getMessage());
+		}
 	}
 	
 	/**

@@ -594,12 +594,16 @@ $ref_code      = isset($referral_code) ? $referral_code : 'UPCH-PATIENT-50';
                                         <i class="fa fa-undo"></i> Refund Credited
                                     </span>
                                 <?php endif; ?>
-                            <?php else: ?>
+                            <?php elseif ($is_paid): ?>
                                 <span class="badge-appt badge-appt-confirmed">
                                     <i class="fa fa-check-circle"></i> Confirmed
                                 </span>
-                                <span class="badge-appt <?=$is_paid ? 'badge-appt-paid' : 'badge-appt-unpaid';?>">
-                                    <i class="fa fa-credit-card"></i> <?=$is_paid ? 'Paid' : 'Payment Pending';?>
+                                <span class="badge-appt badge-appt-paid">
+                                    <i class="fa fa-credit-card"></i> Paid
+                                </span>
+                            <?php else: ?>
+                                <span class="badge-appt badge-appt-unpaid">
+                                    <i class="fa fa-clock-o"></i> Payment Pending
                                 </span>
                             <?php endif; ?>
                         </div>
@@ -655,7 +659,7 @@ $ref_code      = isset($referral_code) ? $referral_code : 'UPCH-PATIENT-50';
                             <?php elseif ($is_paid): ?>
                                 <span style="color: #16a34a; font-weight: 600;"><i class="fa fa-shield"></i> Payment Secured via UPCHAR Gateway</span>
                             <?php else: ?>
-                                <span style="color: #d97706; font-weight: 600;"><i class="fa fa-info-circle"></i> Pay online using Points or Gateway</span>
+                                <span style="color: #d97706; font-weight: 600;"><i class="fa fa-info-circle"></i> Pay online using Points or Gateway to confirm</span>
                             <?php endif; ?>
                         </div>
 
@@ -674,13 +678,18 @@ $ref_code      = isset($referral_code) ? $referral_code : 'UPCH-PATIENT-50';
                                 <?php endif; ?>
 
                                 <?php if (!$is_paid): ?>
-                                    <a href="<?=base_url('payment/checkout?purpose=APPOINTMENT&reference_id='.$appt_id.'&amount='.$amount.'&item_name='.urlencode('Consultation with '.$doctor));?>" class="btn-appt-pay">
-                                        <i class="fa fa-bolt"></i> Pay ₹<?=number_format($amount, 2);?> Now
+                                    <a href="<?=base_url('paysecure/acheckout?aid='.$appt_id);?>" class="btn-appt-pay">
+                                        <i class="fa fa-bolt"></i> Complete Payment (₹<?=number_format($amount, 2);?>)
                                     </a>
                                     <button type="button" class="btn-appt-cancel" onclick="cancelAppointment('<?=$appt_id;?>', '<?=$p->appointment_date;?>')">
                                         <i class="fa fa-times"></i> Cancel
                                     </button>
                                 <?php else: ?>
+                                    <?php if (!empty($p->ref_no)): ?>
+                                        <a href="<?=base_url('payment/receipt/'.$p->ref_no);?>" target="_blank" style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; color: #0d7a6e; background: #f0fdfa; border: 1px solid #ccfbf1; padding: 6px 14px; border-radius: 8px; text-decoration: none;">
+                                            <i class="fa fa-file-text-o"></i> View Receipt
+                                        </a>
+                                    <?php endif; ?>
                                     <button type="button" class="btn-appt-cancel" onclick="cancelAppointment('<?=$appt_id;?>', '<?=$p->appointment_date;?>')">
                                         <i class="fa fa-times"></i> Cancel &amp; Refund
                                     </button>

@@ -10,6 +10,29 @@ class Pathlabreg extends CI_Controller
 		$this->load->model('Pathlabregmodel');
 		$this->load->model('Audit_footprint_model');
 		$this->load->helper(array('query_string_helper','dbquery_helper','admin_helper','text'));
+		$this->_ensure_tables();
+	}
+
+	private function _ensure_tables()
+	{
+		try {
+			if (!$this->db) return;
+			if ($this->db->table_exists('pathlab')) {
+				$fields = $this->db->list_fields('pathlab');
+				if (!in_array('commission_rate', $fields)) {
+					$this->db->query("ALTER TABLE `pathlab` ADD COLUMN `commission_rate` DECIMAL(5,2) DEFAULT 15.00 AFTER `status`");
+				}
+				if (!in_array('nabl_accredited', $fields)) {
+					$this->db->query("ALTER TABLE `pathlab` ADD COLUMN `nabl_accredited` TINYINT(1) DEFAULT 0 AFTER `commission_rate`");
+				}
+				if (!in_array('license_number', $fields)) {
+					$this->db->query("ALTER TABLE `pathlab` ADD COLUMN `license_number` VARCHAR(100) DEFAULT NULL AFTER `nabl_accredited`");
+				}
+				if (!in_array('raw_password_temp', $fields)) {
+					$this->db->query("ALTER TABLE `pathlab` ADD COLUMN `raw_password_temp` VARCHAR(100) DEFAULT NULL AFTER `license_number`");
+				}
+			}
+		} catch (Throwable $e) {}
 	}
 	 
 	/**

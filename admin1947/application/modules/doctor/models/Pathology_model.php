@@ -324,63 +324,149 @@ class Pathology_model extends CI_Model
 
 	public function get_dashboard_metrics()
 	{
-		$stats = array();
-		$stats['total_labs']        = $this->db->count_all('pathlab');
-		$stats['approved_labs']     = $this->db->where('approved', '1')->count_all_results('pathlab');
-		$stats['total_tests']       = $this->db->count_all('pathtest');
-		$stats['total_assignments'] = $this->db->count_all('path_lab_test');
-		$stats['active_assignments']= $this->db->where('status', '1')->count_all_results('path_lab_test');
-		
-		// Bookings & Logistics
-		$stats['total_bookings']     = $this->db->count_all('path_book');
-		$stats['pending_collection'] = $this->db->group_start()->where('order_stage', 'BOOKED')->or_where('order_stage', 'PENDING')->or_where('order_stage IS NULL')->group_end()->count_all_results('path_book');
-		$stats['in_transit']         = $this->db->where('order_stage', 'IN_TRANSIT')->count_all_results('path_book');
-		$stats['received_at_lab']    = $this->db->group_start()->where('order_stage', 'RECEIVED_AT_LAB')->or_where('order_stage', 'SAMPLE_COLLECTED')->group_end()->count_all_results('path_book');
-		$stats['completed_reports']  = $this->db->group_start()->where('order_stage', 'REPORT_READY')->or_where('order_stage', 'COMPLETED')->group_end()->count_all_results('path_book');
-		$stats['active_phlebos']     = $this->db->count_all('staff');
+		$stats = array(
+			'total_labs'          => 0,
+			'approved_labs'       => 0,
+			'total_tests'         => 0,
+			'total_assignments'   => 0,
+			'active_assignments'  => 0,
+			'total_bookings'      => 0,
+			'pending_collection'  => 0,
+			'in_transit'          => 0,
+			'received_at_lab'     => 0,
+			'completed_reports'   => 0,
+			'active_phlebos'      => 0,
+			'recent_footprints'   => array()
+		);
 
-		// Recent footprints
-		$this->db->order_by('id', 'DESC');
-		$this->db->limit(10);
-		$stats['recent_footprints'] = $this->db->get('system_audit_footprints')->result();
+		try {
+			if ($this->db && $this->db->table_exists('pathlab')) {
+				$stats['total_labs']    = $this->db->count_all('pathlab');
+				$stats['approved_labs'] = $this->db->where('approved', '1')->count_all_results('pathlab');
+			}
+			if ($this->db && $this->db->table_exists('pathtest')) {
+				$stats['total_tests'] = $this->db->count_all('pathtest');
+			}
+			if ($this->db && $this->db->table_exists('path_lab_test')) {
+				$stats['total_assignments']  = $this->db->count_all('path_lab_test');
+				$stats['active_assignments'] = $this->db->where('status', '1')->count_all_results('path_lab_test');
+			}
+			if ($this->db && $this->db->table_exists('path_book')) {
+				$stats['total_bookings'] = $this->db->count_all('path_book');
+				$bookFields = $this->db->list_fields('path_book');
+				if (in_array('order_stage', $bookFields)) {
+					$stats['pending_collection'] = $this->db->group_start()->where('order_stage', 'BOOKED')->or_where('order_stage', 'PENDING')->or_where('order_stage IS NULL', NULL, FALSE)->group_end()->count_all_results('path_book');
+					$stats['in_transit']         = $this->db->where('order_stage', 'IN_TRANSIT')->count_all_results('path_book');
+					$stats['received_at_lab']    = $this->db->group_start()->where('order_stage', 'RECEIVED_AT_LAB')->or_where('order_stage', 'SAMPLE_COLLECTED')->group_end()->count_all_results('path_book');
+					$stats['completed_reports']  = $this->db->group_start()->where('order_stage', 'REPORT_READY')->or_where('order_stage', 'COMPLETED')->group_end()->count_all_results('path_book');
+				}
+			}
+			if ($this->db && $this->db->table_exists('staff')) {
+				$stats['active_phlebos'] = $this->db->count_all('staff');
+			}
+			if ($this->db && $this->db->table_exists('system_audit_footprints')) {
+				$this->db->order_by('id', 'DESC');
+				$this->db->limit(10);
+				$q = $this->db->get('system_audit_footprints');
+				$stats['recent_footprints'] = ($q && is_object($q)) ? $q->result() : array();
+			}
+		} catch (Throwable $e) {
+			log_message('error', 'get_dashboard_metrics: ' . $e->getMessage());
+		}
 
 		return $stats;
 	}
 
 	public function get_custody_bookings($limit = 20, $offset = 0, $filters = array())
 	{
-		$this->db->select('path_book.*, pathlab.name as lab_name, staff.name as phlebo_name, staff.surname as phlebo_surname, staff.contact_no as phlebo_mobile, sample_custody_tracking.id as custody_id, sample_custody_tracking.barcode_number, sample_custody_tracking.collection_temperature_c, sample_custody_tracking.status as custody_status, sample_custody_tracking.handover_verification_otp, sample_custody_tracking.sample_condition_on_receipt');
-		$this->db->from('path_book');
-		$this->db->join('pathlab', 'pathlab.id = path_book.pathlab_id', 'left');
-		$this->db->join('staff', 'staff.id = path_book.assigned_collector_id', 'left');
-		$this->db->join('sample_custody_tracking', 'sample_custody_tracking.booking_id = path_book.booking_id', 'left');
+		try {
+			if (!$this->db || !$this->db->table_exists('path_book')) {
+				return array();
+			}
 
-		if (!empty($filters['stage'])) {
-			$this->db->where('path_book.order_stage', $filters['stage']);
-		}
-		if (!empty($filters['keyword'])) {
-			$kw = $this->db->escape_str($filters['keyword']);
-			$this->db->where("(path_book.patient_name LIKE '%{$kw}%' OR path_book.booking_id LIKE '%{$kw}%' OR path_book.patient_mobile LIKE '%{$kw}%' OR sample_custody_tracking.barcode_number LIKE '%{$kw}%')");
-		}
+			$hasCustodyTable = $this->db->table_exists('sample_custody_tracking');
+			$hasStaffTable   = $this->db->table_exists('staff');
+			$hasLabTable     = $this->db->table_exists('pathlab');
+			$bookFields      = $this->db->list_fields('path_book');
 
-		$this->db->order_by('path_book.booking_id', 'DESC');
-		$this->db->limit($limit, $offset);
-		return $this->db->get()->result();
+			$select = 'path_book.*';
+			if ($hasLabTable) {
+				$select .= ', pathlab.name as lab_name';
+			}
+			if ($hasStaffTable) {
+				$select .= ', staff.name as phlebo_name, staff.surname as phlebo_surname, staff.contact_no as phlebo_mobile';
+			}
+			if ($hasCustodyTable) {
+				$select .= ', sample_custody_tracking.id as custody_id, sample_custody_tracking.barcode_number, sample_custody_tracking.collection_temperature_c, sample_custody_tracking.status as custody_status, sample_custody_tracking.handover_verification_otp, sample_custody_tracking.sample_condition_on_receipt';
+			}
+
+			$this->db->select($select);
+			$this->db->from('path_book');
+
+			if ($hasLabTable) {
+				$this->db->join('pathlab', 'pathlab.id = path_book.pathlab_id', 'left');
+			}
+			if ($hasStaffTable && in_array('assigned_collector_id', $bookFields)) {
+				$this->db->join('staff', 'staff.id = path_book.assigned_collector_id', 'left');
+			}
+			if ($hasCustodyTable) {
+				$this->db->join('sample_custody_tracking', 'sample_custody_tracking.booking_id = path_book.booking_id', 'left');
+			}
+
+			if (!empty($filters['stage']) && in_array('order_stage', $bookFields)) {
+				$this->db->where('path_book.order_stage', $filters['stage']);
+			}
+			if (!empty($filters['keyword'])) {
+				$kw = $this->db->escape_str($filters['keyword']);
+				$cond = "(path_book.patient_name LIKE '%{$kw}%' OR path_book.booking_id LIKE '%{$kw}%' OR path_book.patient_mobile LIKE '%{$kw}%'";
+				if ($hasCustodyTable) {
+					$cond .= " OR sample_custody_tracking.barcode_number LIKE '%{$kw}%'";
+				}
+				$cond .= ")";
+				$this->db->where($cond);
+			}
+
+			$this->db->order_by('path_book.booking_id', 'DESC');
+			$this->db->limit($limit, $offset);
+			$q = $this->db->get();
+			return ($q && is_object($q)) ? $q->result() : array();
+		} catch (Throwable $e) {
+			log_message('error', 'get_custody_bookings: ' . $e->getMessage());
+			return array();
+		}
 	}
 
 	public function count_custody_bookings($filters = array())
 	{
-		$this->db->from('path_book');
-		$this->db->join('sample_custody_tracking', 'sample_custody_tracking.booking_id = path_book.booking_id', 'left');
+		try {
+			if (!$this->db || !$this->db->table_exists('path_book')) {
+				return 0;
+			}
 
-		if (!empty($filters['stage'])) {
-			$this->db->where('path_book.order_stage', $filters['stage']);
+			$hasCustodyTable = $this->db->table_exists('sample_custody_tracking');
+			$bookFields      = $this->db->list_fields('path_book');
+
+			$this->db->from('path_book');
+			if ($hasCustodyTable) {
+				$this->db->join('sample_custody_tracking', 'sample_custody_tracking.booking_id = path_book.booking_id', 'left');
+			}
+
+			if (!empty($filters['stage']) && in_array('order_stage', $bookFields)) {
+				$this->db->where('path_book.order_stage', $filters['stage']);
+			}
+			if (!empty($filters['keyword'])) {
+				$kw = $this->db->escape_str($filters['keyword']);
+				$cond = "(path_book.patient_name LIKE '%{$kw}%' OR path_book.booking_id LIKE '%{$kw}%' OR path_book.patient_mobile LIKE '%{$kw}%'";
+				if ($hasCustodyTable) {
+					$cond .= " OR sample_custody_tracking.barcode_number LIKE '%{$kw}%'";
+				}
+				$cond .= ")";
+				$this->db->where($cond);
+			}
+			return (int)$this->db->count_all_results();
+		} catch (Throwable $e) {
+			return 0;
 		}
-		if (!empty($filters['keyword'])) {
-			$kw = $this->db->escape_str($filters['keyword']);
-			$this->db->where("(path_book.patient_name LIKE '%{$kw}%' OR path_book.booking_id LIKE '%{$kw}%' OR path_book.patient_mobile LIKE '%{$kw}%' OR sample_custody_tracking.barcode_number LIKE '%{$kw}%')");
-		}
-		return $this->db->count_all_results();
 	}
 
 	public function assign_phlebotomist($booking_id, $staff_id, $barcode = null, $temp = null)

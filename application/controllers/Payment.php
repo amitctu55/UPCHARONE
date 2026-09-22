@@ -344,6 +344,7 @@ class Payment extends CI_Controller {
                 'payment_mode'       => 'RAZORPAY',
                 'ref_no'             => $order['internal_order_ref'],
                 'pay_date'           => date('Y-m-d H:i:s'),
+                'status'             => '1',
                 'appointment_status' => '1',
                 'user_id'            => $userId
             ));

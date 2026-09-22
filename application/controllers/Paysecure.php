@@ -167,6 +167,7 @@ class Paysecure extends CI_Controller {
 				'payment_mode'       => 'UPCHAR_POINTS',
 				'ref_no'             => $txn_ref,
 				'pay_date'           => date('Y-m-d H:i:s'),
+				'status'             => '1',
 				'appointment_status' => '1',
 				'user_id'            => $userId
 			);
