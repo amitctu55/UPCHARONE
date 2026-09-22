@@ -1034,6 +1034,162 @@ body {
     background: #00a896;
     color: #ffffff;
 }
+/* ---------------------------------------------------------
+   CHECKOUT & MERGED CART STYLES
+   --------------------------------------------------------- */
+.checkout-header-bar {
+    background: #FFFFFF;
+    border-radius: 16px;
+    border: 1px solid #E2E8F0;
+    padding: 20px 24px;
+    margin-bottom: 24px;
+    box-shadow: 0 4px 16px rgba(15, 23, 42, 0.03);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+.checkout-stepper { display: flex; align-items: center; gap: 10px; }
+.step-pill {
+    display: flex; align-items: center; gap: 7px;
+    font-size: 12.5px; font-weight: 600; color: #94A3B8;
+    padding: 6px 14px; border-radius: 9999px; background: #F1F5F9;
+}
+.step-pill.completed { background: #E6F4EA; color: #16A34A; }
+.step-pill.active { background: #F0FDFA; color: #00A896; border: 1.5px solid #00A896; font-weight: 700; }
+.step-divider { color: #CBD5E1; font-size: 11px; }
+
+.checkout-card {
+    background: #FFFFFF;
+    border: 1px solid #E2E8F0;
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 20px rgba(15, 23, 42, 0.04);
+}
+.card-step-header {
+    display: flex; justify-content: space-between; align-items: center;
+    border-bottom: 1px solid #F1F5F9; padding-bottom: 14px; margin-bottom: 18px;
+}
+.card-step-title {
+    font-size: 16.5px; font-weight: 800; color: #0F172A; margin: 0;
+    display: flex; align-items: center; gap: 10px;
+}
+.badge-step-num {
+    width: 26px; height: 26px; background: #00A896; color: #FFFFFF;
+    border-radius: 50%; display: inline-flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 800;
+}
+.patient-selector-pills {
+    display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px;
+    background: #F8FAFC; padding: 8px; border-radius: 12px; border: 1px solid #E2E8F0;
+}
+.patient-pill-btn {
+    border: 1.5px solid #CBD5E1; background: #FFFFFF; color: #475569;
+    font-size: 12px; font-weight: 600; padding: 6px 13px; border-radius: 8px;
+    cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: all 0.15s ease;
+}
+.patient-pill-btn.active {
+    background: #00A896; color: #FFFFFF; border-color: #00A896; box-shadow: 0 2px 8px rgba(0, 168, 150, 0.25);
+}
+.upchar-input-wrap label { font-size: 12.5px; font-weight: 700; color: #334155; margin-bottom: 5px; display: block; }
+.upchar-input-wrap .form-control {
+    border-radius: 10px; border: 1.5px solid #E2E8F0; padding: 9px 13px;
+    font-size: 13px; color: #0F172A; background-color: #FFFFFF; box-shadow: none !important;
+}
+.upchar-input-wrap .form-control:focus { border-color: #00A896; box-shadow: 0 0 0 3px rgba(0, 168, 150, 0.12) !important; }
+
+.choice-card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; margin-bottom: 16px; }
+.choice-card {
+    border: 1.5px solid #E2E8F0; background: #FFFFFF; border-radius: 12px;
+    padding: 14px 16px; cursor: pointer; transition: all 0.15s ease;
+    display: flex; align-items: flex-start; gap: 12px;
+}
+.choice-card:hover { border-color: #94A3B8; background: #F8FAFC; }
+.choice-card.selected { border-color: #00A896; background: #F0FDFA; box-shadow: 0 2px 10px rgba(0, 168, 150, 0.1); }
+.choice-card input[type="radio"] { margin-top: 3px; accent-color: #00A896; width: 17px; height: 17px; cursor: pointer; }
+.choice-card-info { flex-grow: 1; }
+.choice-card-info strong { font-size: 13.5px; font-weight: 700; color: #0F172A; display: block; margin-bottom: 2px; }
+.choice-card-info p { font-size: 12px; color: #64748B; margin: 0; line-height: 1.4; }
+.choice-badge-free { background: #DCFCE7; color: #16A34A; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 6px; display: inline-block; margin-top: 4px; }
+
+.fasting-notice-box {
+    background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 10px;
+    padding: 12px 14px; display: flex; align-items: center; gap: 12px; margin-top: 14px;
+}
+.fasting-notice-box i { color: #D97706; font-size: 18px; flex-shrink: 0; }
+.fasting-notice-box div { font-size: 12px; color: #92400E; line-height: 1.4; }
+
+.date-chips-wrap { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+.date-chip {
+    border: 1.5px solid #E2E8F0; background: #FFFFFF; padding: 7px 13px;
+    border-radius: 10px; font-size: 12.5px; font-weight: 600; color: #475569;
+    cursor: pointer; transition: all 0.15s ease;
+}
+.date-chip.active { background: #00A896; border-color: #00A896; color: #FFFFFF; box-shadow: 0 2px 8px rgba(0, 168, 150, 0.25); }
+
+.checkout-summary-card {
+    background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 16px;
+    padding: 22px 20px; box-shadow: 0 4px 20px rgba(15, 23, 42, 0.05);
+    position: sticky; top: 90px;
+}
+.summary-header {
+    display: flex; justify-content: space-between; align-items: center;
+    border-bottom: 1px solid #F1F5F9; padding-bottom: 12px; margin-bottom: 14px;
+}
+.summary-header h3 { font-size: 15.5px; font-weight: 800; color: #0F172A; margin: 0; display: flex; align-items: center; gap: 8px; }
+.summary-clear-btn {
+    background: none; border: none; color: #EF4444; font-size: 11.5px;
+    font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;
+    padding: 4px 8px; border-radius: 6px;
+}
+.checkout-items-list { max-height: 260px; overflow-y: auto; padding-right: 4px; margin-bottom: 14px; }
+.checkout-item-row {
+    background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px;
+    padding: 10px 12px; margin-bottom: 8px; display: flex; justify-content: space-between;
+    align-items: center; gap: 10px;
+}
+.checkout-item-name { font-size: 12.5px; font-weight: 700; color: #0F172A; margin-bottom: 2px; }
+.checkout-item-meta { font-size: 11px; color: #64748B; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.checkout-item-price-wrap { text-align: right; display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.checkout-item-price { font-size: 13.5px; font-weight: 800; color: #00A896; }
+.checkout-item-mrp { font-size: 11px; color: #94A3B8; text-decoration: line-through; display: block; }
+.btn-remove-item {
+    width: 26px; height: 26px; border-radius: 7px; background: #FFFFFF;
+    border: 1px solid #FECACA; color: #EF4444; display: inline-flex;
+    align-items: center; justify-content: center; cursor: pointer; font-size: 11px;
+}
+.btn-remove-item:hover { background: #EF4444; color: #FFFFFF; }
+
+.price-breakdown { background: #F8FAFC; border-radius: 12px; padding: 13px; margin-bottom: 14px; border: 1px solid #E2E8F0; }
+.price-row { display: flex; justify-content: space-between; align-items: center; font-size: 12.5px; color: #475569; margin-bottom: 7px; }
+.price-row.discount { color: #16A34A; font-weight: 600; }
+.price-row.total { border-top: 1.5px dashed #CBD5E1; padding-top: 9px; margin-top: 9px; font-size: 14px; font-weight: 800; color: #0F172A; }
+.grand-amount { font-size: 20px; font-weight: 900; color: #00A896; }
+
+.btn-confirm-checkout {
+    width: 100%; background: #00A896; color: #FFFFFF; border: none;
+    border-radius: 12px; padding: 13px 18px; font-size: 14.5px; font-weight: 800;
+    display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer;
+    box-shadow: 0 4px 14px rgba(0, 168, 150, 0.35); transition: all 0.2s ease;
+}
+.btn-confirm-checkout:hover { background: #008f80; transform: translateY(-1px); color: #FFFFFF; }
+
+.security-assurance-list { margin-top: 14px; border-top: 1px solid #F1F5F9; padding-top: 12px; font-size: 11px; color: #64748B; }
+.security-assurance-list div { display: flex; align-items: center; gap: 7px; margin-bottom: 5px; }
+.security-assurance-list i { color: #16A34A; font-size: 12px; }
+
+.empty-checkout-card {
+    background: #FFFFFF; border-radius: 16px; border: 1px solid #E2E8F0;
+    padding: 40px 20px; text-align: center; box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+    max-width: 850px; margin: 20px auto 40px;
+}
+.empty-icon-circle {
+    width: 68px; height: 68px; border-radius: 50%; background: #F0FDFA;
+    color: #00A896; display: inline-flex; align-items: center; justify-content: center;
+    font-size: 28px; margin-bottom: 14px;
+}
 </style>
 
 <!-- =========================================================
@@ -1130,6 +1286,10 @@ body {
         </a>
         <a href="<?=base_url('mytest?tab=scans' . ($selected_city ? '&city='.$selected_city : '') . ($selected_lab ? '&lab_id='.$selected_lab : '') . ($keyword ? '&keyword='.urlencode($keyword) : ''));?>" class="tab-nav-btn <?=($active_tab == 'scans') ? 'active' : '';?>">
             <i class="fas fa-x-ray"></i> Radiology &amp; Scans
+        </a>
+        <a href="<?=base_url('mytest?tab=checkout' . ($selected_city ? '&city='.$selected_city : '') . ($selected_lab ? '&lab_id='.$selected_lab : '') . ($keyword ? '&keyword='.urlencode($keyword) : ''));?>" class="tab-nav-btn <?=($active_tab == 'checkout') ? 'active' : '';?>" id="tabCheckoutBtn" style="border-left: 1px solid #e2e8f0; margin-left: 4px; padding-left: 18px;">
+            <i class="fas fa-shopping-cart" style="color: #ec4899;"></i> Test Cart &amp; Checkout 
+            <span class="tab-count-badge cart-total-items" style="<?=empty($cart) ? 'display:none;' : '';?> background: #ec4899; color: #ffffff;"><?=count($cart);?></span>
         </a>
     </div>
 </div>
@@ -1972,6 +2132,400 @@ body {
         </div>
     </div>
 
+<!-- =========================================================
+     TAB CONTENT: TEST CART & SECURE CHECKOUT (tab=checkout)
+     ========================================================= -->
+<?php elseif ($active_tab == 'checkout'): ?>
+
+    <div class="section-container" style="max-width: 1200px;">
+        
+        <!-- Breadcrumbs & Step Indicator Bar -->
+        <div class="checkout-header-bar">
+            <div class="checkout-title-wrap">
+                <h1 style="font-size: 22px; font-weight: 800; color: #0F172A; margin: 0 0 4px 0; display: flex; align-items: center; gap: 10px;">
+                    <i class="fas fa-shield-alt" style="color: var(--up-teal);"></i> Secure Diagnostic Checkout
+                </h1>
+                <p style="font-size: 13px; color: #64748B; margin: 0;">
+                    Certified lab booking with doorstep sample pickup &amp; 100% verified digital reports.
+                </p>
+            </div>
+
+            <!-- Stepper Indicator -->
+            <div class="checkout-stepper">
+                <div class="step-pill <?=!empty($cart) ? 'completed' : 'active';?>">
+                    <i class="fas fa-shopping-cart"></i> 1. Cart Review
+                </div>
+                <div class="step-divider"><i class="fas fa-chevron-right"></i></div>
+                <div class="step-pill <?=!empty($cart) ? 'active' : '';?>">
+                    <i class="fas fa-calendar-check"></i> 2. Patient &amp; Schedule
+                </div>
+                <div class="step-divider"><i class="fas fa-chevron-right"></i></div>
+                <div class="step-pill">
+                    <i class="fas fa-receipt"></i> 3. Confirmed
+                </div>
+            </div>
+        </div>
+
+        <?php if($this->session->flashdata('flashmsg')): ?>
+            <div style="margin-bottom: 20px;">
+                <?=$this->session->flashdata('flashmsg');?>
+            </div>
+        <?php endif; ?>
+
+        <?php if (empty($cart)): ?>
+            <!-- Empty Cart Handler -->
+            <div class="empty-checkout-card">
+                <div class="empty-icon-circle">
+                    <i class="fas fa-vials"></i>
+                </div>
+                <h2 style="font-size: 20px; font-weight: 800; color: #0F172A; margin: 0 0 8px 0;">Your Diagnostic Cart is Empty</h2>
+                <p style="font-size: 13.5px; color: #64748B; max-width: 500px; margin: 0 auto 24px;">
+                    You do not have any lab tests or checkup packages selected yet. Explore our certified tests catalog or add a recommended checkup below:
+                </p>
+
+                <a href="<?=base_url('mytest?tab=tests');?>" class="btn" style="background: #00A896; color: #FFFFFF; font-weight: 700; border-radius: 10px; padding: 10px 24px; font-size: 14px; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; margin-bottom: 30px;">
+                    <i class="fas fa-search"></i> Browse Full Diagnostic Catalog
+                </a>
+
+                <?php if (!empty($popular_tests)): ?>
+                    <div style="text-align: left; margin-top: 10px; border-top: 1px solid #F1F5F9; padding-top: 24px;">
+                        <h4 style="font-size: 15px; font-weight: 800; color: #0F172A; margin-bottom: 16px;">Popular Preventive Checkups (1-Click Add)</h4>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px;">
+                            <?php foreach ($popular_tests as $pt): ?>
+                                <div style="border: 1px solid #E2E8F0; border-radius: 12px; padding: 14px 16px; background: #F8FAFC; display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+                                    <div>
+                                        <strong style="font-size: 13px; color: #0F172A; display: block; margin-bottom: 2px;">
+                                            <?=html_escape($pt->test_name);?>
+                                        </strong>
+                                        <span style="font-size: 13px; color: #00A896; font-weight: 800;">₹<?=number_format($pt->amount);?></span>
+                                        <span style="font-size: 11px; color: #94A3B8; text-decoration: line-through; margin-left: 4px;">₹<?=round($pt->amount * 1.35);?></span>
+                                    </div>
+                                    <button type="button" class="btn btn-sm btn-cart-toggle" data-test-id="<?=$pt->test_id;?>" style="background: #00A896; color: #FFFFFF; font-weight: 700; border-radius: 8px; padding: 6px 14px; font-size: 12px; border: none; cursor: pointer;">
+                                        + Add Test
+                                    </button>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                    </div>
+                <?php endif; ?>
+            </div>
+        <?php else: ?>
+
+            <form action="<?=base_url('mytest/process_payment');?>" method="POST" id="mainCheckoutForm">
+                <input type="hidden" name="<?=$this->security->get_csrf_token_name();?>" value="<?=$this->security->get_csrf_hash();?>">
+                <input type="hidden" name="ajax" value="1">
+
+                <div class="row">
+                    <!-- LEFT COLUMN: Patient, Location, Scheduling & Payment (8 cols) -->
+                    <div class="col-md-8 col-12">
+                        
+                        <!-- STEP 1: Patient Information -->
+                        <div class="checkout-card">
+                            <div class="card-step-header">
+                                <h2 class="card-step-title">
+                                    <span class="badge-step-num">1</span> Patient Details
+                                </h2>
+                                <span style="font-size: 12px; color: #64748B; font-weight: 500;">
+                                    Required for pathology report generation
+                                </span>
+                            </div>
+
+                            <!-- Patient Fast Select Pills -->
+                            <div class="patient-selector-pills">
+                                <button type="button" class="patient-pill-btn active" id="btnSelectSelf" 
+                                    onclick="fillPatientData('<?=addslashes(html_escape($patient_name ?: @$user->FNAME));?>', '<?=$patient_age ?: 32;?>', '<?=$patient_gender ?: 'Male';?>', '<?=addslashes(html_escape($patient_mobile ?: @$user->MOBILE));?>', '<?=addslashes(html_escape($patient_email ?: @$user->EMAIL));?>', this)">
+                                    <i class="fas fa-user"></i> Myself (<?=html_escape($patient_name ?: (@$user->FNAME ?: 'Patient'));?>)
+                                </button>
+
+                                <?php if (!empty($dependents)): ?>
+                                    <?php foreach ($dependents as $dep): 
+                                        $dep_age = 30;
+                                        if (!empty($dep->dob)) {
+                                            $dob_ts = strtotime($dep->dob);
+                                            if ($dob_ts) $dep_age = max(1, date('Y') - date('Y', $dob_ts));
+                                        }
+                                        $dep_gender = ($dep->gender === 'F') ? 'Female' : 'Male';
+                                    ?>
+                                        <button type="button" class="patient-pill-btn" 
+                                            onclick="fillPatientData('<?=addslashes(html_escape($dep->name));?>', '<?=$dep_age;?>', '<?=$dep_gender;?>', '<?=addslashes(html_escape($patient_mobile ?: @$user->MOBILE));?>', '<?=addslashes(html_escape($patient_email ?: @$user->EMAIL));?>', this)">
+                                            <i class="fas fa-users"></i> <?=html_escape($dep->name);?> (<?=html_escape($dep->relationship);?>)
+                                        </button>
+                                    <?php endforeach; ?>
+                                <?php endif; ?>
+
+                                <button type="button" class="patient-pill-btn" onclick="clearPatientData(this)">
+                                    <i class="fas fa-user-plus"></i> Other Patient
+                                </button>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6 col-12 form-group upchar-input-wrap">
+                                    <label>Patient Full Name <span style="color: #EF4444;">*</span></label>
+                                    <input type="text" name="patient_name" id="inputPatientName" class="form-control" required placeholder="Full Name as per Aadhaar / ID" value="<?=html_escape($patient_name ?: @$user->FNAME);?>">
+                                </div>
+
+                                <div class="col-md-3 col-6 form-group upchar-input-wrap">
+                                    <label>Age (Years) <span style="color: #EF4444;">*</span></label>
+                                    <input type="number" name="patient_age" id="inputPatientAge" class="form-control" required min="1" max="120" placeholder="e.g. 35" value="<?=$patient_age ?: 32;?>">
+                                </div>
+
+                                <div class="col-md-3 col-6 form-group upchar-input-wrap">
+                                    <label>Gender <span style="color: #EF4444;">*</span></label>
+                                    <select name="patient_gender" id="selectPatientGender" class="form-control">
+                                        <option value="Male" <?=$patient_gender==='Male' ? 'selected' : '';?>>Male</option>
+                                        <option value="Female" <?=$patient_gender==='Female' ? 'selected' : '';?>>Female</option>
+                                        <option value="Other" <?=$patient_gender==='Other' ? 'selected' : '';?>>Other</option>
+                                    </select>
+                                </div>
+
+                                <div class="col-md-6 col-12 form-group upchar-input-wrap">
+                                    <label>10-Digit Mobile Number <span style="color: #EF4444;">*</span></label>
+                                    <input type="tel" name="patient_mobile" id="inputPatientMobile" class="form-control" required maxlength="10" placeholder="Mobile for phlebotomist call &amp; SMS updates" value="<?=html_escape($patient_mobile ?: @$user->MOBILE);?>">
+                                </div>
+
+                                <div class="col-md-6 col-12 form-group upchar-input-wrap">
+                                    <label>Email Address (for PDF Report) <span style="color: #EF4444;">*</span></label>
+                                    <input type="email" name="patient_email" id="inputPatientEmail" class="form-control" required placeholder="Email for digital lab reports" value="<?=html_escape($patient_email ?: @$user->EMAIL);?>">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- STEP 2: Sample Collection & Scheduling -->
+                        <div class="checkout-card">
+                            <div class="card-step-header">
+                                <h2 class="card-step-title">
+                                    <span class="badge-step-num">2</span> Sample Collection &amp; Schedule
+                                </h2>
+                                <span style="font-size: 12px; color: #16A34A; font-weight: 700;">
+                                    <i class="fas fa-check-circle"></i> Free Doorstep Pickup Included
+                                </span>
+                            </div>
+
+                            <!-- Collection Mode Cards -->
+                            <div class="choice-card-grid">
+                                <label class="choice-card selected" id="choiceHomeCollection">
+                                    <input type="radio" name="visit_type" value="HOME_COLLECTION" checked onchange="toggleVisitType(this.value)">
+                                    <div class="choice-card-info">
+                                        <strong><i class="fas fa-home" style="color: #00A896; margin-right: 4px;"></i> Doorstep Home Pickup</strong>
+                                        <p>Trained medical phlebotomist visits your home with sterile vacutainer kit.</p>
+                                        <span class="choice-badge-free"><i class="fas fa-gift"></i> 100% FREE Sample Collection</span>
+                                    </div>
+                                </label>
+
+                                <label class="choice-card" id="choiceLabVisit">
+                                    <input type="radio" name="visit_type" value="VISIT_LAB" onchange="toggleVisitType(this.value)">
+                                    <div class="choice-card-info">
+                                        <strong><i class="fas fa-hospital" style="color: #0284C7; margin-right: 4px;"></i> Diagnostic Center Visit</strong>
+                                        <p>Walk-in directly to the partner pathology lab with your booking code.</p>
+                                        <span style="font-size: 11px; color: #64748B; font-weight: 600; display: inline-block; margin-top: 4px;">Priority Queue Entry</span>
+                                    </div>
+                                </label>
+                            </div>
+
+                            <!-- Home Address Input -->
+                            <div id="homeAddressContainer" class="form-group upchar-input-wrap" style="margin-bottom: 16px;">
+                                <label>Complete Pickup Address <span style="color: #EF4444;">*</span></label>
+                                <textarea name="patient_address" id="patientAddressInput" rows="2" class="form-control" required placeholder="House / Flat No, Building / Apartment Name, Street, Landmark, PIN Code"></textarea>
+                                <span style="font-size: 11.5px; color: #64748B; margin-top: 4px; display: block;">
+                                    <i class="fas fa-info-circle" style="color: #00A896;"></i> Phlebotomist calls 15-20 minutes prior to arrival.
+                                </span>
+                            </div>
+
+                            <!-- Fasting Notice -->
+                            <div class="fasting-notice-box">
+                                <i class="fas fa-utensils"></i>
+                                <div>
+                                    <strong>Fasting Guideline Note:</strong> For tests like Fasting Blood Sugar, Lipid Profile, or Full Body Checkup, please observe <strong>10 to 12 hours of overnight fasting</strong>. Drinking plain water is allowed and recommended.
+                                </div>
+                            </div>
+
+                            <!-- Date & Time Slot Scheduling -->
+                            <div style="margin-top: 20px;">
+                                <div class="row">
+                                    <div class="col-md-5 col-12 form-group upchar-input-wrap">
+                                        <label>Select Appointment Date <span style="color: #EF4444;">*</span></label>
+                                        <div class="date-chips-wrap">
+                                            <?php 
+                                                $tomorrow = date('Y-m-d', strtotime('+1 day'));
+                                                $day_after = date('Y-m-d', strtotime('+2 days'));
+                                            ?>
+                                            <div class="date-chip active" onclick="setDateValue('<?=$tomorrow;?>', this)">
+                                                Tomorrow (<?=date('d M', strtotime('+1 day'));?>)
+                                            </div>
+                                            <div class="date-chip" onclick="setDateValue('<?=$day_after;?>', this)">
+                                                <?=date('D, d M', strtotime('+2 days'));?>
+                                            </div>
+                                        </div>
+                                        <input type="date" name="booking_date" id="bookingDateInput" class="form-control" required value="<?=$tomorrow;?>" min="<?=date('Y-m-d');?>">
+                                    </div>
+
+                                    <div class="col-md-7 col-12 form-group upchar-input-wrap">
+                                        <label>Preferred Time Slot <span style="color: #EF4444;">*</span></label>
+                                        <select name="time_slot" id="timeSlotSelect" class="form-control" required>
+                                            <option value="Early Morning (06:30 AM - 08:30 AM)">🌅 Early Morning (06:30 AM - 08:30 AM) - Best for Fasting</option>
+                                            <option value="Morning (08:30 AM - 11:30 AM)" selected>☀️ Morning (08:30 AM - 11:30 AM) - Most Popular</option>
+                                            <option value="Afternoon (12:00 PM - 03:00 PM)">🌤️ Afternoon (12:00 PM - 03:00 PM)</option>
+                                            <option value="Evening (04:00 PM - 07:00 PM)">🌆 Evening (04:00 PM - 07:00 PM)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-group upchar-input-wrap" style="margin-bottom: 0;">
+                                <label style="font-weight: 600; color: #64748B;">Special Instructions or Landmark Note (Optional)</label>
+                                <input type="text" name="notes" class="form-control" placeholder="e.g. Near Community Center gate, please ring doorbell twice">
+                            </div>
+                        </div>
+
+                        <!-- STEP 3: Payment Method Selection -->
+                        <div class="checkout-card">
+                            <div class="card-step-header">
+                                <h2 class="card-step-title">
+                                    <span class="badge-step-num">3</span> Payment Method
+                                </h2>
+                                <span style="font-size: 12px; color: #16A34A; font-weight: 700;">
+                                    <i class="fas fa-lock"></i> 100% Safe &amp; Secure
+                                </span>
+                            </div>
+
+                            <label class="choice-card selected" id="payMethodCOD" style="margin-bottom: 12px;">
+                                <input type="radio" name="payment_mode" value="COD" checked onchange="togglePaymentMode(this.value)">
+                                <div class="choice-card-info">
+                                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                                        <strong><i class="fas fa-hand-holding-usd" style="color: #16A34A; margin-right: 4px;"></i> Pay on Sample Collection (Cash or UPI QR at Doorstep)</strong>
+                                        <span style="background: #DCFCE7; color: #166534; font-size: 11px; font-weight: 800; padding: 2px 8px; border-radius: 6px;">Recommended</span>
+                                    </div>
+                                    <p>Pay cash or simply scan the visiting phlebotomist's dynamic UPI QR code via Google Pay, PhonePe, or Paytm once your samples are drawn.</p>
+                                </div>
+                            </label>
+
+                            <label class="choice-card" id="payMethodUPI" style="margin-bottom: 12px;">
+                                <input type="radio" name="payment_mode" value="ONLINE_UPI" onchange="togglePaymentMode(this.value)">
+                                <div class="choice-card-info">
+                                    <strong><i class="fas fa-qrcode" style="color: #0284C7; margin-right: 4px;"></i> Instant Online UPI / QR Code</strong>
+                                    <p>Seamless payment with Google Pay, PhonePe, Paytm, BHIM, or any UPI banking app.</p>
+                                </div>
+                            </label>
+
+                            <label class="choice-card" id="payMethodCard">
+                                <input type="radio" name="payment_mode" value="ONLINE_CARD" onchange="togglePaymentMode(this.value)">
+                                <div class="choice-card-info">
+                                    <strong><i class="fas fa-credit-card" style="color: #7C3AED; margin-right: 4px;"></i> Debit Card, Credit Card &amp; Net Banking</strong>
+                                    <p>256-bit SSL bank-grade checkout supporting all major Indian banks and card networks.</p>
+                                </div>
+                            </label>
+                        </div>
+
+                    </div>
+
+                    <!-- RIGHT COLUMN: Sticky Order Summary (4 cols) -->
+                    <div class="col-md-4 col-12">
+                        <div class="checkout-summary-card">
+                            <div class="summary-header">
+                                <h3>
+                                    <i class="fas fa-shopping-bag" style="color: #00A896;"></i> Booked Tests (<span id="checkoutCartCount"><?=count($cart);?></span>)
+                                </h3>
+                                <button type="button" class="summary-clear-btn" onclick="clearCheckoutCart()" title="Remove all tests">
+                                    <i class="fas fa-trash-alt"></i> Clear All
+                                </button>
+                            </div>
+
+                            <!-- Test Items List with smooth remove buttons -->
+                            <div class="checkout-items-list" id="checkoutItemsList">
+                                <?php foreach ($cart as $item): ?>
+                                    <div class="checkout-item-row" id="checkoutItem_<?=$item['test_id'];?>">
+                                        <div class="checkout-item-info">
+                                            <div class="checkout-item-name"><?=html_escape($item['test_name']);?></div>
+                                            <div class="checkout-item-meta">
+                                                <span><i class="fas fa-hospital" style="color: #00A896;"></i> <?=html_escape($item['lab_name']);?></span>
+                                                <span><i class="fas fa-vial" style="color: #EF4444;"></i> <?=html_escape($item['sample_type']);?></span>
+                                                <span><i class="fas fa-clock" style="color: #0284C7;"></i> <?=html_escape($item['report_time']);?></span>
+                                            </div>
+                                        </div>
+                                        <div class="checkout-item-price-wrap">
+                                            <div>
+                                                <div class="checkout-item-price">₹<?=number_format($item['amount']);?></div>
+                                                <?php if(!empty($item['mrp']) && $item['mrp'] > $item['amount']): ?>
+                                                    <span class="checkout-item-mrp">₹<?=number_format($item['mrp']);?></span>
+                                                <?php endif; ?>
+                                            </div>
+                                            <button type="button" class="btn-remove-item btn-remove-checkout-item" data-test-id="<?=$item['test_id'];?>" title="Remove this test">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                <?php endforeach; ?>
+                            </div>
+
+                            <!-- Coupon Box -->
+                            <div class="coupon-box" style="background: #FFFFFF; border: 1.5px dashed #CBD5E1; border-radius: 12px; padding: 12px; margin-bottom: 14px;">
+                                <div style="font-size: 13px; font-weight: 700; color: #0F172A; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between;">
+                                    <span><i class="fas fa-tag" style="color: #00A896;"></i> Apply Promo Code</span>
+                                    <span id="labAppliedBadge" style="display:none; background: #DCFCE7; color: #166534; font-size: 11px; padding: 2px 8px; border-radius: 12px; font-weight: 700;">Applied</span>
+                                </div>
+                                <div style="display: flex; gap: 6px;">
+                                    <input type="text" id="labCouponInput" name="applied_coupon_code" class="form-control" placeholder="e.g. LABCARE20" style="text-transform: uppercase; font-weight: 700; font-size: 12px; border-radius: 8px; height: 38px;">
+                                    <button type="button" id="btnApplyLabCoupon" class="btn" style="background: #00A896; color: #FFF; font-weight: 700; font-size: 12px; border-radius: 8px; padding: 6px 14px; white-space: nowrap;">Apply</button>
+                                    <button type="button" id="btnRemoveLabCoupon" class="btn btn-outline-danger" style="display:none; border-radius: 8px; padding: 6px 10px;" title="Remove Coupon"><i class="fas fa-times"></i></button>
+                                </div>
+                                <div id="labCouponFeedback" style="font-size: 12px; margin-top: 6px; display: none;"></div>
+
+                                <div style="margin-top: 10px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center;">
+                                    <span style="font-size: 11px; color: #64748B; font-weight: 600;">Offers:</span>
+                                    <span class="coupon-chip" onclick="quickApplyLabCoupon('LABCARE20')" style="cursor: pointer; background: #E0F2FE; color: #0369A1; border: 1px solid #BAE6FD; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 6px;">LABCARE20 (20% OFF)</span>
+                                    <span class="coupon-chip" onclick="quickApplyLabCoupon('HEALTH50')" style="cursor: pointer; background: #FEF3C7; color: #92400E; border: 1px solid #FDE68A; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 6px;">HEALTH50 (₹50 OFF)</span>
+                                </div>
+                            </div>
+
+                            <!-- Price Breakdown -->
+                            <div class="price-breakdown">
+                                <div class="price-row">
+                                    <span>Total Tests M.R.P.:</span>
+                                    <span id="checkoutTotalMrp" style="text-decoration: line-through; color: #94A3B8;">₹<?=number_format($total_mrp);?></span>
+                                </div>
+                                <div class="price-row discount">
+                                    <span>Direct Lab Discount:</span>
+                                    <span id="checkoutSavings">- ₹<?=number_format($savings);?></span>
+                                </div>
+                                <div class="price-row discount" id="labCouponDiscountRow" style="display: none; color: #16A34A; font-weight: 700;">
+                                    <span><i class="fas fa-tag"></i> Coupon Discount (<span id="labCouponCodeLabel"></span>):</span>
+                                    <span id="labCouponDiscountAmount">- ₹0</span>
+                                </div>
+                                <div class="price-row">
+                                    <span>Doorstep Sample Pickup:</span>
+                                    <span style="color: #16A34A; font-weight: 700;">
+                                        <span style="text-decoration: line-through; color: #94A3B8; font-weight: 400; margin-right: 4px;">₹150</span> FREE
+                                    </span>
+                                </div>
+                                <div class="price-row total">
+                                    <span>Total Payable:</span>
+                                    <span class="grand-amount" id="checkoutFinalTotal">₹<?=number_format($final_total);?></span>
+                                </div>
+                            </div>
+
+                            <div id="checkoutMsgBox" style="display: none; margin-bottom: 12px; font-size: 12.5px; padding: 10px; border-radius: 8px;"></div>
+
+                            <!-- Confirm Booking CTA -->
+                            <button type="submit" class="btn-confirm-checkout" id="btnPlaceOrder">
+                                <i class="fas fa-lock"></i> Confirm Booking Now <i class="fas fa-arrow-right"></i>
+                            </button>
+
+                            <div style="font-size: 11px; text-align: center; color: #64748B; margin-top: 10px;">
+                                By confirming, you agree to Upchar Medical Terms &amp; Conditions.
+                            </div>
+
+                            <div class="security-assurance-list">
+                                <div><i class="fas fa-check-circle"></i> Free Sample Pickup by DMLT Certified Staff</div>
+                                <div><i class="fas fa-check-circle"></i> Digital Reports on WhatsApp, SMS &amp; Email</div>
+                                <div><i class="fas fa-check-circle"></i> Zero Cancellation Charges before sample collection</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        <?php endif; ?>
+    </div>
+
 <?php endif; ?>
 
 <!-- =========================================================
@@ -2016,8 +2570,8 @@ body {
             <span>Total Payable:</span>
             <span style="font-size: 20px; color: var(--up-teal);">₹<span class="cart-total-amount"><?=number_format(array_sum(array_column($cart, 'amount')));?></span></span>
         </div>
-        <a href="<?=base_url('mytest/checkout');?>" style="background: var(--up-teal); color: #ffffff; text-decoration: none !important; width: 100%; justify-content: space-between; display: flex; align-items: center; padding: 12px 18px; font-weight: 800; font-size: 14px; border-radius: 8px; box-shadow: 0 4px 14px rgba(0,168,150,0.3);">
-            <span>Proceed to Checkout</span>
+        <a href="<?=base_url('mytest?tab=checkout');?>" style="background: var(--up-teal); color: #ffffff; text-decoration: none !important; width: 100%; justify-content: space-between; display: flex; align-items: center; padding: 12px 18px; font-weight: 800; font-size: 14px; border-radius: 8px; box-shadow: 0 4px 14px rgba(0,168,150,0.3);">
+            <span>Review &amp; Checkout Tests</span>
             <i class="fas fa-arrow-right"></i>
         </a>
     </div>
@@ -2156,6 +2710,67 @@ body {
      10. JAVASCRIPT INTEGRATION & CART LOGIC
      ========================================================= -->
 <script>
+function fillPatientData(name, age, gender, mobile, email, btn) {
+    $('.patient-pill-btn').removeClass('active');
+    $(btn).addClass('active');
+
+    $('#inputPatientName').val(name);
+    $('#inputPatientAge').val(age);
+    $('#selectPatientGender').val(gender);
+    $('#inputPatientMobile').val(mobile);
+    $('#inputPatientEmail').val(email);
+}
+
+function clearPatientData(btn) {
+    $('.patient-pill-btn').removeClass('active');
+    $(btn).addClass('active');
+
+    $('#inputPatientName').val('').focus();
+    $('#inputPatientAge').val('');
+    $('#selectPatientGender').val('Male');
+    $('#inputPatientMobile').val('');
+    $('#inputPatientEmail').val('');
+}
+
+function toggleVisitType(val) {
+    if (val === 'HOME_COLLECTION') {
+        $('#choiceHomeCollection').addClass('selected');
+        $('#choiceLabVisit').removeClass('selected');
+        $('#homeAddressContainer').slideDown(200);
+        $('#patientAddressInput').prop('required', true);
+    } else {
+        $('#choiceLabVisit').addClass('selected');
+        $('#choiceHomeCollection').removeClass('selected');
+        $('#homeAddressContainer').slideUp(200);
+        $('#patientAddressInput').prop('required', false);
+    }
+}
+
+function togglePaymentMode(val) {
+    $('#payMethodCOD, #payMethodUPI, #payMethodCard').removeClass('selected');
+    if (val === 'COD') {
+        $('#payMethodCOD').addClass('selected');
+    } else if (val === 'ONLINE_UPI') {
+        $('#payMethodUPI').addClass('selected');
+    } else if (val === 'ONLINE_CARD') {
+        $('#payMethodCard').addClass('selected');
+    }
+}
+
+function setDateValue(dateVal, chip) {
+    $('.date-chip').removeClass('active');
+    $(chip).addClass('active');
+    $('#bookingDateInput').val(dateVal);
+}
+
+function clearCheckoutCart() {
+    if (confirm('Are you sure you want to remove all tests from your diagnostic booking?')) {
+        $.post('<?=base_url("mytest/clear_cart");?>', function() {
+            window.location.href = '<?=base_url("mytest?tab=checkout");?>';
+        });
+    }
+}
+
 function openPrescriptionModal() {
     $('#rxModalOverlay').css('display', 'flex');
 }
@@ -2187,102 +2802,155 @@ function inquireScan(scanName) {
 
 $(document).ready(function() {
 
-    // Quick Book Trigger Buttons
-    $(document).on('click', '.btn-open-quick-book', function(e) {
-        e.preventDefault();
-        var testId = $(this).data('test-id');
-        var testName = $(this).data('test-name');
-        var labId = $(this).data('lab-id');
-        var labName = $(this).data('lab-name');
-        var amount = $(this).data('amount');
-        openQuickBookModal(testId, testName, labId, labName, amount);
-    });
-
-    // Quick Book Submission
-    $('#instantQuickBookForm').on('submit', function(e) {
-        e.preventDefault();
-        var btn = $('#btnSubmitQuickBook');
-        btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Processing...');
-
-        $.post('<?=base_url("mytest/quick_book");?>', $(this).serialize(), function(res) {
-            btn.prop('disabled', false).html('<i class="fas fa-check"></i> Confirm Booking');
-            if (res.status === 'success') {
-                $('#qbMsgBox').css({'display': 'block', 'background': '#ecfdf5', 'color': '#065f46', 'border': '1px solid #a7f3d0'})
-                              .html('<i class="fas fa-check-circle"></i> ' + res.message);
-                setTimeout(function() {
-                    if (res.redirect_url) {
-                        window.location.href = res.redirect_url;
-                    } else {
-                        closeQuickBookModal();
-                    }
-                }, 1000);
-            } else {
-                $('#qbMsgBox').css({'display': 'block', 'background': '#fef2f2', 'color': '#991b1b', 'border': '1px solid #fecaca'})
-                              .html('<i class="fas fa-exclamation-triangle"></i> ' + (res.message || 'Error processing booking.'));
-            }
-        }, 'json').fail(function() {
-            btn.prop('disabled', false).html('<i class="fas fa-check"></i> Confirm Booking');
-            $('#qbMsgBox').css({'display': 'block', 'background': '#fef2f2', 'color': '#991b1b', 'border': '1px solid #fecaca'})
-                          .html('<i class="fas fa-exclamation-triangle"></i> Network connection error. Please retry.');
-        });
-    });
-
-    // Floating Cart Toggle
-    $('#floatingCartBtn').on('click', function() {
+    <?php if (!empty($open_checkout) && $active_tab != 'checkout'): ?>
         refreshCartDrawer();
         $('#cartOverlay').fadeIn(200);
         $('#cartDrawer').css('right', '0');
-    });
+    <?php endif; ?>
 
-    $('#btnCloseDrawer, #cartOverlay').on('click', function() {
-        $('#cartDrawer').css('right', '-420px');
-        $('#cartOverlay').fadeOut(200);
-    });
-
-    // Cart Toggle (Add / Remove)
-    $(document).on('click', '.btn-cart-toggle', function(e) {
+    // Remove item from in-page checkout table
+    $(document).on('click', '.btn-remove-checkout-item', function(e) {
         e.preventDefault();
         var btn = $(this);
         var testId = btn.data('test-id');
+        var row = $('#checkoutItem_' + testId);
 
-        if (btn.hasClass('in-cart')) {
-            $.post('<?=base_url("mytest/remove_from_cart");?>', { test_id: testId }, function(res) {
-                btn.removeClass('in-cart').html('<i class="fas fa-shopping-cart"></i> Add to Cart');
-                updateCartUI(res);
-            }, 'json');
-        } else {
-            btn.html('<i class="fas fa-spinner fa-spin"></i> Adding...');
-            $.post('<?=base_url("mytest/add_to_cart");?>', { test_id: testId }, function(res) {
-                if (res.status === 'success') {
-                    btn.addClass('in-cart').html('<i class="fas fa-check"></i> Added in Cart');
-                    updateCartUI(res);
-                    refreshCartDrawer();
-                    $('#cartOverlay').fadeIn(200);
-                    $('#cartDrawer').css('right', '0');
-                }
-            }, 'json');
-        }
+        btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin" style="font-size: 11px;"></i>');
+
+        $.post('<?=base_url("mytest/remove_from_cart");?>', { test_id: testId }, function(res) {
+            if (res.status === 'success') {
+                row.fadeOut(250, function() {
+                    $(this).remove();
+                    if (res.cart_count > 0) {
+                        $('#checkoutCartCount').text(res.cart_count);
+                        $('#checkoutTotalMrp').text('₹' + Number(res.total_mrp).toLocaleString());
+                        $('#checkoutSavings').text('- ₹' + Number(res.savings).toLocaleString());
+                        $('#checkoutFinalTotal').text('₹' + Number(res.subtotal).toLocaleString());
+                        labGrossTotal = res.subtotal;
+                        updateCartUI(res);
+                        refreshCartDrawer();
+                    } else {
+                        window.location.reload();
+                    }
+                });
+            }
+        }, 'json');
     });
 
-    // Remove from Drawer
-    $(document).on('click', '.btn-drawer-remove', function() {
-        var testId = $(this).data('test-id');
-        $.post('<?=base_url("mytest/remove_from_cart");?>', { test_id: testId }, function(res) {
-            $('.btn-cart-toggle[data-test-id="' + testId + '"]').removeClass('in-cart').html('<i class="fas fa-shopping-cart"></i> Add to Cart');
-            updateCartUI(res);
-            refreshCartDrawer();
-        }, 'json');
+    // Coupon Code Management
+    let labGrossTotal = <?=json_encode($final_total);?>;
+    let labCouponDiscount = 0;
+
+    window.quickApplyLabCoupon = function(code) {
+        $('#labCouponInput').val(code);
+        $('#btnApplyLabCoupon').trigger('click');
+    };
+
+    $('#btnApplyLabCoupon').click(function() {
+        const code = $('#labCouponInput').val().trim();
+        const fb = $('#labCouponFeedback');
+        if (!code) {
+            fb.css('color', '#EF4444').text('Please enter a coupon code.').show();
+            return;
+        }
+
+        const btn = $(this);
+        btn.prop('disabled', true).text('Applying...');
+
+        $.ajax({
+            url: '<?=base_url("coupon/apply");?>',
+            type: 'POST',
+            dataType: 'json',
+            data: {
+                coupon_code: code,
+                service_type: 'LAB_TEST',
+                amount: labGrossTotal,
+                "<?=$this->security->get_csrf_token_name();?>": "<?=$this->security->get_csrf_hash();?>"
+            },
+            success: function(resp) {
+                btn.prop('disabled', false).text('Apply');
+                if (resp.status === 'success') {
+                    labCouponDiscount = parseFloat(resp.discount_amount) || 0;
+                    const newTotal = Math.max(0, labGrossTotal - labCouponDiscount);
+
+                    $('#labAppliedBadge').show();
+                    $('#btnRemoveLabCoupon').show();
+                    $('#labCouponInput').prop('readonly', true);
+                    $('#labCouponCodeLabel').text(resp.coupon_code);
+                    $('#labCouponDiscountAmount').text('- ₹' + labCouponDiscount.toLocaleString());
+                    $('#labCouponDiscountRow').show();
+                    $('#checkoutFinalTotal').text('₹' + newTotal.toLocaleString());
+                    fb.css('color', '#16A34A').text(resp.message).show();
+                } else {
+                    fb.css('color', '#EF4444').text(resp.message || 'Invalid coupon code.').show();
+                }
+            },
+            error: function() {
+                btn.prop('disabled', false).text('Apply');
+                fb.css('color', '#EF4444').text('Error validating coupon. Please try again.').show();
+            }
+        });
+    });
+
+    $('#btnRemoveLabCoupon').click(function() {
+        $.post('<?=base_url("coupon/remove");?>', function() {
+            labCouponDiscount = 0;
+            $('#labCouponInput').prop('readonly', false).val('');
+            $('#labAppliedBadge').hide();
+            $('#btnRemoveLabCoupon').hide();
+            $('#labCouponDiscountRow').hide();
+            $('#labCouponFeedback').hide();
+            $('#checkoutFinalTotal').text('₹' + labGrossTotal.toLocaleString());
+        });
+    });
+
+    // In-Page Checkout Form Submit via AJAX
+    $('#mainCheckoutForm').on('submit', function(e) {
+        e.preventDefault();
+        var form = $(this);
+        var btn = $('#btnPlaceOrder');
+        var msgBox = $('#checkoutMsgBox');
+
+        btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Confirming Booking...');
+        msgBox.hide();
+
+        $.ajax({
+            url: form.attr('action'),
+            type: 'POST',
+            data: form.serialize(),
+            dataType: 'json',
+            success: function(res) {
+                if (res.status === 'success') {
+                    btn.html('<i class="fas fa-check"></i> Booking Confirmed!');
+                    msgBox.css({'display': 'block', 'background': '#ecfdf5', 'color': '#065f46', 'border': '1px solid #a7f3d0'})
+                          .html('<i class="fas fa-check-circle"></i> ' + (res.message || 'Booking successful! Redirecting to confirmation...'));
+                    setTimeout(function() {
+                        window.location.href = res.redirect_url;
+                    }, 700);
+                } else {
+                    btn.prop('disabled', false).html('<i class="fas fa-lock"></i> Confirm Booking Now <i class="fas fa-arrow-right"></i>');
+                    msgBox.css({'display': 'block', 'background': '#fef2f2', 'color': '#991b1b', 'border': '1px solid #fecaca'})
+                          .html('<i class="fas fa-exclamation-triangle"></i> ' + (res.message || 'Error completing booking.'));
+                }
+            },
+            error: function() {
+                form.off('submit').submit();
+            }
+        });
     });
 
     function updateCartUI(res) {
         if (res.cart_count > 0) {
-            $('.cart-total-items').text(res.cart_count);
+            $('.cart-total-items').text(res.cart_count).show();
             $('.cart-total-amount').text(Number(res.subtotal).toLocaleString());
             $('#floatingCartBtn').fadeIn(200);
+            $('#headerCartBadge').text(res.cart_count).show();
         } else {
+            $('.cart-total-items').hide();
             $('#floatingCartBtn').fadeOut(200);
             $('#cartDrawer').css('right', '-420px');
             $('#cartOverlay').fadeOut(200);
+            $('#headerCartBadge').hide();
         }
     }
 

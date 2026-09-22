@@ -52,7 +52,7 @@ class Mytest extends CI_Controller {
         $selected_lab      = $this->input->get('lab_id', TRUE);
         $keyword           = trim($this->input->get('keyword', TRUE) ?: $this->input->get('pathology_name', TRUE));
         $selected_category = $this->input->get('category', TRUE) ?: $this->input->get('spl', TRUE);
-        $active_tab        = $this->input->get('tab', TRUE) ?: 'all'; // 'all', 'tests', 'labs', 'packages', 'scans'
+        $active_tab        = $this->input->get('tab', TRUE) ?: ($this->input->get('open_checkout') == '1' || $this->input->get('checkout') == '1' ? 'checkout' : 'all'); // 'all', 'tests', 'labs', 'packages', 'scans', 'checkout'
 
         // 1. Fetch Master Dropdowns & Filters
         $data['cities'] = $this->db->select('c.id, c.name, COUNT(p.id) as lab_count')
@@ -164,22 +164,79 @@ class Mytest extends CI_Controller {
             return ($t->category_id == 10 || stripos($t->test_name, 'Package') !== false || stripos($t->test_name, 'Profile') !== false || stripos($t->test_name, 'Shield') !== false);
         });
 
-        // 5. Current Session Cart
+        // 5. Current Session Cart & Totals
         $cart = $this->session->userdata('path_cart') ?: [];
+        $totals = $this->_calculate_cart_totals($cart);
+
+        // 6. User and Patient Information for Instant In-Page Booking
+        $user_id   = $this->session->userdata('USERID') ?: $this->session->userdata('userid') ?: $this->session->userdata('user_id');
+        $useremail = $this->session->userdata('useremail');
+        $username  = $this->session->userdata('username');
+
+        $user = null;
+        if (!empty($user_id)) {
+            $user = $this->db->get_where('userlogin', array('USERID' => $user_id))->row();
+        }
+        if (!$user && !empty($useremail)) {
+            $user = $this->db->get_where('userlogin', array('EMAIL' => $useremail))->row();
+            if ($user) {
+                $user_id = $user->USERID;
+                $this->session->set_userdata('userid', $user_id);
+            }
+        }
+        if (!$user && !empty($username)) {
+            $user = $this->db->group_start()
+                ->where('EMAIL', $username)
+                ->or_where('MOBILE', $username)
+                ->or_where('FNAME', $username)
+                ->group_end()
+                ->get('userlogin')->row();
+            if ($user) {
+                $user_id = $user->USERID;
+                $this->session->set_userdata('userid', $user_id);
+            }
+        }
+
+        $calculated_age = 30;
+        if ($user && !empty($user->DOB)) {
+            $dob_time = strtotime($user->DOB);
+            if ($dob_time) {
+                $calculated_age = max(1, date('Y') - date('Y', $dob_time));
+            }
+        }
+
+        $dependents = (!empty($user_id)) ? $this->db->get_where('patient_dependents', array('primary_user_id' => $user_id))->result() : [];
+        $popular_tests = $this->db->where('status', '1')->order_by('test_id', 'asc')->limit(8)->get('pathtest')->result();
+
+        $open_checkout = ($this->input->get('checkout') == '1' || $this->input->get('open_checkout') == '1' || $active_tab === 'checkout');
 
         $data['pathologies']          = $pathologies;
         $data['all_tests']            = $all_tests;
         $data['packages']             = array_values($packages);
         $data['cart']                 = $cart;
         $data['cart_count']           = count($cart);
+        $data['subtotal']             = $totals['subtotal'];
+        $data['total_mrp']            = $totals['total_mrp'];
+        $data['savings']              = $totals['savings'];
+        $data['collection_fee']       = 0.00; // Free Home Sample Collection
+        $data['final_total']          = $totals['subtotal'];
         $data['selected_city']        = $selected_city;
         $data['selected_lab']         = $selected_lab;
         $data['selected_category']    = $selected_category;
         $data['keyword']              = $keyword;
         $data['active_tab']           = $active_tab;
+        $data['open_checkout']        = $open_checkout;
         $data['total_labs_count']     = count($pathologies);
         $data['total_tests_count']    = count($all_tests);
         $data['total_packages_count'] = count($packages);
+        $data['popular_tests']        = $popular_tests;
+        $data['user']                 = $user;
+        $data['dependents']           = $dependents;
+        $data['patient_name']         = $user ? trim($user->FNAME . ' ' . $user->LNAME) : '';
+        $data['patient_mobile']       = $user ? $user->MOBILE : '';
+        $data['patient_email']        = $user ? $user->EMAIL : '';
+        $data['patient_gender']       = $user && !empty($user->GENDER) ? $user->GENDER : 'Male';
+        $data['patient_age']          = $calculated_age;
 
         $this->load->view('mytest', $data);
     }
@@ -395,7 +452,7 @@ class Mytest extends CI_Controller {
     }
 
     /**
-     * Checkout Page: Patient Details, Timing, Collection & Payment Method
+     * Unified Checkout: Merged with main diagnostics page
      */
     public function checkout() {
         $add_test_id    = intval($this->input->get('test_id') ?: $this->input->get('add'));
@@ -405,8 +462,6 @@ class Mytest extends CI_Controller {
         if ($remove_test_id > 0 && isset($cart[$remove_test_id])) {
             unset($cart[$remove_test_id]);
             $this->session->set_userdata('path_cart', $cart);
-            redirect('mytest/checkout');
-            return;
         }
 
         if ($add_test_id > 0 && !isset($cart[$add_test_id])) {
@@ -439,73 +494,7 @@ class Mytest extends CI_Controller {
             }
         }
 
-        // Fetch popular tests for quick add if cart is light
-        $popular_tests = $this->db->where('status', '1')->order_by('test_id', 'asc')->limit(6)->get('pathtest')->result();
-
-        // Enforce Login before booking diagnostic tests with robust resolution
-        $user_id   = $this->session->userdata('USERID') ?: $this->session->userdata('userid') ?: $this->session->userdata('user_id');
-        $useremail = $this->session->userdata('useremail');
-        $username  = $this->session->userdata('username');
-
-        $user = null;
-        if (!empty($user_id)) {
-            $user = $this->db->get_where('userlogin', array('USERID' => $user_id))->row();
-        }
-        if (!$user && !empty($useremail)) {
-            $user = $this->db->get_where('userlogin', array('EMAIL' => $useremail))->row();
-            if ($user) {
-                $user_id = $user->USERID;
-                $this->session->set_userdata('userid', $user_id);
-            }
-        }
-        if (!$user && !empty($username)) {
-            $user = $this->db->group_start()
-                ->where('EMAIL', $username)
-                ->or_where('MOBILE', $username)
-                ->or_where('FNAME', $username)
-                ->group_end()
-                ->get('userlogin')->row();
-            if ($user) {
-                $user_id = $user->USERID;
-                $this->session->set_userdata('userid', $user_id);
-            }
-        }
-
-        if (!$user && !$user_id) {
-            $this->session->set_userdata('last_page', base_url('mytest/checkout'));
-            $this->session->set_flashdata('flashmsg', '<div class="alert alert-warning">Please login to complete your diagnostic test booking.</div>');
-            redirect('login');
-            return;
-        }
-
-        $totals = $this->_calculate_cart_totals($cart);
-
-        // Compute age from DOB if present
-        $calculated_age = 32;
-        if (!empty($user->DOB)) {
-            $dob_time = strtotime($user->DOB);
-            if ($dob_time) {
-                $calculated_age = max(1, date('Y') - date('Y', $dob_time));
-            }
-        }
-
-        $data['cart']           = $cart;
-        $data['cart_count']     = count($cart);
-        $data['subtotal']       = $totals['subtotal'];
-        $data['total_mrp']      = $totals['total_mrp'];
-        $data['savings']        = $totals['savings'];
-        $data['collection_fee'] = 0.00; // Free Home Sample Collection
-        $data['final_total']    = $totals['subtotal'];
-        $data['user']           = $user;
-        $data['dependents']     = !empty($user_id) ? $this->db->get_where('patient_dependents', array('primary_user_id' => $user_id))->result() : [];
-        $data['patient_name']   = $user ? trim($user->FNAME . ' ' . $user->LNAME) : '';
-        $data['patient_mobile'] = $user ? $user->MOBILE : '';
-        $data['patient_email']  = $user ? $user->EMAIL : '';
-        $data['patient_gender'] = $user && !empty($user->GENDER) ? $user->GENDER : 'Male';
-        $data['patient_age']    = $calculated_age;
-        $data['popular_tests']  = $popular_tests;
-
-        $this->load->view('mytest_checkout', $data);
+        redirect('mytest?tab=checkout');
     }
 
     /**
@@ -513,22 +502,19 @@ class Mytest extends CI_Controller {
      */
     public function process_payment() {
         if ($this->input->server('REQUEST_METHOD') !== 'POST') {
-            redirect('mytest/checkout');
+            redirect('mytest');
             return;
         }
 
-        // Enforce Login
-        $user_id = $this->session->userdata('USERID') ?: $this->session->userdata('userid') ?: $this->session->userdata('user_id');
-        if (!$user_id) {
-            $this->session->set_userdata('last_page', base_url('mytest/checkout'));
-            $this->session->set_flashdata('flashmsg', '<div class="alert alert-warning">Please login to complete your booking.</div>');
-            redirect('login');
-            return;
-        }
+        $is_ajax = $this->input->is_ajax_request() || $this->input->post('ajax');
 
         $cart = $this->session->userdata('path_cart') ?: [];
         if (empty($cart)) {
-            $this->session->set_flashdata('flashmsg', '<div class="alert alert-danger">Your cart is empty.</div>');
+            if ($is_ajax) {
+                echo json_encode(['status' => 'error', 'message' => 'Your test cart is empty. Please select at least one test to book.']);
+                return;
+            }
+            $this->session->set_flashdata('flashmsg', '<div class="alert alert-danger">Your cart is empty. Please select at least one test to book.</div>');
             redirect('mytest');
             return;
         }
@@ -539,19 +525,67 @@ class Mytest extends CI_Controller {
         $patient_name    = trim($this->input->post('patient_name', TRUE));
         $patient_mobile  = trim($this->input->post('patient_mobile', TRUE));
         $patient_email   = trim($this->input->post('patient_email', TRUE));
-        $patient_age     = trim($this->input->post('patient_age', TRUE));
+        $patient_age     = trim($this->input->post('patient_age', TRUE)) ?: '30';
         $patient_gender  = trim($this->input->post('patient_gender', TRUE)) ?: 'M';
         $patient_address = trim($this->input->post('patient_address', TRUE));
         $booking_date    = trim($this->input->post('booking_date', TRUE)) ?: date('Y-m-d', strtotime('+1 day'));
-        $time_slot       = trim($this->input->post('time_slot', TRUE)) ?: 'Morning (08:30 AM - 11:30 AM)';
+        $time_slot       = trim($this->input->post('time_slot', TRUE)) ?: 'Morning (07:00 AM - 10:00 AM)';
         $visit_type      = trim($this->input->post('visit_type', TRUE)) ?: 'HOME_COLLECTION';
-        $payment_mode    = trim($this->input->post('payment_mode', TRUE)) ?: 'COD'; // 'COD', 'ONLINE_UPI', 'ONLINE_CARD', 'CENTER'
+        $payment_mode    = trim($this->input->post('payment_mode', TRUE)) ?: 'COD'; // 'COD', 'ONLINE_UPI', 'ONLINE_CARD'
         $notes           = trim($this->input->post('notes', TRUE));
 
         if (empty($patient_name) || empty($patient_mobile)) {
+            if ($is_ajax) {
+                echo json_encode(['status' => 'error', 'message' => 'Please provide patient full name and a valid 10-digit mobile number.']);
+                return;
+            }
             $this->session->set_flashdata('flashmsg', '<div class="alert alert-danger">Please fill in patient name and mobile number.</div>');
-            redirect('mytest/checkout');
+            redirect('mytest?open_checkout=1');
             return;
+        }
+
+        // Enforce or Auto-Resolve User Account
+        $user_id = $this->session->userdata('USERID') ?: $this->session->userdata('userid') ?: $this->session->userdata('user_id');
+        if (!$user_id) {
+            $existing = null;
+            $cleanMob = preg_replace('/[^0-9]/', '', $patient_mobile);
+            if (strlen($cleanMob) == 12 && substr($cleanMob, 0, 2) === '91') $cleanMob = substr($cleanMob, 2);
+            if (!empty($cleanMob)) {
+                $existing = $this->db->group_start()->where('MOBILE', $cleanMob)->or_where('MOBILE', $patient_mobile)->group_end()->get('userlogin')->row();
+            }
+            if (!$existing && !empty($patient_email)) {
+                $existing = $this->db->get_where('userlogin', array('EMAIL' => $patient_email))->row();
+            }
+
+            if ($existing) {
+                $user_id = $existing->USERID;
+            } else {
+                $parts = preg_split('/\s+/', $patient_name, 2);
+                $fname = $parts[0];
+                $lname = isset($parts[1]) ? $parts[1] : '';
+
+                $newPatient = array(
+                    'FNAME'       => $fname,
+                    'LNAME'       => $lname,
+                    'MOBILE'      => !empty($cleanMob) ? $cleanMob : null,
+                    'EMAIL'       => !empty($patient_email) ? $patient_email : null,
+                    'GENDER'      => !empty($patient_gender) ? $patient_gender : 'M',
+                    'STATUS'      => '1',
+                    'APPROVED'    => '1',
+                    'REG_DATE'    => date('Y-m-d H:i:s'),
+                    'UPDATE_DATE' => date('Y-m-d')
+                );
+                $this->db->insert('userlogin', $newPatient);
+                $user_id = $this->db->insert_id();
+            }
+
+            if ($user_id) {
+                $this->session->set_userdata('userid', $user_id);
+                $this->session->set_userdata('user_id', $user_id);
+                $this->session->set_userdata('USERID', $user_id);
+                $this->session->set_userdata('username', $patient_name);
+                if (!empty($patient_email)) $this->session->set_userdata('useremail', $patient_email);
+            }
         }
 
         // Validate Coupon
@@ -589,7 +623,7 @@ class Mytest extends CI_Controller {
 
         // 1. Insert into path_book
         $book_data = [
-            'user_id'         => $this->session->userdata('USERID') ?: $this->session->userdata('userid') ?: null,
+            'user_id'         => $user_id ? intval($user_id) : null,
             'patient_name'    => $patient_name,
             'patient_mobile'  => $patient_mobile,
             'patient_email'   => $patient_email,
@@ -672,11 +706,16 @@ class Mytest extends CI_Controller {
                 @$this->azad_lib->sendMail($patient_email, $email_subj, $email_body);
             }
 
-            // 4. Clear Cart and redirect based on payment mode
+            // Clear Cart upon order success
             $this->session->unset_userdata('path_cart');
 
-            if ($payment_mode === 'ONLINE_UPI' || $payment_mode === 'ONLINE_CARD' || $payment_mode === 'RAZORPAY') {
-                redirect(base_url('payment/checkout?purpose=LAB_TEST&reference_id=' . $booking_id . '&amount=' . $net_total . '&item_name=' . urlencode('Diagnostic Pathology Lab Tests (Booking #' . $booking_id . ')')));
+            if ($is_ajax) {
+                echo json_encode([
+                    'status'       => 'success',
+                    'message'      => 'Booking confirmed successfully!',
+                    'booking_id'   => $booking_id,
+                    'redirect_url' => base_url('mytest/order_success/' . $booking_id)
+                ]);
                 return;
             }
 
@@ -684,8 +723,13 @@ class Mytest extends CI_Controller {
             return;
         }
 
+        if ($is_ajax) {
+            echo json_encode(['status' => 'error', 'message' => 'An error occurred while creating your booking. Please try again.']);
+            return;
+        }
+
         $this->session->set_flashdata('flashmsg', '<div class="alert alert-danger">An error occurred while creating your booking. Please try again.</div>');
-        redirect('mytest/checkout');
+        redirect('mytest?open_checkout=1');
     }
 
     /**

@@ -672,34 +672,20 @@
                 <ul class="patient-nav-list">
 
                     <!-- Work: Browse pathology tests, packages & book sample pickup -->
+                    <!-- Diagnostics & Pathology Unified Entry (Catalog, Cart & Checkout merged) -->
                     <li class="patient-nav-item">
-                        <a href="<?=base_url('mytest');?>" class="patient-nav-link <?=($seg1 == 'mytest' && $seg2 != 'checkout' || $seg1 == 'diagnostic') ? 'active' : '';?>">
+                        <a href="<?=base_url('mytest');?>" class="patient-nav-link <?=($seg1 == 'mytest' || $seg1 == 'diagnostic') ? 'active' : '';?>">
                             <div class="nav-link-content">
                                 <div class="nav-icon-wrapper" style="color: #00a896;">
                                     <i class="fa fa-flask"></i>
                                 </div>
                                 <div class="nav-label-stack">
-                                    <span class="nav-main-title">Book Lab Tests &amp; Packages</span>
-                                    <span class="nav-sub-desc">Pathology &amp; Home Pickup</span>
+                                    <span class="nav-main-title">Diagnostics &amp; Lab Tests</span>
+                                    <span class="nav-sub-desc">Tests, Cart &amp; Home Pickup</span>
                                 </div>
                             </div>
-                        </a>
-                    </li>
-
-                    <!-- Work: Cart review and checkout for diagnostics/medicines -->
-                    <li class="patient-nav-item">
-                        <a href="<?=base_url('mytest/checkout');?>" class="patient-nav-link <?=($seg1 == 'mytest' && $seg2 == 'checkout') ? 'active' : '';?>">
-                            <div class="nav-link-content">
-                                <div class="nav-icon-wrapper" style="color: #ec4899;">
-                                    <i class="fa fa-shopping-cart"></i>
-                                </div>
-                                <div class="nav-label-stack">
-                                    <span class="nav-main-title">Test Cart &amp; Checkout</span>
-                                    <span class="nav-sub-desc">Review selected tests</span>
-                                </div>
-                            </div>
-                            <?php if($total_cart_items > 0): ?>
-                                <span class="nav-badge-pill badge-cart">
+                            <?php if(!empty($total_cart_items) && $total_cart_items > 0): ?>
+                                <span class="nav-badge-pill badge-cart" id="headerCartBadge">
                                     <?=$total_cart_items;?>
                                 </span>
                             <?php endif; ?>
