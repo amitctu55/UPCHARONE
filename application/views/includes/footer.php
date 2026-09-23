@@ -57,21 +57,21 @@ $userlogin=$this->Userlogin_Model->c_count();
 						<li class="footer-contact-item">
 							<div class="footer-contact-icon"><i class="fas fa-phone-alt"></i></div>
 							<div class="footer-contact-info">
-								<h6>24/7 Helpline</h6>
+								<h5 class="footer-contact-title" style="font-size: 13px; font-weight: 700; margin: 0 0 2px; text-transform: none;">24/7 Helpline</h5>
 								<p><a href="tel:8448440603">844-844-0603</a></p>
 							</div>
 						</li>
 						<li class="footer-contact-item">
 							<div class="footer-contact-icon"><i class="fas fa-envelope"></i></div>
 							<div class="footer-contact-info">
-								<h6>Support Email</h6>
+								<h5 class="footer-contact-title" style="font-size: 13px; font-weight: 700; margin: 0 0 2px; text-transform: none;">Support Email</h5>
 								<p><a href="mailto:hello@upchar.info">hello@upchar.info</a></p>
 							</div>
 						</li>
 						<li class="footer-contact-item">
 							<div class="footer-contact-icon"><i class="fas fa-map-marker-alt"></i></div>
 							<div class="footer-contact-info">
-								<h6>Registered Office</h6>
+								<h5 class="footer-contact-title" style="font-size: 13px; font-weight: 700; margin: 0 0 2px; text-transform: none;">Registered Office</h5>
 								<p>N8/251 A-1-11 Newada, Sundarpur, BHU to DLW Road, Varanasi, UP 221005</p>
 							</div>
 						</li>

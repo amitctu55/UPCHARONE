@@ -1,3 +1,65 @@
+<style>
+  .info-box {
+    display: flex;
+    align-items: center;
+    min-height: 85px;
+    border-radius: 8px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    border: 1px solid #e2e8f0;
+    overflow: hidden;
+  }
+  .info-box-icon {
+    width: 75px !important;
+    height: 85px !important;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    font-size: 26px !important;
+    flex-shrink: 0;
+  }
+  .info-box-content {
+    padding: 12px 16px !important;
+    margin-left: 0 !important;
+    flex-grow: 1;
+  }
+  .info-box-text {
+    white-space: normal !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+    line-height: 1.3 !important;
+    font-size: 12.5px !important;
+    color: #64748b !important;
+    font-weight: 600 !important;
+    text-transform: none !important;
+    margin-bottom: 4px;
+  }
+  .info-box-number {
+    font-size: 22px !important;
+    font-weight: 700 !important;
+    color: #1e293b !important;
+  }
+  #doctor-table_filter {
+    padding: 8px 0;
+  }
+  #doctor-table_filter label {
+    font-weight: 600;
+    color: #475569;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+  }
+  #doctor-table_filter input {
+    height: 34px;
+    border-radius: 6px;
+    border: 1px solid #cbd5e1;
+    padding: 6px 12px;
+    font-size: 13px;
+    outline: none;
+    min-width: 220px;
+  }
+</style>
+
 <div class="content-wrapper">
   <!-- Content Header & Breadcrumbs -->
   <section class="content-header" style="padding: 20px 20px 10px;">
@@ -21,49 +83,49 @@
       <!-- Top KPI Metric Cards -->
       <div class="row" style="margin-bottom: 20px;">
         <div class="col-md-3 col-sm-6 col-xs-12">
-          <div class="info-box" style="border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); border: 1px solid #e2e8f0;">
-            <span class="info-box-icon" style="background: linear-gradient(135deg, #00a896 0%, #028090 100%); color: #fff; border-radius: 8px 0 0 8px;">
+          <div class="info-box">
+            <span class="info-box-icon" style="background: linear-gradient(135deg, #00a896 0%, #028090 100%); color: #fff;">
               <i class="fa fa-calendar-check-o"></i>
             </span>
             <div class="info-box-content">
-              <span class="info-box-text" style="color: #64748b; font-size: 12px; font-weight: 600; text-transform: uppercase;">Total Appointments</span>
-              <span class="info-box-number" style="font-size: 22px; font-weight: 700; color: #1e293b;"><?=number_format($total_appointments);?></span>
+              <span class="info-box-text">Total Appointments</span>
+              <span class="info-box-number"><?=number_format($total_appointments);?></span>
             </div>
           </div>
         </div>
 
         <div class="col-md-3 col-sm-6 col-xs-12">
-          <div class="info-box" style="border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); border: 1px solid #e2e8f0;">
-            <span class="info-box-icon" style="background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); color: #fff; border-radius: 8px 0 0 8px;">
+          <div class="info-box">
+            <span class="info-box-icon" style="background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); color: #fff;">
               <i class="fa fa-clock-o"></i>
             </span>
             <div class="info-box-content">
-              <span class="info-box-text" style="color: #64748b; font-size: 12px; font-weight: 600; text-transform: uppercase;">Today's Bookings</span>
-              <span class="info-box-number" style="font-size: 22px; font-weight: 700; color: #1e293b;"><?=number_format($today_appointments);?></span>
+              <span class="info-box-text">Today's Bookings</span>
+              <span class="info-box-number"><?=number_format($today_appointments);?></span>
             </div>
           </div>
         </div>
 
         <div class="col-md-3 col-sm-6 col-xs-12">
-          <div class="info-box" style="border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); border: 1px solid #e2e8f0;">
-            <span class="info-box-icon" style="background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%); color: #fff; border-radius: 8px 0 0 8px;">
+          <div class="info-box">
+            <span class="info-box-icon" style="background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%); color: #fff;">
               <i class="fa fa-user-md"></i>
             </span>
             <div class="info-box-content">
-              <span class="info-box-text" style="color: #64748b; font-size: 12px; font-weight: 600; text-transform: uppercase;">Tracked Doctors</span>
-              <span class="info-box-number" style="font-size: 22px; font-weight: 700; color: #1e293b;"><?=number_format(@$total_doctors ?: count($doctor_stats));?></span>
+              <span class="info-box-text">Tracked Doctors</span>
+              <span class="info-box-number"><?=number_format(@$total_doctors ?: count($doctor_stats));?></span>
             </div>
           </div>
         </div>
 
         <div class="col-md-3 col-sm-6 col-xs-12">
-          <div class="info-box" style="border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); border: 1px solid #e2e8f0;">
-            <span class="info-box-icon" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: #fff; border-radius: 8px 0 0 8px;">
+          <div class="info-box">
+            <span class="info-box-icon" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: #fff;">
               <i class="fa fa-hospital-o"></i>
             </span>
             <div class="info-box-content">
-              <span class="info-box-text" style="color: #64748b; font-size: 12px; font-weight: 600; text-transform: uppercase;">Active Hospital Links</span>
-              <span class="info-box-number" style="font-size: 22px; font-weight: 700; color: #1e293b;"><?=count($hospital_doctor_stats);?></span>
+              <span class="info-box-text">Active Hospital Links</span>
+              <span class="info-box-number"><?=count($hospital_doctor_stats);?></span>
             </div>
           </div>
         </div>
@@ -93,9 +155,9 @@
           <!-- TAB 1: Doctor-Level Tracking -->
           <div class="tab-pane active" id="tab_doctor_tracking">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
-              <h4 style="font-size: 16px; font-weight: 700; color: #1e293b; margin: 0;">
+              <h2 style="font-size: 16px; font-weight: 700; color: #1e293b; margin: 0;">
                 Doctor Appointment Volume Breakdown
-              </h4>
+              </h2>
               <div style="display: flex; gap: 8px; align-items: center;">
                 <input type="text" id="doctor-search" class="form-control input-sm" placeholder="Filter by Doctor / Speciality..." style="width: 250px; border-radius: 6px;">
                 <a href="<?=base_url('doctor/appointment/doctorappointment');?>" class="btn btn-sm btn-default" style="border-radius: 6px;">
@@ -104,8 +166,8 @@
               </div>
             </div>
 
-            <div class="table-responsive" style="border: 1px solid #e2e8f0; border-radius: 6px;">
-              <table class="table table-hover table-striped" id="doctor-table" style="margin: 0;">
+            <div class="table-responsive" style="border: 1px solid #e2e8f0; border-radius: 6px; overflow-x: auto;">
+              <table class="table table-hover table-striped" id="doctor-table" style="margin: 0; min-width: 980px;">
                 <thead>
                   <tr style="background: #f8fafc; color: #475569; font-size: 12px; text-transform: uppercase;">
                     <th style="padding: 12px 15px;">#ID</th>
@@ -127,9 +189,9 @@
           <!-- TAB 2: Hospital-Doctor Cross Tracking Breakdown -->
           <div class="tab-pane" id="tab_hospital_doctor">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
-              <h4 style="font-size: 16px; font-weight: 700; color: #1e293b; margin: 0;">
+              <h2 style="font-size: 16px; font-weight: 700; color: #1e293b; margin: 0;">
                 Hospital-Doctor Cross Consultation Matrix
-              </h4>
+              </h2>
               <div style="display: flex; gap: 8px; align-items: center;">
                 <input type="text" id="hd-search" class="form-control input-sm" placeholder="Filter by Hospital or Doctor..." style="width: 250px; border-radius: 6px;">
               </div>
@@ -191,9 +253,9 @@
           <!-- TAB 3: Practice & Fee Affiliations -->
           <div class="tab-pane" id="tab_affiliations">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
-              <h4 style="font-size: 16px; font-weight: 700; color: #1e293b; margin: 0;">
+              <h2 style="font-size: 16px; font-weight: 700; color: #1e293b; margin: 0;">
                 Doctor Affiliated Practices &amp; Consultation Fees
-              </h4>
+              </h2>
               <a href="<?=base_url('doctor/clinicreg/assign_doctor');?>" class="btn btn-sm btn-primary" style="border-radius: 6px; background: #00a896; border-color: #00a896;">
                 <i class="fa fa-user-plus"></i> New Doctor Affiliation
               </a>
@@ -295,7 +357,7 @@ $(document).ready(function() {
       { "className": "text-center" },
       { "className": "text-center" },
       { "className": "text-center" },
-      { "width": "120px", "className": "text-center", "orderable": false }
+      { "width": "150px", "className": "text-center", "orderable": false }
     ],
     "language": {
       "processing": '<div style="padding: 15px; color: #00a896; font-weight: 700; font-size: 14px;"><i class="fa fa-spinner fa-spin fa-2x"></i><br>Loading Doctor Analytics...</div>',

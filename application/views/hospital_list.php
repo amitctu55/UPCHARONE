@@ -195,19 +195,23 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
-  border-right: 1px dashed #e5e7eb;
-  padding-right: 20px;
+  border-right: none;
+  padding-right: 12px;
   text-align: left;
 }
 
 .hospital-card .doc-col-right {
-  flex: 0 0 200px;
+  flex: 0 0 210px;
   display: flex;
   flex-direction: column;
   gap: 10px;
   justify-content: center;
   align-items: stretch;
   text-align: center;
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-radius: 12px;
+  padding: 14px 16px;
 }
 
 /* Grid View Overrides for Hospital Cards */
@@ -412,6 +416,137 @@
     width: 100% !important;
   }
 }
+
+/* Usability & Typography Scale Overrides (Fix Issues 5, 6, 7, 8, 9, 13) */
+.doc-name, .doc-name a {
+  font-size: 16.5px !important;
+  font-weight: 700 !important;
+  color: #0F172A !important;
+  text-transform: capitalize !important;
+}
+.doc-name a:hover {
+  color: #00A896 !important;
+}
+
+.doc-qualifications {
+  font-size: 13px !important;
+  color: #00A896 !important;
+  font-weight: 600 !important;
+  display: block;
+  margin-top: 3px;
+}
+
+.doc-spec-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.spec-pill {
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  padding: 4px 10px !important;
+  border-radius: 6px !important;
+  background: #F1F5F9 !important;
+  color: #0F766E !important;
+  border: 1px solid #E2E8F0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+}
+
+.doc-meta-info {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.meta-item {
+  font-size: 13px !important;
+  color: #475569 !important;
+  line-height: 1.5 !important;
+  margin: 0 !important;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-transform: capitalize;
+}
+
+.meta-item i {
+  color: #00A896 !important;
+  width: 16px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.trust-badges .badge-rating,
+.trust-badges .badge-fee {
+  font-size: 12px !important;
+}
+
+/* Standardized 48px Search Bar unit (Fix Issue 13) */
+.box-form .input-group {
+  box-shadow: none !important;
+  background: #FFFFFF !important;
+  border: 1.5px solid #CBD5E1 !important;
+  border-radius: 10px !important;
+  overflow: hidden;
+  height: 48px !important;
+  display: flex !important;
+  align-items: center;
+  transition: all 0.2s ease;
+}
+
+.box-form .input-group:focus-within {
+  border-color: #00A896 !important;
+  box-shadow: 0 0 0 3px rgba(0, 168, 150, 0.15) !important;
+}
+
+.box-form .input-group-addon {
+  background: transparent !important;
+  border: none !important;
+  color: #00A896 !important;
+  font-size: 16px !important;
+  padding: 10px 14px !important;
+}
+
+.box-form .form-control {
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  color: #1E293B !important;
+  height: 48px !important;
+  line-height: 48px !important;
+}
+
+#searchBTN {
+  height: 48px !important;
+  line-height: 48px !important;
+  width: 100% !important;
+  background: linear-gradient(135deg, #00A896 0%, #028090 100%) !important;
+  border: none !important;
+  border-radius: 10px !important;
+  color: #FFFFFF !important;
+  font-size: 14.5px !important;
+  font-weight: 700 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  cursor: pointer !important;
+  box-shadow: 0 4px 14px rgba(0, 168, 150, 0.35) !important;
+  transition: all 0.2s ease !important;
+}
+
+#searchBTN:hover {
+  background: #008F80 !important;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(0, 168, 150, 0.45) !important;
+}
 </style>
 
 <!-- Floating Search & Filter Bar -->
@@ -445,10 +580,10 @@
                         </select>
                     </div>
                 </div>
-                <div class="col-md-5 col-sm-6" style="padding: 6px;">
+                <div class="col-md-4 col-sm-6" style="padding: 6px;">
                     <div class="input-group">
                         <span class="input-group-addon"><i class="fas fa-search"></i></span>
-                        <input type="text" id="hint" class="form-control ui-autocomplete-input" name="keyword" value="<?=@$_GET['keyword'];?>" placeholder="Search Hospitals, Clinics, Treatments, Facilities..." autocomplete="off">
+                        <input type="text" id="hint" class="form-control ui-autocomplete-input" name="keyword" value="<?=@$_GET['keyword'];?>" placeholder="Search Hospitals, Treatments, Facilities..." autocomplete="off">
                     </div>       
                 </div>
                 <div class="col-md-3 col-sm-8" style="padding: 6px;">
@@ -462,8 +597,10 @@
                         </select>
                     </div> 
                 </div>
-                <div class="col-md-1 col-sm-4" style="padding: 6px;">
-                    <button type="submit" id="searchBTN" title="Search"><i class="fas fa-search" aria-hidden="true"></i></button>
+                <div class="col-md-2 col-sm-4" style="padding: 6px;">
+                    <button type="submit" id="searchBTN" title="Search Hospitals">
+                        <i class="fas fa-search" aria-hidden="true"></i> <span>Search</span>
+                    </button>
                 </div>
             </div>
         </div>
@@ -476,29 +613,29 @@
         <div class="row">
             <!-- Sidebar: Quick Assistance & Filters -->
             <div class="col-md-3 col-sm-4">
-                <div class="modern-partner-card" style="text-align: left; padding: 24px 20px; margin-bottom: 24px;">
-                    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
-                        <div class="modern-partner-icon" style="margin: 0; width: 48px; height: 48px; font-size: 20px;">
+                <div class="modern-partner-card" style="text-align: left; padding: 16px; margin-bottom: 16px;">
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
+                        <div class="modern-partner-icon" style="margin: 0; width: 36px; height: 36px; font-size: 16px; border-radius: 8px;">
                             <i class="fas fa-ambulance"></i>
                         </div>
                         <div>
-                            <h5 style="margin: 0; font-size: 16px; font-weight: 700; color: #0F172A;">24/7 Emergency</h5>
+                            <h5 style="margin: 0; font-size: 15px; font-weight: 700; color: #0F172A;">24/7 Emergency</h5>
                             <span style="font-size: 12px; color: #64748B;">Immediate Care Support</span>
                         </div>
                     </div>
-                    <p style="font-size: 13px; color: #475569; margin-bottom: 16px; line-height: 1.5;">
+                    <p style="font-size: 13px; color: #475569; margin-bottom: 12px; line-height: 1.4;">
                         Need urgent medical care or emergency bed allocation? Call our dedicated patient assistance desk.
                     </p>
-                    <a href="tel:8448440603" class="btn btn-primary-cta" style="width: 100%; justify-content: center; display: flex; align-items: center; gap: 8px;">
+                    <a href="tel:8448440603" class="btn btn-primary-cta" style="width: 100%; justify-content: center; display: flex; align-items: center; gap: 8px; padding: 8px 14px; font-size: 13px;">
                         <i class="fas fa-phone-alt"></i> 844-844-0603
                     </a>
                 </div>
 
-                <div class="modern-partner-card" style="text-align: left; padding: 24px 20px;">
-                    <h5 style="margin: 0 0 12px; font-size: 15px; font-weight: 700; color: #0F172A;">
+                <div class="modern-partner-card" style="text-align: left; padding: 16px;">
+                    <h5 style="margin: 0 0 10px; font-size: 14px; font-weight: 700; color: #0F172A;">
                         <i class="fas fa-shield-alt" style="color: #00A896; margin-right: 6px;"></i> Upchar Assurance
                     </h5>
-                    <ul style="padding-left: 0; list-style: none; margin: 0; font-size: 13px; color: #64748B; display: flex; flex-direction: column; gap: 10px;">
+                    <ul style="padding-left: 0; list-style: none; margin: 0; font-size: 12.5px; color: #64748B; display: flex; flex-direction: column; gap: 8px;">
                         <li style="display: flex; align-items: center; gap: 8px;">
                             <i class="fas fa-check-circle" style="color: #16A34A;"></i> 100% NABH/Govt Accredited
                         </li>
@@ -542,13 +679,13 @@
                 }
                 ?>
 
-                <!-- Results Header Bar with View Mode Switcher -->
+                <!-- Results Header Bar with View Mode Switcher (Fix Issue 10: Semantic H1 heading) -->
                 <div class="results-header-bar">
                     <div class="results-header-title">
-                        <h4 class="results-count-text">
-                            <i class="fas fa-hospital-alt" style="color: #00A896; margin-right: 4px;"></i> Verified Hospitals & Clinics
+                        <h1 class="results-count-text" style="font-size: 16px; font-weight: 700; margin: 0; display: inline-flex; align-items: center; gap: 8px;">
+                            <i class="fas fa-hospital-alt" style="color: #00A896; margin-right: 4px;"></i> Verified Hospitals &amp; Clinics
                             <span class="results-count-badge"><?=$t_hosp;?> Available</span>
-                        </h4>
+                        </h1>
                         <?php if ($t_hosp > 0) { ?>
                         <span class="results-divider">|</span>
                         <span class="results-count-sub">Showing <strong><?=($c_page - 1) * $p_size + 1;?> - <?=min($c_page * $p_size, $t_hosp);?></strong> of <strong><?=$t_hosp;?></strong> facilities (Page <?=$c_page;?> of <?=$t_pages;?>)</span>
@@ -604,14 +741,14 @@
                         </div>
                     </div>
 
-                    <!-- Column 2: Details & Services -->
+                    <!-- Column 2: Details & Services (Fix Issues 8 & 9: Cased typography) -->
                     <div class="doc-col-mid">
                         <div class="doc-header">
-                            <h3 class="doc-name">
-                                <a href="<?=base_url();?>hospital/<?=$institution->id;?>"><?=htmlspecialchars($institution->name);?></a>
+                            <h3 class="doc-name" style="text-transform: capitalize;">
+                                <a href="<?=base_url();?>hospital/<?=$institution->id;?>"><?=htmlspecialchars(ucwords(strtolower($institution->name)));?></a>
                             </h3>
                             <span class="doc-qualifications" style="color: #00A896; font-weight: 600;">
-                                <i class="fas fa-hospital-alt"></i> Multi-Specialty Hospital & Research Center
+                                <i class="fas fa-hospital-alt"></i> Multi-Specialty Hospital &amp; Research Center
                             </span>
                         </div>
 
@@ -625,8 +762,8 @@
                             <p class="meta-item">
                                 <i class="fas fa-clock"></i> <strong>Open 24 Hours</strong> (Mon - Sun)
                             </p>
-                            <p class="meta-item">
-                                <i class="fas fa-map-marker-alt"></i> <?=htmlspecialchars($addressText);?>
+                            <p class="meta-item" style="text-transform: capitalize;">
+                                <i class="fas fa-map-marker-alt"></i> <?=htmlspecialchars(ucwords(strtolower($addressText)));?>
                             </p>
                         </div>
                     </div>

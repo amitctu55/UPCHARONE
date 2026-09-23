@@ -5,14 +5,30 @@
         color: #FFFFFF;
         border-top-left-radius: 6px;
         border-top-right-radius: 6px;
-        padding: 16px 20px;
+        padding: 16px 24px;
     }
     .upchar-modal-header .close {
         color: #FFFFFF;
         opacity: 0.85;
+        font-size: 28px;
+        font-weight: 300;
+        line-height: 1;
+        padding: 8px 12px;
+        margin: -8px -8px -8px auto;
+        min-width: 44px;
+        min-height: 44px;
+        border-radius: 8px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: background 0.2s ease, opacity 0.2s ease;
     }
-    .upchar-modal-header .close:hover {
+    .upchar-modal-header .close:hover,
+    .upchar-modal-header .close:focus {
         opacity: 1;
+        background: rgba(255, 255, 255, 0.15);
+        outline: none;
     }
     .upchar-modal-title {
         font-weight: 800;
@@ -38,8 +54,8 @@
     .store-compare-card {
         border: 1px solid #E2E8F0;
         border-radius: 10px;
-        padding: 14px 18px;
-        margin-bottom: 12px;
+        padding: 18px 20px;
+        margin-bottom: 16px;
         background: #FFFFFF;
         transition: all 0.2s ease;
     }
@@ -403,22 +419,22 @@ function runMedicineCompare() {
                     ${isDoctorPinned ? '<div class="doctor-pinned-badge"><i class="fas fa-star"></i> DOCTOR AFFILIATED CHEMIST</div>' : ''}
                     <div class="row" style="margin: 0; display: flex; align-items: center; flex-wrap: wrap;">
                         <div class="col-sm-6" style="padding: 0;">
-                            <h4 style="margin: 0 0 4px; font-weight: 800; font-size: 16px; color: #08364B;">
+                            <h4 style="margin: 0 0 6px; font-weight: 700; font-size: 16px; color: #08364B; line-height: 1.3;">
                                 ${item.store_name}
                             </h4>
-                            <div style="font-size: 12px; color: #64748B; margin-bottom: 4px;">
+                            <div style="font-size: 13px; color: #475569; margin-bottom: 6px; line-height: 1.4;">
                                 <i class="fas fa-map-marker-alt" style="color: #00A8FF;"></i> ${item.address}, ${item.city} &bull; <strong>${item.distance_km} km away</strong>
                             </div>
-                            <div style="font-size: 12.5px; color: #10B981; font-weight: 600;">
+                            <div style="font-size: 13px; color: #059669; font-weight: 600;">
                                 <i class="fas fa-bolt"></i> Est. Delivery: ${item.estimated_delivery_time}
                             </div>
                         </div>
 
                         <div class="col-sm-3" style="padding: 0; text-align: center;">
-                            <div style="font-size: 11px; color: #64748B;">${item.medicine.brand_name} (${item.medicine.dosage_form})</div>
-                            <div style="font-size: 16px; font-weight: 800; color: #08364B;">
+                            <div style="font-size: 13px; color: #475569; margin-bottom: 4px; font-weight: 500;">${item.medicine.brand_name} (${item.medicine.dosage_form})</div>
+                            <div style="font-size: 18px; font-weight: 800; color: #08364B;">
                                 ₹${item.pricing.selling_price.toFixed(2)}
-                                <small style="text-decoration: line-through; color: #94A3B8; font-size: 12px;">₹${item.pricing.mrp.toFixed(2)}</small>
+                                <small style="text-decoration: line-through; color: #94A3B8; font-size: 13px;">₹${item.pricing.mrp.toFixed(2)}</small>
                             </div>
                             <div>${discountBadge}</div>
                         </div>

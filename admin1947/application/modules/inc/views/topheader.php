@@ -34,7 +34,7 @@
                     }
                 } catch (Throwable $e) {}
               ?>
-				<span class="hidden-xs">Logedin as <?=htmlspecialchars($role_name, ENT_QUOTES, 'UTF-8');?></span>
+				<span class="hidden-xs">Logged in as <?=htmlspecialchars($role_name, ENT_QUOTES, 'UTF-8');?></span>
             </a>
             <ul class="dropdown-menu">
               <!-- User image -->
@@ -53,10 +53,6 @@
                 </div>
               </li>
             </ul>
-          </li>
-          <!-- Control Sidebar Toggle Button -->
-          <li>
-            <a href="#" data-toggle="control-sidebar"><i class="fa fa-gears"></i></a>
           </li>
         </ul>
       </div>

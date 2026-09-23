@@ -557,20 +557,117 @@ class Home extends CI_Controller
 		$this->load->view('patient_footer');
 	}
 
-	public function ad_click($id)
+	private function _ensure_advertisement_schema()
 	{
-		$ad = $this->db->get_where('advertisement', array('id' => $id))->row();
+		static $schema_checked = false;
+		if ($schema_checked) {
+			return;
+		}
+		$schema_checked = true;
+
+		try {
+			if (!$this->db->table_exists('advertisement')) {
+				$this->db->query("CREATE TABLE IF NOT EXISTS `advertisement` (
+				  `id` int(11) NOT NULL AUTO_INCREMENT,
+				  `title` varchar(255) DEFAULT NULL,
+				  `category` enum('medicine','medical_store','hospital','pathology','equipment','general') DEFAULT 'general',
+				  `sponsor_badge` varchar(100) DEFAULT 'Sponsored Partner',
+				  `short_description` varchar(300) DEFAULT NULL,
+				  `long_description` varchar(500) DEFAULT NULL,
+				  `image` varchar(250) DEFAULT NULL,
+				  `page` varchar(250) DEFAULT NULL,
+				  `link_url` varchar(255) DEFAULT NULL,
+				  `placement` varchar(100) DEFAULT 'public_dashboard',
+				  `clicks` int(11) DEFAULT '0',
+				  `impressions` int(11) DEFAULT '0',
+				  `price_paid` decimal(10,2) DEFAULT '0.00',
+				  `contact_info` varchar(200) DEFAULT NULL,
+				  `status` enum('0','1') DEFAULT '1',
+				  `creat_date` datetime DEFAULT NULL,
+				  PRIMARY KEY (`id`)
+				) ENGINE=InnoDB DEFAULT CHARSET=utf8;");
+			} else {
+				if (!$this->db->field_exists('category', 'advertisement')) {
+					@$this->db->query("ALTER TABLE `advertisement` ADD COLUMN `category` enum('medicine','medical_store','hospital','pathology','equipment','general') DEFAULT 'general' AFTER `title`");
+				}
+				if (!$this->db->field_exists('sponsor_badge', 'advertisement')) {
+					@$this->db->query("ALTER TABLE `advertisement` ADD COLUMN `sponsor_badge` varchar(100) DEFAULT 'Sponsored Partner'");
+				}
+				if (!$this->db->field_exists('short_description', 'advertisement')) {
+					@$this->db->query("ALTER TABLE `advertisement` ADD COLUMN `short_description` varchar(300) DEFAULT NULL");
+				}
+				if (!$this->db->field_exists('long_description', 'advertisement')) {
+					@$this->db->query("ALTER TABLE `advertisement` ADD COLUMN `long_description` varchar(500) DEFAULT NULL");
+				}
+				if (!$this->db->field_exists('link_url', 'advertisement')) {
+					@$this->db->query("ALTER TABLE `advertisement` ADD COLUMN `link_url` varchar(255) DEFAULT NULL");
+				}
+				if (!$this->db->field_exists('placement', 'advertisement')) {
+					@$this->db->query("ALTER TABLE `advertisement` ADD COLUMN `placement` varchar(100) DEFAULT 'public_dashboard'");
+				}
+				if (!$this->db->field_exists('clicks', 'advertisement')) {
+					@$this->db->query("ALTER TABLE `advertisement` ADD COLUMN `clicks` int(11) DEFAULT '0'");
+				}
+				if (!$this->db->field_exists('impressions', 'advertisement')) {
+					@$this->db->query("ALTER TABLE `advertisement` ADD COLUMN `impressions` int(11) DEFAULT '0'");
+				}
+				if (!$this->db->field_exists('price_paid', 'advertisement')) {
+					@$this->db->query("ALTER TABLE `advertisement` ADD COLUMN `price_paid` decimal(10,2) DEFAULT '0.00'");
+				}
+				if (!$this->db->field_exists('contact_info', 'advertisement')) {
+					@$this->db->query("ALTER TABLE `advertisement` ADD COLUMN `contact_info` varchar(200) DEFAULT NULL");
+				}
+				if (!$this->db->field_exists('status', 'advertisement')) {
+					@$this->db->query("ALTER TABLE `advertisement` ADD COLUMN `status` enum('0','1') DEFAULT '1'");
+				}
+			}
+		} catch (Throwable $e) {
+			log_message('error', 'Error in Home::_ensure_advertisement_schema: ' . $e->getMessage());
+		}
+	}
+
+	public function ad_click($id = null)
+	{
+		$id = intval($id);
+		if ($id <= 0) {
+			redirect(base_url());
+			return;
+		}
+
+		$this->_ensure_advertisement_schema();
+
+		$ad = null;
+		try {
+			$q = $this->db->get_where('advertisement', array('id' => $id));
+			$ad = ($q && is_object($q)) ? $q->row() : null;
+		} catch (Throwable $e) {
+			log_message('error', 'ad_click query error: ' . $e->getMessage());
+		}
+
 		if ($ad) {
-			$this->db->where('id', $id)->set('clicks', 'clicks+1', FALSE)->update('advertisement');
+			// Increment clicks safely; failure must never break user redirection
+			try {
+				if ($this->db->field_exists('clicks', 'advertisement')) {
+					$this->db->where('id', $id)->set('clicks', 'clicks+1', FALSE)->update('advertisement');
+				}
+			} catch (Throwable $e) {
+				log_message('error', 'ad_click click count update error: ' . $e->getMessage());
+			}
+
 			$rawDest = !empty($ad->link_url) ? trim($ad->link_url) : (!empty($ad->page) ? trim($ad->page) : base_url());
 
+			// Avoid recursive loops back into ad_click
+			if (stripos($rawDest, 'home/ad_click') !== false || stripos($rawDest, 'ad_click/' . $id) !== false) {
+				$rawDest = base_url('medical');
+			}
+
 			// Parse destination URL
-			$parsed = parse_url($rawDest);
-			$host   = isset($parsed['host']) ? strtolower($parsed['host']) : '';
+			$parsed = @parse_url($rawDest);
+			$host   = (is_array($parsed) && isset($parsed['host'])) ? strtolower($parsed['host']) : '';
 			$isInternal = empty($host) || in_array($host, array('upchar.info', 'www.upchar.info', 'upcharr.com', 'www.upcharr.com', 'localhost', '127.0.0.1'));
 
 			if ($isInternal) {
-				$path = isset($parsed['path']) ? ltrim($parsed['path'], '/') : '';
+				$path = (is_array($parsed) && isset($parsed['path'])) ? ltrim($parsed['path'], '/') : '';
 				// Strip subfolder when matching localhost paths
 				$path = preg_replace('#^demo/upchar/?#i', '', $path);
 
@@ -580,17 +677,24 @@ class Home extends CI_Controller
 					$path = 'medical';
 					$catParam = !empty($ad->category) ? $ad->category : 'equipment';
 					$path .= '?category=' . urlencode($catParam) . '&offer=' . $ad->id;
+				} elseif ($path === 'home' || $path === 'index.php') {
+					$path = '';
 				}
 
-				$queryStr = (isset($parsed['query']) && strpos($path, '?') === false) ? '?' . $parsed['query'] : '';
+				$queryStr = (is_array($parsed) && isset($parsed['query']) && strpos($path, '?') === false) ? '?' . $parsed['query'] : '';
 				$dest = base_url($path . $queryStr);
 			} else {
 				$dest = $rawDest;
 			}
 
+			if (empty($dest)) {
+				$dest = base_url();
+			}
+
 			redirect($dest);
 			return;
 		}
+
 		redirect(base_url());
 	}
 

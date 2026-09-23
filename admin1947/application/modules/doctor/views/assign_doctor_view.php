@@ -276,18 +276,24 @@
   }
 
   /* Fee Presets */
+  .fee-preset-container {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-top: 8px;
+  }
+
   .fee-preset-btn {
-    padding: 4px 10px;
+    padding: 5px 12px;
     font-size: 12px;
     font-weight: 600;
     border-radius: 6px;
     border: 1px solid #cbd5e1;
-    background: #f8fafc;
-    color: #475569;
+    background: #ffffff;
+    color: #334155;
     cursor: pointer;
-    transition: all 0.15s;
-    margin-right: 4px;
-    margin-bottom: 4px;
+    transition: all 0.15s ease;
   }
 
   .fee-preset-btn:hover {
@@ -349,24 +355,44 @@
     accent-color: var(--primary);
   }
 
+  .day-presets-wrap {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
   .day-preset-link {
-    font-size: 11.5px;
+    font-size: 12px;
     font-weight: 600;
-    color: #0284c7;
+    color: #0f766e;
+    background: #ffffff;
+    border: 1px solid #ccfbf1;
+    padding: 4px 10px;
+    border-radius: 6px;
     cursor: pointer;
-    text-decoration: underline;
-    margin-right: 10px;
+    text-decoration: none !important;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    transition: all 0.15s ease;
+  }
+
+  .day-preset-link:hover {
+    background: #f0fdfa;
+    border-color: #99f6e4;
+    color: #0d9488;
   }
 
   .session-row {
     background: #ffffff;
     border: 1px solid var(--border);
     border-radius: 8px;
-    padding: 12px 14px;
-    margin-bottom: 10px;
+    padding: 14px 16px;
+    margin-bottom: 12px;
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 14px;
     flex-wrap: wrap;
   }
 
@@ -443,7 +469,7 @@
               <i class="fa fa-user-md"></i>
             </div>
             <div>
-              <div style="font-size: 11.5px; color: #64748b; font-weight: 600; text-transform: uppercase;">Available Specialists</div>
+              <div style="font-size: 12px; color: #64748b; font-weight: 600; text-transform: uppercase;">Available Specialists</div>
               <div style="font-size: 18px; font-weight: 800; color: #0f172a;"><?=number_format(count($doctors));?> Doctors</div>
             </div>
           </div>
@@ -454,7 +480,7 @@
               <i class="fa fa-hospital-o"></i>
             </div>
             <div>
-              <div style="font-size: 11.5px; color: #64748b; font-weight: 600; text-transform: uppercase;">Medical Facilities</div>
+              <div style="font-size: 12px; color: #64748b; font-weight: 600; text-transform: uppercase;">Medical Facilities</div>
               <div style="font-size: 18px; font-weight: 800; color: #0f172a;"><?=number_format(count($hospitals));?> Hospitals &bull; <?=number_format(count($clinics));?> Clinics</div>
             </div>
           </div>
@@ -465,7 +491,7 @@
               <i class="fa fa-clock-o"></i>
             </div>
             <div>
-              <div style="font-size: 11.5px; color: #64748b; font-weight: 600; text-transform: uppercase;">OPD Scheduling Engine</div>
+              <div style="font-size: 12px; color: #64748b; font-weight: 600; text-transform: uppercase;">OPD Scheduling Engine</div>
               <div style="font-size: 18px; font-weight: 800; color: #0f172a;">Multi-Session / Remaining Days</div>
             </div>
           </div>
@@ -699,8 +725,8 @@
                     <i class="fa fa-inr text-success" style="margin-right: 4px;"></i> Base Consultation Fee (&#8377;) <span class="text-danger">*</span>
                   </label>
                   <input type="number" name="fee" id="fee" class="form-control" placeholder="e.g. 500" min="0" step="50" value="500" required>
-                  <div style="margin-top: 6px;">
-                    <span style="font-size: 11px; color: #64748b; margin-right: 4px;">Presets:</span>
+                  <div class="fee-preset-container">
+                    <span style="font-size: 12px; font-weight: 600; color: #64748b; margin-right: 4px;">Presets:</span>
                     <button type="button" class="fee-preset-btn" onclick="setFee(300)">&#8377;300</button>
                     <button type="button" class="fee-preset-btn" onclick="setFee(500)">&#8377;500</button>
                     <button type="button" class="fee-preset-btn" onclick="setFee(800)">&#8377;800</button>
@@ -735,16 +761,16 @@
               <div class="timing-block-card" id="timing_block_0">
                 <div class="timing-block-header">
                   <div>
-                    <span class="label label-primary" style="font-size: 11px; padding: 4px 8px; border-radius: 4px; background: #00a896;">
+                    <span class="label label-primary" style="font-size: 12px; padding: 5px 10px; border-radius: 4px; background: #00a896;">
                       Schedule Block #1 (Primary Days)
                     </span>
                   </div>
-                  <div>
-                    <span style="font-size: 11.5px; color: #64748b; margin-right: 6px;">Day Presets:</span>
-                    <span class="day-preset-link" onclick="applyDayPreset(0, ['M','T','W','TH','F'])">Mon-Fri (Weekdays)</span>
-                    <span class="day-preset-link" onclick="applyDayPreset(0, ['M','T','W','TH','F','SA'])">Mon-Sat</span>
-                    <span class="day-preset-link" onclick="applyDayPreset(0, ['M','T','W','TH','F','SA','S'])">All 7 Days</span>
-                    <span class="day-preset-link" onclick="applyDayPreset(0, ['SA','S'])">Sat-Sun (Weekend)</span>
+                  <div class="day-presets-wrap">
+                    <span style="font-size: 12px; font-weight: 600; color: #64748b; margin-right: 4px;">Presets:</span>
+                    <span class="day-preset-link" onclick="applyDayPreset(0, ['M','T','W','TH','F'])"><i class="fa fa-check"></i> Mon-Fri (Weekdays)</span>
+                    <span class="day-preset-link" onclick="applyDayPreset(0, ['M','T','W','TH','F','SA'])"><i class="fa fa-check"></i> Mon-Sat</span>
+                    <span class="day-preset-link" onclick="applyDayPreset(0, ['M','T','W','TH','F','SA','S'])"><i class="fa fa-check"></i> All 7 Days</span>
+                    <span class="day-preset-link" onclick="applyDayPreset(0, ['SA','S'])"><i class="fa fa-check"></i> Sat-Sun (Weekend)</span>
                   </div>
                 </div>
 
@@ -773,19 +799,19 @@
                     <!-- Session Row 0 -->
                     <div class="session-row" id="session_row_0_0">
                       <div style="flex: 1; min-width: 140px;">
-                        <label style="font-size: 11px; margin-bottom: 3px; font-weight: 600; color: #475569;">From Time</label>
+                        <label style="font-size: 12px; margin-bottom: 4px; font-weight: 600; color: #475569;">From Time</label>
                         <input type="time" name="timing_blocks[0][sessions][0][from_timing]" class="form-control input-sm" value="09:00" required>
                       </div>
                       <div style="flex: 1; min-width: 140px;">
-                        <label style="font-size: 11px; margin-bottom: 3px; font-weight: 600; color: #475569;">To Time</label>
+                        <label style="font-size: 12px; margin-bottom: 4px; font-weight: 600; color: #475569;">To Time</label>
                         <input type="time" name="timing_blocks[0][sessions][0][to_timing]" class="form-control input-sm" value="13:00" required>
                       </div>
                       <div style="flex: 1; min-width: 120px;">
-                        <label style="font-size: 11px; margin-bottom: 3px; font-weight: 600; color: #475569;">Max Patients</label>
+                        <label style="font-size: 12px; margin-bottom: 4px; font-weight: 600; color: #475569;">Max Patients</label>
                         <input type="number" name="timing_blocks[0][sessions][0][max_patient]" class="form-control input-sm" value="20" min="1">
                       </div>
                       <div style="flex: 1; min-width: 130px;">
-                        <label style="font-size: 11px; margin-bottom: 3px; font-weight: 600; color: #475569;">Slot Fee (&#8377; Optional)</label>
+                        <label style="font-size: 12px; margin-bottom: 4px; font-weight: 600; color: #475569;">Slot Fee (&#8377; Optional)</label>
                         <input type="number" name="timing_blocks[0][sessions][0][fee]" class="form-control input-sm" placeholder="Base fee">
                       </div>
                       <div style="padding-top: 18px;">
@@ -1356,23 +1382,23 @@ function addSessionRow(blockIndex) {
   
   var newRow = '<div class="session-row" id="session_row_' + blockIndex + '_' + sessionIndex + '">' +
     '<div style="flex: 1; min-width: 140px;">' +
-      '<label style="font-size: 11px; margin-bottom: 3px; font-weight: 600; color: #475569;">From Time</label>' +
+      '<label style="font-size: 12px; margin-bottom: 4px; font-weight: 600; color: #475569;">From Time</label>' +
       '<input type="time" name="timing_blocks[' + blockIndex + '][sessions][' + sessionIndex + '][from_timing]" class="form-control input-sm" value="17:00" required>' +
     '</div>' +
     '<div style="flex: 1; min-width: 140px;">' +
-      '<label style="font-size: 11px; margin-bottom: 3px; font-weight: 600; color: #475569;">To Time</label>' +
+      '<label style="font-size: 12px; margin-bottom: 4px; font-weight: 600; color: #475569;">To Time</label>' +
       '<input type="time" name="timing_blocks[' + blockIndex + '][sessions][' + sessionIndex + '][to_timing]" class="form-control input-sm" value="20:00" required>' +
     '</div>' +
     '<div style="flex: 1; min-width: 120px;">' +
-      '<label style="font-size: 11px; margin-bottom: 3px; font-weight: 600; color: #475569;">Max Patients</label>' +
+      '<label style="font-size: 12px; margin-bottom: 4px; font-weight: 600; color: #475569;">Max Patients</label>' +
       '<input type="number" name="timing_blocks[' + blockIndex + '][sessions][' + sessionIndex + '][max_patient]" class="form-control input-sm" value="15" min="1">' +
     '</div>' +
     '<div style="flex: 1; min-width: 130px;">' +
-      '<label style="font-size: 11px; margin-bottom: 3px; font-weight: 600; color: #475569;">Slot Fee (&#8377; Optional)</label>' +
+      '<label style="font-size: 12px; margin-bottom: 4px; font-weight: 600; color: #475569;">Slot Fee (&#8377; Optional)</label>' +
       '<input type="number" name="timing_blocks[' + blockIndex + '][sessions][' + sessionIndex + '][fee]" class="form-control input-sm" placeholder="Base fee">' +
     '</div>' +
     '<div style="padding-top: 18px;">' +
-      '<button type="button" class="btn btn-sm btn-default" onclick="removeSessionRow(' + blockIndex + ', ' + sessionIndex + ')" title="Delete session" style="color: #ef4444; border-radius: 6px;">' +
+      '<button type="button" class="btn btn-sm btn-default" onclick="removeSessionRow(' + blockIndex + ', ' + sessionIndex + ')" title="Delete session" style="color: #ef4444; border-radius: 6px; padding: 6px 10px;">' +
         '<i class="fa fa-trash-o"></i>' +
       '</button>' +
     '</div>' +
@@ -1427,12 +1453,12 @@ function addRemainingDaysBlock() {
   var blockHtml = '<div class="timing-block-card block-secondary" id="timing_block_1">' +
     '<div class="timing-block-header">' +
       '<div>' +
-        '<span class="label" style="font-size: 11px; padding: 4px 8px; border-radius: 4px; background: #0284c7; color: #ffffff;">' +
+        '<span class="label" style="font-size: 12px; padding: 5px 10px; border-radius: 4px; background: #0284c7; color: #ffffff;">' +
           '<i class="fa fa-calendar"></i> Schedule Block #2 (Remaining Days / Alternate Timing)' +
         '</span>' +
       '</div>' +
       '<div>' +
-        '<button type="button" class="btn btn-xs btn-danger" onclick="removeBlock(1)" style="border-radius: 4px; font-weight: 600;">' +
+        '<button type="button" class="btn btn-xs btn-danger" onclick="removeBlock(1)" style="border-radius: 4px; font-weight: 600; padding: 4px 8px;">' +
           '<i class="fa fa-times"></i> Remove Block #2' +
         '</button>' +
       '</div>' +
@@ -1454,23 +1480,23 @@ function addRemainingDaysBlock() {
       '<div id="sessions_wrapper_1">' +
         '<div class="session-row" id="session_row_1_0">' +
           '<div style="flex: 1; min-width: 140px;">' +
-            '<label style="font-size: 11px; margin-bottom: 3px; font-weight: 600; color: #475569;">From Time</label>' +
+            '<label style="font-size: 12px; margin-bottom: 4px; font-weight: 600; color: #475569;">From Time</label>' +
             '<input type="time" name="timing_blocks[1][sessions][0][from_timing]" class="form-control input-sm" value="10:00" required>' +
           '</div>' +
           '<div style="flex: 1; min-width: 140px;">' +
-            '<label style="font-size: 11px; margin-bottom: 3px; font-weight: 600; color: #475569;">To Time</label>' +
+            '<label style="font-size: 12px; margin-bottom: 4px; font-weight: 600; color: #475569;">To Time</label>' +
             '<input type="time" name="timing_blocks[1][sessions][0][to_timing]" class="form-control input-sm" value="14:00" required>' +
           '</div>' +
           '<div style="flex: 1; min-width: 120px;">' +
-            '<label style="font-size: 11px; margin-bottom: 3px; font-weight: 600; color: #475569;">Max Patients</label>' +
+            '<label style="font-size: 12px; margin-bottom: 4px; font-weight: 600; color: #475569;">Max Patients</label>' +
             '<input type="number" name="timing_blocks[1][sessions][0][max_patient]" class="form-control input-sm" value="15" min="1">' +
           '</div>' +
           '<div style="flex: 1; min-width: 130px;">' +
-            '<label style="font-size: 11px; margin-bottom: 3px; font-weight: 600; color: #475569;">Slot Fee (&#8377; Optional)</label>' +
+            '<label style="font-size: 12px; margin-bottom: 4px; font-weight: 600; color: #475569;">Slot Fee (&#8377; Optional)</label>' +
             '<input type="number" name="timing_blocks[1][sessions][0][fee]" class="form-control input-sm" placeholder="Base fee">' +
           '</div>' +
           '<div style="padding-top: 18px;">' +
-            '<button type="button" class="btn btn-sm btn-default" onclick="removeSessionRow(1, 0)" title="Delete session" style="color: #94a3b8; border-radius: 6px;">' +
+            '<button type="button" class="btn btn-sm btn-default" onclick="removeSessionRow(1, 0)" title="Delete session" style="color: #ef4444; border-radius: 6px; padding: 6px 10px;">' +
               '<i class="fa fa-trash-o"></i>' +
             '</button>' +
           '</div>' +

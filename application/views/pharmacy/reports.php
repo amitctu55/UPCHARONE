@@ -321,9 +321,376 @@
 .pill-packed, .pill-assigned { background: #ede9fe; color: #6d28d9; border: 1px solid #ddd6fe; }
 .pill-in_transit { background: #dbeafe; color: #1d4ed8; border: 1px solid #bfdbfe; }
 .pill-delivered { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
+
+/* Print-Only Elements (Hidden on screen) */
+.print-only-header,
+.print-only-footer,
+.print-only-block {
+    display: none;
+}
+
+/* =========================================================
+   COMPREHENSIVE PRINT & PDF EXPORT STYLESHEET
+   Fixes:
+   1. Strips fixed topbar & sidebar that overlap/squish page content
+   2. Resets layout margins/paddings from 250px left margin to 100% full width
+   3. Hides non-printable interactive controls, filter cards, and action buttons
+   4. Preserves high-definition colors, badge fills, and chart graphs
+   5. Enforces clean page-break rules avoiding table row splits
+   ========================================================= */
+@media print {
+    @page {
+        size: A4 portrait;
+        margin: 10mm 12mm 12mm 12mm;
+    }
+
+    *, *:before, *:after {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        color-adjust: exact !important;
+        box-shadow: none !important;
+        text-shadow: none !important;
+    }
+
+    html, body {
+        background: #ffffff !important;
+        color: #0f172a !important;
+        font-size: 11px !important;
+        line-height: 1.4 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
+        height: auto !important;
+        min-height: auto !important;
+        overflow: visible !important;
+    }
+
+    /* Force hide website chrome, navigation, headers, footers & action buttons */
+    header.topbar,
+    .topbar,
+    .sidebar,
+    footer.footer,
+    .footer,
+    .scrollup,
+    .dash-header-section,
+    .dash-header-actions,
+    .filter-card,
+    .btn-dash-primary,
+    .btn-dash-secondary,
+    .no-print {
+        display: none !important;
+        visibility: hidden !important;
+        height: 0 !important;
+        width: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        position: absolute !important;
+        left: -9999px !important;
+        top: -9999px !important;
+        overflow: hidden !important;
+    }
+
+    /* Reset layouts and content wrappers to 100% full width */
+    section,
+    .main-content,
+    .pag_cstm,
+    .medical-dash-wrapper {
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        min-height: auto !important;
+        background: #ffffff !important;
+        border: none !important;
+        display: block !important;
+        float: none !important;
+    }
+
+    /* Show Print Letterhead */
+    .print-only-header {
+        display: block !important;
+        border-bottom: 2px solid #00a896 !important;
+        padding-bottom: 12px !important;
+        margin-bottom: 16px !important;
+    }
+
+    .print-header-top {
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: flex-start !important;
+        margin-bottom: 10px !important;
+    }
+
+    .print-brand-title {
+        font-size: 18px !important;
+        font-weight: 800 !important;
+        color: #043d5b !important;
+        letter-spacing: -0.5px !important;
+    }
+
+    .print-store-name {
+        font-size: 15px !important;
+        font-weight: 700 !important;
+        color: #0f172a !important;
+        margin-top: 2px !important;
+    }
+
+    .print-store-sub {
+        font-size: 10.5px !important;
+        color: #475569 !important;
+        margin-top: 2px !important;
+    }
+
+    .print-meta-box {
+        text-align: right !important;
+        font-size: 10.5px !important;
+        color: #334155 !important;
+        line-height: 1.45 !important;
+    }
+
+    .print-strip {
+        background: #f8fafc !important;
+        border: 1px solid #cbd5e1 !important;
+        border-radius: 6px !important;
+        padding: 8px 12px !important;
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        font-size: 11px !important;
+    }
+
+    /* Metric Cards Grid */
+    .dash-metric-grid {
+        display: grid !important;
+        grid-template-columns: repeat(4, 1fr) !important;
+        gap: 10px !important;
+        margin-bottom: 16px !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+    }
+
+    .dash-metric-card {
+        border: 1px solid #cbd5e1 !important;
+        border-radius: 6px !important;
+        background: #f8fafc !important;
+        padding: 10px 12px !important;
+        box-shadow: none !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+    }
+
+    .dash-metric-icon-wrap {
+        display: none !important;
+    }
+
+    .dash-metric-num {
+        font-size: 18px !important;
+        font-weight: 800 !important;
+        color: #0f172a !important;
+        margin-bottom: 2px !important;
+    }
+
+    .dash-metric-label {
+        font-size: 10px !important;
+        font-weight: 700 !important;
+        color: #475569 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.3px !important;
+    }
+
+    .dash-metric-sub {
+        font-size: 9.5px !important;
+        color: #64748b !important;
+        margin-top: 4px !important;
+    }
+
+    /* Charts in Print */
+    .charts-split-grid {
+        display: grid !important;
+        grid-template-columns: 1.8fr 1.2fr !important;
+        gap: 14px !important;
+        margin-bottom: 16px !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+    }
+
+    .dash-card-box {
+        border: 1px solid #cbd5e1 !important;
+        border-radius: 6px !important;
+        background: #ffffff !important;
+        box-shadow: none !important;
+        margin-bottom: 16px !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+    }
+
+    .dash-card-header {
+        background: #f1f5f9 !important;
+        border-bottom: 1px solid #cbd5e1 !important;
+        padding: 8px 14px !important;
+    }
+
+    .dash-card-title {
+        font-size: 12.5px !important;
+        font-weight: 700 !important;
+        color: #0f172a !important;
+    }
+
+    .dash-card-body {
+        padding: 12px 14px !important;
+    }
+
+    .chart-canvas-wrap {
+        min-height: 160px !important;
+        max-height: 200px !important;
+    }
+
+    /* Two Column Section */
+    .two-col-grid-section {
+        display: grid !important;
+        grid-template-columns: 1.5fr 1fr !important;
+        gap: 14px !important;
+        margin-bottom: 16px !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+    }
+
+    /* Tables */
+    .table-responsive {
+        overflow: visible !important;
+        border: none !important;
+    }
+
+    .dash-table {
+        width: 100% !important;
+        border-collapse: collapse !important;
+        font-size: 10px !important;
+    }
+
+    .dash-table th {
+        background: #f1f5f9 !important;
+        color: #0f172a !important;
+        border: 1px solid #cbd5e1 !important;
+        padding: 6px 8px !important;
+        font-weight: 700 !important;
+        font-size: 10px !important;
+    }
+
+    .dash-table td {
+        border: 1px solid #e2e8f0 !important;
+        padding: 6px 8px !important;
+        color: #1e293b !important;
+        font-size: 10px !important;
+    }
+
+    .dash-table tr {
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+    }
+
+    .dash-table tr:nth-child(even) td {
+        background: #f8fafc !important;
+    }
+
+    /* Badges */
+    .order-code-badge {
+        background: #e0f2fe !important;
+        border: 1px solid #bae6fd !important;
+        color: #0369a1 !important;
+        padding: 2px 5px !important;
+        font-size: 9.5px !important;
+    }
+
+    .status-badge-pill {
+        padding: 2px 6px !important;
+        font-size: 9px !important;
+        border-radius: 3px !important;
+    }
+
+    /* Print Footer */
+    .print-only-footer {
+        display: block !important;
+        margin-top: 24px !important;
+        padding-top: 14px !important;
+        border-top: 1px solid #cbd5e1 !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+    }
+
+    .print-footer-content {
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: flex-end !important;
+        margin-bottom: 16px !important;
+    }
+
+    .print-compliance-note {
+        font-size: 9.5px !important;
+        color: #64748b !important;
+        max-width: 65% !important;
+        line-height: 1.4 !important;
+    }
+
+    .print-sign-block {
+        text-align: center !important;
+        width: 180px !important;
+    }
+
+    .print-sign-line {
+        border-bottom: 1px dashed #64748b !important;
+        height: 35px !important;
+        margin-bottom: 4px !important;
+    }
+
+    .print-copyright-strip {
+        text-align: center !important;
+        font-size: 9px !important;
+        color: #94a3b8 !important;
+        border-top: 1px solid #f1f5f9 !important;
+        padding-top: 6px !important;
+    }
+}
 </style>
 
 <div class="medical-dash-wrapper">
+
+    <!-- Formal Print Document Letterhead (Visible ONLY during print / PDF export) -->
+    <div class="print-only-header">
+        <div class="print-header-top">
+            <div>
+                <div class="print-brand-title">
+                    <i class="fa fa-plus-square" style="color: #00a896;"></i> UPCHAR HEALTHCARE
+                </div>
+                <div class="print-store-name">
+                    <?=html_escape(!empty($current_store['store_name']) ? $current_store['store_name'] : 'Apex Care Medicos & Chemist');?>
+                </div>
+                <div class="print-store-sub">
+                    <i class="fa fa-map-marker"></i> 
+                    <?=html_escape(!empty($current_store['address']) ? $current_store['address'] : 'Shop #12, Ground Floor, Central Healthcare Complex');?>, 
+                    <?=html_escape(!empty($current_store['city']) ? $current_store['city'] : 'New Delhi');?>
+                    <?php if(!empty($current_store['phone'])): ?> &bull; <i class="fa fa-phone"></i> <?=html_escape($current_store['phone']);?><?php endif; ?>
+                    <?php if(!empty($current_store['email'])): ?> &bull; <i class="fa fa-envelope"></i> <?=html_escape($current_store['email']);?><?php endif; ?>
+                </div>
+            </div>
+            <div class="print-meta-box">
+                <div><strong>D.L. No:</strong> <?=html_escape(!empty($current_store['drug_license_no']) ? $current_store['drug_license_no'] : 'DL-20B/21B-UP-98421');?></div>
+                <div><strong>GSTIN:</strong> <?=html_escape(!empty($current_store['gstin']) ? $current_store['gstin'] : '07AAAAU9988K1Z5');?></div>
+                <div><strong>Report Type:</strong> Financial, Sales & Delivery Audit</div>
+                <div><strong>Printed At:</strong> <?=date('d M Y, h:i A');?></div>
+            </div>
+        </div>
+        <div class="print-strip">
+            <span>
+                <strong>Audit Period:</strong> <?=date('d M Y', strtotime($start_date));?> &mdash; <?=date('d M Y', strtotime($end_date));?>
+            </span>
+            <span>
+                <strong>Total Gross:</strong> ₹<?=number_format($total_gross, 2);?> &bull; 
+                <strong>Orders:</strong> <?=$total_orders;?> &bull; 
+                <strong>Fulfilled:</strong> <?=$total_delivered;?> &bull; 
+                <strong>Fulfillment Rate:</strong> <?=($total_orders > 0) ? round(($total_delivered / $total_orders) * 100, 1) : 0;?>%
+            </span>
+        </div>
+    </div>
 
     <!-- Header Section -->
     <div class="dash-header-section">
@@ -460,7 +827,7 @@
     </div>
 
     <!-- Two-Column: Top Selling Medicines & Channel Breakdown -->
-    <div style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 20px; margin-bottom: 24px;">
+    <div class="two-col-grid-section" style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 20px; margin-bottom: 24px;">
 
         <!-- Top Selling Medicines -->
         <div class="dash-card-box">
@@ -469,7 +836,7 @@
                     <i class="fa fa-trophy" style="color: #f59e0b;"></i> 
                     Top Dispensed Medicines & Turnover
                 </h3>
-                <a href="<?=base_url('pharmacy/inventory');?>" class="btn-dash-secondary" style="font-size: 12px; padding: 4px 8px;">
+                <a href="<?=base_url('pharmacy/inventory');?>" class="btn-dash-secondary no-print" style="font-size: 12px; padding: 4px 8px;">
                     View Inventory
                 </a>
             </div>
@@ -609,6 +976,24 @@
         </div>
     </div>
 
+    <!-- Formal Print Document Footer & Sign-off Block (Visible ONLY during print / PDF export) -->
+    <div class="print-only-footer">
+        <div class="print-footer-content">
+            <div class="print-compliance-note">
+                <p style="margin: 0 0 4px 0;"><strong>Compliance & Statutory Declaration:</strong> This report represents authentic commercial telemetry recorded in the Upchar Pharmacy Partner Network. Generated for store-level bookkeeping, sales tax auditing, and fulfillment reconciliation.</p>
+                <p style="margin: 0;">Audit Ref: <strong>UPC-MED-<?=date('Ymd');?>-<?=!empty($current_store['id']) ? $current_store['id'] : 'STORE';?></strong> &bull; Printed by: <strong><?=html_escape(!empty($current_store['store_name']) ? $current_store['store_name'] : 'Verified Pharmacist');?></strong></p>
+            </div>
+            <div class="print-sign-block">
+                <div class="print-sign-line"></div>
+                <div style="font-size: 11px; font-weight: 700; color: #0f172a;">Registered Pharmacist</div>
+                <div style="font-size: 9.5px; color: #64748b;">Seal & Authorized Signature</div>
+            </div>
+        </div>
+        <div class="print-copyright-strip">
+            Upchar Healthcare Technologies &copy; <?=date('Y');?> &bull; Confidential Pharmacy Audit Document &bull; Generated via Chemist Partner Command Center
+        </div>
+    </div>
+
 </div>
 
 <!-- Charts Script -->
@@ -709,6 +1094,23 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
+
+    // Chart.js Print Adaptation: resize canvases cleanly when print dialog triggers
+    window.addEventListener('beforeprint', function() {
+        if (window.Chart && Chart.instances) {
+            Chart.helpers.each(Chart.instances, function(instance) {
+                instance.resize();
+            });
+        }
+    });
+
+    window.addEventListener('afterprint', function() {
+        if (window.Chart && Chart.instances) {
+            Chart.helpers.each(Chart.instances, function(instance) {
+                instance.resize();
+            });
+        }
+    });
 });
 </script>
 

@@ -730,18 +730,53 @@ class Pharmacy extends CI_Controller {
      */
     public function orders() {
         $storeData = $this->_get_active_store_data();
+        $storeId = (int)$storeData['store_id'];
         $status = strtoupper($this->input->get('status') ?: 'ALL');
 
-        $orders = $this->_fetch_store_orders($storeData['store_id'], $status);
+        $orders = $this->_fetch_store_orders($storeId, $status);
         $riders = $this->db->get_where('delivery_riders', ['is_active' => 1])->result_array();
 
+        // Calculate real-time counts across all pipeline statuses for KPI ribbon
+        $allStoreOrders = $this->db->select('order_status, total_amount')
+            ->from('medicine_orders')
+            ->where('pharmacy_id', $storeId)
+            ->get()->result_array();
+
+        $counts = [
+            'total'      => count($allStoreOrders),
+            'pending'    => 0,
+            'confirmed'  => 0,
+            'packed'     => 0,
+            'in_transit' => 0,
+            'delivered'  => 0
+        ];
+        $totalValue = 0.00;
+
+        foreach ($allStoreOrders as $so) {
+            $st = strtoupper($so['order_status']);
+            $totalValue += (float)$so['total_amount'];
+            if (in_array($st, ['PLACED', 'PENDING_RX'])) {
+                $counts['pending']++;
+            } elseif ($st === 'CONFIRMED') {
+                $counts['confirmed']++;
+            } elseif (in_array($st, ['PACKED', 'ASSIGNED'])) {
+                $counts['packed']++;
+            } elseif ($st === 'IN_TRANSIT') {
+                $counts['in_transit']++;
+            } elseif ($st === 'DELIVERED') {
+                $counts['delivered']++;
+            }
+        }
+
         $data = [
-            'stores' => $storeData['stores'],
-            'current_store' => $storeData['current_store'],
-            'orders' => $orders,
+            'stores'         => $storeData['stores'],
+            'current_store'  => $storeData['current_store'],
+            'orders'         => $orders,
             'current_status' => $status,
-            'riders' => $riders,
-            'content_view' => 'pharmacy/orders'
+            'status_counts'  => $counts,
+            'total_value'    => $totalValue,
+            'riders'         => $riders,
+            'content_view'   => 'pharmacy/orders'
         ];
 
         $this->load->view('layouts/chemist_layout', $data);
@@ -839,9 +874,9 @@ class Pharmacy extends CI_Controller {
      */
     public function delivery() {
         $storeData = $this->_get_active_store_data();
-        $storeId = $storeData['store_id'];
+        $storeId = (int)$storeData['store_id'];
 
-        // Orders ready for handover (PACKED or ASSIGNED)
+        // Orders ready for handover (PACKED or ASSIGNED or IN_TRANSIT)
         $this->db->select('mo.*, dr.rider_name, dr.phone as rider_phone, dr.vehicle_number, dr.vehicle_type, oda.delivery_status as assign_status, oda.assigned_at, oda.picked_up_at');
         $this->db->from('medicine_orders mo');
         $this->db->join('delivery_riders dr', 'dr.id = mo.rider_id', 'left');
@@ -854,12 +889,35 @@ class Pharmacy extends CI_Controller {
         // Available active fleet
         $riders = $this->db->get_where('delivery_riders', ['is_active' => 1])->result_array();
 
+        // Calculate real-time delivery telemetry
+        $kpi = [
+            'packed_count'     => 0,
+            'assigned_count'   => 0,
+            'in_transit_count' => 0,
+            'available_riders' => 0,
+            'total_riders'     => count($riders)
+        ];
+
+        foreach ($handovers as $h) {
+            $st = strtoupper($h['order_status']);
+            if ($st === 'PACKED') $kpi['packed_count']++;
+            elseif ($st === 'ASSIGNED') $kpi['assigned_count']++;
+            elseif ($st === 'IN_TRANSIT') $kpi['in_transit_count']++;
+        }
+
+        foreach ($riders as $r) {
+            if (strtoupper($r['status'] ?? '') === 'AVAILABLE') {
+                $kpi['available_riders']++;
+            }
+        }
+
         $data = [
-            'stores' => $storeData['stores'],
-            'current_store' => $storeData['current_store'],
-            'handovers' => $handovers,
-            'riders' => $riders,
-            'content_view' => 'pharmacy/delivery'
+            'stores'         => $storeData['stores'],
+            'current_store'  => $storeData['current_store'],
+            'handovers'      => $handovers,
+            'riders'         => $riders,
+            'kpi'            => $kpi,
+            'content_view'   => 'pharmacy/delivery'
         ];
 
         $this->load->view('layouts/chemist_layout', $data);

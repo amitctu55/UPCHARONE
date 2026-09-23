@@ -46,13 +46,27 @@
       --admin-border: #e2e8f0;
     }
 
-    body, .main-header, .content-wrapper, .main-footer, .form-control, .btn {
+    *, html, body, .main-header, .content-wrapper, .main-footer, .form-control, .btn, .table, th, td, h1, h2, h3, h4, h5, h6, p, span, a, label, input, select, textarea {
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
     }
 
     body {
       background-color: var(--admin-bg-light) !important;
       color: var(--admin-text-dark);
+      font-size: 13.5px;
+    }
+
+    /* Standardized Type Hierarchy */
+    h1, .h1 { font-size: 22px !important; font-weight: 700 !important; }
+    h2, .h2 { font-size: 18px !important; font-weight: 700 !important; }
+    h3, .h3 { font-size: 16px !important; font-weight: 600 !important; }
+    h4, .h4 { font-size: 14px !important; font-weight: 600 !important; }
+
+    /* Hide Control Sidebar Demo */
+    .control-sidebar, .control-sidebar-bg {
+      display: none !important;
+      width: 0 !important;
+      height: 0 !important;
     }
 
     .content-wrapper {
@@ -64,6 +78,7 @@
       background: var(--admin-navy) !important;
       border-bottom: 2px solid var(--admin-teal);
       box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+      margin-left: 230px;
     }
 
     .main-header .logo {
@@ -87,9 +102,10 @@
     .sidebar-menu > li.header {
       background: var(--admin-navy-dark) !important;
       color: #94a3b8 !important;
-      font-size: 10px !important;
-      font-weight: 700 !important;
-      letter-spacing: 0.8px;
+      font-size: 12px !important;
+      font-weight: 600 !important;
+      letter-spacing: 0.5px;
+      text-transform: none !important;
       padding: 12px 15px 8px !important;
     }
 
@@ -99,13 +115,22 @@
       font-weight: 500;
       transition: all 0.2s ease;
       border-left: 3px solid transparent;
+      display: flex !important;
+      align-items: center !important;
+      gap: 10px !important;
     }
 
-    .sidebar-menu > li:hover > a, 
-    .sidebar-menu > li.active > a {
+    .sidebar-menu > li:hover > a {
       background: #243452 !important;
       color: #ffffff !important;
-      border-left-color: var(--admin-teal) !important;
+    }
+
+    /* Parent Category Open/Selected State: Subtle & Less Prominent (Fix Issue 7) */
+    .sidebar-menu > li.treeview.menu-open > a,
+    .sidebar-menu > li.treeview.active > a {
+      background: rgba(255, 255, 255, 0.05) !important;
+      color: #e2e8f0 !important;
+      border-left: 3px solid transparent !important;
     }
 
     .sidebar-menu .treeview-menu {
@@ -113,18 +138,48 @@
       padding: 4px 0;
     }
 
+    /* Sub-Item Alignment & Indentation (Fix Issue 10) */
     .sidebar-menu .treeview-menu > li > a {
-      padding: 8px 15px 8px 25px !important;
+      padding: 9px 15px 9px 32px !important;
       color: #94a3b8 !important;
       font-size: 13px;
       transition: all 0.15s ease;
+      display: flex !important;
+      align-items: center !important;
+      gap: 10px !important;
+      border-left: 3px solid transparent;
     }
 
-    .sidebar-menu .treeview-menu > li.active > a,
+    /* Specific Active Sub-Page Item: Distinct Left-Border Accent & Contrast (Fix Issue 7) */
+    .sidebar-menu .treeview-menu > li.active > a {
+      background: rgba(0, 168, 150, 0.14) !important;
+      color: var(--admin-teal) !important;
+      font-weight: 600 !important;
+      border-left: 3px solid var(--admin-teal) !important;
+      padding-left: 32px !important;
+    }
+
     .sidebar-menu .treeview-menu > li:hover > a {
       color: var(--admin-teal) !important;
-      font-weight: 600;
-      padding-left: 28px !important;
+    }
+
+    /* Sidebar Icon Centering (Fix Issue 10) */
+    .sidebar-menu > li > a > i,
+    .sidebar-menu .treeview-menu > li > a > i {
+      width: 20px !important;
+      text-align: center !important;
+      font-size: 14px !important;
+      flex-shrink: 0 !important;
+      margin-right: 0 !important;
+    }
+
+    /* Spacious Table Rows (Fix Issue 9) */
+    .table-spacious > tbody > tr > th,
+    .table-spacious > tbody > tr > td,
+    .table-spacious > thead > tr > th {
+      padding: 12px 16px !important;
+      vertical-align: middle !important;
+      line-height: 1.5 !important;
     }
 
     /* Content Header & Breadcrumbs */

@@ -128,14 +128,36 @@
     margin-bottom: 4px;
   }
   .dash-metric-label {
-    font-size: 13px;
+    font-size: 13.5px;
     font-weight: 600;
     color: var(--adm-slate-700);
   }
   .dash-metric-sub {
-    font-size: 11.5px;
+    font-size: 12.5px;
     color: var(--adm-slate-600);
     margin-top: 10px;
+    line-height: 1.4;
+  }
+  .dash-metric-sub .label {
+    font-size: 12px !important;
+  }
+  .dash-metric-action {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 14px;
+    padding-top: 8px;
+    border-top: 1px dashed #e2e8f0;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--adm-teal);
+    transition: all 0.2s ease;
+  }
+  .dash-metric-card:hover .dash-metric-action {
+    color: #0d9488;
+  }
+  .dash-metric-card:hover .dash-metric-action i {
+    transform: translateX(4px);
   }
 
   /* Chart & Card Boxes */
@@ -154,7 +176,7 @@
     justify-content: space-between;
   }
   .dash-box-title {
-    font-size: 14.5px;
+    font-size: 15px;
     font-weight: 700;
     color: var(--adm-slate-900);
     margin: 0;
@@ -182,7 +204,7 @@
     display: flex;
     align-items: center;
     gap: 14px;
-    padding: 14px 16px;
+    padding: 16px 18px;
     border-radius: 8px;
     background: #f8fafc;
     border: 1px solid var(--adm-border);
@@ -200,9 +222,9 @@
     transform: translateX(3px);
   }
   .quick-action-icon {
-    width: 40px;
-    height: 40px;
-    border-radius: 6px;
+    width: 42px;
+    height: 42px;
+    border-radius: 8px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -247,12 +269,15 @@
                         <div class="dash-metric-label">Hospital Facilities</div>
                     </div>
                     <div class="dash-metric-sub" style="display: flex; gap: 6px; flex-wrap: wrap;">
-                        <span class="label label-success" style="background: #dcfce7 !important; color: #16a34a !important; border: 1px solid #bbf7d0; font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 4px;">
+                        <span class="label label-success" style="background: #dcfce7 !important; color: #16a34a !important; border: 1px solid #bbf7d0; font-size: 12px; font-weight: 700; padding: 3px 8px; border-radius: 4px;">
                             <i class="fa fa-check-circle"></i> <?=number_format($approved_hospitals ?? $total_hospitals);?> Verified
                         </span>
-                        <span class="label label-warning" style="background: #fef3c7 !important; color: #d97706 !important; border: 1px solid #fde68a; font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 4px;">
+                        <span class="label label-warning" style="background: #fef3c7 !important; color: #d97706 !important; border: 1px solid #fde68a; font-size: 12px; font-weight: 700; padding: 3px 8px; border-radius: 4px;">
                             <i class="fa fa-clock-o"></i> <?=number_format($pending_hospitals ?? 0);?> Pending
                         </span>
+                    </div>
+                    <div class="dash-metric-action">
+                        <span>View facilities</span> <i class="fa fa-arrow-right"></i>
                     </div>
                 </div>
             </a>
@@ -270,6 +295,9 @@
                     <div class="dash-metric-sub">
                         <span class="text-primary"><i class="fa fa-map-marker"></i> Outpatient Centers</span>
                     </div>
+                    <div class="dash-metric-action">
+                        <span>View clinics</span> <i class="fa fa-arrow-right"></i>
+                    </div>
                 </div>
             </a>
 
@@ -285,6 +313,9 @@
                     </div>
                     <div class="dash-metric-sub">
                         <span class="text-warning"><i class="fa fa-stethoscope"></i> Multi-Specialty Practitioners</span>
+                    </div>
+                    <div class="dash-metric-action">
+                        <span>Manage doctors</span> <i class="fa fa-arrow-right"></i>
                     </div>
                 </div>
             </a>
@@ -302,6 +333,9 @@
                     <div class="dash-metric-sub">
                         <span class="text-muted"><i class="fa fa-users"></i> <?=number_format($total_users);?> Registered Users</span>
                     </div>
+                    <div class="dash-metric-action">
+                        <span>View bookings</span> <i class="fa fa-arrow-right"></i>
+                    </div>
                 </div>
             </a>
 
@@ -317,6 +351,9 @@
                     </div>
                     <div class="dash-metric-sub">
                         <span class="text-success"><i class="fa fa-shield"></i> <?=number_format($active_abha_ids);?> Active Linked</span>
+                    </div>
+                    <div class="dash-metric-action">
+                        <span>ABDM Console</span> <i class="fa fa-arrow-right"></i>
                     </div>
                 </div>
             </a>
@@ -334,6 +371,9 @@
                     <div class="dash-metric-sub">
                         <span class="text-primary"><i class="fa fa-lock"></i> <?=number_format($active_consent_records);?> Active Records</span>
                     </div>
+                    <div class="dash-metric-action">
+                        <span>Review consents</span> <i class="fa fa-arrow-right"></i>
+                    </div>
                 </div>
             </a>
 
@@ -350,6 +390,9 @@
                     <div class="dash-metric-sub">
                         <span class="text-success"><i class="fa fa-check"></i> <?=number_format($approved_hpr_registrations);?> Approved Practitioners</span>
                     </div>
+                    <div class="dash-metric-action">
+                        <span>Verify registry</span> <i class="fa fa-arrow-right"></i>
+                    </div>
                 </div>
             </a>
 
@@ -365,6 +408,9 @@
                     </div>
                     <div class="dash-metric-sub">
                         <span class="text-success"><i class="fa fa-check"></i> <?=number_format($approved_hfr_registrations);?> Approved Facilities</span>
+                    </div>
+                    <div class="dash-metric-action">
+                        <span>Verify registry</span> <i class="fa fa-arrow-right"></i>
                     </div>
                 </div>
             </a>
@@ -494,10 +540,10 @@
             <div class="col-md-3 col-sm-6 col-xs-12">
                 <div class="dash-box" style="border-top: 3px solid #0284c7;">
                     <div class="dash-box-header" style="background: #f8fafc;">
-                        <h4 class="dash-box-title" style="color: #0369a1;">
+                        <h3 class="dash-box-title" style="color: #0369a1;">
                             <i class="fa fa-users"></i> HR &amp; Staff Suite
-                        </h4>
-                        <span class="label label-primary" style="font-size: 11px;"><?=number_format($total_staff ?? 0);?> Active</span>
+                        </h3>
+                        <span class="label label-primary" style="font-size: 12px; font-weight: 600;"><?=number_format($total_staff ?? 0);?> Active</span>
                     </div>
                     <div class="dash-box-body" style="padding: 14px;">
                         <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 12.5px;">
@@ -509,16 +555,16 @@
                             <strong style="color: #d97706;"><?=number_format($pending_leaves ?? 0);?></strong>
                         </div>
                         <div style="margin-top: 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 6px;">
-                            <a href="<?=base_url('hr/dashboard');?>" target="_blank" class="btn btn-xs btn-default" style="font-weight: 600; text-align: left;">
+                            <a href="<?=base_url('hr/dashboard');?>" target="_blank" class="btn btn-xs btn-default" style="font-weight: 600; text-align: left; padding: 6px 8px;">
                                 <i class="fa fa-tachometer text-primary"></i> HR Hub
                             </a>
-                            <a href="<?=base_url('hr/employees');?>" target="_blank" class="btn btn-xs btn-default" style="font-weight: 600; text-align: left;">
+                            <a href="<?=base_url('hr/employees');?>" target="_blank" class="btn btn-xs btn-default" style="font-weight: 600; text-align: left; padding: 6px 8px;">
                                 <i class="fa fa-user-plus text-success"></i> Directory
                             </a>
-                            <a href="<?=base_url('hr/attendance');?>" target="_blank" class="btn btn-xs btn-default" style="font-weight: 600; text-align: left;">
+                            <a href="<?=base_url('hr/attendance');?>" target="_blank" class="btn btn-xs btn-default" style="font-weight: 600; text-align: left; padding: 6px 8px;">
                                 <i class="fa fa-calendar-check-o text-info"></i> Roster
                             </a>
-                            <a href="<?=base_url('hr/payroll');?>" target="_blank" class="btn btn-xs btn-default" style="font-weight: 600; text-align: left;">
+                            <a href="<?=base_url('hr/payroll');?>" target="_blank" class="btn btn-xs btn-default" style="font-weight: 600; text-align: left; padding: 6px 8px;">
                                 <i class="fa fa-money text-warning"></i> Payroll
                             </a>
                         </div>
@@ -530,10 +576,10 @@
             <div class="col-md-3 col-sm-6 col-xs-12">
                 <div class="dash-box" style="border-top: 3px solid #00a896;">
                     <div class="dash-box-header" style="background: #f8fafc;">
-                        <h4 class="dash-box-title" style="color: #0f766e;">
+                        <h3 class="dash-box-title" style="color: #0f766e;">
                             <i class="fa fa-motorcycle"></i> Logistics &amp; Pickups
-                        </h4>
-                        <span class="label label-success" style="background: #00a896;"><?=number_format($total_path_orders ?? 0);?> Orders</span>
+                        </h3>
+                        <span class="label label-success" style="background: #00a896; font-size: 12px; font-weight: 600;"><?=number_format($total_path_orders ?? 0);?> Orders</span>
                     </div>
                     <div class="dash-box-body" style="padding: 14px;">
                         <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 12.5px;">
@@ -545,16 +591,16 @@
                             <strong style="color: #d97706;"><?=number_format($pending_handoffs ?? 0);?></strong>
                         </div>
                         <div style="margin-top: 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 6px;">
-                            <a href="<?=base_url('../collector/dashboard');?>" target="_blank" class="btn btn-xs btn-default" style="font-weight: 600; text-align: left;">
+                            <a href="<?=base_url('../collector/dashboard');?>" target="_blank" class="btn btn-xs btn-default" style="font-weight: 600; text-align: left; padding: 6px 8px;">
                                 <i class="fa fa-list-alt text-teal"></i> Collector App
                             </a>
-                            <a href="<?=base_url('operations/handoffs');?>" target="_blank" class="btn btn-xs btn-default" style="font-weight: 600; text-align: left;">
+                            <a href="<?=base_url('operations/handoffs');?>" target="_blank" class="btn btn-xs btn-default" style="font-weight: 600; text-align: left; padding: 6px 8px;">
                                 <i class="fa fa-flask text-primary"></i> Handoffs
                             </a>
-                            <a href="<?=base_url('operations/expenses');?>" target="_blank" class="btn btn-xs btn-default" style="font-weight: 600; text-align: left;">
+                            <a href="<?=base_url('operations/expenses');?>" target="_blank" class="btn btn-xs btn-default" style="font-weight: 600; text-align: left; padding: 6px 8px;">
                                 <i class="fa fa-receipt text-danger"></i> Claims (<?=$pending_expenses ?? 0;?>)
                             </a>
-                            <a href="<?=base_url('attendance/punch');?>" target="_blank" class="btn btn-xs btn-default" style="font-weight: 600; text-align: left;">
+                            <a href="<?=base_url('attendance/punch');?>" target="_blank" class="btn btn-xs btn-default" style="font-weight: 600; text-align: left; padding: 6px 8px;">
                                 <i class="fa fa-camera text-info"></i> GPS Punch
                             </a>
                         </div>
@@ -566,10 +612,10 @@
             <div class="col-md-3 col-sm-6 col-xs-12">
                 <div class="dash-box" style="border-top: 3px solid #f43f5e;">
                     <div class="dash-box-header" style="background: #f8fafc;">
-                        <h4 class="dash-box-title" style="color: #be123c;">
+                        <h3 class="dash-box-title" style="color: #be123c;">
                             <i class="fa fa-handshake-o"></i> BDE CRM &amp; Pipeline
-                        </h4>
-                        <span class="label label-danger" style="background: #f43f5e;"><?=number_format($total_crm_leads ?? 0);?> Leads</span>
+                        </h3>
+                        <span class="label label-danger" style="background: #f43f5e; font-size: 12px; font-weight: 600;"><?=number_format($total_crm_leads ?? 0);?> Leads</span>
                     </div>
                     <div class="dash-box-body" style="padding: 14px;">
                         <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 12.5px;">
@@ -581,10 +627,10 @@
                             <strong style="color: #16a34a;">Active</strong>
                         </div>
                         <div style="margin-top: 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 6px;">
-                            <a href="<?=base_url('crm/dashboard');?>" target="_blank" class="btn btn-xs btn-default" style="font-weight: 600; text-align: left;">
+                            <a href="<?=base_url('crm/dashboard');?>" target="_blank" class="btn btn-xs btn-default" style="font-weight: 600; text-align: left; padding: 6px 8px;">
                                 <i class="fa fa-line-chart text-danger"></i> CRM Metrics
                             </a>
-                            <a href="<?=base_url('crm/leads');?>" target="_blank" class="btn btn-xs btn-default" style="font-weight: 600; text-align: left;">
+                            <a href="<?=base_url('crm/leads');?>" target="_blank" class="btn btn-xs btn-default" style="font-weight: 600; text-align: left; padding: 6px 8px;">
                                 <i class="fa fa-columns text-primary"></i> Kanban Board
                             </a>
                         </div>
@@ -596,10 +642,10 @@
             <div class="col-md-3 col-sm-6 col-xs-12">
                 <div class="dash-box" style="border-top: 3px solid #6366f1;">
                     <div class="dash-box-header" style="background: #f8fafc;">
-                        <h4 class="dash-box-title" style="color: #4338ca;">
+                        <h3 class="dash-box-title" style="color: #4338ca;">
                             <i class="fa fa-google"></i> Google SSO &amp; Ads
-                        </h4>
-                        <span class="label label-info" style="background: #6366f1;"><?=number_format($total_gmail_users ?? 0);?> Google</span>
+                        </h3>
+                        <span class="label label-info" style="background: #6366f1; font-size: 12px; font-weight: 600;"><?=number_format($total_gmail_users ?? 0);?> Google</span>
                     </div>
                     <div class="dash-box-body" style="padding: 14px;">
                         <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 12.5px;">
@@ -611,22 +657,20 @@
                             <strong style="color: #10b981;">Online</strong>
                         </div>
                         <div style="margin-top: 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 6px;">
-                            <a href="<?=base_url('users/userlogincreate/gmail_users');?>" class="btn btn-xs btn-default" style="font-weight: 600; text-align: left;">
+                            <a href="<?=base_url('users/userlogincreate/gmail_users');?>" class="btn btn-xs btn-default" style="font-weight: 600; text-align: left; padding: 6px 8px;">
                                 <i class="fa fa-google text-danger"></i> Gmail Users
                             </a>
-                            <a href="<?=base_url('doctor/clinicreg/advertisment');?>" class="btn btn-xs btn-default" style="font-weight: 600; text-align: left;">
+                            <a href="<?=base_url('doctor/clinicreg/advertisment');?>" class="btn btn-xs btn-default" style="font-weight: 600; text-align: left; padding: 6px 8px;">
                                 <i class="fa fa-bullhorn text-warning"></i> Ads Manager
                             </a>
-                            <a href="<?=base_url('doctor/pathology/assign_test');?>" class="btn btn-xs btn-default" style="font-weight: 600; text-align: left;">
+                            <a href="<?=base_url('doctor/pathology/assign_test');?>" class="btn btn-xs btn-default" style="font-weight: 600; text-align: left; padding: 6px 8px;">
                                 <i class="fa fa-heartbeat text-pink"></i> Path Tests
                             </a>
-                            <a href="<?=base_url('doctor/pathology/add');?>" class="btn btn-xs btn-default" style="font-weight: 600; text-align: left;">
+                            <a href="<?=base_url('doctor/pathology/add');?>" class="btn btn-xs btn-default" style="font-weight: 600; text-align: left; padding: 6px 8px;">
                                 <i class="fa fa-plus text-success"></i> Add Test
                             </a>
                         </div>
                     </div>
-                </div>
-            </div>
         </div>
     </section>
 </div>

@@ -952,6 +952,18 @@ class Doctorregmodel extends CI_Model
 				if (!$this->db->field_exists('placement', 'advertisement')) {
 					$this->db->query("ALTER TABLE `advertisement` ADD COLUMN `placement` varchar(100) DEFAULT 'public_dashboard'");
 				}
+				if (!$this->db->field_exists('clicks', 'advertisement')) {
+					$this->db->query("ALTER TABLE `advertisement` ADD COLUMN `clicks` int(11) DEFAULT '0'");
+				}
+				if (!$this->db->field_exists('impressions', 'advertisement')) {
+					$this->db->query("ALTER TABLE `advertisement` ADD COLUMN `impressions` int(11) DEFAULT '0'");
+				}
+				if (!$this->db->field_exists('price_paid', 'advertisement')) {
+					$this->db->query("ALTER TABLE `advertisement` ADD COLUMN `price_paid` decimal(10,2) DEFAULT '0.00'");
+				}
+				if (!$this->db->field_exists('contact_info', 'advertisement')) {
+					$this->db->query("ALTER TABLE `advertisement` ADD COLUMN `contact_info` varchar(200) DEFAULT NULL");
+				}
 				if (!$this->db->field_exists('status', 'advertisement')) {
 					$this->db->query("ALTER TABLE `advertisement` ADD COLUMN `status` enum('0','1') DEFAULT '1'");
 				}

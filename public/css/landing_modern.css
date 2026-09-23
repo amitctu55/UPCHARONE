@@ -3965,3 +3965,593 @@ header {
     display: inline-flex;
   }
 }
+
+/* ==========================================================================
+   HOMEPAGE 2026 MODERN DESIGN SYSTEM (home1.php)
+   ========================================================================== */
+
+/* 1. Hero & Search Section */
+.hero-search-section-modern {
+  background: radial-gradient(120% 120% at 50% 0%, #FFFFFF 30%, #F0FDFA 75%, #E0F2FE 100%) !important;
+  padding: 55px 0 45px !important;
+  border-bottom: 1px solid #E2E8F0 !important;
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-trust-pill-modern {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #FFFFFF;
+  border: 1px solid #CCFBF1;
+  padding: 6px 16px;
+  border-radius: 9999px;
+  box-shadow: 0 2px 6px rgba(0, 168, 150, 0.08);
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #0F766E;
+  margin-bottom: 18px;
+}
+
+.hero-trust-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #10B981;
+  box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+  animation: pulse-live 2s infinite;
+}
+
+@keyframes pulse-live {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+  70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+
+.hero-main-title-modern {
+  font-size: 38px !important;
+  font-weight: 800 !important;
+  line-height: 1.25 !important;
+  color: #0F172A !important;
+  margin: 0 0 14px !important;
+  letter-spacing: -0.5px;
+}
+
+.hero-main-title-modern span {
+  background: linear-gradient(135deg, #00A896 0%, #0284C7 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.hero-main-desc-modern {
+  font-size: 15px !important;
+  line-height: 1.6 !important;
+  color: #475569 !important;
+  max-width: 720px;
+  margin: 0 auto 24px !important;
+}
+
+/* Service Switcher Tabs */
+.search-category-tabs-modern {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(8px);
+  border: 1px solid #E2E8F0;
+  border-radius: 9999px;
+  padding: 4px;
+  gap: 4px;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.tab-btn-modern {
+  border: none;
+  background: transparent;
+  padding: 8px 18px;
+  border-radius: 9999px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #475569;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.tab-btn-modern:hover {
+  color: #0F172A;
+  background: rgba(241, 245, 249, 0.7);
+}
+
+.tab-btn-modern.active {
+  background: #08364B;
+  color: #FFFFFF;
+  box-shadow: 0 2px 8px rgba(8, 54, 75, 0.25);
+}
+
+.tab-btn-modern.active i {
+  color: #2DD4BF;
+}
+
+/* Search Pill Container */
+.search-pill-container-modern {
+  background: #FFFFFF !important;
+  border-radius: 9999px !important;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08), 0 2px 6px rgba(15, 23, 42, 0.03) !important;
+  border: 1px solid #CBD5E1 !important;
+  display: flex !important;
+  align-items: center !important;
+  padding: 6px !important;
+  max-width: 920px;
+  margin: 24px auto 18px !important;
+  transition: all 0.25s ease !important;
+}
+
+.search-pill-container-modern:focus-within {
+  border-color: #00A896 !important;
+  box-shadow: 0 12px 35px rgba(0, 168, 150, 0.15), 0 0 0 3px rgba(0, 168, 150, 0.12) !important;
+}
+
+.search-pill-sec-modern {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 14px;
+}
+
+.search-pill-sec-modern.loc-sec {
+  flex: 1.1;
+}
+
+.search-pill-sec-modern.spl-sec {
+  flex: 1.2;
+}
+
+.search-pill-sec-modern.kw-sec {
+  flex: 2;
+}
+
+.search-pill-icon-modern {
+  font-size: 15px;
+  color: #00A896;
+  flex-shrink: 0;
+}
+
+.search-pill-select-modern,
+.search-pill-input-modern {
+  width: 100%;
+  border: none !important;
+  background: transparent !important;
+  outline: none !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  color: #0F172A !important;
+  box-shadow: none !important;
+}
+
+.search-pill-select-modern option {
+  color: #0F172A;
+  background: #FFFFFF;
+}
+
+.search-pill-input-modern::placeholder {
+  color: #94A3B8;
+  font-weight: 400;
+}
+
+.search-pill-divider-modern {
+  width: 1px;
+  height: 28px;
+  background: #E2E8F0;
+  flex-shrink: 0;
+}
+
+.search-pill-btn-modern {
+  border-radius: 9999px !important;
+  background: linear-gradient(135deg, #00A896 0%, #028090 100%) !important;
+  color: #FFFFFF !important;
+  font-weight: 700 !important;
+  font-size: 14px !important;
+  padding: 0 26px !important;
+  height: 48px !important;
+  border: none !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  box-shadow: 0 4px 14px rgba(0, 168, 150, 0.35) !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  flex-shrink: 0;
+}
+
+.search-pill-btn-modern:hover {
+  background: linear-gradient(135deg, #009383 0%, #026f7c 100%) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(0, 168, 150, 0.45) !important;
+}
+
+/* Quick Search Tags */
+.search-quick-tags-modern {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 14px;
+}
+
+.quick-tag-chip-modern {
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 9999px;
+  padding: 4px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #475569;
+  text-decoration: none !important;
+  transition: all 0.2s ease;
+}
+
+.quick-tag-chip-modern:hover {
+  background: #F1F5F9;
+  border-color: #CBD5E1;
+  color: #0F172A;
+  transform: translateY(-1px);
+}
+
+.quick-tag-emergency {
+  background: #FFE4E6 !important;
+  border: 1px solid #FDA4AF !important;
+  color: #E11D48 !important;
+  border-radius: 9999px;
+  padding: 4px 14px;
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none !important;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+
+.quick-tag-emergency:hover {
+  background: #FECDD3 !important;
+  color: #BE123C !important;
+}
+
+/* 2. Core Healthcare Services Bento Grid */
+.core-services-section-modern {
+  padding: 45px 0 35px !important;
+  background: #FFFFFF !important;
+}
+
+.core-services-grid-modern {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 16px;
+}
+
+.core-service-card-modern {
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 14px;
+  padding: 22px 14px 18px;
+  text-align: center;
+  text-decoration: none !important;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  transition: all 0.25s ease;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.02);
+}
+
+.core-service-card-modern:hover {
+  transform: translateY(-5px);
+  border-color: #00A896;
+  box-shadow: 0 12px 26px rgba(0, 168, 150, 0.12);
+}
+
+.service-card-badge-modern {
+  position: absolute;
+  top: -9px;
+  right: 10px;
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  letter-spacing: 0.2px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+}
+
+.badge-live { background: #DCFCE7; color: #15803D; border: 1px solid #BBF7D0; }
+.badge-247 { background: #E0F2FE; color: #0369A1; border: 1px solid #BAE6FD; }
+.badge-offer { background: #FEF3C7; color: #B45309; border: 1px solid #FDE68A; }
+.badge-popular { background: #EDE9FE; color: #6D28D9; border: 1px solid #DDD6FE; }
+.badge-emergency { background: #FFE4E6; color: #BE123C; border: 1px solid #FECDD3; }
+
+.service-icon-box-modern {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  margin-bottom: 12px;
+  transition: transform 0.25s ease;
+}
+
+.core-service-card-modern:hover .service-icon-box-modern {
+  transform: scale(1.1);
+}
+
+.icon-box-teal   { background: #E6F7F5; color: #00A896; }
+.icon-box-blue   { background: #EFF6FF; color: #2563EB; }
+.icon-box-emerald{ background: #ECFDF5; color: #059669; }
+.icon-box-purple { background: #F5F3FF; color: #7C3AED; }
+.icon-box-amber  { background: #FFFBEB; color: #D97706; }
+.icon-box-rose   { background: #FFF1F2; color: #E11D48; }
+
+.service-card-title-modern {
+  font-size: 15px !important;
+  font-weight: 700 !important;
+  color: #0F172A !important;
+  margin: 0 0 6px !important;
+  line-height: 1.3 !important;
+}
+
+.service-card-desc-modern {
+  font-size: 12px !important;
+  line-height: 1.4 !important;
+  color: #64748B !important;
+  margin: 0 !important;
+}
+
+/* 3. Specialties & Symptoms Grid */
+.specialization-category-grid-modern {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 16px;
+}
+
+.spec-category-card-modern {
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 12px;
+  padding: 16px;
+  text-decoration: none !important;
+  display: flex;
+  flex-direction: column;
+  transition: all 0.25s ease;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+}
+
+.spec-category-card-modern:hover {
+  transform: translateY(-4px);
+  border-color: #00A896;
+  box-shadow: 0 10px 20px rgba(0, 168, 150, 0.08);
+}
+
+.spec-category-icon-modern {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  margin-bottom: 10px;
+}
+
+/* 4. Verified Specialists Slider */
+.specialists-slider-container-modern {
+  position: relative;
+  overflow: hidden;
+  padding: 6px 2px;
+}
+
+.specialists-track-modern {
+  display: flex;
+  gap: 18px;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  padding-bottom: 10px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.specialists-track-modern::-webkit-scrollbar {
+  height: 6px;
+}
+
+.specialists-track-modern::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+  border-radius: 10px;
+}
+
+.specialist-card-modern {
+  min-width: 270px;
+  max-width: 270px;
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 16px;
+  padding: 22px 18px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.04);
+  transition: all 0.25s ease;
+  flex-shrink: 0;
+}
+
+.specialist-card-modern:hover {
+  transform: translateY(-5px);
+  border-color: #00A896;
+  box-shadow: 0 14px 30px rgba(0, 168, 150, 0.1);
+}
+
+.specialist-avatar-wrap-modern {
+  position: relative;
+  width: 86px;
+  height: 86px;
+  margin: 0 auto 12px;
+}
+
+.specialist-avatar-modern {
+  width: 86px;
+  height: 86px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid #E6F7F5;
+}
+
+.specialist-verified-icon {
+  position: absolute;
+  bottom: 0;
+  right: 2px;
+  width: 22px;
+  height: 22px;
+  background: #10B981;
+  color: #FFFFFF;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  border: 2px solid #FFFFFF;
+}
+
+.specialist-name-modern {
+  font-size: 16px !important;
+  font-weight: 700 !important;
+  margin: 0 0 4px !important;
+  color: #0F172A !important;
+}
+
+.specialist-name-modern a {
+  color: #0F172A !important;
+  text-decoration: none !important;
+}
+
+.specialist-spec-badge {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 600;
+  color: #00A896;
+  background: #E6F7F5;
+  padding: 2px 10px;
+  border-radius: 9999px;
+  margin-bottom: 8px;
+}
+
+.specialist-qual-text {
+  font-size: 12px;
+  color: #64748B;
+  margin-bottom: 10px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.specialist-book-btn {
+  background: #00A896 !important;
+  color: #FFFFFF !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  padding: 9px 18px !important;
+  border-radius: 8px !important;
+  text-decoration: none !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+  transition: all 0.2s ease !important;
+}
+
+.specialist-book-btn:hover {
+  background: #008f80 !important;
+  color: #FFFFFF !important;
+  transform: translateY(-1px);
+}
+
+/* 5. High-Trust Stats Bar */
+.trust-stats-bar {
+  background: linear-gradient(135deg, #08364B 0%, #0F172A 100%) !important;
+  border-radius: 16px !important;
+  padding: 34px 28px !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 10px 30px rgba(8, 54, 75, 0.18) !important;
+  margin: 30px auto !important;
+}
+
+.trust-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+  text-align: center;
+}
+
+.trust-stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Responsive Rules for Mobile (<992px & <768px) */
+@media (max-width: 991.98px) {
+  .hero-main-title-modern {
+    font-size: 30px !important;
+  }
+  .core-services-grid-modern {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .trust-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 24px;
+  }
+}
+
+@media (max-width: 767.98px) {
+  .hero-main-title-modern {
+    font-size: 25px !important;
+  }
+  .search-pill-container-modern {
+    flex-direction: column !important;
+    border-radius: 16px !important;
+    padding: 12px !important;
+  }
+  .search-pill-sec-modern {
+    width: 100% !important;
+    padding: 6px 4px !important;
+  }
+  .search-pill-divider-modern {
+    width: 100% !important;
+    height: 1px !important;
+    margin: 4px 0 !important;
+  }
+  .search-pill-btn-modern {
+    width: 100% !important;
+    margin-top: 8px !important;
+    border-radius: 10px !important;
+  }
+  .core-services-grid-modern {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+  .specialization-category-grid-modern {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .trust-stats-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+}
+

@@ -88,18 +88,18 @@
         </div>
       </div>
 
-      <div class="master-card">
+      <div class="master-card" style="margin-top: 20px;">
         <div class="master-card-header">
-          <h3 class="master-card-title">
+          <h2 class="master-card-title" style="margin: 0; font-size: 16px; font-weight: 700; color: #1e293b; display: flex; align-items: center; gap: 8px;">
             <i class="fa fa-hospital-o" style="color: #00a896;"></i>
             <span>Registered Hospitals Directory</span>
-          </h3>
+          </h2>
           <div style="display: flex; gap: 8px; align-items: center;">
             <button type="button" id="bulk-delete-hospital-btn" class="btn btn-sm btn-danger" style="display: none; border-radius: 6px; font-weight: 600; background: #dc2626; border-color: #dc2626;">
               <i class="fa fa-trash"></i> Delete Selected (<span id="hospital-selected-count">0</span>)
             </button>
-            <a href="<?=base_url('doctor/clinicreg/createHospitalExcel?keyword='.$this->input->get_post('keyword').'&type='.$this->input->get_post('type').'&status_filter='.$this->input->get_post('status_filter'))?>" class="btn btn-sm btn-success" style="border-radius: 6px; font-weight: 600; background: #10b981; border-color: #10b981;">
-              <i class="fa fa-file-excel-o"></i> Export Excel
+            <a href="<?=base_url('doctor/clinicreg/createHospitalExcel?keyword='.$this->input->get_post('keyword').'&type='.$this->input->get_post('type').'&status_filter='.$this->input->get_post('status_filter'))?>" class="btn btn-sm btn-default" style="border-radius: 6px; font-weight: 600; color: #0f766e; border-color: #cbd5e1; background: #ffffff;">
+              <i class="fa fa-file-excel-o text-success"></i> Export Excel
             </a>
             <a href="<?=base_url('doctor/clinicreg/add')?>" class="btn btn-sm btn-primary" style="border-radius: 6px; font-weight: 600; background: #00a896; border-color: #00a896;">
               <i class="fa fa-plus"></i> Add New Hospital
@@ -141,10 +141,10 @@
 
               <!-- Hospital Name Search -->
               <div style="width: 220px;">
-                <div class="input-group input-group-sm" style="width: 100%;">
-                  <input type="text" class="form-control" name="keyword" placeholder="Hospital name, email, phone..." value="<?=$this->input->get_post('keyword');?>" style="height: 34px; border-radius: 6px 0 0 6px;">
-                  <span class="input-group-btn">
-                    <button type="submit" class="btn btn-primary" style="height: 34px; border-radius: 0 6px 6px 0; background: #00a896; border-color: #00a896;">
+                <div class="input-group input-group-sm" style="width: 100%; display: flex; align-items: center;">
+                  <input type="text" class="form-control" name="keyword" placeholder="Hospital name, email, phone..." value="<?=$this->input->get_post('keyword');?>" style="height: 34px; border-radius: 6px 0 0 6px; border-right: none;">
+                  <span class="input-group-btn" style="width: auto;">
+                    <button type="submit" class="btn btn-primary" style="height: 34px; border-radius: 0 6px 6px 0; background: #00a896; border-color: #00a896; display: flex; align-items: center; justify-content: center; padding: 0 12px;">
                       <i class="fa fa-search"></i>
                     </button>
                   </span>
@@ -233,19 +233,21 @@
                     <td style="text-align: center; font-size: 12px; color: #64748b; vertical-align: middle;">
                       <?=date('d M Y', strtotime($val['creat_date']));?>
                     </td>
-                    <td style="text-align: center; vertical-align: middle;">
-                      <a href="<?=base_url('doctor/clinicreg/hospitalview/'.$val['id']);?>" class="btn-icon-action" style="background: #f1f5f9; color: #475569;" title="View Hospital Details">
-                        <i class="fa fa-eye"></i>
-                      </a>
-                      <a href="<?=base_url('doctor/clinicreg/updatehospital/'.$val['id']);?>" class="btn-icon-action btn-action-edit" title="Edit Hospital">
-                        <i class="fa fa-pencil"></i>
-                      </a>
-                      <a href="<?=base_url('doctor/clinicreg/viewgallery/'.$val['id']);?>" class="btn-icon-action" style="background: #fef3c7; color: #d97706;" title="Hospital Gallery">
-                        <i class="fa fa-picture-o"></i>
-                      </a>
-                      <a href="<?=base_url('doctor/clinicreg/deletehospital/'.$val['id']);?>" class="btn-icon-action btn-action-delete delete-hosp-btn" data-id="<?=$val['id'];?>" data-name="<?=htmlspecialchars($val['name']);?>" title="Delete Hospital">
-                        <i class="fa fa-trash-o"></i>
-                      </a>
+                    <td style="text-align: center; vertical-align: middle; white-space: nowrap; width: 140px;">
+                      <div style="display: inline-flex; align-items: center; justify-content: center; gap: 6px;">
+                        <a href="<?=base_url('doctor/clinicreg/hospitalview/'.$val['id']);?>" class="btn-icon-action" style="background: #f1f5f9; color: #475569;" title="View Hospital Details">
+                          <i class="fa fa-eye"></i>
+                        </a>
+                        <a href="<?=base_url('doctor/clinicreg/updatehospital/'.$val['id']);?>" class="btn-icon-action btn-action-edit" title="Edit Hospital">
+                          <i class="fa fa-pencil"></i>
+                        </a>
+                        <a href="<?=base_url('doctor/clinicreg/viewgallery/'.$val['id']);?>" class="btn-icon-action" style="background: #fef3c7; color: #d97706;" title="Hospital Gallery">
+                          <i class="fa fa-picture-o"></i>
+                        </a>
+                        <a href="<?=base_url('doctor/clinicreg/deletehospital/'.$val['id']);?>" class="btn-icon-action btn-action-delete delete-hosp-btn" data-id="<?=$val['id'];?>" data-name="<?=htmlspecialchars($val['name']);?>" title="Delete Hospital">
+                          <i class="fa fa-trash-o"></i>
+                        </a>
+                      </div>
                     </td>
                   </tr>
                 <?php endforeach; else: ?>

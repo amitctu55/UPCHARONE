@@ -1,3 +1,31 @@
+<style>
+  #appointment-table_filter {
+    padding: 8px 0;
+  }
+  #appointment-table_filter label {
+    font-weight: 600;
+    color: #475569;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+  }
+  #appointment-table_filter input {
+    height: 34px;
+    border-radius: 6px;
+    border: 1px solid #cbd5e1;
+    padding: 6px 12px;
+    font-size: 13px;
+    outline: none;
+    min-width: 240px;
+    background: #ffffff;
+  }
+  #appointment-table_filter input:focus {
+    border-color: #00a896;
+    box-shadow: 0 0 0 2px rgba(0, 168, 150, 0.15);
+  }
+</style>
+
 <div class="content-wrapper">
   <!-- Content Header & Breadcrumbs -->
   <section class="content-header" style="padding: 20px 20px 10px;">
@@ -219,15 +247,15 @@
       <?php endif; ?>
 
       <!-- APPOINTMENTS TABLE CARD -->
-      <div class="master-card" style="background: #ffffff; border-radius: 10px; border: 1px solid #e2e8f0; box-shadow: 0 2px 6px rgba(0,0,0,0.05); overflow: hidden;">
+      <div class="master-card" style="margin-top: 24px; background: #ffffff; border-radius: 10px; border: 1px solid #e2e8f0; box-shadow: 0 2px 6px rgba(0,0,0,0.05); overflow: hidden;">
         <div class="master-card-header" style="padding: 16px 20px; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-          <h3 class="master-card-title" style="margin: 0; font-size: 16px; font-weight: 700; color: #1e293b;">
+          <h2 class="master-card-title" style="margin: 0; font-size: 16px; font-weight: 700; color: #1e293b; display: flex; align-items: center; gap: 8px;">
             <i class="fa fa-calendar-check-o" style="color: #00a896;"></i>
             <span>
               <?=!empty($selected_doctor) ? 'Appointments for Dr. ' . htmlspecialchars($selected_doctor->fname) : 'Consultation Appointments List';?>
-              <span class="badge bg-teal" style="font-size: 12px; margin-left: 6px;"><?=count($data);?> records</span>
+              <span class="badge bg-teal" style="font-size: 12px; margin-left: 6px; font-weight: 600;"><?=count($data);?> records</span>
             </span>
-          </h3>
+          </h2>
           <div style="display: flex; gap: 8px; align-items: center;">
             <button type="button" id="bulk-delete-app-btn" class="btn btn-sm btn-danger" style="display: none; border-radius: 6px; font-weight: 600; background: #dc2626; border-color: #dc2626;">
               <i class="fa fa-trash"></i> Delete Selected (<span id="app-selected-count">0</span>)
@@ -287,12 +315,14 @@
                       <input type="checkbox" class="app-checkbox" value="<?=$aid;?>" data-name="<?=htmlspecialchars($pname);?>" style="cursor: pointer; width: 16px; height: 16px; accent-color: #00a896;">
                     </td>
                     <td style="text-align: center; font-weight: 600; color: #64748b; vertical-align: middle;">#<?=$aid;?></td>
-                    <td style="vertical-align: middle;">
-                      <strong style="color: #1e293b; font-size: 13.5px;"><?=htmlspecialchars($pname);?></strong>
-                      <?php if($age): ?><span style="font-size: 11px; color: #64748b; margin-left: 4px;">(Age: <?=$age;?>)</span><?php endif; ?>
-                      <div style="font-size: 12px; color: #64748b; margin-top: 3px;">
-                        <?php if($mobile): ?><span><i class="fa fa-phone text-muted"></i> <?=htmlspecialchars($mobile);?></span><?php endif; ?>
-                        <?php if($email): ?><span style="margin-left: 8px;"><i class="fa fa-envelope-o text-muted"></i> <?=htmlspecialchars($email);?></span><?php endif; ?>
+                    <td style="vertical-align: middle; line-height: 1.5;">
+                      <div style="font-weight: 700; color: #1e293b; font-size: 13.5px;">
+                        <?=htmlspecialchars($pname);?>
+                        <?php if($age): ?><span class="label label-default" style="font-size: 11px; margin-left: 6px; background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; font-weight: 500;">Age: <?=$age;?></span><?php endif; ?>
+                      </div>
+                      <div style="font-size: 12px; color: #475569; margin-top: 4px; display: flex; flex-direction: column; gap: 2px;">
+                        <?php if($mobile): ?><div><i class="fa fa-phone text-muted" style="width: 14px;"></i> <?=htmlspecialchars($mobile);?></div><?php endif; ?>
+                        <?php if($email): ?><div><i class="fa fa-envelope-o text-muted" style="width: 14px;"></i> <?=htmlspecialchars($email);?></div><?php endif; ?>
                       </div>
                     </td>
                     <td style="vertical-align: middle;">

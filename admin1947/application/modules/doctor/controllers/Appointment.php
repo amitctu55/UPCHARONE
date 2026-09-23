@@ -380,13 +380,13 @@ class Appointment extends CI_Controller
 				$rows[] = array(
 					'<span style="font-weight: 600; color: #64748b;">#' . $doc['doctor_id'] . '</span>',
 					'<strong style="color: #1e293b;">Dr. ' . $docName . '</strong>',
-					'<span class="label label-info" style="font-weight: 500;">' . $speciality . '</span>',
+					'<span class="label label-info" style="font-weight: 600; font-size: 12px; padding: 4px 8px; border-radius: 4px;">' . $speciality . '</span>',
 					'<span style="font-size: 12px; color: #64748b;"><i class="fa fa-phone text-muted"></i> ' . $mobile . '<br><i class="fa fa-envelope text-muted"></i> ' . $email . '</span>',
 					'<span class="badge bg-teal" style="font-size: 13px; padding: 4px 10px;">' . number_format($doc['total_bookings']) . '</span>',
 					'<span class="badge bg-blue" style="font-size: 12px; padding: 3px 8px;">' . number_format($doc['today_bookings']) . '</span>',
 					'<span class="badge bg-green" style="font-size: 12px; padding: 3px 8px;">' . number_format($doc['confirmed_count']) . '</span>',
 					'<span class="badge bg-yellow" style="font-size: 12px; padding: 3px 8px;">' . number_format($doc['pending_count']) . '</span>',
-					'<a href="' . $bookingUrl . '" class="btn btn-xs btn-default" style="border-radius: 4px;" title="Filter Bookings"><i class="fa fa-search text-primary"></i> View Bookings</a>'
+					'<a href="' . $bookingUrl . '" class="btn btn-sm btn-default" style="border-radius: 6px; font-weight: 600; padding: 5px 12px; white-space: nowrap; color: #0284c7; border-color: #bae6fd; background: #f0f9ff;" title="View Dr. ' . $docName . '\'s Bookings"><i class="fa fa-calendar-check-o text-primary"></i> View Bookings</a>'
 				);
 			}
 		}

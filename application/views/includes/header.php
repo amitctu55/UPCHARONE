@@ -140,7 +140,7 @@ if(
 
             <!-- 2. Become Partner / Login (4 Portal Categories with Login & Join Actions) - Shown ONLY for Guest / Logged-Out Users -->
             <li class="dropdown partner-dropdown-container">
-              <a class="dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">
+              <a class="dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false" style="text-transform: none !important; letter-spacing: normal !important;">
                 <i class="fas fa-user-plus iconEffect"></i> Become Partner / Login <span class="caret"></span>
               </a>
               <div class="partner-menu-box">

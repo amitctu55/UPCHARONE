@@ -54,7 +54,7 @@ try {
       <!-- =========================================================
            1. CLINICAL & HEALTHCARE PROVIDERS
            ========================================================= -->
-      <li class="header">CLINICAL MANAGEMENT</li>
+      <li class="header">Clinical Management</li>
       
       <!-- Dashboard -->
       <li class="<?php if($pageurl1=='masters' && ($pageurl2=='dashboard' || empty($pageurl2))){ ?>active<?php }?>">
@@ -288,7 +288,7 @@ try {
       <!-- =========================================================
            2. PATIENT RELATIONS & ENGAGEMENT
            ========================================================= -->
-      <li class="header">PATIENTS &amp; ENGAGEMENT</li>
+      <li class="header">Patients &amp; Engagement</li>
 
       <!-- Patients & Social Logins -->
       <?php 
@@ -398,7 +398,7 @@ try {
       <!-- =========================================================
            3. FINANCE, REVENUE & PAYOUTS
            ========================================================= -->
-      <li class="header">FINANCE &amp; SETTLEMENTS</li>
+      <li class="header">Finance &amp; Settlements</li>
 
       <!-- Revenue & Commission Module -->
       <li class="treeview <?php if($pageurl1=='admin_revenue'){ ?> active menu-open <?php }?>">
@@ -482,7 +482,7 @@ try {
       <!-- =========================================================
            4. ENTERPRISE WORKFORCE & OPERATIONS
            ========================================================= -->
-      <li class="header">ENTERPRISE WORKFORCE</li>
+      <li class="header">Enterprise Workforce</li>
 
       <!-- HR & Workforce Operations -->
       <li class="treeview <?php if($pageurl1=='hr' || ($pageurl1=='attendance' && in_array($pageurl2, ['roster', 'attendance', '']))){ ?> active menu-open <?php }?>">
@@ -538,7 +538,7 @@ try {
       <!-- =========================================================
            5. SYSTEM ADMINISTRATION & CONFIGURATION
            ========================================================= -->
-      <li class="header">SYSTEM ADMINISTRATION</li>
+      <li class="header">System Administration</li>
 
       <!-- SEO & Meta Tags -->
       <li class="treeview <?php if($pageurl1=='seo'){ ?> active menu-open <?php }?>">
