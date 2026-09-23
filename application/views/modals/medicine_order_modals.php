@@ -219,6 +219,84 @@
 
                 <!-- Stores List Container -->
                 <div id="modalStoresList"></div>
+
+                <!-- Doorstep Checkout Confirmation Drawer -->
+                <div id="modalDoorstepCheckout" style="display: none; background: #FFFFFF; border: 1.5px solid #00A8FF; border-radius: 12px; padding: 20px; margin-top: 16px; box-shadow: 0 8px 24px rgba(0, 168, 255, 0.12);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #E2E8F0; padding-bottom: 10px; margin-bottom: 14px;">
+                        <h4 style="margin: 0; font-weight: 800; color: #08364B; font-size: 16px;">
+                            <i class="fas fa-shopping-bag" style="color: #9BC03C;"></i> Confirm Doorstep Medicine Order
+                        </h4>
+                        <button type="button" class="btn btn-xs btn-default" onclick="cancelDoorstepCheckout()" style="font-weight: 600;">
+                            <i class="fas fa-arrow-left"></i> Change Pharmacy
+                        </button>
+                    </div>
+
+                    <!-- Selected Pharmacy & Medicine Summary -->
+                    <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 12px 16px; margin-bottom: 14px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                            <strong style="color: #08364B; font-size: 15px;" id="checkoutBrandName">Medicine Name</strong>
+                            <span class="badge" style="background: #00A8FF; font-size: 11px;" id="checkoutStoreBadge">Sanjivani 24x7 Chemist</span>
+                        </div>
+                        <div style="font-size: 12.5px; color: #64748B;">
+                            <i class="fas fa-store" style="color: #00A8FF;"></i> <span id="checkoutStoreName">Sanjivani 24x7 Chemist & Druggists</span> &bull; 
+                            <i class="fas fa-bolt" style="color: #059669;"></i> <span id="checkoutEta">Est. Delivery 20 - 30 mins</span>
+                        </div>
+                    </div>
+
+                    <!-- Quantity & Price Calculator -->
+                    <div class="row" style="margin-bottom: 14px; background: #FFF; padding: 10px 4px; border-radius: 8px;">
+                        <div class="col-xs-6">
+                            <label style="font-size: 12px; font-weight: 700; color: #475569; display:block; margin-bottom:4px;">Quantity</label>
+                            <div class="input-group" style="width: 120px;">
+                                <span class="input-group-btn">
+                                    <button class="btn btn-default btn-sm" type="button" onclick="adjustCheckoutQty(-1)"><i class="fas fa-minus"></i></button>
+                                </span>
+                                <input type="number" id="checkoutQty" class="form-control input-sm text-center" value="1" min="1" max="20" readonly style="font-weight: 700; font-size: 14px;">
+                                <span class="input-group-btn">
+                                    <button class="btn btn-default btn-sm" type="button" onclick="adjustCheckoutQty(1)"><i class="fas fa-plus"></i></button>
+                                </span>
+                            </div>
+                        </div>
+                        <div class="col-xs-6 text-right">
+                            <div style="font-size: 12px; color: #64748B;">Item Total: <span style="font-weight: 700; color: #08364B;">₹<span id="checkoutItemTotal">0.00</span></span></div>
+                            <div style="font-size: 12px; color: #64748B;">Doorstep Delivery: <span style="font-weight: 700; color: #059669;">₹40.00</span></div>
+                            <div style="font-size: 15px; font-weight: 800; color: #08364B; margin-top: 2px;">
+                                Grand Total: ₹<span id="checkoutGrandTotal">0.00</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Patient Contact & Address Inputs -->
+                    <div class="row">
+                        <div class="col-sm-6" style="margin-bottom: 12px;">
+                            <label for="checkoutCustomerName" style="font-size: 12px; font-weight: 700; color: #475569;">Patient Name <span style="color:#E63946;">*</span></label>
+                            <input type="text" id="checkoutCustomerName" class="form-control input-sm" placeholder="Full Name" value="Patient">
+                        </div>
+                        <div class="col-sm-6" style="margin-bottom: 12px;">
+                            <label for="checkoutCustomerPhone" style="font-size: 12px; font-weight: 700; color: #475569;">Contact Mobile (for OTP) <span style="color:#E63946;">*</span></label>
+                            <input type="tel" id="checkoutCustomerPhone" class="form-control input-sm" placeholder="10-digit mobile" value="9839112233" maxlength="10">
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom: 14px;">
+                        <label for="checkoutAddress" style="font-size: 12px; font-weight: 700; color: #475569;">Doorstep Delivery Address <span style="color:#E63946;">*</span></label>
+                        <input type="text" id="checkoutAddress" class="form-control input-sm" placeholder="House/Flat No., Landmark, Area, City" value="Sigra, Varanasi, Uttar Pradesh">
+                    </div>
+
+                    <div style="background: #ECFDF5; border: 1px solid #A7F3D0; border-radius: 8px; padding: 10px 14px; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between;">
+                        <span style="font-size: 12.5px; color: #065F46; font-weight: 600;">
+                            <i class="fas fa-check-circle" style="color: #10B981;"></i> Payment Mode: <strong>Cash on Delivery (COD) / UPI QR at Doorstep</strong>
+                        </span>
+                        <span class="badge" style="background: #10B981; font-size: 10px;">Zero Online Risk</span>
+                    </div>
+
+                    <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                        <button type="button" class="btn btn-default" onclick="cancelDoorstepCheckout()">Cancel</button>
+                        <button type="button" class="btn" id="btnConfirmDoorstepOrder" onclick="executeDoorstepOrder()" style="background: #9BC03C; color: #FFFFFF; font-weight: 800; border-radius: 6px; padding: 9px 24px; font-size: 14px; box-shadow: 0 4px 12px rgba(155, 192, 60, 0.35);">
+                            <i class="fas fa-motorcycle"></i> Confirm &amp; Dispatch Order
+                        </button>
+                    </div>
+                </div>
             </div>
             <div class="modal-footer" style="background: #F8FAFC; display: flex; justify-content: space-between; align-items: center;">
                 <small style="color: #64748B;">
@@ -440,7 +518,15 @@ function runMedicineCompare() {
                         </div>
 
                         <div class="col-sm-3" style="padding: 0; text-align: right;">
-                            <button type="button" class="btn btn-sm" onclick="placeOrderFromCompare(${item.pharmacy_id}, ${item.medicine.id}, ${item.pricing.selling_price})" style="background: #9BC03C; color: #FFF; font-weight: 700; border-radius: 6px; padding: 7px 16px;">
+                            <button type="button" 
+                                    class="btn btn-sm btn-order-doorstep" 
+                                    data-pharmacy-id="${item.pharmacy_id}" 
+                                    data-medicine-id="${item.medicine.id}" 
+                                    data-price="${item.pricing.selling_price}" 
+                                    data-brand-name="${escapeHtml(item.medicine.brand_name)} (${escapeHtml(item.medicine.dosage_form || 'Tablet')})" 
+                                    data-store-name="${escapeHtml(item.store_name)}" 
+                                    data-eta="${escapeHtml(item.estimated_delivery_time)}"
+                                    style="background: #9BC03C; color: #FFF; font-weight: 700; border-radius: 6px; padding: 7px 16px; box-shadow: 0 2px 6px rgba(155, 192, 60, 0.4);">
                                 <i class="fas fa-shopping-bag"></i> Order Doorstep
                             </button>
                         </div>
@@ -452,47 +538,180 @@ function runMedicineCompare() {
     });
 }
 
-function placeOrderFromCompare(pharmacyId, medicineId, price) {
-    const qty = 1;
-    const itemTotal = price * qty;
+let activeCheckoutData = null;
+
+function escapeHtml(text) {
+    if (!text) return '';
+    return String(text)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+// Event Delegation for "Order Doorstep" Button Click
+$(document).on('click', '.btn-order-doorstep', function(e) {
+    e.preventDefault();
+    const btn = $(this);
+    const pharmacyId = parseInt(btn.data('pharmacy-id'));
+    const medicineId = parseInt(btn.data('medicine-id'));
+    const price = parseFloat(btn.data('price')) || 0.00;
+    const brandName = btn.data('brand-name') || 'Medicine';
+    const storeName = btn.data('store-name') || 'Partner Pharmacy';
+    const eta = btn.data('eta') || '20 - 30 mins';
+
+    openDoorstepCheckout(pharmacyId, medicineId, price, brandName, storeName, eta);
+});
+
+function openDoorstepCheckout(pharmacyId, medicineId, price, brandName, storeName, eta) {
+    activeCheckoutData = {
+        pharmacyId: pharmacyId,
+        medicineId: medicineId,
+        unitPrice: price,
+        brandName: brandName,
+        storeName: storeName,
+        eta: eta,
+        qty: 1
+    };
+
+    $('#checkoutBrandName').text(brandName);
+    $('#checkoutStoreName').text(storeName);
+    $('#checkoutStoreBadge').text(storeName.split(' ')[0] + ' Store');
+    $('#checkoutEta').text('Est. Delivery ' + eta);
+    $('#checkoutQty').val(1);
+
+    updateCheckoutPrices();
+
+    // Slide up list and show checkout drawer
+    $('#modalStoresList').slideUp(200);
+    $('#modalDoorstepCheckout').slideDown(250);
+}
+
+function cancelDoorstepCheckout() {
+    $('#modalDoorstepCheckout').slideUp(200);
+    $('#modalStoresList').slideDown(250);
+    activeCheckoutData = null;
+}
+
+function adjustCheckoutQty(delta) {
+    if (!activeCheckoutData) return;
+    let currentQty = parseInt($('#checkoutQty').val()) || 1;
+    currentQty += delta;
+    if (currentQty < 1) currentQty = 1;
+    if (currentQty > 20) currentQty = 20;
+
+    $('#checkoutQty').val(currentQty);
+    activeCheckoutData.qty = currentQty;
+    updateCheckoutPrices();
+}
+
+function updateCheckoutPrices() {
+    if (!activeCheckoutData) return;
+    const qty = activeCheckoutData.qty || 1;
+    const itemTotal = (activeCheckoutData.unitPrice * qty);
     const deliveryFee = 40.00;
-    const total = itemTotal + deliveryFee;
+    const grandTotal = itemTotal + deliveryFee;
+
+    $('#checkoutItemTotal').text(itemTotal.toFixed(2));
+    $('#checkoutGrandTotal').text(grandTotal.toFixed(2));
+}
+
+function executeDoorstepOrder() {
+    if (!activeCheckoutData) {
+        alert('Please select a pharmacy first.');
+        return;
+    }
+
+    const patientName = $('#checkoutCustomerName').val().trim() || 'Patient';
+    const patientPhone = $('#checkoutCustomerPhone').val().trim() || '9839112233';
+    const address = $('#checkoutAddress').val().trim() || 'Sigra, Varanasi, Uttar Pradesh';
+
+    if (patientPhone.length < 10) {
+        alert('Please enter a valid 10-digit mobile number for doorstep OTP verification.');
+        $('#checkoutCustomerPhone').focus();
+        return;
+    }
+
+    const qty = activeCheckoutData.qty || 1;
+    const itemTotal = activeCheckoutData.unitPrice * qty;
+    const deliveryFee = 40.00;
+    const grandTotal = itemTotal + deliveryFee;
+
+    const btn = $('#btnConfirmDoorstepOrder');
+    const originalHtml = btn.html();
+    btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Dispatching Order...');
+
+    const payload = {
+        pharmacy_id: activeCheckoutData.pharmacyId,
+        prescription_id: currentPrescriptionId || null,
+        customer_name: patientName,
+        customer_phone: patientPhone,
+        delivery_address: address,
+        payment_mode: 'COD',
+        item_total: itemTotal,
+        delivery_fee: deliveryFee,
+        total_amount: grandTotal,
+        items: [
+            {
+                medicine_id: activeCheckoutData.medicineId,
+                quantity: qty,
+                unit_mrp: activeCheckoutData.unitPrice * 1.15,
+                unit_price: activeCheckoutData.unitPrice,
+                total_price: itemTotal
+            }
+        ]
+    };
 
     $.ajax({
         url: '<?=base_url("api/v1/medicines/create-order");?>',
         type: 'POST',
         contentType: 'application/json',
-        data: JSON.stringify({
-            pharmacy_id: pharmacyId,
-            prescription_id: currentPrescriptionId,
-            customer_name: 'Patient (Self)',
-            customer_phone: '9839112233',
-            delivery_address: 'Sigra, Varanasi, UP',
-            payment_mode: 'COD',
-            item_total: itemTotal,
-            delivery_fee: deliveryFee,
-            total_amount: total,
-            items: [
-                {
-                    medicine_id: medicineId,
-                    quantity: qty,
-                    unit_mrp: price * 1.15,
-                    unit_price: price,
-                    total_price: itemTotal
-                }
-            ]
-        }),
+        data: JSON.stringify(payload),
+        dataType: 'json',
         success: function(resp) {
-            $('#upcharMedicineCompareModal').modal('hide');
-            // Show live tracking modal
-            $('#trackOrderCode').text(resp.data.order_code);
-            $('#trackOtpDisplay').text(resp.data.delivery_otp);
-            $('#upcharOrderTrackingModal').modal('show');
+            btn.prop('disabled', false).html(originalHtml);
+            if (typeof resp === 'string') {
+                try { resp = JSON.parse(resp); } catch(e) {}
+            }
+
+            if (resp && resp.status === 'success' && resp.data) {
+                // Populate Live Order Tracking Modal
+                $('#trackOrderCode').text(resp.data.order_code || 'UPM-' + Date.now());
+                $('#trackOtpDisplay').text(resp.data.delivery_otp || '1234');
+                $('#trackStoreName').text(activeCheckoutData.storeName);
+                $('#trackEta').text('Within ' + (activeCheckoutData.eta || '25 mins'));
+                $('#trackStatusBadge').text('CONFIRMED');
+
+                // Smoothly close compare modal and show tracking modal
+                $('#upcharMedicineCompareModal').modal('hide');
+                $('#upcharMedicineCompareModal').one('hidden.bs.modal', function () {
+                    $('#upcharOrderTrackingModal').modal('show');
+                    cancelDoorstepCheckout();
+                });
+            } else {
+                alert((resp && resp.message) ? resp.message : 'Unable to place order. Please try again.');
+            }
         },
         error: function(xhr) {
-            alert('Failed to place order. Please try again.');
+            btn.prop('disabled', false).html(originalHtml);
+            let msg = 'Failed to place order. Please try again.';
+            if (xhr.responseJSON && xhr.responseJSON.message) {
+                msg = xhr.responseJSON.message;
+            }
+            alert(msg);
         }
     });
+}
+
+// Global alias for compatibility across all site pages (including medical.php)
+function initiateDoorstepOrder(inventoryId, brandName, storeName, price) {
+    openMedicineCompareModal(null, brandName);
+}
+
+// Direct fallback function
+function placeOrderFromCompare(pharmacyId, medicineId, price, brandName, storeName, eta) {
+    openDoorstepCheckout(pharmacyId, medicineId, price, brandName || 'Medicine', storeName || 'Partner Pharmacy', eta || '20 - 30 mins');
 }
 
 // Alias rxModal triggers to upcharRxUploadModal
