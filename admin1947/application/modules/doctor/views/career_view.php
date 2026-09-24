@@ -241,7 +241,7 @@
                     $cid        = $val['career_id'];
                     $cname      = $val['name'];
                     $hasResume  = !empty($val['resume']);
-                    $resumeUrl  = $hasResume ? base_url('admin1947/public/assets/document/'.$val['resume']) : '';
+                    $resumeUrl  = $hasResume ? base_url('public/assets/document/'.$val['resume']) : '';
                     $roleName   = !empty($val['job_title']) ? $val['job_title'] : (!empty($val['designation']) ? $val['designation'] : 'General Application');
                     $deptName   = !empty($val['job_department']) ? $val['job_department'] : 'Clinical / Support';
                     $stage      = !empty($val['status_stage']) ? $val['status_stage'] : 'pending';

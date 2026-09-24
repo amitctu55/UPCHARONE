@@ -475,5 +475,37 @@ $route['admin1947/crm/get_lead_json']                  = 'crm/get_lead_json';
 $route['admin1947/crm/onboard_partner/(:num)']         = 'crm/onboard_partner/$1';
 $route['admin1947/crm/(:any)']                         = 'crm/$1';
 
+// Public Blog Routes
+$route['blog']                          = 'blog/index';
+$route['blog/page/(:num)']              = 'blog/index/$1';
+$route['blog/category/(:any)']          = 'blog/category/$1';
+$route['blog/category/(:any)/(:num)']   = 'blog/category/$1/$2';
+$route['blog/(:any)']                   = 'blog/single/$1';
+
+// Admin Management Routes
+$route['admin/blog']                    = 'admin_blog/index';
+$route['admin/blog/create']             = 'admin_blog/create';
+$route['admin/blog/store']              = 'admin_blog/store';
+$route['admin/blog/edit/(:num)']        = 'admin_blog/edit/$1';
+$route['admin/blog/update/(:num)']      = 'admin_blog/update/$1';
+$route['admin/blog/delete/(:num)']      = 'admin_blog/delete/$1';
+
+// E-Commerce Pharmacy Cart Routes
+$route['cart']                          = 'cart/index';
+$route['cart/add']                      = 'cart/add_to_cart';
+$route['cart/update']                   = 'cart/update_quantity';
+$route['cart/remove']                   = 'cart/remove_item';
+$route['cart/coupon']                   = 'cart/apply_coupon';
+$route['cart/remove_coupon']            = 'cart/remove_coupon';
+$route['cart/count']                    = 'cart/get_count';
+$route['cart/checkout']                 = 'cart/checkout';
+$route['cart/order/(:num)']             = 'cart/order/$1';
+$route['cart/track/(:num)']             = 'cart/order/$1';
+$route['cart/status/(:num)']            = 'cart/get_order_status/$1';
+$route['cart/advance_stage']            = 'cart/advance_order_stage';
+$route['cart/verify_otp']               = 'cart/verify_delivery_otp';
+$route['cart/verify_qr']                = 'cart/verify_delivery_qr';
+
+
 
 

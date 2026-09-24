@@ -112,7 +112,7 @@ class Career extends CI_Controller
             return;
         }
 
-        $applicant['resume_url'] = !empty($applicant['resume']) ? base_url('admin1947/public/assets/document/' . $applicant['resume']) : '';
+        $applicant['resume_url'] = !empty($applicant['resume']) ? base_url('public/assets/document/' . $applicant['resume']) : '';
         echo json_encode(array('status' => 1, 'data' => $applicant));
     }
 
@@ -131,7 +131,10 @@ class Career extends CI_Controller
             // Fetch resume to remove file if needed
             $row = $this->db->where('career_id', (int)$del_id)->get('career')->row_array();
             if ($row && !empty($row['resume'])) {
-                $filepath = FCPATH . 'admin1947/public/assets/document/' . $row['resume'];
+                $filepath = FCPATH . 'public/assets/document/' . $row['resume'];
+                if (!file_exists($filepath)) {
+                    $filepath = FCPATH . 'admin1947/public/assets/document/' . $row['resume'];
+                }
                 if (file_exists($filepath)) {
                     @unlink($filepath);
                 }
@@ -161,7 +164,10 @@ class Career extends CI_Controller
                 if ($cid > 0) {
                     $row = $this->db->where('career_id', $cid)->get('career')->row_array();
                     if ($row && !empty($row['resume'])) {
-                        $filepath = FCPATH . 'admin1947/public/assets/document/' . $row['resume'];
+                        $filepath = FCPATH . 'public/assets/document/' . $row['resume'];
+                        if (!file_exists($filepath)) {
+                            $filepath = FCPATH . 'admin1947/public/assets/document/' . $row['resume'];
+                        }
                         if (file_exists($filepath)) {
                             @unlink($filepath);
                         }

@@ -21,6 +21,9 @@ RewriteEngine on
 # Fallback alias for legacy hospital uploads
 RewriteRule ^public/assets/images/hospital/(.*)$ public/assets/upload/$1 [L]
 
+# Fix accidental double admin1947 prefix for uploaded documents and assets
+RewriteRule ^admin1947/public/assets/(.*)$ public/assets/$1 [L]
+
 # Delegate enterprise admin modules (operations, hr, attendance, crm) to primary application
 RewriteRule ^(operations|hr|attendance|crm)(.*)$ ../index.php?/admin1947/$1$2 [L,QSA]
  

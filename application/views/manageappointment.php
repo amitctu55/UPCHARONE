@@ -1202,7 +1202,7 @@ $csrf_hash       = $this->security->get_csrf_hash();
                             <div class="meta-label">Diagnostic Laboratory</div>
                             <div class="meta-value">
                                 <i class="fa fa-building-o" style="color: #2563eb;"></i>
-                                <?=htmlspecialchars($lb['lab_name'] ?: 'Upchar Certified Diagnostic Lab');?>
+                                <?=htmlspecialchars(!empty($lb['lab_name']) ? $lb['lab_name'] : 'Upchar Certified Diagnostic Lab');?>
                             </div>
                         </div>
 
@@ -1210,7 +1210,7 @@ $csrf_hash       = $this->security->get_csrf_hash();
                             <div class="meta-label">Collection Type</div>
                             <div class="meta-value">
                                 <i class="fa fa-home" style="color: var(--upchar-teal);"></i>
-                                <?=htmlspecialchars($lb['collection_type'] ?: 'Home Blood Sample Collection');?>
+                                <?=htmlspecialchars(!empty($lb['collection_type']) ? $lb['collection_type'] : 'Home Blood Sample Collection');?>
                             </div>
                         </div>
 
@@ -1218,7 +1218,7 @@ $csrf_hash       = $this->security->get_csrf_hash();
                             <div class="meta-label">Patient Name</div>
                             <div class="meta-value">
                                 <i class="fa fa-user-circle-o" style="color: var(--upchar-slate-500);"></i>
-                                <?=htmlspecialchars($lb['patient_name'] ?? $user_name);?>
+                                <?=htmlspecialchars(!empty($lb['patient_name']) ? $lb['patient_name'] : $user_name);?>
                             </div>
                         </div>
 
@@ -1326,7 +1326,7 @@ $csrf_hash       = $this->security->get_csrf_hash();
                                         <?=number_format($pd['wallet_points_used'], 0);?> Pts
                                     </td>
                                     <td style="padding: 14px 16px; vertical-align: middle; color: var(--upchar-slate-500);">
-                                        <small><?=$pd['razorpay_payment_id'] ?: '-';?></small>
+                                        <small><?=!empty($pd['razorpay_payment_id']) ? $pd['razorpay_payment_id'] : '-';?></small>
                                     </td>
                                     <td style="padding: 14px 16px; vertical-align: middle;">
                                         <span class="badge-status <?=($pd['status'] === 'PAID') ? 'badge-paid' : 'badge-unpaid';?>">

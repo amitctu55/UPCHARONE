@@ -139,6 +139,7 @@ class User_Model extends CI_Model {
 					}
 				}
 				$this->load->model('Cart_Model');
+				$this->Cart_Model->process_pending_cart($row->USERID);
 				$this->Cart_Model->update_cart_db();
 				return 'SUCCESS';
 			}

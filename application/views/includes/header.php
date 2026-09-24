@@ -40,21 +40,16 @@ if(
 <head>
 	<?php 
 	$meta_rec = getMeta();
-	if( array_key_exists('dynamic_meta',$meta_rec) && @is_array($meta_array) && !empty($meta_array) )
+	if( (isset($meta_array) && is_array($meta_array) && !empty($meta_array)) || (isset($page_title) && !empty($page_title)) )
 	{
-		if(  array_key_exists('meta_title',$meta_array) && $meta_array['meta_title']!='')
+		$display_title = !empty($page_title) ? $page_title : (!empty($meta_array['meta_title']) ? $meta_array['meta_title'] : $meta_rec['meta_title']);
+		$display_desc = !empty($meta_description) ? $meta_description : (!empty($meta_array['meta_description']) ? $meta_array['meta_description'] : $meta_rec['meta_description']);
+		echo '<title>'.htmlspecialchars($display_title).'</title>' . "\n";
+		echo '<meta name="description" content="'.htmlspecialchars($display_desc).'" />' . "\n";
+		if( isset($meta_array['meta_keyword']) && $meta_array['meta_keyword']!='')
 		{
-			echo '<title>'.$meta_array['meta_title'].'</title>';
+		   echo '<meta name="keywords" content="'.$meta_array['meta_keyword'].'" />' . "\n";
 		}
-		if( array_key_exists('meta_description',$meta_array) && $meta_array['meta_description']!='')
-		{
-			echo '<meta name="description" content="'.$meta_array['meta_description'].'" />';
-		}
-		if( array_key_exists('meta_keyword',$meta_array) && $meta_array['meta_keyword']!='')
-		{
-		   echo '<meta  name="keywords" content="'.$meta_array['meta_keyword'].'" />';
-		}
-		
 	}else
 	{   
 	?>
@@ -200,14 +195,29 @@ if(
               </div>
             </li>
 
+            <li class="<?= ((isset($active_menu) && $active_menu === 'blog') || (isset($active_tab) && $active_tab === 'blog')) ? 'active' : '' ?>">
+              <a class="nav-link <?= ((isset($active_menu) && $active_menu === 'blog') || (isset($active_tab) && $active_tab === 'blog')) ? 'active text-primary fw-bold' : '' ?>" href="<?=base_url('blog');?>"><i class="fas fa-newspaper iconEffect"></i> Blog</a>
+            </li>
             <li>
-              <a href="https://upchar.info/" target="_blank"><i class="fas fa-newspaper iconEffect"></i> Blog</a>
+              <a href="<?=base_url('cart');?>" title="Medicine Cart" style="position: relative;">
+                <i class="fas fa-shopping-cart iconEffect" style="color: #00A896;"></i> Cart
+                <span class="badge" id="navCartBadge" style="background: #E11D48; color: #fff; font-size: 10px; margin-left: 2px; vertical-align: top; border-radius: 10px; padding: 2px 6px; display: inline-block;">0</span>
+              </a>
             </li>
             <li>
               <a href="<?=base_url('login');?>" class="nav-login-btn"><i class="fas fa-sign-in-alt iconEffect"></i> Patient Login</a>
             </li>
             <?php else: ?>
             <!-- Authenticated User Navigation: Clean & Focused on Patient Services -->
+            <li class="<?= ((isset($active_menu) && $active_menu === 'blog') || (isset($active_tab) && $active_tab === 'blog')) ? 'active' : '' ?>">
+              <a class="nav-link <?= ((isset($active_menu) && $active_menu === 'blog') || (isset($active_tab) && $active_tab === 'blog')) ? 'active text-primary fw-bold' : '' ?>" href="<?=base_url('blog');?>"><i class="fas fa-newspaper iconEffect"></i> Blog</a>
+            </li>
+            <li>
+              <a href="<?=base_url('cart');?>" title="Medicine Cart" style="position: relative;">
+                <i class="fas fa-shopping-cart iconEffect" style="color: #00A896;"></i> Cart
+                <span class="badge" id="navCartBadgeAuth" style="background: #E11D48; color: #fff; font-size: 10px; margin-left: 2px; vertical-align: top; border-radius: 10px; padding: 2px 6px; display: inline-block;">0</span>
+              </a>
+            </li>
             <li>
               <a href="<?=base_url('myappointments');?>"><i class="fas fa-calendar-alt iconEffect"></i> My Appointments</a>
             </li>
@@ -235,6 +245,20 @@ if(
 $(document).ready(function(){
   $(".mobileIcon").click(function(){
     $(".navbar").slideToggle("slow");
+  });
+
+  // Live Cart Counter fetch
+  $.ajax({
+    url: '<?=base_url("cart/get_count");?>',
+    type: 'GET',
+    dataType: 'json',
+    success: function(res) {
+      if (res && res.cart_count > 0) {
+        $('#navCartBadge, #navCartBadgeAuth').text(res.cart_count).show();
+      } else {
+        $('#navCartBadge, #navCartBadgeAuth').text('0');
+      }
+    }
   });
 });
 </script>

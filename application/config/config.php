@@ -522,7 +522,17 @@ $config['csrf_exclude_uris'] = array(
 	'admin1947/attendance/.*',
 	'api/.*',
 	'pharmacy/.*',
-	'delivery/.*'
+	'delivery/.*',
+	'Home/career',
+	'home/career',
+	'Home/apply_job_ajax',
+	'home/apply_job_ajax',
+	'career',
+	'apply_job_ajax',
+	'admin/blog/.*',
+	'admin_blog/.*',
+	'cart/.*',
+	'Cart/.*'
 );
 
 /*

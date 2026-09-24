@@ -216,12 +216,24 @@
   border-color: #0284c7;
 }
 
-/* Modal styling */
+/* Modal styling & Stacking Fix */
+.career-modal.modal {
+  z-index: 105001 !important;
+}
+
+.career-modal .modal-dialog {
+  position: relative;
+  z-index: 105002 !important;
+}
+
 .career-modal .modal-content {
   border-radius: 14px;
   border: none;
   overflow: hidden;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  position: relative;
+  z-index: 105003 !important;
+  pointer-events: auto !important;
 }
 
 .career-modal .modal-header {
@@ -493,8 +505,9 @@
               <button type="button" class="btn-view-job-details" data-id="<?=$jid?>">
                 <i class="fa fa-info-circle"></i> <span>View Details</span>
               </button>
-              <button type="button" class="btn-apply-job btn-apply-trigger" 
+              <button type="button" class="btn-apply-job btn-apply-trigger apply-btn" 
                       data-id="<?=$jid?>" 
+                      data-job-id="<?=$jid?>" 
                       data-title="<?=htmlspecialchars($jtitle)?>" 
                       data-dept="<?=htmlspecialchars($jdept)?>">
                 <i class="fa fa-paper-plane"></i> Apply Now
@@ -559,7 +572,8 @@
         </div>
       </div>
 
-      <form id="careerApplicationForm" action="<?=base_url('Home/career')?>" method="post" enctype="multipart/form-data">
+      <form id="careerApplicationForm" action="<?=base_url('Home/apply_job_ajax')?>" method="post" enctype="multipart/form-data">
+        <input type="hidden" name="<?=$this->security->get_csrf_token_name();?>" value="<?=$this->security->get_csrf_hash();?>" id="csrf-token-input">
         <input type="hidden" name="job_id" id="apply-job-id" value="">
         <input type="hidden" name="designation" id="apply-designation" value="">
         <input type="hidden" name="is_ajax" value="1">
@@ -628,14 +642,26 @@
           <!-- Resume Upload -->
           <div class="form-group" style="margin-bottom: 0;">
             <label style="font-weight: 700; font-size: 12px; text-transform: uppercase; color: #475569;">Attach Resume / Curriculum Vitae <span class="text-danger">*</span></label>
-            <div class="file-upload-zone" onclick="$('#resume-file-input').click();">
-              <i class="fa fa-cloud-upload fa-2x" style="color: #00a896; margin-bottom: 6px;"></i>
-              <div style="font-weight: 600; color: #334155; font-size: 14px;" id="file-upload-label">
-                Click or tap here to upload Resume
+            <!-- Upload Container -->
+            <label for="resume_file" class="file-upload-zone upload-dropzone d-block text-center p-4 border border-2 border-dashed rounded-3" style="cursor: pointer; display: block; margin: 0;">
+              <i class="fa fa-cloud-upload fa-2x text-muted mb-2" style="color: #00a896; margin-bottom: 6px;"></i>
+              <div>
+                <strong id="file-upload-label" style="color: #334155; font-size: 14px;">Click or tap here to upload Resume</strong>
               </div>
-              <small style="color: #94a3b8; font-size: 12px;">Supported: PDF, DOC, DOCX (Max 2MB)</small>
-              <input type="file" name="uploadimage" id="resume-file-input" style="display: none;" accept=".pdf,.doc,.docx" required>
-            </div>
+              <small class="text-muted d-block mt-1" style="color: #94a3b8; font-size: 12px;">Supported: PDF only (Max 2MB)</small>
+              <div id="selected_file_name" class="text-success fw-bold mt-2" style="font-size: 13px;"></div>
+            </label>
+
+            <!-- Hidden File Input Restricted to PDF -->
+            <input 
+              type="file" 
+              name="uploadimage" 
+              id="resume_file" 
+              accept=".pdf,application/pdf" 
+              class="d-none" 
+              style="display: none;" 
+              required
+            >
           </div>
 
         </div>
@@ -655,6 +681,8 @@
 
 <script>
 $(document).ready(function() {
+  // Ensure modal is attached directly to body to avoid backdrop stacking context traps
+  $('#jobApplicationModal').appendTo('body');
   
   // Department filter buttons
   $('.dept-filter-btn').on('click', function() {
@@ -712,22 +740,64 @@ $(document).ready(function() {
     }
   });
 
-  // Open Application Modal for Specific Job
-  $(document).on('click', '.btn-apply-trigger', function() {
-    var jid = $(this).data('id');
-    var jtitle = $(this).data('title');
-    var jdept = $(this).data('dept');
+  // Open Application Modal for Specific Job (Supports .btn-apply-trigger and .apply-btn)
+  $(document).on('click', '.btn-apply-trigger, .apply-btn', function(e) {
+    e.preventDefault();
+    var button = $(this);
+    var jid = button.data('job-id') || button.data('id');
+    var jtitle = button.data('title');
+    var jdept = button.data('dept');
+    var originalHtml = button.html();
 
     $('#careerApplicationForm')[0].reset();
     $('#modal-alert-box').hide().empty();
     $('#file-upload-label').text('Click or tap here to upload Resume');
+    $('#selected_file_name').text('');
 
-    $('#apply-job-id').val(jid);
-    $('#apply-designation').val(jtitle);
-    $('#modal-role-badge').text(jtitle + ' (' + jdept + ')').show();
+    $('#apply-job-id').val(jid || '');
+    $('#apply-designation').val(jtitle || '');
+    if (jtitle) {
+      $('#modal-role-badge').text(jtitle + (jdept ? ' (' + jdept + ')' : '')).show();
+    }
     $('#custom-designation-group').hide();
 
-    $('#jobApplicationModal').modal('show');
+    // Fetch dynamic details and pre-fill via AJAX if job ID exists
+    if (jid) {
+      button.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Loading...');
+      $.ajax({
+        url: "<?= base_url('Home/apply_job_ajax') ?>",
+        type: "POST",
+        data: {
+          job_id: jid,
+          '<?= $this->security->get_csrf_token_name() ?>': '<?= $this->security->get_csrf_hash() ?>'
+        },
+        dataType: "json",
+        success: function(res) {
+          button.prop('disabled', false).html(originalHtml);
+          if (res.status === 'success' && res.job) {
+            $('#apply-designation').val(res.job.title);
+            $('#modal-role-badge').text(res.job.title + (res.job.department ? ' (' + res.job.department + ')' : '')).show();
+            if (res.user) {
+              if (res.user.name && !$('input[name="name"]').val()) $('input[name="name"]').val(res.user.name);
+              if (res.user.email && !$('input[name="email"]').val()) $('input[name="email"]').val(res.user.email);
+              if (res.user.mobile && !$('input[name="mobile"]').val()) $('input[name="mobile"]').val(res.user.mobile);
+            }
+            if (res.csrf_hash) {
+              $('#csrf-token-input').val(res.csrf_hash);
+            }
+          }
+          $('#jobApplicationModal').modal('show');
+        },
+        error: function(xhr, status, error) {
+          button.prop('disabled', false).html(originalHtml);
+          console.error("AJAX Error:", error);
+          console.log("Server Response:", xhr.responseText);
+          $('#jobApplicationModal').modal('show');
+        }
+      });
+    } else {
+      $('#jobApplicationModal').modal('show');
+    }
   });
 
   // Open Spontaneous / General Application Modal
@@ -735,6 +805,7 @@ $(document).ready(function() {
     $('#careerApplicationForm')[0].reset();
     $('#modal-alert-box').hide().empty();
     $('#file-upload-label').text('Click or tap here to upload Resume');
+    $('#selected_file_name').text('');
 
     $('#apply-job-id').val('');
     $('#apply-designation').val('');
@@ -744,46 +815,51 @@ $(document).ready(function() {
     $('#jobApplicationModal').modal('show');
   });
 
-  // File Upload Input validation & label update (Strict 2MB Limit)
-  $('#resume-file-input').on('change', function(e) {
-    var file = this.files && this.files[0];
-    if (!file) return;
+  // 1. File Upload Dropzone Trigger & Validation Setup
+  const fileInput = $('#resume_file');
+  const uploadBox = $('.upload-dropzone');
+  const fileNameDisplay = $('#selected_file_name');
 
-    var maxSizeInBytes = 2 * 1024 * 1024; // 2MB = 2,097,152 bytes
-    var allowedExtensions = ['pdf', 'doc', 'docx'];
-    var allowedMimeTypes = [
-      'application/pdf',
-      'application/msword',
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-    ];
-    var fileExtension = file.name.split('.').pop().toLowerCase();
+  // Trigger file picker when clicking anywhere inside dropzone container (if not native label)
+  uploadBox.on('click', function(e) {
+    if (this.tagName.toLowerCase() !== 'label') {
+      fileInput.trigger('click');
+    }
+  });
 
-    // 1. Format & Extension Check
-    if (allowedExtensions.indexOf(fileExtension) === -1) {
-      alert('Invalid file format! Please upload a PDF, DOC, or DOCX file.');
-      $(this).val('');
+  // Client-Side Validation & File Name Display (Strictly PDF only, Max 2MB)
+  fileInput.on('change', function() {
+    const file = this.files && this.files[0];
+
+    if (!file) {
+      fileNameDisplay.text('');
       $('#file-upload-label').text('Click or tap here to upload Resume');
       return;
     }
 
-    // 2. MIME Type Check (when provided by browser)
-    if (file.type && allowedMimeTypes.indexOf(file.type) === -1 && fileExtension === 'pdf' && file.type !== 'application/pdf') {
-      alert('Invalid file format! Please upload a valid PDF document.');
-      $(this).val('');
+    // Validate PDF MIME type and file extension
+    const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+    const maxSizeBytes = 2 * 1024 * 1024; // 2 MB
+
+    if (!isPdf) {
+      alert('Invalid file format. Please upload a PDF file only.');
+      $(this).val(''); // Clear selection
+      fileNameDisplay.text('');
       $('#file-upload-label').text('Click or tap here to upload Resume');
       return;
     }
 
-    // 3. Size Check (Max 2MB)
-    if (file.size > maxSizeInBytes) {
-      alert('File size exceeds 2MB! Please upload a smaller PDF or Word file.');
-      $(this).val('');
+    if (file.size > maxSizeBytes) {
+      alert('File size exceeds the 2MB limit. Please upload a smaller file.');
+      $(this).val(''); // Clear selection
+      fileNameDisplay.text('');
       $('#file-upload-label').text('Click or tap here to upload Resume');
       return;
     }
 
-    var fileSizeMb = (file.size / (1024 * 1024)).toFixed(2);
-    $('#file-upload-label').html('<i class="fa fa-file-text-o text-success"></i> ' + file.name + ' (' + fileSizeMb + ' MB)');
+    // Display selected file name
+    fileNameDisplay.text('Selected: ' + file.name);
+    $('#file-upload-label').text(file.name);
   });
 
   // Submit Application Form via AJAX
@@ -796,20 +872,33 @@ $(document).ready(function() {
       $('#apply-designation').val(customRole || 'General Spontaneous Application');
     }
 
-    // Pre-flight check: Strict 2MB file size verification
-    var fileInput = document.getElementById('resume-file-input');
-    if (fileInput && fileInput.files && fileInput.files[0]) {
-      var uploadFile = fileInput.files[0];
+    // Pre-flight check: Strict PDF and 2MB file size verification
+    var fInput = document.getElementById('resume_file');
+    if (fInput && fInput.files && fInput.files[0]) {
+      var uploadFile = fInput.files[0];
+      var isPdf = uploadFile.type === 'application/pdf' || uploadFile.name.toLowerCase().endsWith('.pdf');
       var maxSizeInBytes = 2 * 1024 * 1024; // 2MB
+
+      if (!isPdf) {
+        alert('Invalid file format. Please upload a PDF file only.');
+        $(fInput).val('');
+        fileNameDisplay.text('');
+        $('#file-upload-label').text('Click or tap here to upload Resume');
+        return false;
+      }
+
       if (uploadFile.size > maxSizeInBytes) {
-        alert('File size exceeds 2MB! Please upload a smaller file (Maximum 2MB).');
+        alert('File size exceeds the 2MB limit. Please upload a smaller file.');
+        $(fInput).val('');
+        fileNameDisplay.text('');
+        $('#file-upload-label').text('Click or tap here to upload Resume');
         return false;
       }
     }
 
     var $btn = $('#btn-submit-career-app');
     var origText = $btn.html();
-    $btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Submitting...');
+    $btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Submitting Application...');
 
     var formData = new FormData(this);
 
@@ -826,6 +915,7 @@ $(document).ready(function() {
           $('#modal-alert-box').html('<div class="alert alert-success" style="border-radius: 8px; font-weight: 600;"><i class="fa fa-check-circle"></i> ' + res.message + '</div>').fadeIn(200);
           $('#careerApplicationForm')[0].reset();
           $('#file-upload-label').text('Click or tap here to upload Resume');
+          $('#selected_file_name').text('');
           setTimeout(function() {
             $('#jobApplicationModal').modal('hide');
           }, 2500);
@@ -833,8 +923,10 @@ $(document).ready(function() {
           $('#modal-alert-box').html('<div class="alert alert-danger" style="border-radius: 8px; font-weight: 600;"><i class="fa fa-exclamation-circle"></i> ' + (res.message || 'Submission failed') + '</div>').fadeIn(200);
         }
       },
-      error: function() {
+      error: function(xhr, status, error) {
         $btn.prop('disabled', false).html(origText);
+        console.error("AJAX Error:", error);
+        console.log("Server Response:", xhr.responseText);
         $('#modal-alert-box').html('<div class="alert alert-danger" style="border-radius: 8px; font-weight: 600;"><i class="fa fa-exclamation-circle"></i> An unexpected server error occurred. Please check your internet connection and try again.</div>').fadeIn(200);
       }
     });

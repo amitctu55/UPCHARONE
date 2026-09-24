@@ -707,26 +707,50 @@ class Home extends CI_Controller
 		$data['service']      = $service;
 		$data['filter_store'] = $store_id;
 
-		// 1. If a medicine search term is provided, query matching inventory across stores
-		$medicine_results = array();
-		if ($q !== '') {
-			$escaped_q = $this->db->escape_like_str($q);
-			$where_clause = "(mm.brand_name LIKE '%{$escaped_q}%' OR mm.generic_composition LIKE '%{$escaped_q}%' OR mm.manufacturer LIKE '%{$escaped_q}%')";
-			
-			$extra_filter = "";
-			if ($pincode !== '') {
-				$extra_filter .= " AND (ps.pincode = " . $this->db->escape($pincode) . " OR ps.city LIKE '%" . $this->db->escape_like_str($pincode) . "%')";
+		// If a specific store is requested, load its details
+		$current_store = null;
+		if ($store_id > 0) {
+			$cs_res = $this->db->query("
+				SELECT 
+					ps.*,
+					(SELECT COUNT(*) FROM pharmacy_inventory pi WHERE pi.pharmacy_id = ps.id AND pi.is_available = 1 AND pi.stock_quantity > 0) AS in_stock_count,
+					h.name AS hospital_name,
+					h.address AS hospital_address,
+					CONCAT('Dr. ', d.fname, ' ', d.lname) AS doctor_name
+				FROM pharmacy_stores ps
+				LEFT JOIN hospital h ON h.id = ps.hospital_id
+				LEFT JOIN profile_dr d ON d.id = ps.associated_doctor_id
+				WHERE ps.id = {$store_id} AND ps.is_active = 1
+			");
+			if ($cs_res && is_object($cs_res) && $cs_res->num_rows() > 0) {
+				$current_store = $cs_res->row();
 			}
-			if ($service === 'open24') {
-				$extra_filter .= " AND ps.operating_hours LIKE '%24%'";
-			} elseif ($service === 'delivery') {
-				$extra_filter .= " AND ps.delivery_radius_km > 0";
-			} elseif ($service === 'affiliated') {
-				$extra_filter .= " AND (ps.hospital_id IS NOT NULL OR ps.associated_doctor_id IS NOT NULL)";
+		}
+		$data['current_store'] = $current_store;
+
+		// 1. If a medicine search term is provided OR a specific store is requested, query matching inventory
+		$medicine_results = array();
+		if ($q !== '' || $store_id > 0) {
+			$where_conditions = array();
+			if ($q !== '') {
+				$escaped_q = $this->db->escape_like_str($q);
+				$where_conditions[] = "(mm.brand_name LIKE '%{$escaped_q}%' OR mm.generic_composition LIKE '%{$escaped_q}%' OR mm.manufacturer LIKE '%{$escaped_q}%')";
 			}
 			if ($store_id > 0) {
-				$extra_filter .= " AND ps.id = {$store_id}";
+				$where_conditions[] = "ps.id = {$store_id}";
 			}
+			if ($pincode !== '') {
+				$where_conditions[] = "(ps.pincode = " . $this->db->escape($pincode) . " OR ps.city LIKE '%" . $this->db->escape_like_str($pincode) . "%')";
+			}
+			if ($service === 'open24') {
+				$where_conditions[] = "ps.operating_hours LIKE '%24%'";
+			} elseif ($service === 'delivery') {
+				$where_conditions[] = "ps.delivery_radius_km > 0";
+			} elseif ($service === 'affiliated') {
+				$where_conditions[] = "((ps.hospital_id IS NOT NULL AND ps.hospital_id > 0) OR (ps.associated_doctor_id IS NOT NULL AND ps.associated_doctor_id > 0))";
+			}
+
+			$where_clause = !empty($where_conditions) ? implode(" AND ", $where_conditions) : "1=1";
 
 			$med_sql = "
 				SELECT 
@@ -761,8 +785,8 @@ class Home extends CI_Controller
 				JOIN pharmacy_stores ps ON ps.id = pi.pharmacy_id AND ps.is_active = 1 AND ps.is_emergency_closed = 0
 				LEFT JOIN hospital h ON h.id = ps.hospital_id
 				LEFT JOIN profile_dr d ON d.id = ps.associated_doctor_id
-				WHERE {$where_clause} {$extra_filter}
-				ORDER BY (ps.hospital_id IS NOT NULL OR ps.associated_doctor_id IS NOT NULL) DESC, pi.selling_price ASC
+				WHERE {$where_clause}
+				ORDER BY (ps.hospital_id IS NOT NULL OR ps.associated_doctor_id IS NOT NULL) DESC, mm.brand_name ASC, pi.selling_price ASC
 			";
 			$m_res = $this->db->query($med_sql);
 			if ($m_res && is_object($m_res)) {
@@ -781,7 +805,7 @@ class Home extends CI_Controller
 		} elseif ($service === 'delivery') {
 			$store_where .= " AND ps.delivery_radius_km > 0";
 		} elseif ($service === 'affiliated') {
-			$store_where .= " AND (ps.hospital_id IS NOT NULL OR ps.associated_doctor_id IS NOT NULL)";
+			$store_where .= " AND ((ps.hospital_id IS NOT NULL AND ps.hospital_id > 0) OR (ps.associated_doctor_id IS NOT NULL AND ps.associated_doctor_id > 0))";
 		}
 		if ($store_id > 0) {
 			$store_where .= " AND ps.id = {$store_id}";
@@ -2130,10 +2154,17 @@ class Home extends CI_Controller
 			if ($this->form_validation->run() === TRUE)
 			{
 				$uploadimage = '';
-				if (isset($_FILES['uploadimage']) && !empty($_FILES['uploadimage']['name']))
+				$file_key = '';
+				if (isset($_FILES['resume']) && !empty($_FILES['resume']['name'])) {
+					$file_key = 'resume';
+				} elseif (isset($_FILES['uploadimage']) && !empty($_FILES['uploadimage']['name'])) {
+					$file_key = 'uploadimage';
+				}
+
+				if (!empty($file_key))
 				{
 					// Check PHP upload error codes
-					if (isset($_FILES['uploadimage']['error']) && ($_FILES['uploadimage']['error'] === UPLOAD_ERR_INI_SIZE || $_FILES['uploadimage']['error'] === UPLOAD_ERR_FORM_SIZE)) {
+					if (isset($_FILES[$file_key]['error']) && ($_FILES[$file_key]['error'] === UPLOAD_ERR_INI_SIZE || $_FILES[$file_key]['error'] === UPLOAD_ERR_FORM_SIZE)) {
 						$err = "Error: File exceeds the server upload limit (Maximum 2MB allowed).";
 						if ($is_ajax) {
 							echo json_encode(array('status' => 'error', 'message' => $err));
@@ -2144,8 +2175,8 @@ class Home extends CI_Controller
 						return;
 					}
 
-					if (isset($_FILES['uploadimage']['error']) && $_FILES['uploadimage']['error'] !== UPLOAD_ERR_OK && $_FILES['uploadimage']['error'] !== UPLOAD_ERR_NO_FILE) {
-						$err = "Error: File upload failed with error code: " . $_FILES['uploadimage']['error'];
+					if (isset($_FILES[$file_key]['error']) && $_FILES[$file_key]['error'] !== UPLOAD_ERR_OK && $_FILES[$file_key]['error'] !== UPLOAD_ERR_NO_FILE) {
+						$err = "Error: File upload failed with error code: " . $_FILES[$file_key]['error'];
 						if ($is_ajax) {
 							echo json_encode(array('status' => 'error', 'message' => $err));
 							return;
@@ -2155,9 +2186,9 @@ class Home extends CI_Controller
 						return;
 					}
 
-					$fileTmpPath    = $_FILES['uploadimage']['tmp_name'];
-					$fileName       = $_FILES['uploadimage']['name'];
-					$fileSize       = (int)$_FILES['uploadimage']['size'];
+					$fileTmpPath    = $_FILES[$file_key]['tmp_name'];
+					$fileName       = $_FILES[$file_key]['name'];
+					$fileSize       = (int)$_FILES[$file_key]['size'];
 					$maxSizeInBytes = 2 * 1024 * 1024; // 2MB = 2,097,152 bytes
 
 					// 1. Validate File Size (Strict 2MB Limit)
@@ -2172,12 +2203,12 @@ class Home extends CI_Controller
 						return;
 					}
 
-					// 2. Validate Extension
+					// 2. Validate Extension (Strictly PDF only)
 					$fileExtension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
-					$allowed_exts  = array('pdf', 'doc', 'docx');
+					$allowed_exts  = array('pdf');
 
 					if (!in_array($fileExtension, $allowed_exts)) {
-						$err = "Error: Invalid file format! Only PDF, DOC, or DOCX documents are allowed.";
+						$err = "Error: Invalid file format! Only PDF documents (.pdf) are allowed.";
 						if ($is_ajax) {
 							echo json_encode(array('status' => 'error', 'message' => $err));
 							return;
@@ -2201,13 +2232,16 @@ class Home extends CI_Controller
 
 					$allowed_mimes = array(
 						'application/pdf',
-						'application/msword',
-						'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+						'application/x-pdf',
+						'application/acrobat',
+						'applications/vnd.pdf',
+						'text/pdf',
+						'text/x-pdf',
 						'application/octet-stream'
 					);
 
 					if (!empty($mimeType) && !in_array($mimeType, $allowed_mimes)) {
-						$err = "Error: Only PDF and Word documents are allowed (detected: " . htmlspecialchars($mimeType) . ").";
+						$err = "Error: Only PDF documents are allowed (detected: " . htmlspecialchars($mimeType) . ").";
 						if ($is_ajax) {
 							echo json_encode(array('status' => 'error', 'message' => $err));
 							return;
@@ -2222,12 +2256,12 @@ class Home extends CI_Controller
 					$uploadimage = '_profile_pic_' . $rname . $date . '.' . $fileExtension;
 
 					$config['upload_path']   = './admin1947/public/assets/document/';
-					$config['allowed_types'] = 'pdf|doc|docx';
+					$config['allowed_types'] = 'pdf';
 					$config['max_size']      = 2048; // 2048 KB = 2MB
 					$config['file_name']     = $uploadimage;
 
 					$this->load->library('upload', $config);
-					if (!$this->upload->do_upload('uploadimage'))
+					if (!$this->upload->do_upload($file_key))
 					{
 						$error = strip_tags($this->upload->display_errors());
 						if ($is_ajax) {
@@ -2307,6 +2341,132 @@ class Home extends CI_Controller
 		);
 
 		$this->load->view('careers', $data);
+	}
+
+	public function apply_job_ajax()
+	{
+		header('Content-Type: application/json');
+
+		$job_id = (int)$this->input->post('job_id');
+		$name   = trim($this->input->post('name', TRUE));
+		$email  = trim($this->input->post('email', TRUE));
+		$mobile = trim($this->input->post('mobile', TRUE));
+
+		// If full form submission (name, email, mobile are provided)
+		if (!empty($name) || !empty($email)) {
+			$this->form_validation->set_rules('name', 'Full Name', "trim|required|max_length[200]");
+			$this->form_validation->set_rules('email', 'Email Address', "trim|required|valid_email|max_length[200]");
+			$this->form_validation->set_rules('mobile', 'Mobile Number', "required|regex_match[/^[0-9]{10}$/]");
+			$this->form_validation->set_rules('qualification', 'Highest Qualification', "required|max_length[200]");
+
+			if ($this->form_validation->run() === FALSE) {
+				echo json_encode(array(
+					'status'  => 'error',
+					'message' => strip_tags(validation_errors())
+				));
+				return;
+			}
+
+			// File Upload (Strict PDF Only, Max 2MB)
+			$uploadimage = '';
+			$file_key = '';
+			if (isset($_FILES['resume']) && !empty($_FILES['resume']['name'])) {
+				$file_key = 'resume';
+			} elseif (isset($_FILES['uploadimage']) && !empty($_FILES['uploadimage']['name'])) {
+				$file_key = 'uploadimage';
+			}
+
+			if (!empty($file_key)) {
+				$fileSize = (int)$_FILES[$file_key]['size'];
+				if ($fileSize > (2 * 1024 * 1024)) {
+					echo json_encode(array('status' => 'error', 'message' => 'Error: Resume file size must be less than 2MB.'));
+					return;
+				}
+
+				$fileExtension = strtolower(pathinfo($_FILES[$file_key]['name'], PATHINFO_EXTENSION));
+				$allowed_exts  = array('pdf');
+				if (!in_array($fileExtension, $allowed_exts)) {
+					echo json_encode(array('status' => 'error', 'message' => 'Error: Invalid file format! Please upload a PDF file only (.pdf).'));
+					return;
+				}
+
+				$rname       = rand(1111111, 999999999);
+				$uploadimage = '_profile_pic_' . $rname . date('Y-m-d') . '.' . $fileExtension;
+
+				$config['upload_path']   = './admin1947/public/assets/document/';
+				$config['allowed_types'] = 'pdf';
+				$config['max_size']      = 2048; // 2MB
+				$config['file_name']     = $uploadimage;
+
+				$this->load->library('upload', $config);
+				if (!$this->upload->do_upload($file_key)) {
+					echo json_encode(array('status' => 'error', 'message' => 'Resume Upload Failed: ' . strip_tags($this->upload->display_errors())));
+					return;
+				}
+			}
+
+			$designation = trim($this->input->post('designation', TRUE));
+			if ($job_id > 0 && empty($designation)) {
+				$job_row = $this->db->where('job_id', $job_id)->get('career_jobs')->row_array();
+				if ($job_row) {
+					$designation = $job_row['title'];
+				}
+			}
+			if (empty($designation)) {
+				$designation = 'General Application';
+			}
+
+			$insert_data = array(
+				'job_id'        => ($job_id > 0) ? $job_id : null,
+				'name'          => $name,
+				'email'         => $email,
+				'mobile'        => $mobile,
+				'qualification' => trim($this->input->post('qualification', TRUE)),
+				'experience'    => trim($this->input->post('experience', TRUE)),
+				'designation'   => $designation,
+				'message'       => trim($this->input->post('message', TRUE)),
+				'resume'        => $uploadimage,
+				'status'        => '0',
+				'status_stage'  => 'pending',
+				'creat_date'    => date('Y-m-d'),
+				'applied_at'    => date('Y-m-d H:i:s')
+			);
+
+			$this->db->insert('career', $insert_data);
+
+			echo json_encode(array(
+				'status'  => 'success',
+				'message' => 'Application submitted successfully! Our recruitment team will review your application and contact you soon.'
+			));
+			return;
+		}
+
+		// Quick apply or fetch job details for modal
+		if ($job_id > 0) {
+			$job = $this->db->where('job_id', $job_id)->get('career_jobs')->row_array();
+			if ($job) {
+				$userid = $this->session->userdata('userid');
+				$user_data = null;
+				if ($userid) {
+					$user_data = $this->db->where('userid', $userid)->get('profile_dr')->row_array();
+				}
+
+				echo json_encode(array(
+					'status'    => 'success',
+					'job'       => $job,
+					'user'      => $user_data,
+					'message'   => 'Job details fetched successfully.',
+					'csrf_name' => $this->security->get_csrf_token_name(),
+					'csrf_hash' => $this->security->get_csrf_hash()
+				));
+				return;
+			} else {
+				echo json_encode(array('status' => 'error', 'message' => 'Job opening not found or no longer active.'));
+				return;
+			}
+		}
+
+		echo json_encode(array('status' => 'error', 'message' => 'Invalid request: Job ID is required.'));
 	}
 	
 	public function file_check($file,$type)
