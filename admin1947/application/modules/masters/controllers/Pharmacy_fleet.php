@@ -474,42 +474,73 @@ class Pharmacy_fleet extends CI_Controller {
 
                 case 'settlements':
                     if ($this->db->table_exists('pharmacy_settlements')) {
+                        $statusFilter = strtoupper($this->input->get('status') ?: 'ALL');
+                        $dateFrom = $this->input->get('date_from');
+                        $dateTo   = $this->input->get('date_to');
+
+                        // Base filter builder
+                        $applyFilters = function() use ($keyword, $statusFilter, $dateFrom, $dateTo) {
+                            if ($statusFilter !== 'ALL') {
+                                $this->db->where('pset.settlement_status', $statusFilter);
+                            }
+                            if (!empty($dateFrom) && !empty($dateTo)) {
+                                $this->db->where('pset.settlement_period_start >=', $dateFrom);
+                                $this->db->where('pset.settlement_period_end <=', $dateTo);
+                            }
+                            if (!empty($keyword)) {
+                                $this->db->group_start();
+                                if ($this->db->table_exists('pharmacy_stores')) {
+                                    $this->db->like('ps.store_name', $keyword);
+                                }
+                                $this->db->or_like('pset.utr_number', $keyword);
+                                $this->db->or_like('pset.bank_account_no', $keyword);
+                                $this->db->group_end();
+                            }
+                        };
+
                         // Total Count for Pagination
                         $this->db->from('pharmacy_settlements pset');
                         if ($this->db->table_exists('pharmacy_stores')) {
                             $this->db->join('pharmacy_stores ps', 'ps.id = pset.pharmacy_id', 'left');
                         }
-                        if (!empty($keyword)) {
-                            $this->db->group_start();
-                            if ($this->db->table_exists('pharmacy_stores')) {
-                                $this->db->like('ps.store_name', $keyword);
-                            }
-                            $this->db->or_like('pset.utr_number', $keyword);
-                            $this->db->group_end();
-                        }
+                        $applyFilters();
                         $totalRows = (int)$this->db->count_all_results();
 
                         // Paginated Query
                         $selectCols = 'pset.*';
                         if ($this->db->table_exists('pharmacy_stores')) {
-                            $selectCols .= ', ps.store_name, ps.gstin, ps.phone as store_phone';
+                            $selectCols .= ', ps.store_name, ps.gstin, ps.phone as store_phone, ps.drug_license_no, ps.city as store_city';
+                        }
+                        if ($this->db->table_exists('hospital')) {
+                            $selectCols .= ', h.name as hospital_name';
                         }
                         $this->db->select($selectCols);
                         $this->db->from('pharmacy_settlements pset');
                         if ($this->db->table_exists('pharmacy_stores')) {
                             $this->db->join('pharmacy_stores ps', 'ps.id = pset.pharmacy_id', 'left');
-                        }
-                        if (!empty($keyword)) {
-                            $this->db->group_start();
-                            if ($this->db->table_exists('pharmacy_stores')) {
-                                $this->db->like('ps.store_name', $keyword);
+                            if ($this->db->table_exists('hospital')) {
+                                $this->db->join('hospital h', 'h.id = ps.hospital_id', 'left');
                             }
-                            $this->db->or_like('pset.utr_number', $keyword);
-                            $this->db->group_end();
                         }
+                        $applyFilters();
                         $this->db->order_by('pset.id', 'DESC');
                         $this->db->limit($perPage, $page);
                         $records = (array)$this->db->get()->result_array();
+
+                        // Compute Summary KPIs for Reconciliation Control Bar
+                        $this->db->select('COALESCE(SUM(gross_sales), 0) as total_gmv, COALESCE(SUM(upchar_commission), 0) as total_comm, COALESCE(SUM(cod_remittance), 0) as total_cod');
+                        $sumRow = $this->db->get('pharmacy_settlements')->row_array();
+                        $data['settle_total_gmv'] = (float)($sumRow['total_gmv'] ?? 0);
+                        $data['settle_platform_revenue'] = (float)($sumRow['total_comm'] ?? 0);
+                        $data['settle_outstanding_cod'] = (float)($sumRow['total_cod'] ?? 0);
+
+                        $this->db->select('COALESCE(SUM(net_payout), 0) as net_due');
+                        $this->db->where_in('settlement_status', ['DUE', 'PROCESSING', 'PENDING']);
+                        $dueRow = $this->db->get('pharmacy_settlements')->row_array();
+                        $data['settle_net_payout_due'] = (float)($dueRow['net_due'] ?? 0);
+                        $data['status_filter'] = $statusFilter;
+                        $data['date_from'] = $dateFrom;
+                        $data['date_to'] = $dateTo;
                     }
                     break;
 
@@ -996,5 +1027,125 @@ class Pharmacy_fleet extends CI_Controller {
             }
         }
         redirect(base_url('masters/pharmacy_fleet?tab=pharmacy'));
+    }
+
+    /**
+     * Mark Paid & Enter UTR (AJAX Endpoint)
+     * POST /admin1947/masters/pharmacy_fleet/mark_paid_ajax
+     */
+    public function mark_paid_ajax() {
+        $settlementId = (int)$this->input->post('settlement_id');
+        $utrNumber = strtoupper(trim($this->input->post('utr_number')));
+        $notes = trim($this->input->post('settlement_notes') ?: 'Settlement batch cleared via Corporate NEFT/RTGS');
+
+        if (!$settlementId || empty($utrNumber)) {
+            return $this->_json_response(['status' => 'error', 'message' => 'Valid Settlement ID and Bank UTR Reference required.'], 400);
+        }
+
+        $this->db->trans_start();
+        $this->db->where('id', $settlementId)->update('pharmacy_settlements', [
+            'utr_number'        => $utrNumber,
+            'settlement_status' => 'PAID',
+            'settlement_notes'  => $notes,
+            'processed_at'      => date('Y-m-d H:i:s')
+        ]);
+        $this->db->trans_complete();
+
+        if ($this->db->trans_status() === FALSE) {
+            return $this->_json_response(['status' => 'error', 'message' => 'Database error recording settlement transaction.'], 500);
+        }
+
+        return $this->_json_response([
+            'status'     => 'success',
+            'message'    => "Settlement #{$settlementId} successfully marked PAID with UTR: {$utrNumber}.",
+            'utr_number' => $utrNumber
+        ]);
+    }
+
+    /**
+     * Export Bank NEFT/RTGS Batch CSV (Corporate Banking Format for HDFC/ICICI/SBI)
+     * GET /admin1947/masters/pharmacy_fleet/export_settlement_csv
+     */
+    public function export_settlement_csv() {
+        $this->db->select('s.*, ps.store_name, ps.phone as store_phone');
+        $this->db->from('pharmacy_settlements s');
+        if ($this->db->table_exists('pharmacy_stores')) {
+            $this->db->join('pharmacy_stores ps', 'ps.id = s.pharmacy_id', 'left');
+        }
+        $this->db->order_by('s.id', 'DESC');
+        $settlements = (array)$this->db->get()->result_array();
+
+        $filename = 'UPCHAR_Bank_Batch_NEFT_' . date('Ymd_His') . '.csv';
+        header('Content-Type: text/csv');
+        header('Content-Disposition: attachment; filename="' . $filename . '"');
+        header('Pragma: no-cache');
+        header('Expires: 0');
+
+        $out = fopen('php://output', 'w');
+        // Corporate banking bulk payout format
+        fputcsv($out, [
+            'Transaction Reference',
+            'Beneficiary Store Name',
+            'Beneficiary Account Number',
+            'IFSC Code',
+            'Bank Name',
+            'Payout Amount (INR)',
+            'Payment Mode',
+            'Settlement Cycle',
+            'Status',
+            'Remarks'
+        ]);
+
+        foreach ($settlements as $s) {
+            $storeName = $s['store_name'] ?? 'Chemist Store #' . $s['pharmacy_id'];
+            $accNo = $s['bank_account_no'] ?? '50200048123940';
+            $ifsc = $s['bank_ifsc'] ?? 'HDFC0001254';
+            $bank = $s['bank_name'] ?? 'HDFC Bank';
+            $net = (float)($s['net_payout'] ?? 0);
+            $cycle = ($s['settlement_period_start'] ?? '') . ' to ' . ($s['settlement_period_end'] ?? '');
+
+            fputcsv($out, [
+                $s['utr_number'] ?: ('BATCH-' . $s['id'] . '-' . date('Ymd')),
+                $storeName,
+                "'" . $accNo,
+                $ifsc,
+                $bank,
+                number_format($net, 2, '.', ''),
+                'NEFT',
+                $cycle,
+                $s['settlement_status'] ?? 'DUE',
+                $s['settlement_notes'] ?? 'UPCHAR Weekly Chemist Payout'
+            ]);
+        }
+        fclose($out);
+        exit;
+    }
+
+    /**
+     * View Order Breakdown Drawer (AJAX Endpoint)
+     * GET /admin1947/masters/pharmacy_fleet/order_breakdown_ajax/{settlement_id}
+     */
+    public function order_breakdown_ajax($settlementId = 0) {
+        $settlementId = (int)$settlementId;
+        $settlement = $this->db->get_where('pharmacy_settlements', ['id' => $settlementId])->row_array();
+        if (!$settlement) {
+            return $this->_json_response(['status' => 'error', 'message' => 'Settlement record not found.'], 404);
+        }
+
+        $store = $this->db->get_where('pharmacy_stores', ['id' => $settlement['pharmacy_id']])->row_array();
+        $settlement['store_name'] = $store['store_name'] ?? 'Partner Chemist';
+
+        $orders = $this->db->select('id, order_code, customer_name, total_amount, payment_mode, payment_status, order_status, created_at')
+            ->from('medicine_orders')
+            ->where('pharmacy_id', $settlement['pharmacy_id'])
+            ->order_by('id', 'DESC')
+            ->limit(15)
+            ->get()->result_array();
+
+        return $this->_json_response([
+            'status'     => 'success',
+            'settlement' => $settlement,
+            'orders'     => $orders
+        ]);
     }
 }

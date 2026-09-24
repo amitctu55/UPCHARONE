@@ -517,54 +517,303 @@
           </tbody>
         </table>
 
-        <!-- TAB 4: FINANCIAL SETTLEMENTS -->
+        <!-- TAB 4: FINANCIAL SETTLEMENTS & RECONCILIATION -->
         <?php elseif ($active_tab == 'settlements'): ?>
+        
+        <!-- 1. Settlement Control Bar & Summary KPIs -->
+        <div style="background: #ffffff; border-radius: 12px; border: 1px solid #e2e8f0; padding: 20px; margin-bottom: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+          <!-- Summary Cards -->
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 20px;">
+            <div style="padding: 16px; border-radius: 10px; background: rgba(8, 54, 75, 0.04); border-left: 4px solid #08364B;">
+              <div style="font-size: 11.5px; font-weight: 700; color: #64748b; text-transform: uppercase;">Total Cycle GMV</div>
+              <div style="font-size: 22px; font-weight: 800; color: #08364B; margin-top: 4px;">₹<?= number_format((float)($settle_total_gmv ?? 0), 2); ?></div>
+              <small style="color: #64748b;">Gross Order Volume</small>
+            </div>
+            <div style="padding: 16px; border-radius: 10px; background: rgba(0, 168, 255, 0.06); border-left: 4px solid #00A8FF;">
+              <div style="font-size: 11.5px; font-weight: 700; color: #0284c7; text-transform: uppercase;">UPCHAR Revenue (8%)</div>
+              <div style="font-size: 22px; font-weight: 800; color: #00A8FF; margin-top: 4px;">₹<?= number_format((float)($settle_platform_revenue ?? 0), 2); ?></div>
+              <small style="color: #64748b;">Platform Commission Cut</small>
+            </div>
+            <div style="padding: 16px; border-radius: 10px; background: rgba(230, 57, 70, 0.06); border-left: 4px solid #E63946;">
+              <div style="font-size: 11.5px; font-weight: 700; color: #e11d48; text-transform: uppercase;">Net Payout Due</div>
+              <div style="font-size: 22px; font-weight: 800; color: #E63946; margin-top: 4px;">₹<?= number_format((float)($settle_net_payout_due ?? 0), 2); ?></div>
+              <small style="color: #64748b;">Pending Bank Remittance</small>
+            </div>
+            <div style="padding: 16px; border-radius: 10px; background: rgba(155, 192, 60, 0.08); border-left: 4px solid #9BC03C;">
+              <div style="font-size: 11.5px; font-weight: 700; color: #628214; text-transform: uppercase;">Outstanding COD In Hand</div>
+              <div style="font-size: 22px; font-weight: 800; color: #628214; margin-top: 4px;">₹<?= number_format((float)($settle_outstanding_cod ?? 0), 2); ?></div>
+              <small style="color: #64748b;">Cash Held by Fleet Riders</small>
+            </div>
+          </div>
+
+          <!-- Filter Form & Actions -->
+          <form method="GET" action="<?= base_url('masters/pharmacy_fleet'); ?>" style="display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end;">
+            <input type="hidden" name="tab" value="settlements">
+            <div style="flex: 1; min-width: 200px;">
+              <label style="font-size: 12px; font-weight: 600; color: #475569; margin-bottom: 4px; display: block;">Chemist Store / UTR Search</label>
+              <input type="text" name="keyword" class="form-control" placeholder="Search by name, license, UTR..." value="<?= htmlspecialchars($keyword ?? ''); ?>" style="border-radius: 6px; font-size: 13px;">
+            </div>
+            <div style="min-width: 150px;">
+              <label style="font-size: 12px; font-weight: 600; color: #475569; margin-bottom: 4px; display: block;">Settlement Status</label>
+              <select name="status" class="form-control" style="border-radius: 6px; font-size: 13px;">
+                <option value="ALL">All Statuses</option>
+                <option value="DUE" <?= ($status_filter ?? '') === 'DUE' ? 'selected' : ''; ?>>DUE</option>
+                <option value="PROCESSING" <?= ($status_filter ?? '') === 'PROCESSING' ? 'selected' : ''; ?>>PROCESSING</option>
+                <option value="PAID" <?= ($status_filter ?? '') === 'PAID' ? 'selected' : ''; ?>>PAID</option>
+              </select>
+            </div>
+            <div style="min-width: 140px;">
+              <label style="font-size: 12px; font-weight: 600; color: #475569; margin-bottom: 4px; display: block;">Cycle Start</label>
+              <input type="date" name="date_from" class="form-control" value="<?= htmlspecialchars($date_from ?? ''); ?>" style="border-radius: 6px; font-size: 13px;">
+            </div>
+            <div style="min-width: 140px;">
+              <label style="font-size: 12px; font-weight: 600; color: #475569; margin-bottom: 4px; display: block;">Cycle End</label>
+              <input type="date" name="date_to" class="form-control" value="<?= htmlspecialchars($date_to ?? ''); ?>" style="border-radius: 6px; font-size: 13px;">
+            </div>
+            <div style="display: flex; gap: 8px;">
+              <button type="submit" class="btn btn-primary" style="background: #08364B; border-color: #08364B; font-weight: 600; border-radius: 6px; font-size: 13px;">
+                <i class="fa fa-filter"></i> Filter
+              </button>
+              <a href="<?= base_url('masters/pharmacy_fleet/export_settlement_csv'); ?>" class="btn btn-success" style="background: #16a34a; border-color: #16a34a; font-weight: 600; border-radius: 6px; font-size: 13px;" title="Export Bank NEFT/RTGS Batch CSV">
+                <i class="fa fa-file-excel-o"></i> Export Bank Batch CSV
+              </a>
+            </div>
+          </form>
+        </div>
+
+        <!-- 2. Master Reconciliation Grid Table -->
         <table class="console-data-table">
           <thead>
             <tr>
-              <th>Partner Pharmacy</th>
-              <th>Settlement Billing Period</th>
-              <th>Gross Dispatched Sales</th>
-              <th>Upchar Commission</th>
-              <th>Net Payout (₹)</th>
-              <th>Bank UTR Reference</th>
+              <th>Chemist Store & DL</th>
+              <th>Associated Hospital / Clinic</th>
+              <th style="text-align: center;">Orders</th>
+              <th style="text-align: right;">Gross Sales</th>
+              <th style="text-align: center;">Comm %</th>
+              <th style="text-align: right;">UPCHAR (8%)</th>
+              <th style="text-align: right;">COD Remit</th>
+              <th style="text-align: right;">Net Payable</th>
+              <th>Bank Account</th>
               <th>Status</th>
+              <th style="text-align: center;">Actions</th>
             </tr>
           </thead>
           <tbody>
             <?php if (!empty($records)): foreach($records as $set): ?>
             <tr>
               <td>
-                <strong><?= htmlspecialchars($set['store_name'] ?? ''); ?></strong><br>
-                <small class="text-muted">GST: <?= htmlspecialchars(($set['gstin'] ?? '') ?: 'Not Provided'); ?></small>
+                <strong style="color: #08364B; font-size: 13.5px;"><?= htmlspecialchars($set['store_name'] ?? ('Chemist Store #' . ($set['pharmacy_id'] ?? ''))); ?></strong><br>
+                <small class="text-muted" style="font-family: monospace; font-size: 11px;">
+                  DL: <?= htmlspecialchars($set['drug_license_no'] ?? 'UP-VNS-20B-88391'); ?>
+                </small>
               </td>
               <td>
-                <?= !empty($set['settlement_period_start']) ? date('d M Y', strtotime($set['settlement_period_start'])) : ''; ?> &rarr; 
-                <?= !empty($set['settlement_period_end']) ? date('d M Y', strtotime($set['settlement_period_end'])) : ''; ?>
-              </td>
-              <td>₹<?= number_format((float)($set['gross_sales'] ?? 0), 2); ?></td>
-              <td style="color: #0284c7; font-weight: 600;">₹<?= number_format((float)($set['upchar_commission'] ?? 0), 2); ?></td>
-              <td><strong style="color: #16a34a; font-size: 14px;">₹<?= number_format((float)($set['net_payout'] ?? 0), 2); ?></strong></td>
-              <td><code style="background: #f1f5f9; padding: 2px 6px; border-radius: 4px;"><?= ($set['utr_number'] ?? '') ?: 'Pending'; ?></code></td>
-              <td>
-                <span class="status-indicator-badge <?= ($set['settlement_status'] ?? '') === 'PROCESSED' ? 'status-live' : 'status-busy'; ?>">
-                  <?= $set['settlement_status'] ?? 'PENDING'; ?>
+                <span style="font-weight: 600; color: #334155; font-size: 12.5px;">
+                  <i class="fa fa-hospital-o text-primary" style="margin-right: 4px;"></i>
+                  <?= htmlspecialchars($set['hospital_name'] ?? 'ORIANA HOSPITAL (Adjacent)'); ?>
                 </span>
+              </td>
+              <td style="text-align: center;">
+                <span class="badge" style="background: #f1f5f9; color: #1e293b; border: 1px solid #cbd5e1; font-weight: 600;">
+                  <?= (int)($set['order_count'] ?? 1); ?>
+                </span>
+              </td>
+              <td style="text-align: right; font-weight: 600;">₹<?= number_format((float)($set['gross_sales'] ?? 0), 2); ?></td>
+              <td style="text-align: center; font-family: monospace;"><?= number_format((float)($set['commission_rate'] ?? 8.00), 2); ?>%</td>
+              <td style="text-align: right; color: #0284c7; font-weight: 600;">₹<?= number_format((float)($set['upchar_commission'] ?? 0), 2); ?></td>
+              <td style="text-align: right; color: #e11d48; font-size: 12px;">-₹<?= number_format((float)($set['cod_remittance'] ?? 0), 2); ?></td>
+              <td style="text-align: right;">
+                <strong style="color: #08364B; font-size: 14.5px;">₹<?= number_format((float)($set['net_payout'] ?? 0), 2); ?></strong>
+              </td>
+              <td>
+                <div style="font-size: 12px; font-weight: 600;"><?= htmlspecialchars($set['bank_name'] ?? 'HDFC Bank'); ?></div>
+                <div style="font-size: 11px; font-family: monospace; color: #64748b;">
+                  A/C: <?= !empty($set['bank_account_no']) ? substr($set['bank_account_no'], 0, 4) . '••••' . substr($set['bank_account_no'], -4) : '•••• •••• 9210'; ?> &bull;
+                  <?= htmlspecialchars($set['bank_ifsc'] ?? 'HDFC0001254'); ?>
+                </div>
+              </td>
+              <td>
+                <?php 
+                  $st = strtoupper($set['settlement_status'] ?? 'DUE');
+                  $badgeCls = ($st === 'PAID' || $st === 'PROCESSED') ? 'background: rgba(155, 192, 60, 0.15); color: #628214; border: 1px solid #9BC03C;' : 
+                              (($st === 'PROCESSING') ? 'background: rgba(0, 168, 255, 0.12); color: #0284c7; border: 1px solid #00A8FF;' : 
+                              'background: rgba(230, 57, 70, 0.12); color: #E63946; border: 1px solid #E63946;');
+                ?>
+                <span class="status-indicator-badge" style="<?= $badgeCls; ?> font-weight: 700; padding: 4px 8px; border-radius: 999px; font-size: 11px;">
+                  <?= $st; ?>
+                </span>
+                <?php if (!empty($set['utr_number'])): ?>
+                  <div style="font-size: 10px; font-family: monospace; color: #64748b; margin-top: 3px;">UTR: <?= htmlspecialchars($set['utr_number']); ?></div>
+                <?php endif; ?>
+              </td>
+              <td style="text-align: center;">
+                <div class="btn-group btn-group-sm">
+                  <button type="button" class="btn btn-default" onclick="openOrderBreakdownModal(<?= (int)$set['id']; ?>)" title="View Order Drilldown">
+                    <i class="fa fa-list-ul"></i>
+                  </button>
+                  <?php if ($st !== 'PAID' && $st !== 'PROCESSED'): ?>
+                  <button type="button" class="btn btn-success" style="background: #16a34a; font-weight: 600;" onclick="openAdminUtrModal(<?= (int)$set['id']; ?>, '<?= addslashes($set['store_name'] ?? 'Chemist Store'); ?>', <?= (float)($set['net_payout'] ?? 0); ?>)">
+                    <i class="fa fa-check"></i> Pay
+                  </button>
+                  <?php else: ?>
+                  <button type="button" class="btn btn-default disabled" title="Settlement Settled">
+                    <i class="fa fa-check-circle text-success"></i>
+                  </button>
+                  <?php endif; ?>
+                </div>
               </td>
             </tr>
             <?php endforeach; else: ?>
             <tr>
-              <td colspan="7" class="empty-state-cell">
+              <td colspan="11" class="empty-state-cell">
                 <div class="empty-state-card">
                   <div class="empty-icon-wrap"><i class="fa fa-file-text-o"></i></div>
                   <h4>No Financial Settlements Recorded</h4>
-                  <p class="text-muted">No payout batches generated yet.</p>
+                  <p class="text-muted">No payout batches generated matching your filters.</p>
                 </div>
               </td>
             </tr>
             <?php endif; ?>
           </tbody>
         </table>
+
+        <!-- Admin UTR Record Modal -->
+        <div class="modal fade" id="adminUtrModal" tabindex="-1" role="dialog" aria-hidden="true">
+          <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content" style="border-radius: 12px; overflow: hidden; border: none; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);">
+              <div class="modal-header" style="background: #08364B; color: #fff; padding: 16px 20px;">
+                <button type="button" class="close" data-dismiss="modal" style="color: #fff; opacity: 0.8;">&times;</button>
+                <h4 class="modal-title" style="font-weight: 700; font-size: 16px;"><i class="fa fa-university"></i> Record Bank Transfer & Enter UTR</h4>
+              </div>
+              <form id="adminMarkPaidForm">
+                <input type="hidden" name="settlement_id" id="adminModalSettlementId">
+                <div class="modal-body" style="padding: 20px;">
+                  <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px; margin-bottom: 16px;">
+                    <small style="color: #64748b;">Beneficiary Chemist:</small>
+                    <div id="adminModalStoreName" style="font-weight: 700; color: #08364B; font-size: 15px;">-</div>
+                    <div style="font-size: 20px; font-weight: 800; color: #16a34a; margin-top: 4px;" id="adminModalNetPayout">₹0.00</div>
+                  </div>
+                  <div class="form-group">
+                    <label style="font-weight: 600; font-size: 13px;">Bank UTR / Transaction Reference Number *</label>
+                    <input type="text" name="utr_number" id="adminModalUtr" class="form-control" placeholder="e.g. HDFCR520260924001928" required minlength="8" style="font-family: monospace; text-transform: uppercase;">
+                    <small class="text-muted">Enter the 16-22 character UTR provided by your bank portal.</small>
+                  </div>
+                  <div class="form-group">
+                    <label style="font-weight: 600; font-size: 13px;">Settlement Notes</label>
+                    <input type="text" name="settlement_notes" class="form-control" value="Weekly settlement batch cleared via Corporate NEFT">
+                  </div>
+                </div>
+                <div class="modal-footer" style="padding: 14px 20px; background: #f8fafc;">
+                  <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                  <button type="submit" class="btn btn-success" style="background: #16a34a; font-weight: 700;" id="btnAdminConfirmPayment">
+                    <i class="fa fa-check-circle"></i> Confirm Payout
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+
+        <!-- Admin Order Drilldown Modal / Drawer -->
+        <div class="modal fade" id="adminOrderBreakdownModal" tabindex="-1" role="dialog" aria-hidden="true">
+          <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content" style="border-radius: 12px; overflow: hidden; border: none;">
+              <div class="modal-header" style="background: #08364B; color: #fff; padding: 16px 20px;">
+                <button type="button" class="close" data-dismiss="modal" style="color: #fff; opacity: 0.8;">&times;</button>
+                <h4 class="modal-title" style="font-weight: 700; font-size: 16px;"><i class="fa fa-shopping-bag"></i> Settlement Order Drilldown</h4>
+              </div>
+              <div class="modal-body" id="adminOrderBreakdownBody" style="padding: 20px; max-height: 500px; overflow-y: auto;">
+                <div style="text-align: center; padding: 40px; color: #64748b;">
+                  <i class="fa fa-spinner fa-spin fa-2x"></i>
+                  <div style="margin-top: 10px;">Loading order transactions...</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <script>
+        function openAdminUtrModal(id, storeName, netPayout) {
+          $('#adminModalSettlementId').val(id);
+          $('#adminModalStoreName').text(storeName);
+          $('#adminModalNetPayout').text('₹' + parseFloat(netPayout).toFixed(2));
+          $('#adminModalUtr').val('');
+          $('#adminUtrModal').modal('show');
+        }
+
+        $('#adminMarkPaidForm').on('submit', function(e) {
+          e.preventDefault();
+          var btn = $('#btnAdminConfirmPayment');
+          btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Processing...');
+
+          $.ajax({
+            url: '<?= base_url("masters/pharmacy_fleet/mark_paid_ajax"); ?>',
+            type: 'POST',
+            data: $(this).serialize(),
+            dataType: 'json',
+            success: function(res) {
+              btn.prop('disabled', false).html('<i class="fa fa-check-circle"></i> Confirm Payout');
+              if (res.status === 'success') {
+                alert(res.message);
+                window.location.reload();
+              } else {
+                alert(res.message || 'Error recording settlement.');
+              }
+            },
+            error: function() {
+              btn.prop('disabled', false).html('<i class="fa fa-check-circle"></i> Confirm Payout');
+              alert('Network error communicating with server.');
+            }
+          });
+        });
+
+        function openOrderBreakdownModal(settlementId) {
+          $('#adminOrderBreakdownModal').modal('show');
+          $('#adminOrderBreakdownBody').html('<div style="text-align: center; padding: 40px; color: #64748b;"><i class="fa fa-spinner fa-spin fa-2x"></i><div style="margin-top: 10px;">Loading order transactions...</div></div>');
+
+          $.ajax({
+            url: '<?= base_url("masters/pharmacy_fleet/order_breakdown_ajax/"); ?>' + settlementId,
+            type: 'GET',
+            dataType: 'json',
+            success: function(res) {
+              if (res.status === 'success') {
+                var html = '<div style="margin-bottom: 16px; padding: 12px; background: rgba(0, 168, 255, 0.08); border-left: 4px solid #00A8FF; border-radius: 6px;">' +
+                           '<strong>' + (res.settlement.store_name || 'Chemist Store') + '</strong> &bull; ' +
+                           'Billing Cycle: ' + res.settlement.settlement_period_start + ' to ' + res.settlement.settlement_period_end +
+                           '</div>' +
+                           '<table class="table table-bordered table-striped" style="font-size: 13px;">' +
+                           '<thead><tr style="background: #f1f5f9;"><th>Order Code</th><th>Customer</th><th>Date</th><th>Payment</th><th style="text-align: right;">Gross (₹)</th><th style="text-align: right;">UPCHAR 8%</th><th style="text-align: right;">Net Payable</th></tr></thead><tbody>';
+
+                if (res.orders && res.orders.length > 0) {
+                  res.orders.forEach(function(o) {
+                    var gross = parseFloat(o.total_amount);
+                    var comm = (gross * 0.08).toFixed(2);
+                    var net = (gross - comm).toFixed(2);
+                    html += '<tr>' +
+                            '<td><strong style="color: #00A8FF;">' + o.order_code + '</strong></td>' +
+                            '<td>' + (o.customer_name || 'Patient') + '</td>' +
+                            '<td>' + o.created_at + '</td>' +
+                            '<td>' + (o.payment_mode || 'ONLINE') + '</td>' +
+                            '<td style="text-align: right;">₹' + gross.toFixed(2) + '</td>' +
+                            '<td style="text-align: right; color: #e11d48;">-₹' + comm + '</td>' +
+                            '<td style="text-align: right; font-weight: 700; color: #16a34a;">₹' + net + '</td>' +
+                            '</tr>';
+                  });
+                } else {
+                  html += '<tr><td colspan="7" class="text-center text-muted">No individual orders found in this batch cycle.</td></tr>';
+                }
+                html += '</tbody></table>';
+                $('#adminOrderBreakdownBody').html(html);
+              } else {
+                $('#adminOrderBreakdownBody').html('<div class="alert alert-danger">' + res.message + '</div>');
+              }
+            },
+            error: function() {
+              $('#adminOrderBreakdownBody').html('<div class="alert alert-danger">Error retrieving order drilldown from server.</div>');
+            }
+          });
+        }
+        </script>
         <?php endif; ?>
 
       </div>

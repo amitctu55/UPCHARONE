@@ -74,6 +74,7 @@ if(
   <link rel="stylesheet" type="text/css" href="<?=base_url();?>style_home2.css">
   <link rel="stylesheet" type="text/css" href="<?=base_url();?>media.css">
   <link rel="stylesheet" type="text/css" href="<?=base_url();?>public/css/landing_modern.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.css">
 </head>
 
 <body>
@@ -90,58 +91,64 @@ if(
           <ul class="nav navbar-nav navbar-right">
             <li>
               <a href="<?=base_url();?>">
-                <span class="glyphicon glyphicon-home iconEffect"></span> Home
+                <i class="fas fa-home iconEffect"></i> Home
               </a>
             </li>
-
-            <?php if (!$isUserLoggedIn): ?>
-            <!-- 1. Our Partners (4-Category Dropdown: Hospital, Doctor, Pathology, Pharmacy) - Shown ONLY for Guest / Logged-Out Users -->
+            <!-- Partner List Dropdown (Doctors, Hospitals, Medicines, Lab Tests, 108 SOS) -->
             <li class="dropdown partner-dropdown-container">
-              <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
-                <i class="fas fa-handshake iconEffect"></i> Our Partners <span class="caret"></span>
+              <a class="dropdown-toggle" data-toggle="dropdown" href="javascript:void(0);" role="button" aria-haspopup="true" aria-expanded="false" style="text-transform: none !important; letter-spacing: normal !important;">
+                <i class="fas fa-list-ul iconEffect" style="color: #00A896;"></i> Partner List <span class="caret"></span>
               </a>
               <div class="partner-menu-box">
                 <div class="partner-menu-header">
-                  <h5><i class="fas fa-hospital-user" style="color: #00A896;"></i> Our Partner Network</h5>
-                  <span>Verified Healthcare Providers</span>
+                  <h5><i class="fas fa-hospital-user" style="color: #00A896;"></i> Healthcare Partner List</h5>
+                  <span>Verified Medical Services</span>
                 </div>
                 <div class="partner-grid">
-                  <a href="<?=base_url('hospitals');?>" class="partner-card-link">
-                    <div class="partner-card-icon"><i class="fas fa-hospital"></i></div>
+                  <a href="<?=base_url('doctors');?>" class="partner-card-link">
+                    <div class="partner-card-icon" style="color: #00A896; background: #CCFBF1;"><i class="fas fa-user-md"></i></div>
                     <div class="partner-card-text">
-                      <h6>Hospital</h6>
-                      <p>Browse network hospitals & clinics</p>
+                      <h6>Doctors</h6>
+                      <p>Certified specialists &amp; surgeons</p>
                     </div>
                   </a>
-                  <a href="<?=base_url('doctors');?>" class="partner-card-link">
-                    <div class="partner-card-icon"><i class="fas fa-user-md"></i></div>
+                  <a href="<?=base_url('hospitals');?>" class="partner-card-link">
+                    <div class="partner-card-icon" style="color: #0284C7; background: #E0F2FE;"><i class="fas fa-hospital"></i></div>
                     <div class="partner-card-text">
-                      <h6>Doctor</h6>
-                      <p>Certified specialists & surgeons</p>
+                      <h6>Hospitals</h6>
+                      <p>Browse network hospitals &amp; clinics</p>
+                    </div>
+                  </a>
+                  <a href="<?=base_url('medical');?>" class="partner-card-link">
+                    <div class="partner-card-icon" style="color: #10B981; background: #D1FAE5;"><i class="fas fa-pills"></i></div>
+                    <div class="partner-card-text">
+                      <h6>Medicines</h6>
+                      <p>Verified chemists &amp; pharmacies</p>
                     </div>
                   </a>
                   <a href="<?=base_url('mytest');?>" class="partner-card-link">
-                    <div class="partner-card-icon"><i class="fas fa-flask"></i></div>
+                    <div class="partner-card-icon" style="color: #7C3AED; background: #EDE9FE;"><i class="fas fa-flask"></i></div>
                     <div class="partner-card-text">
-                      <h6>Pathology</h6>
-                      <p>Diagnostic labs & sample testing</p>
+                      <h6>Lab Tests</h6>
+                      <p>Diagnostic labs &amp; doorstep tests</p>
                     </div>
                   </a>
-                  <a href="<?=base_url('medical-signup');?>" class="partner-card-link">
-                    <div class="partner-card-icon"><i class="fas fa-pills"></i></div>
+                  <a href="tel:108" class="partner-card-link" style="grid-column: span 2; background: #FFF1F2; border-color: #FECDD3;">
+                    <div class="partner-card-icon" style="color: #E63946; background: #FFE4E6;"><i class="fas fa-ambulance"></i></div>
                     <div class="partner-card-text">
-                      <h6>Pharmacy</h6>
-                      <p>Verified chemist & medical stores</p>
+                      <h6 style="color: #9F1239;"><i class="fas fa-phone-alt"></i> 108 SOS Ambulance</h6>
+                      <p style="color: #E11D48;">Emergency response helpline 24/7</p>
                     </div>
                   </a>
                 </div>
               </div>
             </li>
 
-            <!-- 2. Become Partner / Login (4 Portal Categories with Login & Join Actions) - Shown ONLY for Guest / Logged-Out Users -->
+            <?php if (!$isUserLoggedIn): ?>
+            <!-- Partner Access Portal (Doctor, Hospital, Lab, Pharmacy Onboarding & Login) -->
             <li class="dropdown partner-dropdown-container">
-              <a class="dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false" style="text-transform: none !important; letter-spacing: normal !important;">
-                <i class="fas fa-user-plus iconEffect"></i> Become Partner / Login <span class="caret"></span>
+              <a class="dropdown-toggle" data-toggle="dropdown" href="javascript:void(0);" role="button" aria-haspopup="true" aria-expanded="false" style="text-transform: none !important; letter-spacing: normal !important;">
+                <i class="fas fa-handshake iconEffect"></i>Partners Portal <span class="caret"></span>
               </a>
               <div class="partner-menu-box">
                 <div class="partner-menu-header">
@@ -150,7 +157,7 @@ if(
                 </div>
                 <div class="partner-grid">
                   <div class="partner-login-card">
-                    <div class="partner-card-icon"><i class="fas fa-user-md"></i></div>
+                    <div class="partner-card-icon" style="color: #00A896; background: #CCFBF1;"><i class="fas fa-user-md"></i></div>
                     <div class="partner-card-text">
                       <h6>Doctor Portal</h6>
                       <div class="partner-card-actions">
@@ -160,7 +167,7 @@ if(
                     </div>
                   </div>
                   <div class="partner-login-card">
-                    <div class="partner-card-icon"><i class="fas fa-hospital"></i></div>
+                    <div class="partner-card-icon" style="color: #0284C7; background: #E0F2FE;"><i class="fas fa-hospital"></i></div>
                     <div class="partner-card-text">
                       <h6>Hospital Portal</h6>
                       <div class="partner-card-actions">
@@ -170,7 +177,7 @@ if(
                     </div>
                   </div>
                   <div class="partner-login-card">
-                    <div class="partner-card-icon"><i class="fas fa-flask"></i></div>
+                    <div class="partner-card-icon" style="color: #7C3AED; background: #EDE9FE;"><i class="fas fa-flask"></i></div>
                     <div class="partner-card-text">
                       <h6>Pathology Lab</h6>
                       <div class="partner-card-actions">
@@ -180,7 +187,7 @@ if(
                     </div>
                   </div>
                   <div class="partner-login-card">
-                    <div class="partner-card-icon"><i class="fas fa-pills"></i></div>
+                    <div class="partner-card-icon" style="color: #10B981; background: #D1FAE5;"><i class="fas fa-pills"></i></div>
                     <div class="partner-card-text">
                       <h6>Pharmacy Store</h6>
                       <div class="partner-card-actions">
@@ -197,7 +204,7 @@ if(
               <a href="https://upchar.info/" target="_blank"><i class="fas fa-newspaper iconEffect"></i> Blog</a>
             </li>
             <li>
-              <a href="<?=base_url('login');?>" class="nav-login-btn"><span class="glyphicon glyphicon-log-in iconEffect"></span> Patient Login</a>
+              <a href="<?=base_url('login');?>" class="nav-login-btn"><i class="fas fa-sign-in-alt iconEffect"></i> Patient Login</a>
             </li>
             <?php else: ?>
             <!-- Authenticated User Navigation: Clean & Focused on Patient Services -->

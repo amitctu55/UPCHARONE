@@ -250,30 +250,81 @@ class Api_medicines extends CI_Controller {
 
     /**
      * Create Order Endpoint (for Checkout & Patient Modal)
-     * POST /api/v1/medicines/create-order
+     * POST /api/v1/medicines/create-order or /api/order
      */
     public function create_order() {
-        $input = json_decode($this->input->raw_input_stream, true) ?: $this->input->post();
+        header('Access-Control-Allow-Origin: *');
+        header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
+        header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With');
+        if (strtoupper($this->input->method()) === 'OPTIONS') {
+            return $this->output->set_status_header(200)->_display();
+        }
 
-        if (empty($input['pharmacy_id'])) {
+        $rawBody = $this->input->raw_input_stream;
+        $input = json_decode($rawBody, true);
+        if (empty($input) || !is_array($input)) {
+            $input = $this->input->post();
+        }
+        if (empty($input) || !is_array($input)) {
+            $input = [];
+        }
+
+        // Support stringified JSON items if submitted via multipart/form-data
+        if (!empty($input['items']) && is_string($input['items'])) {
+            $decodedItems = json_decode($input['items'], true);
+            if (is_array($decodedItems)) {
+                $input['items'] = $decodedItems;
+            }
+        }
+
+        // Support direct root-level medicine_id parameter (1-click order from card)
+        if (empty($input['items']) && !empty($input['medicine_id'])) {
+            $qty = !empty($input['quantity']) ? max(1, (int)$input['quantity']) : 1;
+            $unitPrice = !empty($input['unit_price']) ? (float)$input['unit_price'] : (!empty($input['price']) ? (float)$input['price'] : 30.00);
+            $unitMrp = !empty($input['unit_mrp']) ? (float)$input['unit_mrp'] : ($unitPrice * 1.15);
+            $totalPrice = !empty($input['total_price']) ? (float)$input['total_price'] : ($unitPrice * $qty);
+
+            $input['items'] = [
+                [
+                    'medicine_id' => (int)$input['medicine_id'],
+                    'quantity'    => $qty,
+                    'unit_mrp'    => $unitMrp,
+                    'unit_price'  => $unitPrice,
+                    'total_price' => $totalPrice
+                ]
+            ];
+
+            if (empty($input['item_total'])) {
+                $input['item_total'] = $totalPrice;
+            }
+            if (empty($input['total_amount'])) {
+                $input['total_amount'] = $totalPrice + (float)($input['delivery_fee'] ?? 40.00);
+            }
+        }
+
+        if (empty($input['pharmacy_id']) || (int)$input['pharmacy_id'] <= 0) {
             return $this->_json_response(['status' => 'error', 'message' => 'Pharmacy ID is required.'], 400);
         }
         if (empty($input['items']) || !is_array($input['items'])) {
             return $this->_json_response(['status' => 'error', 'message' => 'At least one medicine item is required.'], 400);
         }
 
-        $userId = $this->session->userdata('userid') ?: 1;
+        $userId = $this->session->userdata('userid') ?: $this->session->userdata('USERID') ?: 1;
+        $custName = !empty($input['customer_name']) ? trim($input['customer_name']) : ($this->session->userdata('username') ?: 'Patient');
+        $custPhone = !empty($input['customer_phone']) ? trim($input['customer_phone']) : ($this->session->userdata('mobile') ?: '9839112233');
+        $custAddress = !empty($input['delivery_address']) ? trim($input['delivery_address']) : 'Sigra, Varanasi, Uttar Pradesh';
+
         $orderData = [
-            'user_id' => $userId,
+            'user_id' => (int)$userId,
             'pharmacy_id' => (int)$input['pharmacy_id'],
             'prescription_id' => !empty($input['prescription_id']) ? (int)$input['prescription_id'] : null,
             'item_total' => (float)($input['item_total'] ?? 0),
             'delivery_fee' => (float)($input['delivery_fee'] ?? 40.00),
             'total_amount' => (float)($input['total_amount'] ?? 0),
             'payment_mode' => $input['payment_mode'] ?? 'COD',
-            'customer_name' => $input['customer_name'] ?? 'Patient',
-            'customer_phone' => $input['customer_phone'] ?? '9876543210',
-            'delivery_address' => $input['delivery_address'] ?? 'Varanasi',
+            'customer_name' => $custName,
+            'customer_phone' => $custPhone,
+            'delivery_address' => $custAddress,
             'delivery_lat' => !empty($input['delivery_lat']) ? (float)$input['delivery_lat'] : 25.3176,
             'delivery_lng' => !empty($input['delivery_lng']) ? (float)$input['delivery_lng'] : 82.9739
         ];

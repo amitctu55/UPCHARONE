@@ -26,13 +26,16 @@ $userlogin=$this->Userlogin_Model->c_count();
 				<div class="col-lg-2 col-md-2 col-sm-6 footer-col">
 					<h4 class="footer-title">Quick Links</h4>
 					<ul class="footer-links-list">
-						<li><a href="<?=base_url();?>"><i class="fas fa-chevron-right"></i> Home</a></li>
-						<li><a href="<?=base_url('doctors');?>"><i class="fas fa-chevron-right"></i> Find Doctors</a></li>
-						<li><a href="<?=base_url('hospitals');?>"><i class="fas fa-chevron-right"></i> Hospitals & Clinics</a></li>
-						<li><a href="<?=base_url('doctors');?>"><i class="fas fa-chevron-right"></i> Video Consult</a></li>
-						<li><a href="<?=base_url('aboutus');?>"><i class="fas fa-chevron-right"></i> About Us</a></li>
-						<li><a href="<?=base_url('Home/services');?>"><i class="fas fa-chevron-right"></i> Our Services</a></li>
-						<li><a href="https://upchar.info/" target="_blank"><i class="fas fa-chevron-right"></i> Health Blog</a></li>
+						<li><a href="<?=base_url();?>"><i class="fas fa-home" style="color: #00A896; width: 18px;"></i> Home</a></li>
+						<li><a href="<?=base_url('doctors');?>"><i class="fas fa-user-md" style="color: #00A8FF; width: 18px;"></i> Find Doctors</a></li>
+						<li><a href="<?=base_url('hospitals');?>"><i class="fas fa-hospital" style="color: #0284C7; width: 18px;"></i> Hospitals & Clinics</a></li>
+						<li><a href="<?=base_url('medical');?>"><i class="fas fa-pills" style="color: #10B981; width: 18px;"></i> Local Pharmacies</a></li>
+						<li><a href="<?=base_url('mytest');?>"><i class="fas fa-flask" style="color: #8B5CF6; width: 18px;"></i> Diagnostic Labs</a></li>
+						<li><a href="tel:108"><i class="fas fa-ambulance" style="color: #E63946; width: 18px;"></i> 24/7 Ambulance (108)</a></li>
+						<li><a href="<?=base_url('doctors');?>"><i class="fas fa-video" style="color: #38BDF8; width: 18px;"></i> Video Consult</a></li>
+						<li><a href="<?=base_url('aboutus');?>"><i class="fas fa-info-circle" style="color: #94A3B8; width: 18px;"></i> About Us</a></li>
+						<li><a href="<?=base_url('Home/services');?>"><i class="fas fa-stethoscope" style="color: #00A896; width: 18px;"></i> Our Services</a></li>
+						<li><a href="https://upchar.info/" target="_blank"><i class="fas fa-newspaper" style="color: #F59E0B; width: 18px;"></i> Health Blog</a></li>
 					</ul>
 				</div>
 
@@ -40,13 +43,16 @@ $userlogin=$this->Userlogin_Model->c_count();
 				<div class="col-lg-3 col-md-3 col-sm-6 footer-col">
 					<h4 class="footer-title">Legal & Trust</h4>
 					<ul class="footer-links-list">
-						<li><a href="<?=base_url('privacy');?>"><i class="fas fa-chevron-right"></i> Privacy Policy</a></li>
-						<li><a href="<?=base_url('tnc');?>"><i class="fas fa-chevron-right"></i> Terms & Conditions</a></li>
-						<li><a href="<?=base_url('refund_cancellation');?>"><i class="fas fa-chevron-right"></i> Refund Policy</a></li>
-						<li><a href="<?=base_url('doctor-signup');?>"><i class="fas fa-chevron-right"></i> Doctor Onboarding</a></li>
-						<li><a href="<?=base_url('hospital-signup');?>"><i class="fas fa-chevron-right"></i> Hospital Registration</a></li>
-						<li><a href="<?=base_url('Home/career');?>"><i class="fas fa-chevron-right"></i> Careers & Jobs</a></li>
-						<li><a href="<?=base_url('Upchar_Patient.apk');?>"><i class="fas fa-download"></i> Download App</a></li>
+						<li><a href="<?=base_url('doctor-signup');?>"><i class="fas fa-user-plus" style="color: #00A896; width: 18px;"></i> Doctor Onboarding</a></li>
+						<li><a href="<?=base_url('hospital-signup');?>"><i class="fas fa-clinic-medical" style="color: #0284C7; width: 18px;"></i> Hospital Registration</a></li>
+						<li><a href="<?=base_url('medical-signup');?>"><i class="fas fa-store-alt" style="color: #10B981; width: 18px;"></i> Chemist Onboarding</a></li>
+						<li><a href="<?=base_url('medical-login');?>"><i class="fas fa-capsules" style="color: #10B981; width: 18px;"></i> Pharmacy Portal</a></li>
+						<li><a href="<?=base_url('pathlab-signup');?>"><i class="fas fa-microscope" style="color: #8B5CF6; width: 18px;"></i> Pathology Partner</a></li>
+						<li><a href="<?=base_url('privacy');?>"><i class="fas fa-shield-alt" style="color: #64748B; width: 18px;"></i> Privacy Policy</a></li>
+						<li><a href="<?=base_url('tnc');?>"><i class="fas fa-file-contract" style="color: #64748B; width: 18px;"></i> Terms & Conditions</a></li>
+						<li><a href="<?=base_url('refund_cancellation');?>"><i class="fas fa-undo-alt" style="color: #64748B; width: 18px;"></i> Refund Policy</a></li>
+						<li><a href="<?=base_url('Home/career');?>"><i class="fas fa-briefcase" style="color: #64748B; width: 18px;"></i> Careers & Jobs</a></li>
+						<li><a href="<?=base_url('Upchar_Patient.apk');?>"><i class="fas fa-mobile-alt" style="color: #00A896; width: 18px;"></i> Download App</a></li>
 					</ul>
 				</div>
 

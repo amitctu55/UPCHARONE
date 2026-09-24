@@ -1567,14 +1567,20 @@ $is_meds_page = in_array($current_page, ['medicines', 'medical', 'medicine', 'ph
     <div class="user-pharmacy-search-box">
       <div class="search-category-tabs">
         <button type="button" class="tab-btn <?= (!$is_meds_page) ? 'active' : ''; ?>" id="tabFindDoctors" onclick="switchSearchTab('doctors')">
-          <i class="fa fa-user-md"></i> Find Doctors
+          <i class="fas fa-user-md" style="color: #00A896;"></i> Find Doctors
+        </button>
+        <button type="button" class="tab-btn" onclick="window.location.href='<?=base_url('hospitals');?>'">
+          <i class="fas fa-hospital" style="color: #0284C7;"></i> Hospitals &amp; Clinics
         </button>
         <button type="button" class="tab-btn <?= ($is_meds_page) ? 'active' : 'highlight-tab'; ?>" id="tabOrderMeds" onclick="switchSearchTab('medicines')">
-          <i class="fa fa-pills"></i> Order Medicines (Doorstep Delivery)
+          <i class="fas fa-pills" style="color: #10B981;"></i> Order Medicines
         </button>
-        <button type="button" class="tab-btn" onclick="alert('24/7 UPCHAR Emergency Ambulance Helpline: 108 or +91 8448440603');">
-          <i class="fa fa-ambulance"></i> Ambulance
+        <button type="button" class="tab-btn" onclick="window.location.href='<?=base_url('mytest');?>'">
+          <i class="fas fa-flask" style="color: #7C3AED;"></i> Pathology Labs
         </button>
+        <a href="tel:108" class="tab-btn" style="color: #E63946 !important; text-decoration: none; display: inline-flex; align-items: center;">
+          <i class="fas fa-ambulance" style="color: #E63946;"></i> 24/7 Ambulance (108)
+        </a>
       </div>
 
       <!-- TAB 1: DOCTOR SEARCH PANEL (DEFAULT ON /doctors) -->

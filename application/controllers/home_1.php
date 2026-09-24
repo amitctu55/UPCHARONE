@@ -28,7 +28,7 @@ class Home extends CI_Controller {
 	public function index()
 	{
 		$data['specialization']=$this->db->order_by('name','asc')->where('status','1')->get('master_specialization')->result();
-		$this->load->view('home',$data);
+		$this->load->view('home1',$data);
 	}
 	
 	public function login()

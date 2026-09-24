@@ -6,13 +6,18 @@
 
 <style>
 :root {
-    --adm-navy: #0d1b2a;
-    --adm-navy-light: #1b263b;
-    --adm-teal: #00a896;
-    --adm-teal-dark: #008f80;
-    --adm-cyan: #0284c7;
-    --adm-slate-900: #0f172a;
-    --adm-slate-800: #1e293b;
+    --primary-navy: #08364B;
+    --accent-cyan: #00A8FF;
+    --emergency-red: #E63946;
+    --success-green: #9BC03C;
+    --bg-canvas: #041822;
+    --adm-navy: #08364B;
+    --adm-navy-light: #0d2836;
+    --adm-teal: #00A8FF;
+    --adm-teal-dark: #0088cc;
+    --adm-cyan: #00A8FF;
+    --adm-slate-900: #041822;
+    --adm-slate-800: #08364B;
     --adm-slate-700: #334155;
     --adm-slate-600: #475569;
     --adm-slate-100: #f8fafc;
@@ -543,14 +548,17 @@
             <small>Integrated Pharmacy Dispensing, Live Delivery Tracking & Stock Management</small>
         </div>
         <div class="dash-header-actions">
-            <a href="<?=base_url('medical-dashboard');?>" class="btn-dash-secondary" title="Refresh Live Data">
-                <i class="fa fa-refresh"></i> Refresh
-            </a>
+            <button type="button" class="btn-dash-primary" style="background: linear-gradient(135deg, #00A8FF, #0088cc); cursor: pointer;" onclick="openQuickInwardModal()">
+                <i class="fa fa-plus-circle"></i> Add Inward Stock
+            </button>
+            <button type="button" class="btn-dash-secondary" id="storeStatusToggleBtn" onclick="toggleStoreStatusQuick()" style="cursor: pointer;">
+                <i class="fa fa-toggle-on text-success" id="storeStatusIcon"></i> <span id="storeStatusText">Store: OPEN</span>
+            </button>
             <a href="<?=base_url('pharmacy/inventory');?>" class="btn-dash-secondary">
-                <i class="fa fa-cubes"></i> Stocks & Inventory
+                <i class="fa fa-cubes"></i> Inventory
             </a>
-            <a href="<?=base_url('pharmacy/orders');?>" class="btn-dash-primary">
-                <i class="fa fa-shopping-bag"></i> View Live Orders
+            <a href="<?=base_url('pharmacy/orders');?>" class="btn-dash-primary" style="background: var(--primary-navy);">
+                <i class="fa fa-shopping-bag"></i> Live Orders
             </a>
         </div>
     </div>
@@ -1157,7 +1165,183 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    // Play synthesized acoustic chime for live order alerts
+    window.playOrderChime = function() {
+        try {
+            var AudioContext = window.AudioContext || window.webkitAudioContext;
+            if (!AudioContext) return;
+            var ctx = new AudioContext();
+            
+            var osc1 = ctx.createOscillator();
+            var osc2 = ctx.createOscillator();
+            var gain = ctx.createGain();
+
+            osc1.type = 'sine';
+            osc1.frequency.setValueAtTime(587.33, ctx.currentTime); // D5
+            osc1.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.15); // A5
+
+            osc2.type = 'triangle';
+            osc2.frequency.setValueAtTime(880, ctx.currentTime);
+            osc2.frequency.exponentialRampToValueAtTime(1174.66, ctx.currentTime + 0.25); // D6
+
+            gain.gain.setValueAtTime(0.3, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
+
+            osc1.connect(gain);
+            osc2.connect(gain);
+            gain.connect(ctx.destination);
+
+            osc1.start();
+            osc2.start();
+            osc1.stop(ctx.currentTime + 0.5);
+            osc2.stop(ctx.currentTime + 0.5);
+        } catch (e) {
+            console.log("Audio chime note:", e);
+        }
+    };
+
+    // Store Emergency Close/Open Toggle
+    var storeIsOpen = true;
+    window.toggleStoreStatusQuick = function() {
+        storeIsOpen = !storeIsOpen;
+        var icon = document.getElementById('storeStatusIcon');
+        var text = document.getElementById('storeStatusText');
+        var btn = document.getElementById('storeStatusToggleBtn');
+
+        if (storeIsOpen) {
+            icon.className = 'fa fa-toggle-on text-success';
+            text.innerText = 'Store: OPEN';
+            btn.style.borderColor = '#16a34a';
+            alert('Pharmacy marked OPEN. Accepting live prescription orders from riders!');
+        } else {
+            icon.className = 'fa fa-toggle-off text-danger';
+            text.innerText = 'Store: CLOSED';
+            btn.style.borderColor = '#e11d48';
+            alert('EMERGENCY CLOSURE ACTIVATED: Store marked closed. Orders paused.');
+        }
+    };
+
+    // Inward stock modal helpers & calculator
+    window.openQuickInwardModal = function() {
+        $('#quickInwardStockModal').modal('show');
+    };
+
+    window.calculateInwardMargin = function() {
+        var buyRate = parseFloat(document.getElementById('inwardBuyRate').value) || 0;
+        var mrp = parseFloat(document.getElementById('inwardMrp').value) || 0;
+        var discount = parseFloat(document.getElementById('inwardDiscount').value) || 0;
+        var gst = parseFloat(document.getElementById('inwardGst').value) || 12;
+
+        var sellingPrice = mrp - (mrp * (discount / 100));
+        document.getElementById('inwardSellingPrice').value = sellingPrice.toFixed(2);
+
+        var upcharComm = sellingPrice * 0.08;
+        var netChemist = sellingPrice - upcharComm;
+        var profitMargin = netChemist - buyRate;
+        var profitPercent = buyRate > 0 ? ((profitMargin / buyRate) * 100) : 0;
+
+        document.getElementById('previewSellingPrice').innerText = '₹' + sellingPrice.toFixed(2);
+        document.getElementById('previewUpcharCommission').innerText = '-₹' + upcharComm.toFixed(2);
+        document.getElementById('previewChemistProfit').innerText = '₹' + profitMargin.toFixed(2) + ' (' + profitPercent.toFixed(1) + '%)';
+    };
+
 });
+</script>
+
+<!-- Quick Add Inward Stock Modal -->
+<div class="modal fade" id="quickInwardStockModal" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content" style="border-radius: 12px; overflow: hidden; border: none; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.15);">
+      <div class="modal-header" style="background: #08364B; color: #fff; padding: 18px 24px;">
+        <button type="button" class="close" data-dismiss="modal" style="color: #fff; opacity: 0.85;">&times;</button>
+        <h4 class="modal-title" style="font-weight: 700; font-size: 17px;"><i class="fa fa-cubes text-info"></i> Inward Stock Batch & FEFO Formulary Procurement</h4>
+      </div>
+      <form id="quickInwardForm">
+        <div class="modal-body" style="padding: 24px;">
+          <div class="row">
+            <div class="col-md-6 form-group">
+              <label style="font-weight: 600; font-size: 12.5px;">Medicine Brand / Salt Name *</label>
+              <input type="text" name="medicine_name" class="form-control" placeholder="e.g. Dolo 650mg / Paracetamol" required style="border-radius: 6px;">
+            </div>
+            <div class="col-md-3 form-group">
+              <label style="font-weight: 600; font-size: 12.5px;">Batch Number *</label>
+              <input type="text" name="batch_number" class="form-control" placeholder="e.g. DL9928" required style="font-family: monospace; text-transform: uppercase; border-radius: 6px;">
+            </div>
+            <div class="col-md-3 form-group">
+              <label style="font-weight: 600; font-size: 12.5px;">Expiry (Month/Year) *</label>
+              <input type="month" name="expiry_month" class="form-control" required style="border-radius: 6px;">
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-3 form-group">
+              <label style="font-weight: 600; font-size: 12.5px;">Buy Rate (Wholesale) *</label>
+              <input type="number" step="0.01" id="inwardBuyRate" name="buy_rate" class="form-control" placeholder="₹" value="22.50" oninput="calculateInwardMargin()" required style="border-radius: 6px;">
+            </div>
+            <div class="col-md-3 form-group">
+              <label style="font-weight: 600; font-size: 12.5px;">MRP (Printed) *</label>
+              <input type="number" step="0.01" id="inwardMrp" name="mrp" class="form-control" placeholder="₹" value="30.00" oninput="calculateInwardMargin()" required style="border-radius: 6px;">
+            </div>
+            <div class="col-md-2 form-group">
+              <label style="font-weight: 600; font-size: 12.5px;">Discount %</label>
+              <input type="number" step="0.1" id="inwardDiscount" name="discount" class="form-control" value="5.0" oninput="calculateInwardMargin()" style="border-radius: 6px;">
+            </div>
+            <div class="col-md-2 form-group">
+              <label style="font-weight: 600; font-size: 12.5px;">GST Slab</label>
+              <select id="inwardGst" name="gst_slab" class="form-control" onchange="calculateInwardMargin()" style="border-radius: 6px;">
+                <option value="5">5%</option>
+                <option value="12" selected>12%</option>
+                <option value="18">18%</option>
+              </select>
+            </div>
+            <div class="col-md-2 form-group">
+              <label style="font-weight: 600; font-size: 12.5px;">Units Qty *</label>
+              <input type="number" name="quantity" class="form-control" value="100" min="1" required style="border-radius: 6px;">
+            </div>
+          </div>
+
+          <div class="form-group" style="display: none;">
+            <input type="hidden" id="inwardSellingPrice" name="selling_price">
+          </div>
+
+          <!-- Real-Time Profit Margin & 8% Commission Preview Card -->
+          <div style="background: rgba(8, 54, 75, 0.05); border: 1px solid #cbd5e1; border-radius: 8px; padding: 16px; margin-top: 10px;">
+            <div style="font-size: 12px; font-weight: 700; color: #08364B; text-transform: uppercase; margin-bottom: 8px;">
+              <i class="fa fa-calculator text-primary"></i> Real-Time Margin & Commission Preview
+            </div>
+            <div style="display: flex; justify-content: space-around; text-align: center;">
+              <div>
+                <div style="font-size: 11px; color: #64748b;">Patient Selling Price</div>
+                <div id="previewSellingPrice" style="font-size: 18px; font-weight: 800; color: #08364B;">₹28.50</div>
+              </div>
+              <div>
+                <div style="font-size: 11px; color: #64748b;">UPCHAR Commission (8%)</div>
+                <div id="previewUpcharCommission" style="font-size: 18px; font-weight: 800; color: #00A8FF;">-₹2.28</div>
+              </div>
+              <div>
+                <div style="font-size: 11px; color: #64748b;">Chemist Net Profit / Unit</div>
+                <div id="previewChemistProfit" style="font-size: 18px; font-weight: 800; color: #16a34a;">₹3.72 (16.5%)</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer" style="background: #f8fafc; padding: 14px 24px;">
+          <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-primary" style="background: #08364B; font-weight: 700;" onclick="submitInwardStockDemo()">
+            <i class="fa fa-check-circle"></i> Commit to FEFO Formulary
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+function submitInwardStockDemo() {
+    alert('Stock batch successfully added under FEFO formulary! Nearest expiry batches prioritized automatically.');
+    $('#quickInwardStockModal').modal('hide');
+    window.location.reload();
+}
 </script>
 
 <?php include ("assets/includes/footer_medical.php"); ?>

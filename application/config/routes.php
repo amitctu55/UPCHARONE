@@ -349,14 +349,22 @@ $route['medicalpanel/(:any)/(:any)']        = 'medicalpanel/$1/$2';
 // =========================================================================
 // API routes
 $route['api/v1/medicines/compare']                = 'api_medicines/compare';
+$route['api/medicines/compare']                   = 'api_medicines/compare';
+$route['api/compare']                             = 'api_medicines/compare';
 $route['api/v1/prescriptions/upload']             = 'api_medicines/upload_prescription';
 $route['api/v1/pharmacy/orders/(:any)/verify-rx'] = 'api_medicines/verify_prescription/$1';
 $route['api/v1/medicines/create-order']           = 'api_medicines/create_order';
+$route['api/medicines/create-order']              = 'api_medicines/create_order';
+$route['api/v1/medicines/order']                  = 'api_medicines/create_order';
+$route['api/v1/order']                            = 'api_medicines/create_order';
+$route['api/order']                               = 'api_medicines/create_order';
+$route['api/v1/medicines/track/(:any)']           = 'api_medicines/track_order/$1';
 
 // Phase 1 Clean URI Routes
 $route['pharmacy/dashboard']                      = 'pharmacy/dashboard';
 $route['pharmacy/profile/edit']                   = 'pharmacy/profile_edit';
 $route['pharmacy/profile/update']                 = 'pharmacy/profile_update';
+$route['pharmacy/get_hospital_doctors']           = 'pharmacy/get_hospital_doctors';
 $route['pharmacy/profile/verification']           = 'pharmacy/profile_verification';
 $route['pharmacy/profile/onboarding']             = 'pharmacy/profile_onboarding';
 $route['pharmacy/doctors']                        = 'pharmacy/doctors';

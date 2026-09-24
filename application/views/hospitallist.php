@@ -126,9 +126,11 @@
                         </div>
 
                         <div class="doc-spec-tags">
-                            <span class="spec-pill"><i class="fas fa-ambulance"></i> 24/7 Emergency</span>
-                            <span class="spec-pill"><i class="fas fa-procedures"></i> Inpatient / ICU</span>
-                            <span class="spec-pill"><i class="fas fa-flask"></i> Diagnostic Pathology</span>
+                            <span class="spec-pill"><i class="fas fa-ambulance" style="color: #E63946;"></i> 24/7 Ambulance</span>
+                            <span class="spec-pill"><i class="fas fa-user-md" style="color: #00A896;"></i> Specialist Doctors</span>
+                            <span class="spec-pill"><i class="fas fa-pills" style="color: #10B981;"></i> 24/7 Pharmacy</span>
+                            <span class="spec-pill"><i class="fas fa-flask" style="color: #7C3AED;"></i> Pathology Labs</span>
+                            <span class="spec-pill"><i class="fas fa-procedures" style="color: #0284C7;"></i> Inpatient / ICU</span>
                         </div>
 
                         <div class="doc-meta-info">

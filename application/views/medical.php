@@ -491,8 +491,10 @@
                     <button type="button" onclick="openPrescriptionModal()" class="btn btn-sm btn-block" style="background: #10B981; color: #FFFFFF; font-weight: 700; border-radius: 6px; padding: 8px 12px;">
                         <i class="fas fa-upload"></i> Upload Rx Now
                     </button>
-                    <div style="margin-top: 12px; font-size: 11px; color: #94A3B8;">
-                        <i class="fas fa-phone-alt"></i> 24/7 Helpline: 8448440603
+                    <div style="margin-top: 12px; font-size: 11px; color: #94A3B8; display: flex; justify-content: center; gap: 10px; align-items: center;">
+                        <span><i class="fas fa-phone-alt"></i> 8448440603</span>
+                        <span>&bull;</span>
+                        <a href="tel:108" style="color: #F87171; text-decoration: none; font-weight: 700;"><i class="fas fa-ambulance"></i> 108 SOS</a>
                     </div>
                 </div>
             </div>
@@ -642,9 +644,15 @@
                                 <i class="fas fa-phone-alt"></i> Call Store
                             </a>
                             <button type="button" 
-                                    class="btn btn-sm" 
-                                    style="background: #00A8FF; color: #FFFFFF; font-weight: 700; border-radius: 6px; padding: 6px 16px;"
-                                    onclick="initiateDoorstepOrder(<?=$med->inventory_id;?>, '<?=addslashes(html_escape($med->brand_name));?>', '<?=addslashes(html_escape($med->store_name));?>', <?=$med->selling_price;?>)">
+                                    class="btn btn-sm btn-order-doorstep" 
+                                    style="background: #9BC03C; color: #FFFFFF; font-weight: 700; border-radius: 6px; padding: 6px 16px; box-shadow: 0 2px 6px rgba(155, 192, 60, 0.4);"
+                                    data-pharmacy-id="<?=$med->pharmacy_id ?? 1;?>"
+                                    data-medicine-id="<?=$med->medicine_id ?? 1;?>"
+                                    data-price="<?=$med->selling_price;?>"
+                                    data-brand-name="<?=html_escape($med->brand_name);?>"
+                                    data-store-name="<?=html_escape($med->store_name);?>"
+                                    data-eta="<?=html_escape($med->delivery_radius_km > 0 ? 'Within ' . $med->delivery_radius_km . ' km' : '20 - 30 mins');?>"
+                                    onclick="initiateDoorstepOrder(<?=$med->pharmacy_id ?? 1;?>, <?=$med->medicine_id ?? 1;?>, <?=$med->selling_price;?>, '<?=addslashes(html_escape($med->brand_name));?>', '<?=addslashes(html_escape($med->store_name));?>', '<?=addslashes(html_escape($med->delivery_radius_km > 0 ? 'Within ' . $med->delivery_radius_km . ' km' : '20 - 30 mins'));?>')">
                                 <i class="fas fa-shopping-bag"></i> Order Doorstep
                             </button>
                         </div>

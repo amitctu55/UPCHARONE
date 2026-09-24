@@ -231,9 +231,35 @@ class Pharmacy extends CI_Controller {
         // If chemist logged in, also check linked profile_chem
         $chemProfile = $this->profile_chem ?: [];
 
-        // Hospitals & Doctors for affiliation tagging
+        // Hospitals for affiliation tagging
         $hospitals = $this->db->select('id, name, city')->order_by('name', 'ASC')->get('hospital')->result_array();
-        $doctors = $this->db->select('id, fname, lname')->order_by('fname', 'ASC')->get('profile_dr')->result_array();
+        
+        // Doctors list: filtered by current hospital affiliation if set
+        $selectedHospitalId = !empty($store['hospital_id']) ? (int)$store['hospital_id'] : null;
+        if ($selectedHospitalId) {
+            $doctors = $this->db->select('profile_dr.id, profile_dr.fname, profile_dr.lname, profile_dr.degree')
+                ->distinct()
+                ->join('dr_practice', 'dr_practice.user_id = profile_dr.id')
+                ->where('dr_practice.institution_id', $selectedHospitalId)
+                ->where('dr_practice.type', 'H')
+                ->order_by('profile_dr.fname', 'ASC')
+                ->get('profile_dr')->result_array();
+
+            // Retain currently selected doctor even if not in the default list
+            if (!empty($store['associated_doctor_id'])) {
+                $docIds = array_column($doctors, 'id');
+                if (!in_array((int)$store['associated_doctor_id'], $docIds)) {
+                    $selectedDoc = $this->db->select('id, fname, lname, degree')->where('id', (int)$store['associated_doctor_id'])->get('profile_dr')->row_array();
+                    if ($selectedDoc) {
+                        array_unshift($doctors, $selectedDoc);
+                    }
+                }
+            }
+        } else {
+            $doctors = $this->db->select('id, fname, lname, degree')->order_by('fname', 'ASC')->limit(150)->get('profile_dr')->result_array();
+        }
+
+        $activeTab = $this->input->get('tab') ?: 'identity';
 
         $data = [
             'stores' => $storeData['stores'],
@@ -241,6 +267,7 @@ class Pharmacy extends CI_Controller {
             'chem_profile' => $chemProfile,
             'hospitals' => $hospitals,
             'doctors' => $doctors,
+            'active_tab' => $activeTab,
             'flashmsg' => $this->session->flashdata('flashmsg'),
             'content_view' => 'pharmacy/profile_edit'
         ];
@@ -249,44 +276,87 @@ class Pharmacy extends CI_Controller {
     }
 
     /**
+     * GET /pharmacy/get_hospital_doctors
+     * Returns JSON list of doctors affiliated with a hospital, with keyword search support
+     */
+    public function get_hospital_doctors() {
+        $hospitalId = (int)$this->input->get('hospital_id');
+        $query = trim($this->input->get('q') ?: '');
+
+        $this->db->select('profile_dr.id, profile_dr.fname, profile_dr.lname, profile_dr.degree, profile_dr.city')
+                 ->distinct();
+
+        if ($hospitalId > 0) {
+            $this->db->join('dr_practice', 'dr_practice.user_id = profile_dr.id');
+            $this->db->where('dr_practice.institution_id', $hospitalId);
+            $this->db->where('dr_practice.type', 'H');
+        }
+
+        if (!empty($query)) {
+            $this->db->group_start()
+                     ->like('profile_dr.fname', $query)
+                     ->or_like('profile_dr.lname', $query)
+                     ->or_like('profile_dr.degree', $query)
+                     ->group_end();
+        }
+
+        $this->db->order_by('profile_dr.fname', 'ASC');
+
+        if ($hospitalId > 0 && empty($query)) {
+            $this->db->limit(300);
+        } else {
+            $this->db->limit(100);
+        }
+
+        $doctors = $this->db->get('profile_dr')->result_array();
+
+        $results = [];
+        foreach ($doctors as $doc) {
+            $name = 'Dr. ' . trim($doc['fname'] . ' ' . $doc['lname']);
+            $deg = !empty($doc['degree']) && $doc['degree'] !== '0' ? ' (' . $doc['degree'] . ')' : '';
+            $results[] = [
+                'id' => (int)$doc['id'],
+                'name' => $name,
+                'degree' => $deg,
+                'full_label' => $name . $deg
+            ];
+        }
+
+        return $this->_json_response([
+            'status' => true,
+            'hospital_id' => $hospitalId,
+            'count' => count($results),
+            'doctors' => $results
+        ]);
+    }
+
+    /**
      * POST /pharmacy/profile/update
-     * Handle store profile and KYC compliance updates
+     * Handle store profile and KYC compliance updates with section-based partial saves & AJAX support
      */
     public function profile_update() {
+        if ($this->input->method(TRUE) !== 'POST') {
+            redirect('pharmacy/profile/edit');
+            return;
+        }
+
         $storeId = (int)$this->input->post('store_id');
+        $section = trim($this->input->post('section') ?: 'all');
+        $isAjax  = $this->input->is_ajax_request() 
+                   || (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest')
+                   || (isset($_SERVER['HTTP_ACCEPT']) && strpos($_SERVER['HTTP_ACCEPT'], 'application/json') !== false);
+
         if (!$storeId) {
+            if ($isAjax) {
+                echo json_encode(['status' => false, 'message' => 'Invalid Store ID.']);
+                return;
+            }
             $this->session->set_flashdata('flashmsg', '<div class="alert alert-danger">Invalid Store ID.</div>');
             redirect('pharmacy/profile/edit');
             return;
         }
 
-        $updateData = [
-            'store_name'            => trim($this->input->post('store_name')),
-            'pharmacist_name'       => trim($this->input->post('pharmacist_name')),
-            'drug_license_no'       => trim($this->input->post('drug_license_no')),
-            'gstin'                 => trim($this->input->post('gstin')),
-            'phone'                 => trim($this->input->post('phone')),
-            'email'                 => trim($this->input->post('email')),
-            'address'               => trim($this->input->post('address')),
-            'city'                  => trim($this->input->post('city')),
-            'pincode'               => trim($this->input->post('pincode')),
-            'operating_hours'       => trim($this->input->post('operating_hours')),
-            'delivery_radius_km'    => (float)$this->input->post('delivery_radius_km') ?: 5.0,
-            'max_queue_limit'       => (int)$this->input->post('max_queue_limit') ?: 25,
-            'is_emergency_closed'   => $this->input->post('is_emergency_closed') ? 1 : 0,
-            'hospital_id'           => (int)$this->input->post('hospital_id') ?: null,
-            'associated_doctor_id'  => (int)$this->input->post('associated_doctor_id') ?: null,
-            'updated_at'            => date('Y-m-d H:i:s')
-        ];
-
-        if ($this->input->post('latitude') !== '') {
-            $updateData['latitude'] = (float)$this->input->post('latitude');
-        }
-        if ($this->input->post('longitude') !== '') {
-            $updateData['longitude'] = (float)$this->input->post('longitude');
-        }
-
-        // File uploads
+        // Setup upload config if files might be uploaded
         if (!is_dir('./uploads/pharmacy/')) {
             @mkdir('./uploads/pharmacy/', 0777, true);
         }
@@ -299,42 +369,166 @@ class Pharmacy extends CI_Controller {
         ];
         $this->load->library('upload', $uploadConfig);
 
-        if (!empty($_FILES['store_photo']['name'])) {
-            if ($this->upload->do_upload('store_photo')) {
-                $uploadRes = $this->upload->data();
-                $updateData['store_photo'] = 'uploads/pharmacy/' . $uploadRes['file_name'];
-            }
-        }
+        $updateData = ['updated_at' => date('Y-m-d H:i:s')];
+        $sectionTitle = 'Pharmacy Profile';
 
-        if (!empty($_FILES['drug_license_file']['name'])) {
-            if ($this->upload->do_upload('drug_license_file')) {
-                $uploadRes = $this->upload->data();
-                $updateData['drug_license_file'] = 'uploads/pharmacy/' . $uploadRes['file_name'];
-            }
-        }
+        switch ($section) {
+            case 'identity':
+                $sectionTitle = 'Pharmacy Store & Pharmacist Identity';
+                $updateData['store_name']      = trim($this->input->post('store_name'));
+                $updateData['pharmacist_name'] = trim($this->input->post('pharmacist_name'));
+                $updateData['phone']           = trim($this->input->post('phone'));
+                $updateData['email']           = trim($this->input->post('email'));
 
-        if (!empty($_FILES['gst_certificate']['name'])) {
-            if ($this->upload->do_upload('gst_certificate')) {
-                $uploadRes = $this->upload->data();
-                $updateData['gst_certificate'] = 'uploads/pharmacy/' . $uploadRes['file_name'];
-            }
+                if (!empty($_FILES['store_photo']['name'])) {
+                    if ($this->upload->do_upload('store_photo')) {
+                        $uploadRes = $this->upload->data();
+                        $updateData['store_photo'] = 'uploads/pharmacy/' . $uploadRes['file_name'];
+                    }
+                }
+
+                // Sync profile_chem if linked
+                if ($this->chem_user_id && $this->profile_chem) {
+                    $this->db->where('user_id', $this->chem_user_id)->update('profile_chem', [
+                        'fname'  => $updateData['pharmacist_name'] ?: ($this->profile_chem['fname'] ?? ''),
+                        'mobile' => $updateData['phone'] ?: ($this->profile_chem['mobile'] ?? ''),
+                        'email'  => $updateData['email'] ?: ($this->profile_chem['email'] ?? '')
+                    ]);
+                }
+                break;
+
+            case 'compliance':
+                $sectionTitle = 'Drug License & Tax Compliance';
+                $dl20 = trim($this->input->post('dl_20'));
+                $dlMaster = trim($this->input->post('drug_license_no'));
+                $updateData['dl_20']           = $dl20 ?: $dlMaster;
+                $updateData['dl_21']           = trim($this->input->post('dl_21'));
+                $updateData['gstin']           = trim($this->input->post('gstin'));
+                $updateData['drug_license_no'] = $dlMaster ?: $dl20;
+
+                if (!empty($_FILES['drug_license_file']['name'])) {
+                    if ($this->upload->do_upload('drug_license_file')) {
+                        $uploadRes = $this->upload->data();
+                        $updateData['drug_license_file'] = 'uploads/pharmacy/' . $uploadRes['file_name'];
+                    }
+                }
+
+                if (!empty($_FILES['gst_certificate']['name'])) {
+                    if ($this->upload->do_upload('gst_certificate')) {
+                        $uploadRes = $this->upload->data();
+                        $updateData['gst_certificate'] = 'uploads/pharmacy/' . $uploadRes['file_name'];
+                    }
+                }
+                break;
+
+            case 'affiliation':
+                $sectionTitle = 'Hospital & Doctor Affiliation';
+                $updateData['hospital_id']          = (int)$this->input->post('hospital_id') ?: null;
+                $updateData['associated_doctor_id'] = (int)$this->input->post('associated_doctor_id') ?: null;
+                break;
+
+            case 'operations':
+                $sectionTitle = 'Operational Controls & Dispatch SLAs';
+                $updateData['operating_hours']     = trim($this->input->post('operating_hours'));
+                $updateData['delivery_radius_km']  = (float)$this->input->post('delivery_radius_km') ?: 5.0;
+                $updateData['max_queue_limit']     = (int)$this->input->post('max_queue_limit') ?: 25;
+                $updateData['is_emergency_closed'] = $this->input->post('is_emergency_closed') ? 1 : 0;
+                break;
+
+            case 'location':
+                $sectionTitle = 'Location & Dispatch Coordinates';
+                $updateData['address'] = trim($this->input->post('address'));
+                $updateData['city']    = trim($this->input->post('city'));
+                $updateData['pincode'] = trim($this->input->post('pincode'));
+                if ($this->input->post('latitude') !== '') {
+                    $updateData['latitude'] = (float)$this->input->post('latitude');
+                }
+                if ($this->input->post('longitude') !== '') {
+                    $updateData['longitude'] = (float)$this->input->post('longitude');
+                }
+
+                // Sync profile_chem address
+                if ($this->chem_user_id && $this->profile_chem) {
+                    $this->db->where('user_id', $this->chem_user_id)->update('profile_chem', [
+                        'city'   => $updateData['city'] ?: ($this->profile_chem['city'] ?? ''),
+                        'street' => $updateData['address'] ?: ($this->profile_chem['street'] ?? '')
+                    ]);
+                }
+                break;
+
+            default:
+                $sectionTitle = 'Complete Profile';
+                $updateData['store_name']          = trim($this->input->post('store_name'));
+                $updateData['pharmacist_name']     = trim($this->input->post('pharmacist_name'));
+                $updateData['drug_license_no']     = trim($this->input->post('drug_license_no'));
+                $updateData['dl_20']               = trim($this->input->post('dl_20') ?: $this->input->post('drug_license_no'));
+                $updateData['dl_21']               = trim($this->input->post('dl_21'));
+                $updateData['gstin']               = trim($this->input->post('gstin'));
+                $updateData['phone']               = trim($this->input->post('phone'));
+                $updateData['email']               = trim($this->input->post('email'));
+                $updateData['address']             = trim($this->input->post('address'));
+                $updateData['city']                = trim($this->input->post('city'));
+                $updateData['pincode']             = trim($this->input->post('pincode'));
+                $updateData['operating_hours']     = trim($this->input->post('operating_hours'));
+                $updateData['delivery_radius_km']  = (float)$this->input->post('delivery_radius_km') ?: 5.0;
+                $updateData['max_queue_limit']     = (int)$this->input->post('max_queue_limit') ?: 25;
+                $updateData['is_emergency_closed'] = $this->input->post('is_emergency_closed') ? 1 : 0;
+                $updateData['hospital_id']         = (int)$this->input->post('hospital_id') ?: null;
+                $updateData['associated_doctor_id'] = (int)$this->input->post('associated_doctor_id') ?: null;
+
+                if ($this->input->post('latitude') !== '') {
+                    $updateData['latitude'] = (float)$this->input->post('latitude');
+                }
+                if ($this->input->post('longitude') !== '') {
+                    $updateData['longitude'] = (float)$this->input->post('longitude');
+                }
+
+                if (!empty($_FILES['store_photo']['name']) && $this->upload->do_upload('store_photo')) {
+                    $uploadRes = $this->upload->data();
+                    $updateData['store_photo'] = 'uploads/pharmacy/' . $uploadRes['file_name'];
+                }
+                if (!empty($_FILES['drug_license_file']['name']) && $this->upload->do_upload('drug_license_file')) {
+                    $uploadRes = $this->upload->data();
+                    $updateData['drug_license_file'] = 'uploads/pharmacy/' . $uploadRes['file_name'];
+                }
+                if (!empty($_FILES['gst_certificate']['name']) && $this->upload->do_upload('gst_certificate')) {
+                    $uploadRes = $this->upload->data();
+                    $updateData['gst_certificate'] = 'uploads/pharmacy/' . $uploadRes['file_name'];
+                }
+
+                if ($this->chem_user_id && $this->profile_chem) {
+                    $this->db->where('user_id', $this->chem_user_id)->update('profile_chem', [
+                        'fname'  => $updateData['pharmacist_name'] ?: ($this->profile_chem['fname'] ?? ''),
+                        'mobile' => $updateData['phone'] ?: ($this->profile_chem['mobile'] ?? ''),
+                        'email'  => $updateData['email'] ?: ($this->profile_chem['email'] ?? ''),
+                        'city'   => $updateData['city'] ?: ($this->profile_chem['city'] ?? ''),
+                        'street' => $updateData['address'] ?: ($this->profile_chem['street'] ?? '')
+                    ]);
+                }
+                break;
         }
 
         $this->db->where('id', $storeId)->update('pharmacy_stores', $updateData);
 
-        // Also sync profile_chem if linked
-        if ($this->chem_user_id && $this->profile_chem) {
-            $this->db->where('user_id', $this->chem_user_id)->update('profile_chem', [
-                'fname' => $updateData['pharmacist_name'] ?: ($this->profile_chem['fname'] ?? ''),
-                'mobile' => $updateData['phone'] ?: ($this->profile_chem['mobile'] ?? ''),
-                'email' => $updateData['email'] ?: ($this->profile_chem['email'] ?? ''),
-                'city' => $updateData['city'] ?: ($this->profile_chem['city'] ?? ''),
-                'street' => $updateData['address'] ?: ($this->profile_chem['street'] ?? '')
+        $successMsg = $sectionTitle . ' saved successfully.';
+
+        if ($isAjax) {
+            echo json_encode([
+                'status' => true,
+                'message' => $successMsg,
+                'section' => $section,
+                'store_name' => $updateData['store_name'] ?? null,
+                'store_photo' => isset($updateData['store_photo']) ? base_url($updateData['store_photo']) : null,
+                'drug_license_file' => isset($updateData['drug_license_file']) ? base_url($updateData['drug_license_file']) : null,
+                'gst_certificate' => isset($updateData['gst_certificate']) ? base_url($updateData['gst_certificate']) : null,
+                'is_emergency_closed' => isset($updateData['is_emergency_closed']) ? $updateData['is_emergency_closed'] : null,
+                'dl_20' => $updateData['dl_20'] ?? null
             ]);
+            return;
         }
 
-        $this->session->set_flashdata('flashmsg', '<div class="alert alert-success" style="border-radius:8px;"><strong>Success!</strong> Pharmacy profile and compliance settings updated successfully.</div>');
-        redirect('pharmacy/profile/edit?store_id=' . $storeId);
+        $this->session->set_flashdata('flashmsg', '<div class="alert alert-success" style="border-radius:8px;"><strong>Success!</strong> ' . htmlspecialchars($successMsg) . '</div>');
+        redirect('pharmacy/profile/edit?store_id=' . $storeId . '&tab=' . $section);
     }
 
     public function profile_verification() {

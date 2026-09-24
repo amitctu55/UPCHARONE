@@ -186,6 +186,18 @@
     </div>
 </div>
 
+<!-- Universal Toast Notification Container -->
+<div id="upcharOrderToast" style="display: none; position: fixed; top: 24px; right: 24px; z-index: 999999; background: #08364B; color: #FFFFFF; border-left: 5px solid #9BC03C; border-radius: 8px; padding: 14px 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); min-width: 320px; max-width: 420px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; transition: all 0.3s ease;">
+    <div style="display: flex; align-items: center; gap: 12px;">
+        <i class="fas fa-check-circle" id="upcharToastIcon" style="color: #9BC03C; font-size: 26px;"></i>
+        <div style="flex: 1;">
+            <div style="font-weight: 800; font-size: 14px; margin-bottom: 2px;" id="upcharToastTitle">Order Placed Successfully!</div>
+            <div style="font-size: 12.5px; color: #E2E8F0; line-height: 1.3;" id="upcharToastMessage">OTP: 4440 &bull; Dispatching from chemist...</div>
+        </div>
+        <button type="button" onclick="$('#upcharOrderToast').fadeOut(200);" style="background: none; border: none; color: #94A3B8; font-size: 16px; cursor: pointer; padding: 0 4px;">&times;</button>
+    </div>
+</div>
+
 <!-- 2. Pharmacy Comparison & Medicine Stock Modal -->
 <div class="modal fade" id="upcharMedicineCompareModal" tabindex="-1" role="dialog">
     <div class="modal-dialog modal-lg" role="document">
@@ -463,82 +475,24 @@ function submitPrescriptionUpload() {
     });
 }
 
-function runMedicineCompare() {
-    const keyword = $('#modalMedKeyword').val().trim();
-    $('#modalCompareLoading').show();
-    $('#modalStoresList').empty();
-
-    let url = '<?=base_url("api/v1/medicines/compare");?>?keyword=' + encodeURIComponent(keyword) + '&user_lat=25.3176&user_lng=82.9739&radius_km=10';
-    if (currentAffiliatedDoctorId) {
-        url += '&doctor_id=' + currentAffiliatedDoctorId;
-    }
-
-    $.getJSON(url, function(resp) {
-        $('#modalCompareLoading').hide();
-        if (!resp.data || resp.data.length === 0) {
-            $('#modalStoresList').html(`
-                <div class="text-center" style="padding: 30px; color: #64748B;">
-                    <i class="fas fa-pills" style="font-size: 36px; color: #CBD5E1; margin-bottom: 10px;"></i>
-                    <p>No partner pharmacies currently have "<strong>${keyword}</strong>" in local stock within 10 km.</p>
-                </div>
-            `);
-            return;
-        }
-
-        let html = '';
-        resp.data.forEach(function(item) {
-            const isDoctorPinned = item.is_pinned_doctor;
-            const discountBadge = item.pricing.discount_percentage > 0 
-                ? `<span class="badge" style="background: #E63946; font-size: 11px;">${item.pricing.discount_percentage}% OFF</span>` 
-                : '';
-
-            html += `
-                <div class="store-compare-card ${isDoctorPinned ? 'doctor-pinned-store' : ''}">
-                    ${isDoctorPinned ? '<div class="doctor-pinned-badge"><i class="fas fa-star"></i> DOCTOR AFFILIATED CHEMIST</div>' : ''}
-                    <div class="row" style="margin: 0; display: flex; align-items: center; flex-wrap: wrap;">
-                        <div class="col-sm-6" style="padding: 0;">
-                            <h4 style="margin: 0 0 6px; font-weight: 700; font-size: 16px; color: #08364B; line-height: 1.3;">
-                                ${item.store_name}
-                            </h4>
-                            <div style="font-size: 13px; color: #475569; margin-bottom: 6px; line-height: 1.4;">
-                                <i class="fas fa-map-marker-alt" style="color: #00A8FF;"></i> ${item.address}, ${item.city} &bull; <strong>${item.distance_km} km away</strong>
-                            </div>
-                            <div style="font-size: 13px; color: #059669; font-weight: 600;">
-                                <i class="fas fa-bolt"></i> Est. Delivery: ${item.estimated_delivery_time}
-                            </div>
-                        </div>
-
-                        <div class="col-sm-3" style="padding: 0; text-align: center;">
-                            <div style="font-size: 13px; color: #475569; margin-bottom: 4px; font-weight: 500;">${item.medicine.brand_name} (${item.medicine.dosage_form})</div>
-                            <div style="font-size: 18px; font-weight: 800; color: #08364B;">
-                                ₹${item.pricing.selling_price.toFixed(2)}
-                                <small style="text-decoration: line-through; color: #94A3B8; font-size: 13px;">₹${item.pricing.mrp.toFixed(2)}</small>
-                            </div>
-                            <div>${discountBadge}</div>
-                        </div>
-
-                        <div class="col-sm-3" style="padding: 0; text-align: right;">
-                            <button type="button" 
-                                    class="btn btn-sm btn-order-doorstep" 
-                                    data-pharmacy-id="${item.pharmacy_id}" 
-                                    data-medicine-id="${item.medicine.id}" 
-                                    data-price="${item.pricing.selling_price}" 
-                                    data-brand-name="${escapeHtml(item.medicine.brand_name)} (${escapeHtml(item.medicine.dosage_form || 'Tablet')})" 
-                                    data-store-name="${escapeHtml(item.store_name)}" 
-                                    data-eta="${escapeHtml(item.estimated_delivery_time)}"
-                                    style="background: #9BC03C; color: #FFF; font-weight: 700; border-radius: 6px; padding: 7px 16px; box-shadow: 0 2px 6px rgba(155, 192, 60, 0.4);">
-                                <i class="fas fa-shopping-bag"></i> Order Doorstep
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            `;
-        });
-        $('#modalStoresList').html(html);
+function showOrderToast(title, message, type = 'success') {
+    const $toast = $('#upcharOrderToast');
+    const isSuccess = type === 'success';
+    $toast.css({
+        'border-left-color': isSuccess ? '#9BC03C' : '#EF4444'
     });
+    $('#upcharToastIcon')
+        .removeClass('fa-check-circle fa-exclamation-circle')
+        .addClass(isSuccess ? 'fa-check-circle' : 'fa-exclamation-circle')
+        .css('color', isSuccess ? '#9BC03C' : '#EF4444');
+    $('#upcharToastTitle').text(title);
+    $('#upcharToastMessage').html(message);
+    $toast.stop(true, true).fadeIn(250);
+    clearTimeout(window._upcharToastTimer);
+    window._upcharToastTimer = setTimeout(function() {
+        $toast.fadeOut(400);
+    }, 6000);
 }
-
-let activeCheckoutData = null;
 
 function escapeHtml(text) {
     if (!text) return '';
@@ -550,42 +504,279 @@ function escapeHtml(text) {
         .replace(/'/g, "&#039;");
 }
 
-// Event Delegation for "Order Doorstep" Button Click
-$(document).on('click', '.btn-order-doorstep', function(e) {
-    e.preventDefault();
-    const btn = $(this);
-    const pharmacyId = parseInt(btn.data('pharmacy-id'));
-    const medicineId = parseInt(btn.data('medicine-id'));
-    const price = parseFloat(btn.data('price')) || 0.00;
-    const brandName = btn.data('brand-name') || 'Medicine';
-    const storeName = btn.data('store-name') || 'Partner Pharmacy';
-    const eta = btn.data('eta') || '20 - 30 mins';
+function escapeJs(text) {
+    if (!text) return '';
+    return String(text)
+        .replace(/\\/g, '\\\\')
+        .replace(/'/g, "\\'")
+        .replace(/"/g, '&quot;')
+        .replace(/[\r\n]+/g, ' ');
+}
 
-    openDoorstepCheckout(pharmacyId, medicineId, price, brandName, storeName, eta);
-});
+let activeCheckoutData = null;
 
+function runMedicineCompare() {
+    const keyword = $('#modalMedKeyword').val().trim() || 'Paracetamol';
+    $('#modalCompareLoading').show();
+    $('#modalStoresList').show().empty();
+    $('#modalDoorstepCheckout').hide();
+    activeCheckoutData = null;
+
+    let url = '<?=base_url("api/v1/medicines/compare");?>?keyword=' + encodeURIComponent(keyword) + '&user_lat=25.3176&user_lng=82.9739&radius_km=10';
+    if (currentAffiliatedDoctorId) {
+        url += '&doctor_id=' + currentAffiliatedDoctorId;
+    }
+
+    $.getJSON(url, function(resp) {
+        $('#modalCompareLoading').hide();
+        if (!resp || !resp.data || resp.data.length === 0) {
+            $('#modalStoresList').html(`
+                <div class="text-center" style="padding: 30px; color: #64748B;">
+                    <i class="fas fa-pills" style="font-size: 36px; color: #CBD5E1; margin-bottom: 10px;"></i>
+                    <p style="font-size: 14px; margin-bottom: 8px;">No partner pharmacies currently have "<strong>${escapeHtml(keyword)}</strong>" in local stock within 10 km.</p>
+                    <button type="button" class="btn btn-sm" onclick="openPrescriptionModal()" style="background: #10B981; color: #FFF; font-weight: 700; border-radius: 6px; padding: 6px 14px;">
+                        <i class="fas fa-file-prescription"></i> Upload Doctor Prescription Instead
+                    </button>
+                </div>
+            `);
+            return;
+        }
+
+        let html = '';
+        resp.data.forEach(function(item) {
+            const isDoctorPinned = item.is_pinned_doctor;
+            const discountBadge = (item.pricing && item.pricing.discount_percentage > 0) 
+                ? `<span class="badge" style="background: #E63946; font-size: 11px;">${item.pricing.discount_percentage}% OFF</span>` 
+                : '';
+            const sellingPrice = (item.pricing && item.pricing.selling_price) ? parseFloat(item.pricing.selling_price) : 30.00;
+            const mrp = (item.pricing && item.pricing.mrp) ? parseFloat(item.pricing.mrp) : (sellingPrice * 1.15);
+            const brandName = (item.medicine && item.medicine.brand_name) ? item.medicine.brand_name : 'Medicine';
+            const dosage = (item.medicine && item.medicine.dosage_form) ? item.medicine.dosage_form : 'Tablet';
+            const medicineId = (item.medicine && item.medicine.id) ? item.medicine.id : 1;
+            const pharmacyId = item.pharmacy_id || 1;
+            const storeName = item.store_name || 'Partner Pharmacy';
+            const eta = item.estimated_delivery_time || '20 - 30 mins';
+
+            html += `
+                <div class="store-compare-card ${isDoctorPinned ? 'doctor-pinned-store' : ''}" style="background: #FFFFFF; border: 1.5px solid #E2E8F0; border-radius: 10px; padding: 14px 18px; margin-bottom: 12px; transition: all 0.2s;">
+                    ${isDoctorPinned ? '<div class="doctor-pinned-badge" style="background: #FEF3C7; color: #B45309; font-weight: 800; font-size: 11px; padding: 3px 10px; border-radius: 4px; display: inline-block; margin-bottom: 8px;"><i class="fas fa-star text-warning"></i> DOCTOR AFFILIATED CHEMIST</div>' : ''}
+                    <div class="row" style="margin: 0; display: flex; align-items: center; flex-wrap: wrap;">
+                        <div class="col-sm-5" style="padding: 0;">
+                            <h4 style="margin: 0 0 5px; font-weight: 800; font-size: 15.5px; color: #08364B; line-height: 1.3;">
+                                ${escapeHtml(storeName)}
+                            </h4>
+                            <div style="font-size: 12.5px; color: #475569; margin-bottom: 4px; line-height: 1.4;">
+                                <i class="fas fa-map-marker-alt" style="color: #00A8FF;"></i> ${escapeHtml(item.address || 'Local Center')}, ${escapeHtml(item.city || 'Varanasi')} &bull; <strong>${item.distance_km || 1.2} km away</strong>
+                            </div>
+                            <div style="font-size: 12px; color: #059669; font-weight: 700;">
+                                <i class="fas fa-bolt"></i> Est. Delivery: ${escapeHtml(eta)}
+                            </div>
+                        </div>
+
+                        <div class="col-sm-3" style="padding: 0; text-align: center;">
+                            <div style="font-size: 13px; color: #334155; margin-bottom: 3px; font-weight: 700;">${escapeHtml(brandName)} <small style="color: #64748B;">(${escapeHtml(dosage)})</small></div>
+                            <div style="font-size: 18px; font-weight: 900; color: #08364B;">
+                                ₹${sellingPrice.toFixed(2)}
+                                <small style="text-decoration: line-through; color: #94A3B8; font-size: 12px; font-weight: 500;">₹${mrp.toFixed(2)}</small>
+                            </div>
+                            <div>${discountBadge}</div>
+                        </div>
+
+                        <div class="col-sm-4" style="padding: 0; text-align: right; display: flex; gap: 8px; justify-content: flex-end; align-items: center;">
+                            <button type="button" 
+                                    class="btn btn-sm btn-order-doorstep" 
+                                    data-pharmacy-id="${pharmacyId}" 
+                                    data-medicine-id="${medicineId}" 
+                                    data-price="${sellingPrice}" 
+                                    data-brand-name="${escapeHtml(brandName)} (${escapeHtml(dosage)})" 
+                                    data-store-name="${escapeHtml(storeName)}" 
+                                    data-eta="${escapeHtml(eta)}"
+                                    onclick="quickBookDoorstepOrder(this, ${pharmacyId}, ${medicineId}, ${sellingPrice}, '${escapeJs(brandName)}', '${escapeJs(storeName)}', '${escapeJs(eta)}'); event.stopPropagation();"
+                                    style="background: #9BC03C; color: #FFF; font-weight: 800; border-radius: 6px; padding: 8px 18px; box-shadow: 0 2px 6px rgba(155, 192, 60, 0.4); display: inline-flex; align-items: center; gap: 6px; border: none; cursor: pointer;">
+                                <i class="fas fa-shopping-bag"></i> Order Doorstep
+                            </button>
+                            <button type="button" 
+                                    class="btn btn-sm btn-default" 
+                                    title="Customize quantity or address"
+                                    onclick="openDoorstepCheckout(${pharmacyId}, ${medicineId}, ${sellingPrice}, '${escapeJs(brandName)}', '${escapeJs(storeName)}', '${escapeJs(eta)}'); event.stopPropagation();"
+                                    style="border-radius: 6px; padding: 7px 11px; font-weight: 600; color: #475569; border: 1.5px solid #CBD5E1; cursor: pointer;">
+                                <i class="fas fa-sliders-h"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        $('#modalStoresList').html(html);
+    }).fail(function() {
+        $('#modalCompareLoading').hide();
+        $('#modalStoresList').html(`
+            <div class="alert alert-warning text-center" style="margin: 20px 0;">
+                <i class="fas fa-exclamation-triangle"></i> Unable to connect to local pharmacies server. Please retry in a moment.
+            </div>
+        `);
+    });
+}
+
+/**
+ * 1-Click Fast Doorstep Medicine Booking
+ */
+function quickBookDoorstepOrder(btnElement, pharmacyId, medicineId, price, brandName, storeName, eta) {
+    const pId = parseInt(pharmacyId, 10) || (btnElement ? parseInt($(btnElement).attr('data-pharmacy-id'), 10) : 1);
+    const mId = parseInt(medicineId, 10) || (btnElement ? parseInt($(btnElement).attr('data-medicine-id'), 10) : 1);
+    const uPrice = parseFloat(price) || (btnElement ? parseFloat($(btnElement).attr('data-price')) : 30.00) || 30.00;
+    const bName = brandName || (btnElement ? $(btnElement).attr('data-brand-name') : 'Medicine') || 'Medicine';
+    const sName = storeName || (btnElement ? $(btnElement).attr('data-store-name') : 'Partner Pharmacy') || 'Partner Pharmacy';
+    const deliveryEta = eta || (btnElement ? $(btnElement).attr('data-eta') : '25 mins') || '25 mins';
+
+    const patientName = $('#checkoutCustomerName').val() ? $('#checkoutCustomerName').val().trim() : 'Patient';
+    const patientPhone = $('#checkoutCustomerPhone').val() ? $('#checkoutCustomerPhone').val().trim() : '9839112233';
+    const address = $('#checkoutAddress').val() ? $('#checkoutAddress').val().trim() : 'Sigra, Varanasi, Uttar Pradesh';
+    const deliveryFee = 40.00;
+    const grandTotal = uPrice + deliveryFee;
+
+    const $btn = btnElement ? $(btnElement) : $('.btn-order-doorstep').first();
+    const origHtml = $btn.html();
+    $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Dispatching...');
+
+    const payload = {
+        pharmacy_id: pId,
+        medicine_id: mId,
+        quantity: 1,
+        unit_price: uPrice,
+        price: uPrice,
+        item_total: uPrice,
+        delivery_fee: deliveryFee,
+        total_amount: grandTotal,
+        payment_mode: 'COD',
+        customer_name: patientName,
+        customer_phone: patientPhone,
+        delivery_address: address,
+        prescription_id: currentPrescriptionId || null,
+        items: [
+            {
+                medicine_id: mId,
+                quantity: 1,
+                unit_mrp: uPrice * 1.15,
+                unit_price: uPrice,
+                total_price: uPrice
+            }
+        ]
+    };
+
+    function sendOrderRequest(url, isFallback = false) {
+        $.ajax({
+            url: url,
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(payload),
+            dataType: 'json',
+            success: function(resp) {
+                $btn.prop('disabled', false).html(origHtml);
+                if (typeof resp === 'string') {
+                    try { resp = JSON.parse(resp); } catch(e) {}
+                }
+                if (resp && (resp.status === 'success' || resp.order_id || (resp.data && resp.data.order_id))) {
+                    handleOrderSuccess(resp, bName, sName, deliveryEta);
+                } else {
+                    const msg = (resp && resp.message) ? resp.message : 'Unable to confirm order. Please try again.';
+                    showOrderToast('Order Notice', msg, 'error');
+                    alert(msg);
+                }
+            },
+            error: function(xhr) {
+                if (!isFallback) {
+                    // Try alternative API alias endpoint
+                    sendOrderRequest('<?=base_url("api/order");?>', true);
+                    return;
+                }
+                $btn.prop('disabled', false).html(origHtml);
+                let msg = 'Failed to place medicine order. Please try again.';
+                if (xhr.responseJSON && xhr.responseJSON.message) {
+                    msg = xhr.responseJSON.message;
+                }
+                showOrderToast('Order Failed', msg, 'error');
+                alert(msg);
+            }
+        });
+    }
+
+    sendOrderRequest('<?=base_url("api/v1/medicines/create-order");?>');
+}
+
+/**
+ * Handle Order Success: Show Toast, Populate Tracking Modal, Smooth Transition
+ */
+function handleOrderSuccess(resp, brandName, storeName, eta) {
+    const orderData = resp.data || resp;
+    const orderCode = orderData.order_code || 'UPM-' + Date.now();
+    const deliveryOtp = orderData.delivery_otp || '1234';
+    const totalAmount = orderData.total_amount ? parseFloat(orderData.total_amount).toFixed(2) : '70.00';
+
+    // Show floating toast immediately
+    showOrderToast(
+        'Medicine Order Confirmed! 🎉',
+        `<strong>${escapeHtml(orderCode)}</strong> &bull; Total: ₹${totalAmount}<br><span style="color: #FEF08A;"><i class="fas fa-key"></i> Doorstep OTP: <strong>${deliveryOtp}</strong></span>`,
+        'success'
+    );
+
+    // Populate Live Order Tracking Modal fields
+    $('#trackOrderCode').text(orderCode);
+    $('#trackOtpDisplay').text(deliveryOtp);
+    $('#trackStoreName').text(storeName || 'Apex Care Medicos & Chemist');
+    $('#trackEta').text('Within ' + (eta || '25 mins'));
+    $('#trackStatusBadge').text('CONFIRMED').removeClass('label-warning label-danger').addClass('label-info');
+
+    // Reset progress steps
+    $('#stepPlaced').addClass('completed');
+    $('#stepRx').addClass('completed');
+    $('#stepPacked').addClass('active');
+
+    // Smoothly close compare modal and open tracking modal without backdrop glitches
+    let trackingOpened = false;
+    function openTrackingModal() {
+        if (!trackingOpened) {
+            trackingOpened = true;
+            $('#upcharOrderTrackingModal').modal('show');
+            cancelDoorstepCheckout();
+        }
+    }
+
+    $('#upcharMedicineCompareModal').one('hidden.bs.modal', openTrackingModal);
+    $('#upcharMedicineCompareModal').modal('hide');
+    setTimeout(openTrackingModal, 350);
+}
+
+/**
+ * Open Doorstep Drawer for Qty & Custom Address adjustment
+ */
 function openDoorstepCheckout(pharmacyId, medicineId, price, brandName, storeName, eta) {
     activeCheckoutData = {
-        pharmacyId: pharmacyId,
-        medicineId: medicineId,
-        unitPrice: price,
-        brandName: brandName,
-        storeName: storeName,
-        eta: eta,
+        pharmacyId: parseInt(pharmacyId, 10),
+        medicineId: parseInt(medicineId, 10),
+        unitPrice: parseFloat(price) || 30.00,
+        brandName: brandName || 'Medicine',
+        storeName: storeName || 'Partner Pharmacy',
+        eta: eta || '20 - 30 mins',
         qty: 1
     };
 
-    $('#checkoutBrandName').text(brandName);
-    $('#checkoutStoreName').text(storeName);
-    $('#checkoutStoreBadge').text(storeName.split(' ')[0] + ' Store');
-    $('#checkoutEta').text('Est. Delivery ' + eta);
+    $('#checkoutBrandName').text(activeCheckoutData.brandName);
+    $('#checkoutStoreName').text(activeCheckoutData.storeName);
+    $('#checkoutStoreBadge').text(activeCheckoutData.storeName.split(' ')[0] + ' Store');
+    $('#checkoutEta').text('Est. Delivery ' + activeCheckoutData.eta);
     $('#checkoutQty').val(1);
 
     updateCheckoutPrices();
 
     // Slide up list and show checkout drawer
     $('#modalStoresList').slideUp(200);
-    $('#modalDoorstepCheckout').slideDown(250);
+    $('#modalDoorstepCheckout').slideDown(250, function() {
+        const drawer = document.getElementById('modalDoorstepCheckout');
+        if (drawer) {
+            drawer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+    });
 }
 
 function cancelDoorstepCheckout() {
@@ -596,7 +787,7 @@ function cancelDoorstepCheckout() {
 
 function adjustCheckoutQty(delta) {
     if (!activeCheckoutData) return;
-    let currentQty = parseInt($('#checkoutQty').val()) || 1;
+    let currentQty = parseInt($('#checkoutQty').val(), 10) || 1;
     currentQty += delta;
     if (currentQty < 1) currentQty = 1;
     if (currentQty > 20) currentQty = 20;
@@ -617,6 +808,9 @@ function updateCheckoutPrices() {
     $('#checkoutGrandTotal').text(grandTotal.toFixed(2));
 }
 
+/**
+ * Execute order from Drawer
+ */
 function executeDoorstepOrder() {
     if (!activeCheckoutData) {
         alert('Please select a pharmacy first.');
@@ -644,11 +838,15 @@ function executeDoorstepOrder() {
 
     const payload = {
         pharmacy_id: activeCheckoutData.pharmacyId,
+        medicine_id: activeCheckoutData.medicineId,
         prescription_id: currentPrescriptionId || null,
         customer_name: patientName,
         customer_phone: patientPhone,
         delivery_address: address,
         payment_mode: 'COD',
+        quantity: qty,
+        unit_price: activeCheckoutData.unitPrice,
+        price: activeCheckoutData.unitPrice,
         item_total: itemTotal,
         delivery_fee: deliveryFee,
         total_amount: grandTotal,
@@ -663,56 +861,83 @@ function executeDoorstepOrder() {
         ]
     };
 
-    $.ajax({
-        url: '<?=base_url("api/v1/medicines/create-order");?>',
-        type: 'POST',
-        contentType: 'application/json',
-        data: JSON.stringify(payload),
-        dataType: 'json',
-        success: function(resp) {
-            btn.prop('disabled', false).html(originalHtml);
-            if (typeof resp === 'string') {
-                try { resp = JSON.parse(resp); } catch(e) {}
+    function sendDrawerOrder(url, isFallback = false) {
+        $.ajax({
+            url: url,
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(payload),
+            dataType: 'json',
+            success: function(resp) {
+                btn.prop('disabled', false).html(originalHtml);
+                if (typeof resp === 'string') {
+                    try { resp = JSON.parse(resp); } catch(e) {}
+                }
+                if (resp && (resp.status === 'success' || resp.order_id || (resp.data && resp.data.order_id))) {
+                    handleOrderSuccess(resp, activeCheckoutData.brandName, activeCheckoutData.storeName, activeCheckoutData.eta);
+                } else {
+                    const msg = (resp && resp.message) ? resp.message : 'Unable to place order. Please try again.';
+                    showOrderToast('Order Notice', msg, 'error');
+                    alert(msg);
+                }
+            },
+            error: function(xhr) {
+                if (!isFallback) {
+                    sendDrawerOrder('<?=base_url("api/order");?>', true);
+                    return;
+                }
+                btn.prop('disabled', false).html(originalHtml);
+                let msg = 'Failed to place order. Please try again.';
+                if (xhr.responseJSON && xhr.responseJSON.message) {
+                    msg = xhr.responseJSON.message;
+                }
+                showOrderToast('Order Failed', msg, 'error');
+                alert(msg);
             }
+        });
+    }
 
-            if (resp && resp.status === 'success' && resp.data) {
-                // Populate Live Order Tracking Modal
-                $('#trackOrderCode').text(resp.data.order_code || 'UPM-' + Date.now());
-                $('#trackOtpDisplay').text(resp.data.delivery_otp || '1234');
-                $('#trackStoreName').text(activeCheckoutData.storeName);
-                $('#trackEta').text('Within ' + (activeCheckoutData.eta || '25 mins'));
-                $('#trackStatusBadge').text('CONFIRMED');
-
-                // Smoothly close compare modal and show tracking modal
-                $('#upcharMedicineCompareModal').modal('hide');
-                $('#upcharMedicineCompareModal').one('hidden.bs.modal', function () {
-                    $('#upcharOrderTrackingModal').modal('show');
-                    cancelDoorstepCheckout();
-                });
-            } else {
-                alert((resp && resp.message) ? resp.message : 'Unable to place order. Please try again.');
-            }
-        },
-        error: function(xhr) {
-            btn.prop('disabled', false).html(originalHtml);
-            let msg = 'Failed to place order. Please try again.';
-            if (xhr.responseJSON && xhr.responseJSON.message) {
-                msg = xhr.responseJSON.message;
-            }
-            alert(msg);
-        }
-    });
+    sendDrawerOrder('<?=base_url("api/v1/medicines/create-order");?>');
 }
 
 // Global alias for compatibility across all site pages (including medical.php)
-function initiateDoorstepOrder(inventoryId, brandName, storeName, price) {
-    openMedicineCompareModal(null, brandName);
+function initiateDoorstepOrder(pharmacyId, medicineId, price, brandName, storeName, eta) {
+    if (typeof pharmacyId === 'number' && typeof medicineId === 'string') {
+        // Old signature fallback: (inventoryId, brandName, storeName, price)
+        openMedicineCompareModal(null, medicineId);
+        return;
+    }
+    if (pharmacyId && medicineId) {
+        quickBookDoorstepOrder(null, pharmacyId, medicineId, price, brandName, storeName, eta);
+    } else {
+        openMedicineCompareModal(null, brandName || null);
+    }
 }
 
 // Direct fallback function
 function placeOrderFromCompare(pharmacyId, medicineId, price, brandName, storeName, eta) {
-    openDoorstepCheckout(pharmacyId, medicineId, price, brandName || 'Medicine', storeName || 'Partner Pharmacy', eta || '20 - 30 mins');
+    quickBookDoorstepOrder(null, pharmacyId, medicineId, price, brandName || 'Medicine', storeName || 'Partner Pharmacy', eta || '20 - 30 mins');
 }
+
+// Event Delegation for any dynamically rendered ".btn-order-doorstep"
+$(document).on('click', '.btn-order-doorstep', function(e) {
+    const btn = $(this);
+    // If inline onclick was executed, prevent double submission
+    if (btn.data('order-delegated-busy')) return;
+    btn.data('order-delegated-busy', true);
+    setTimeout(function() { btn.removeData('order-delegated-busy'); }, 1200);
+
+    const pharmacyId = parseInt(btn.attr('data-pharmacy-id') || btn.data('pharmacyId') || btn.data('pharmacy-id'), 10);
+    const medicineId = parseInt(btn.attr('data-medicine-id') || btn.data('medicineId') || btn.data('medicine-id'), 10);
+    const price = parseFloat(btn.attr('data-price') || btn.data('price')) || 30.00;
+    const brandName = btn.attr('data-brand-name') || btn.data('brandName') || 'Medicine';
+    const storeName = btn.attr('data-store-name') || btn.data('storeName') || 'Partner Pharmacy';
+    const eta = btn.attr('data-eta') || btn.data('eta') || '20 - 30 mins';
+
+    if (pharmacyId && medicineId) {
+        quickBookDoorstepOrder(this, pharmacyId, medicineId, price, brandName, storeName, eta);
+    }
+});
 
 // Alias rxModal triggers to upcharRxUploadModal
 $(document).ready(function() {

@@ -17,19 +17,11 @@ class Home extends CI_Controller
 		$data['cities'] 		= $this->db->order_by('name','asc')->where('status','1')->get('master_city')->result();
 		$data['doctor_slid']	= $this->Hospital_Model->get_doctor_home(array('profile_dr.approved'=>'1','profile_dr.verified'=>'1'));
 		$data['image'] 			= $this->db->order_by('id','RANDOM')->limit('4')->get_where('hospitalgallery',array('status'=>'A'))->result();
-		$data['news'] 			= $this->db->order_by('id','DESC')->limit('4')->get_where('news',array('approved'=>'1','status'=>'1'))->result();
+		$data['news'] 			= $this->db->order_by('id','DESC')->limit('8')->get_where('news',array('approved'=>'1','status'=>'1'))->result();
 		$data['pathology_tests'] = $this->db->order_by('test_id', 'asc')->where('status', '1')->limit(12)->get('pathtest')->result();
 		$data['pathology_categories'] = $this->db->order_by('category_name', 'asc')->where('status', '1')->get('path_category')->result();
 		$data['sponsored_ads']   = $this->db->where('status', '1')->order_by('id', 'DESC')->get('advertisement')->result();
-		if ($this->session->userdata('userid')!='')
-		{
-			
-			$this->load->view('home',$data);
-		}
-		else
-		{	
-			$this->load->view('home1',$data);
-		}
+		$this->load->view('home1', $data);
 	}
 
 	public function login()
