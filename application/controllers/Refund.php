@@ -25,6 +25,42 @@ class Refund extends CI_Controller {
                $this->session->userdata('WEB_UID') ?:
                $this->session->userdata('user_id');
 
+        $this->load->helper('cookie');
+        $ssoCookie = $this->input->cookie('upchar_sso_token');
+        $masterUser = null;
+
+        // Check SSO token cookie
+        if ($ssoCookie) {
+            $this->load->model('Auth_model');
+            $payload = $this->Auth_model->verify_sso_token($ssoCookie);
+            if ($payload && !empty($payload['sub'])) {
+                $masterUser = $this->Auth_model->find_master_user($payload['sub']);
+                if ($masterUser && !$uid) {
+                    $ciUser = null;
+                    if (!empty($masterUser['email'])) {
+                        $ciUser = $this->db->get_where('userlogin', ['EMAIL' => $masterUser['email']])->row_array();
+                    }
+                    if (!$ciUser && !empty($masterUser['mobile'])) {
+                        $ciUser = $this->db->get_where('userlogin', ['MOBILE' => $masterUser['mobile']])->row_array();
+                    }
+                    $sessionUid = $ciUser ? $ciUser['USERID'] : $masterUser['id'];
+                    $this->session->set_userdata([
+                        'USERID'   => $sessionUid,
+                        'userid'   => $sessionUid,
+                        'WEB_UID'  => $sessionUid,
+                        'username' => $masterUser['name'],
+                        'name'     => $masterUser['name'],
+                        'email'    => $masterUser['email'],
+                        'mobile'   => $masterUser['mobile'],
+                        'uuid'     => $masterUser['uuid'],
+                        'status'   => $masterUser['status'],
+                        'logged_in'=> true,
+                    ]);
+                    $uid = $sessionUid;
+                }
+            }
+        }
+
         $userRow = null;
         if ($uid) {
             $userRow = $this->db->get_where('userlogin', array('USERID' => $uid))->row_array();
@@ -48,21 +84,68 @@ class Refund extends CI_Controller {
             }
         }
 
+        // If userRow found, try to locate linked upchar_users record if not already found
+        if ($userRow && !$masterUser) {
+            $masterUser = $this->db->group_start()
+                                   ->where('email', $userRow['EMAIL'])
+                                   ->or_where('mobile', $userRow['MOBILE'])
+                                   ->group_end()
+                                   ->get('upchar_users')->row_array();
+        }
+
         if ($userRow) {
             return array(
-                'id'     => intval($userRow['USERID']),
-                'name'   => trim($userRow['FNAME'] . ' ' . $userRow['LNAME']) ?: $userRow['FNAME'],
-                'mobile' => $userRow['MOBILE'],
-                'email'  => $userRow['EMAIL']
+                'id'        => intval($userRow['USERID']),
+                'master_id' => $masterUser ? intval($masterUser['id']) : null,
+                'name'      => trim($userRow['FNAME'] . ' ' . $userRow['LNAME']) ?: $userRow['FNAME'],
+                'mobile'    => $userRow['MOBILE'],
+                'email'     => $userRow['EMAIL']
+            );
+        }
+
+        // Check Unified Master Users table (upchar_users)
+        if (!$masterUser && $uid) {
+            $masterUser = $this->db->get_where('upchar_users', array('id' => $uid))->row_array();
+        }
+
+        $sessionEmail = $this->session->userdata('email') ?: $this->session->userdata('useremail');
+        if (!$masterUser && $sessionEmail) {
+            $masterUser = $this->db->get_where('upchar_users', array('email' => $sessionEmail))->row_array();
+        }
+
+        $sessionMobile = $this->session->userdata('mobile') ?: $this->session->userdata('usermobile');
+        if (!$masterUser && $sessionMobile) {
+            $masterUser = $this->db->get_where('upchar_users', array('mobile' => $sessionMobile))->row_array();
+        }
+
+        if ($masterUser) {
+            return array(
+                'id'        => intval($masterUser['id']),
+                'master_id' => intval($masterUser['id']),
+                'name'      => $masterUser['name'],
+                'mobile'    => $masterUser['mobile'],
+                'email'     => $masterUser['email']
+            );
+        }
+
+        // Fallback directly from session if logged in
+        if ($uid) {
+            return array(
+                'id'        => intval($uid),
+                'master_id' => intval($uid),
+                'name'      => $this->session->userdata('name') ?: $this->session->userdata('username') ?: 'Valued Patient',
+                'mobile'    => $sessionMobile ?: '',
+                'email'     => $sessionEmail ?: ''
             );
         }
 
         if ($this->session->userdata('adminuserid')) {
             return array(
-                'id'     => intval($this->session->userdata('adminuserid')),
-                'name'   => 'Administrator',
-                'mobile' => '',
-                'email'  => ''
+                'id'        => intval($this->session->userdata('adminuserid')),
+                'master_id' => null,
+                'name'      => 'Administrator',
+                'mobile'    => '',
+                'email'     => ''
             );
         }
 
@@ -70,23 +153,64 @@ class Refund extends CI_Controller {
     }
 
     /**
-     * Check if a record belongs to the active user (by user_id, mobile, or email)
+     * Check if a record belongs to the active user (by user_id, master_id, mobile, or email)
      */
     private function _is_authorized($recordUserId, $recordMobile, $recordEmail, $currentUser) {
         if ($this->session->userdata('adminuserid')) {
             return true;
         }
 
-        if (empty($currentUser) || empty($currentUser['id'])) {
+        if (empty($currentUser) || (empty($currentUser['id']) && empty($currentUser['master_id']))) {
             return false;
         }
 
-        // Direct user ID match
-        if (!empty($recordUserId) && intval($recordUserId) === intval($currentUser['id'])) {
-            return true;
+        $recId = !empty($recordUserId) ? intval($recordUserId) : 0;
+
+        // 1. Direct ID matches
+        if ($recId > 0) {
+            if (!empty($currentUser['id']) && $recId === intval($currentUser['id'])) {
+                return true;
+            }
+            if (!empty($currentUser['master_id']) && $recId === intval($currentUser['master_id'])) {
+                return true;
+            }
+            $sessId = $this->session->userdata('USERID') ?: $this->session->userdata('userid') ?: $this->session->userdata('user_id');
+            if (!empty($sessId) && $recId === intval($sessId)) {
+                return true;
+            }
+
+            // 2. Cross-reference record user ID via upchar_users table
+            $recMaster = $this->db->get_where('upchar_users', array('id' => $recId))->row_array();
+            if ($recMaster) {
+                if (!empty($currentUser['email']) && !empty($recMaster['email']) && strtolower(trim($currentUser['email'])) === strtolower(trim($recMaster['email']))) {
+                    return true;
+                }
+                if (!empty($currentUser['mobile']) && !empty($recMaster['mobile'])) {
+                    $u1 = substr(preg_replace('/[^0-9]/', '', $currentUser['mobile']), -10);
+                    $u2 = substr(preg_replace('/[^0-9]/', '', $recMaster['mobile']), -10);
+                    if (!empty($u1) && $u1 === $u2) {
+                        return true;
+                    }
+                }
+            }
+
+            // 3. Cross-reference record user ID via userlogin table
+            $recLegacy = $this->db->get_where('userlogin', array('USERID' => $recId))->row_array();
+            if ($recLegacy) {
+                if (!empty($currentUser['email']) && !empty($recLegacy['EMAIL']) && strtolower(trim($currentUser['email'])) === strtolower(trim($recLegacy['EMAIL']))) {
+                    return true;
+                }
+                if (!empty($currentUser['mobile']) && !empty($recLegacy['MOBILE'])) {
+                    $u1 = substr(preg_replace('/[^0-9]/', '', $currentUser['mobile']), -10);
+                    $u2 = substr(preg_replace('/[^0-9]/', '', $recLegacy['MOBILE']), -10);
+                    if (!empty($u1) && $u1 === $u2) {
+                        return true;
+                    }
+                }
+            }
         }
 
-        // Mobile match (exact or last 10 digits)
+        // 4. Mobile match (exact or last 10 digits)
         if (!empty($recordMobile) && !empty($currentUser['mobile'])) {
             $cleanRecMob  = preg_replace('/[^0-9]/', '', $recordMobile);
             $cleanUserMob = preg_replace('/[^0-9]/', '', $currentUser['mobile']);
@@ -98,7 +222,7 @@ class Refund extends CI_Controller {
             }
         }
 
-        // Email match
+        // 5. Email match
         if (!empty($recordEmail) && !empty($currentUser['email'])) {
             if (strtolower(trim($recordEmail)) === strtolower(trim($currentUser['email']))) {
                 return true;
@@ -106,6 +230,38 @@ class Refund extends CI_Controller {
         }
 
         return false;
+    }
+
+    /**
+     * Resolve facility cancellation cutoff policy (in hours)
+     */
+    private function _get_facility_cancellation_hours($institute_id, $institution_type) {
+        $institute_id = intval($institute_id);
+        if ($institute_id <= 0) {
+            return array('hours' => 3, 'policy_text' => 'Cancellations allowed up to 3 hours prior to consultation slot.');
+        }
+
+        $table = ($institution_type === 'C') ? 'clinic' : 'hospital';
+        if ($this->db->table_exists($table)) {
+            $row = $this->db->select('cancellation_hours, cancellation_policy_text')->where('id', $institute_id)->get($table)->row_array();
+            if ($row && isset($row['cancellation_hours'])) {
+                $hours = max(0, intval($row['cancellation_hours']));
+                $text = !empty($row['cancellation_policy_text']) ? $row['cancellation_policy_text'] : "Cancellations allowed up to {$hours} hours prior to consultation slot.";
+                return array('hours' => $hours, 'policy_text' => $text);
+            }
+        }
+
+        // Check fallback hospital table if not already checked
+        if ($table !== 'hospital' && $this->db->table_exists('hospital')) {
+            $row = $this->db->select('cancellation_hours, cancellation_policy_text')->where('id', $institute_id)->get('hospital')->row_array();
+            if ($row && isset($row['cancellation_hours'])) {
+                $hours = max(0, intval($row['cancellation_hours']));
+                $text = !empty($row['cancellation_policy_text']) ? $row['cancellation_policy_text'] : "Cancellations allowed up to {$hours} hours prior to consultation slot.";
+                return array('hours' => $hours, 'policy_text' => $text);
+            }
+        }
+
+        return array('hours' => 3, 'policy_text' => 'Cancellations allowed up to 3 hours prior to consultation slot.');
     }
 
     /**
@@ -145,6 +301,33 @@ class Refund extends CI_Controller {
 
             if ($app['status'] == '2' || $app['appointment_status'] == '2' || strtoupper(trim($app['payment_status'] ?? '')) === 'REFUNDED') {
                 echo json_encode(array('status' => 'error', 'message' => 'Appointment #' . $appt_id . ' is already cancelled.'));
+                return;
+            }
+
+            // Check if appointment is completed/done
+            $is_done = ($app['status'] == '3' || strtoupper(trim($app['status'] ?? '')) === 'COMPLETED' || strtoupper(trim($app['status'] ?? '')) === 'DONE' || ($app['appointment_status'] ?? '') == '3');
+            if ($is_done) {
+                echo json_encode(array('status' => 'error', 'message' => 'This consultation has already been completed and cannot be cancelled.'));
+                return;
+            }
+
+            // Check facility cancellation timing policy
+            $facilityPolicy = $this->_get_facility_cancellation_hours($app['institute_id'] ?? 0, $app['institution_type'] ?? '');
+            $cancel_cutoff_hours = $facilityPolicy['hours'];
+
+            $app_timing = !empty($app['from_timing']) ? $app['from_timing'] : (!empty($app['appointment_time']) ? $app['appointment_time'] : '10:00:00');
+            $parsed_slot_time = strtotime($app_timing);
+            $slot_time_str = ($parsed_slot_time !== false) ? date('H:i:s', $parsed_slot_time) : '10:00:00';
+            $app_timestamp = strtotime($app['appointment_date'] . ' ' . $slot_time_str);
+            $diff_hrs = ($app_timestamp - time()) / 3600.0;
+
+            if ($diff_hrs < $cancel_cutoff_hours) {
+                if ($app_timestamp < time()) {
+                    $msg = 'Appointment slot has already passed. It can no longer be cancelled.';
+                } else {
+                    $msg = "Cancellations are not permitted within {$cancel_cutoff_hours} hours of the scheduled consultation slot as per the facility policy.";
+                }
+                echo json_encode(array('status' => 'error', 'message' => $msg));
                 return;
             }
 
@@ -295,6 +478,33 @@ class Refund extends CI_Controller {
                     return;
                 }
 
+                // Check if appointment is completed/done
+                $is_done = ($app['status'] == '3' || strtoupper(trim($app['status'] ?? '')) === 'COMPLETED' || strtoupper(trim($app['status'] ?? '')) === 'DONE' || ($app['appointment_status'] ?? '') == '3');
+                if ($is_done) {
+                    echo json_encode(array('status' => 'error', 'message' => 'This consultation has already been completed and cannot be cancelled.'));
+                    return;
+                }
+
+                // Check facility cancellation timing policy
+                $facilityPolicy = $this->_get_facility_cancellation_hours($app['institute_id'] ?? 0, $app['institution_type'] ?? '');
+                $cancel_cutoff_hours = $facilityPolicy['hours'];
+
+                $app_timing = !empty($app['from_timing']) ? $app['from_timing'] : (!empty($app['appointment_time']) ? $app['appointment_time'] : '10:00:00');
+                $parsed_slot_time = strtotime($app_timing);
+                $slot_time_str = ($parsed_slot_time !== false) ? date('H:i:s', $parsed_slot_time) : '10:00:00';
+                $app_timestamp = strtotime($app['appointment_date'] . ' ' . $slot_time_str);
+                $diff_hrs = ($app_timestamp - time()) / 3600.0;
+
+                if ($diff_hrs < $cancel_cutoff_hours) {
+                    if ($app_timestamp < time()) {
+                        $msg = 'Appointment slot has already passed. It can no longer be cancelled.';
+                    } else {
+                        $msg = "Cancellations are not permitted within {$cancel_cutoff_hours} hours of the scheduled consultation slot as per the facility policy.";
+                    }
+                    echo json_encode(array('status' => 'error', 'message' => $msg));
+                    return;
+                }
+
                 // Beneficiary user who should receive wallet credit
                 $beneficiaryUserId = (!empty($app['user_id']) && intval($app['user_id']) > 0) ? intval($app['user_id']) : $userId;
 
@@ -372,6 +582,11 @@ class Refund extends CI_Controller {
                         'cancel_by'          => 'U',
                         'cancel_reason'      => $reason
                     ));
+
+                    // Also mark linked sm_order as CANCELLED if exists
+                    $this->db->where('ITEM_ID', $appt_id)
+                             ->where('ITEM_TYPE', 'A')
+                             ->update('sm_order', array('PAYMENT_STATUS' => 'CANCELLED', 'REMARK' => 'Cancelled by patient'));
 
                     if ($order) {
                         $this->Payment_model->update_order_status($order['internal_order_ref'], 'FAILED', null, array(
@@ -522,8 +737,33 @@ class Refund extends CI_Controller {
 
             if ($order['purpose'] === 'APPOINTMENT' && $order['reference_id']) {
                 $app = $this->db->get_where('appointment', array('appointment_id' => $order['reference_id']))->row_array();
-                if ($app && !empty($app['appointment_date'])) {
-                    $app_datetime = $app['appointment_date'] . ' ' . (!empty($app['from_timing']) ? $app['from_timing'] : '10:00:00');
+                if ($app) {
+                    $is_done = ($app['status'] == '3' || strtoupper(trim($app['status'] ?? '')) === 'COMPLETED' || strtoupper(trim($app['status'] ?? '')) === 'DONE' || ($app['appointment_status'] ?? '') == '3');
+                    if ($is_done) {
+                        echo json_encode(array('status' => 'error', 'message' => 'This consultation has already been completed and cannot be cancelled.'));
+                        return;
+                    }
+
+                    $facilityPolicy = $this->_get_facility_cancellation_hours($app['institute_id'] ?? 0, $app['institution_type'] ?? '');
+                    $cancel_cutoff_hours = $facilityPolicy['hours'];
+
+                    $app_timing = !empty($app['from_timing']) ? $app['from_timing'] : (!empty($app['appointment_time']) ? $app['appointment_time'] : '10:00:00');
+                    $parsed_slot_time = strtotime($app_timing);
+                    $slot_time_str = ($parsed_slot_time !== false) ? date('H:i:s', $parsed_slot_time) : '10:00:00';
+                    $app_timestamp = strtotime($app['appointment_date'] . ' ' . $slot_time_str);
+                    $diff_hrs = ($app_timestamp - time()) / 3600.0;
+
+                    if ($diff_hrs < $cancel_cutoff_hours) {
+                        if ($app_timestamp < time()) {
+                            $msg = 'Appointment slot has already passed. It can no longer be cancelled.';
+                        } else {
+                            $msg = "Cancellations are not permitted within {$cancel_cutoff_hours} hours of the scheduled consultation slot as per the facility policy.";
+                        }
+                        echo json_encode(array('status' => 'error', 'message' => $msg));
+                        return;
+                    }
+
+                    $app_datetime = $app['appointment_date'] . ' ' . $slot_time_str;
                     $refund_percent = $this->Refund_model->calculate_refund_percentage($app_datetime);
                 }
             }

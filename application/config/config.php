@@ -463,6 +463,7 @@ $config['csrf_cookie_name'] = 'csrf_cookie_name';
 $config['csrf_expire'] = 7200;
 $config['csrf_regenerate'] = FALSE;
 $config['csrf_exclude_uris'] = array(
+	'doctorpanel/update_video_consult_status',
 	'paysecure/.*', 
 	'webservices.*', 
 	'home/app_conf_pop_.*',
@@ -532,7 +533,9 @@ $config['csrf_exclude_uris'] = array(
 	'admin/blog/.*',
 	'admin_blog/.*',
 	'cart/.*',
-	'Cart/.*'
+	'Cart/.*',
+	'ambulance/.*',
+	'Ambulance/.*'
 );
 
 /*

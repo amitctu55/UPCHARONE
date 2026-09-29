@@ -104,6 +104,49 @@
                         <i class="fa fa-plus"></i> Add New Practice
                     </a>
                 </div>
+
+            <!-- ========================================================= -->
+            <!-- VIDEO CONSULTATION AVAILABILITY TOGGLE CARD (AJAX-ENABLED)-->
+            <!-- ========================================================= -->
+            <div class="video-consult-card" style="background: linear-gradient(135deg, #0A192F 0%, #0f274a 100%); border-radius: 16px; padding: 22px 26px; margin-bottom: 24px; color: #ffffff; box-shadow: 0 8px 24px rgba(10, 25, 47, 0.15); border: 1px solid rgba(0, 168, 255, 0.25);">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+                    <div style="display: flex; align-items: center; gap: 16px;">
+                        <div style="width: 52px; height: 52px; border-radius: 14px; background: rgba(0, 168, 255, 0.15); border: 1px solid rgba(0, 168, 255, 0.3); display: flex; align-items: center; justify-content: center; font-size: 24px; color: #00A8FF;">
+                            <i class="fa fa-video-camera"></i>
+                        </div>
+                        <div>
+                            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 4px;">
+                                <h3 style="margin: 0; font-size: 18px; font-weight: 800; color: #ffffff; letter-spacing: -0.3px;">
+                                    Available for Video Consultation
+                                </h3>
+                                <span id="videoStatusBadge" style="font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 20px; <?= (!empty($is_video_consult_enabled)) ? 'background: #10B981; color: #ffffff;' : 'background: rgba(255,255,255,0.2); color: #e2e8f0;'; ?>">
+                                    <?= (!empty($is_video_consult_enabled)) ? '● ONLINE & ACCEPTING CALLS' : '○ PAUSED / IN-CLINIC ONLY'; ?>
+                                </span>
+                            </div>
+                            <p style="margin: 0; font-size: 13.5px; color: #94a3b8; max-width: 650px;">
+                                When enabled, your verified profile is actively featured in the <strong style="color: #38bdf8;">Upchar Teleconsultation Directory</strong> for patient video calls and follow-ups.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Custom iOS / Luxury Switch UI -->
+                    <div style="display: flex; align-items: center; gap: 14px;">
+                        <span id="videoToggleSpinner" style="display: none; color: #00A8FF; font-size: 14px;">
+                            <i class="fa fa-spinner fa-spin"></i> Saving...
+                        </span>
+                        <label class="custom-switch-wrap" style="position: relative; display: inline-block; width: 62px; height: 34px; margin: 0; cursor: pointer;">
+                            <input type="checkbox" id="videoConsultToggle" value="1" <?= (!empty($is_video_consult_enabled)) ? 'checked' : ''; ?> style="opacity: 0; width: 0; height: 0;">
+                            <span class="custom-slider" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: <?= (!empty($is_video_consult_enabled)) ? '#10B981' : '#475569'; ?>; transition: .3s; border-radius: 34px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);">
+                                <span class="custom-slider-knob" style="position: absolute; content: ''; height: 26px; width: 26px; left: <?= (!empty($is_video_consult_enabled)) ? '32px' : '4px'; ?>; bottom: 4px; background-color: white; transition: .3s; border-radius: 50%; box-shadow: 0 2px 6px rgba(0,0,0,0.3);"></span>
+                            </span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Live Alert / Toast Container -->
+                <div id="videoToggleAlert" style="display: none; margin-top: 14px; padding: 10px 16px; border-radius: 10px; font-size: 13px; font-weight: 600;"></div>
+            </div>
+
             </div>
 
             <!-- Flash Alert -->
@@ -337,5 +380,77 @@ $(document).on('click', '.open-fee-modal-btn', function(e) {
     $('#modal_inst_name').text(name);
     $('#modal_fee').val(fee);
     $('#feeModal').modal('show');
+});
+</script>
+
+<script>
+$(document).ready(function() {
+    $('#videoConsultToggle').on('change', function() {
+        var isChecked = $(this).is(':checked') ? 1 : 0;
+        var $slider = $(this).siblings('.custom-slider');
+        var $knob = $slider.find('.custom-slider-knob');
+        var $badge = $('#videoStatusBadge');
+        var $spinner = $('#videoToggleSpinner');
+        var $alert = $('#videoToggleAlert');
+
+        // Immediate UI feedback
+        $spinner.fadeIn(150);
+        $(this).prop('disabled', true);
+
+        if (isChecked) {
+            $slider.css('background-color', '#10B981');
+            $knob.css('left', '32px');
+            $badge.css({'background': '#10B981', 'color': '#ffffff'}).text('● ONLINE & ACCEPTING CALLS');
+        } else {
+            $slider.css('background-color', '#475569');
+            $knob.css('left', '4px');
+            $badge.css({'background': 'rgba(255,255,255,0.2)', 'color': '#e2e8f0'}).text('○ PAUSED / IN-CLINIC ONLY');
+        }
+
+        $.ajax({
+            url: "<?= base_url('doctorpanel/update_video_consult_status'); ?>",
+            type: "POST",
+            data: {
+                is_video_consult_enabled: isChecked,
+                "<?= $this->security->get_csrf_token_name(); ?>": "<?= $this->security->get_csrf_hash(); ?>"
+            },
+            dataType: "json",
+            success: function(res) {
+                $spinner.fadeOut(150);
+                $('#videoConsultToggle').prop('disabled', false);
+
+                if (res.status === 'success') {
+                    $alert.removeClass('alert-danger')
+                          .css({'background': 'rgba(16, 185, 129, 0.15)', 'color': '#34d399', 'border': '1px solid rgba(16, 185, 129, 0.3)'})
+                          .html('<i class="fa fa-check-circle me-1"></i> ' + res.message)
+                          .fadeIn().delay(4000).fadeOut();
+                } else {
+                    revertToggle(res.message);
+                }
+            },
+            error: function(xhr, status, error) {
+                $spinner.fadeOut(150);
+                $('#videoConsultToggle').prop('disabled', false);
+                revertToggle('Connection error. Could not update video consultation status.');
+            }
+        });
+
+        function revertToggle(msg) {
+            var revertState = isChecked ? 0 : 1;
+            $('#videoConsultToggle').prop('checked', revertState == 1);
+            if (revertState == 1) {
+                $slider.css('background-color', '#10B981');
+                $knob.css('left', '32px');
+                $badge.css({'background': '#10B981', 'color': '#ffffff'}).text('● ONLINE & ACCEPTING CALLS');
+            } else {
+                $slider.css('background-color', '#475569');
+                $knob.css('left', '4px');
+                $badge.css({'background': 'rgba(255,255,255,0.2)', 'color': '#e2e8f0'}).text('○ PAUSED / IN-CLINIC ONLY');
+            }
+            $alert.css({'background': 'rgba(239, 68, 68, 0.15)', 'color': '#f87171', 'border': '1px solid rgba(239, 68, 68, 0.3)'})
+                  .html('<i class="fa fa-exclamation-triangle me-1"></i> ' + msg)
+                  .fadeIn().delay(5000).fadeOut();
+        }
+    });
 });
 </script>

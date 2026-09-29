@@ -545,148 +545,284 @@ class Paysecure extends CI_Controller {
 
 	public function processordercod()
 	{	
-		$gatewayData=$this->session->userdata('SecurePay');
-		//echo "<pre>"; print_r($gatewayData); die;
-		$AppointmentCheckout=$this->session->userdata('AppointmentCheckout');
+		$gatewayData = $this->session->userdata('SecurePay');
+		$AppointmentCheckout = $this->session->userdata('AppointmentCheckout') ?: $this->input->get_post('aid');
+		$userId = $this->session->userdata('USERID') ?: $this->session->userdata('userid') ?: $this->session->userdata('WEB_UID') ?: $this->session->userdata('user_id');
 
-		$OrderId= $gatewayData['Order_Id'];
-		$order=$this->db->where(array('ORDER_ID'=>$OrderId))->get('sm_order')->row();
+		$OrderId = !empty($gatewayData['Order_Id']) ? $gatewayData['Order_Id'] : null;
+		$order = null;
+		if ($OrderId) {
+			$order = $this->db->where(array('ORDER_ID' => $OrderId))->get('sm_order')->row();
+		}
 
-		$aid=$order->ITEM_ID;
-		$paystatus=$order->PAYMENT_STATUS; //cross check
-		$ordertotal=$order->TOTAL;// compare total with the amount recieved
+		$aid = (!empty($order) && !empty($order->ITEM_ID)) ? $order->ITEM_ID : $AppointmentCheckout;
 
-		$appointment_data=$this->db->where(array('appointment_id'=>$aid))->get('appointment')->row();
-		$mobile=$appointment_data->appointment_mobile;
+		// Fallback: If aid still missing, find user's latest booking
+		if (!$aid && $userId) {
+			$latest = $this->db->where('user_id', $userId)->order_by('appointment_id', 'DESC')->get('appointment', 1)->row();
+			if ($latest) {
+				$aid = $latest->appointment_id;
+			}
+		}
 
-		$msg="Your Appointment booked successfully! Appointment# $aid
-			Please Pay the Fee Rs. $ordertotal at Counter,  Request# $OrderId
-			https://www.upchar.info";
-			sendsms($msg,$mobile);
+		if (!$order && $aid) {
+			$order = $this->db->where('ITEM_ID', $aid)->order_by('ID', 'DESC')->get('sm_order')->row();
+			if ($order && empty($OrderId)) {
+				$OrderId = $order->ORDER_ID;
+			}
+		}
 
-		$updatedata=array('PAYMENT_STATUS'=>'COC');
-		$this->db->where('ORDER_ID',$OrderId);
-		$this->db->update('sm_order',$updatedata);
+		if (!$aid) {
+			$this->session->set_flashdata('flashmsg', '<div class="alert alert-warning">No active appointment booking found.</div>');
+			$targetUrl = base_url('myappointments');
+			if (headers_sent()) {
+				echo "<script>window.location.href=" . json_encode($targetUrl) . ";</script>";
+				exit;
+			} else {
+				redirect('myappointments');
+				return;
+			}
+		}
 
-		$updateuserdata=array('checkout_id'=>'0','payment_status'=>'UNPAID','payment_mode'=>'COC','status'=>'1');
-		$this->db->where('appointment_id',$aid);
-		$this->db->update('appointment',$updateuserdata);
+		if (!$OrderId) {
+			$OrderId = 'UPCH-APPT-' . $aid;
+		}
+
+		$appointment_data = $this->db->where(array('appointment_id' => $aid))->get('appointment')->row();
+		if (!$appointment_data) {
+			$targetUrl = base_url('myappointments');
+			if (headers_sent()) {
+				echo "<script>window.location.href=" . json_encode($targetUrl) . ";</script>";
+				exit;
+			} else {
+				redirect('myappointments');
+				return;
+			}
+		}
+
+		$ordertotal = (!empty($order) && isset($order->TOTAL)) ? $order->TOTAL : ((!empty($appointment_data->fee)) ? $appointment_data->fee : (!empty($gatewayData['Amount']) ? $gatewayData['Amount'] : 0.00));
+		$mobile = !empty($appointment_data->appointment_mobile) ? $appointment_data->appointment_mobile : '';
+
+		// Ensure sm_order has record without invalid column names
+		if ($order) {
+			$this->db->where('ID', $order->ID)->update('sm_order', array(
+				'PAYMENT_STATUS' => 'REQUESTED',
+				'REMARK'         => 'Cash on Counter (COC)'
+			));
+		} else {
+			$this->db->insert('sm_order', array(
+				'ORDER_ID'       => $OrderId,
+				'USER_ID'        => (!empty($appointment_data->user_id)) ? $appointment_data->user_id : $userId,
+				'USER_TYPE'      => 'U',
+				'ITEM_TYPE'      => 'A',
+				'ITEM_ID'        => $aid,
+				'QTY'            => 1,
+				'TOTAL'          => $ordertotal,
+				'PAYMENT_STATUS' => 'REQUESTED',
+				'DATE'           => date('Y-m-d'),
+				'TIME'           => date('H:i:s'),
+				'REMARK'         => 'Cash on Counter (COC)'
+			));
+		}
+
+		// Update appointment to COC / UNPAID
+		$updateuserdata = array('checkout_id' => '0', 'payment_status' => 'UNPAID', 'payment_mode' => 'COC', 'status' => '1');
+		$this->db->where('appointment_id', $aid);
+		$this->db->update('appointment', $updateuserdata);
 
 		// Record in Double-Entry Financial Ledger (Escrow)
-		$payee_id = (!empty($appointment_data->doctor_id)) ? $appointment_data->doctor_id : ((!empty($appointment_data->institute_id)) ? $appointment_data->institute_id : 1);
-		$payee_type = (!empty($appointment_data->doctor_id)) ? 'DOCTOR' : 'HOSPITAL';
-		$patient_uid = (!empty($appointment_data->user_id)) ? $appointment_data->user_id : $this->session->userdata('userid');
-		$this->Financial_Model->record_transaction($OrderId, 'PATIENT', $patient_uid, $payee_type, $payee_id, $ordertotal, 'COD');
-			
-		$user	=	$this->User_Model->get_appointment_details($aid);
-		$this->load->library('azad_lib');
-		/*Admin Email Start */
-		$body="Hello upchar <BR> You have new booking  by ".$user['appointment_name']."  to ".$user['name']." for ".$user['fname'].", <BR>Timing - ".$user['from_timing']." to ".$user['to_timing']." ,Date - ".$user['appointment_date']." ,<BR>fee - ".$user['fee']." paid ".$user['payment_mode']." ,appointment no - ".$user['appointment_id'].".<BR>Thank You  <BR>Email: info@upchar.info ";
-		$this->azad_lib->sendMail('info@upchar.info','New Appointment Booking',$body);
-		/*Admin Email End */
-		
-		/*User Email Start */
-		if(!empty($user['appointment_email']))
-		{
-			$body=" Dear ".$user['appointment_name']."<BR>
-					Thank you for using upchar servies.<BR>
-					Your appointment no is ".$user['appointment_id'].",".$user['name']." for ".$user['fname'].",<BR>Timing - ".$user['from_timing']." to ".$user['to_timing']." ,Date - ".$user['appointment_date'].",fee - ".$user['fee']." paid ".$user['payment_mode'].".<BR>
-					If you want to confirm your Priority appointment  paid online by your account.<BR>
-					Feel free to call any time on 8448449603 to our customer care will help you.<BR>
-					Thank You  <BR>Email: info@upchar.info <BR>WWW.UPCHAR.INFO";
-			$this->azad_lib->sendMail($user['appointment_email'],'Thanks for book appointment ',$body);
+		if (isset($this->Financial_Model)) {
+			$payee_id = (!empty($appointment_data->doctor_id)) ? $appointment_data->doctor_id : ((!empty($appointment_data->institute_id)) ? $appointment_data->institute_id : 1);
+			$payee_type = (!empty($appointment_data->doctor_id)) ? 'DOCTOR' : 'HOSPITAL';
+			$patient_uid = (!empty($appointment_data->user_id)) ? $appointment_data->user_id : $userId;
+			$this->Financial_Model->record_transaction($OrderId, 'PATIENT', $patient_uid, $payee_type, $payee_id, $ordertotal, 'COD');
 		}
-		/*User Email End */
-		
-		/*Doctor  Email Start */
-		$body=" Dear dr ".$user['fname']."<BR>
-				You have new appointment  in ".$user['name'].", Patient name ".$user['appointment_name']." appointment No ".$user['appointment_id']." date of booking ".$user['book_date']." and date of appointment ".$user['appointment_date'].".<BR>
-				Thank your for Beining partner with upchar on e place of healthcare.<BR>
 
-				Feel free to contact if any problem will happen with upchar.<BR>
-				Thank you<BR>
-				Upchar<BR>
-				8448440603<BR>
-				partner@upchar.info<BR>";
-		$this->azad_lib->sendMail($user['dr_email'],'Upchar Appointment Booking',$body);
-		/*Doctor Email End */
-		
+		// Send SMS Confirmation
+		if (!empty($mobile) && function_exists('sendsms')) {
+			$msg = "Your Appointment booked successfully! Appointment# $aid. Please Pay the Fee Rs. $ordertotal at Counter, Request# $OrderId https://www.upchar.info";
+			@sendsms($msg, $mobile);
+		}
+
+		// Send Email Notifications
+		$user = $this->User_Model->get_appointment_details($aid);
+		if (!empty($user) && is_array($user)) {
+			$this->load->library('azad_lib');
+			$pt_name = !empty($user['appointment_name']) ? $user['appointment_name'] : 'Patient';
+			$dr_name = !empty($user['fname']) ? $user['fname'] : 'Doctor';
+			$inst_name = !empty($user['name']) ? $user['name'] : 'Clinic/Hospital';
+			$timing = (!empty($user['from_timing']) && !empty($user['to_timing'])) ? ($user['from_timing'] . ' to ' . $user['to_timing']) : 'Consultation Hours';
+			$appt_date = !empty($user['appointment_date']) ? $user['appointment_date'] : date('d-m-Y');
+			$fee_val = !empty($user['fee']) ? $user['fee'] : $ordertotal;
+			$pmode = !empty($user['payment_mode']) ? $user['payment_mode'] : 'COC';
+
+			/* Admin Email */
+			$body = "Hello Upchar,<br>You have a new booking by $pt_name for Dr. $dr_name at $inst_name.<br>Timing: $timing, Date: $appt_date<br>Fee: Rs. $fee_val ($pmode), Appointment No: $aid.<br>Thank You.<br>Email: info@upchar.info";
+			@$this->azad_lib->sendMail('info@upchar.info', 'New Appointment Booking', $body);
+
+			/* User Email */
+			if (!empty($user['appointment_email'])) {
+				$body = "Dear $pt_name,<br>Thank you for using Upchar services.<br>Your appointment no is $aid for Dr. $dr_name at $inst_name.<br>Timing: $timing, Date: $appt_date, Fee: Rs. $fee_val ($pmode).<br>Please pay the fee at the counter upon arrival.<br>Feel free to call 8448449603 for assistance.<br>Thank You.<br>Email: info@upchar.info<br>www.upchar.info";
+				@$this->azad_lib->sendMail($user['appointment_email'], 'Appointment Booking Confirmation', $body);
+			}
+
+			/* Doctor Email */
+			if (!empty($user['dr_email'])) {
+				$body = "Dear Dr. $dr_name,<br>You have a new appointment at $inst_name.<br>Patient: $pt_name, Appointment No: $aid.<br>Date: $appt_date, Timing: $timing.<br>Thank you for partnering with Upchar.<br>Email: partner@upchar.info";
+				@$this->azad_lib->sendMail($user['dr_email'], 'Upchar Appointment Booking', $body);
+			}
+		}
+
 		$this->session->unset_userdata('SecurePay');
 		$this->session->unset_userdata('AppointmentCheckout');
-		$this->session->set_flashdata('pgresponse', 'Thank you! The Appointment detail has been sent to the registered  mobile no.');
-		redirect('/myappointents');
+		$this->session->set_flashdata('pgresponse', 'Thank you! The appointment detail has been sent to your registered mobile no. Please pay the fee at the clinic counter.');
+
+		$targetUrl = base_url('myappointments');
+		if (headers_sent()) {
+			echo "<script>window.location.href=" . json_encode($targetUrl) . ";</script>";
+			echo "<noscript><meta http-equiv='refresh' content='0;url=" . htmlspecialchars($targetUrl) . "'></noscript>";
+			exit;
+		} else {
+			redirect('myappointments');
+		}
 	}
-	
+
 	public function processordercod_hospital()
 	{	
-		$gatewayData=$this->session->userdata('SecurePay');
-		$AppointmentCheckout=$this->session->userdata('AppointmentCheckout');
-		$OrderId= $gatewayData['Order_Id'];
-		$order=$this->db->where(array('ORDER_ID'=>$OrderId))->get('sm_order')->row();
-		$aid=$order->ITEM_ID;
-		$paystatus=$order->PAYMENT_STATUS; //cross check
-		$ordertotal=$order->TOTAL;// compare total with the amount recieved
+		$gatewayData = $this->session->userdata('SecurePay');
+		$AppointmentCheckout = $this->session->userdata('AppointmentCheckout') ?: $this->input->get_post('aid');
+		$userId = $this->session->userdata('USERID') ?: $this->session->userdata('userid') ?: $this->session->userdata('WEB_UID') ?: $this->session->userdata('user_id');
 
-		$appointment_data=$this->db->where(array('appointment_id'=>$aid))->get('appointment')->row();
-		$mobile=$appointment_data->appointment_mobile;
-
-		$msg="Your Appointment booked successfully! Appointment# $aid
-			Please Pay the Fee Rs. $ordertotal at Counter,  Request# $OrderId
-			WWW.UPCHAR.INFO";
-			sendsms($msg,$mobile);
-
-		$updatedata=array('PAYMENT_STATUS'=>'COC');
-		$this->db->where('ORDER_ID',$OrderId);
-		$this->db->update('sm_order',$updatedata);
-
-		$updateuserdata=array('checkout_id'=>'0','payment_status'=>'UNPAID','payment_mode'=>'COC','status'=>'1');
-		$this->db->where('appointment_id',$aid);
-		$this->db->update('appointment',$updateuserdata);
-
-		// Record in Double-Entry Financial Ledger (Escrow)
-		$payee_id = (!empty($appointment_data->doctor_id)) ? $appointment_data->doctor_id : ((!empty($appointment_data->institute_id)) ? $appointment_data->institute_id : 1);
-		$payee_type = (!empty($appointment_data->doctor_id)) ? 'DOCTOR' : 'HOSPITAL';
-		$patient_uid = (!empty($appointment_data->user_id)) ? $appointment_data->user_id : $this->session->userdata('userid');
-		$this->Financial_Model->record_transaction($OrderId, 'PATIENT', $patient_uid, $payee_type, $payee_id, $ordertotal, 'COD_HOSPITAL');
-			
-		$user	=	$this->User_Model->get_appointment_details($aid);
-		$this->load->library('azad_lib');
-		/*Admin Email Start */
-		$body="Hello upchar <BR> You have new booking  by ".$user['appointment_name']."  to ".$user['name']." for ".$user['fname'].", <BR>Timing - ".$user['from_timing']." to ".$user['to_timing']." ,Date - ".$user['appointment_date']." ,<BR>fee - ".$user['fee']." paid ".$user['payment_mode']." ,appointment no - ".$user['appointment_id'].".<BR>Thank You  <BR>Email: info@upchar.info ";
-		$this->azad_lib->sendMail('info@upchar.info','New Appointment Booking',$body);
-		/*Admin Email End */
-		
-		/*User Email Start */
-		if(!empty($user['appointment_email']))
-		{
-			$body=" Dear ".$user['appointment_name']."<BR>
-					Thank you for using upchar servies.<BR>
-					Your appointment no is ".$user['appointment_id'].",".$user['name']." for ".$user['fname'].",<BR>Timing - ".$user['from_timing']." to ".$user['to_timing']." ,Date - ".$user['appointment_date'].",fee - ".$user['fee']." paid ".$user['payment_mode'].".<BR>
-					If you want to confirm your Priority appointment  paid online by your account.<BR>
-					Feel free to call any time on 8448449603 to our customer care will help you.<BR>
-					Thank You  <BR>Email: info@upchar.info <BR>WWW.UPCHAR.INFO";
-			$this->azad_lib->sendMail($user['appointment_email'],'Thanks for book appointment ',$body);
+		$OrderId = !empty($gatewayData['Order_Id']) ? $gatewayData['Order_Id'] : null;
+		$order = null;
+		if ($OrderId) {
+			$order = $this->db->where(array('ORDER_ID' => $OrderId))->get('sm_order')->row();
 		}
-		/*User Email End */
-		
-		/*Doctor  Email Start */
-		$body=" Dear dr ".$user['fname']."<BR>
-				You have new appointment  in ".$user['name'].", Patient name ".$user['appointment_name']." appointment No ".$user['appointment_id']." date of booking ".$user['book_date']." and date of appointment ".$user['appointment_date'].".<BR>
-				Thank your for Beining partner with upchar on e place of healthcare.<BR>
 
-				Feel free to contact if any problem will happen with upchar.<BR>
-				Thank you<BR>
-				Upchar<BR>
-				8448440603<BR>
-				partner@upchar.info<BR>";
-		$this->azad_lib->sendMail($user['dr_email'],'Upchar Appointment Booking',$body);
-		/*Doctor Email End */
-		
+		$aid = (!empty($order) && !empty($order->ITEM_ID)) ? $order->ITEM_ID : $AppointmentCheckout;
+
+		if (!$aid && $userId) {
+			$latest = $this->db->where('user_id', $userId)->order_by('appointment_id', 'DESC')->get('appointment', 1)->row();
+			if ($latest) {
+				$aid = $latest->appointment_id;
+			}
+		}
+
+		if (!$order && $aid) {
+			$order = $this->db->where('ITEM_ID', $aid)->order_by('ID', 'DESC')->get('sm_order')->row();
+			if ($order && empty($OrderId)) {
+				$OrderId = $order->ORDER_ID;
+			}
+		}
+
+		if (!$aid) {
+			$this->session->set_flashdata('flashmsg', '<div class="alert alert-warning">No active appointment booking found.</div>');
+			$targetUrl = base_url('hospitalpanel/manageappointment');
+			if (headers_sent()) {
+				echo "<script>window.location.href=" . json_encode($targetUrl) . ";</script>";
+				exit;
+			} else {
+				redirect('hospitalpanel/manageappointment');
+				return;
+			}
+		}
+
+		if (!$OrderId) {
+			$OrderId = 'UPCH-APPT-' . $aid;
+		}
+
+		$appointment_data = $this->db->where(array('appointment_id' => $aid))->get('appointment')->row();
+		if (!$appointment_data) {
+			$targetUrl = base_url('hospitalpanel/manageappointment');
+			if (headers_sent()) {
+				echo "<script>window.location.href=" . json_encode($targetUrl) . ";</script>";
+				exit;
+			} else {
+				redirect('hospitalpanel/manageappointment');
+				return;
+			}
+		}
+
+		$ordertotal = (!empty($order) && isset($order->TOTAL)) ? $order->TOTAL : ((!empty($appointment_data->fee)) ? $appointment_data->fee : (!empty($gatewayData['Amount']) ? $gatewayData['Amount'] : 0.00));
+		$mobile = !empty($appointment_data->appointment_mobile) ? $appointment_data->appointment_mobile : '';
+
+		// Ensure sm_order has record without invalid column names
+		if ($order) {
+			$this->db->where('ID', $order->ID)->update('sm_order', array(
+				'PAYMENT_STATUS' => 'REQUESTED',
+				'REMARK'         => 'Cash on Counter (COC)'
+			));
+		} else {
+			$this->db->insert('sm_order', array(
+				'ORDER_ID'       => $OrderId,
+				'USER_ID'        => (!empty($appointment_data->user_id)) ? $appointment_data->user_id : $userId,
+				'USER_TYPE'      => 'U',
+				'ITEM_TYPE'      => 'A',
+				'ITEM_ID'        => $aid,
+				'QTY'            => 1,
+				'TOTAL'          => $ordertotal,
+				'PAYMENT_STATUS' => 'REQUESTED',
+				'DATE'           => date('Y-m-d'),
+				'TIME'           => date('H:i:s'),
+				'REMARK'         => 'Cash on Counter (COC)'
+			));
+		}
+
+		$updateuserdata = array('checkout_id' => '0', 'payment_status' => 'UNPAID', 'payment_mode' => 'COC', 'status' => '1');
+		$this->db->where('appointment_id', $aid);
+		$this->db->update('appointment', $updateuserdata);
+
+		if (isset($this->Financial_Model)) {
+			$payee_id = (!empty($appointment_data->doctor_id)) ? $appointment_data->doctor_id : ((!empty($appointment_data->institute_id)) ? $appointment_data->institute_id : 1);
+			$payee_type = (!empty($appointment_data->doctor_id)) ? 'DOCTOR' : 'HOSPITAL';
+			$patient_uid = (!empty($appointment_data->user_id)) ? $appointment_data->user_id : $userId;
+			$this->Financial_Model->record_transaction($OrderId, 'PATIENT', $patient_uid, $payee_type, $payee_id, $ordertotal, 'COD_HOSPITAL');
+		}
+
+		if (!empty($mobile) && function_exists('sendsms')) {
+			$msg = "Your Appointment booked successfully! Appointment# $aid. Please Pay the Fee Rs. $ordertotal at Counter, Request# $OrderId WWW.UPCHAR.INFO";
+			@sendsms($msg, $mobile);
+		}
+
+		$user = $this->User_Model->get_appointment_details($aid);
+		if (!empty($user) && is_array($user)) {
+			$this->load->library('azad_lib');
+			$pt_name = !empty($user['appointment_name']) ? $user['appointment_name'] : 'Patient';
+			$dr_name = !empty($user['fname']) ? $user['fname'] : 'Doctor';
+			$inst_name = !empty($user['name']) ? $user['name'] : 'Hospital';
+			$timing = (!empty($user['from_timing']) && !empty($user['to_timing'])) ? ($user['from_timing'] . ' to ' . $user['to_timing']) : 'Consultation Hours';
+			$appt_date = !empty($user['appointment_date']) ? $user['appointment_date'] : date('d-m-Y');
+			$fee_val = !empty($user['fee']) ? $user['fee'] : $ordertotal;
+			$pmode = !empty($user['payment_mode']) ? $user['payment_mode'] : 'COC';
+
+			$body = "Hello Upchar,<br>You have a new booking by $pt_name for Dr. $dr_name at $inst_name.<br>Timing: $timing, Date: $appt_date<br>Fee: Rs. $fee_val ($pmode), Appointment No: $aid.<br>Thank You.<br>Email: info@upchar.info";
+			@$this->azad_lib->sendMail('info@upchar.info', 'New Appointment Booking', $body);
+
+			if (!empty($user['appointment_email'])) {
+				$body = "Dear $pt_name,<br>Thank you for using Upchar services.<br>Your appointment no is $aid for Dr. $dr_name at $inst_name.<br>Timing: $timing, Date: $appt_date, Fee: Rs. $fee_val ($pmode).<br>Thank You.<br>Email: info@upchar.info<br>www.upchar.info";
+				@$this->azad_lib->sendMail($user['appointment_email'], 'Appointment Booking Confirmation', $body);
+			}
+
+			if (!empty($user['dr_email'])) {
+				$body = "Dear Dr. $dr_name,<br>You have a new appointment at $inst_name.<br>Patient: $pt_name, Appointment No: $aid.<br>Date: $appt_date, Timing: $timing.<br>Thank you.<br>Email: partner@upchar.info";
+				@$this->azad_lib->sendMail($user['dr_email'], 'Upchar Appointment Booking', $body);
+			}
+		}
+
 		$this->session->unset_userdata('SecurePay');
 		$this->session->unset_userdata('AppointmentCheckout');
-		$this->session->set_flashdata('pgresponse', 'Thank you! The Appointment detail has been sent to the registered  mobile no.');
-		redirect('/hospitalpanel/manageappointment');
+		$this->session->set_flashdata('pgresponse', 'Thank you! The Appointment detail has been sent to the registered mobile no.');
+
+		$targetUrl = base_url('hospitalpanel/manageappointment');
+		if (headers_sent()) {
+			echo "<script>window.location.href=" . json_encode($targetUrl) . ";</script>";
+			echo "<noscript><meta http-equiv='refresh' content='0;url=" . htmlspecialchars($targetUrl) . "'></noscript>";
+			exit;
+		} else {
+			redirect('hospitalpanel/manageappointment');
+		}
 	}
+
 	public function processorder()
 		{
 

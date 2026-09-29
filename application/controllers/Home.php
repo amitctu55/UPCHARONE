@@ -491,8 +491,45 @@ class Home extends CI_Controller
 	public function manageappointment()
 	{
 		$user_id = $this->session->userdata('userid') ?: $this->session->userdata('user_id') ?: $this->session->userdata('USERID');
+
+		// If session not active, attempt SSO session restore via cross-platform SSO cookie
 		if (!$user_id) {
-			redirect('login');
+			$this->load->helper('cookie');
+			$ssoCookie = $this->input->cookie('upchar_sso_token');
+			if ($ssoCookie) {
+				$this->load->model('Auth_model');
+				$payload = $this->Auth_model->verify_sso_token($ssoCookie);
+				if ($payload && !empty($payload['sub'])) {
+					$masterUser = $this->Auth_model->find_master_user($payload['sub']);
+					if ($masterUser) {
+						$ciUser = null;
+						if (!empty($masterUser['email'])) {
+							$ciUser = $this->db->get_where('userlogin', ['EMAIL' => $masterUser['email']])->row_array();
+						}
+						if (!$ciUser && !empty($masterUser['mobile'])) {
+							$ciUser = $this->db->get_where('userlogin', ['MOBILE' => $masterUser['mobile']])->row_array();
+						}
+						$sessionUid = $ciUser ? $ciUser['USERID'] : $masterUser['id'];
+						$this->session->set_userdata([
+							'USERID'   => $sessionUid,
+							'userid'   => $sessionUid,
+							'WEB_UID'  => $sessionUid,
+							'username' => $masterUser['name'],
+							'name'     => $masterUser['name'],
+							'email'    => $masterUser['email'],
+							'mobile'   => $masterUser['mobile'],
+							'uuid'     => $masterUser['uuid'],
+							'status'   => $masterUser['status'],
+							'logged_in'=> true,
+						]);
+						$user_id = $sessionUid;
+					}
+				}
+			}
+		}
+
+		if (!$user_id) {
+			redirect('login?redirect=' . urlencode('myappointments'));
 			return;
 		}
 
@@ -500,10 +537,39 @@ class Home extends CI_Controller
 		$this->load->model('Wallet_model');
 		$this->load->model('Referral_model');
 		$this->load->model('Payment_model');
+		$this->load->model('Ambulance_model');
 
 		$user_row = $this->db->get_where('userlogin', array('USERID' => $user_id))->row_array();
+		if (!$user_row) {
+			$uEmail = $this->session->userdata('email');
+			$uMobile = $this->session->userdata('mobile');
+			if ($uEmail) {
+				$user_row = $this->db->get_where('userlogin', array('EMAIL' => $uEmail))->row_array();
+			}
+			if (!$user_row && $uMobile) {
+				$user_row = $this->db->get_where('userlogin', array('MOBILE' => $uMobile))->row_array();
+			}
+			if (!$user_row) {
+				$uMaster = $this->db->get_where('upchar_users', array('id' => $user_id))->row_array();
+				if ($uMaster) {
+					$names = explode(' ', $uMaster['name'] ?? '', 2);
+					$user_row = [
+						'USERID'   => $uMaster['id'],
+						'FNAME'    => $names[0] ?? '',
+						'LNAME'    => $names[1] ?? '',
+						'EMAIL'    => $uMaster['email'] ?? '',
+						'MOBILE'   => $uMaster['mobile'] ?? '',
+						'GENDER'   => '',
+						'DOB'      => '',
+						'BGROUP'   => '',
+					];
+				}
+			}
+		}
 		$user_mobile = $user_row ? $user_row['MOBILE'] : '';
 
+		$data['csrf_token_name']   = $this->security->get_csrf_token_name();
+		$data['csrf_hash']         = $this->security->get_csrf_hash();
 		$data['user_data']         = $user_row;
 		$data['appointments_data'] = $this->Appointment_model->get_user_appointments($user_id, $user_mobile);
 		$data['wallet']            = $this->Wallet_model->get_or_create_wallet($user_id);
@@ -512,6 +578,14 @@ class Home extends CI_Controller
 		$data['cashback_pct']      = floatval($this->Wallet_model->get_setting('cashback_percentage', 5.00));
 		$data['referral_code']     = $this->Referral_model->get_or_create_code($user_id);
 		$data['payments_data']     = $this->Payment_model->get_orders_by_user($user_id, 20, 0);
+
+		// Ambulance Bookings & Emergency Fleet Data
+		$data['ambulance_bookings'] = $this->Ambulance_model->get_user_ambulance_bookings($user_id, $user_mobile);
+		$data['ambulance_count']    = count($data['ambulance_bookings']);
+		$data['active_ambulance']   = $this->Ambulance_model->get_active_or_recent_booking($user_id, $user_mobile);
+		$data['ambulance_types']    = $this->Ambulance_model->get_categories();
+		$data['hospitals_list']     = $this->Ambulance_model->get_hospitals_list(40);
+		$data['provider_count']     = $this->Ambulance_model->get_provider_count();
 
 		// Cancellation policy configuration
 		$data['cancellation_policy_mode']        = $this->Wallet_model->get_setting('cancellation_policy_mode', 'TIERED');
@@ -2889,5 +2963,32 @@ class Home extends CI_Controller
 		$this->load->view('mytest', $data);
 	}
 
-   }
+   
+	/**
+	 * Patient-Facing Teleconsultation Directory (/teleconsult)
+	 * Only displays verified doctors who have explicitly enabled is_video_consult_enabled = 1
+	 */
+	public function teleconsult()
+	{
+		$specialty = trim($this->input->get('specialty') ?? ($this->input->get('speciality') ?? ''));
+		$keyword = trim($this->input->get('keyword') ?? ($this->input->get('query') ?? ''));
+		$city = trim($this->input->get('city') ?? ($this->input->get('location') ?? ''));
 
+		$filters = array(
+			'specialty' => $specialty,
+			'keyword'   => $keyword,
+			'city'      => $city
+		);
+
+		$data['doctors'] = $this->Doctor_Model->get_available_teleconsult_doctors($filters, 24, 0);
+		$data['total_available'] = $this->Doctor_Model->count_teleconsult_doctors($filters);
+		$data['specialization'] = $this->db->order_by('name', 'asc')->where('status', '1')->get('master_specialization')->result();
+		$data['cities'] = $this->db->order_by('name', 'asc')->where('status', '1')->get('master_city')->result();
+		$data['active_specialty'] = $specialty;
+		$data['active_keyword'] = $keyword;
+		$data['active_city'] = $city;
+
+		$this->load->view('teleconsult', $data);
+	}
+
+}

@@ -13,8 +13,14 @@ class Doctorpanel extends CI_Controller
 		 if(!$this->session->userdata('druserid')){
 			 $page=$this->uri->segment('1');
 			 $excep_array=array('doctor-aindex','doctor-login','doctor-signup','doctor-verifymobile','doctor-forgotpassword','doctor-verifymobileforgot');
-			 if (!in_array($page, $excep_array))
+			 if (!in_array($page, $excep_array)) {
+				if ($this->input->is_ajax_request() || (isset($_SERVER['HTTP_ACCEPT']) && strpos($_SERVER['HTTP_ACCEPT'], 'application/json') !== false)) {
+					header('Content-Type: application/json');
+					echo json_encode(array('status' => 'error', 'message' => 'Your doctor session has expired. Please log in again.'));
+					exit;
+				}
 				redirect('doctor-login');
+			}
 		 }else{
 			 $druserid = $this->session->userdata('druserid');
 			 $row = $this->db->where('user_id', $druserid)->or_where('id', $druserid)->get('profile_dr')->row();
@@ -465,6 +471,9 @@ class Doctorpanel extends CI_Controller
 			->join('hospital', 'hospital.id=dr_practice.institution_id')
 			->get_where('dr_practice', array('dr_practice.user_id' => $userid, 'dr_practice.type' => 'H'))
 			->result();
+
+		$doc_profile = $this->db->where('id', $userid)->or_where('user_id', $this->session->userdata('druserid'))->get('profile_dr')->row();
+		$data['is_video_consult_enabled'] = ($doc_profile && isset($doc_profile->is_video_consult_enabled)) ? (int)$doc_profile->is_video_consult_enabled : 0;
 
 		$this->load->view('doctorpanel/managepractice', $data);
 	}
@@ -1363,4 +1372,38 @@ public function gallery()
 		$data['existing_rx'] = $this->db->get_where('prescriptions', array('appointment_id' => $aid))->row();
 		$this->load->view('doctorpanel/prescription', $data);
 	}
+
+	/**
+	 * AJAX Endpoint: Toggle / Update Video Consultation Availability
+	 */
+	public function update_video_consult_status()
+	{
+		header('Content-Type: application/json');
+
+		$druserid = $this->session->userdata('druserid');
+		if (!$druserid) {
+			echo json_encode(array('status' => 'error', 'message' => 'Unauthorized. Please login again.'));
+			return;
+		}
+
+		$status = $this->input->post('is_video_consult_enabled');
+		$status_val = ($status === '1' || $status == 1 || $status === 'true' || $status === true) ? 1 : 0;
+
+		$doctor_id = $this->did ?: $druserid;
+		$updated = $this->Doctor_Model->update_video_consult_status($doctor_id, $status_val);
+
+		if ($updated) {
+			$msg = ($status_val == 1)
+				? 'Video consultation is now ACTIVE. Patients can discover and book online video calls with you.'
+				: 'Video consultation has been PAUSED. You are temporarily hidden from the teleconsultation directory.';
+			echo json_encode(array(
+				'status' => 'success',
+				'is_video_consult_enabled' => $status_val,
+				'message' => $msg
+			));
+		} else {
+			echo json_encode(array('status' => 'error', 'message' => 'Failed to update video consultation status in database.'));
+		}
+	}
+
 }

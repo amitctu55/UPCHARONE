@@ -396,9 +396,11 @@ body {
     color: #ffffff;
 }
 
-.btn-package-add.in-cart {
-    background: #0f172a;
-    color: #5eead4;
+.btn-package-add.in-cart,
+.btn-cart-toggle.in-cart {
+    background: #0f172a !important;
+    color: #5eead4 !important;
+    border-color: #0f172a !important;
 }
 
 /* ---------------------------------------------------------
@@ -2807,6 +2809,139 @@ $(document).ready(function() {
         $('#cartOverlay').fadeIn(200);
         $('#cartDrawer').css('right', '0');
     <?php endif; ?>
+
+        // Diagnostics Add/Remove Cart Handler
+    $(document).on('click', '.btn-cart-toggle', function(e) {
+        e.preventDefault();
+        var btn = $(this);
+        var testId = btn.data('test-id');
+        if (!testId) return;
+
+        var isAlreadyInCart = btn.hasClass('in-cart');
+        var originalHtml = btn.html();
+        btn.prop('disabled', true);
+
+        if (isAlreadyInCart) {
+            btn.html('<i class="fas fa-spinner fa-spin"></i>');
+            $.post('<?=base_url("mytest/remove_from_cart");?>', { test_id: testId }, function(res) {
+                btn.prop('disabled', false);
+                if (res.status === 'success') {
+                    $('.btn-cart-toggle[data-test-id="' + testId + '"]')
+                        .removeClass('in-cart')
+                        .html('<i class="fas fa-plus"></i> Add Test');
+                    updateCartUI(res);
+                    refreshCartDrawer();
+                } else {
+                    btn.html(originalHtml);
+                    alert(res.message || 'Error removing test.');
+                }
+            }, 'json').fail(function() {
+                btn.prop('disabled', false).html(originalHtml);
+            });
+        } else {
+            btn.html('<i class="fas fa-spinner fa-spin"></i> Adding...');
+            $.post('<?=base_url("mytest/add_to_cart");?>', { test_id: testId }, function(res) {
+                btn.prop('disabled', false);
+                if (res.status === 'success') {
+                    $('.btn-cart-toggle[data-test-id="' + testId + '"]')
+                        .addClass('in-cart')
+                        .html('<i class="fas fa-check"></i> In Cart');
+                    updateCartUI(res);
+                    refreshCartDrawer();
+                    // Open drawer for instant feedback
+                    $('#cartOverlay').fadeIn(200);
+                    $('#cartDrawer').css('right', '0');
+                } else {
+                    btn.html(originalHtml);
+                    alert(res.message || 'Could not add test to cart.');
+                }
+            }, 'json').fail(function() {
+                btn.prop('disabled', false).html(originalHtml);
+                alert('Network error while adding test.');
+            });
+        }
+    });
+
+    // Instant Quick Book Trigger
+    $(document).on('click', '.btn-open-quick-book', function(e) {
+        e.preventDefault();
+        var btn = $(this);
+        var testId   = btn.data('test-id');
+        var testName = btn.data('test-name');
+        var labId    = btn.data('lab-id');
+        var labName  = btn.data('lab-name');
+        var amount   = btn.data('amount');
+        openQuickBookModal(testId, testName, labId, labName, amount);
+    });
+
+    // Floating Cart Bar / Pill Click -> Open Cart Drawer
+    $(document).on('click', '#floatingCartBtn, .btn-open-cart-drawer', function(e) {
+        e.preventDefault();
+        refreshCartDrawer();
+        $('#cartOverlay').fadeIn(200);
+        $('#cartDrawer').css('right', '0');
+    });
+
+    // Close Cart Drawer
+    $(document).on('click', '#btnCloseDrawer, #cartOverlay', function(e) {
+        e.preventDefault();
+        $('#cartDrawer').css('right', '-420px');
+        $('#cartOverlay').fadeOut(200);
+    });
+
+    // Remove Test from Drawer
+    $(document).on('click', '.btn-drawer-remove', function(e) {
+        e.preventDefault();
+        var btn = $(this);
+        var testId = btn.data('test-id');
+        btn.prop('disabled', true).text('Removing...');
+        $.post('<?=base_url("mytest/remove_from_cart");?>', { test_id: testId }, function(res) {
+            if (res.status === 'success') {
+                $('.btn-cart-toggle[data-test-id="' + testId + '"]')
+                    .removeClass('in-cart')
+                    .html('<i class="fas fa-plus"></i> Add Test');
+                updateCartUI(res);
+                refreshCartDrawer();
+            }
+        }, 'json');
+    });
+
+    // 1-Step Quick Book Form Submit
+    $('#instantQuickBookForm').on('submit', function(e) {
+        e.preventDefault();
+        var form = $(this);
+        var btn = $('#btnSubmitQuickBook');
+        var msgBox = $('#qbMsgBox');
+
+        btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Booking...');
+        msgBox.hide();
+
+        $.ajax({
+            url: '<?=base_url("mytest/quick_book");?>',
+            type: 'POST',
+            data: form.serialize(),
+            dataType: 'json',
+            success: function(res) {
+                if (res.status === 'success') {
+                    btn.html('<i class="fas fa-check"></i> Booked!');
+                    msgBox.css({'display': 'block', 'background': '#ecfdf5', 'color': '#065f46', 'border': '1px solid #a7f3d0'})
+                          .html('<i class="fas fa-check-circle"></i> ' + (res.message || 'Booking successful! Redirecting...'));
+                    setTimeout(function() {
+                        window.location.href = res.redirect_url;
+                    }, 800);
+                } else {
+                    btn.prop('disabled', false).html('<i class="fas fa-check"></i> Confirm Booking');
+                    msgBox.css({'display': 'block', 'background': '#fef2f2', 'color': '#991b1b', 'border': '1px solid #fecaca'})
+                          .html('<i class="fas fa-exclamation-triangle"></i> ' + (res.message || 'Error creating booking.'));
+                }
+            },
+            error: function() {
+                btn.prop('disabled', false).html('<i class="fas fa-check"></i> Confirm Booking');
+                msgBox.css({'display': 'block', 'background': '#fef2f2', 'color': '#991b1b', 'border': '1px solid #fecaca'})
+                      .html('<i class="fas fa-exclamation-triangle"></i> Server error. Please try again.');
+            }
+        });
+    });
 
     // Remove item from in-page checkout table
     $(document).on('click', '.btn-remove-checkout-item', function(e) {

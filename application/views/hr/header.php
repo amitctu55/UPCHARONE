@@ -212,6 +212,23 @@
                     <i class="fa fa-phone-square" style="color: #34d399;"></i> Activity &amp; Follow-ups
                 </a>
 
+                                <div class="hr-nav-heading">Ambulance Network</div>
+                <a href="<?=base_url('ambulance');?>" class="<?=($seg1=='ambulance' && (empty($seg2) || $seg2=='index')) ? 'active' : '';?>" target="_blank">
+                    <i class="fa fa-ambulance" style="color: #f87171;"></i> Ambulance Frontend
+                </a>
+                <a href="http://localhost/demo/upchar-ambulance/" target="_blank">
+                    <i class="fa fa-tachometer" style="color: #fb923c;"></i> Ambulance App Dashboard
+                </a>
+                <a href="http://localhost/demo/upchar-ambulance/admin/requests" target="_blank">
+                    <i class="fa fa-list" style="color: #34d399;"></i> All Bookings
+                </a>
+                <a href="http://localhost/demo/upchar-ambulance/provider" target="_blank">
+                    <i class="fa fa-car" style="color: #60a5fa;"></i> Manage Drivers
+                </a>
+                <a href="<?=base_url('ambulance/sos');?>" target="_blank">
+                    <i class="fa fa-phone" style="color: #f43f5e;"></i> SOS Booking Page
+                </a>
+
                 <div class="hr-nav-heading">Account</div>
                 <a href="<?=base_url('admin1947/login/logout');?>">
                     <i class="fa fa-sign-out" style="color: #f87171;"></i> Logout

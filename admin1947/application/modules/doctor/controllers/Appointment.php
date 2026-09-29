@@ -961,6 +961,8 @@ class Appointment extends CI_Controller
 			COALESCE(profile_dr.verified, 0) as dr_verified,
 			COALESCE(ms.name, 'General Consultation') as dr_speciality,
 			COALESCE(hospital.name, clinic.name, 'Upchar Partner Clinic / Consultation Chamber') as facility_name,
+			COALESCE(hospital.cancellation_hours, clinic.cancellation_hours, 3) as cancellation_hours,
+			COALESCE(hospital.cancellation_policy_text, clinic.cancellation_policy_text, 'Cancellations allowed up to 3 hours prior to consultation slot.') as cancellation_policy_text,
 			COALESCE(hospital.address, clinic.address, '') as facility_address,
 			COALESCE(mc.name, hospital.city, clinic.city, '') as facility_city,
 			COALESCE(hospital.mobile, clinic.mobile, '') as facility_mobile,
@@ -1041,6 +1043,54 @@ class Appointment extends CI_Controller
 		$process_type = trim($this->input->post('process_type') ?? '');
 		$update_data = array();
 		$success_msg = "Appointment record #{$appointment_id} has been updated successfully.";
+
+		// -----------------------------------------------------------------
+		// PROCESS 0: UPDATE HOSPITAL CANCELLATION TIMING POLICY
+		// -----------------------------------------------------------------
+		if ($process_type === 'hospital_cancellation_policy') {
+			$h_hours = max(0, intval($this->input->post('cancellation_hours')));
+			$h_text  = trim($this->input->post('cancellation_policy_text') ?? '');
+			if (empty($h_text)) {
+				$h_text = "Cancellations allowed up to {$h_hours} hours prior to consultation slot.";
+			}
+
+			$inst_id = intval($current_app->institute_id);
+			$inst_type = (!empty($current_app->institution_type) && $current_app->institution_type === 'C') ? 'clinic' : 'hospital';
+
+			if ($inst_id > 0) {
+				$this->db->where('id', $inst_id)->update($inst_type, array(
+					'cancellation_hours'       => $h_hours,
+					'cancellation_policy_text' => $h_text
+				));
+			}
+
+			// If linked hospital table exists
+			if ($inst_id > 0 && $this->db->table_exists('hospital')) {
+				$this->db->where('id', $inst_id)->update('hospital', array(
+					'cancellation_hours'       => $h_hours,
+					'cancellation_policy_text' => $h_text
+				));
+			}
+
+			$success_msg = "Hospital cancellation policy updated: Patient cancellation cutoff set to {$h_hours} hour(s) before consultation.";
+			if ($is_ajax) {
+				if (ob_get_length()) { @ob_clean(); }
+				$this->output
+					->set_status_header(200)
+					->set_content_type('application/json', 'utf-8')
+					->set_output(json_encode(array(
+						'status'  => 1,
+						'message' => $success_msg,
+						'cancellation_hours' => $h_hours,
+						'cancellation_policy_text' => $h_text
+					)));
+				return;
+			}
+			$flash = '<div class="alert alert-success" style="border-radius: 6px;"><i class="fa fa-check-circle"></i> ' . htmlspecialchars($success_msg) . '</div>';
+			$this->session->set_flashdata('flashmsg', $flash);
+			redirect(base_url('doctor/appointment/data?appointment_id=' . $appointment_id));
+			return;
+		}
 
 		// -----------------------------------------------------------------
 		// PROCESS 1: UPDATE STATUS / PAYMENT

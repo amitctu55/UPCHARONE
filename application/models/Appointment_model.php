@@ -8,25 +8,70 @@ class Appointment_model extends CI_Model {
             return array();
         }
 
-        if ($user_mobile === null) {
-            $user_row = $this->db->select('MOBILE')->where('USERID', $user_id)->get('userlogin')->row();
-            $user_mobile = $user_row ? $user_row->MOBILE : '';
+        $userIds = array(intval($user_id));
+        $userEmail = '';
+
+        // Check userlogin
+        $uRow = $this->db->where('USERID', $user_id)->get('userlogin')->row();
+        if ($uRow) {
+            if ($user_mobile === null && !empty($uRow->MOBILE)) {
+                $user_mobile = $uRow->MOBILE;
+            }
+            if (!empty($uRow->EMAIL)) {
+                $userEmail = $uRow->EMAIL;
+                $mUser = $this->db->group_start()
+                                  ->where('email', $uRow->EMAIL)
+                                  ->or_where('mobile', $uRow->MOBILE)
+                                  ->group_end()
+                                  ->get('upchar_users')->row();
+                if ($mUser) {
+                    $userIds[] = intval($mUser->id);
+                }
+            }
+        } else {
+            // Check upchar_users
+            $mUser = $this->db->where('id', $user_id)->get('upchar_users')->row();
+            if ($mUser) {
+                $userIds[] = intval($mUser->id);
+                if ($user_mobile === null && !empty($mUser->mobile)) {
+                    $user_mobile = $mUser->mobile;
+                }
+                if (!empty($mUser->email)) {
+                    $userEmail = $mUser->email;
+                    $uLegacy = $this->db->group_start()
+                                        ->where('EMAIL', $mUser->email)
+                                        ->or_where('MOBILE', $mUser->mobile)
+                                        ->group_end()
+                                        ->get('userlogin')->row();
+                    if ($uLegacy) {
+                        $userIds[] = intval($uLegacy->USERID);
+                    }
+                }
+            }
         }
+
+        $userIds = array_values(array_unique(array_filter($userIds)));
 
         $this->db->select('a.*, a.appointment_name as patient_name, d.fname as doctor_fname, d.lname as doctor_lname');
         $this->db->from('appointment a');
         $this->db->join('profile_dr d', 'd.id = a.doctor_id', 'left');
 
-        // Match by user_id or patient registered mobile so no appointment is missed
+        // Match by any linked user_id, mobile, or email
         $this->db->group_start();
-        $this->db->where('a.user_id', $user_id);
+        $this->db->where_in('a.user_id', $userIds);
         if (!empty($user_mobile)) {
+            $cleanMob = substr(preg_replace('/[^0-9]/', '', $user_mobile), -10);
             $this->db->or_where('a.appointment_mobile', $user_mobile);
+            if (!empty($cleanMob)) {
+                $this->db->or_like('a.appointment_mobile', $cleanMob);
+            }
+        }
+        if (!empty($userEmail)) {
+            $this->db->or_where('a.appointment_email', $userEmail);
         }
         $this->db->group_end();
 
-        // Most recent bookings first
-        $this->db->order_by('a.appointment_id', 'DESC');
+                $this->db->order_by('a.appointment_id', 'DESC');
 
         $query = $this->db->get();
 
@@ -35,8 +80,10 @@ class Appointment_model extends CI_Model {
             foreach ($results as $row) {
                 // Determine institute table (clinic or hospital)
                 $table = (!empty($row->institution_type) && $row->institution_type == 'C') ? 'clinic' : 'hospital';
-                $institute = $this->db->select('name')->where('id', $row->institute_id)->get($table)->row();
+                $institute = $this->db->select('name, cancellation_hours, cancellation_policy_text')->where('id', $row->institute_id)->get($table)->row();
                 $row->institute_name = $institute ? $institute->name : 'Medical Center';
+                $row->cancellation_hours = ($institute && isset($institute->cancellation_hours) && $institute->cancellation_hours !== null) ? intval($institute->cancellation_hours) : 3;
+                $row->cancellation_policy_text = ($institute && !empty($institute->cancellation_policy_text)) ? $institute->cancellation_policy_text : 'Cancellations allowed up to 3 hours prior to consultation slot.';
                 
                 // Doctor name resolution with fallback
                 $doc_name = trim(($row->doctor_fname ?: '') . ' ' . ($row->doctor_lname ?: ''));

@@ -10,6 +10,9 @@ $appt_count    = is_array($appointments_data) ? count($appointments_data) : 0;
 $lab_count     = is_array($lab_bookings) ? count($lab_bookings) : 0;
 $payments_cnt  = is_array($payments_data) ? count($payments_data) : 0;
 $ref_code      = isset($referral_code) ? $referral_code : 'UPCH-PATIENT-50';
+$amb_bookings  = is_array($ambulance_bookings ?? null) ? $ambulance_bookings : [];
+$amb_count     = count($amb_bookings);
+$has_active_amb = !empty($active_ambulance);
 
 $csrf_token_name = $this->security->get_csrf_token_name();
 $csrf_hash       = $this->security->get_csrf_hash();
@@ -674,6 +677,127 @@ $csrf_hash       = $this->security->get_csrf_hash();
     font-size: 26px;
     margin: 0 auto 16px;
 }
+/* Modern Filter & Pagination System */
+.portal-filter-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 14px;
+    background: #ffffff;
+    border: 1px solid var(--upchar-slate-200);
+    border-radius: 14px;
+    padding: 14px 18px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+}
+
+.portal-filter-search {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #f8fafc;
+    border: 1px solid var(--upchar-slate-200);
+    border-radius: 10px;
+    padding: 8px 14px;
+    flex: 1;
+    min-width: 240px;
+    max-width: 380px;
+}
+
+.portal-filter-search input {
+    border: none;
+    background: transparent;
+    outline: none;
+    font-size: 13.5px;
+    color: var(--upchar-slate-800);
+    width: 100%;
+}
+
+.portal-status-pills {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.status-filter-pill {
+    background: #f1f5f9;
+    border: 1px solid transparent;
+    color: var(--upchar-slate-600);
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 12.5px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.status-filter-pill:hover {
+    background: #e2e8f0;
+    color: var(--upchar-slate-800);
+}
+
+.status-filter-pill.active {
+    background: var(--upchar-teal);
+    color: #ffffff;
+}
+
+.portal-pagination-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 14px;
+    background: #ffffff;
+    border: 1px solid var(--upchar-slate-200);
+    border-radius: 14px;
+    padding: 14px 20px;
+    margin-top: 24px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+}
+
+.portal-page-numbers {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    flex-wrap: wrap;
+}
+
+.page-num-btn {
+    min-width: 36px;
+    height: 36px;
+    padding: 0 10px;
+    border-radius: 8px;
+    border: 1px solid var(--upchar-slate-200);
+    background: #ffffff;
+    color: var(--upchar-slate-700);
+    font-size: 13px;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.page-num-btn:hover:not(:disabled) {
+    background: #f1f5f9;
+    border-color: var(--upchar-slate-300);
+    color: var(--upchar-slate-900);
+}
+
+.page-num-btn.active {
+    background: var(--upchar-teal);
+    border-color: var(--upchar-teal);
+    color: #ffffff !important;
+}
+
+.page-num-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
 </style>
 
 <div class="portal-container">
@@ -699,6 +823,9 @@ $csrf_hash       = $this->security->get_csrf_hash();
             </div>
 
             <div class="hero-quick-actions">
+                <button type="button" onclick="openAmbulanceDispatchModal()" class="btn-hero-white" style="background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); color: #ffffff; border-color: rgba(255,255,255,0.3); box-shadow: 0 4px 15px rgba(220,38,38,0.4);">
+                    <i class="fa fa-ambulance"></i> Request Ambulance / SOS
+                </button>
                 <a href="#wallet" onclick="switchDashboardTab('wallet')" class="btn-hero-wallet">
                     <i class="fa fa-google-wallet"></i> Upchar Wallet: <?=number_format($points_bal, 0);?> Pts (₹<?=number_format($currency_val, 2);?>)
                 </a>
@@ -714,6 +841,25 @@ $csrf_hash       = $this->security->get_csrf_hash();
 
     <!-- 2. TOP KPI CARDS -->
     <div class="portal-kpi-grid">
+        <!-- Ambulance & Emergency Response KPI Card -->
+        <div class="portal-kpi-card" onclick="switchDashboardTab('ambulance')" style="<?= $has_active_amb ? 'border: 2px solid #ef4444; background: #fff5f5;' : ''; ?>">
+            <div>
+                <div class="kpi-title" style="color: #ef4444;"><i class="fa fa-bolt"></i> Ambulance &amp; SOS</div>
+                <div class="kpi-main-val" style="color: #dc2626;">
+                    <?=$amb_count;?> <small style="font-size: 13px; font-weight: 700; color: #64748b;">Trips</small>
+                </div>
+                <div class="kpi-caption">
+                    <?php if($has_active_amb): ?>
+                        <span style="color: #ef4444; font-weight: 800;"><i class="fa fa-circle text-danger"></i> 1 Active Trip En Route</span>
+                    <?php else: ?>
+                        24/7 Rapid ICU &amp; GPS Tracking
+                    <?php endif; ?>
+                </div>
+            </div>
+            <div class="kpi-icon-pill" style="background: #fee2e2; color: #dc2626;">
+                <i class="fa fa-ambulance"></i>
+            </div>
+        </div>
         <!-- Wallet Card -->
         <div class="portal-kpi-card" onclick="switchDashboardTab('wallet')">
             <div>
@@ -781,25 +927,60 @@ $csrf_hash       = $this->security->get_csrf_hash();
             <i class="fa fa-calendar-check-o"></i> Doctor Consultations
             <span class="tab-badge-pill"><?=$appt_count;?></span>
         </button>
-        <button type="button" class="portal-tab-btn" id="tabBtn-wallet" onclick="switchDashboardTab('wallet')">
-            <i class="fa fa-google-wallet"></i> Upchar Wallet &amp; Points
-            <span class="tab-badge-pill" style="background: #7c3aed; color: #ffffff;">₹<?=number_format($currency_val, 0);?></span>
+        <button type="button" class="portal-tab-btn" id="tabBtn-ambulance" onclick="switchDashboardTab('ambulance')" style="<?= $has_active_amb ? 'border: 1.5px solid #ef4444; background: #fff5f5;' : ''; ?>">
+            <i class="fa fa-ambulance" style="color: #ef4444;"></i> Ambulance &amp; SOS
+            <span class="tab-badge-pill" style="<?= $has_active_amb ? 'background: #dc2626; color: #ffffff;' : ''; ?>">
+                <?=$amb_count;?><?= $has_active_amb ? ' • LIVE' : ''; ?>
+            </span>
         </button>
         <button type="button" class="portal-tab-btn" id="tabBtn-diagnostics" onclick="switchDashboardTab('diagnostics')">
             <i class="fa fa-flask"></i> Lab Tests &amp; Diagnostics
             <span class="tab-badge-pill"><?=$lab_count;?></span>
+        </button>
+        <button type="button" class="portal-tab-btn" id="tabBtn-wallet" onclick="switchDashboardTab('wallet')">
+            <i class="fa fa-google-wallet"></i> Upchar Wallet &amp; Points
+            <span class="tab-badge-pill" style="background: #7c3aed; color: #ffffff;">₹<?=number_format($currency_val, 0);?></span>
         </button>
         <button type="button" class="portal-tab-btn" id="tabBtn-payments" onclick="switchDashboardTab('payments')">
             <i class="fa fa-credit-card"></i> Invoices &amp; Receipts
             <span class="tab-badge-pill"><?=$payments_cnt;?></span>
         </button>
     </div>
-
     <!-- ================================================================= -->
     <!-- TAB 1: DOCTOR CONSULTATIONS                                      -->
     <!-- ================================================================= -->
     <div id="section-appointments">
         <?php if (!empty($appointments_data)): ?>
+
+            <!-- Interactive Filter & Search Bar -->
+            <div class="portal-filter-bar">
+                <div class="portal-filter-search">
+                    <i class="fa fa-search" style="color: var(--upchar-slate-400);"></i>
+                    <input type="text" id="apptSearchInput" placeholder="Search doctor, facility, ID, patient..." oninput="filterAndPaginateAppts()">
+                </div>
+                <div class="portal-status-pills">
+                    <button type="button" class="status-filter-pill active" data-filter="all" onclick="setApptStatusFilter('all', this)">
+                        All (<?=$appt_count;?>)
+                    </button>
+                    <button type="button" class="status-filter-pill" data-filter="active" onclick="setApptStatusFilter('active', this)">
+                        <i class="fa fa-check-circle" style="color: #10b981; margin-right: 3px;"></i> Active / Upcoming
+                    </button>
+                    <button type="button" class="status-filter-pill" data-filter="cancelled" onclick="setApptStatusFilter('cancelled', this)">
+                        <i class="fa fa-times-circle" style="color: #ef4444; margin-right: 3px;"></i> Cancelled
+                    </button>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--upchar-slate-600); font-weight: 600;">
+                    <span>Show:</span>
+                    <select id="apptPageSizeSelect" onchange="changeApptPageSize(this.value)" style="border: 1px solid var(--upchar-slate-200); border-radius: 8px; padding: 6px 10px; font-size: 13px; font-weight: 700; color: var(--upchar-slate-700); background: #ffffff; outline: none; cursor: pointer;">
+                        <option value="10" selected>10 per page</option>
+                        <option value="20">20 per page</option>
+                        <option value="50">50 per page</option>
+                        <option value="100">100 per page</option>
+                    </select>
+                </div>
+            </div>
+
+            <div id="apptCardsContainer">
             <?php foreach ($appointments_data as $p): ?>
                 <?php
                     $appt_id      = isset($p->appointment_id) ? $p->appointment_id : 'N/A';
@@ -812,10 +993,21 @@ $csrf_hash       = $this->security->get_csrf_hash();
                     $pay_status   = isset($p->payment_status) ? strtoupper(trim($p->payment_status)) : 'UNPAID';
                     $is_paid      = ($pay_status == 'PAID' || $pay_status == 'DONE');
                     $is_cancelled = ($p->status == '2' || $p->appointment_status == '2' || $pay_status == 'REFUNDED');
+                    $is_done      = ($p->status == '3' || strtoupper(trim($p->status ?? '')) === 'COMPLETED' || strtoupper(trim($p->status ?? '')) === 'DONE' || ($p->appointment_status ?? '') == '3');
                     $is_video     = (!empty($p->room_id) || (isset($p->appointment_type) && $p->appointment_type == 'video'));
+
+                    // Hospital cancellation policy & cutoff timing
+                    $cancellation_hours = isset($p->cancellation_hours) ? max(0, intval($p->cancellation_hours)) : 3;
+                    $raw_from = !empty($p->from_timing) ? $p->from_timing : (!empty($p->appointment_time) ? $p->appointment_time : '10:00:00');
+                    $parsed_slot_time = strtotime($raw_from);
+                    $slot_time_str = ($parsed_slot_time !== false) ? date('H:i:s', $parsed_slot_time) : '10:00:00';
+                    $slot_timestamp = !empty($p->appointment_date) ? strtotime($p->appointment_date . ' ' . $slot_time_str) : 0;
+                    $now = time();
+                    $hours_remaining = ($slot_timestamp - $now) / 3600.0;
+                    $is_cancellable = (!$is_cancelled && !$is_done && ($slot_timestamp > 0) && ($hours_remaining >= $cancellation_hours));
                 ?>
 
-                <div class="appt-modern-card" id="appt-card-<?=$appt_id;?>" style="<?=$is_cancelled ? 'background: #fdfefe; opacity: 0.92; border-color: #fecaca;' : '';?>">
+                <div class="appt-modern-card" id="appt-card-<?=$appt_id;?>" data-status="<?=$is_cancelled ? 'cancelled' : 'active';?>" data-search="<?=strtolower(html_escape($appt_id . ' ' . $doctor . ' ' . $institute . ' ' . $patient . ' ' . $appt_date . ' ' . $pay_status));?>" style="<?=$is_cancelled ? 'background: #fdfefe; opacity: 0.92; border-color: #fecaca;' : '';?>">
                     
                     <!-- Header -->
                     <div class="appt-card-header">
@@ -841,6 +1033,10 @@ $csrf_hash       = $this->security->get_csrf_hash();
                                         <i class="fa fa-undo"></i> Refund Credited to Wallet
                                     </span>
                                 <?php endif; ?>
+                            <?php elseif ($is_done): ?>
+                                <span class="badge-status" style="background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; font-weight: 700; font-size: 12px; padding: 4px 10px; border-radius: 6px;">
+                                    <i class="fa fa-check-square-o"></i> Consultation Completed
+                                </span>
                             <?php elseif ($is_paid): ?>
                                 <span class="badge-status badge-paid">
                                     <i class="fa fa-check-circle"></i> Confirmed &amp; Paid (₹<?=number_format($amount, 2);?>)
@@ -903,9 +1099,17 @@ $csrf_hash       = $this->security->get_csrf_hash();
                                         <span style="color: var(--upchar-slate-500); font-weight: 400;">(<?=date('d M Y, h:i A', strtotime($p->cancel_date));?>)</span>
                                     <?php endif; ?>
                                 </span>
+                            <?php elseif ($is_done): ?>
+                                <span style="font-size: 12.5px; color: #0369a1; font-weight: 600;">
+                                    <i class="fa fa-check-circle"></i> Consultation Completed &bull; Non-Cancellable
+                                </span>
+                            <?php elseif ($hours_remaining < $cancellation_hours): ?>
+                                <span style="font-size: 12.5px; color: #64748b; font-weight: 600;" title="Cancellation cutoff: <?=$cancellation_hours;?> hours before appointment slot">
+                                    <i class="fa fa-lock"></i> Cancellation window closed (Cutoff: <?=$cancellation_hours;?>h before slot)
+                                </span>
                             <?php elseif ($is_paid): ?>
                                 <span style="font-size: 12.5px; color: #15803d; font-weight: 600;">
-                                    <i class="fa fa-shield"></i> 100% Upchar Refund Guarantee Protected
+                                    <i class="fa fa-shield"></i> 100% Upchar Refund Guarantee Protected &bull; Cancellations open until <?=$cancellation_hours;?>h prior
                                 </span>
                             <?php else: ?>
                                 <span style="font-size: 12.5px; color: #b45309; font-weight: 600;">
@@ -919,6 +1123,15 @@ $csrf_hash       = $this->security->get_csrf_hash();
                                 <a href="#wallet" onclick="switchDashboardTab('wallet')" class="btn-action-receipt" style="background: #f5f3ff; color: #7c3aed !important; border-color: #ddd6fe;">
                                     <i class="fa fa-google-wallet"></i> View Wallet Statement
                                 </a>
+                            <?php elseif ($is_done): ?>
+                                <?php if (!empty($p->ref_no)): ?>
+                                    <a href="<?=base_url('payment/receipt/'.$p->ref_no);?>" target="_blank" class="btn-action-receipt">
+                                        <i class="fa fa-file-text-o"></i> View Receipt
+                                    </a>
+                                <?php endif; ?>
+                                <span class="badge" style="background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; padding: 7px 12px; font-size: 12px; font-weight: 600; border-radius: 6px;">
+                                    <i class="fa fa-check"></i> Consultation Done
+                                </span>
                             <?php else: ?>
                                 <?php if ($is_video): ?>
                                     <a href="<?=base_url('videocall/'.($p->room_id ?: 'upchar_consult_'.$appt_id));?>" target="_blank" class="btn-action-pay" style="background: #4f46e5;">
@@ -932,16 +1145,28 @@ $csrf_hash       = $this->security->get_csrf_hash();
                                             <i class="fa fa-file-text-o"></i> View Receipt
                                         </a>
                                     <?php endif; ?>
-                                    <button type="button" class="btn-action-cancel" onclick="openCancellationModal('APPT-<?=$appt_id;?>', '<?=html_escape($doctor);?>', '<?=$appt_date;?> <?=$timing;?>', '<?=$amount;?>')">
-                                        <i class="fa fa-times-circle"></i> Cancel Appointment
-                                    </button>
+                                    <?php if ($is_cancellable): ?>
+                                        <button type="button" class="btn-action-cancel" onclick="openCancellationModal('APPT-<?=$appt_id;?>', '<?=html_escape($doctor);?>', '<?=$appt_date;?> <?=$timing;?>', '<?=$amount;?>')">
+                                            <i class="fa fa-times-circle"></i> Cancel Appointment
+                                        </button>
+                                    <?php else: ?>
+                                        <span class="badge" style="background: #f8fafc; color: #64748b; border: 1px solid #e2e8f0; padding: 7px 12px; font-size: 12px; font-weight: 600; border-radius: 6px;" title="<?=$slot_timestamp < $now ? 'Appointment slot time has passed' : 'Cancellations not permitted within ' . $cancellation_hours . ' hours of slot';?>">
+                                            <i class="fa fa-lock"></i> <?=$slot_timestamp < $now ? 'Slot Passed' : ('Non-Cancellable (< ' . $cancellation_hours . 'h)');?>
+                                        </span>
+                                    <?php endif; ?>
                                 <?php else: ?>
                                     <a href="<?=base_url('paysecure/acheckout?aid='.$appt_id);?>" class="btn-action-pay">
                                         <i class="fa fa-bolt"></i> Pay Now (₹<?=number_format($amount, 2);?>)
                                     </a>
-                                    <button type="button" class="btn-action-cancel" onclick="openCancellationModal('APPT-<?=$appt_id;?>', '<?=html_escape($doctor);?>', '<?=$appt_date;?> <?=$timing;?>', '0')">
-                                        <i class="fa fa-times"></i> Cancel
-                                    </button>
+                                    <?php if ($is_cancellable): ?>
+                                        <button type="button" class="btn-action-cancel" onclick="openCancellationModal('APPT-<?=$appt_id;?>', '<?=html_escape($doctor);?>', '<?=$appt_date;?> <?=$timing;?>', '0')">
+                                            <i class="fa fa-times"></i> Cancel
+                                        </button>
+                                    <?php else: ?>
+                                        <span class="badge" style="background: #f8fafc; color: #64748b; border: 1px solid #e2e8f0; padding: 7px 12px; font-size: 12px; font-weight: 600; border-radius: 6px;">
+                                            <i class="fa fa-lock"></i> <?=$slot_timestamp < $now ? 'Slot Passed' : ('Cutoff Passed (< ' . $cancellation_hours . 'h)');?>
+                                        </span>
+                                    <?php endif; ?>
                                 <?php endif; ?>
                             <?php endif; ?>
                         </div>
@@ -949,6 +1174,18 @@ $csrf_hash       = $this->security->get_csrf_hash();
 
                 </div>
             <?php endforeach; ?>
+            </div><!-- /#apptCardsContainer -->
+
+            <!-- Interactive Pagination Bar -->
+            <div id="apptPaginationBar" class="portal-pagination-bar">
+                <div id="apptPaginationInfo" style="font-size: 13.5px; font-weight: 600; color: var(--upchar-slate-600);">
+                    Showing 1 – 10 of <?=$appt_count;?> appointments
+                </div>
+                <div class="portal-page-numbers" id="apptPaginationButtons">
+                    <!-- Dynamic Page Buttons -->
+                </div>
+            </div>
+
         <?php else: ?>
             <div class="empty-portal-box">
                 <div class="empty-portal-icon"><i class="fa fa-calendar-plus-o"></i></div>
@@ -1149,6 +1386,357 @@ $csrf_hash       = $this->security->get_csrf_hash();
     <!-- ================================================================= -->
     <!-- TAB 3: DIAGNOSTICS & LAB ORDERS                                  -->
     <!-- ================================================================= -->
+    
+    <!-- ================================================================= -->
+    <!-- TAB: AMBULANCE & EMERGENCY SOS (Integrated 24/7 Medical Response)  -->
+    <!-- ================================================================= -->
+    <div id="section-ambulance" style="display: none;">
+        
+        <!-- Emergency Ambulance Top Action Bar -->
+        <div style="background: #ffffff; border: 1px solid var(--upchar-slate-200); border-radius: 18px; padding: 22px 24px; margin-bottom: 24px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; box-shadow: var(--card-shadow);">
+            <div>
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 4px;">
+                    <span style="background: #fee2e2; color: #b91c1c; font-size: 11px; font-weight: 800; padding: 3px 10px; border-radius: 999px; text-transform: uppercase; letter-spacing: 0.5px;">
+                        <i class="fa fa-circle" style="color: #ef4444; font-size: 8px;"></i> 24/7 Rapid Ambulance Network
+                    </span>
+                    <span style="font-size: 13px; color: var(--upchar-slate-500); font-weight: 600;">Average Arrival &lt; 8 Mins</span>
+                </div>
+                <h3 style="margin: 0; font-size: 1.35rem; font-weight: 800; color: var(--upchar-slate-900);">
+                    Emergency Ambulance &amp; Critical Medical Transport
+                </h3>
+            </div>
+            <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                <button type="button" onclick="openAmbulanceDispatchModal()" class="btn" style="background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); color: #ffffff; border-radius: 12px; font-weight: 800; padding: 12px 24px; font-size: 14px; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 14px rgba(220,38,38,0.3); border: none; cursor: pointer;">
+                    <i class="fa fa-bolt"></i> Request Ambulance / SOS
+                </button>
+                <a href="<?=base_url('ambulance/tracking');?>" class="btn" style="background: #f8fafc; border: 1.5px solid var(--upchar-slate-200); color: var(--upchar-slate-800); border-radius: 12px; font-weight: 700; padding: 11px 18px; font-size: 13.5px; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
+                    <i class="fa fa-search-location" style="color: #dc2626;"></i> Track By Reference
+                </a>
+                <a href="tel:18002479999" class="btn" style="background: #fef2f2; border: 1px solid #fee2e2; color: #dc2626; border-radius: 12px; font-weight: 800; padding: 11px 18px; font-size: 13.5px; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
+                    <i class="fa fa-phone"></i> 1800-247-9999
+                </a>
+            </div>
+        </div>
+
+        <?php if(!empty($active_ambulance)): ?>
+        <!-- ACTIVE TRIP SPOTLIGHT BANNER -->
+        <div style="background: linear-gradient(135deg, #450a0a 0%, #1e1b4b 100%); border-radius: 20px; padding: 24px 28px; margin-bottom: 24px; color: #ffffff; box-shadow: 0 14px 30px -8px rgba(220, 38, 38, 0.4); position: relative; overflow: hidden;">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+                <div>
+                    <span style="background: rgba(239, 68, 68, 0.3); border: 1px solid rgba(248, 113, 113, 0.5); color: #fca5a5; font-size: 11.5px; font-weight: 800; padding: 4px 12px; border-radius: 999px; text-transform: uppercase; letter-spacing: 0.5px;">
+                        <i class="fa fa-satellite-dish"></i> ACTIVE TRIP EN ROUTE &bull; #<?=html_escape($active_ambulance['booking_code']);?>
+                    </span>
+                    <h3 style="font-size: 1.6rem; font-weight: 900; color: #ffffff; margin: 10px 0 6px;">
+                        <?=html_escape($active_ambulance['category_requested']);?> Unit &bull; <?=html_escape($active_ambulance['vehicle_number'] ?: 'Assigned Unit');?>
+                    </h3>
+                    <p style="color: #cbd5e1; font-size: 13.5px; margin: 0;">
+                        <span><i class="fa fa-user-md" style="color: #34d399; margin-right: 4px;"></i> Paramedic: <strong><?=html_escape($active_ambulance['driver_name'] ?: 'Rajesh Yadav');?></strong></span>
+                        <span style="margin: 0 10px;">&bull;</span>
+                        <span><i class="fa fa-hospital-o" style="color: #60a5fa; margin-right: 4px;"></i> Destination: <strong><?=html_escape($active_ambulance['hospital_name'] ?: 'Oriana Hospital Trauma Wing');?></strong></span>
+                    </p>
+                </div>
+                <div style="display: flex; align-items: center; gap: 16px;">
+                    <div style="background: rgba(255,255,255,0.1); border: 1px dashed rgba(255,255,255,0.25); border-radius: 12px; padding: 10px 16px; text-align: center;">
+                        <small style="display: block; font-size: 10.5px; text-transform: uppercase; color: #94a3b8; font-weight: 700;">Pickup OTP</small>
+                        <strong style="font-size: 1.6rem; font-weight: 900; color: #4ade80; letter-spacing: 2px;">
+                            <?=html_escape($active_ambulance['pickup_otp'] ?? '2534');?>
+                        </strong>
+                    </div>
+                    <a href="<?=base_url('ambulance/tracking?ref='.$active_ambulance['booking_code']);?>" class="btn" style="background: #ffffff; color: #991b1b; font-weight: 800; border-radius: 12px; padding: 12px 22px; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
+                        <i class="fa fa-map-marked-alt"></i> Live GPS Tracking
+                    </a>
+                    <button type="button" onclick="cancelAmbulanceBooking('<?=html_escape($active_ambulance['booking_code']);?>')" class="btn" style="background: rgba(254, 202, 202, 0.15); border: 1px solid rgba(254, 202, 202, 0.4); color: #fecaca; font-weight: 700; border-radius: 12px; padding: 12px 18px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+                        <i class="fa fa-times"></i> Cancel Trip
+                    </button>
+                </div>
+            </div>
+        </div>
+        <?php endif; ?>
+
+        <!-- AMBULANCE TRIPS LIST -->
+        <?php if(!empty($ambulance_bookings)): ?>
+            <div style="display: grid; gap: 16px;">
+                <?php foreach($ambulance_bookings as $ab): ?>
+                    <?php
+                        $st = strtoupper(trim($ab['status'] ?? 'REQUESTED'));
+                        $is_active = in_array($st, ['REQUESTED', 'DISPATCHING', 'ASSIGNED', 'ARRIVED_PICKUP', 'IN_TRANSIT', 'ARRIVED_HOSPITAL']);
+                        $is_done   = ($st === 'COMPLETED');
+                        $is_canc   = ($st === 'CANCELLED');
+                        $st_color  = $is_canc ? '#ef4444' : ($is_done ? '#10b981' : '#f59e0b');
+                        $st_bg     = $is_canc ? '#fef2f2' : ($is_done ? '#ecfdf5' : '#fffbeb');
+                        $created   = !empty($ab['created_at']) ? date('d M Y, h:i A', strtotime($ab['created_at'])) : 'Recent';
+                    ?>
+                    <div style="background: #ffffff; border: 1px solid var(--upchar-slate-200); border-radius: 16px; padding: 20px 24px; box-shadow: var(--card-shadow); transition: all 0.2s;">
+                        <!-- Card Header -->
+                        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; border-bottom: 1px solid #f1f5f9; padding-bottom: 12px;">
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <span style="background: #fee2e2; color: #dc2626; font-weight: 800; font-size: 13px; padding: 4px 10px; border-radius: 8px;">
+                                    #<?=html_escape($ab['booking_code']);?>
+                                </span>
+                                <span style="font-size: 13px; color: var(--upchar-slate-500); font-weight: 600;">
+                                    <i class="fa fa-clock-o"></i> <?=$created;?>
+                                </span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span style="background: <?=$st_bg;?>; color: <?=$st_color;?>; font-weight: 800; font-size: 12px; padding: 4px 12px; border-radius: 999px; text-transform: uppercase; letter-spacing: 0.5px;">
+                                    <i class="fa fa-circle" style="font-size: 8px;"></i> <?=html_escape($st);?>
+                                </span>
+                            </div>
+                        </div>
+
+                        <?php if($is_canc && !empty($ab['cancellation_reason'])): ?>
+                            <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 10px; padding: 9px 14px; margin-bottom: 16px; font-size: 13px; color: #991b1b; display: flex; align-items: center; gap: 8px;">
+                                <i class="fa fa-ban" style="color: #dc2626; font-size: 14px;"></i>
+                                <span><strong>Cancellation Reason:</strong> <?=html_escape($ab['cancellation_reason']);?></span>
+                            </div>
+                        <?php endif; ?>
+
+                        <!-- Card Body Grid -->
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 18px;">
+                            <!-- Capability & Ambulance -->
+                            <div>
+                                <small style="display: block; font-size: 11px; text-transform: uppercase; font-weight: 700; color: #64748b; margin-bottom: 4px;">Service Capability</small>
+                                <div style="font-size: 15px; font-weight: 800; color: #0f172a;">
+                                    <i class="fa fa-ambulance" style="color: #dc2626; margin-right: 4px;"></i>
+                                    <?=html_escape($ab['category_requested'] ?? 'ALS');?> Unit
+                                </div>
+                                <div style="font-size: 12.5px; color: #64748b; margin-top: 2px;">
+                                    Vehicle: <strong><?=html_escape($ab['vehicle_number'] ?: 'En Route Assigned Unit');?></strong>
+                                </div>
+                            </div>
+
+                            <!-- Paramedic / Driver -->
+                            <div>
+                                <small style="display: block; font-size: 11px; text-transform: uppercase; font-weight: 700; color: #64748b; margin-bottom: 4px;">Paramedic / Driver</small>
+                                <div style="font-size: 14.5px; font-weight: 700; color: #0f172a;">
+                                    <?=html_escape($ab['driver_name'] ?: 'Rajesh Yadav (ALS Tech)');?>
+                                </div>
+                                <?php if(!empty($ab['driver_phone'])): ?>
+                                    <a href="tel:<?=html_escape($ab['driver_phone']);?>" style="font-size: 12.5px; color: #0d7a6e; text-decoration: none; font-weight: 700;">
+                                        <i class="fa fa-phone"></i> <?=html_escape($ab['driver_phone']);?>
+                                    </a>
+                                <?php endif; ?>
+                            </div>
+
+                            <!-- Route details -->
+                            <div style="grid-column: span 2;">
+                                <small style="display: block; font-size: 11px; text-transform: uppercase; font-weight: 700; color: #64748b; margin-bottom: 4px;">Transit Route</small>
+                                <div style="font-size: 13px; color: #334155; line-height: 1.4;">
+                                    <div><i class="fa fa-map-marker" style="color: #10b981; width: 14px;"></i> <strong>Pickup:</strong> <?=html_escape($ab['pickup_address']);?></div>
+                                    <div style="margin-top: 4px;"><i class="fa fa-hospital-o" style="color: #3b82f6; width: 14px;"></i> <strong>Destination:</strong> <?=html_escape($ab['drop_address'] ?: 'Oriana Hospital Emergency Wing');?></div>
+                                </div>
+                            </div>
+
+                            <!-- Security OTPs & Fare -->
+                            <div>
+                                <small style="display: block; font-size: 11px; text-transform: uppercase; font-weight: 700; color: #64748b; margin-bottom: 4px;">Security Handover OTPs</small>
+                                <div style="display: flex; gap: 10px;">
+                                    <span style="background: #f1f5f9; padding: 4px 10px; border-radius: 8px; font-size: 12px; font-weight: 700;">
+                                        Pickup: <strong style="color: #0d7a6e;"><?=html_escape($ab['pickup_otp'] ?? '----');?></strong>
+                                    </span>
+                                    <span style="background: #f1f5f9; padding: 4px 10px; border-radius: 8px; font-size: 12px; font-weight: 700;">
+                                        Hospital: <strong style="color: #2563eb;"><?=html_escape($ab['hospital_handover_otp'] ?? '----');?></strong>
+                                    </span>
+                                </div>
+                            </div>
+
+                            <!-- Fare Amount -->
+                            <div style="text-align: right;">
+                                <small style="display: block; font-size: 11px; text-transform: uppercase; font-weight: 700; color: #64748b; margin-bottom: 4px;">Total Emergency Fare</small>
+                                <div style="font-size: 1.3rem; font-weight: 900; color: #dc2626;">
+                                    ₹<?=number_format(floatval($ab['total_fare'] ?? 1800), 2);?>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Card Footer Action Buttons -->
+                        <div style="display: flex; justify-content: flex-end; align-items: center; gap: 10px; border-top: 1px solid #f1f5f9; padding-top: 14px;">
+                            <?php if($is_active): ?>
+                                <button type="button" onclick="cancelAmbulanceBooking('<?=html_escape($ab['booking_code']);?>')" class="btn btn-sm" style="background: #ffffff; border: 1px solid #fca5a5; color: #b91c1c; font-weight: 700; border-radius: 8px; padding: 7px 16px;">
+                                    <i class="fa fa-times"></i> Cancel Trip
+                                </button>
+                                <a href="<?=base_url('ambulance/tracking?ref='.$ab['booking_code']);?>" class="btn btn-sm" style="background: #dc2626; color: #ffffff; font-weight: 800; border-radius: 8px; padding: 7px 18px; text-decoration: none;">
+                                    <i class="fa fa-map-marked-alt"></i> Live GPS Tracking
+                                </a>
+                            <?php else: ?>
+                                <a href="<?=base_url('ambulance/tracking?ref='.$ab['booking_code']);?>" class="btn btn-sm" style="background: #f8fafc; border: 1px solid var(--upchar-slate-200); color: var(--upchar-slate-800); font-weight: 700; border-radius: 8px; padding: 7px 16px; text-decoration: none;">
+                                    <i class="fa fa-file-text-o"></i> View Trip Details
+                                </a>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+        <?php else: ?>
+            <!-- Empty State for Ambulance Bookings -->
+            <div class="empty-portal-box">
+                <div class="empty-portal-icon" style="background: #fee2e2; color: #dc2626;">
+                    <i class="fa fa-ambulance"></i>
+                </div>
+                <h3 style="font-size: 1.3rem; font-weight: 800; color: var(--upchar-slate-900); margin-bottom: 6px;">
+                    No Ambulance Bookings Yet
+                </h3>
+                <p style="color: var(--upchar-slate-500); max-width: 520px; margin: 0 auto 20px; font-size: 14px;">
+                    When you or your family require rapid emergency medical response, Basic or Advanced Life Support ambulances are dispatched within minutes with live GPS telemetry.
+                </p>
+                <button type="button" onclick="openAmbulanceDispatchModal()" class="btn" style="background: linear-gradient(135deg, #dc2626, #b91c1c); color: #ffffff; font-weight: 800; border-radius: 12px; padding: 12px 28px; border: none; cursor: pointer; box-shadow: 0 4px 14px rgba(220,38,38,0.35);">
+                    <i class="fa fa-bolt"></i> Request Ambulance Now
+                </button>
+            </div>
+        <?php endif; ?>
+
+    </div>
+
+    <!-- IN-PAGE AMBULANCE DISPATCH MODAL -->
+    <div id="ambulanceDispatchModal" style="display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(5px); z-index: 99999; align-items: center; justify-content: center; padding: 20px; overflow-y: auto;">
+        <div style="background: #ffffff; border-radius: 24px; width: 100%; max-width: 620px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.3); overflow: hidden; position: relative;">
+            
+            <!-- Modal Header -->
+            <div style="background: linear-gradient(135deg, #991b1b 0%, #1e1b4b 100%); color: #ffffff; padding: 20px 24px; display: flex; justify-content: space-between; align-items: center;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <div style="width: 40px; height: 40px; border-radius: 12px; background: rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center; font-size: 20px;">
+                        <i class="fa fa-ambulance"></i>
+                    </div>
+                    <div>
+                        <h4 style="margin: 0; font-weight: 800; font-size: 1.2rem;">24/7 Rapid Ambulance Booking</h4>
+                        <div style="font-size: 11.5px; opacity: 0.9;">Emergency Dispatch Desk &bull; Live GPS Response</div>
+                    </div>
+                </div>
+                <button type="button" onclick="closeAmbulanceDispatchModal()" style="background: rgba(255,255,255,0.15); border: none; color: #ffffff; width: 32px; height: 32px; border-radius: 8px; cursor: pointer; font-size: 16px;">
+                    <i class="fa fa-times"></i>
+                </button>
+            </div>
+
+            <!-- Modal Form Body -->
+            <div id="ambFormContainer" style="padding: 24px; max-height: calc(85vh - 120px); overflow-y: auto;">
+                
+                <!-- Patient Name & Mobile -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 16px;">
+                    <div>
+                        <label style="font-size: 12px; font-weight: 700; color: #475569; display: block; margin-bottom: 6px;">Patient / Caller Name</label>
+                        <input type="text" id="amb_patient_name" class="form-control" value="<?=html_escape($user_name);?>" placeholder="Enter patient name" style="border-radius: 10px; font-size: 14px; padding: 10px 14px;">
+                    </div>
+                    <div>
+                        <label style="font-size: 12px; font-weight: 700; color: #475569; display: block; margin-bottom: 6px;">Contact Mobile</label>
+                        <input type="tel" id="amb_patient_mobile" class="form-control" value="<?=html_escape($user_mobile);?>" placeholder="+91 XXXXX XXXXX" style="border-radius: 10px; font-size: 14px; padding: 10px 14px;">
+                    </div>
+                </div>
+
+                <!-- Pickup Address -->
+                <div style="margin-bottom: 16px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                        <label style="font-size: 12px; font-weight: 700; color: #475569; margin: 0;">Emergency Pickup Address</label>
+                        <button type="button" onclick="detectGPSForModal()" style="background: none; border: none; color: #dc2626; font-size: 12px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;">
+                            <i class="fa fa-crosshairs"></i> Use My GPS
+                        </button>
+                    </div>
+                    <input type="text" id="amb_pickup_address" class="form-control" placeholder="House/Flat No, Landmark, Road, City" value="Sigra, Varanasi" style="border-radius: 10px; font-size: 14px; padding: 10px 14px;">
+                    <input type="hidden" id="amb_pickup_lat" value="25.3176">
+                    <input type="hidden" id="amb_pickup_lng" value="82.9739">
+                </div>
+
+                <!-- Capability Selector -->
+                <div style="margin-bottom: 16px;">
+                    <label style="font-size: 12px; font-weight: 700; color: #475569; display: block; margin-bottom: 8px;">Select Required Capability</label>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <div class="amb-modal-type active" onclick="selectModalCategory(this, 'ALS', 1800, 50)" style="border: 2px solid #ef4444; background: #fef2f2; border-radius: 12px; padding: 10px 12px; cursor: pointer; transition: all 0.2s;">
+                            <strong style="color: #991b1b; font-size: 13.5px; display: block;">ALS ICU Ambulance</strong>
+                            <small style="color: #7f1d1d; font-size: 11px;">Ventilator, Defibrillator, Paramedic &bull; ₹1,800 Base</small>
+                        </div>
+                        <div class="amb-modal-type" onclick="selectModalCategory(this, 'BLS', 800, 30)" style="border: 1.5px solid #e2e8f0; background: #f8fafc; border-radius: 12px; padding: 10px 12px; cursor: pointer; transition: all 0.2s;">
+                            <strong style="color: #0f172a; font-size: 13.5px; display: block;">BLS Ambulance</strong>
+                            <small style="color: #64748b; font-size: 11px;">Oxygen, Stretcher, First Aid &bull; ₹800 Base</small>
+                        </div>
+                        <div class="amb-modal-type" onclick="selectModalCategory(this, 'PATIENT_TRANSPORT', 400, 20)" style="border: 1.5px solid #e2e8f0; background: #f8fafc; border-radius: 12px; padding: 10px 12px; cursor: pointer; transition: all 0.2s;">
+                            <strong style="color: #0f172a; font-size: 13.5px; display: block;">Patient Transport</strong>
+                            <small style="color: #64748b; font-size: 11px;">Wheelchair / Routine Transfer &bull; ₹400 Base</small>
+                        </div>
+                        <div class="amb-modal-type" onclick="selectModalCategory(this, 'NEONATAL', 2200, 60)" style="border: 1.5px solid #e2e8f0; background: #f8fafc; border-radius: 12px; padding: 10px 12px; cursor: pointer; transition: all 0.2s;">
+                            <strong style="color: #0f172a; font-size: 13.5px; display: block;">Neonatal Incubator</strong>
+                            <small style="color: #64748b; font-size: 11px;">Infant Resuscitation ICU &bull; ₹2,200 Base</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Destination Hospital Selector -->
+                <div style="margin-bottom: 16px;">
+                    <label style="font-size: 12px; font-weight: 700; color: #475569; display: block; margin-bottom: 6px;">Destination Hospital / Emergency Center</label>
+                    <select id="amb_hospital_id" class="form-control" style="border-radius: 10px; font-size: 13.5px; padding: 9px 12px;">
+                        <option value="11" selected>Oriana Hospital Emergency Wing (Trauma &amp; ICU)</option>
+                        <option value="1">Apex Hospital Emergency Fleet</option>
+                        <option value="2">Heritage Hospitals Trauma Center</option>
+                        <?php if(!empty($hospitals_list)): ?>
+                            <?php foreach($hospitals_list as $h): ?>
+                                <?php if(!in_array($h['id'], [1, 2, 11])): ?>
+                                    <option value="<?=$h['id'];?>"><?=html_escape($h['name']);?> (<?=html_escape($h['location'] ?: 'Emergency');?>)</option>
+                                <?php endif; ?>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+                    </select>
+                </div>
+
+                <!-- Estimated Distance & Fare preview -->
+                <div style="background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 12px; padding: 12px 16px; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between;">
+                    <div>
+                        <small style="color: #64748b; display: block; font-size: 11px; font-weight: 700; text-transform: uppercase;">Estimated Fare Matrix</small>
+                        <span id="ambFareBreakdown" style="font-size: 13px; color: #475569;">₹1,800 Base + 8km × ₹50</span>
+                    </div>
+                    <div style="text-align: right;">
+                        <div id="ambFareTotal" style="font-size: 1.5rem; font-weight: 900; color: #dc2626;">₹2,200</div>
+                    </div>
+                </div>
+
+                <!-- Medical notes -->
+                <div style="margin-bottom: 20px;">
+                    <label style="font-size: 12px; font-weight: 700; color: #475569; display: block; margin-bottom: 6px;">Medical Emergency Details (Optional)</label>
+                    <input type="text" id="amb_notes" class="form-control" placeholder="e.g. Cardiac arrest, breathing difficulty, accident trauma..." style="border-radius: 10px; font-size: 13px; padding: 9px 14px;">
+                </div>
+
+                <!-- Dispatch Button -->
+                <button type="button" id="btnSubmitAmbDispatch" onclick="submitAmbulanceDispatch()" class="btn" style="width: 100%; background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); color: #ffffff; font-weight: 800; font-size: 15px; border-radius: 12px; padding: 14px; border: none; cursor: pointer; box-shadow: 0 4px 14px rgba(220,38,38,0.4); display: flex; align-items: center; justify-content: center; gap: 8px;">
+                    <i class="fa fa-bolt"></i> Dispatch Nearest Ambulance Unit Now
+                </button>
+            </div>
+
+            <!-- Success State Screen inside Modal -->
+            <div id="ambSuccessScreen" style="display: none; padding: 36px 24px; text-align: center;">
+                <div style="width: 68px; height: 68px; background: #dcfce7; color: #16a34a; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 30px; margin: 0 auto 16px;">
+                    <i class="fa fa-check"></i>
+                </div>
+                <h3 style="font-size: 1.5rem; font-weight: 900; color: #15803d; margin: 0 0 6px;">Ambulance Dispatched!</h3>
+                <p style="color: #64748b; font-size: 14px; margin-bottom: 20px;">Emergency dispatch desk has assigned your nearest equipped unit. Paramedic is responding.</p>
+                
+                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; padding: 16px 20px; text-align: left; margin-bottom: 24px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px;">
+                        <span style="font-size: 12px; color: #64748b; font-weight: 700;">Booking Reference</span>
+                        <strong id="ambResCode" style="font-size: 14px; color: #dc2626;"></strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px;">
+                        <span style="font-size: 12px; color: #64748b; font-weight: 700;">Assigned Vehicle</span>
+                        <strong id="ambResVehicle" style="font-size: 14px; color: #0f172a;"></strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px;">
+                        <span style="font-size: 12px; color: #64748b; font-weight: 700;">Paramedic / Pilot</span>
+                        <span id="ambResDriver" style="font-size: 13.5px; font-weight: 700; color: #0f172a;"></span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-size: 12px; color: #64748b; font-weight: 700;">Patient Pickup OTP</span>
+                        <strong id="ambResOtp" style="font-size: 18px; font-weight: 900; color: #16a34a; letter-spacing: 2px;"></strong>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 12px; justify-content: center;">
+                    <a id="ambResTrackBtn" href="#" class="btn" style="background: #dc2626; color: #ffffff; font-weight: 800; border-radius: 10px; padding: 12px 24px; text-decoration: none;">
+                        <i class="fa fa-map-marked-alt"></i> Live GPS Tracking
+                    </a>
+                    <button type="button" onclick="location.reload()" class="btn" style="background: #f8fafc; border: 1px solid #cbd5e1; color: #475569; font-weight: 700; border-radius: 10px; padding: 12px 20px;">
+                        Close &amp; View Trips
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </div>
     <div id="section-diagnostics" style="display: none;">
         <?php if (!empty($lab_bookings)): ?>
             <?php foreach ($lab_bookings as $lb): 
@@ -1273,6 +1861,18 @@ $csrf_hash       = $this->security->get_csrf_hash();
 
                 </div>
             <?php endforeach; ?>
+            </div><!-- /#apptCardsContainer -->
+
+            <!-- Interactive Pagination Bar -->
+            <div id="apptPaginationBar" class="portal-pagination-bar">
+                <div id="apptPaginationInfo" style="font-size: 13.5px; font-weight: 600; color: var(--upchar-slate-600);">
+                    Showing 1 – 10 of <?=$appt_count;?> appointments
+                </div>
+                <div class="portal-page-numbers" id="apptPaginationButtons">
+                    <!-- Dynamic Page Buttons -->
+                </div>
+            </div>
+
         <?php else: ?>
             <div class="empty-portal-box">
                 <div class="empty-portal-icon"><i class="fa fa-flask"></i></div>
@@ -1510,9 +2110,137 @@ $csrf_hash       = $this->security->get_csrf_hash();
 </div>
 
 <script>
+// =================================================================
+// APPOINTMENTS PAGINATION & FILTERING CONTROLLER
+// =================================================================
+let apptCurrentPage = 1;
+let apptPageSize = 10;
+let apptActiveFilter = 'all';
+
+function setApptStatusFilter(filter, btn) {
+    apptActiveFilter = filter;
+    document.querySelectorAll('.status-filter-pill').forEach(p => p.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+    apptCurrentPage = 1;
+    filterAndPaginateAppts(false);
+}
+
+function changeApptPageSize(val) {
+    apptPageSize = parseInt(val, 10) || 10;
+    apptCurrentPage = 1;
+    filterAndPaginateAppts(false);
+}
+
+function filterAndPaginateAppts(scrollToTop = false) {
+    const container = document.getElementById('apptCardsContainer');
+    if (!container) return;
+
+    const cards = Array.from(container.querySelectorAll('.appt-modern-card'));
+    const searchInput = document.getElementById('apptSearchInput');
+    const searchVal = searchInput ? (searchInput.value || '').trim().toLowerCase() : '';
+
+    let matchedCards = [];
+    cards.forEach(card => {
+        const cardStatus = card.getAttribute('data-status') || '';
+        const cardSearch = card.getAttribute('data-search') || '';
+
+        let statusMatch = true;
+        if (apptActiveFilter === 'active') {
+            statusMatch = (cardStatus !== 'cancelled');
+        } else if (apptActiveFilter === 'cancelled') {
+            statusMatch = (cardStatus === 'cancelled');
+        }
+
+        let searchMatch = true;
+        if (searchVal) {
+            searchMatch = cardSearch.includes(searchVal);
+        }
+
+        if (statusMatch && searchMatch) {
+            matchedCards.push(card);
+        } else {
+            card.style.display = 'none';
+        }
+    });
+
+    const total = matchedCards.length;
+    const totalPages = Math.max(1, Math.ceil(total / apptPageSize));
+    if (apptCurrentPage > totalPages) apptCurrentPage = totalPages;
+    if (apptCurrentPage < 1) apptCurrentPage = 1;
+
+    const startIndex = (apptCurrentPage - 1) * apptPageSize;
+    const endIndex = Math.min(startIndex + apptPageSize, total);
+
+    matchedCards.forEach((card, idx) => {
+        if (idx >= startIndex && idx < endIndex) {
+            card.style.display = 'block';
+        } else {
+            card.style.display = 'none';
+        }
+    });
+
+    // Update Counter Text
+    const info = document.getElementById('apptPaginationInfo');
+    if (info) {
+        if (total === 0) {
+            info.innerHTML = '<span style="color: #dc2626;"><i class="fa fa-info-circle"></i> No matching appointments found</span>';
+        } else {
+            info.innerText = `Showing ${startIndex + 1} – ${endIndex} of ${total} appointments`;
+        }
+    }
+
+    // Render Pagination Buttons
+    const btnContainer = document.getElementById('apptPaginationButtons');
+    const paginationBar = document.getElementById('apptPaginationBar');
+    if (paginationBar) {
+        paginationBar.style.display = (total > 0) ? 'flex' : 'none';
+    }
+
+    if (btnContainer) {
+        let html = '';
+        html += `<button type="button" class="page-num-btn" ${apptCurrentPage === 1 ? 'disabled' : ''} onclick="goToApptPage(${apptCurrentPage - 1})" title="Previous Page"><i class="fa fa-chevron-left"></i></button>`;
+
+        let pagesToShow = [];
+        if (totalPages <= 7) {
+            for (let i = 1; i <= totalPages; i++) pagesToShow.push(i);
+        } else {
+            pagesToShow.push(1);
+            if (apptCurrentPage > 3) pagesToShow.push('...');
+            const start = Math.max(2, apptCurrentPage - 1);
+            const end = Math.min(totalPages - 1, apptCurrentPage + 1);
+            for (let i = start; i <= end; i++) pagesToShow.push(i);
+            if (apptCurrentPage < totalPages - 2) pagesToShow.push('...');
+            pagesToShow.push(totalPages);
+        }
+
+        pagesToShow.forEach(p => {
+            if (p === '...') {
+                html += `<span style="padding: 0 4px; color: var(--upchar-slate-400); font-weight: 700; display: inline-flex; align-items: center;">...</span>`;
+            } else {
+                html += `<button type="button" class="page-num-btn ${p === apptCurrentPage ? 'active' : ''}" onclick="goToApptPage(${p})">${p}</button>`;
+            }
+        });
+
+        html += `<button type="button" class="page-num-btn" ${apptCurrentPage === totalPages ? 'disabled' : ''} onclick="goToApptPage(${apptCurrentPage + 1})" title="Next Page"><i class="fa fa-chevron-right"></i></button>`;
+        btnContainer.innerHTML = html;
+    }
+
+    if (scrollToTop) {
+        const topEl = document.getElementById('section-appointments');
+        if (topEl) {
+            topEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    }
+}
+
+function goToApptPage(page) {
+    apptCurrentPage = page;
+    filterAndPaginateAppts(true);
+}
+
 // Dashboard Tab Switcher
 function switchDashboardTab(tab) {
-    const tabs = ['appointments', 'wallet', 'diagnostics', 'payments'];
+    const tabs = ['appointments', 'ambulance', 'wallet', 'diagnostics', 'payments'];
     tabs.forEach(t => {
         const sec = document.getElementById('section-' + t);
         const btn = document.getElementById('tabBtn-' + t);
@@ -1609,7 +2337,7 @@ function executeCancellation() {
     formData.append('order_ref', currentOrderRef);
     formData.append('refund_to', 'WALLET');
     formData.append('reason', finalReason);
-    formData.append('<?=$csrf_token_name;?>', '<?=$csrf_hash;?>');
+    formData.append('<?= !empty($csrf_token_name) ? $csrf_token_name : $this->security->get_csrf_token_name(); ?>', '<?= !empty($csrf_hash) ? $csrf_hash : $this->security->get_csrf_hash(); ?>');
 
     fetch('<?=base_url("refund/initiate");?>', {
         method: 'POST',
@@ -1632,18 +2360,398 @@ function executeCancellation() {
         window.location.reload();
     });
 }
+</script>
 
-// Auto open tab based on URL hash (e.g. #wallet)
-$(document).ready(function() {
-    const hash = window.location.hash;
-    if (hash === '#wallet') {
-        switchDashboardTab('wallet');
-    } else if (hash === '#diagnostics') {
-        switchDashboardTab('diagnostics');
-    } else if (hash === '#payments') {
-        switchDashboardTab('payments');
+<!-- ================================================================= -->
+<!-- INTERACTIVE AMBULANCE CANCELLATION MODAL WITH REASON OPTIONS       -->
+<!-- ================================================================= -->
+<div id="cancelAmbulanceModal" style="display: none; position: fixed; inset: 0; z-index: 999999; background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(4px); align-items: center; justify-content: center; padding: 16px; box-sizing: border-box;">
+    <div style="background: #ffffff; width: 100%; max-width: 540px; max-height: 90vh; border-radius: 20px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35); border: 1px solid #fee2e2; overflow: hidden; display: flex; flex-direction: column;">
+        
+        <!-- Header -->
+        <div style="background: #fff1f2; border-bottom: 1px solid #fecdd3; padding: 18px 24px; display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; flex-shrink: 0;">
+            <div style="display: flex; align-items: center; gap: 14px;">
+                <div style="width: 42px; height: 42px; border-radius: 12px; background: #fee2e2; color: #dc2626; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; border: 1px solid #fca5a5;">
+                    <i class="fa fa-ambulance"></i>
+                </div>
+                <div>
+                    <h4 style="margin: 0; font-size: 1.15rem; font-weight: 800; color: #991b1b;">Cancel Ambulance Request</h4>
+                    <div style="font-size: 12.5px; color: #9f1239; margin-top: 2px;">
+                        Booking Ref: <strong id="ambCancelModalRef" style="font-family: monospace;">#UPAMB-0</strong>
+                    </div>
+                </div>
+            </div>
+            <button type="button" onclick="closeAmbulanceCancelModal()" style="background: transparent; border: none; font-size: 24px; color: #9f1239; cursor: pointer; padding: 0; line-height: 1;">&times;</button>
+        </div>
+
+        <!-- Body -->
+        <div style="padding: 22px 24px; overflow-y: auto; flex-grow: 1;">
+            
+            <div style="background: #fff7ed; border-left: 4px solid #f97316; border-radius: 8px; padding: 10px 14px; margin-bottom: 18px;">
+                <div style="font-size: 12.5px; font-weight: 800; color: #9a3412;">
+                    <i class="fa fa-info-circle"></i> Emergency Dispatch Standdown Notice:
+                </div>
+                <div style="font-size: 12px; color: #c2410c; margin-top: 2px; line-height: 1.4;">
+                    Cancelling will release the assigned paramedic and emergency vehicle unit immediately. If this is a life-threatening acute emergency, please keep the ambulance en route or dial <strong>1800-247-9999</strong>.
+                </div>
+            </div>
+
+            <label style="display: block; font-size: 13px; font-weight: 800; color: #0f172a; margin-bottom: 10px;">
+                Select Reason for Cancellation <span style="color: #dc2626;">*</span>:
+            </label>
+
+            <!-- Reason Options -->
+            <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px;">
+                
+                <label class="amb-cancel-option selected" style="display: flex; align-items: flex-start; gap: 12px; padding: 11px 14px; border: 1.5px solid #dc2626; background: #fef2f2; border-radius: 12px; cursor: pointer; transition: all 0.2s;">
+                    <input type="radio" name="amb_cancel_choice" value="Patient condition stabilized / Recovered" style="margin-top: 3px; accent-color: #dc2626;" checked onchange="handleAmbReasonChange(this)">
+                    <div>
+                        <div style="font-size: 13px; font-weight: 700; color: #0f172a;">Patient condition stabilized / Recovered</div>
+                        <div style="font-size: 11.5px; color: #64748b;">Acute symptoms subsided; urgent transport is no longer needed</div>
+                    </div>
+                </label>
+
+                <label class="amb-cancel-option" style="display: flex; align-items: flex-start; gap: 12px; padding: 11px 14px; border: 1.5px solid #e2e8f0; border-radius: 12px; cursor: pointer; transition: all 0.2s;">
+                    <input type="radio" name="amb_cancel_choice" value="Arranged alternate private vehicle / car" style="margin-top: 3px; accent-color: #dc2626;" onchange="handleAmbReasonChange(this)">
+                    <div>
+                        <div style="font-size: 13px; font-weight: 700; color: #0f172a;">Arranged alternate private vehicle / car</div>
+                        <div style="font-size: 11.5px; color: #64748b;">Departing via family personal car, taxi, or local vehicle already on-site</div>
+                    </div>
+                </label>
+
+                <label class="amb-cancel-option" style="display: flex; align-items: flex-start; gap: 12px; padding: 11px 14px; border: 1.5px solid #e2e8f0; border-radius: 12px; cursor: pointer; transition: all 0.2s;">
+                    <input type="radio" name="amb_cancel_choice" value="Ambulance ETA is taking too long" style="margin-top: 3px; accent-color: #dc2626;" onchange="handleAmbReasonChange(this)">
+                    <div>
+                        <div style="font-size: 13px; font-weight: 700; color: #0f172a;">Ambulance ETA is taking too long</div>
+                        <div style="font-size: 11.5px; color: #64748b;">Found faster emergency transfer option due to urgent timing</div>
+                    </div>
+                </label>
+
+                <label class="amb-cancel-option" style="display: flex; align-items: flex-start; gap: 12px; padding: 11px 14px; border: 1.5px solid #e2e8f0; border-radius: 12px; cursor: pointer; transition: all 0.2s;">
+                    <input type="radio" name="amb_cancel_choice" value="Decided to visit a different hospital / clinic nearby" style="margin-top: 3px; accent-color: #dc2626;" onchange="handleAmbReasonChange(this)">
+                    <div>
+                        <div style="font-size: 13px; font-weight: 700; color: #0f172a;">Decided to visit a different hospital / clinic nearby</div>
+                        <div style="font-size: 11.5px; color: #64748b;">Changed destination hospital or admitted to nearest local clinic</div>
+                    </div>
+                </label>
+
+                <label class="amb-cancel-option" style="display: flex; align-items: flex-start; gap: 12px; padding: 11px 14px; border: 1.5px solid #e2e8f0; border-radius: 12px; cursor: pointer; transition: all 0.2s;">
+                    <input type="radio" name="amb_cancel_choice" value="Booked by mistake / duplicate request" style="margin-top: 3px; accent-color: #dc2626;" onchange="handleAmbReasonChange(this)">
+                    <div>
+                        <div style="font-size: 13px; font-weight: 700; color: #0f172a;">Booked by mistake / duplicate request</div>
+                        <div style="font-size: 11.5px; color: #64748b;">Accidental tap or multiple family members dispatched an ambulance</div>
+                    </div>
+                </label>
+
+                <label class="amb-cancel-option" style="display: flex; align-items: flex-start; gap: 12px; padding: 11px 14px; border: 1.5px solid #e2e8f0; border-radius: 12px; cursor: pointer; transition: all 0.2s;">
+                    <input type="radio" name="amb_cancel_choice" value="Other" style="margin-top: 3px; accent-color: #dc2626;" onchange="handleAmbReasonChange(this)">
+                    <div>
+                        <div style="font-size: 13px; font-weight: 700; color: #0f172a;">Other reason</div>
+                        <div style="font-size: 11.5px; color: #64748b;">Specify exact reason or remarks below</div>
+                    </div>
+                </label>
+
+            </div>
+
+            <!-- Notes -->
+            <div style="margin-bottom: 18px;">
+                <label for="ambCancelNotes" style="display: block; font-size: 12px; font-weight: 700; color: #475569; margin-bottom: 4px;">
+                    Additional Details / Remarks (Optional):
+                </label>
+                <textarea id="ambCancelNotes" rows="2" placeholder="Write any specific explanation or details for dispatch records..." style="width: 100%; border: 1.5px solid #cbd5e1; border-radius: 10px; padding: 10px 12px; font-size: 13px; outline: none; font-family: inherit; resize: vertical; box-sizing: border-box;"></textarea>
+            </div>
+
+            <!-- Feedback Alert -->
+            <div id="ambCancelModalAlert" style="display: none; padding: 10px 14px; border-radius: 8px; font-size: 13px; font-weight: 600; margin-bottom: 14px;"></div>
+        </div>
+
+        <!-- Footer -->
+        <div style="background: #f8fafc; border-top: 1px solid #e2e8f0; padding: 16px 24px; display: flex; justify-content: flex-end; align-items: center; gap: 12px; flex-shrink: 0;">
+            <button type="button" onclick="closeAmbulanceCancelModal()" style="background: #ffffff; border: 1px solid #cbd5e1; color: #475569; font-weight: 700; padding: 9px 18px; border-radius: 10px; cursor: pointer; font-size: 13px;">
+                Don't Cancel (Keep En Route)
+            </button>
+            <button type="button" id="confirmAmbCancelBtn" onclick="submitAmbCancellation()" style="background: #dc2626; border: none; color: #ffffff; font-weight: 800; padding: 9px 20px; border-radius: 10px; cursor: pointer; font-size: 13px; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 12px rgba(220, 38, 38, 0.25);">
+                <i class="fa fa-ban"></i> Confirm Cancellation
+            </button>
+        </div>
+
+    </div>
+</div>
+
+<style>
+.amb-cancel-option:hover {
+    border-color: #fca5a5 !important;
+    background: #fff8f8 !important;
+}
+.amb-cancel-option.selected {
+    border-color: #dc2626 !important;
+    background: #fef2f2 !important;
+}
+/* Modern Filter & Pagination System */
+.portal-filter-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 14px;
+    background: #ffffff;
+    border: 1px solid var(--upchar-slate-200);
+    border-radius: 14px;
+    padding: 14px 18px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+}
+
+.portal-filter-search {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #f8fafc;
+    border: 1px solid var(--upchar-slate-200);
+    border-radius: 10px;
+    padding: 8px 14px;
+    flex: 1;
+    min-width: 240px;
+    max-width: 380px;
+}
+
+.portal-filter-search input {
+    border: none;
+    background: transparent;
+    outline: none;
+    font-size: 13.5px;
+    color: var(--upchar-slate-800);
+    width: 100%;
+}
+
+.portal-status-pills {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.status-filter-pill {
+    background: #f1f5f9;
+    border: 1px solid transparent;
+    color: var(--upchar-slate-600);
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 12.5px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.status-filter-pill:hover {
+    background: #e2e8f0;
+    color: var(--upchar-slate-800);
+}
+
+.status-filter-pill.active {
+    background: var(--upchar-teal);
+    color: #ffffff;
+}
+
+.portal-pagination-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 14px;
+    background: #ffffff;
+    border: 1px solid var(--upchar-slate-200);
+    border-radius: 14px;
+    padding: 14px 20px;
+    margin-top: 24px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+}
+
+.portal-page-numbers {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    flex-wrap: wrap;
+}
+
+.page-num-btn {
+    min-width: 36px;
+    height: 36px;
+    padding: 0 10px;
+    border-radius: 8px;
+    border: 1px solid var(--upchar-slate-200);
+    background: #ffffff;
+    color: var(--upchar-slate-700);
+    font-size: 13px;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.page-num-btn:hover:not(:disabled) {
+    background: #f1f5f9;
+    border-color: var(--upchar-slate-300);
+    color: var(--upchar-slate-900);
+}
+
+.page-num-btn.active {
+    background: var(--upchar-teal);
+    border-color: var(--upchar-teal);
+    color: #ffffff !important;
+}
+
+.page-num-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+</style>
+
+<script>
+var activeAmbCancelCode = "";
+
+function cancelAmbulanceBooking(code) {
+    if (!code) return;
+    activeAmbCancelCode = code;
+    var refEl = document.getElementById("ambCancelModalRef");
+    if (refEl) refEl.innerText = "#" + code;
+    
+    var al = document.getElementById("ambCancelModalAlert");
+    if (al) al.style.display = "none";
+
+    var modal = document.getElementById("cancelAmbulanceModal");
+    if (modal) modal.style.display = "flex";
+    highlightAmbSelectedReason();
+}
+
+function closeAmbulanceCancelModal() {
+    var modal = document.getElementById("cancelAmbulanceModal");
+    if (modal) modal.style.display = "none";
+}
+
+function handleAmbReasonChange(el) {
+    highlightAmbSelectedReason();
+    if (el.value === "Other") {
+        var notes = document.getElementById("ambCancelNotes");
+        if (notes) {
+            notes.focus();
+            notes.placeholder = "Please explain the reason for cancellation...";
+        }
+    }
+}
+
+function highlightAmbSelectedReason() {
+    document.querySelectorAll(".amb-cancel-option").forEach(function(opt) {
+        var radio = opt.querySelector('input[type="radio"]');
+        if (radio && radio.checked) {
+            opt.classList.add("selected");
+        } else {
+            opt.classList.remove("selected");
+        }
+    });
+}
+
+function submitAmbCancellation() {
+    var selectedRadio = document.querySelector('input[name="amb_cancel_choice"]:checked');
+    if (!selectedRadio) {
+        showAmbCancelAlert("Please select a cancellation reason option.", "error");
+        return;
+    }
+
+    var chosenReason = selectedRadio.value;
+    var notes = (document.getElementById("ambCancelNotes").value || "").trim();
+
+    if (chosenReason === "Other" && !notes) {
+        showAmbCancelAlert("Please provide additional details describing your cancellation reason.", "error");
+        document.getElementById("ambCancelNotes").focus();
+        return;
+    }
+
+    var fullReason = chosenReason;
+    if (notes && chosenReason !== "Other") {
+        fullReason += " (" + notes + ")";
+    } else if (chosenReason === "Other") {
+        fullReason = "Other: " + notes;
+    }
+
+    var btn = document.getElementById("confirmAmbCancelBtn");
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Cancelling...';
+
+    var fd = new FormData();
+    fd.append("booking_code", activeAmbCancelCode);
+    fd.append("reason", fullReason);
+
+    fetch("<?=base_url('ambulance/cancel_booking');?>", {
+        method: "POST",
+        body: fd
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+        if (d.status === "success") {
+            showAmbCancelAlert(d.message || "Ambulance trip cancelled successfully.", "success");
+            setTimeout(function() {
+                window.location.hash = "#ambulance";
+                window.location.reload();
+            }, 800);
+        } else {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa fa-ban"></i> Confirm Cancellation';
+            showAmbCancelAlert(d.message || "Cancellation failed. Please try again.", "error");
+        }
+    })
+    .catch(function() {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa fa-ban"></i> Confirm Cancellation';
+        showAmbCancelAlert("Network error occurred while cancelling. Please retry.", "error");
+    });
+}
+
+function showAmbCancelAlert(msg, type) {
+    var al = document.getElementById("ambCancelModalAlert");
+    if (!al) return;
+    al.style.display = "block";
+    if (type === "success") {
+        al.style.background = "#ecfdf5";
+        al.style.border = "1px solid #a7f3d0";
+        al.style.color = "#065f46";
     } else {
-        switchDashboardTab('appointments');
+        al.style.background = "#fef2f2";
+        al.style.border = "1px solid #fecaca";
+        al.style.color = "#991b1b";
+    }
+    al.innerText = msg;
+}
+
+window.addEventListener("click", function(e) {
+    var modal = document.getElementById("cancelAmbulanceModal");
+    if (e.target === modal) {
+        closeAmbulanceCancelModal();
     }
 });
+
+// Auto open tab based on URL hash (e.g. #wallet or #ambulance)
+function handleHashChange() {
+    var hash = (window.location.hash || "").replace("#", "").toLowerCase();
+    if (hash === "ambulance" || hash === "wallet" || hash === "diagnostics" || hash === "payments" || hash === "appointments") {
+        switchDashboardTab(hash);
+    } else if (!hash) {
+        switchDashboardTab("appointments");
+    }
+    // Initialize or refresh appointments pagination
+    if (typeof filterAndPaginateAppts === "function") {
+        filterAndPaginateAppts(false);
+    }
+}
+
+if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", handleHashChange);
+} else {
+    handleHashChange();
+}
+window.addEventListener("load", handleHashChange);
+window.addEventListener("hashchange", handleHashChange);
 </script>

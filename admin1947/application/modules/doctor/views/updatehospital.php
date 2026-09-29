@@ -104,7 +104,23 @@
             <label style="display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 6px;">
               Hospital Overview / Bio
             </label>
-            <textarea class="form-control" id="about" name="about" rows="3" style="border-radius: 8px; border: 1px solid #CBD5E1; font-size: 14px; padding: 10px 14px;"><?=set_value('about', @$hospital->about);?></textarea>
+          <div style="background: #fffbeb; border: 1px solid #fef3c7; border-radius: 8px; padding: 14px; margin-top: 6px;">
+            <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 14px; align-items: start;">
+              <div>
+                <label style="display: block; font-size: 13px; font-weight: 700; color: #92400e; margin-bottom: 6px;">
+                  <i class="fa fa-clock-o"></i> Cancellation Cutoff (Hours Before Appointment)
+                </label>
+                <input type="number" min="0" max="720" class="form-control" id="cancellation_hours" name="cancellation_hours" value="<?=set_value('cancellation_hours', @$hospital->cancellation_hours ?? 3);?>" style="height: 42px; border-radius: 8px; border: 1px solid #fde68a; font-size: 14px; font-weight: 700; padding: 8px 14px;">
+                <small style="color: #b45309; font-size: 11.5px; display: block; margin-top: 4px;">Default: 3 hours. Patients cannot cancel within this cutoff window.</small>
+              </div>
+              <div>
+                <label style="display: block; font-size: 13px; font-weight: 700; color: #92400e; margin-bottom: 6px;">
+                  Cancellation Policy Notice Displayed to Patients
+                </label>
+                <input type="text" class="form-control" id="cancellation_policy_text" name="cancellation_policy_text" value="<?=set_value('cancellation_policy_text', @$hospital->cancellation_policy_text ?? 'Cancellations allowed up to 3 hours prior to consultation slot.');?>" style="height: 42px; border-radius: 8px; border: 1px solid #fde68a; font-size: 13.5px; padding: 8px 14px;">
+                <small style="color: #b45309; font-size: 11.5px; display: block; margin-top: 4px;">Explains the cancellation cutoff rule clearly to patients on the booking portal.</small>
+              </div>
+            </div>
           </div>
 
           <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 10px;">

@@ -138,6 +138,11 @@
             <i class="fa fa-calendar" style="color: #0284c7;"></i> Reschedule
           </button>
 
+          <!-- Cancellation Policy Modal Trigger -->
+          <button type="button" class="btn btn-sm btn-default btn-open-modal" data-open-modal="#editCancellationPolicyModal" style="border-radius: 6px; font-weight: 600; background: #f8fafc; border-color: #cbd5e1; color: #334155; padding: 6px 13px;" title="Configure Facility Cancellation Cutoff">
+            <i class="fa fa-clock-o" style="color: #f59e0b;"></i> Cancellation Policy (<?=$app->cancellation_hours ?? 3;?>h)
+          </button>
+
           <!-- Print Invoice -->
           <button type="button" onclick="window.print();" class="btn btn-sm btn-info" style="border-radius: 6px; font-weight: 600; background: #0284c7; border-color: #0284c7; padding: 6px 13px;">
             <i class="fa fa-print"></i> Print Slip
@@ -200,6 +205,9 @@
         $haddress = !empty($app->facility_address) ? $app->facility_address : (!empty($app->hospital_address) ? $app->hospital_address : 'Address not specified');
         $hcity = !empty($app->facility_city) ? $app->facility_city : (!empty($app->hospital_city) ? $app->hospital_city : '');
         $hmobile = !empty($app->facility_mobile) ? $app->facility_mobile : (!empty($app->hospital_mobile) ? $app->hospital_mobile : 'N/A');
+
+        $hCancellationHours = isset($app->cancellation_hours) ? intval($app->cancellation_hours) : 3;
+        $hCancellationPolicyText = !empty($app->cancellation_policy_text) ? $app->cancellation_policy_text : "Cancellations allowed up to {$hCancellationHours} hours prior to consultation slot.";
 
         $adate = !empty($app->appointment_date) ? $app->appointment_date : 'N/A';
         $fromTime = !empty($app->from_timing) ? $app->from_timing : '';
@@ -512,6 +520,25 @@
                       <span class="label" style="background: #f1f5f9; color: #334155; border: 1px solid #e2e8f0; font-size: 11px; padding: 4px 8px; border-radius: 4px;">
                         <i class="fa fa-stethoscope text-primary"></i> <?=htmlspecialchars(ucwords(str_replace('_', ' ', $app->appointment_type ?? 'In-Clinic Physical Visit')));?>
                       </span>
+                    </div>
+                  </div>
+
+                  <div class="col-sm-12" style="margin-top: 10px; padding-top: 12px; border-top: 1px dashed #e2e8f0;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
+                      <div>
+                        <label style="font-size: 11.5px; font-weight: 600; color: #64748b; text-transform: uppercase; margin-bottom: 3px; display: block;">
+                          <i class="fa fa-ban text-warning"></i> Cancellation Policy (Cutoff)
+                        </label>
+                        <div style="font-size: 13px; color: #1e293b; font-weight: 600; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                          <span class="label" style="background: #e0f2fe; color: #0284c7; border: 1px solid #bae6fd; font-size: 11px; padding: 4px 8px; border-radius: 4px; font-weight: 700;">
+                            <i class="fa fa-clock-o"></i> <?=$hCancellationHours;?> Hours Prior
+                          </span>
+                          <span style="font-size: 12px; color: #64748b; font-weight: normal;"><?=htmlspecialchars($hCancellationPolicyText);?></span>
+                        </div>
+                      </div>
+                      <button type="button" class="btn btn-xs btn-default btn-open-modal" data-open-modal="#editCancellationPolicyModal" style="border-radius: 5px; font-weight: 600; color: #0284c7; border-color: #bae6fd; background: #f0f9ff; padding: 4px 10px;">
+                        <i class="fa fa-pencil"></i> Edit Policy
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -953,6 +980,94 @@
     </div>
   </div>
 </div>
+
+<!-- ========================================================= -->
+<!-- PROCESS 4: EDIT FACILITY CANCELLATION POLICY MODAL       -->
+<!-- ========================================================= -->
+<div class="modal fade no-print" id="editCancellationPolicyModal" tabindex="-1" role="dialog" aria-labelledby="cancellationPolicyModalLabel">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content" style="border-radius: 12px; overflow: hidden; border: none; box-shadow: 0 15px 35px rgba(0,0,0,0.2);">
+      <form action="<?=base_url('doctor/appointment/update_status');?>" method="post" id="formCancellationPolicy">
+        <input type="hidden" name="process_type" value="hospital_cancellation_policy">
+        <input type="hidden" name="appointment_id" value="<?=$aid;?>">
+        <input type="hidden" name="<?=$this->security->get_csrf_token_name();?>" value="<?=$this->security->get_csrf_hash();?>" class="csrf-field">
+        
+        <div class="modal-header" style="background: #1e293b; color: #ffffff; padding: 18px 22px;">
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close" style="color: #ffffff; opacity: 0.85;"><span aria-hidden="true">&times;</span></button>
+          <h4 class="modal-title" id="cancellationPolicyModalLabel" style="font-weight: 700; font-size: 16px; display: flex; align-items: center; gap: 8px;">
+            <i class="fa fa-clock-o" style="color: #f59e0b;"></i> Hospital / Facility Cancellation Timing Policy
+          </h4>
+        </div>
+        
+        <div class="modal-body" style="padding: 22px;">
+          <div id="cancellationPolicyModalAlert" style="display: none; margin-bottom: 16px;" class="alert"></div>
+
+          <!-- Current Facility Info -->
+          <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 16px; margin-bottom: 18px; display: flex; align-items: center; justify-content: space-between;">
+            <div>
+              <span style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: #64748b; display: block;">Facility / Clinic</span>
+              <strong style="font-size: 14.5px; color: #0f172a;">
+                <?=htmlspecialchars($hname);?>
+              </strong>
+            </div>
+            <div>
+              <span class="label" style="background: #e0f2fe; color: #0284c7; font-size: 11px; padding: 4px 8px; border-radius: 4px;">
+                Current Cutoff: <?=$hCancellationHours;?>h
+              </span>
+            </div>
+          </div>
+
+          <!-- Presets for cutoff hours -->
+          <div class="form-group" style="margin-bottom: 16px;">
+            <label style="font-weight: 600; color: #334155; font-size: 13px; margin-bottom: 8px; display: block;">Quick Cutoff Hour Presets</label>
+            <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+              <button type="button" class="btn btn-sm <?=($hCancellationHours == 1)?'btn-primary':'btn-default';?> btn-cancel-preset" data-hours="1" style="border-radius: 6px; font-weight: 600; padding: 5px 12px; font-size: 12px;">1 Hour</button>
+              <button type="button" class="btn btn-sm <?=($hCancellationHours == 2)?'btn-primary':'btn-default';?> btn-cancel-preset" data-hours="2" style="border-radius: 6px; font-weight: 600; padding: 5px 12px; font-size: 12px;">2 Hours</button>
+              <button type="button" class="btn btn-sm <?=($hCancellationHours == 3)?'btn-primary':'btn-default';?> btn-cancel-preset" data-hours="3" style="border-radius: 6px; font-weight: 600; padding: 5px 12px; font-size: 12px;">3 Hours (Default)</button>
+              <button type="button" class="btn btn-sm <?=($hCancellationHours == 6)?'btn-primary':'btn-default';?> btn-cancel-preset" data-hours="6" style="border-radius: 6px; font-weight: 600; padding: 5px 12px; font-size: 12px;">6 Hours</button>
+              <button type="button" class="btn btn-sm <?=($hCancellationHours == 12)?'btn-primary':'btn-default';?> btn-cancel-preset" data-hours="12" style="border-radius: 6px; font-weight: 600; padding: 5px 12px; font-size: 12px;">12 Hours</button>
+              <button type="button" class="btn btn-sm <?=($hCancellationHours == 24)?'btn-primary':'btn-default';?> btn-cancel-preset" data-hours="24" style="border-radius: 6px; font-weight: 600; padding: 5px 12px; font-size: 12px;">24 Hours</button>
+              <button type="button" class="btn btn-sm <?=($hCancellationHours == 0)?'btn-primary':'btn-default';?> btn-cancel-preset" data-hours="0" style="border-radius: 6px; font-weight: 600; padding: 5px 12px; font-size: 12px;">0 (Anytime)</button>
+            </div>
+          </div>
+
+          <!-- Cutoff Hours Input -->
+          <div class="form-group" style="margin-bottom: 16px;">
+            <label style="font-weight: 600; color: #334155; font-size: 13px;">Cancellation Cutoff Window (Hours Before Slot) <span class="text-danger">*</span></label>
+            <div class="input-group">
+              <span class="input-group-addon" style="background: #f8fafc; border-radius: 6px 0 0 6px;"><i class="fa fa-hourglass-half text-muted"></i></span>
+              <input type="number" name="cancellation_hours" id="cancellationHoursInput" class="form-control" min="0" max="168" value="<?=$hCancellationHours;?>" required style="border-radius: 0 6px 6px 0; height: 42px; font-size: 14px; font-weight: 600;">
+            </div>
+            <small class="text-muted" style="font-size: 11.5px; display: block; margin-top: 4px;">
+              Patients will NOT be allowed to cancel their appointment if there are fewer than this many hours remaining before the appointment slot.
+            </small>
+          </div>
+
+          <!-- Policy Custom Display Text -->
+          <div class="form-group" style="margin-bottom: 16px;">
+            <label style="font-weight: 600; color: #334155; font-size: 13px;">Custom Policy Display Text</label>
+            <input type="text" name="cancellation_policy_text" id="cancellationPolicyTextInput" class="form-control" value="<?=htmlspecialchars($hCancellationPolicyText);?>" placeholder="e.g. Cancellations allowed up to 3 hours prior to consultation slot." style="border-radius: 6px; height: 42px; font-size: 13px;">
+            <small class="text-muted" style="font-size: 11.5px; display: block; margin-top: 4px;">
+              This policy text is displayed directly on the patient's appointment card and cancellation screen.
+            </small>
+          </div>
+
+          <div style="background: #fefce8; border-radius: 8px; padding: 12px 16px; border: 1px solid #fef08a; font-size: 12px; color: #854d0e; line-height: 1.5;">
+            <i class="fa fa-info-circle text-warning" style="margin-right: 4px;"></i>
+            <strong>Universal Rule:</strong> Once an appointment is completed/done, patient cancellation is permanently disabled regardless of hours.
+          </div>
+        </div>
+        
+        <div class="modal-footer" style="background: #f8fafc; border-top: 1px solid #e2e8f0; padding: 14px 22px;">
+          <button type="button" class="btn btn-default" data-dismiss="modal" style="border-radius: 6px; font-weight: 600;">Close</button>
+          <button type="submit" class="btn btn-primary" id="btnSubmitCancellationPolicy" style="background: #00a896; border-color: #00a896; border-radius: 6px; font-weight: 600; padding: 8px 22px;">
+            <i class="fa fa-check"></i> Save Facility Policy
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
 <?php endif; ?>
 
 <!-- CLIENT JAVASCRIPT HANDLERS & MODAL STYLES FOR THE 3 PROCESSES -->
@@ -1200,10 +1315,38 @@
         });
       }
 
-      // Bind the 3 process forms
+      // Cancellation Policy Presets
+      $('.btn-cancel-preset').on('click', function(e) {
+        e.preventDefault();
+        var hrs = parseInt($(this).data('hours'), 10);
+        $('#cancellationHoursInput').val(hrs);
+        if (hrs > 0) {
+          $('#cancellationPolicyTextInput').val('Cancellations allowed up to ' + hrs + ' hours prior to consultation slot.');
+        } else {
+          $('#cancellationPolicyTextInput').val('Cancellations allowed anytime prior to consultation.');
+        }
+        $('.btn-cancel-preset').removeClass('btn-primary').addClass('btn-default');
+        $(this).removeClass('btn-default').addClass('btn-primary');
+      });
+
+      $('#cancellationHoursInput').on('input', function() {
+        var hrs = parseInt($(this).val(), 10);
+        if (!isNaN(hrs)) {
+          if (hrs > 0) {
+            $('#cancellationPolicyTextInput').val('Cancellations allowed up to ' + hrs + ' hours prior to consultation slot.');
+          } else {
+            $('#cancellationPolicyTextInput').val('Cancellations allowed anytime prior to consultation.');
+          }
+          $('.btn-cancel-preset').removeClass('btn-primary').addClass('btn-default');
+          $('.btn-cancel-preset[data-hours="' + hrs + '"]').removeClass('btn-default').addClass('btn-primary');
+        }
+      });
+
+      // Bind the process forms
       bindAjaxForm('#formUpdateStatus', '#btnSubmitStatus', '#statusModalAlert', '#updateStatusModal');
       bindAjaxForm('#formReassignDoctor', '#btnSubmitDoctor', '#doctorModalAlert', '#reassignDoctorModal');
       bindAjaxForm('#formReschedule', '#btnSubmitReschedule', '#rescheduleModalAlert', '#rescheduleModal');
+      bindAjaxForm('#formCancellationPolicy', '#btnSubmitCancellationPolicy', '#cancellationPolicyModalAlert', '#editCancellationPolicyModal');
     });
   }
 

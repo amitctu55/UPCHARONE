@@ -117,6 +117,12 @@
                 <a href="<?=base_url('admin1947/hr/dashboard');?>">
                     <i class="fa fa-users" style="color: #a78bfa;"></i> HR Portal
                 </a>
+                                <a href="<?=base_url('admin1947/operations');?>">
+                    <i class="fa fa-cogs" style="color: #60a5fa;"></i> Operations Hub
+                </a>
+                <a href="<?=base_url('ambulance');?>" target="_blank">
+                    <i class="fa fa-ambulance" style="color: #f87171;"></i> Ambulance Service
+                </a>
                 <a href="<?=base_url('admin1947/login/logout');?>">
                     <i class="fa fa-sign-out" style="color: #f87171;"></i> Logout
                 </a>

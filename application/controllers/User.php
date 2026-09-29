@@ -19,12 +19,40 @@ class User extends CI_Controller {
 	public function login()
 	{
 		$email = strtolower($this->input->post('email'));
-		$password = md5($this->input->post('password'));
+		$rawPassword = $this->input->post('password');
+		$password = md5($rawPassword);
         $login = $this->User_Model->login($email,$password);
+
+		// Centralized Identity & SSO Integration
+		$this->load->model('Auth_model');
+		if ($login != 'SUCCESS') {
+			$masterUser = $this->Auth_model->find_master_user($email);
+			if ($masterUser && $this->Auth_model->verify_master_password($masterUser, $rawPassword)) {
+				$this->session->set_userdata([
+					'USERID'   => $masterUser['id'],
+					'userid'   => $masterUser['id'],
+					'WEB_UID'  => $masterUser['id'],
+					'username' => $masterUser['name'],
+					'name'     => $masterUser['name'],
+					'email'    => $masterUser['email'],
+					'mobile'   => $masterUser['mobile'],
+					'status'   => $masterUser['status'],
+				]);
+				$login = 'SUCCESS';
+			}
+		}
 		if($login=='SUCCESS'){
 			$last_page = $this->session->userdata('last_page');
 			$this->session->unset_userdata('last_page');
 			$redirect_url = $last_page ?: base_url('myappointments');
+			$userId = $this->session->userdata('USERID') ?: $this->session->userdata('userid');
+			if ($userId) {
+				$mUser = $this->Auth_model->find_master_user($userId);
+				if ($mUser) {
+					$ssoToken = $this->Auth_model->generate_sso_token($mUser);
+					setcookie('upchar_sso_token', $ssoToken, time() + 604800, '/demo/', '', false, false);
+				}
+			}
 			$response=array('status'=>'success','msg'=>'Logged in Successfully', 'redirect_url' => $redirect_url);
 		}else if($login=='UNVERIFIED'){
 			$response=array('status'=>'failed','msg'=>'Your account is pending verification and approval by the Administrator. You cannot login until approved.');

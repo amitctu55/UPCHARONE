@@ -691,6 +691,8 @@ class Doctorregmodel extends CI_Model
 							'med_reg_proof'	=>$regproof,
 							'subscription'	=>$package,
 							'status'		=>$status,
+							'cancellation_hours'       => ($this->input->post('cancellation_hours') !== null) ? max(0, intval($this->input->post('cancellation_hours'))) : 3,
+							'cancellation_policy_text' => $this->input->post('cancellation_policy_text') ? trim($this->input->post('cancellation_policy_text')) : 'Cancellations allowed up to 3 hours prior to consultation slot.',
 							'modified_date'	=>$date,
 							'modified_by'	=>getUserId(),
 							);

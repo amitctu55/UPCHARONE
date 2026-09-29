@@ -15,6 +15,7 @@
     <!-- FontAwesome 4.7 -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <link rel="stylesheet" href="<?=base_url();?>public/assets/css/bootstrap.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
     <style>
     :root {
@@ -566,6 +567,18 @@
     }
 
     // Current URI segments for precise active link highlighting
+    // Check if user has active ambulance trip
+    $active_amb_booking = null;
+    if (!empty($userId)) {
+        $CI =& get_instance();
+        if (!isset($CI->Ambulance_model)) {
+            $CI->load->model('Ambulance_model');
+        }
+        if (isset($CI->Ambulance_model)) {
+            $active_amb_booking = $CI->Ambulance_model->get_active_or_recent_booking($userId);
+        }
+    }
+
     $seg1 = $this->uri->segment(1);
     $seg2 = $this->uri->segment(2);
 ?>
@@ -576,7 +589,10 @@
         <img src="<?=base_url('images/logo.png');?>" alt="Upchar Logo" onerror="this.src='https://upchar.info/images/Final_logo23.png';">
         <span>Upchar Patient</span>
     </div>
-    <div style="display: flex; align-items: center; gap: 10px;">
+    <div style="display: flex; align-items: center; gap: 8px;">
+        <a href="<?=base_url('ambulance/sos');?>" style="text-decoration: none; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 800; background: #dc2626; color: #ffffff; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 0 10px rgba(220,38,38,0.4);">
+            <i class="fa fa-ambulance"></i> SOS
+        </a>
         <?php if($total_cart_items > 0): ?>
             <a href="<?=base_url('mytest/checkout');?>" class="badge-cart" style="text-decoration: none; padding: 5px 10px; border-radius: 999px; font-size: 11px; font-weight: 700;">
                 <i class="fa fa-shopping-cart"></i> <?=$total_cart_items;?>
@@ -629,12 +645,54 @@
                 </div>
             </div>
 
-            <!-- 3. Navigation Group: CLINICAL CARE & BOOKINGS -->
+            <!-- 3. Navigation Group: EMERGENCY & RAPID DISPATCH -->
+            <div class="patient-nav-section" style="background: rgba(220, 38, 38, 0.08); border-radius: 12px; margin: 6px 12px 12px; padding: 6px 8px; border: 1px dashed rgba(239, 68, 68, 0.35);">
+                <span class="nav-group-label" style="color: #fca5a5; display: flex; align-items: center; justify-content: space-between; padding: 4px 6px 6px;">
+                    <span><i class="fa fa-ambulance text-danger" style="color: #ef4444; margin-right: 4px;"></i> Emergency Care</span>
+                    <span style="background: #dc2626; color: #fff; font-size: 9px; padding: 1px 6px; border-radius: 999px; font-weight: 800; letter-spacing: 0.5px;">24/7 LIVE</span>
+                </span>
+                <ul class="patient-nav-list">
+                    <!-- Ambulance SOS & Booking -->
+                    <li class="patient-nav-item">
+                        <a href="<?=base_url('ambulance');?>" class="patient-nav-link <?=($seg1 == 'ambulance' && $seg2 != 'tracking') ? 'active' : '';?>">
+                            <div class="nav-link-content">
+                                <div class="nav-icon-wrapper" style="color: #ef4444; background: rgba(239, 68, 68, 0.2);">
+                                    <i class="fa fa-bolt"></i>
+                                </div>
+                                <div class="nav-label-stack">
+                                    <span class="nav-main-title" style="color: #fee2e2;">Ambulance Services &amp; SOS</span>
+                                    <span class="nav-sub-desc" style="color: #fca5a5;">24/7 Rapid ICU &amp; BLS Fleet</span>
+                                </div>
+                            </div>
+                            <?php if(!empty($active_amb_booking)): ?>
+                                <span class="nav-badge-pill" style="background: #ef4444; color: #ffffff; animation: pulse 1.5s infinite; font-size: 10px;">
+                                    ACTIVE
+                                </span>
+                            <?php endif; ?>
+                        </a>
+                    </li>
+                    <!-- Ambulance Trips & Live Tracking -->
+                    <li class="patient-nav-item">
+                        <a href="<?=base_url('myappointments#ambulance');?>" onclick="if(typeof switchDashboardTab==='function'){ switchDashboardTab('ambulance'); }" class="patient-nav-link <?=($seg1 == 'ambulance' && $seg2 == 'tracking') ? 'active' : '';?>">
+                            <div class="nav-link-content">
+                                <div class="nav-icon-wrapper" style="color: #f59e0b; background: rgba(245, 158, 11, 0.2);">
+                                    <i class="fa fa-map-marker"></i>
+                                </div>
+                                <div class="nav-label-stack">
+                                    <span class="nav-main-title">Ambulance Trips &amp; Tracking</span>
+                                    <span class="nav-sub-desc">Live GPS Telemetry &amp; OTPs</span>
+                                </div>
+                            </div>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- 4. Navigation Group: CLINICAL CARE & CONSULTATIONS -->
             <div class="patient-nav-section">
                 <span class="nav-group-label">Clinical &amp; Consultations</span>
                 <ul class="patient-nav-list">
-
-                    <!-- Work: Consultations, Appointments & Booking Management -->
+                    <!-- Consultations, Appointments & Booking Management -->
                     <li class="patient-nav-item">
                         <a href="<?=base_url('myappointments');?>" class="patient-nav-link <?=($seg1 == 'myappointments' || $seg1 == 'myappointents') ? 'active' : '';?>">
                             <div class="nav-link-content">
@@ -642,14 +700,14 @@
                                     <i class="fa fa-calendar-check-o"></i>
                                 </div>
                                 <div class="nav-label-stack">
-                                    <span class="nav-main-title">My Appointments &amp; Bookings</span>
-                                    <span class="nav-sub-desc">Doctor visits &amp; Lab orders</span>
+                                    <span class="nav-main-title">My Appointments &amp; Consults</span>
+                                    <span class="nav-sub-desc">Doctor visits &amp; Video calls</span>
                                 </div>
                             </div>
                         </a>
                     </li>
 
-                    <!-- Work: Find and book certified doctors -->
+                    <!-- Find and book certified doctors -->
                     <li class="patient-nav-item">
                         <a href="<?=base_url('doctors');?>" class="patient-nav-link <?=($seg1 == 'doctors') ? 'active' : '';?>">
                             <div class="nav-link-content">
@@ -658,7 +716,22 @@
                                 </div>
                                 <div class="nav-label-stack">
                                     <span class="nav-main-title">Find &amp; Book Doctors</span>
-                                    <span class="nav-sub-desc">Specialists &amp; Video Consults</span>
+                                    <span class="nav-sub-desc">Specialists &amp; Clinic Visits</span>
+                                </div>
+                            </div>
+                        </a>
+                    </li>
+
+                    <!-- Video Teleconsultation -->
+                    <li class="patient-nav-item">
+                        <a href="<?=base_url('teleconsult');?>" class="patient-nav-link <?=($seg1 == 'teleconsult') ? 'active' : '';?>">
+                            <div class="nav-link-content">
+                                <div class="nav-icon-wrapper" style="color: #60a5fa;">
+                                    <i class="fa fa-video-camera"></i>
+                                </div>
+                                <div class="nav-label-stack">
+                                    <span class="nav-main-title">Online Video Consult</span>
+                                    <span class="nav-sub-desc">Instant Teleconsult &amp; Rx</span>
                                 </div>
                             </div>
                         </a>
@@ -666,13 +739,11 @@
                 </ul>
             </div>
 
-            <!-- 4. Navigation Group: DIAGNOSTICS & CART -->
+            <!-- 5. Navigation Group: DIAGNOSTICS & PATHOLOGY -->
             <div class="patient-nav-section">
-                <span class="nav-group-label">Diagnostics &amp; Cart</span>
+                <span class="nav-group-label">Diagnostics &amp; Lab Tests</span>
                 <ul class="patient-nav-list">
-
-                    <!-- Work: Browse pathology tests, packages & book sample pickup -->
-                    <!-- Diagnostics & Pathology Unified Entry (Catalog, Cart & Checkout merged) -->
+                    <!-- Diagnostics Catalog & Home Collection -->
                     <li class="patient-nav-item">
                         <a href="<?=base_url('mytest');?>" class="patient-nav-link <?=($seg1 == 'mytest' || $seg1 == 'diagnostic') ? 'active' : '';?>">
                             <div class="nav-link-content">
@@ -680,7 +751,7 @@
                                     <i class="fa fa-flask"></i>
                                 </div>
                                 <div class="nav-label-stack">
-                                    <span class="nav-main-title">Diagnostics &amp; Lab Tests</span>
+                                    <span class="nav-main-title">Diagnostics &amp; Health Tests</span>
                                     <span class="nav-sub-desc">Tests, Cart &amp; Home Pickup</span>
                                 </div>
                             </div>
@@ -691,15 +762,49 @@
                             <?php endif; ?>
                         </a>
                     </li>
+
+                    <!-- Digital Pathology Reports & Test Slips -->
+                    <li class="patient-nav-item">
+                        <a href="<?=base_url('myappointments#diagnostics');?>" onclick="if(typeof switchDashboardTab==='function'){ switchDashboardTab('diagnostics'); }" class="patient-nav-link">
+                            <div class="nav-link-content">
+                                <div class="nav-icon-wrapper" style="color: #2dd4bf;">
+                                    <i class="fa fa-file-text-o"></i>
+                                </div>
+                                <div class="nav-label-stack">
+                                    <span class="nav-main-title">Lab Orders &amp; Reports</span>
+                                    <span class="nav-sub-desc">Digital Pathology Slips</span>
+                                </div>
+                            </div>
+                        </a>
+                    </li>
                 </ul>
             </div>
 
-            <!-- 5. Navigation Group: BILLING, REWARDS & PROFILE -->
+            <!-- 6. Navigation Group: PHARMACY & MEDICINES -->
+            <div class="patient-nav-section">
+                <span class="nav-group-label">Pharmacy &amp; Medicines</span>
+                <ul class="patient-nav-list">
+                    <li class="patient-nav-item">
+                        <a href="<?=base_url('pharmacy');?>" class="patient-nav-link <?=($seg1 == 'pharmacy') ? 'active' : '';?>">
+                            <div class="nav-link-content">
+                                <div class="nav-icon-wrapper" style="color: #e879f9;">
+                                    <i class="fa fa-medkit"></i>
+                                </div>
+                                <div class="nav-label-stack">
+                                    <span class="nav-main-title">Order Medicines</span>
+                                    <span class="nav-sub-desc">Upload Rx &amp; Doorstep Delivery</span>
+                                </div>
+                            </div>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- 7. Navigation Group: BILLING, REWARDS & HEALTH PROFILE -->
             <div class="patient-nav-section">
                 <span class="nav-group-label">Billing &amp; Medical Records</span>
                 <ul class="patient-nav-list">
-
-                    <!-- Work: Upchar Cashback Points, Wallet Balance & Topup -->
+                    <!-- Upchar Wallet -->
                     <li class="patient-nav-item">
                         <a href="<?=base_url('wallet');?>" class="patient-nav-link <?=($seg1 == 'wallet' || $seg1 == 'wallet_v2') ? 'active' : '';?>">
                             <div class="nav-link-content">
@@ -717,7 +822,7 @@
                         </a>
                     </li>
 
-                    <!-- Work: Invoices, Tax receipts & Payment transactions -->
+                    <!-- Invoices, Tax receipts & Payment transactions -->
                     <li class="patient-nav-item">
                         <a href="<?=base_url('payment/history');?>" class="patient-nav-link <?=($seg1 == 'payment') ? 'active' : '';?>">
                             <div class="nav-link-content">
@@ -732,7 +837,7 @@
                         </a>
                     </li>
 
-                    <!-- Work: Personal vitals, health history, address & dependents -->
+                    <!-- Personal vitals, health history, address & dependents -->
                     <li class="patient-nav-item">
                         <a href="<?=base_url('profile');?>" class="patient-nav-link <?=($seg1 == 'profile') ? 'active' : '';?>">
                             <div class="nav-link-content">
@@ -751,7 +856,7 @@
 
         </div>
 
-        <!-- 6. Bottom Sticky Quick Action Footer -->
+                <!-- 6. Bottom Sticky Quick Action Footer -->
         <div class="patient-sidebar-footer">
             <div class="footer-action-links">
                 <a href="<?=base_url();?>" class="btn-sidebar-foot btn-foot-home" title="Go to Main Website">

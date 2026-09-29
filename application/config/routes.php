@@ -262,6 +262,7 @@ $route['wallet/get_balance_ajax']           = 'wallet/get_balance_ajax';
 $route['wallet_v2']                         = 'wallet/index';
 $route['wallet/(:any)']                     = 'wallet/$1';
 
+$route['refund/quote']                         = 'refund/quote';
 $route['refund/initiate']                   = 'refund/initiate';
 $route['refund/status/(:any)']              = 'refund/status/$1';
 
@@ -508,4 +509,34 @@ $route['cart/verify_qr']                = 'cart/verify_delivery_qr';
 
 
 
+
+
+
+// Healthcare Partner Directory Aliases
+$route['partners/hospitals']  = 'home/hospitals';
+$route['partners/doctors']    = 'home/doctors';
+$route['partners/labs']       = 'mytest/index';
+$route['partners/pharmacies'] = 'home/medical';
+
+
+// Video Consultation & Teleconsult Routes
+$route['teleconsult']                               = 'home/teleconsult';
+$route['teleconsult/(:any)']                        = 'home/teleconsult/$1';
+$route['doctorpanel/update_video_consult_status']   = 'doctorpanel/update_video_consult_status';
+
+// =========================================================
+// AMBULANCE MODULE ROUTES (Integrated 24/7 Medical Response)
+// =========================================================
+$route['ambulance']                     = 'Ambulance/index';
+$route['ambulance/sos']                 = 'Ambulance/sos';
+$route['ambulance/book']                = 'Ambulance/book';
+$route['ambulance/tracking']            = 'Ambulance/tracking';
+$route['ambulance/my-bookings']         = 'Ambulance/my_bookings';
+$route['ambulance/find-providers']      = 'Ambulance/find_providers';
+$route['ambulance/create_booking']      = 'Ambulance/create_booking';
+$route['ambulance/cancel_booking']      = 'Ambulance/cancel_booking';
+$route['ambulance/tracking_api']        = 'Ambulance/tracking_api';
+$route['ambulance/tracking_api/(:any)'] = 'Ambulance/tracking_api/$1';
+$route['ambulance/hospitals']           = 'Ambulance/hospitals';
+$route['myambulance']                   = 'home/myappointments';
 
