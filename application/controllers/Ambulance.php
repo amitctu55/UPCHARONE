@@ -72,14 +72,18 @@ class Ambulance extends CI_Controller {
         $userId = $this->_get_auth_user_id();
         $user   = $this->_get_auth_user_data();
 
-        $data["page_title"]     = "Emergency SOS Ambulance Dispatch - Upchar";
-        $data["user"]           = $user;
-        $data["user_id"]        = $userId;
-        $data["patient_name"]   = trim(($user['FNAME'] ?? '') . ' ' . ($user['LNAME'] ?? '')) ?: ($user['NAME'] ?? '');
-        $data["patient_mobile"] = $user['MOBILE'] ?? '';
-        $data["categories"]     = $this->Ambulance_model->get_categories();
-        $data["hospitals_list"] = $this->Ambulance_model->get_hospitals_list(20);
-        $data["active_booking"] = $userId ? $this->Ambulance_model->get_active_or_recent_booking($userId) : null;
+        $data["page_title"]        = "Emergency SOS Ambulance Dispatch - Upchar";
+        $data["user"]              = $user;
+        $data["user_id"]           = $userId;
+        $data["patient_name"]      = trim(($user['FNAME'] ?? '') . ' ' . ($user['LNAME'] ?? '')) ?: ($user['NAME'] ?? '');
+        $data["patient_mobile"]    = $user['MOBILE'] ?? '';
+        $data["categories"]        = $this->Ambulance_model->get_categories();
+        $data["hospitals_list"]    = $this->Ambulance_model->get_hospitals_list(40);
+        $data["active_booking"]    = $userId ? $this->Ambulance_model->get_active_or_recent_booking($userId) : null;
+        $data["selected_category"] = strtoupper(trim($this->input->get('category', TRUE) ?: 'ALS'));
+        $data["param_pickup"]      = trim($this->input->get('pickup', TRUE) ?: '');
+        $data["param_drop"]        = trim($this->input->get('drop', TRUE) ?: '');
+        $data["param_dist"]        = max(1.0, floatval($this->input->get('dist', TRUE) ?: 8.0));
 
         $this->load->view("includes/header", $data);
         $this->load->view("ambulance/sos", $data);
@@ -104,6 +108,10 @@ class Ambulance extends CI_Controller {
     public function tracking() {
         $ref    = trim($this->input->get('ref', TRUE) ?: $this->input->post('ref', TRUE) ?: '');
         $userId = $this->_get_auth_user_id();
+
+        if (empty($ref)) {
+            $ref = $this->session->userdata('last_ambulance_ref') ?: '';
+        }
 
         $booking = null;
         if (!empty($ref)) {
@@ -180,6 +188,9 @@ class Ambulance extends CI_Controller {
         ];
 
         $res = $this->Ambulance_model->create_booking($params);
+        if (!empty($res['booking_code'])) {
+            $this->session->set_userdata('last_ambulance_ref', $res['booking_code']);
+        }
         echo json_encode($res);
     }
 

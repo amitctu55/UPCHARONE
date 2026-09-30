@@ -541,6 +541,9 @@
             var latlngs = [amb, pickup, drop];
             var polyline = L.polyline(latlngs, {color: '<?=$is_canc ? "#94a3b8" : "#dc2626";?>', weight: 4, dashArray: '6, 8'}).addTo(map);
             map.fitBounds(polyline.getBounds().pad(0.2));
+            setTimeout(function() {
+                map.invalidateSize();
+            }, 250);
 
             <?php if(!$is_canc && !$is_done): ?>
             // Auto-refresh telemetry every 8 seconds
@@ -635,6 +638,7 @@
             var fd = new FormData();
             fd.append('booking_code', currentCancelCode);
             fd.append('reason', fullReason);
+            fd.append('<?=$this->security->get_csrf_token_name();?>', '<?=$this->security->get_csrf_hash();?>');
 
             fetch('<?=base_url("ambulance/cancel_booking");?>', {
                 method: 'POST',

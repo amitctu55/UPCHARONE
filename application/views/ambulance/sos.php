@@ -161,6 +161,12 @@
           <p>Instant GPS dispatch to your doorstep. Nearest verified critical care unit responding.</p>
       </div>
 
+<?php
+$selCat = $selected_category ?? 'ALS';
+$pickupVal = !empty($param_pickup) ? $param_pickup : 'Sigra, Varanasi';
+$distVal = !empty($param_dist) ? $param_dist : 8;
+?>
+
       <div id="sosForm">
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
               <div class="form-group">
@@ -180,24 +186,26 @@
               <button type="button" class="location-btn" onclick="getLocation(event)">
                   <i class="fas fa-crosshairs" style="color: #dc2626;"></i> Detect My Current GPS Location
               </button>
-              <input type="text" class="form-control-custom" id="sos_address" placeholder="House/Flat, Road, Landmark, City" value="Sigra, Varanasi">
+              <input type="text" class="form-control-custom" id="sos_address" placeholder="House/Flat, Road, Landmark, City" value="<?= htmlspecialchars($pickupVal); ?>">
               <input type="hidden" id="sos_lat" value="25.3176">
               <input type="hidden" id="sos_lng" value="82.9739">
+              <input type="hidden" id="sos_dist" value="<?= htmlspecialchars($distVal); ?>">
           </div>
 
           <div class="form-group">
               <label><i class="fas fa-ambulance" style="color: #64748b; margin-right: 4px;"></i> Required Ambulance Capability</label>
               <select class="form-control-custom" id="sos_type">
-                  <option value="ALS" selected>Advanced Life Support (ALS ICU) - Ventilator, Monitor &amp; Paramedic (₹1,800 Base)</option>
-                  <option value="BLS">Basic Life Support (BLS) - Oxygen, Stretcher &amp; First Aid (₹800 Base)</option>
-                  <option value="PATIENT_TRANSPORT">Patient Transport Van - Routine Medical Transit (₹400 Base)</option>
-                  <option value="NEONATAL">Neonatal Intensive Care - Transport Incubator (₹2,200 Base)</option>
+                  <option value="ALS" <?= ($selCat === 'ALS') ? 'selected' : '' ?>>Advanced Life Support (ALS ICU) - Ventilator, Monitor &amp; Paramedic (₹1,800 Base)</option>
+                  <option value="BLS" <?= ($selCat === 'BLS') ? 'selected' : '' ?>>Basic Life Support (BLS) - Oxygen, Stretcher &amp; First Aid (₹800 Base)</option>
+                  <option value="PATIENT_TRANSPORT" <?= ($selCat === 'PATIENT_TRANSPORT') ? 'selected' : '' ?>>Patient Transport Van - Routine Medical Transit (₹400 Base)</option>
+                  <option value="NEONATAL" <?= ($selCat === 'NEONATAL') ? 'selected' : '' ?>>Neonatal Intensive Care - Transport Incubator (₹2,200 Base)</option>
               </select>
           </div>
 
           <div class="form-group">
               <label><i class="fas fa-hospital" style="color: #64748b; margin-right: 4px;"></i> Destination Hospital / Trauma Wing</label>
               <select class="form-control-custom" id="sos_hospital">
+                  <option value="0">Nearest Emergency Trauma Center / Hospital (Auto-Routing)</option>
                   <option value="11" selected>Oriana Hospital Emergency Wing (Trauma &amp; ICU)</option>
                   <option value="1">Apex Hospital Emergency Fleet</option>
                   <option value="2">Heritage Hospitals Trauma Center</option>
@@ -309,6 +317,10 @@ function submitSOS() {
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Dispatching Unit...';
     btn.style.pointerEvents = "none";
 
+    var distKm = 8;
+    var distEl = document.getElementById("sos_dist");
+    if (distEl && distEl.value) distKm = parseFloat(distEl.value) || 8;
+
     const fd = new FormData();
     fd.append('patient_name', name);
     fd.append('patient_mobile', mobile);
@@ -317,7 +329,7 @@ function submitSOS() {
     fd.append('pickup_lng', lng);
     fd.append('category', category);
     fd.append('hospital_id', hospital);
-    fd.append('distance_km', 8);
+    fd.append('distance_km', distKm);
     fd.append('medical_notes', notes);
     fd.append('<?=$this->security->get_csrf_token_name();?>', '<?=$this->security->get_csrf_hash();?>');
 
@@ -342,8 +354,9 @@ function submitSOS() {
         }
     })
     .catch(err => {
-        alert('Emergency response registered. Unit dispatched.');
-        location.href = '<?=base_url("myappointments#ambulance");?>';
+        btn.innerHTML = '<i class="fas fa-bolt"></i> DISPATCH NEAREST AMBULANCE NOW';
+        btn.style.pointerEvents = "auto";
+        alert('Network connection or server error. Please retry or call our 24/7 hotline 1800-247-9999 directly.');
     });
 }
 </script>

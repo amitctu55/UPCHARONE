@@ -847,17 +847,21 @@
 
                         <!-- Service Selector -->
                         <div class="amb-type-pills">
-                            <div class="amb-type-pill active" onclick="selectType(this, 1, 500, 20)">
+                            <div class="amb-type-pill active" onclick="selectType(this, 'BLS', 800, 30)">
                                 <span class="p-name">BLS Unit</span>
-                                <span class="p-price">₹500 Base</span>
+                                <span class="p-price">₹800 Base</span>
                             </div>
-                            <div class="amb-type-pill" onclick="selectType(this, 2, 1000, 35)">
+                            <div class="amb-type-pill" onclick="selectType(this, 'ALS', 1800, 50)">
                                 <span class="p-name">ALS ICU</span>
-                                <span class="p-price">₹1000 Base</span>
+                                <span class="p-price">₹1800 Base</span>
                             </div>
-                            <div class="amb-type-pill" onclick="selectType(this, 3, 300, 15)">
+                            <div class="amb-type-pill" onclick="selectType(this, 'PATIENT_TRANSPORT', 400, 20)">
                                 <span class="p-name">Patient Van</span>
-                                <span class="p-price">₹300 Base</span>
+                                <span class="p-price">₹400 Base</span>
+                            </div>
+                            <div class="amb-type-pill" onclick="selectType(this, 'NEONATAL', 2200, 60)">
+                                <span class="p-name">Neonatal ICU</span>
+                                <span class="p-price">₹2200 Base</span>
                             </div>
                         </div>
 
@@ -888,15 +892,15 @@
                         <div class="amb-estimate-result">
                             <div>
                                 <small style="color: #64748b; display: block; font-size: 11px; font-weight: 700; text-transform: uppercase;">Estimated Total Fare</small>
-                                <span style="font-size: 13px; color: #475569;" id="calcBreakdown">₹500 base + 10km × ₹20</span>
+                                <span style="font-size: 13px; color: #475569;" id="calcBreakdown">₹800 base + 10km × ₹30</span>
                             </div>
                             <div class="rate-box">
-                                <div class="rate-amt" id="calcTotal">₹700</div>
+                                <div class="rate-amt" id="calcTotal">₹1,100</div>
                             </div>
                         </div>
 
                         <!-- Dispatch Trigger -->
-                        <a href="<?= base_url('ambulance/sos') ?>" class="amb-btn-calc-dispatch">
+                        <a href="<?= base_url('ambulance/sos') ?>" onclick="requestFromCalculator(event)" class="amb-btn-calc-dispatch">
                             <i class="fas fa-ambulance"></i> Request Immediate Ambulance
                         </a>
                     </div>
@@ -1026,8 +1030,25 @@
                                 </div>
                             </div>
 
+                            <?php
+                                $catCode = 'BLS';
+                                if (stripos($st['name'], 'ALS') !== false || stripos($st['name'], 'ICU') !== false || stripos($st['name'], 'Advanced') !== false) {
+                                    $catCode = 'ALS';
+                                } elseif (stripos($st['name'], 'Neonatal') !== false || stripos($st['name'], 'Pediatric') !== false) {
+                                    $catCode = 'NEONATAL';
+                                } elseif (stripos($st['name'], 'Transport') !== false || stripos($st['name'], 'Van') !== false) {
+                                    $catCode = 'PATIENT_TRANSPORT';
+                                } elseif ($sid === 2) {
+                                    $catCode = 'ALS';
+                                } elseif ($sid === 3) {
+                                    $catCode = 'PATIENT_TRANSPORT';
+                                } elseif ($sid === 4) {
+                                    $catCode = 'NEONATAL';
+                                }
+                            ?>
+
                             <div class="amb-card-btns">
-                                <a href="<?= base_url('ambulance/sos') ?>" class="amb-card-btn-primary">
+                                <a href="<?= base_url('ambulance/sos?category=' . $catCode) ?>" class="amb-card-btn-primary">
                                     <i class="fas fa-bolt"></i> Book This Ambulance
                                 </a>
                                 <a href="tel:18002479999" class="amb-card-btn-call" title="Call Dispatcher">
@@ -1272,14 +1293,16 @@
 </div>
 
 <script>
-var curBasePrice = 500;
-var curKmPrice = 20;
+var curCategory = 'BLS';
+var curBasePrice = 800;
+var curKmPrice = 30;
 
-function selectType(el, typeId, base, perKm) {
+function selectType(el, catCode, base, perKm) {
     document.querySelectorAll('.amb-type-pill').forEach(function(p) {
         p.classList.remove('active');
     });
     el.classList.add('active');
+    curCategory = catCode;
     curBasePrice = base;
     curKmPrice = perKm;
     var dist = document.getElementById('distRange').value;
@@ -1290,7 +1313,22 @@ function recalcFare(km) {
     km = parseInt(km, 10);
     document.getElementById('distDisplay').textContent = km + " km";
     var total = curBasePrice + (km * curKmPrice);
-    document.getElementById('calcBreakdown').textContent = "₹" + curBasePrice + " base + " + km + "km × ₹" + curKmPrice;
+    document.getElementById('calcBreakdown').textContent = "₹" + curBasePrice.toLocaleString() + " base + " + km + "km × ₹" + curKmPrice;
     document.getElementById('calcTotal').textContent = "₹" + total.toLocaleString();
+}
+
+function requestFromCalculator(e) {
+    e.preventDefault();
+    var pickup = (document.getElementById('calcPickup').value || '').trim();
+    var drop = (document.getElementById('calcDrop').value || '').trim();
+    var dist = document.getElementById('distRange').value || 10;
+    var url = '<?= base_url("ambulance/sos") ?>?category=' + encodeURIComponent(curCategory) + '&dist=' + encodeURIComponent(dist);
+    if (pickup && pickup !== 'Current GPS Location') {
+        url += '&pickup=' + encodeURIComponent(pickup);
+    }
+    if (drop && drop !== 'Nearest Emergency Hospital') {
+        url += '&drop=' + encodeURIComponent(drop);
+    }
+    window.location.href = url;
 }
 </script>

@@ -453,43 +453,170 @@
       color: #7f1d1d !important;
     }
 
+    /* =========================================================
+       GLOBAL MODERN ACTION BUTTONS DESIGN SYSTEM (EVERY PANEL)
+       ========================================================= */
     .btn-icon-action {
-      width: 32px;
-      height: 32px;
-      border-radius: 6px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      border: 1px solid transparent;
-      transition: all 0.15s ease;
-      cursor: pointer;
-      font-size: 13px;
+      width: 34px !important;
+      height: 34px !important;
+      border-radius: 8px !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      border: 1px solid transparent !important;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+      cursor: pointer !important;
+      font-size: 14px !important;
+      line-height: 1 !important;
       text-decoration: none !important;
-      margin: 0 2px;
+      margin: 0 3px !important;
+      position: relative !important;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04) !important;
+      vertical-align: middle !important;
     }
 
-    .btn-action-edit {
-      color: #0284c7 !important;
-      background: #e0f2fe !important;
-      border-color: #bae6fd !important;
+    .btn-icon-action i.fa {
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+      font-size: 13.5px !important;
+      line-height: 1 !important;
     }
 
-    .btn-action-edit:hover {
-      background: #0284c7 !important;
+    .btn-icon-action:hover {
+      transform: translateY(-2px) !important;
+      text-decoration: none !important;
+    }
+
+    .btn-icon-action:hover i.fa {
+      transform: scale(1.15) !important;
+    }
+
+    .btn-icon-action:active {
+      transform: translateY(0) scale(0.97) !important;
+    }
+
+    /* 1. VIEW ACTION BUTTONS */
+    .btn-action-view,
+    .btn-icon-action[title*="View" i],
+    .btn-icon-action[title*="Preview" i],
+    .btn-icon-action[title*="Details" i],
+    .btn-icon-action:has(.fa-eye) {
+      color: #0d9488 !important;
+      background: #f0fdfa !important;
+      border-color: #ccfbf1 !important;
+    }
+
+    .btn-action-view:hover,
+    .btn-icon-action[title*="View" i]:hover,
+    .btn-icon-action[title*="Preview" i]:hover,
+    .btn-icon-action[title*="Details" i]:hover,
+    .btn-icon-action:has(.fa-eye):hover {
+      background: #00a896 !important;
       color: #ffffff !important;
-      transform: translateY(-1px);
+      border-color: #00a896 !important;
+      box-shadow: 0 4px 12px rgba(0, 168, 150, 0.35) !important;
     }
 
-    .btn-action-delete {
+    /* 2. EDIT ACTION BUTTONS */
+    .btn-action-edit,
+    .btn-icon-action[title*="Edit" i],
+    .btn-icon-action[title*="Update" i],
+    .btn-icon-action:has(.fa-pencil, .fa-edit) {
+      color: #2563eb !important;
+      background: #eff6ff !important;
+      border-color: #bfdbfe !important;
+    }
+
+    .btn-action-edit:hover,
+    .btn-icon-action[title*="Edit" i]:hover,
+    .btn-icon-action[title*="Update" i]:hover,
+    .btn-icon-action:has(.fa-pencil, .fa-edit):hover {
+      background: #2563eb !important;
+      color: #ffffff !important;
+      border-color: #2563eb !important;
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35) !important;
+    }
+
+    /* 3. DELETE ACTION BUTTONS */
+    .btn-action-delete,
+    .btn-icon-action[title*="Delete" i],
+    .btn-icon-action[title*="Remove" i],
+    .btn-icon-action:has(.fa-trash, .fa-trash-o) {
       color: #dc2626 !important;
-      background: #fee2e2 !important;
+      background: #fef2f2 !important;
       border-color: #fecaca !important;
     }
 
-    .btn-action-delete:hover {
+    .btn-action-delete:hover,
+    .btn-icon-action[title*="Delete" i]:hover,
+    .btn-icon-action[title*="Remove" i]:hover,
+    .btn-icon-action:has(.fa-trash, .fa-trash-o):hover {
       background: #dc2626 !important;
       color: #ffffff !important;
-      transform: translateY(-1px);
+      border-color: #dc2626 !important;
+      box-shadow: 0 4px 12px rgba(220, 38, 38, 0.35) !important;
+    }
+
+    /* 4. GALLERY / MEDIA ACTION BUTTONS */
+    .btn-action-gallery,
+    .btn-icon-action[title*="Gallery" i],
+    .btn-icon-action:has(.fa-picture-o, .fa-image) {
+      color: #d97706 !important;
+      background: #fffbeb !important;
+      border-color: #fde68a !important;
+    }
+
+    .btn-action-gallery:hover,
+    .btn-icon-action[title*="Gallery" i]:hover,
+    .btn-icon-action[title*="Media" i]:hover,
+    .btn-icon-action:has(.fa-picture-o, .fa-image):hover {
+      background: #f59e0b !important;
+      color: #ffffff !important;
+      border-color: #f59e0b !important;
+      box-shadow: 0 4px 12px rgba(245, 158, 11, 0.35) !important;
+    }
+
+    /* 5. SETTINGS / ATTRIBUTES / SLIDERS */
+    .btn-action-settings,
+    .btn-icon-action:has(.fa-sliders, .fa-cog) {
+      color: #4f46e5 !important;
+      background: #eef2ff !important;
+      border-color: #c7d2fe !important;
+    }
+
+    .btn-action-settings:hover,
+    .btn-icon-action:has(.fa-sliders, .fa-cog):hover {
+      background: #4f46e5 !important;
+      color: #ffffff !important;
+      border-color: #4f46e5 !important;
+      box-shadow: 0 4px 12px rgba(79, 70, 229, 0.35) !important;
+    }
+
+    /* 6. ENHANCE LEGACY TABLE ACTION BUTTONS (e.g. td .btn-xs, td .btn-sm) */
+    table.table td div[style*="display: inline-flex"],
+    table.table td div[style*="display:inline-flex"] {
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      gap: 6px !important;
+    }
+
+    table.table td .btn-xs,
+    table.table td .btn-group-xs > .btn {
+      padding: 5px 9px !important;
+      font-size: 12px !important;
+      border-radius: 6px !important;
+      font-weight: 600 !important;
+      transition: all 0.15s ease !important;
+      line-height: 1.2 !important;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05) !important;
+    }
+
+    table.table td .btn-xs:hover {
+      transform: translateY(-1px) !important;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.12) !important;
     }
 
     .upload-dropzone {
