@@ -243,17 +243,22 @@ class Refund extends CI_Controller {
 
         $table = ($institution_type === 'C') ? 'clinic' : 'hospital';
         if ($this->db->table_exists($table)) {
-            $row = $this->db->select('cancellation_hours, cancellation_policy_text')->where('id', $institute_id)->get($table)->row_array();
-            if ($row && isset($row['cancellation_hours'])) {
-                $hours = max(0, intval($row['cancellation_hours']));
-                $text = !empty($row['cancellation_policy_text']) ? $row['cancellation_policy_text'] : "Cancellations allowed up to {$hours} hours prior to consultation slot.";
-                return array('hours' => $hours, 'policy_text' => $text);
+            $has_col = $this->db->field_exists('cancellation_hours', $table);
+            if ($has_col) {
+                $row = $this->db->select('cancellation_hours, cancellation_policy_text')->where('id', $institute_id)->get($table)->row_array();
+                if ($row && isset($row['cancellation_hours'])) {
+                    $hours = max(0, intval($row['cancellation_hours']));
+                    $text = !empty($row['cancellation_policy_text']) ? $row['cancellation_policy_text'] : "Cancellations allowed up to {$hours} hours prior to consultation slot.";
+                    return array('hours' => $hours, 'policy_text' => $text);
+                }
             }
         }
 
         // Check fallback hospital table if not already checked
         if ($table !== 'hospital' && $this->db->table_exists('hospital')) {
-            $row = $this->db->select('cancellation_hours, cancellation_policy_text')->where('id', $institute_id)->get('hospital')->row_array();
+            $has_col = $this->db->field_exists('cancellation_hours', 'hospital');
+            if ($has_col) {
+                $row = $this->db->select('cancellation_hours, cancellation_policy_text')->where('id', $institute_id)->get('hospital')->row_array();
             if ($row && isset($row['cancellation_hours'])) {
                 $hours = max(0, intval($row['cancellation_hours']));
                 $text = !empty($row['cancellation_policy_text']) ? $row['cancellation_policy_text'] : "Cancellations allowed up to {$hours} hours prior to consultation slot.";

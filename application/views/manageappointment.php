@@ -2612,6 +2612,132 @@ function executeCancellation() {
 
 <script>
 var activeAmbCancelCode = "";
+var curModalCat = "ALS";
+var curModalBase = 1800;
+var curModalRate = 50;
+
+function openAmbulanceDispatchModal() {
+    var modal = document.getElementById("ambulanceDispatchModal");
+    if (modal) {
+        modal.style.display = "flex";
+        var fc = document.getElementById("ambFormContainer");
+        var ss = document.getElementById("ambSuccessScreen");
+        if (fc) fc.style.display = "block";
+        if (ss) ss.style.display = "none";
+        recalcModalFare();
+    }
+}
+
+function closeAmbulanceDispatchModal() {
+    var modal = document.getElementById("ambulanceDispatchModal");
+    if (modal) modal.style.display = "none";
+}
+
+function selectModalCategory(el, cat, base, rate) {
+    document.querySelectorAll(".amb-modal-type").forEach(function(item) {
+        item.classList.remove("active");
+        item.style.border = "1.5px solid #e2e8f0";
+        item.style.background = "#f8fafc";
+        var title = item.querySelector("strong");
+        if (title) title.style.color = "#0f172a";
+    });
+    el.classList.add("active");
+    el.style.border = "2px solid #ef4444";
+    el.style.background = "#fef2f2";
+    var curTitle = el.querySelector("strong");
+    if (curTitle) curTitle.style.color = "#991b1b";
+
+    curModalCat = cat;
+    curModalBase = base;
+    curModalRate = rate;
+    recalcModalFare();
+}
+
+function recalcModalFare() {
+    var km = 8;
+    var total = curModalBase + (km * curModalRate);
+    var bEl = document.getElementById("ambFareBreakdown");
+    var tEl = document.getElementById("ambFareTotal");
+    if (bEl) bEl.textContent = "₹" + curModalBase.toLocaleString() + " Base + " + km + "km × ₹" + curModalRate;
+    if (tEl) tEl.textContent = "₹" + total.toLocaleString();
+}
+
+function detectGPSForModal() {
+    if (!navigator.geolocation) {
+        alert("Geolocation is not supported by your browser.");
+        return;
+    }
+    navigator.geolocation.getCurrentPosition(function(pos) {
+        document.getElementById("amb_pickup_lat").value = pos.coords.latitude;
+        document.getElementById("amb_pickup_lng").value = pos.coords.longitude;
+        document.getElementById("amb_pickup_address").value = "GPS: " + pos.coords.latitude.toFixed(5) + ", " + pos.coords.longitude.toFixed(5);
+        fetch("https://nominatim.openstreetmap.org/reverse?format=json&lat=" + pos.coords.latitude + "&lon=" + pos.coords.longitude)
+            .then(function(r) { return r.json(); })
+            .then(function(d) {
+                if (d.display_name) document.getElementById("amb_pickup_address").value = d.display_name;
+            }).catch(function(){});
+    }, function() {
+        alert("Unable to retrieve GPS coordinates. Please enter pickup address manually.");
+    });
+}
+
+function submitAmbulanceDispatch() {
+    var name     = (document.getElementById("amb_patient_name").value || "").trim();
+    var mobile   = (document.getElementById("amb_patient_mobile").value || "").trim();
+    var address  = (document.getElementById("amb_pickup_address").value || "").trim();
+    var hospital = document.getElementById("amb_hospital_id").value;
+    var notes    = (document.getElementById("amb_notes").value || "").trim();
+    var lat      = document.getElementById("amb_pickup_lat").value || 25.3176;
+    var lng      = document.getElementById("amb_pickup_lng").value || 82.9739;
+
+    if (!name || !mobile || !address) {
+        alert("Please provide patient name, contact mobile, and pickup address.");
+        return;
+    }
+
+    var btn = document.getElementById("btnSubmitAmbDispatch");
+    var origHtml = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Dispatching Unit...';
+
+    var fd = new FormData();
+    fd.append("patient_name", name);
+    fd.append("patient_mobile", mobile);
+    fd.append("pickup_address", address);
+    fd.append("pickup_lat", lat);
+    fd.append("pickup_lng", lng);
+    fd.append("category", curModalCat);
+    fd.append("hospital_id", hospital);
+    fd.append("distance_km", 8);
+    fd.append("medical_notes", notes);
+    fd.append("<?= !empty($csrf_token_name) ? $csrf_token_name : $this->security->get_csrf_token_name(); ?>", "<?= !empty($csrf_hash) ? $csrf_hash : $this->security->get_csrf_hash(); ?>");
+
+    fetch("<?=base_url('ambulance/create_booking');?>", {
+        method: "POST",
+        body: fd
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        if (data.status === "success") {
+            document.getElementById("ambFormContainer").style.display = "none";
+            document.getElementById("ambSuccessScreen").style.display = "block";
+            document.getElementById("ambResCode").textContent = "#" + data.booking_code;
+            document.getElementById("ambResVehicle").textContent = data.ambulance + " (" + data.category + ")";
+            document.getElementById("ambResDriver").textContent = data.driver_name + " • " + data.driver_phone;
+            document.getElementById("ambResOtp").textContent = data.pickup_otp;
+            document.getElementById("ambResTrackBtn").href = data.tracking_url;
+        } else {
+            alert(data.message || "Error dispatching ambulance.");
+            btn.disabled = false;
+            btn.innerHTML = origHtml;
+        }
+    })
+    .catch(function() {
+        btn.disabled = false;
+        btn.innerHTML = origHtml;
+        alert("Network error. Please call 1800-247-9999 directly.");
+    });
+}
 
 function cancelAmbulanceBooking(code) {
     if (!code) return;
@@ -2730,6 +2856,10 @@ window.addEventListener("click", function(e) {
     var modal = document.getElementById("cancelAmbulanceModal");
     if (e.target === modal) {
         closeAmbulanceCancelModal();
+    }
+    var dModal = document.getElementById("ambulanceDispatchModal");
+    if (e.target === dModal) {
+        closeAmbulanceDispatchModal();
     }
 });
 

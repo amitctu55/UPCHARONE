@@ -489,27 +489,25 @@ class Ambulance_model extends CI_Model {
         // Sync with legacy amb_bookings if exists
         if ($db->table_exists('amb_bookings')) {
             $legacyData = [
-                'booking_id'          => $bookingCode,
-                'user_id'             => $userId,
-                'upchar_user_id'      => $userId,
-                'provider_id'         => $assignedDriverId ?: 1,
-                'current_provider_id' => $assignedDriverId ?: 1,
-                'service_type_id'     => ($category === 'BLS') ? 1 : (($category === 'ALS') ? 2 : 3),
-                'status'              => ($status === 'ASSIGNED') ? 'ACCEPTED' : 'SEARCHING',
-                'payment_mode'        => 'CASH',
-                'paid'                => 0,
-                'is_track'            => 'YES',
-                'distance'            => $distanceKm,
-                's_address'           => $pickupAddr,
-                's_latitude'          => $pickupLat,
-                's_longitude'         => $pickupLng,
-                'd_address'           => $dropAddr,
-                'd_latitude'          => $dropLat,
-                'd_longitude'         => $dropLng,
-                'otp'                 => $pickupOtp,
-                'route_key'           => '',
-                'created_at'          => date('Y-m-d H:i:s'),
-                'updated_at'          => date('Y-m-d H:i:s')
+                'booking_id'      => $bookingCode,
+                'user_id'         => $userId,
+                'upchar_user_id'  => $userId,
+                'provider_id'     => $assignedDriverId ?: 1,
+                'service_type_id' => ($category === 'BLS') ? 1 : (($category === 'ALS') ? 2 : 3),
+                'status'          => ($status === 'ASSIGNED') ? 'ACCEPTED' : 'SEARCHING',
+                'payment_mode'    => 'CASH',
+                'paid'            => 0,
+                'distance'        => $distanceKm,
+                's_address'       => $pickupAddr,
+                's_latitude'      => $pickupLat,
+                's_longitude'     => $pickupLng,
+                'd_address'       => $dropAddr,
+                'd_latitude'      => $dropLat,
+                'd_longitude'     => $dropLng,
+                'otp'             => $pickupOtp,
+                'route_key'       => '',
+                'created_at'      => date('Y-m-d H:i:s'),
+                'updated_at'      => date('Y-m-d H:i:s')
             ];
             $db->insert('amb_bookings', $legacyData);
         }

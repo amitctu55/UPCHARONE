@@ -80,7 +80,12 @@ class Appointment_model extends CI_Model {
             foreach ($results as $row) {
                 // Determine institute table (clinic or hospital)
                 $table = (!empty($row->institution_type) && $row->institution_type == 'C') ? 'clinic' : 'hospital';
-                $institute = $this->db->select('name, cancellation_hours, cancellation_policy_text')->where('id', $row->institute_id)->get($table)->row();
+                $institute = null;
+                if ($this->db->table_exists($table)) {
+                    $has_col = $this->db->field_exists('cancellation_hours', $table);
+                    $select_cols = $has_col ? 'name, cancellation_hours, cancellation_policy_text' : 'name';
+                    $institute = $this->db->select($select_cols)->where('id', $row->institute_id)->get($table)->row();
+                }
                 $row->institute_name = $institute ? $institute->name : 'Medical Center';
                 $row->cancellation_hours = ($institute && isset($institute->cancellation_hours) && $institute->cancellation_hours !== null) ? intval($institute->cancellation_hours) : 3;
                 $row->cancellation_policy_text = ($institute && !empty($institute->cancellation_policy_text)) ? $institute->cancellation_policy_text : 'Cancellations allowed up to 3 hours prior to consultation slot.';

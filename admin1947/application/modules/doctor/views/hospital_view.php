@@ -233,15 +233,15 @@
                     <td style="text-align: center; font-size: 12px; color: #64748b; vertical-align: middle;">
                       <?=date('d M Y', strtotime($val['creat_date']));?>
                     </td>
-                    <td style="text-align: center; vertical-align: middle; white-space: nowrap; width: 140px;">
+                    <td style="text-align: center; vertical-align: middle; white-space: nowrap; width: 150px;">
                       <div style="display: inline-flex; align-items: center; justify-content: center; gap: 6px;">
-                        <a href="<?=base_url('doctor/clinicreg/hospitalview/'.$val['id']);?>" class="btn-icon-action" style="background: #f1f5f9; color: #475569;" title="View Hospital Details">
+                        <a href="<?=base_url('doctor/clinicreg/hospitalview/'.$val['id']);?>" class="btn-icon-action btn-action-view" title="View Hospital Details">
                           <i class="fa fa-eye"></i>
                         </a>
                         <a href="<?=base_url('doctor/clinicreg/updatehospital/'.$val['id']);?>" class="btn-icon-action btn-action-edit" title="Edit Hospital">
                           <i class="fa fa-pencil"></i>
                         </a>
-                        <a href="<?=base_url('doctor/clinicreg/viewgallery/'.$val['id']);?>" class="btn-icon-action" style="background: #fef3c7; color: #d97706;" title="Hospital Gallery">
+                        <a href="<?=base_url('doctor/clinicreg/viewgallery/'.$val['id']);?>" class="btn-icon-action btn-action-gallery" title="Hospital Gallery">
                           <i class="fa fa-picture-o"></i>
                         </a>
                         <a href="<?=base_url('doctor/clinicreg/deletehospital/'.$val['id']);?>" class="btn-icon-action btn-action-delete delete-hosp-btn" data-id="<?=$val['id'];?>" data-name="<?=htmlspecialchars($val['name']);?>" title="Delete Hospital">
