@@ -259,10 +259,11 @@ class Refund extends CI_Controller {
             $has_col = $this->db->field_exists('cancellation_hours', 'hospital');
             if ($has_col) {
                 $row = $this->db->select('cancellation_hours, cancellation_policy_text')->where('id', $institute_id)->get('hospital')->row_array();
-            if ($row && isset($row['cancellation_hours'])) {
-                $hours = max(0, intval($row['cancellation_hours']));
-                $text = !empty($row['cancellation_policy_text']) ? $row['cancellation_policy_text'] : "Cancellations allowed up to {$hours} hours prior to consultation slot.";
-                return array('hours' => $hours, 'policy_text' => $text);
+                if ($row && isset($row['cancellation_hours'])) {
+                    $hours = max(0, intval($row['cancellation_hours']));
+                    $text = !empty($row['cancellation_policy_text']) ? $row['cancellation_policy_text'] : "Cancellations allowed up to {$hours} hours prior to consultation slot.";
+                    return array('hours' => $hours, 'policy_text' => $text);
+                }
             }
         }
 

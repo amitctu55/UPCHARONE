@@ -99,14 +99,32 @@ jobs:
           port: ${{ env.FTP_PORT }}
           server-dir: ${{ env.FTP_SERVER_DIR }}
           protocol: ftp
+          timeout: 600000
           dangerous-clean-slate: false
           exclude: |
             **/.git*
             **/.git*/**
             **/.github/**
             **/*.sql
+            **/*.zip
+            **/*.tar.gz
+            **/*.tgz
+            **/*.rar
+            **/*.bak
+            **/*.crdownload
+            **/scratch/**
+            **/amb/scratch/**
             **/error_log
             **/push-error.txt
             **/tests/**
             **/application/cache/**
             **/admin1947/application/cache/**
+            **/PHPExcel/**
+            **/PHPExcel*
+            **/tcpdf/**
+            **/TCPDF*
+            **/third_party/**
+            admin1947/application/third_party/**
+            application/third_party/**
+            admin1947/public/assets/upload/**
+            assets/userimages/**
