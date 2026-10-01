@@ -886,51 +886,66 @@ class Doctor_Model extends CI_Model
 	 */
 	public function get_available_teleconsult_doctors($filters = array(), $limit = 24, $offset = 0)
 	{
-		$limit = max(1, (int)$limit);
-		$offset = max(0, (int)$offset);
+		try {
+			$limit = max(1, (int)$limit);
+			$offset = max(0, (int)$offset);
 
-		$this->db->select('p.id, p.user_id, p.fname, p.lname, p.drimage, p.dr_fee, p.exp, p.about, p.city, p.is_video_consult_enabled,
-		                   s.name as specialization_name, d.name as degree_name');
-		$this->db->from('profile_dr p');
-		$this->db->join('master_specialization s', 's.id = p.specialization', 'left');
-		$this->db->join('master_degree d', 'd.id = p.degree', 'left');
+			$has_video_col = $this->db->table_exists('profile_dr') && $this->db->field_exists('is_video_consult_enabled', 'profile_dr');
+			$video_select = $has_video_col ? 'p.is_video_consult_enabled' : '1 as is_video_consult_enabled';
 
-		// Explicit Requirement: Filter by is_video_consult_enabled = 1
-		$this->db->where('p.is_video_consult_enabled', 1);
-		$this->db->where('p.verified', '1');
+			$this->db->select("p.id, p.user_id, p.fname, p.lname, p.drimage, p.dr_fee, p.exp, p.about, p.city, {$video_select},
+			                   s.name as specialization_name, d.name as degree_name");
+			$this->db->from('profile_dr p');
+			if ($this->db->table_exists('master_specialization')) {
+				$this->db->join('master_specialization s', 's.id = p.specialization', 'left');
+			}
+			if ($this->db->table_exists('master_degree')) {
+				$this->db->join('master_degree d', 'd.id = p.degree', 'left');
+			}
 
-		// Optional Specialty Filter
-		if (!empty($filters['specialty'])) {
-			$spl = $filters['specialty'];
-			if (is_numeric($spl)) {
-				$this->db->where('p.specialization', (int)$spl);
-			} else {
+			// Filter by video consult enabled if column exists
+			if ($has_video_col) {
+				$this->db->where('p.is_video_consult_enabled', 1);
+			}
+			$this->db->where('p.verified', '1');
+
+			// Optional Specialty Filter
+			if (!empty($filters['specialty'])) {
+				$spl = $filters['specialty'];
+				if (is_numeric($spl)) {
+					$this->db->where('p.specialization', (int)$spl);
+				} else {
+					$this->db->group_start();
+					$this->db->like('s.name', $spl);
+					$this->db->group_end();
+				}
+			}
+
+			// Optional City Filter
+			if (!empty($filters['city'])) {
+				$this->db->where('p.city', $filters['city']);
+			}
+
+			// Optional Keyword Search
+			if (!empty($filters['keyword'])) {
+				$kw = trim($filters['keyword']);
 				$this->db->group_start();
-				$this->db->like('s.name', $spl);
+				$this->db->like('p.fname', $kw);
+				$this->db->or_like('p.lname', $kw);
+				$this->db->or_like('s.name', $kw);
+				$this->db->or_like('p.about', $kw);
 				$this->db->group_end();
 			}
+
+			$this->db->order_by('p.id', 'DESC');
+			$this->db->limit($limit, $offset);
+
+			$res = $this->db->get();
+			return $res ? $res->result() : array();
+		} catch (\Throwable $e) {
+			log_message('error', 'get_available_teleconsult_doctors error: ' . $e->getMessage());
+			return array();
 		}
-
-		// Optional City Filter
-		if (!empty($filters['city'])) {
-			$this->db->where('p.city', $filters['city']);
-		}
-
-		// Optional Keyword Search
-		if (!empty($filters['keyword'])) {
-			$kw = trim($filters['keyword']);
-			$this->db->group_start();
-			$this->db->like('p.fname', $kw);
-			$this->db->or_like('p.lname', $kw);
-			$this->db->or_like('s.name', $kw);
-			$this->db->or_like('p.about', $kw);
-			$this->db->group_end();
-		}
-
-		$this->db->order_by('p.id', 'DESC');
-		$this->db->limit($limit, $offset);
-
-		return $this->db->get()->result();
 	}
 
 	/**
@@ -938,35 +953,46 @@ class Doctor_Model extends CI_Model
 	 */
 	public function count_teleconsult_doctors($filters = array())
 	{
-		$this->db->from('profile_dr p');
-		$this->db->join('master_specialization s', 's.id = p.specialization', 'left');
-		$this->db->where('p.is_video_consult_enabled', 1);
-		$this->db->where('p.verified', '1');
+		try {
+			$has_video_col = $this->db->table_exists('profile_dr') && $this->db->field_exists('is_video_consult_enabled', 'profile_dr');
 
-		if (!empty($filters['specialty'])) {
-			$spl = $filters['specialty'];
-			if (is_numeric($spl)) {
-				$this->db->where('p.specialization', (int)$spl);
-			} else {
-				$this->db->like('s.name', $spl);
+			$this->db->from('profile_dr p');
+			if ($this->db->table_exists('master_specialization')) {
+				$this->db->join('master_specialization s', 's.id = p.specialization', 'left');
 			}
-		}
+			if ($has_video_col) {
+				$this->db->where('p.is_video_consult_enabled', 1);
+			}
+			$this->db->where('p.verified', '1');
 
-		if (!empty($filters['city'])) {
-			$this->db->where('p.city', $filters['city']);
-		}
+			if (!empty($filters['specialty'])) {
+				$spl = $filters['specialty'];
+				if (is_numeric($spl)) {
+					$this->db->where('p.specialization', (int)$spl);
+				} else {
+					$this->db->like('s.name', $spl);
+				}
+			}
 
-		if (!empty($filters['keyword'])) {
-			$kw = trim($filters['keyword']);
-			$this->db->group_start();
-			$this->db->like('p.fname', $kw);
-			$this->db->or_like('p.lname', $kw);
-			$this->db->or_like('s.name', $kw);
-			$this->db->or_like('p.about', $kw);
-			$this->db->group_end();
-		}
+			if (!empty($filters['city'])) {
+				$this->db->where('p.city', $filters['city']);
+			}
 
-		return $this->db->count_all_results();
+			if (!empty($filters['keyword'])) {
+				$kw = trim($filters['keyword']);
+				$this->db->group_start();
+				$this->db->like('p.fname', $kw);
+				$this->db->or_like('p.lname', $kw);
+				$this->db->or_like('s.name', $kw);
+				$this->db->or_like('p.about', $kw);
+				$this->db->group_end();
+			}
+
+			return (int)$this->db->count_all_results();
+		} catch (\Throwable $e) {
+			log_message('error', 'count_teleconsult_doctors error: ' . $e->getMessage());
+			return 0;
+		}
 	}
 
 }

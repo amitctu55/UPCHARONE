@@ -3145,25 +3145,39 @@ class Home extends CI_Controller
 	 */
 	public function teleconsult()
 	{
-		$specialty = trim($this->input->get('specialty') ?? ($this->input->get('speciality') ?? ''));
-		$keyword = trim($this->input->get('keyword') ?? ($this->input->get('query') ?? ''));
-		$city = trim($this->input->get('city') ?? ($this->input->get('location') ?? ''));
+		try {
+			$specialty = trim($this->input->get('specialty') ?? ($this->input->get('speciality') ?? ''));
+			$keyword = trim($this->input->get('keyword') ?? ($this->input->get('query') ?? ''));
+			$city = trim($this->input->get('city') ?? ($this->input->get('location') ?? ''));
 
-		$filters = array(
-			'specialty' => $specialty,
-			'keyword'   => $keyword,
-			'city'      => $city
-		);
+			$filters = array(
+				'specialty' => $specialty,
+				'keyword'   => $keyword,
+				'city'      => $city
+			);
 
-		$data['doctors'] = $this->Doctor_Model->get_available_teleconsult_doctors($filters, 24, 0);
-		$data['total_available'] = $this->Doctor_Model->count_teleconsult_doctors($filters);
-		$data['specialization'] = $this->db->order_by('name', 'asc')->where('status', '1')->get('master_specialization')->result();
-		$data['cities'] = $this->db->order_by('name', 'asc')->where('status', '1')->get('master_city')->result();
-		$data['active_specialty'] = $specialty;
-		$data['active_keyword'] = $keyword;
-		$data['active_city'] = $city;
+			$data['doctors'] = $this->Doctor_Model->get_available_teleconsult_doctors($filters, 24, 0);
+			$data['total_available'] = $this->Doctor_Model->count_teleconsult_doctors($filters);
+			$data['specialization'] = $this->db->table_exists('master_specialization') ? $this->db->order_by('name', 'asc')->where('status', '1')->get('master_specialization')->result() : array();
+			$data['cities'] = $this->db->table_exists('master_city') ? $this->db->order_by('name', 'asc')->where('status', '1')->get('master_city')->result() : array();
+			$data['active_specialty'] = $specialty;
+			$data['active_keyword'] = $keyword;
+			$data['active_city'] = $city;
 
-		$this->load->view('teleconsult', $data);
+			$this->load->view('teleconsult', $data);
+		} catch (\Throwable $e) {
+			log_message('error', 'Error in teleconsult: ' . $e->getMessage());
+			$data = array(
+				'doctors'          => array(),
+				'total_available'  => 0,
+				'specialization'   => array(),
+				'cities'           => array(),
+				'active_specialty' => '',
+				'active_keyword'   => '',
+				'active_city'      => ''
+			);
+			$this->load->view('teleconsult', $data);
+		}
 	}
 
 }
