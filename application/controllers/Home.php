@@ -488,68 +488,79 @@ class Home extends CI_Controller
 		redirect('login');
 	}
 
+	public function myappointments()
+	{
+		return $this->manageappointment();
+	}
+
 	public function manageappointment()
 	{
-		$user_id = $this->session->userdata('userid') ?: $this->session->userdata('user_id') ?: $this->session->userdata('USERID');
+		try {
+			$user_id = $this->session->userdata('userid') ?: $this->session->userdata('user_id') ?: $this->session->userdata('USERID');
 
-		// If session not active, attempt SSO session restore via cross-platform SSO cookie
-		if (!$user_id) {
-			$this->load->helper('cookie');
-			$ssoCookie = $this->input->cookie('upchar_sso_token');
-			if ($ssoCookie) {
-				$this->load->model('Auth_model');
-				$payload = $this->Auth_model->verify_sso_token($ssoCookie);
-				if ($payload && !empty($payload['sub'])) {
-					$masterUser = $this->Auth_model->find_master_user($payload['sub']);
-					if ($masterUser) {
-						$ciUser = null;
-						if (!empty($masterUser['email'])) {
-							$ciUser = $this->db->get_where('userlogin', ['EMAIL' => $masterUser['email']])->row_array();
+			// If session not active, attempt SSO session restore via cross-platform SSO cookie
+			if (!$user_id) {
+				$this->load->helper('cookie');
+				$ssoCookie = $this->input->cookie('upchar_sso_token');
+				if ($ssoCookie) {
+					$this->load->model('Auth_model');
+					$payload = $this->Auth_model->verify_sso_token($ssoCookie);
+					if ($payload && !empty($payload['sub'])) {
+						$masterUser = $this->Auth_model->find_master_user($payload['sub']);
+						if ($masterUser) {
+							$ciUser = null;
+							if (!empty($masterUser['email']) && $this->db->table_exists('userlogin')) {
+								$ciUser = $this->db->get_where('userlogin', ['EMAIL' => $masterUser['email']])->row_array();
+							}
+							if (!$ciUser && !empty($masterUser['mobile']) && $this->db->table_exists('userlogin')) {
+								$ciUser = $this->db->get_where('userlogin', ['MOBILE' => $masterUser['mobile']])->row_array();
+							}
+							$sessionUid = $ciUser ? $ciUser['USERID'] : $masterUser['id'];
+							$this->session->set_userdata([
+								'USERID'   => $sessionUid,
+								'userid'   => $sessionUid,
+								'WEB_UID'  => $sessionUid,
+								'username' => $masterUser['name'],
+								'name'     => $masterUser['name'],
+								'email'    => $masterUser['email'],
+								'mobile'   => $masterUser['mobile'],
+								'uuid'     => $masterUser['uuid'],
+								'status'   => $masterUser['status'],
+								'logged_in'=> true,
+							]);
+							$user_id = $sessionUid;
 						}
-						if (!$ciUser && !empty($masterUser['mobile'])) {
-							$ciUser = $this->db->get_where('userlogin', ['MOBILE' => $masterUser['mobile']])->row_array();
-						}
-						$sessionUid = $ciUser ? $ciUser['USERID'] : $masterUser['id'];
-						$this->session->set_userdata([
-							'USERID'   => $sessionUid,
-							'userid'   => $sessionUid,
-							'WEB_UID'  => $sessionUid,
-							'username' => $masterUser['name'],
-							'name'     => $masterUser['name'],
-							'email'    => $masterUser['email'],
-							'mobile'   => $masterUser['mobile'],
-							'uuid'     => $masterUser['uuid'],
-							'status'   => $masterUser['status'],
-							'logged_in'=> true,
-						]);
-						$user_id = $sessionUid;
 					}
 				}
 			}
-		}
 
-		if (!$user_id) {
-			redirect('login?redirect=' . urlencode('myappointments'));
-			return;
-		}
-
-		$this->load->model('Appointment_model');
-		$this->load->model('Wallet_model');
-		$this->load->model('Referral_model');
-		$this->load->model('Payment_model');
-		$this->load->model('Ambulance_model');
-
-		$user_row = $this->db->get_where('userlogin', array('USERID' => $user_id))->row_array();
-		if (!$user_row) {
-			$uEmail = $this->session->userdata('email');
-			$uMobile = $this->session->userdata('mobile');
-			if ($uEmail) {
-				$user_row = $this->db->get_where('userlogin', array('EMAIL' => $uEmail))->row_array();
+			if (!$user_id) {
+				redirect('login?redirect=' . urlencode('myappointments'));
+				return;
 			}
-			if (!$user_row && $uMobile) {
-				$user_row = $this->db->get_where('userlogin', array('MOBILE' => $uMobile))->row_array();
+
+			$this->load->model('Appointment_model');
+			$this->load->model('Wallet_model');
+			$this->load->model('Referral_model');
+			$this->load->model('Payment_model');
+			$this->load->model('Ambulance_model');
+
+			$user_row = null;
+			if ($this->db->table_exists('userlogin')) {
+				$user_row = $this->db->get_where('userlogin', array('USERID' => $user_id))->row_array();
+				if (!$user_row) {
+					$uEmail = $this->session->userdata('email');
+					$uMobile = $this->session->userdata('mobile');
+					if ($uEmail) {
+						$user_row = $this->db->get_where('userlogin', array('EMAIL' => $uEmail))->row_array();
+					}
+					if (!$user_row && $uMobile) {
+						$user_row = $this->db->get_where('userlogin', array('MOBILE' => $uMobile))->row_array();
+					}
+				}
 			}
-			if (!$user_row) {
+
+			if (!$user_row && $this->db->table_exists('upchar_users')) {
 				$uMaster = $this->db->get_where('upchar_users', array('id' => $user_id))->row_array();
 				if ($uMaster) {
 					$names = explode(' ', $uMaster['name'] ?? '', 2);
@@ -565,62 +576,173 @@ class Home extends CI_Controller
 					];
 				}
 			}
+
+			if (!$user_row) {
+				$user_row = [
+					'USERID'   => $user_id,
+					'FNAME'    => $this->session->userdata('username') ?: 'User',
+					'LNAME'    => '',
+					'EMAIL'    => $this->session->userdata('email') ?: '',
+					'MOBILE'   => $this->session->userdata('mobile') ?: '',
+					'GENDER'   => '',
+					'DOB'      => '',
+					'BGROUP'   => '',
+				];
+			}
+
+			$user_mobile = $user_row['MOBILE'] ?? '';
+
+			$data['csrf_token_name']   = $this->security->get_csrf_token_name();
+			$data['csrf_hash']         = $this->security->get_csrf_hash();
+			$data['user_data']         = $user_row;
+
+			// Appointments Data
+			try {
+				$data['appointments_data'] = $this->Appointment_model->get_user_appointments($user_id, $user_mobile);
+			} catch (\Throwable $e) {
+				log_message('error', 'Error in get_user_appointments: ' . $e->getMessage());
+				$data['appointments_data'] = [];
+			}
+
+			// Wallet Data
+			try {
+				$data['wallet']            = $this->Wallet_model->get_or_create_wallet($user_id);
+				$data['wallet_history']    = $this->Wallet_model->get_transactions($user_id, 20, 0);
+				$data['point_ratio']       = floatval($this->Wallet_model->get_setting('point_to_inr_ratio', 1.00));
+				$data['cashback_pct']      = floatval($this->Wallet_model->get_setting('cashback_percentage', 5.00));
+				$data['cancellation_policy_mode']        = $this->Wallet_model->get_setting('cancellation_policy_mode', 'TIERED');
+				$data['cancellation_deduction_tier_24h'] = floatval($this->Wallet_model->get_setting('cancellation_deduction_tier_24h', 10.00));
+				$data['cancellation_deduction_tier_12h'] = floatval($this->Wallet_model->get_setting('cancellation_deduction_tier_12h', 20.00));
+				$data['cancellation_deduction_tier_0h']  = floatval($this->Wallet_model->get_setting('cancellation_deduction_tier_0h', 30.00));
+				$data['cancellation_deduction_flat']     = floatval($this->Wallet_model->get_setting('cancellation_deduction_flat', 20.00));
+			} catch (\Throwable $e) {
+				log_message('error', 'Error in Wallet_model: ' . $e->getMessage());
+				$data['wallet'] = (object)['points_balance' => 0, 'currency_equivalent' => 0];
+				$data['wallet_history'] = [];
+				$data['point_ratio'] = 1.00;
+				$data['cashback_pct'] = 5.00;
+				$data['cancellation_policy_mode'] = 'TIERED';
+				$data['cancellation_deduction_tier_24h'] = 10.00;
+				$data['cancellation_deduction_tier_12h'] = 20.00;
+				$data['cancellation_deduction_tier_0h']  = 30.00;
+				$data['cancellation_deduction_flat']     = 20.00;
+			}
+
+			// Referral Data
+			try {
+				$data['referral_code']     = $this->Referral_model->get_or_create_code($user_id);
+			} catch (\Throwable $e) {
+				log_message('error', 'Error in Referral_model: ' . $e->getMessage());
+				$data['referral_code'] = 'UPCH-' . $user_id;
+			}
+
+			// Payments Data
+			try {
+				$data['payments_data']     = $this->Payment_model->get_orders_by_user($user_id, 20, 0);
+			} catch (\Throwable $e) {
+				log_message('error', 'Error in Payment_model: ' . $e->getMessage());
+				$data['payments_data'] = [];
+			}
+
+			// Ambulance Bookings & Emergency Fleet Data
+			try {
+				$data['ambulance_bookings'] = $this->Ambulance_model->get_user_ambulance_bookings($user_id, $user_mobile);
+				$data['ambulance_count']    = count($data['ambulance_bookings']);
+				$data['active_ambulance']   = $this->Ambulance_model->get_active_or_recent_booking($user_id, $user_mobile);
+				$data['ambulance_types']    = $this->Ambulance_model->get_categories();
+				$data['hospitals_list']     = $this->Ambulance_model->get_hospitals_list(40);
+				$data['provider_count']     = $this->Ambulance_model->get_provider_count();
+			} catch (\Throwable $e) {
+				log_message('error', 'Error in Ambulance_model: ' . $e->getMessage());
+				$data['ambulance_bookings'] = [];
+				$data['ambulance_count']    = 0;
+				$data['active_ambulance']   = null;
+				$data['ambulance_types']    = [];
+				$data['hospitals_list']     = [];
+				$data['provider_count']     = 0;
+			}
+
+			// Lab Bookings
+			$lab_bookings = [];
+			try {
+				if ($this->db->table_exists('path_book')) {
+					$this->db->select('path_book.*, pathlab.name as lab_name, pathlab.address as lab_address, master_city.name as city_name');
+					$this->db->from('path_book');
+					if ($this->db->table_exists('pathlab')) {
+						$this->db->join('pathlab', 'pathlab.id = path_book.pathlab_id', 'left');
+					}
+					if ($this->db->table_exists('master_city') && $this->db->table_exists('pathlab')) {
+						$this->db->join('master_city', 'master_city.id = pathlab.city', 'left');
+					}
+					$this->db->group_start();
+					$this->db->where('path_book.user_id', $user_id);
+					if (!empty($user_mobile)) {
+						$this->db->or_where('path_book.patient_mobile', $user_mobile);
+					}
+					$this->db->group_end();
+					$this->db->order_by('path_book.booking_id', 'DESC');
+					$this->db->limit(20);
+					$q = $this->db->get();
+					$lab_bookings = $q ? $q->result_array() : [];
+
+					if (!empty($lab_bookings) && ($this->db->table_exists('path_book_test') || $this->db->table_exists('path_reports'))) {
+						foreach ($lab_bookings as &$lb) {
+							$lb['tests']   = $this->db->table_exists('path_book_test') ? $this->db->get_where('path_book_test', array('booking_id' => $lb['booking_id']))->result_array() : [];
+							$lb['reports'] = $this->db->table_exists('path_reports') ? $this->db->where('booking_id', $lb['booking_id'])->order_by('report_id', 'desc')->get('path_reports')->result_array() : [];
+						}
+						unset($lb);
+					}
+				}
+			} catch (\Throwable $e) {
+				log_message('error', 'Error loading lab bookings: ' . $e->getMessage());
+				$lab_bookings = [];
+			}
+			$data['lab_bookings'] = $lab_bookings;
+
+			// Sponsored Ads
+			try {
+				$this->_ensure_advertisement_schema();
+				$data['sponsored_ads'] = $this->db->table_exists('advertisement') ? $this->db->where('status', '1')->order_by('id', 'DESC')->get('advertisement')->result() : [];
+			} catch (\Throwable $e) {
+				$data['sponsored_ads'] = [];
+			}
+
+			$this->load->view('patient_header', $data);
+			$this->load->view('manageappointment', $data);
+			$this->load->view('patient_footer');
+
+		} catch (\Throwable $e) {
+			log_message('error', 'Fatal error in manageappointment: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
+			// Fallback safe render
+			$fallbackData = [
+				'csrf_token_name'    => $this->security->get_csrf_token_name(),
+				'csrf_hash'          => $this->security->get_csrf_hash(),
+				'user_data'          => ['USERID' => $user_id ?? 0, 'FNAME' => 'User', 'LNAME' => '', 'EMAIL' => '', 'MOBILE' => ''],
+				'appointments_data'  => [],
+				'wallet'             => (object)['points_balance' => 0, 'currency_equivalent' => 0],
+				'wallet_history'     => [],
+				'point_ratio'        => 1.00,
+				'cashback_pct'       => 5.00,
+				'referral_code'      => 'UPCH-' . ($user_id ?? 0),
+				'payments_data'      => [],
+				'ambulance_bookings' => [],
+				'ambulance_count'    => 0,
+				'active_ambulance'   => null,
+				'ambulance_types'    => [],
+				'hospitals_list'     => [],
+				'provider_count'     => 0,
+				'cancellation_policy_mode'        => 'TIERED',
+				'cancellation_deduction_tier_24h' => 10.00,
+				'cancellation_deduction_tier_12h' => 20.00,
+				'cancellation_deduction_tier_0h'  => 30.00,
+				'cancellation_deduction_flat'     => 20.00,
+				'lab_bookings'       => [],
+				'sponsored_ads'      => []
+			];
+			$this->load->view('patient_header', $fallbackData);
+			$this->load->view('manageappointment', $fallbackData);
+			$this->load->view('patient_footer');
 		}
-		$user_mobile = $user_row ? $user_row['MOBILE'] : '';
-
-		$data['csrf_token_name']   = $this->security->get_csrf_token_name();
-		$data['csrf_hash']         = $this->security->get_csrf_hash();
-		$data['user_data']         = $user_row;
-		$data['appointments_data'] = $this->Appointment_model->get_user_appointments($user_id, $user_mobile);
-		$data['wallet']            = $this->Wallet_model->get_or_create_wallet($user_id);
-		$data['wallet_history']    = $this->Wallet_model->get_transactions($user_id, 20, 0);
-		$data['point_ratio']       = floatval($this->Wallet_model->get_setting('point_to_inr_ratio', 1.00));
-		$data['cashback_pct']      = floatval($this->Wallet_model->get_setting('cashback_percentage', 5.00));
-		$data['referral_code']     = $this->Referral_model->get_or_create_code($user_id);
-		$data['payments_data']     = $this->Payment_model->get_orders_by_user($user_id, 20, 0);
-
-		// Ambulance Bookings & Emergency Fleet Data
-		$data['ambulance_bookings'] = $this->Ambulance_model->get_user_ambulance_bookings($user_id, $user_mobile);
-		$data['ambulance_count']    = count($data['ambulance_bookings']);
-		$data['active_ambulance']   = $this->Ambulance_model->get_active_or_recent_booking($user_id, $user_mobile);
-		$data['ambulance_types']    = $this->Ambulance_model->get_categories();
-		$data['hospitals_list']     = $this->Ambulance_model->get_hospitals_list(40);
-		$data['provider_count']     = $this->Ambulance_model->get_provider_count();
-
-		// Cancellation policy configuration
-		$data['cancellation_policy_mode']        = $this->Wallet_model->get_setting('cancellation_policy_mode', 'TIERED');
-		$data['cancellation_deduction_tier_24h'] = floatval($this->Wallet_model->get_setting('cancellation_deduction_tier_24h', 10.00));
-		$data['cancellation_deduction_tier_12h'] = floatval($this->Wallet_model->get_setting('cancellation_deduction_tier_12h', 20.00));
-		$data['cancellation_deduction_tier_0h']  = floatval($this->Wallet_model->get_setting('cancellation_deduction_tier_0h', 30.00));
-		$data['cancellation_deduction_flat']      = floatval($this->Wallet_model->get_setting('cancellation_deduction_flat', 20.00));
-
-		// Fetch Lab Bookings with Lab details, tests, and reports
-		$this->db->select('path_book.*, pathlab.name as lab_name, pathlab.address as lab_address, master_city.name as city_name');
-		$this->db->from('path_book');
-		$this->db->join('pathlab', 'pathlab.id = path_book.pathlab_id', 'left');
-		$this->db->join('master_city', 'master_city.id = pathlab.city', 'left');
-		$this->db->group_start();
-		$this->db->where('path_book.user_id', $user_id);
-		if (!empty($user_mobile)) {
-			$this->db->or_where('path_book.patient_mobile', $user_mobile);
-		}
-		$this->db->group_end();
-		$this->db->order_by('path_book.booking_id', 'DESC');
-		$this->db->limit(20);
-		$lab_bookings = $this->db->get()->result_array();
-
-		foreach ($lab_bookings as &$lb) {
-			$lb['tests']   = $this->db->get_where('path_book_test', array('booking_id' => $lb['booking_id']))->result_array();
-			$lb['reports'] = $this->db->where('booking_id', $lb['booking_id'])->order_by('report_id', 'desc')->get('path_reports')->result_array();
-		}
-		unset($lb);
-		$data['lab_bookings'] = $lab_bookings;
-
-		$data['sponsored_ads'] = $this->db->where('status', '1')->order_by('id', 'DESC')->get('advertisement')->result();
-
-		$this->load->view('patient_header', $data);
-		$this->load->view('manageappointment', $data);
-		$this->load->view('patient_footer');
 	}
 
 	private function _ensure_advertisement_schema()
