@@ -1280,9 +1280,18 @@ function isNumber(evt)
 							myalert(res.message || 'Booking submission failed. Please try again.');
 						}
 					},
-					error: function() {
+					error: function(xhr, status, error) {
 						btn.prop('disabled', false).html(origBtnHtml);
-						myalert('Network connection error while submitting booking. Please retry.');
+						var errMsg = 'Unable to complete appointment booking. Please try again.';
+						if (xhr && xhr.responseJSON && xhr.responseJSON.message) {
+							errMsg = xhr.responseJSON.message;
+						} else if (xhr && xhr.responseText) {
+							try {
+								var p = JSON.parse(xhr.responseText);
+								if (p && p.message) errMsg = p.message;
+							} catch (e) {}
+						}
+						myalert(errMsg);
 					}
 				});
 			},
@@ -1293,12 +1302,24 @@ function isNumber(evt)
 					data: myform.serialize(),
 					type: "POST",
 					success: function(data) {
-						if (data === 'OK' || (typeof data === 'object' && data.status === 'success')) {
-							window.location = "<?=base_url();?>paysecure/acheckout";
+						var res = data;
+						if (typeof data === 'string') {
+							try { res = JSON.parse(data); } catch(e) {}
+						}
+						if (data === 'OK' || (res && res.status === 'success')) {
+							window.location = (res && res.redirect_url) ? res.redirect_url : "<?=base_url();?>paysecure/acheckout";
 						} else {
 							btn.prop('disabled', false).html(origBtnHtml);
-							myalert('Failed to complete booking. Please try again.');
+							myalert((res && res.message) ? res.message : 'Failed to complete booking. Please try again.');
 						}
+					},
+					error: function(xhr) {
+						btn.prop('disabled', false).html(origBtnHtml);
+						var errMsg = 'Unable to complete booking. Please check your network and retry.';
+						if (xhr && xhr.responseJSON && xhr.responseJSON.message) {
+							errMsg = xhr.responseJSON.message;
+						}
+						myalert(errMsg);
 					}
 				});
 			}

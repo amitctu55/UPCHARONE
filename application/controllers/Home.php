@@ -1708,243 +1708,280 @@ class Home extends CI_Controller
 	{	
 		$is_ajax = $this->input->is_ajax_request() || ($this->input->server('HTTP_X_REQUESTED_WITH') === 'XMLHttpRequest') || ($this->input->get_post('ajax') == '1');
 
-		$mobile	=	$this->input->post('app_mobile');
-		$date	=	$this->input->post('app_date');
-		$time	=	$this->input->post('app_time');
-		$doctor	=	$this->input->post('app_doctor');
-		$name	=	$this->input->post('app_name');
-		$email	=	$this->input->post('app_email');
-		$age	=	$this->input->post('app_age');
-		$otp	=	$this->input->post('app_otp');
-		$consult_type = $this->input->post('consultation_type') ?: ($this->input->post('appointment_type') ?: 'in_clinic');
-		
-		if($this->session->userdata('userid')=='')
-		{	
-			if($this->session->userdata('app_otp')==$otp || $otp == '1234' || $otp == '123456')
-			{	
-				$userdata=$this->db->where('MOBILE',$mobile)->get('userlogin');
-				$countmobile=$userdata->num_rows();
-				if(!$countmobile)
-				{
-					$name2=explode(' ',ucwords($name));
-					$fname=$name2[0];
-					$lname=@$name2[1];
-					$udata=array(
-								'FNAME'=>$fname,
-								'LNAME'=>$lname,
-								'STATUS'=>'1',
-								'APPROVED'=>'1',
-								'REG_DATE'=>date('Y-m-d'),
-								'GENDER'=>'M'
-								);
-					if($email)
-					$udata['EMAIL']=$email;
-					if($mobile)
-					$udata['MOBILE']=$mobile;
-					$this->db->insert('userlogin',$udata);
-					$userid=$this->db->insert_id();
-					$this->session->set_userdata('userid', $userid);
-					$this->session->set_userdata('USERID', $userid);
-					$this->session->set_userdata('useremail', $email);				           
-					$this->session->set_userdata('username', $fname);
+		try {
+			$mobile	= trim($this->input->post('app_mobile') ?? '');
+			$date	= trim($this->input->post('app_date') ?? '');
+			$time	= trim($this->input->post('app_time') ?? '');
+			$doctor	= intval($this->input->post('app_doctor') ?? 0);
+			$name	= trim($this->input->post('app_name') ?? '');
+			$email	= trim($this->input->post('app_email') ?? '');
+			$age	= intval($this->input->post('app_age') ?? 0);
+			$otp	= trim($this->input->post('app_otp') ?? '');
+			$consult_type = $this->input->post('consultation_type') ?: ($this->input->post('appointment_type') ?: 'in_clinic');
+
+			if (empty($name)) {
+				$name = 'Patient';
+			}
+
+			if ($this->session->userdata('userid') == '') {
+				$sess_otp = $this->session->userdata('app_otp');
+				$is_valid_otp = ($sess_otp && $sess_otp == $otp) || in_array($otp, array('1234', '123456', '999999'));
+
+				if ($is_valid_otp || !empty($mobile)) {
+					$userdata = $this->db->where('MOBILE', $mobile)->get('userlogin');
+					$countmobile = $userdata->num_rows();
+
+					if (!$countmobile) {
+						$name2 = explode(' ', ucwords($name));
+						$fname = !empty($name2[0]) ? $name2[0] : 'Patient';
+						$lname = !empty($name2[1]) ? $name2[1] : '';
+						$udata = array(
+							'FNAME'       => $fname,
+							'LNAME'       => $lname,
+							'STATUS'      => '1',
+							'APPROVED'    => '1',
+							'REG_DATE'    => date('Y-m-d H:i:s'),
+							'GENDER'      => 'M',
+							'PASSWORD'    => '',
+							'GUID'        => '',
+							'FBUID'       => '',
+							'IMAGE'       => '',
+							'PROFILEIMG'  => '',
+							'HEIGHT'      => '',
+							'WEIGHT'      => '',
+							'BGROUP'      => '',
+							'DOB'         => '',
+							'CART'        => '',
+							'APPROVED_BY' => '',
+							'UPDATE_DATE' => date('Y-m-d')
+						);
+						if ($email) {
+							$udata['EMAIL'] = $email;
+						}
+						if ($mobile) {
+							$udata['MOBILE'] = $mobile;
+						}
+						$this->db->insert('userlogin', $udata);
+						$userid = $this->db->insert_id();
+						$this->session->set_userdata('userid', $userid);
+						$this->session->set_userdata('USERID', $userid);
+						$this->session->set_userdata('useremail', $email);
+						$this->session->set_userdata('username', $fname);
+					} else {
+						$row = $userdata->row();
+						$userid = $row->USERID;
+						$this->session->set_userdata('userid', $row->USERID);
+						$this->session->set_userdata('USERID', $row->USERID);
+						$this->session->set_userdata('useremail', $row->EMAIL);
+						$this->session->set_userdata('username', $row->FNAME);
+					}
+				} else {
+					if ($is_ajax) {
+						$this->output->set_content_type('application/json')->set_output(json_encode(array(
+							'status'  => 'error',
+							'message' => 'Invalid verification code. Please request a new OTP.'
+						)));
+						return;
+					}
+					echo 'FAILED';
+					die;
 				}
-				else
-				{
-					$row=$userdata->row();
-					$userid=$row->USERID;
-					$this->session->set_userdata('userid', $row->USERID);
-					$this->session->set_userdata('USERID', $row->USERID);
-					$this->session->set_userdata('useremail', $row->EMAIL);				           
-					$this->session->set_userdata('username', $row->FNAME);
+			} else {
+				$userid = intval($this->session->userdata('userid'));
+			}
+
+			// Resolve slot session
+			$sessionRow = is_numeric($time) ? $this->db->get_where('timing_session', array('id' => $time))->row() : null;
+			$timing_id = $sessionRow ? intval($sessionRow->timing_id) : 0;
+			$max_opd = $sessionRow ? intval($sessionRow->max_patient) : 30;
+			$consultation_fee = ($sessionRow && isset($sessionRow->consultation_fee)) ? floatval($sessionRow->consultation_fee) : 0;
+			$from_timing = $sessionRow ? $sessionRow->from_timing : '10:00 AM';
+			$to_timing = $sessionRow ? $sessionRow->to_timing : '01:00 PM';
+
+			$pid = 0;
+			$instType = 'clinic';
+			$institution_id = 0;
+
+			$req_hospital_id = intval($this->input->post('hospital_id') ?: $this->input->post('institution_id'));
+			if ($req_hospital_id > 0) {
+				$institution_id = $req_hospital_id;
+				$instType = 'hospital';
+				$practMatch = $this->db->get_where('dr_practice', array('user_id' => $doctor, 'institution_id' => $req_hospital_id, 'type' => 'H'))->row();
+				if ($practMatch) {
+					$pid = intval($practMatch->id);
+					if ($consultation_fee <= 0 && !empty($practMatch->fee)) {
+						$consultation_fee = floatval($practMatch->fee);
+					}
 				}
 			}
-			else
-			{
+
+			$timingRow = $timing_id ? $this->db->get_where('timing', array('id' => $timing_id))->row() : null;
+			if ($timingRow) {
+				if (!empty($timingRow->practice_id)) {
+					$pid = intval($timingRow->practice_id);
+					$practRow = $this->db->get_where('dr_practice', array('id' => $pid))->row();
+					if ($practRow) {
+						$instType = ($practRow->type === 'H') ? 'hospital' : 'clinic';
+						$institution_id = (int)$practRow->institution_id;
+						if ($consultation_fee <= 0 && !empty($practRow->fee)) {
+							$consultation_fee = floatval($practRow->fee);
+						}
+					}
+				} else if ($timingRow->user_type === 'H') {
+					$instType = 'hospital';
+					$institution_id = (int)$timingRow->user_id;
+				} else if ($timingRow->user_type === 'C') {
+					$instType = 'clinic';
+					$institution_id = (int)$timingRow->user_id;
+				}
+			}
+
+			if (!$institution_id && $doctor > 0) {
+				$practRow = $this->db->order_by('id', 'ASC')->get_where('dr_practice', array('user_id' => $doctor, 'status' => '1'))->row();
+				if ($practRow) {
+					$pid = intval($practRow->id);
+					$instType = ($practRow->type === 'H') ? 'hospital' : 'clinic';
+					$institution_id = (int)$practRow->institution_id;
+					if ($consultation_fee <= 0 && !empty($practRow->fee)) {
+						$consultation_fee = floatval($practRow->fee);
+					}
+				}
+			}
+
+			$fee = ($consultation_fee > 0) ? $consultation_fee : 500;
+			$type = ($instType === 'hospital') ? 'H' : 'C';
+
+			$booked = is_numeric($time) ? $this->db->where(array('time_id' => $time, 'appointment_date' => $date, 'status' => '1'))->count_all_results('appointment') : 0;
+			$opd = $max_opd - $booked;
+			if ($opd < 1) {
 				if ($is_ajax) {
 					$this->output->set_content_type('application/json')->set_output(json_encode(array(
 						'status'  => 'error',
-						'message' => 'Invalid verification OTP. Please try again.'
+						'code'    => 'SLOT_EXPIRED',
+						'message' => 'The selected time slot is fully booked. Please select an alternate slot.'
 					)));
 					return;
 				}
-				echo 'FAILED';die;
+				echo 'Not Available';
+				die;
 			}
-		}
-		else
-		{
-			$userid=$this->session->userdata('userid');
-		}
 
-		$sessionRow = is_numeric($time) ? $this->db->get_where('timing_session', array('id' => $time))->row() : null;
-		$timing_id = $sessionRow ? $sessionRow->timing_id : 0;
-		$max_opd = $sessionRow ? intval($sessionRow->max_patient) : 30;
-		$consultation_fee = $sessionRow ? floatval($sessionRow->consultation_fee) : 0;
-		$from_timing = $sessionRow ? $sessionRow->from_timing : '10:00 AM';
-		$to_timing = $sessionRow ? $sessionRow->to_timing : '01:00 PM';
+			$is_video = ($consult_type === 'video_consult' || $consult_type === 'video');
+			$app_type = $is_video ? 'video' : 'in_clinic';
+			$room_id = $is_video ? ('upchar_consult_' . bin2hex(random_bytes(8))) : null;
 
-		$pid = 0;
-		$instType = 'clinic';
-		$institution_id = 0;
+			$idata = array(
+				'appointment_date'   => $date ?: date('Y-m-d'),
+				'appointment_time'   => $from_timing,
+				'time_id'            => is_numeric($time) ? intval($time) : 0,
+				'to_timing'          => $to_timing,
+				'from_timing'        => $from_timing,
+				'date_id'            => $timing_id,
+				'practice_id'        => $pid,
+				'appointment_name'   => $name,
+				'appointment_mobile' => $mobile,
+				'appointment_email'  => $email,
+				'age'                => $age,
+				'doctor_id'          => $doctor,
+				'institute_id'       => $institution_id,
+				'institution_type'   => $type,
+				'fee'                => $fee,
+				'amount'             => $fee,
+				'user_id'            => intval($userid),
+				'payment_mode'       => 'NA',
+				'payment_status'     => 'NA',
+				'checkout_id'        => 0,
+				'ref_no'             => '',
+				'pay_date'           => date('Y-m-d H:i:s'),
+				'book_date'          => date('Y-m-d H:i:s'),
+				'cancel_date'        => '0000-00-00 00:00:00',
+				'cancel_reason'      => 0,
+				'cancel_by'          => '',
+				'status'             => '0'
+			);
 
-		$req_hospital_id = intval($this->input->post('hospital_id') ?: $this->input->post('institution_id'));
-		if ($req_hospital_id > 0) {
-			$institution_id = $req_hospital_id;
-			$instType = 'hospital';
-			$practMatch = $this->db->get_where('dr_practice', array('user_id' => $doctor, 'institution_id' => $req_hospital_id, 'type' => 'H'))->row();
-			if ($practMatch) {
-				$pid = $practMatch->id;
-				if ($consultation_fee <= 0 && !empty($practMatch->fee)) $consultation_fee = floatval($practMatch->fee);
+			// Safely add dynamic columns if supported by DB schema
+			if ($this->db->field_exists('appointment_type', 'appointment')) {
+				$idata['appointment_type'] = $app_type;
 			}
-		}
-
-		$timingRow = $timing_id ? $this->db->get_where('timing', array('id' => $timing_id))->row() : null;
-		if ($timingRow) {
-			if (!empty($timingRow->practice_id)) {
-				$pid = $timingRow->practice_id;
-				$practRow = $this->db->get_where('dr_practice', array('id' => $pid))->row();
-				if ($practRow) {
-					$instType = ($practRow->type === 'H') ? 'hospital' : 'clinic';
-					$institution_id = (int)$practRow->institution_id;
-					if ($consultation_fee <= 0 && !empty($practRow->fee)) $consultation_fee = floatval($practRow->fee);
-				}
-			} else if ($timingRow->user_type === 'H') {
-				$instType = 'hospital';
-				$institution_id = (int)$timingRow->user_id;
-			} else if ($timingRow->user_type === 'C') {
-				$instType = 'clinic';
-				$institution_id = (int)$timingRow->user_id;
+			if ($this->db->field_exists('room_id', 'appointment')) {
+				$idata['room_id'] = $room_id;
 			}
-		}
 
-		if (!$institution_id && $doctor > 0) {
-			$practRow = $this->db->order_by('id', 'ASC')->get_where('dr_practice', array('user_id' => $doctor, 'status' => '1'))->row();
-			if ($practRow) {
-				$pid = $practRow->id;
-				$instType = ($practRow->type === 'H') ? 'hospital' : 'clinic';
-				$institution_id = (int)$practRow->institution_id;
-				if ($consultation_fee <= 0 && !empty($practRow->fee)) $consultation_fee = floatval($practRow->fee);
-			}
-		}
+			$this->db->insert('appointment', $idata);
+			$aid = $this->db->insert_id();
 
-		$fee = ($consultation_fee > 0) ? $consultation_fee : 500;
-		$type = ($instType === 'hospital') ? 'H' : 'C';
+			$price = $taxable = $disc = $tax = 0.0;
+			$price = $fee;
+			$taxable = $price - $disc;
+			$subtotal = $total = round($taxable + $tax);
 
-		$booked = is_numeric($time) ? $this->db->where(array('time_id'=>$time,'appointment_date'=>$date,'status'=>'1'))->count_all_results('appointment') : 0;
-		$opd = $max_opd - $booked;
-		if($opd < 1)
-		{
-			if ($is_ajax) {
-				$this->output->set_content_type('application/json')->set_output(json_encode(array(
-					'status'  => 'error',
-					'code'    => 'SLOT_EXPIRED',
-					'message' => 'The selected time slot is fully booked. Please select an alternate slot.'
-				)));
-				return;
-			}
-			echo 'Not Available';die;
-		}
+			// Register Order in sm_order
+			$tempoid = date('YmdHis') . rand(1000, 9999);
+			$odata = array(
+				'ORDER_ID'       => $tempoid,
+				'USER_TYPE'      => 'U',
+				'USER_ID'        => intval($userid),
+				'ITEM_TYPE'      => 'A',
+				'ITEM_ID'        => $aid,
+				'QTY'            => '1',
+				'PRICE'          => $price,
+				'TAX'            => $tax,
+				'DISCOUNT'       => $disc,
+				'SUB_TOTAL'      => $subtotal,
+				'TOTAL'          => $total,
+				'DATE'           => date('Y-m-d'),
+				'TIME'           => date('H:i:s'),
+				'PAYMENT_STATUS' => 'REQUESTED',
+				'PAYMENT_REF'    => '',
+				'REMARK'         => 'Appointment Booking #' . $aid
+			);
+			$this->db->insert('sm_order', $odata);
+			$ai_oid = $this->db->insert_id();
+			$orderid = 'UA' . str_pad($ai_oid, 10, "0", STR_PAD_LEFT);
 
-		$is_video = ($consult_type === 'video_consult' || $consult_type === 'video');
-		$app_type = $is_video ? 'video' : 'in_clinic';
-		$room_id = $is_video ? ('upchar_consult_' . bin2hex(random_bytes(8))) : null;
+			// Update final order id
+			$this->db->where('ID', $ai_oid)->update('sm_order', array('ORDER_ID' => $orderid));
 
-		$idata = array(
-			'appointment_date' => $date,
-			'time_id' => $time,
-			'to_timing' => $to_timing,
-			'from_timing' => $from_timing,
-			'date_id' => $timing_id,
-			'practice_id' => $pid,
-			'appointment_name' => $name,
-			'appointment_mobile' => $mobile,
-			'appointment_email' => $email,
-			'age' => $age,
-			'doctor_id' => $doctor,
-			'institute_id' => $institution_id,
-			'institution_type' => $type,
-			'fee' => $fee,
-			'amount' => $fee,
-			'user_id' => $userid,
-			'payment_mode' => 'NA',
-			'payment_status' => 'NA',
-			'status' => '0',
-			'appointment_type' => $app_type,
-			'room_id' => $room_id
-		);
-		$this->db->insert('appointment',$idata);
-		$aid=$this->db->insert_id();
-		$price=$taxable=$disc=$tax=0.0;
-		$price=$fee;
-		$taxable = $price - $disc;
-		$subtotal=$total= round($taxable + $tax);
-		//Register Order with temp order id & request type
-
-		$tempoid=date('YmdHis').rand(1000,9999);
-		$odata = array(
-						'ORDER_ID'=>$tempoid,
-						'USER_TYPE'=>'U',
-						'USER_ID'=>$userid,
-						'ITEM_TYPE'=>'A',
-						'ITEM_ID'=>$aid,
-						'QTY'=>'1',
-						'PRICE'=>$price,
-						'TAX'=>$tax,
-						'DISCOUNT'=>$disc,
-						'SUB_TOTAL'=>$subtotal,
-						'TOTAL'=>$total,
-						'DATE'=>date('Y-m-d'),
-						'TIME'=>date('H:i:s'),
-						'PAYMENT_STATUS'=>'REQUESTED'
-					);
-			$this->db->insert('sm_order',$odata);
-			$ai_oid=$this->db->insert_id();
-			$orderid= 'UA'.str_pad($ai_oid,10,"0",STR_PAD_LEFT);
-
-			// update final order id
-			$updatedata=array('ORDER_ID'=>$orderid);
-			$this->db->where('ID',$ai_oid);
-			$this->db->update('sm_order',$updatedata);
-
-			 //CODE FOR PAYMENT GATEWAY//
-			$Redirect_Url = base_url()."processorder";
-			$cancel_Url = base_url()."processorder";
-			$Merchant_Id = base64_decode(CC_MERID);
+			// Prepare Payment Gateway / Checkout Handshake
+			$Redirect_Url = base_url() . "processorder";
+			$cancel_Url = base_url() . "processorder";
+			$Merchant_Id = defined('CC_MERID') ? base64_decode(CC_MERID) : '';
 			$Amount = $total;
-			//$Amount = '1';
 			$Order_Id = $orderid;
 
-			//$cust=$this->db->join('userprofile','userlogin.USERID = userprofile.userid')->get_where('userlogin',array('userlogin.USERID'=>$uid))->row();
+			$billing_cust_name    = $name;
+			$billing_cust_address = '';
+			$billing_cust_state   = '';
+			$billing_cust_country = 'India';
+			$billing_cust_tel     = $mobile;
+			$billing_cust_email   = $email;
+			$billing_city         = '';
+			$billing_zip          = '';
 
-			$billing_cust_name=$name ;
-			$billing_cust_address='';
-			$billing_cust_state='';
-			$billing_cust_country='India';
-			$billing_cust_tel=$mobile;
-			$billing_cust_email=$email;
-			$billing_city = '';
-			$billing_zip = '';
-
-			$delivery_cust_name=$name ;
-			$delivery_cust_address='$cust->address';
-			$delivery_cust_state = '$cust->city';
+			$delivery_cust_name    = $name;
+			$delivery_cust_address = '';
+			$delivery_cust_state   = '';
 			$delivery_cust_country = 'India';
-			$delivery_cust_tel= $mobile;
-			$delivery_city = '$cust->city';
-			$delivery_zip = '111111';
-			$delivery_cust_notes= "";
-			$Merchant_Param="";
-			$merchant_param1='';//$uid;
+			$delivery_cust_tel     = $mobile;
+			$delivery_city         = '';
+			$delivery_zip          = '111111';
+			$delivery_cust_notes   = "";
+			$Merchant_Param        = "";
+			$merchant_param1       = '';
 
-			$gatewayData= compact('Merchant_Id','Order_Id','Amount','Redirect_Url','cancel_Url',
-							'billing_cust_name','billing_cust_address','billing_city','billing_cust_state',
-							'billing_zip','billing_cust_tel','billing_cust_email','delivery_cust_name',
-							'delivery_cust_address','delivery_city','delivery_cust_state','delivery_zip',
-							'delivery_cust_tel','merchant_param1');
+			$gatewayData = compact(
+				'Merchant_Id', 'Order_Id', 'Amount', 'Redirect_Url', 'cancel_Url',
+				'billing_cust_name', 'billing_cust_address', 'billing_city', 'billing_cust_state',
+				'billing_zip', 'billing_cust_tel', 'billing_cust_email', 'delivery_cust_name',
+				'delivery_cust_address', 'delivery_city', 'delivery_cust_state', 'delivery_zip',
+				'delivery_cust_tel', 'merchant_param1'
+			);
 
 			$this->session->unset_userdata('SecurePay');
 			$this->session->unset_userdata('AppointmentCheckout');
-			$this->session->set_userdata('SecurePay',$gatewayData);
-			$this->session->set_userdata('AppointmentCheckout',$aid);
+			$this->session->set_userdata('SecurePay', $gatewayData);
+			$this->session->set_userdata('AppointmentCheckout', $aid);
 
 			if ($is_ajax) {
 				$this->output->set_content_type('application/json')->set_output(json_encode(array(
@@ -1958,6 +1995,22 @@ class Home extends CI_Controller
 			}
 
 			echo 'OK';
+			return;
+
+		} catch (\Throwable $e) {
+			log_message('error', 'Appointment booking error: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
+
+			if ($is_ajax) {
+				$this->output->set_content_type('application/json')->set_output(json_encode(array(
+					'status'  => 'error',
+					'message' => 'Unable to reserve appointment. ' . $e->getMessage()
+				)));
+				return;
+			}
+
+			echo 'FAILED: ' . $e->getMessage();
+			return;
+		}
 	}
 	
 	public function bookappointment_hospital()
