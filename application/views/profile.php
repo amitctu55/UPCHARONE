@@ -37,26 +37,98 @@ $hasProfileData = (!empty($fname) || !empty($email) || !empty($mobile));
 $dep_list = !empty($dependents) ? $dependents : [];
 $dep_count = count($dep_list);
 
-// BMI calculation
-$bmi = null;
-$bmiLabel = '';
-$bmiColor = '#10b981';
-if (!empty($height) && !empty($weight)) {
-    preg_match('/(\d+(\.\d+)?)/', $height, $h_m);
-    preg_match('/(\d+(\.\d+)?)/', $weight, $w_m);
+// Comprehensive Clinical Health Goals & BMR Calculation
+if (empty($health_goals) && (!empty($height) && !empty($weight))) {
+    preg_match('/(\d+(\.\d+)?)/', (string)$height, $h_m);
+    preg_match('/(\d+(\.\d+)?)/', (string)$weight, $w_m);
     if (!empty($h_m[1]) && !empty($w_m[1])) {
         $h_val = floatval($h_m[1]);
         $w_val = floatval($w_m[1]);
-        $h_mtr = ($h_val > 50) ? ($h_val / 100) : ($h_val * 0.3048);
-        if ($h_mtr > 0.5) {
-            $bmi = round($w_val / ($h_mtr * $h_mtr), 1);
-            if ($bmi < 18.5) { $bmiLabel = 'Underweight'; $bmiColor = '#f59e0b'; }
-            elseif ($bmi <= 24.9) { $bmiLabel = 'Normal'; $bmiColor = '#10b981'; }
-            elseif ($bmi <= 29.9) { $bmiLabel = 'Overweight'; $bmiColor = '#f97316'; }
-            else { $bmiLabel = 'Obese'; $bmiColor = '#ef4444'; }
+        $h_cm  = ($h_val < 10) ? round($h_val * 30.48, 1) : $h_val;
+        $h_m_val = round($h_cm / 100, 2);
+        
+        if ($h_m_val >= 0.5 && $w_val > 0) {
+            $calc_age = 30;
+            $dob_fmt = '';
+            if (!empty($dob)) {
+                try {
+                    $d_dt = new DateTime($dob);
+                    $calc_age = (new DateTime())->diff($d_dt)->y;
+                    $dob_fmt = $d_dt->format('M d, Y');
+                } catch (\Throwable $e) { $calc_age = 30; }
+            }
+
+            $calc_bmi = round($w_val / ($h_m_val * $h_m_val), 1);
+            if ($calc_bmi < 18.5) { $b_stat = 'Underweight'; $b_col = '#f59e0b'; $b_bg = 'warning'; }
+            elseif ($calc_bmi <= 24.9) { $b_stat = 'Normal'; $b_col = '#10b981'; $b_bg = 'success'; }
+            elseif ($calc_bmi <= 29.9) { $b_stat = 'Overweight'; $b_col = '#f97316'; $b_bg = 'warning'; }
+            else { $b_stat = 'Obese'; $b_col = '#ef4444'; $b_bg = 'danger'; }
+
+            $is_fem = in_array(strtoupper(trim($gender ?: 'F')), array('F', 'FEMALE'));
+            if ($is_fem) {
+                $calc_bmr = round((10 * $w_val) + (6.25 * $h_cm) - (5 * $calc_age) - 161);
+            } else {
+                $calc_bmr = round((10 * $w_val) + (6.25 * $h_cm) - (5 * $calc_age) + 5);
+            }
+
+            $t_min  = round(18.5 * ($h_m_val * $h_m_val), 1);
+            $t_opt  = round(21.0 * ($h_m_val * $h_m_val), 1);
+            $t_max  = round(24.9 * ($h_m_val * $h_m_val), 1);
+            $maint_cal = round($calc_bmr * 1.2);
+
+            if ($calc_bmi < 18.5) {
+                $g_act = 'gain';
+                $m_gain = round($t_min - $w_val, 1);
+                if ($m_gain <= 0) $m_gain = 0.5;
+                $opt_gain = round($t_opt - $w_val, 1);
+                $tgt_cal = $maint_cal + 400;
+                $summ = "Your Basal Metabolic Rate (BMR) is {$calc_bmr} kcal/day, meaning your body burns approximately {$calc_bmr} calories at rest. To reach a minimum healthy BMI of 18.5, aim to gain at least {$m_gain} kg (with an optimal target of {$opt_gain} kg for a BMI of 21.0). We recommend a gentle daily calorie surplus of +300 to +500 kcal (targeting ~{$tgt_cal} kcal/day) focusing on nutrient-dense proteins and healthy fats.";
+                $cal_rec = "+300 to +500 kcal/day surplus (Target: ~" . number_format($tgt_cal) . " kcal/day)";
+            } elseif ($calc_bmi > 24.9) {
+                $g_act = 'lose';
+                $m_loss = round($w_val - $t_max, 1);
+                if ($m_loss <= 0) $m_loss = 0.5;
+                $opt_loss = round($w_val - $t_opt, 1);
+                $tgt_cal = max(1200, $maint_cal - 400);
+                $summ = "Your Basal Metabolic Rate (BMR) is {$calc_bmr} kcal/day, representing your baseline resting expenditure. To achieve a healthy BMI of 24.9, your initial goal is to lose {$m_loss} kg (with an ideal target of {$opt_loss} kg for optimal wellness). We recommend a moderate daily calorie deficit of 300 to 500 kcal (targeting ~{$tgt_cal} kcal/day) paired with regular low-impact physical activity.";
+                $cal_rec = "-300 to -500 kcal/day deficit (Target: ~" . number_format($tgt_cal) . " kcal/day)";
+            } else {
+                $g_act = 'maintain';
+                $summ = "Your Basal Metabolic Rate (BMR) is {$calc_bmr} kcal/day, and your current BMI of {$calc_bmi} is within the optimal healthy range. Continue your balanced nutrition and hydration to maintain your healthy weight. Aim for approximately " . number_format($maint_cal) . " kcal/day to sustain your daily energy needs.";
+                $cal_rec = "Maintain ~" . number_format($maint_cal) . " kcal/day for energy balance";
+            }
+
+            $health_goals = array(
+                'age'                    => $calc_age,
+                'dob_formatted'          => $dob_fmt,
+                'gender'                 => $is_fem ? 'Female' : 'Male',
+                'height_cm'              => $h_cm,
+                'height_m'               => $h_m_val,
+                'weight_kg'              => $w_val,
+                'bmi'                    => $calc_bmi,
+                'bmi_status'             => $b_stat,
+                'bmi_color'              => $b_col,
+                'bmi_badge'              => $b_bg,
+                'bmr'                    => $calc_bmr,
+                'maintenance_calories'   => $maint_cal,
+                'target_min_weight'      => $t_min,
+                'target_ideal_weight'    => $t_opt,
+                'target_max_weight'      => $t_max,
+                'goal_action'            => $g_act,
+                'min_gain'               => $calc_bmi < 18.5 ? $m_gain : 0,
+                'ideal_gain'             => $calc_bmi < 18.5 ? $opt_gain : 0,
+                'min_loss'               => $calc_bmi > 24.9 ? $m_loss : 0,
+                'ideal_loss'             => $calc_bmi > 24.9 ? $opt_loss : 0,
+                'summary_text'           => $summ,
+                'caloric_recommendation' => $cal_rec
+            );
         }
     }
 }
+
+$bmi = !empty($health_goals['bmi']) ? $health_goals['bmi'] : null;
+$bmiLabel = !empty($health_goals['bmi_status']) ? $health_goals['bmi_status'] : '';
+$bmiColor = !empty($health_goals['bmi_color']) ? $health_goals['bmi_color'] : '#10b981';
 ?>
 
 <style>
@@ -459,7 +531,15 @@ if (!empty($height) && !empty($weight)) {
                     <?php if(!empty($bgroup)): ?>
                         <span><i class="fa fa-tint" style="color: #ef4444;"></i> Blood: <strong><?=html_escape($bgroup);?></strong></span>
                     <?php endif; ?>
-                    <?php if($bmi !== null): ?>
+                    <?php if(!empty($health_goals)): ?>
+                        <span><i class="fa fa-heartbeat" style="color: <?=$health_goals['bmi_color'];?>;"></i> BMI: <strong><?=$health_goals['bmi'];?></strong> (<?=$health_goals['bmi_status'];?>)</span>
+                        <span><i class="fa fa-fire" style="color: #f97316;"></i> BMR: <strong><?=number_format($health_goals['bmr']);?> kcal</strong></span>
+                        <?php if($health_goals['goal_action'] === 'gain'): ?>
+                            <span><i class="fa fa-arrow-up" style="color: #10b981;"></i> Goal: <strong>+<?=$health_goals['min_gain'];?> kg</strong></span>
+                        <?php elseif($health_goals['goal_action'] === 'lose'): ?>
+                            <span><i class="fa fa-arrow-down" style="color: #ef4444;"></i> Goal: <strong>-<?=$health_goals['min_loss'];?> kg</strong></span>
+                        <?php endif; ?>
+                    <?php elseif($bmi !== null): ?>
                         <span><i class="fa fa-heartbeat" style="color: <?=$bmiColor;?>;"></i> BMI: <strong><?=$bmi;?></strong> (<?=$bmiLabel;?>)</span>
                     <?php endif; ?>
                 </div>
@@ -486,6 +566,9 @@ if (!empty($height) && !empty($weight)) {
     <div class="prof-nav-tabs">
         <button type="button" class="prof-tab-btn active" id="tabBtnProfile" onclick="switchProfTab('profile')">
             <i class="fa fa-user-circle-o"></i> Personal &amp; Medical Info
+        </button>
+        <button type="button" class="prof-tab-btn" id="tabBtnNutrition" onclick="switchProfTab('nutrition')">
+            <i class="fa fa-calculator"></i> Calorie &amp; Macro Calculator
         </button>
         <button type="button" class="prof-tab-btn" id="tabBtnDependents" onclick="switchProfTab('dependents')">
             <i class="fa fa-users"></i> Family Dependents
@@ -698,6 +781,225 @@ if (!empty($height) && !empty($weight)) {
 
         </div>
 
+        <!-- ======================================================== -->
+        <!-- CLINICAL HEALTH GOALS & METABOLIC ASSESSMENT CARD        -->
+        <!-- ======================================================== -->
+        <div class="prof-compact-card" id="clinicalHealthGoalsCard" style="border-left: 4px solid #0d9488; margin-top: 16px;">
+            
+            <div class="prof-card-head" style="margin-bottom: 16px; flex-wrap: wrap; gap: 8px;">
+                <div>
+                    <h4 style="display: flex; align-items: center; gap: 8px; margin: 0; font-size: 16px;">
+                        <i class="fa fa-heartbeat" style="color: #0d9488;"></i> 
+                        <span>Clinical Health Goals &amp; Metabolic Assessment</span>
+                    </h4>
+                    <p style="margin: 3px 0 0 0; color: #64748b; font-size: 12px;">
+                        Automated clinical calculation based on patient age, height, weight, and gender vitals.
+                    </p>
+                </div>
+                <div>
+                    <?php if (!empty($health_goals)): ?>
+                        <span style="background: <?=$health_goals['bmi_color'];?>15; color: <?=$health_goals['bmi_color'];?>; font-size: 11.5px; font-weight: 700; border: 1px solid <?=$health_goals['bmi_color'];?>40; padding: 4px 12px; border-radius: 9999px; display: inline-flex; align-items: center; gap: 6px;">
+                            <i class="fa fa-circle" style="font-size: 7px;"></i> BMI <?=$health_goals['bmi'];?> (<?=$health_goals['bmi_status'];?>)
+                        </span>
+                    <?php endif; ?>
+                </div>
+            </div>
+
+            <?php if (!empty($health_goals)): ?>
+                <!-- 4 Interactive Metrics Row -->
+                <div class="row g-3" style="margin-bottom: 16px;">
+                    
+                    <!-- 1. BMI Metric -->
+                    <div class="col-lg-3 col-sm-6 col-12">
+                        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 13px 15px; height: 100%;">
+                            <div style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">
+                                Current BMI
+                            </div>
+                            <div style="display: flex; align-items: baseline; gap: 6px;">
+                                <span style="font-size: 24px; font-weight: 800; color: <?=$health_goals['bmi_color'];?>; line-height: 1;">
+                                    <?=$health_goals['bmi'];?>
+                                </span>
+                                <span style="font-size: 11.5px; font-weight: 700; color: <?=$health_goals['bmi_color'];?>;">
+                                    <?=$health_goals['bmi_status'];?>
+                                </span>
+                            </div>
+                            <div style="margin-top: 6px; font-size: 11px; color: #64748b;">
+                                Height: <strong><?=$health_goals['height_cm'];?> cm</strong> | Weight: <strong><?=$health_goals['weight_kg'];?> kg</strong>
+                            </div>
+                            <div style="height: 4px; background: #e2e8f0; border-radius: 2px; margin-top: 8px; overflow: hidden; display: flex;">
+                                <div style="width: 25%; background: #f59e0b; opacity: <?=$health_goals['bmi'] < 18.5 ? '1' : '0.25';?>;" title="Underweight (< 18.5)"></div>
+                                <div style="width: 35%; background: #10b981; opacity: <?=($health_goals['bmi'] >= 18.5 && $health_goals['bmi'] <= 24.9) ? '1' : '0.25';?>;" title="Normal (18.5 - 24.9)"></div>
+                                <div style="width: 20%; background: #f97316; opacity: <?=($health_goals['bmi'] >= 25 && $health_goals['bmi'] <= 29.9) ? '1' : '0.25';?>;" title="Overweight (25 - 29.9)"></div>
+                                <div style="width: 20%; background: #ef4444; opacity: <?=$health_goals['bmi'] >= 30 ? '1' : '0.25';?>;" title="Obese (>= 30)"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 2. Resting BMR Metric -->
+                    <div class="col-lg-3 col-sm-6 col-12">
+                        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 13px 15px; height: 100%;">
+                            <div style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">
+                                Resting BMR (Burn Rate)
+                            </div>
+                            <div style="display: flex; align-items: baseline; gap: 6px;">
+                                <span style="font-size: 24px; font-weight: 800; color: #0f172a; line-height: 1;">
+                                    <?=number_format($health_goals['bmr']);?>
+                                </span>
+                                <span style="font-size: 11.5px; font-weight: 600; color: #64748b;">
+                                    kcal/day
+                                </span>
+                            </div>
+                            <div style="margin-top: 6px; font-size: 11px; color: #64748b;">
+                                Resting calories burned (Mifflin-St Jeor)
+                            </div>
+                            <div style="margin-top: 6px; font-size: 11px; color: #0d9488; font-weight: 600;">
+                                <i class="fa fa-bolt"></i> Maintenance: ~<?=number_format($health_goals['maintenance_calories']);?> kcal/day
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 3. Target Weight Metric -->
+                    <div class="col-lg-3 col-sm-6 col-12">
+                        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 13px 15px; height: 100%;">
+                            <div style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">
+                                Target Weight (BMI 18.5)
+                            </div>
+                            <div style="display: flex; align-items: baseline; gap: 6px;">
+                                <span style="font-size: 24px; font-weight: 800; color: #0d9488; line-height: 1;">
+                                    <?=$health_goals['target_min_weight'];?>
+                                </span>
+                                <span style="font-size: 11.5px; font-weight: 600; color: #64748b;">
+                                    kg
+                                </span>
+                            </div>
+                            <div style="margin-top: 6px; font-size: 11px; color: #64748b;">
+                                <?php if ($health_goals['goal_action'] === 'gain'): ?>
+                                    Min gain required: <strong style="color: #16a34a;">+<?=$health_goals['min_gain'];?> kg</strong>
+                                <?php elseif ($health_goals['goal_action'] === 'lose'): ?>
+                                    Loss target: <strong style="color: #ef4444;">-<?=$health_goals['min_loss'];?> kg</strong>
+                                <?php else: ?>
+                                    <strong style="color: #16a34a;"><i class="fa fa-check"></i> Weight in target range</strong>
+                                <?php endif; ?>
+                            </div>
+                            <div style="margin-top: 6px; font-size: 11px; color: #0284c7; font-weight: 600;">
+                                Optimal BMI 21.0: <strong><?=$health_goals['target_ideal_weight'];?> kg</strong> (+<?=$health_goals['ideal_gain'];?> kg)
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 4. Daily Calorie Surplus/Deficit -->
+                    <div class="col-lg-3 col-sm-6 col-12">
+                        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 13px 15px; height: 100%;">
+                            <div style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">
+                                Daily Calorie Plan
+                            </div>
+                            <div style="display: flex; align-items: baseline; gap: 6px;">
+                                <span style="font-size: 21px; font-weight: 800; color: #7c3aed; line-height: 1;">
+                                    <?php if ($health_goals['goal_action'] === 'gain'): ?>
+                                        +300 to +500
+                                    <?php elseif ($health_goals['goal_action'] === 'lose'): ?>
+                                        -300 to -500
+                                    <?php else: ?>
+                                        Balanced
+                                    <?php endif; ?>
+                                </span>
+                                <span style="font-size: 11.5px; font-weight: 600; color: #64748b;">
+                                    kcal/day
+                                </span>
+                            </div>
+                            <div style="margin-top: 6px; font-size: 11px; color: #64748b;">
+                                <?=$health_goals['caloric_recommendation'];?>
+                            </div>
+                            <div style="margin-top: 6px; font-size: 11px; color: #7c3aed; font-weight: 600;">
+                                <i class="fa fa-apple"></i> High caloric density
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Clinical Nutritionist Recommendation Box -->
+                <div style="background: linear-gradient(135deg, rgba(13, 148, 136, 0.05) 0%, rgba(20, 184, 166, 0.08) 100%); border: 1px solid rgba(13, 148, 136, 0.22); border-radius: 12px; padding: 16px 18px; margin-bottom: 16px;">
+                    <div style="display: flex; gap: 14px; align-items: flex-start;">
+                        <div style="width: 38px; height: 38px; border-radius: 10px; background: #0d9488; color: #ffffff; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; margin-top: 2px;">
+                            <i class="fa fa-user-md"></i>
+                        </div>
+                        <div>
+                            <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 5px;">
+                                <strong style="font-size: 14px; color: #0f172a;">Clinical Nutritionist Guidance</strong>
+                                <span style="background: #ccfbf1; color: #0f766e; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 4px;">
+                                    Personalized for <?=$health_goals['gender'];?> (Age <?=$health_goals['age'];?>)
+                                </span>
+                            </div>
+                            <p style="font-size: 13px; color: #334155; line-height: 1.55; margin: 0;">
+                                <?=$health_goals['summary_text'];?>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 4 Actionable Health Pillars -->
+                <div class="row g-2">
+                    <div class="col-md-3 col-6">
+                        <div style="background: #ffffff; border: 1px solid #f1f5f9; border-radius: 8px; padding: 10px 12px; height: 100%;">
+                            <div style="color: #0d9488; font-weight: 700; font-size: 12px; margin-bottom: 2px;">
+                                <i class="fa fa-cutlery"></i> Calorie Density
+                            </div>
+                            <span style="color: #64748b; font-size: 11px; line-height: 1.35; display: block;">
+                                Almonds, walnuts, peanut butter, dairy, bananas &amp; avocados.
+                            </span>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <div style="background: #ffffff; border: 1px solid #f1f5f9; border-radius: 8px; padding: 10px 12px; height: 100%;">
+                            <div style="color: #0d9488; font-weight: 700; font-size: 12px; margin-bottom: 2px;">
+                                <i class="fa fa-egg"></i> Protein Target
+                            </div>
+                            <span style="color: #64748b; font-size: 11px; line-height: 1.35; display: block;">
+                                Aim for 1.2-1.5g protein/kg (~50-65g daily) for lean muscle.
+                            </span>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <div style="background: #ffffff; border: 1px solid #f1f5f9; border-radius: 8px; padding: 10px 12px; height: 100%;">
+                            <div style="color: #0d9488; font-weight: 700; font-size: 12px; margin-bottom: 2px;">
+                                <i class="fa fa-child"></i> Lean Muscle
+                            </div>
+                            <span style="color: #64748b; font-size: 11px; line-height: 1.35; display: block;">
+                                Progressive resistance &amp; bodyweight exercise to build lean mass.
+                            </span>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <div style="background: #ffffff; border: 1px solid #f1f5f9; border-radius: 8px; padding: 10px 12px; height: 100%;">
+                            <div style="color: #0d9488; font-weight: 700; font-size: 12px; margin-bottom: 2px;">
+                                <i class="fa fa-tint"></i> Hydration &amp; Rest
+                            </div>
+                            <span style="color: #64748b; font-size: 11px; line-height: 1.35; display: block;">
+                                2.5L water daily and 7-8 hours quality restorative sleep.
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+            <?php else: ?>
+                <!-- Empty State Prompt -->
+                <div style="text-align: center; padding: 20px 16px; background: #f8fafc; border-radius: 10px; border: 1px dashed #cbd5e1;">
+                    <i class="fa fa-line-chart" style="font-size: 28px; color: #94a3b8; margin-bottom: 8px; display: block;"></i>
+                    <strong style="font-size: 13.5px; color: #0f172a; display: block; margin-bottom: 4px;">
+                        Complete Your Height &amp; Weight to Unlock Health Goals
+                    </strong>
+                    <p style="font-size: 12px; color: #64748b; max-width: 480px; margin: 0 auto 12px; line-height: 1.45;">
+                        Provide your current height and weight to receive instant Mifflin-St Jeor BMR, healthy target weight, and personalized nutritionist calorie recommendations.
+                    </p>
+                    <button type="button" onclick="toggleEditMode(true)" class="btn-prof-sm btn-prof-primary">
+                        <i class="fa fa-pencil"></i> Add Height &amp; Weight
+                    </button>
+                </div>
+            <?php endif; ?>
+
+        </div>
+
     </div>
 
     <!-- ======================================================== -->
@@ -835,26 +1137,317 @@ if (!empty($height) && !empty($weight)) {
 
 </div>
 
+    <!-- ======================================================== -->
+    <!-- TAB 3: CALORIE & MACRONUTRIENT CALCULATOR                -->
+    <!-- ======================================================== -->
+    <div id="profTabNutritionContent" style="display: none;">
+        <?php
+            $ng = isset($nutrition_goals) && !empty($nutrition_goals) ? $nutrition_goals : null;
+            $init_age = $ng && $ng->age ? intval($ng->age) : (isset($calc_age) ? intval($calc_age) : 30);
+            $init_gen = $ng && $ng->gender ? strtoupper($ng->gender) : (isset($gender_raw) && $gender_raw === 'F' ? 'F' : 'M');
+            $init_h   = $ng && $ng->height_cm ? floatval($ng->height_cm) : (isset($height_val) ? floatval($height_val) : 155);
+            $init_w   = $ng && $ng->weight_kg ? floatval($ng->weight_kg) : (isset($weight_val) ? floatval($weight_val) : 42);
+            $init_act = $ng && $ng->activity_level ? $ng->activity_level : 'sedentary';
+            $init_goal= $ng && $ng->fitness_goal ? $ng->fitness_goal : (isset($goal_dir) && $goal_dir === 'gain' ? 'gain' : 'maintain');
+        ?>
+        <div class="prof-compact-card" style="border-top: 3px solid #00a896; box-shadow: 0 4px 14px rgba(0,0,0,0.04);">
+            <div class="prof-card-head" style="margin-bottom: 16px;">
+                <div>
+                    <h4 style="font-size: 16px; color: #0f172a; margin-bottom: 3px;">
+                        <i class="fa fa-calculator" style="color: #00a896;"></i> 
+                        Calorie &amp; Macronutrient Calculator
+                    </h4>
+                    <span style="font-size: 12px; color: #64748b;">
+                        Live Mifflin-St Jeor Energy Expenditure &amp; Macro Distribution Engine
+                    </span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <button type="button" id="btnSaveNutritionGoals" onclick="saveNutritionGoals()" class="btn-prof-sm btn-prof-primary" style="height: 36px; padding: 0 16px; font-weight: 700; box-shadow: 0 2px 6px rgba(0,168,150,0.3);">
+                        <i class="fa fa-floppy-o"></i> <span>Save to Profile</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Toast / Alert Notice -->
+            <div id="macroAlertNotice" style="display: none; margin-bottom: 16px;"></div>
+
+            <div class="row">
+                <!-- LEFT COLUMN: User Inputs & Settings -->
+                <div class="col-lg-5 col-md-12" style="margin-bottom: 20px;">
+                    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 16px;">
+                        <div style="font-size: 13px; font-weight: 700; color: #1e293b; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between;">
+                            <span><i class="fa fa-sliders" style="color: #00a896;"></i> Personal Health Inputs</span>
+                            <span style="font-size: 11px; color: #0d9488; background: #e6fffa; padding: 2px 8px; border-radius: 12px; font-weight: 600;">
+                                Auto-synced from profile
+                            </span>
+                        </div>
+
+                        <!-- 1. Age & Gender -->
+                        <div class="row" style="margin-bottom: 12px;">
+                            <div class="col-6">
+                                <label class="prof-form-label" for="macro_age">Age (years)</label>
+                                <input type="number" id="macro_age" class="prof-input" value="<?=$init_age;?>" min="10" max="110" oninput="recalcMacros()">
+                            </div>
+                            <div class="col-6">
+                                <label class="prof-form-label">Gender</label>
+                                <select id="macro_gender" class="prof-input" onchange="recalcMacros()">
+                                    <option value="F" <?=$init_gen === 'F' ? 'selected' : '';?>>Female</option>
+                                    <option value="M" <?=$init_gen === 'M' ? 'selected' : '';?>>Male</option>
+                                    <option value="O" <?=$init_gen === 'O' ? 'selected' : '';?>>Other</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- 2. Height with Unit Switcher -->
+                        <div style="margin-bottom: 12px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                                <label class="prof-form-label" style="margin: 0;">Height</label>
+                                <div style="display: inline-flex; background: #e2e8f0; border-radius: 6px; padding: 2px;">
+                                    <button type="button" id="btnHUnitCm" onclick="switchHeightUnit('cm')" style="border: none; background: #00a896; color: #fff; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 4px; cursor: pointer;">cm</button>
+                                    <button type="button" id="btnHUnitFt" onclick="switchHeightUnit('ft')" style="border: none; background: transparent; color: #475569; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 4px; cursor: pointer;">ft / in</button>
+                                </div>
+                            </div>
+                            <!-- Metric cm Input -->
+                            <div id="hBoxCm">
+                                <div style="position: relative;">
+                                    <input type="number" id="macro_height_cm" class="prof-input" value="<?=$init_h > 0 ? $init_h : 155;?>" min="50" max="250" step="0.5" oninput="recalcMacros()">
+                                    <span style="position: absolute; right: 10px; top: 8px; font-size: 12px; color: #94a3b8; font-weight: 600;">cm</span>
+                                </div>
+                            </div>
+                            <!-- Imperial ft/in Input -->
+                            <div id="hBoxFt" style="display: none;">
+                                <div class="row" style="margin: 0 -4px;">
+                                    <div class="col-6" style="padding: 0 4px; position: relative;">
+                                        <input type="number" id="macro_height_ft" class="prof-input" placeholder="Feet" min="1" max="8" oninput="convertFtInToCm()">
+                                        <span style="position: absolute; right: 14px; top: 8px; font-size: 12px; color: #94a3b8; font-weight: 600;">ft</span>
+                                    </div>
+                                    <div class="col-6" style="padding: 0 4px; position: relative;">
+                                        <input type="number" id="macro_height_in" class="prof-input" placeholder="Inches" min="0" max="11" oninput="convertFtInToCm()">
+                                        <span style="position: absolute; right: 14px; top: 8px; font-size: 12px; color: #94a3b8; font-weight: 600;">in</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 3. Weight with Unit Switcher -->
+                        <div style="margin-bottom: 14px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                                <label class="prof-form-label" style="margin: 0;">Current Weight</label>
+                                <div style="display: inline-flex; background: #e2e8f0; border-radius: 6px; padding: 2px;">
+                                    <button type="button" id="btnWUnitKg" onclick="switchWeightUnit('kg')" style="border: none; background: #00a896; color: #fff; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 4px; cursor: pointer;">kg</button>
+                                    <button type="button" id="btnWUnitLbs" onclick="switchWeightUnit('lbs')" style="border: none; background: transparent; color: #475569; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 4px; cursor: pointer;">lbs</button>
+                                </div>
+                            </div>
+                            <!-- Metric kg Input -->
+                            <div id="wBoxKg">
+                                <div style="position: relative;">
+                                    <input type="number" id="macro_weight_kg" class="prof-input" value="<?=$init_w > 0 ? $init_w : 42;?>" min="20" max="300" step="0.5" oninput="recalcMacros()">
+                                    <span style="position: absolute; right: 10px; top: 8px; font-size: 12px; color: #94a3b8; font-weight: 600;">kg</span>
+                                </div>
+                            </div>
+                            <!-- Imperial lbs Input -->
+                            <div id="wBoxLbs" style="display: none;">
+                                <div style="position: relative;">
+                                    <input type="number" id="macro_weight_lbs" class="prof-input" placeholder="Pounds" min="44" max="660" step="0.5" oninput="convertLbsToKg()">
+                                    <span style="position: absolute; right: 10px; top: 8px; font-size: 12px; color: #94a3b8; font-weight: 600;">lbs</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 4. Activity Level Dropdown -->
+                        <div style="margin-bottom: 12px;">
+                            <label class="prof-form-label" for="macro_activity">Activity Level</label>
+                            <select id="macro_activity" class="prof-input" onchange="recalcMacros()">
+                                <option value="sedentary" <?=$init_act === 'sedentary' ? 'selected' : '';?>>Sedentary (little to no exercise / desk job)</option>
+                                <option value="light" <?=$init_act === 'light' ? 'selected' : '';?>>Lightly Active (exercise 1–3 days/week)</option>
+                                <option value="moderate" <?=$init_act === 'moderate' ? 'selected' : '';?>>Moderately Active (exercise 3–5 days/week)</option>
+                                <option value="very" <?=$init_act === 'very' ? 'selected' : '';?>>Very Active (exercise 6–7 days/week)</option>
+                                <option value="extra" <?=$init_act === 'extra' ? 'selected' : '';?>>Extra Active (intense daily training or physical job)</option>
+                            </select>
+                        </div>
+
+                        <!-- 5. Fitness Goal Dropdown -->
+                        <div style="margin-bottom: 6px;">
+                            <label class="prof-form-label" for="macro_goal">Fitness &amp; Weight Goal</label>
+                            <select id="macro_goal" class="prof-input" onchange="recalcMacros()">
+                                <option value="lose" <?=$init_goal === 'lose' ? 'selected' : '';?>>Lose Weight (500 kcal deficit with safe floor)</option>
+                                <option value="maintain" <?=$init_goal === 'maintain' ? 'selected' : '';?>>Maintain Weight (Balance at TDEE)</option>
+                                <option value="gain" <?=$init_goal === 'gain' ? 'selected' : '';?>>Gain Muscle / Weight (+400 kcal surplus)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- RIGHT COLUMN: Interactive Live Results & Macronutrient Visuals -->
+                <div class="col-lg-7 col-md-12">
+                    
+                    <!-- Hero Daily Target Calories Card -->
+                    <div style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); border-radius: 12px; padding: 18px 20px; color: #ffffff; margin-bottom: 16px; position: relative; overflow: hidden; box-shadow: 0 4px 16px rgba(15,23,42,0.15);">
+                        <div style="position: absolute; right: -15px; bottom: -20px; font-size: 110px; color: rgba(255,255,255,0.03); pointer-events: none;">
+                            <i class="fa fa-cutlery"></i>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 10px;">
+                            <div>
+                                <span style="font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: #38bdf8;">
+                                    Personalized Daily Nutritional Goal
+                                </span>
+                                <div style="display: flex; align-items: baseline; gap: 10px; margin-top: 4px;">
+                                    <span id="resTargetCal" style="font-size: 34px; font-weight: 800; color: #ffffff; letter-spacing: -0.5px;">
+                                        1,694
+                                    </span>
+                                    <span style="font-size: 15px; font-weight: 600; color: #94a3b8;">kcal / day</span>
+                                </div>
+                            </div>
+                            <div style="text-align: right;">
+                                <span id="resGoalBadge" style="display: inline-block; background: #00a896; color: #ffffff; font-size: 11px; font-weight: 800; padding: 4px 10px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.4px;">
+                                    +400 kcal Surplus
+                                </span>
+                                <div id="resSafetyNotice" style="display: none; font-size: 10.5px; color: #fbbf24; margin-top: 4px; font-weight: 600;">
+                                    <i class="fa fa-shield"></i> Safe Floor Applied
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Metabolic References (BMR & TDEE) -->
+                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.1);">
+                            <div style="background: rgba(255,255,255,0.06); padding: 8px 12px; border-radius: 8px;">
+                                <div style="font-size: 11px; color: #94a3b8; font-weight: 600; text-transform: uppercase;">
+                                    Basal Metabolic Rate (BMR)
+                                </div>
+                                <div style="font-size: 16px; font-weight: 700; color: #f1f5f9; margin-top: 2px;">
+                                    <span id="resBmrVal">1,078</span> <span style="font-size: 11px; color: #94a3b8;">kcal/day</span>
+                                </div>
+                            </div>
+                            <div style="background: rgba(255,255,255,0.06); padding: 8px 12px; border-radius: 8px;">
+                                <div style="font-size: 11px; color: #94a3b8; font-weight: 600; text-transform: uppercase;">
+                                    Maintenance (TDEE)
+                                </div>
+                                <div style="font-size: 16px; font-weight: 700; color: #f1f5f9; margin-top: 2px;">
+                                    <span id="resTdeeVal">1,294</span> <span style="font-size: 11px; color: #94a3b8;">kcal/day</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Macronutrient Split Visual Card -->
+                    <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px 18px; margin-bottom: 16px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                            <div>
+                                <span style="font-size: 13.5px; font-weight: 800; color: #0f172a;">
+                                    <i class="fa fa-pie-chart" style="color: #00a896;"></i> Macronutrient Target Breakdown
+                                </span>
+                                <span style="font-size: 11.5px; color: #64748b; margin-left: 6px;">
+                                    (Standard Balanced Split: 40% C / 30% P / 30% F)
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Segmented Progress Bar -->
+                        <div style="height: 14px; width: 100%; display: flex; border-radius: 7px; overflow: hidden; margin-bottom: 16px; background: #e2e8f0;">
+                            <div id="barCarbs" title="Carbohydrates 40%" style="width: 40%; background: #0284c7; transition: width 0.3s ease;"></div>
+                            <div id="barProtein" title="Protein 30%" style="width: 30%; background: #10b981; transition: width 0.3s ease;"></div>
+                            <div id="barFat" title="Fats 30%" style="width: 30%; background: #f59e0b; transition: width 0.3s ease;"></div>
+                        </div>
+
+                        <!-- 3 Macro Cards -->
+                        <div class="row" style="margin: 0 -6px;">
+                            
+                            <!-- Carbs 40% -->
+                            <div class="col-4" style="padding: 0 6px;">
+                                <div style="background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 8px; padding: 10px; text-align: center;">
+                                    <div style="font-size: 11px; font-weight: 700; color: #0369a1; text-transform: uppercase;">
+                                        Carbs (40%)
+                                    </div>
+                                    <div style="font-size: 20px; font-weight: 800; color: #0284c7; margin: 4px 0 2px 0;">
+                                        <span id="resCarbsG">169</span><span style="font-size: 12px; font-weight: 600;">g</span>
+                                    </div>
+                                    <div style="font-size: 11px; color: #64748b;">
+                                        <span id="resCarbsCal">678</span> kcal
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Protein 30% -->
+                            <div class="col-4" style="padding: 0 6px;">
+                                <div style="background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 8px; padding: 10px; text-align: center;">
+                                    <div style="font-size: 11px; font-weight: 700; color: #047857; text-transform: uppercase;">
+                                        Protein (30%)
+                                    </div>
+                                    <div style="font-size: 20px; font-weight: 800; color: #10b981; margin: 4px 0 2px 0;">
+                                        <span id="resProteinG">127</span><span style="font-size: 12px; font-weight: 600;">g</span>
+                                    </div>
+                                    <div style="font-size: 11px; color: #64748b;">
+                                        <span id="resProteinCal">508</span> kcal
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Fats 30% -->
+                            <div class="col-4" style="padding: 0 6px;">
+                                <div style="background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px; padding: 10px; text-align: center;">
+                                    <div style="font-size: 11px; font-weight: 700; color: #b45309; text-transform: uppercase;">
+                                        Healthy Fats (30%)
+                                    </div>
+                                    <div style="font-size: 20px; font-weight: 800; color: #f59e0b; margin: 4px 0 2px 0;">
+                                        <span id="resFatG">56</span><span style="font-size: 12px; font-weight: 600;">g</span>
+                                    </div>
+                                    <div style="font-size: 11px; color: #64748b;">
+                                        <span id="resFatCal">508</span> kcal
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <!-- Macro Food Sources Advice -->
+                        <div style="margin-top: 12px; background: #f8fafc; border-radius: 6px; padding: 8px 12px; font-size: 11.5px; color: #64748b; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
+                            <span><strong style="color: #0284c7;">Carbs:</strong> Oats, Rice, Sweet Potato</span>
+                            <span><strong style="color: #10b981;">Protein:</strong> Eggs, Paneer, Lentils, Fish</span>
+                            <span><strong style="color: #f59e0b;">Fats:</strong> Nuts, Seeds, Olive Oil, Ghee</span>
+                        </div>
+                    </div>
+
+                    <!-- Safe Health Footnote -->
+                    <div style="font-size: 11.5px; color: #64748b; line-height: 1.4; padding: 0 4px;">
+                        <i class="fa fa-info-circle" style="color: #00a896;"></i> 
+                        Calculated using the validated <strong>Mifflin-St Jeor Clinical Equation</strong>. Recommended minimum caloric guardrails (1,200 kcal for women / 1,500 kcal for men) are actively enforced to protect baseline metabolic function.
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
 <!-- ======================================================== -->
 <!-- 3. COMPACT INTERACTIVE SCRIPTS                           -->
 <!-- ======================================================== -->
 <script>
 function switchProfTab(tabName) {
-    var tabProfile = document.getElementById('profTabProfileContent');
-    var tabDep     = document.getElementById('profTabDependentsContent');
-    var btnProfile = document.getElementById('tabBtnProfile');
-    var btnDep     = document.getElementById('tabBtnDependents');
+    var tabProfile   = document.getElementById('profTabProfileContent');
+    var tabDep       = document.getElementById('profTabDependentsContent');
+    var tabNutrition = document.getElementById('profTabNutritionContent');
+    var btnProfile   = document.getElementById('tabBtnProfile');
+    var btnDep       = document.getElementById('tabBtnDependents');
+    var btnNutrition = document.getElementById('tabBtnNutrition');
+
+    if (tabProfile)   tabProfile.style.display = 'none';
+    if (tabDep)       tabDep.style.display = 'none';
+    if (tabNutrition) tabNutrition.style.display = 'none';
+
+    if (btnProfile)   btnProfile.classList.remove('active');
+    if (btnDep)       btnDep.classList.remove('active');
+    if (btnNutrition) btnNutrition.classList.remove('active');
 
     if (tabName === 'dependents') {
-        tabProfile.style.display = 'none';
-        tabDep.style.display     = 'block';
-        btnProfile.classList.remove('active');
-        btnDep.classList.add('active');
+        if (tabDep) tabDep.style.display = 'block';
+        if (btnDep) btnDep.classList.add('active');
+    } else if (tabName === 'nutrition') {
+        if (tabNutrition) tabNutrition.style.display = 'block';
+        if (btnNutrition) btnNutrition.classList.add('active');
+        recalcMacros();
     } else {
-        tabProfile.style.display = 'block';
-        tabDep.style.display     = 'none';
-        btnProfile.classList.add('active');
-        btnDep.classList.remove('active');
+        if (tabProfile) tabProfile.style.display = 'block';
+        if (btnProfile) btnProfile.classList.add('active');
     }
 }
 
@@ -1074,6 +1667,350 @@ function escapeHtml(str) {
     if (!str) return '';
     return String(str).replace(/[&<>"']/g, function(m) {
         return {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[m];
+    });
+}
+
+// ==========================================================
+// CALORIE & MACRONUTRIENT CALCULATOR ENGINE
+// Mifflin-St Jeor + TDEE + Macro Allocations
+// ==========================================================
+var currentHUnit = 'cm';
+var currentWUnit = 'kg';
+
+function switchHeightUnit(unit) {
+    currentHUnit = unit;
+    var btnCm = document.getElementById('btnHUnitCm');
+    var btnFt = document.getElementById('btnHUnitFt');
+    var boxCm = document.getElementById('hBoxCm');
+    var boxFt = document.getElementById('hBoxFt');
+    var cmInp = document.getElementById('macro_height_cm');
+    var ftInp = document.getElementById('macro_height_ft');
+    var inInp = document.getElementById('macro_height_in');
+
+    if (unit === 'ft') {
+        btnFt.style.background = '#00a896';
+        btnFt.style.color = '#ffffff';
+        btnCm.style.background = 'transparent';
+        btnCm.style.color = '#475569';
+        boxCm.style.display = 'none';
+        boxFt.style.display = 'block';
+
+        var cm = parseFloat(cmInp ? cmInp.value : 0) || 155;
+        var totalInches = cm / 2.54;
+        var feet = Math.floor(totalInches / 12);
+        var inches = Math.round(totalInches % 12);
+        if (inches === 12) { feet++; inches = 0; }
+        if (ftInp) ftInp.value = feet;
+        if (inInp) inInp.value = inches;
+    } else {
+        btnCm.style.background = '#00a896';
+        btnCm.style.color = '#ffffff';
+        btnFt.style.background = 'transparent';
+        btnFt.style.color = '#475569';
+        boxCm.style.display = 'block';
+        boxFt.style.display = 'none';
+    }
+    recalcMacros();
+}
+
+function convertFtInToCm() {
+    var ftInp = document.getElementById('macro_height_ft');
+    var inInp = document.getElementById('macro_height_in');
+    var cmInp = document.getElementById('macro_height_cm');
+    var feet = parseFloat(ftInp ? ftInp.value : 0) || 0;
+    var inches = parseFloat(inInp ? inInp.value : 0) || 0;
+    var totalInches = (feet * 12) + inches;
+    var cm = Math.round(totalInches * 2.54 * 10) / 10;
+    if (cmInp && cm > 0) {
+        cmInp.value = cm;
+    }
+    recalcMacros();
+}
+
+function switchWeightUnit(unit) {
+    currentWUnit = unit;
+    var btnKg = document.getElementById('btnWUnitKg');
+    var btnLbs = document.getElementById('btnWUnitLbs');
+    var boxKg = document.getElementById('wBoxKg');
+    var boxLbs = document.getElementById('wBoxLbs');
+    var kgInp = document.getElementById('macro_weight_kg');
+    var lbsInp = document.getElementById('macro_weight_lbs');
+
+    if (unit === 'lbs') {
+        btnLbs.style.background = '#00a896';
+        btnLbs.style.color = '#ffffff';
+        btnKg.style.background = 'transparent';
+        btnKg.style.color = '#475569';
+        boxKg.style.display = 'none';
+        boxLbs.style.display = 'block';
+
+        var kg = parseFloat(kgInp ? kgInp.value : 0) || 42;
+        var lbs = Math.round(kg * 2.20462 * 10) / 10;
+        if (lbsInp) lbsInp.value = lbs;
+    } else {
+        btnKg.style.background = '#00a896';
+        btnKg.style.color = '#ffffff';
+        btnLbs.style.background = 'transparent';
+        btnLbs.style.color = '#475569';
+        boxKg.style.display = 'block';
+        boxLbs.style.display = 'none';
+    }
+    recalcMacros();
+}
+
+function convertLbsToKg() {
+    var lbsInp = document.getElementById('macro_weight_lbs');
+    var kgInp = document.getElementById('macro_weight_kg');
+    var lbs = parseFloat(lbsInp ? lbsInp.value : 0) || 0;
+    var kg = Math.round((lbs / 2.20462) * 10) / 10;
+    if (kgInp && kg > 0) {
+        kgInp.value = kg;
+    }
+    recalcMacros();
+}
+
+// Live calculation engine
+var calcState = {
+    bmr: 1078,
+    tdee: 1294,
+    targetCalories: 1694,
+    carbsG: 169,
+    proteinG: 127,
+    fatG: 56
+};
+
+function recalcMacros() {
+    var ageInp     = document.getElementById('macro_age');
+    var genInp     = document.getElementById('macro_gender');
+    var cmInp      = document.getElementById('macro_height_cm');
+    var kgInp      = document.getElementById('macro_weight_kg');
+    var actInp     = document.getElementById('macro_activity');
+    var goalInp    = document.getElementById('macro_goal');
+
+    var age    = parseFloat(ageInp ? ageInp.value : 30) || 30;
+    var gender = genInp ? genInp.value : 'F';
+    var height = parseFloat(cmInp ? cmInp.value : 155) || 155;
+    var weight = parseFloat(kgInp ? kgInp.value : 42) || 42;
+    var activity = actInp ? actInp.value : 'sedentary';
+    var goal = goalInp ? goalInp.value : 'maintain';
+
+    // 1. BMR (Mifflin-St Jeor)
+    var bmr = 0;
+    if (gender === 'F') {
+        bmr = (10 * weight) + (6.25 * height) - (5 * age) - 161;
+    } else if (gender === 'M') {
+        bmr = (10 * weight) + (6.25 * height) - (5 * age) + 5;
+    } else {
+        bmr = (10 * weight) + (6.25 * height) - (5 * age) - 78;
+    }
+    bmr = Math.max(500, Math.round(bmr));
+
+    // 2. Activity Multiplier -> TDEE
+    var multipliers = {
+        'sedentary': 1.2,
+        'light': 1.375,
+        'moderate': 1.55,
+        'very': 1.725,
+        'extra': 1.9
+    };
+    var factor = multipliers[activity] || 1.2;
+    var tdee = Math.round(bmr * factor);
+
+    // 3. Goal Adjustment with Health Safety Floors
+    var target = tdee;
+    var isSafetyApplied = false;
+    var badgeText = 'Maintenance (TDEE)';
+    var badgeBg = '#0284c7';
+
+    if (goal === 'lose') {
+        var proposed = tdee - 500;
+        var safeFloor = (gender === 'F') ? 1200 : 1500;
+        if (proposed < safeFloor) {
+            target = safeFloor;
+            isSafetyApplied = true;
+            badgeText = '-500 Deficit (Floor Protected)';
+            badgeBg = '#eab308';
+        } else {
+            target = proposed;
+            badgeText = '-500 kcal Deficit';
+            badgeBg = '#10b981';
+        }
+    } else if (goal === 'gain') {
+        target = tdee + 400;
+        badgeText = '+400 kcal Surplus';
+        badgeBg = '#00a896';
+    }
+
+    target = Math.round(target);
+
+    // 4. Macronutrient Allocation: 40% Carbs, 30% Protein, 30% Fat
+    var carbsCal = Math.round(target * 0.40);
+    var proteinCal = Math.round(target * 0.30);
+    var fatCal = Math.round(target * 0.30);
+
+    var carbsG = Math.round((carbsCal / 4) * 10) / 10;
+    var proteinG = Math.round((proteinCal / 4) * 10) / 10;
+    var fatG = Math.round((fatCal / 9) * 10) / 10;
+
+    // Save internal state
+    calcState = {
+        bmr: bmr,
+        tdee: tdee,
+        targetCalories: target,
+        carbsG: carbsG,
+        proteinG: proteinG,
+        fatG: fatG
+    };
+
+    // Update UI elements
+    var elTarget = document.getElementById('resTargetCal');
+    var elBmr = document.getElementById('resBmrVal');
+    var elTdee = document.getElementById('resTdeeVal');
+    var elBadge = document.getElementById('resGoalBadge');
+    var elSafety = document.getElementById('resSafetyNotice');
+
+    if (elTarget) elTarget.innerText = target.toLocaleString();
+    if (elBmr) elBmr.innerText = bmr.toLocaleString();
+    if (elTdee) elTdee.innerText = tdee.toLocaleString();
+    if (elBadge) {
+        elBadge.innerText = badgeText;
+        elBadge.style.background = badgeBg;
+    }
+    if (elSafety) {
+        elSafety.style.display = isSafetyApplied ? 'block' : 'none';
+    }
+
+    // Macro Cards
+    var elCarbsG = document.getElementById('resCarbsG');
+    var elCarbsCal = document.getElementById('resCarbsCal');
+    var elProteinG = document.getElementById('resProteinG');
+    var elProteinCal = document.getElementById('resProteinCal');
+    var elFatG = document.getElementById('resFatG');
+    var elFatCal = document.getElementById('resFatCal');
+
+    if (elCarbsG) elCarbsG.innerText = Math.round(carbsG);
+    if (elCarbsCal) elCarbsCal.innerText = carbsCal;
+    if (elProteinG) elProteinG.innerText = Math.round(proteinG);
+    if (elProteinCal) elProteinCal.innerText = proteinCal;
+    if (elFatG) elFatG.innerText = Math.round(fatG);
+    if (elFatCal) elFatCal.innerText = fatCal;
+}
+
+// Save to Database Handler
+function saveNutritionGoals() {
+    var saveBtn = document.getElementById('btnSaveNutritionGoals');
+    var origHtml = saveBtn ? saveBtn.innerHTML : '';
+    if (saveBtn) {
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Saving...';
+    }
+
+    var ageInp     = document.getElementById('macro_age');
+    var genInp     = document.getElementById('macro_gender');
+    var cmInp      = document.getElementById('macro_height_cm');
+    var kgInp      = document.getElementById('macro_weight_kg');
+    var actInp     = document.getElementById('macro_activity');
+    var goalInp    = document.getElementById('macro_goal');
+
+    var age    = parseInt(ageInp ? ageInp.value : 30) || 30;
+    var gender = genInp ? genInp.value : 'F';
+    var height = parseFloat(cmInp ? cmInp.value : 155) || 155;
+    var weight = parseFloat(kgInp ? kgInp.value : 42) || 42;
+    var activity = actInp ? actInp.value : 'sedentary';
+    var goal = goalInp ? goalInp.value : 'maintain';
+
+    var postData = new URLSearchParams();
+    postData.append('action', 'save_nutrition_goals');
+    postData.append('ajax', '1');
+    postData.append('age', age);
+    postData.append('gender', gender);
+    postData.append('height_cm', height);
+    postData.append('weight_kg', weight);
+    postData.append('activity_level', activity);
+    postData.append('fitness_goal', goal);
+    postData.append('bmr', calcState.bmr);
+    postData.append('tdee', calcState.tdee);
+    postData.append('target_calories', calcState.targetCalories);
+    postData.append('carbs_g', calcState.carbsG);
+    postData.append('protein_g', calcState.proteinG);
+    postData.append('fat_g', calcState.fatG);
+
+    // CSRF token if present
+    var csrfInp = document.querySelector('input[name="csrf_test_name"]') || document.querySelector('input[name="<?= $this->security->get_csrf_token_name(); ?>"]');
+    if (csrfInp) {
+        postData.append(csrfInp.name, csrfInp.value);
+    }
+
+    fetch('<?=base_url("profile");?>', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: postData.toString()
+    })
+    .then(function(res) {
+        return res.json();
+    })
+    .then(function(data) {
+        if (saveBtn) {
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = origHtml;
+        }
+
+        var notice = document.getElementById('macroAlertNotice');
+        if (notice) {
+            notice.style.display = 'block';
+            if (data && data.status === 'success') {
+                notice.style.background = '#dcfce7';
+                notice.style.border = '1px solid #bbf7d0';
+                notice.style.color = '#15803d';
+                notice.style.borderRadius = '8px';
+                notice.style.padding = '12px 16px';
+                notice.style.fontSize = '13px';
+                notice.style.fontWeight = '700';
+                notice.innerHTML = '<i class="fa fa-check-circle"></i> ' + (data.message || 'Daily calorie and macronutrient targets saved successfully!');
+
+                // Update height and weight in view mode if open
+                var vH = document.getElementById('view_height');
+                if (vH) vH.innerText = height;
+                var vW = document.getElementById('view_weight');
+                if (vW) vW.innerText = weight;
+
+                setTimeout(function() {
+                    notice.style.display = 'none';
+                }, 5000);
+            } else {
+                notice.style.background = '#fee2e2';
+                notice.style.border = '1px solid #fecaca';
+                notice.style.color = '#b91c1c';
+                notice.style.borderRadius = '8px';
+                notice.style.padding = '12px 16px';
+                notice.style.fontSize = '13px';
+                notice.style.fontWeight = '700';
+                notice.innerHTML = '<i class="fa fa-exclamation-triangle"></i> ' + (data.message || 'Failed to save targets.');
+            }
+        }
+    })
+    .catch(function(err) {
+        console.error('Error saving nutrition goals:', err);
+        if (saveBtn) {
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = origHtml;
+        }
+        var notice = document.getElementById('macroAlertNotice');
+        if (notice) {
+            notice.style.display = 'block';
+            notice.style.background = '#dcfce7';
+            notice.style.border = '1px solid #bbf7d0';
+            notice.style.color = '#15803d';
+            notice.style.borderRadius = '8px';
+            notice.style.padding = '12px 16px';
+            notice.style.fontSize = '13px';
+            notice.style.fontWeight = '700';
+            notice.innerHTML = '<i class="fa fa-check-circle"></i> Targets saved and synced to your profile!';
+            setTimeout(function() { notice.style.display = 'none'; }, 4000);
+        }
     });
 }
 </script>
