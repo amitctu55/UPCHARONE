@@ -119,3 +119,7 @@ jobs:
             **/tests/**
             **/application/cache/**
             **/admin1947/application/cache/**
+            **/application/third_party/**
+            **/admin1947/application/third_party/**
+            **/admin1947/public/assets/upload/**
+            **/assets/userimages/**
