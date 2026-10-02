@@ -90,19 +90,19 @@ jobs:
           
           echo "✅ SSH deployment completed successfully."
 
-        # Verify and resolve active FTP credentials to prevent authentication mismatches
-        - name: 🔑 Resolve Active FTP Credentials
-          if: env.SSH_HOST == ''
-          run: php .github/scripts/resolve-ftp.php
+      # Verify and resolve active FTP credentials to prevent authentication mismatches
+      - name: 🔑 Resolve Active FTP Credentials
+        if: env.SSH_HOST == ''
+        run: php .github/scripts/resolve-ftp.php
 
-        # FTP Deployment to live server
-        - name: 📤 Deploy via FTP to Live Server
-          if: env.ACTIVE_FTP_PASSWORD != '' && env.SSH_HOST == ''
-          uses: SamKirkland/FTP-Deploy-Action@v4.3.5
-          with:
-            server: ${{ env.FTP_SERVER }}
-            username: ${{ env.FTP_USERNAME }}
-            password: ${{ env.ACTIVE_FTP_PASSWORD }}
+      # FTP Deployment to live server
+      - name: 📤 Deploy via FTP to Live Server
+        if: env.ACTIVE_FTP_PASSWORD != '' && env.SSH_HOST == ''
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ env.FTP_SERVER }}
+          username: ${{ env.FTP_USERNAME }}
+          password: ${{ env.ACTIVE_FTP_PASSWORD }}
           port: ${{ env.FTP_PORT }}
           server-dir: ${{ env.FTP_SERVER_DIR }}
           protocol: ftp
