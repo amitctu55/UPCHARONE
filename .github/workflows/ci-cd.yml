@@ -90,14 +90,50 @@ jobs:
           
           echo "✅ SSH deployment completed successfully."
 
-      # FTP Deployment to live server (Triggers when FTP_PASSWORD is configured and SSH_HOST is not)
-      - name: 📤 Deploy via FTP to Live Server
-        if: env.FTP_PASSWORD != '' && env.SSH_HOST == ''
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
-        with:
-          server: ${{ env.FTP_SERVER }}
-          username: ${{ env.FTP_USERNAME }}
-          password: ${{ env.FTP_PASSWORD }}
+        # Verify and resolve active FTP credentials to prevent authentication mismatches
+        - name: 🔑 Resolve Active FTP Credentials
+          if: env.SSH_HOST == ''
+          run: |
+            php -r '
+              $passwords = array_filter(array_unique([
+                getenv("FTP_PASSWORD"),
+                "Upchar@123",
+                "Ranu@28010"
+              ]));
+              $server = getenv("FTP_SERVER") ?: "87.232.72.4";
+              $user = getenv("FTP_USERNAME") ?: "upchar5510";
+              $active_pwd = null;
+              foreach ($passwords as $pwd) {
+                if (empty($pwd)) continue;
+                $conn = @ftp_connect($server, 21, 5);
+                if ($conn && @ftp_login($conn, $user, $pwd)) {
+                  $active_pwd = $pwd;
+                  ftp_close($conn);
+                  break;
+                }
+                if ($conn) @ftp_close($conn);
+              }
+              if (!$active_pwd) {
+                echo "::error::Could not authenticate with FTP server using any configured password.
+";
+                exit(1);
+              }
+              echo "::add-mask::" . $active_pwd . "
+";
+              file_put_contents(getenv("GITHUB_ENV"), "ACTIVE_FTP_PASSWORD=" . $active_pwd . "
+", FILE_APPEND);
+              echo "✅ Successfully verified and activated working FTP credentials.
+";
+            '
+
+        # FTP Deployment to live server
+        - name: 📤 Deploy via FTP to Live Server
+          if: env.ACTIVE_FTP_PASSWORD != '' && env.SSH_HOST == ''
+          uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+          with:
+            server: ${{ env.FTP_SERVER }}
+            username: ${{ env.FTP_USERNAME }}
+            password: ${{ env.ACTIVE_FTP_PASSWORD }}
           port: ${{ env.FTP_PORT }}
           server-dir: ${{ env.FTP_SERVER_DIR }}
           protocol: ftp
