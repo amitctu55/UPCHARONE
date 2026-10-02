@@ -1,0 +1,47 @@
+# Exclude static third-party libraries (already installed on production)
+admin1947/application/third_party/*
+admin1947/application/third_party/**/*
+application/third_party/*
+application/third_party/**/*
+admin1947/application/third_party/PHPExcel/*
+admin1947/application/third_party/PHPExcel/**/*
+application/third_party/PHPExcel/*
+application/third_party/PHPExcel/**/*
+admin1947/application/third_party/tcpdf/*
+admin1947/application/third_party/tcpdf/**/*
+admin1947/application/third_party/vendor/*
+admin1947/application/third_party/vendor/**/*
+admin1947/application/third_party/TCPDF-main.zip
+application/third_party/PHPExcel.zip
+
+# Exclude large uploads and binary assets
+admin1947/public/assets/upload/*
+admin1947/public/assets/upload/**/*
+assets/userimages/*
+assets/userimages/**/*
+
+# Exclude archives and temporary files
+*.zip
+*.tar.gz
+*.tgz
+*.rar
+*.bak
+*.crdownload
+*.sql
+
+# Exclude cache, logs, tests, scratch
+application/cache/*
+application/cache/**/*
+admin1947/application/cache/*
+admin1947/application/cache/**/*
+error_log
+push-error.txt
+tests/*
+tests/**/*
+scratch/*
+scratch/**/*
+amb/scratch/*
+amb/scratch/**/*
+.git*
+.github/*
+.github/**/*
