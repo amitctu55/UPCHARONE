@@ -93,38 +93,7 @@ jobs:
         # Verify and resolve active FTP credentials to prevent authentication mismatches
         - name: 🔑 Resolve Active FTP Credentials
           if: env.SSH_HOST == ''
-          run: |
-            php -r '
-              $passwords = array_filter(array_unique([
-                getenv("FTP_PASSWORD"),
-                "Upchar@123",
-                "Ranu@28010"
-              ]));
-              $server = getenv("FTP_SERVER") ?: "87.232.72.4";
-              $user = getenv("FTP_USERNAME") ?: "upchar5510";
-              $active_pwd = null;
-              foreach ($passwords as $pwd) {
-                if (empty($pwd)) continue;
-                $conn = @ftp_connect($server, 21, 5);
-                if ($conn && @ftp_login($conn, $user, $pwd)) {
-                  $active_pwd = $pwd;
-                  ftp_close($conn);
-                  break;
-                }
-                if ($conn) @ftp_close($conn);
-              }
-              if (!$active_pwd) {
-                echo "::error::Could not authenticate with FTP server using any configured password.
-";
-                exit(1);
-              }
-              echo "::add-mask::" . $active_pwd . "
-";
-              file_put_contents(getenv("GITHUB_ENV"), "ACTIVE_FTP_PASSWORD=" . $active_pwd . "
-", FILE_APPEND);
-              echo "✅ Successfully verified and activated working FTP credentials.
-";
-            '
+          run: php .github/scripts/resolve-ftp.php
 
         # FTP Deployment to live server
         - name: 📤 Deploy via FTP to Live Server
