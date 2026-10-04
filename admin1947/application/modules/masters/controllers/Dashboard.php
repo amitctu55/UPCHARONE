@@ -10,7 +10,11 @@ class Dashboard extends CI_Controller
 		 $this->load->helper(array('query_string_helper','dbquery_helper','admin_helper'));
 		 $this->load->model('Dashboardmodel');
 
-		 if(!$this->session->userdata('userid') && !$this->session->userdata('username'))
+		 $hasAdminAuth = ($this->session->userdata('adminuserid') || $this->session->userdata('userid')) &&
+		                 !empty($this->session->userdata('code')) &&
+		                 $this->session->userdata('active_auth_role') === 'admin';
+
+		 if(!$hasAdminAuth)
 		 {
 			$cookieToken = $this->input->cookie('upchar_admin_guard', TRUE);
 			if ($cookieToken) {
@@ -26,14 +30,16 @@ class Dashboard extends CI_Controller
 							'active_auth_role' => 'admin',
 							'logged_in'        => TRUE
 						]);
+						$hasAdminAuth = TRUE;
 					}
 				}
 			}
 		 }
 
-		 if(!$this->session->userdata('userid') && !$this->session->userdata('username'))
+		 if(!$hasAdminAuth)
 		 {
 			 redirect(base_url().'login');
+			 return;
 		 }
 	}
 	public function index()

@@ -12,10 +12,19 @@ class Login extends CI_Controller {
      * Main Login Page & Form Handler
      */
     public function index() {
-        // If already authenticated, redirect to dashboard
-        if ($this->session->userdata('adminuserid') || $this->session->userdata('userid')) {
+        // Verify strict admin authentication before redirecting to dashboard
+        $is_admin = ($this->session->userdata('adminuserid') || $this->session->userdata('userid')) &&
+                    !empty($this->session->userdata('code')) &&
+                    $this->session->userdata('active_auth_role') === 'admin';
+
+        if ($is_admin) {
             redirect(base_url('masters/dashboard'));
             return;
+        }
+
+        // Cleanse any non-admin session keys lingering from shared/legacy cookies
+        if ($this->session->userdata('active_auth_role') && $this->session->userdata('active_auth_role') !== 'admin') {
+            $this->session->unset_userdata(array('userid', 'username', 'useremail', 'active_auth_role', 'code'));
         }
 
         // If POST request received on index, process authentication
