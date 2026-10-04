@@ -2,6 +2,7 @@
 // Safely extract properties with fallback defaults
 $userObj = !empty($user) ? $user : (!empty($data) && is_object($data) ? $data : null);
 
+if (!function_exists('get_prop')) {
 function get_prop($obj, $prop) {
     if (!$obj || !is_object($obj)) return '';
     $u = strtoupper($prop);
@@ -10,6 +11,7 @@ function get_prop($obj, $prop) {
     if (isset($obj->$l)) return trim((string)$obj->$l);
     if (isset($obj->$prop)) return trim((string)$obj->$prop);
     return '';
+}
 }
 
 $fname   = get_prop($userObj, 'FNAME');
@@ -697,8 +699,13 @@ $bmiColor = !empty($health_goals['bmi_color']) ? $health_goals['bmi_color'] : '#
                 <div id="profEditAlert" style="display: none; margin-bottom: 12px;"></div>
 
                 <form action="<?=base_url('profile');?>" method="post" id="profForm">
-                    <?php if ($this->config->item('csrf_protection')): ?>
-                        <input type="hidden" name="<?=$this->security->get_csrf_token_name();?>" value="<?=$this->security->get_csrf_hash();?>">
+                    <?php 
+                        $CI =& get_instance();
+                        $csrfName = function_exists('config_item') && config_item('csrf_protection') ? (isset($CI->security) ? $CI->security->get_csrf_token_name() : 'csrf_test_name') : null;
+                        $csrfHash = $csrfName && isset($CI->security) ? $CI->security->get_csrf_hash() : null;
+                        if (!empty($csrfName) && !empty($csrfHash)): 
+                    ?>
+                        <input type="hidden" name="<?=$csrfName;?>" value="<?=$csrfHash;?>">
                     <?php endif; ?>
                     <input type="hidden" name="action" value="update_profile">
                     <input type="hidden" name="userid" value="<?=$userid;?>">
@@ -1026,8 +1033,13 @@ $bmiColor = !empty($health_goals['bmi_color']) ? $health_goals['bmi_color'] : '#
                 </div>
 
                 <form action="<?=base_url('profile');?>" method="post">
-                    <?php if ($this->config->item('csrf_protection')): ?>
-                        <input type="hidden" name="<?=$this->security->get_csrf_token_name();?>" value="<?=$this->security->get_csrf_hash();?>">
+                    <?php 
+                        $CI =& get_instance();
+                        $csrfName = function_exists('config_item') && config_item('csrf_protection') ? (isset($CI->security) ? $CI->security->get_csrf_token_name() : 'csrf_test_name') : null;
+                        $csrfHash = $csrfName && isset($CI->security) ? $CI->security->get_csrf_hash() : null;
+                        if (!empty($csrfName) && !empty($csrfHash)): 
+                    ?>
+                        <input type="hidden" name="<?=$csrfName;?>" value="<?=$csrfHash;?>">
                     <?php endif; ?>
                     <input type="hidden" name="action" value="add_dependent">
 
@@ -1936,7 +1948,7 @@ function saveNutritionGoals() {
     postData.append('fat_g', calcState.fatG);
 
     // CSRF token if present
-    var csrfInp = document.querySelector('input[name="csrf_test_name"]') || document.querySelector('input[name="<?= $this->security->get_csrf_token_name(); ?>"]');
+    var csrfInp = document.querySelector('input[name="csrf_test_name"]') || document.querySelector('input[name="<?= !empty($csrfName) ? $csrfName : "csrf_test_name"; ?>"]');
     if (csrfInp) {
         postData.append(csrfInp.name, csrfInp.value);
     }

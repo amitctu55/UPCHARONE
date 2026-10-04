@@ -3344,19 +3344,48 @@ class Home extends CI_Controller
 		}
 
 		// Ensure patient_dependents table exists
-		$this->db->query("CREATE TABLE IF NOT EXISTS `patient_dependents` (
-			`id` int(11) NOT NULL AUTO_INCREMENT,
-			`primary_user_id` int(11) NOT NULL,
-			`name` varchar(150) NOT NULL,
-			`relationship` varchar(50) NOT NULL,
-			`gender` varchar(10) DEFAULT 'M',
-			`dob` date DEFAULT NULL,
-			`blood_group` varchar(10) DEFAULT NULL,
-			`medical_history` text DEFAULT NULL,
-			`created_at` datetime NOT NULL,
-			PRIMARY KEY (`id`),
-			KEY `idx_primary_user` (`primary_user_id`)
-		) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+		try {
+			$this->db->query("CREATE TABLE IF NOT EXISTS `patient_dependents` (
+				`id` int(11) NOT NULL AUTO_INCREMENT,
+				`primary_user_id` int(11) NOT NULL,
+				`name` varchar(150) NOT NULL,
+				`relationship` varchar(50) NOT NULL,
+				`gender` varchar(10) DEFAULT 'M',
+				`dob` date DEFAULT NULL,
+				`blood_group` varchar(10) DEFAULT NULL,
+				`medical_history` text DEFAULT NULL,
+				`created_at` datetime NOT NULL,
+				PRIMARY KEY (`id`),
+				KEY `idx_primary_user` (`primary_user_id`)
+			) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+		} catch (\Throwable $e) {
+			log_message('error', 'Error ensuring patient_dependents table: ' . $e->getMessage());
+		}
+
+		// Ensure patient_nutrition_goals table exists
+		try {
+			$this->db->query("CREATE TABLE IF NOT EXISTS `patient_nutrition_goals` (
+			  `id` INT AUTO_INCREMENT PRIMARY KEY,
+			  `user_id` INT NOT NULL,
+			  `age` INT DEFAULT NULL,
+			  `gender` VARCHAR(20) DEFAULT NULL,
+			  `height_cm` DECIMAL(6,2) DEFAULT NULL,
+			  `weight_kg` DECIMAL(6,2) DEFAULT NULL,
+			  `activity_level` VARCHAR(50) DEFAULT 'sedentary',
+			  `fitness_goal` VARCHAR(50) DEFAULT 'maintain',
+			  `bmr` DECIMAL(8,2) DEFAULT NULL,
+			  `tdee` DECIMAL(8,2) DEFAULT NULL,
+			  `target_calories` DECIMAL(8,2) DEFAULT NULL,
+			  `carbs_g` DECIMAL(8,2) DEFAULT NULL,
+			  `protein_g` DECIMAL(8,2) DEFAULT NULL,
+			  `fat_g` DECIMAL(8,2) DEFAULT NULL,
+			  `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+			  `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+			  UNIQUE KEY `uk_user` (`user_id`)
+			) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+		} catch (\Throwable $e) {
+			log_message('error', 'Error ensuring patient_nutrition_goals table: ' . $e->getMessage());
+		}
 
 		if (isset($_POST['submit']) || $this->input->post('action') === 'update_profile') {
 			$res = $this->Userlogin_Model->profile($userid);
@@ -3514,11 +3543,24 @@ class Home extends CI_Controller
 			redirect('profile');
 			return;
 		}
-		$data['specialization'] = $this->db->order_by('name','asc')->where('status','1')->get('master_specialization')->result();
+		$data['specialization'] = [];
+		try {
+			if ($this->db && $this->db->conn_id && $this->db->table_exists('master_specialization')) {
+				$data['specialization'] = $this->db->order_by('name','asc')->where('status','1')->get('master_specialization')->result();
+			}
+		} catch (\Throwable $e) {
+			$data['specialization'] = [];
+		}
 
 		// Refresh user object from database
 		if (!empty($userid)) {
-			$user = $this->db->get_where('userlogin', array('USERID' => $userid))->row();
+			try {
+				if ($this->db && $this->db->conn_id && $this->db->table_exists('userlogin')) {
+					$user = $this->db->get_where('userlogin', array('USERID' => $userid))->row();
+				}
+			} catch (\Throwable $e) {
+				// Keep fallback
+			}
 		}
 
 		if (!$user) {
@@ -3537,13 +3579,43 @@ class Home extends CI_Controller
 
 		$data['data'] = $user;
 		$data['user'] = $user;
-		$data['dependents'] = $this->db->get_where('patient_dependents', array('primary_user_id' => $userid))->result();
-		$data['health_goals'] = $this->calculate_patient_health_goals($user);
-		$data['nutrition_goals'] = $this->db->get_where('patient_nutrition_goals', array('user_id' => $userid))->row();
+
+		$data['dependents'] = [];
+		try {
+			if ($this->db && $this->db->conn_id && $this->db->table_exists('patient_dependents')) {
+				$data['dependents'] = $this->db->get_where('patient_dependents', array('primary_user_id' => $userid))->result();
+			}
+		} catch (\Throwable $e) {
+			log_message('error', 'Error fetching dependents: ' . $e->getMessage());
+			$data['dependents'] = [];
+		}
+
+		$data['health_goals'] = null;
+		try {
+			$data['health_goals'] = $this->calculate_patient_health_goals($user);
+		} catch (\Throwable $e) {
+			log_message('error', 'Error calculating health goals: ' . $e->getMessage());
+			$data['health_goals'] = null;
+		}
+
+		$data['nutrition_goals'] = null;
+		try {
+			if ($this->db && $this->db->conn_id && $this->db->table_exists('patient_nutrition_goals')) {
+				$data['nutrition_goals'] = $this->db->get_where('patient_nutrition_goals', array('user_id' => $userid))->row();
+			}
+		} catch (\Throwable $e) {
+			log_message('error', 'Error fetching nutrition goals: ' . $e->getMessage());
+			$data['nutrition_goals'] = null;
+		}
 		
-		$this->load->view('patient_header', $data);
-		$this->load->view('profile', $data);
-		$this->load->view('patient_footer');
+		try {
+			$this->load->view('patient_header', $data);
+			$this->load->view('profile', $data);
+			$this->load->view('patient_footer');
+		} catch (\Throwable $e) {
+			log_message('error', 'Error loading profile views: ' . $e->getMessage());
+			echo "<div style='font-family: sans-serif; padding: 40px; text-align: center;'><h2>Profile temporarily unavailable</h2><p>Please refresh in a moment or contact support.</p><a href='" . base_url() . "'>Return to Home</a></div>";
+		}
 	}
 	public function save_nutrition_goals()
 	{

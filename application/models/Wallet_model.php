@@ -11,6 +11,7 @@ class Wallet_model extends CI_Model {
     }
 
     private function _ensure_tables() {
+        try {
         // user_wallet
         $this->db->query("CREATE TABLE IF NOT EXISTS `user_wallet` (
             `wallet_id` int(11) NOT NULL AUTO_INCREMENT,
@@ -69,6 +70,9 @@ class Wallet_model extends CI_Model {
                 array('setting_key' => 'max_redemption_percent', 'setting_value' => '100', 'description' => 'Maximum percentage of bill that can be paid using points (1-100%)')
             );
             $this->db->insert_batch('points_settings', $defaults);
+        }
+        } catch (\Throwable $e) {
+            log_message('error', 'Wallet_model _ensure_tables error: ' . $e->getMessage());
         }
     }
 

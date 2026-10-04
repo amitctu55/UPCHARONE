@@ -540,10 +540,16 @@
 
     // If full name is available from DB or object
     if (!empty($userId)) {
-        $CI =& get_instance();
-        $userRow = $CI->db->select('FNAME, LNAME, MOBILE, EMAIL')->get_where('userlogin', array('USERID' => $userId))->row();
-        if ($userRow) {
-            $patient_name = trim($userRow->FNAME . ' ' . $userRow->LNAME) ?: $userRow->FNAME ?: $patient_name;
+        try {
+            $CI =& get_instance();
+            if ($CI->db && $CI->db->conn_id && $CI->db->table_exists('userlogin')) {
+                $userRow = $CI->db->select('FNAME, LNAME, MOBILE, EMAIL')->get_where('userlogin', array('USERID' => $userId))->row();
+                if ($userRow) {
+                    $patient_name = trim($userRow->FNAME . ' ' . $userRow->LNAME) ?: $userRow->FNAME ?: $patient_name;
+                }
+            }
+        } catch (\Throwable $e) {
+            // Keep session username fallback
         }
     }
 
@@ -557,12 +563,16 @@
     // Resolve Wallet Balance Preview
     $patient_wallet_points = 0;
     if (!empty($userId)) {
-        $CI =& get_instance();
-        if (!isset($CI->Wallet_model)) {
-            $CI->load->model('Wallet_model');
-        }
-        if (isset($CI->Wallet_model)) {
-            $patient_wallet_points = floatval($CI->Wallet_model->get_balance($userId));
+        try {
+            $CI =& get_instance();
+            if (!isset($CI->Wallet_model)) {
+                $CI->load->model('Wallet_model');
+            }
+            if (isset($CI->Wallet_model) && method_exists($CI->Wallet_model, 'get_balance')) {
+                $patient_wallet_points = floatval($CI->Wallet_model->get_balance($userId));
+            }
+        } catch (\Throwable $e) {
+            $patient_wallet_points = 0;
         }
     }
 
@@ -570,12 +580,16 @@
     // Check if user has active ambulance trip
     $active_amb_booking = null;
     if (!empty($userId)) {
-        $CI =& get_instance();
-        if (!isset($CI->Ambulance_model)) {
-            $CI->load->model('Ambulance_model');
-        }
-        if (isset($CI->Ambulance_model)) {
-            $active_amb_booking = $CI->Ambulance_model->get_active_or_recent_booking($userId);
+        try {
+            $CI =& get_instance();
+            if (!isset($CI->Ambulance_model)) {
+                $CI->load->model('Ambulance_model');
+            }
+            if (isset($CI->Ambulance_model) && method_exists($CI->Ambulance_model, 'get_active_or_recent_booking')) {
+                $active_amb_booking = $CI->Ambulance_model->get_active_or_recent_booking($userId);
+            }
+        } catch (\Throwable $e) {
+            $active_amb_booking = null;
         }
     }
 
