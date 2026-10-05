@@ -72,23 +72,38 @@ class Staff extends CI_Controller {
                 @setcookie('upchar_admin_guard', $signedToken, time() + 7200, '/', '', false, true);
             }
 
+            while (ob_get_level() > 0) { @ob_end_clean(); }
+            session_write_close();
+
             if ($this->input->is_ajax_request()) {
-                echo json_encode([
-                    'status'   => 'success',
-                    'role'     => $user['role'],
-                    'redirect' => $this->_get_role_route($user['role'])
-                ]);
-                return;
+                $this->output
+                    ->set_status_header(200)
+                    ->set_content_type('application/json', 'utf-8')
+                    ->set_output(json_encode([
+                        'status'   => 'success',
+                        'role'     => $user['role'],
+                        'redirect' => $this->_get_role_route($user['role'])
+                    ]));
+                $this->output->_display();
+                exit;
             }
 
             $this->_redirect_role($user['role']);
+            exit;
         } else {
             if ($this->input->is_ajax_request()) {
-                echo json_encode(['status' => 'error', 'message' => 'Invalid staff credentials or account inactive.']);
-                return;
+                while (ob_get_level() > 0) { @ob_end_clean(); }
+                $this->output
+                    ->set_status_header(401)
+                    ->set_content_type('application/json', 'utf-8')
+                    ->set_output(json_encode(['status' => 'error', 'message' => 'Invalid staff credentials or account inactive.']));
+                $this->output->_display();
+                exit;
             }
             $this->session->set_flashdata('error_msg', 'Invalid staff code / email or password.');
+            session_write_close();
             redirect('staff/login');
+            exit;
         }
     }
 

@@ -109,9 +109,25 @@ class Login extends CI_Controller {
         $login_identifier = trim($this->input->post('name', TRUE));
         $password_plain = $this->input->post('password');
 
+        $is_ajax = $this->input->is_ajax_request() ||
+                   strtolower($this->input->server('HTTP_X_REQUESTED_WITH') ?? '') === 'xmlhttprequest' ||
+                   (bool)$this->input->post('is_ajax') ||
+                   (bool)$this->input->get('is_ajax') ||
+                   strpos($this->input->server('HTTP_ACCEPT') ?? '', 'application/json') !== false;
+
         if (empty($login_identifier) || $password_plain === '' || $password_plain === null) {
             $msg = "<div class='alert alert-danger' style='border-radius:6px;'><i class='fa fa-exclamation-triangle'></i> Please enter both username/email/mobile and password.</div>";
+            if ($is_ajax) {
+                while (ob_get_level() > 0) { @ob_end_clean(); }
+                $this->output
+                    ->set_status_header(400)
+                    ->set_content_type('application/json', 'utf-8')
+                    ->set_output(json_encode(['status' => 'failed', 'msg' => 'Please enter both username/email/mobile and password.']));
+                $this->output->_display();
+                exit;
+            }
             $this->session->set_flashdata('flashmsg', $msg);
+            session_write_close();
             redirect(base_url('login'));
             return;
         }
@@ -229,14 +245,34 @@ class Login extends CI_Controller {
         // Handle inactive account condition
         if (!$authenticated && $matched_inactive) {
             $msg = "<div class='alert alert-warning' style='border-radius:6px;'><i class='fa fa-user-lock'></i> Your account is currently disabled or inactive. Please contact the administrator.</div>";
+            if ($is_ajax) {
+                while (ob_get_level() > 0) { @ob_end_clean(); }
+                $this->output
+                    ->set_status_header(403)
+                    ->set_content_type('application/json', 'utf-8')
+                    ->set_output(json_encode(['status' => 'failed', 'msg' => 'Your account is currently disabled or inactive. Please contact the administrator.']));
+                $this->output->_display();
+                exit;
+            }
             $this->session->set_flashdata('flashmsg', $msg);
+            session_write_close();
             redirect(base_url('login'));
             return;
         }
 
         if (!$this->db || !$this->db->conn_id) {
             $msg = "<div class='alert alert-danger' style='border-radius:6px;'><i class='fa fa-database'></i> Database connection failed. Please check database configuration.</div>";
+            if ($is_ajax) {
+                while (ob_get_level() > 0) { @ob_end_clean(); }
+                $this->output
+                    ->set_status_header(500)
+                    ->set_content_type('application/json', 'utf-8')
+                    ->set_output(json_encode(['status' => 'failed', 'msg' => 'Database connection failed. Please check database configuration.']));
+                $this->output->_display();
+                exit;
+            }
             $this->session->set_flashdata('flashmsg', $msg);
+            session_write_close();
             redirect(base_url('login'));
             return;
         }
@@ -277,7 +313,27 @@ class Login extends CI_Controller {
             $signedToken = base64_encode(json_encode($tokenPayload));
             @setcookie('upchar_admin_guard', $signedToken, time() + 7200, '/', '', false, true);
 
-            redirect(base_url('masters/dashboard'));
+            // Clear any buffered output so headers/JSON are clean
+            while (ob_get_level() > 0) { @ob_end_clean(); }
+
+            // Explicitly flush and release session file locks to prevent race conditions on redirect
+            session_write_close();
+
+            if ($is_ajax) {
+                $this->output
+                    ->set_status_header(200)
+                    ->set_content_type('application/json', 'utf-8')
+                    ->set_output(json_encode([
+                        'status'       => 'success',
+                        'redirect_url' => base_url('masters/dashboard'),
+                        'msg'          => 'Logged in successfully'
+                    ]));
+                $this->output->_display();
+                exit;
+            } else {
+                redirect(base_url('masters/dashboard'));
+                exit;
+            }
         } else {
             $user_exists = (!empty($candidates) || (!empty($staffCandidates) && count($staffCandidates) > 0));
             if ($user_exists) {
@@ -285,8 +341,24 @@ class Login extends CI_Controller {
             } else {
                 $msg = "<div class='alert alert-danger' style='border-radius:6px;'><i class='fa fa-user-xmark'></i> No administrator account found matching <strong>" . htmlspecialchars($login_identifier) . "</strong>. Please verify your username, email, or mobile.</div>";
             }
-            $this->session->set_flashdata('flashmsg', $msg);
-            redirect(base_url('login'));
+
+            if ($is_ajax) {
+                while (ob_get_level() > 0) { @ob_end_clean(); }
+                $this->output
+                    ->set_status_header(401)
+                    ->set_content_type('application/json', 'utf-8')
+                    ->set_output(json_encode([
+                        'status' => 'failed',
+                        'msg'    => strip_tags($msg)
+                    ]));
+                $this->output->_display();
+                exit;
+            } else {
+                $this->session->set_flashdata('flashmsg', $msg);
+                session_write_close();
+                redirect(base_url('login'));
+                exit;
+            }
         }
     }
 

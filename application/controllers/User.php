@@ -63,7 +63,14 @@ class User extends CI_Controller {
 		}else {
 			$response=array('status'=>'failed','msg'=>'Incorrect Email or Password');
 		}
-		echo json_encode($response);
+		while (ob_get_level() > 0) { @ob_end_clean(); }
+		session_write_close();
+		$this->output
+			->set_status_header(200)
+			->set_content_type('application/json', 'utf-8')
+			->set_output(json_encode($response));
+		$this->output->_display();
+		exit;
 	}
 	
 	public function verifysignupotp()

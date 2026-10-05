@@ -79,7 +79,7 @@ class Login extends CI_Controller {
             $redirectUrl = $this->session->userdata('last_page') ?: base_url('myappointments');
             $this->session->unset_userdata('last_page');
 
-            echo json_encode([
+            $payload = [
                 'status'                   => 'success',
                 'msg'                      => 'Logged in successfully via Unified Identity',
                 'matched_existing_profile' => true,
@@ -91,8 +91,15 @@ class Login extends CI_Controller {
                 'roles'                    => $masterUser['roles'],
                 'sso_token'                => $ssoToken,
                 'redirect_url'             => $redirectUrl,
-            ]);
-            return;
+            ];
+            while (ob_get_level() > 0) { @ob_end_clean(); }
+            session_write_close();
+            $this->output
+                ->set_status_header(200)
+                ->set_content_type('application/json', 'utf-8')
+                ->set_output(json_encode($payload));
+            $this->output->_display();
+            exit;
         }
 
         // 2. Fallback to Legacy User_Model check
@@ -125,21 +132,34 @@ class Login extends CI_Controller {
                 }
             }
 
-            echo json_encode([
+            $payload = [
                 'status'                   => 'success',
                 'msg'                      => 'Logged in Successfully',
                 'matched_existing_profile' => true,
                 'master_user_id'           => $masterUser ? (int)$masterUser['id'] : null,
                 'redirect_url'             => base_url('myappointments')
-            ]);
-            return;
+            ];
+            while (ob_get_level() > 0) { @ob_end_clean(); }
+            session_write_close();
+            $this->output
+                ->set_status_header(200)
+                ->set_content_type('application/json', 'utf-8')
+                ->set_output(json_encode($payload));
+            $this->output->_display();
+            exit;
         }
 
-        echo json_encode([
-            'status'                   => 'failed',
-            'msg'                      => 'Incorrect Mobile/Email or Password',
-            'matched_existing_profile' => false
-        ]);
+        while (ob_get_level() > 0) { @ob_end_clean(); }
+        $this->output
+            ->set_status_header(401)
+            ->set_content_type('application/json', 'utf-8')
+            ->set_output(json_encode([
+                'status'                   => 'failed',
+                'msg'                      => 'Incorrect Mobile/Email or Password',
+                'matched_existing_profile' => false
+            ]));
+        $this->output->_display();
+        exit;
     }
 
     /**
