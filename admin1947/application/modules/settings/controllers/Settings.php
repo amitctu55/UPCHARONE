@@ -38,7 +38,7 @@ class Settings extends CI_Controller {
      */
     public function index($active_tab = 'general') {
         $tab = $this->input->get('tab') ?: $active_tab;
-        $allowed_tabs = ['general', 'email', 'sms', 'integrations', 'security', 'audit', 'health'];
+        $allowed_tabs = ['general', 'contact', 'email', 'sms', 'integrations', 'security', 'audit', 'health'];
         if (!in_array($tab, $allowed_tabs)) {
             $tab = 'general';
         }
@@ -67,12 +67,34 @@ class Settings extends CI_Controller {
 
     // Direct tab route shortcuts
     public function general() { $this->index('general'); }
+    public function contact() { $this->index('contact'); }
     public function email() { $this->index('email'); }
     public function sms() { $this->index('sms'); }
     public function integrations() { $this->index('integrations'); }
     public function security() { $this->index('security'); }
     public function audit() { $this->index('audit'); }
     public function health() { $this->index('health'); }
+
+    /**
+     * Dedicated Contact Settings Save handler (Phones & Mobile only)
+     */
+    public function save_contact() {
+        $_POST['category'] = 'contact';
+        $is_ajax = $this->input->is_ajax_request()
+            || $this->input->post('is_ajax')
+            || (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest');
+
+        $postData = $this->input->post();
+        if (!empty($postData) && is_array($postData)) {
+            $this->settings_model->update_contact_settings($postData);
+        }
+
+        $this->save();
+        if (!$is_ajax) {
+            $this->session->set_flashdata('success', 'Contact settings updated successfully.');
+            redirect('settings?tab=contact');
+        }
+    }
 
     /**
      * Dedicated Email Settings Save handler (supports both direct POST and AJAX)

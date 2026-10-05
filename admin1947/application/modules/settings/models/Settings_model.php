@@ -147,6 +147,60 @@ class Settings_model extends CI_Model {
     }
 
     /**
+     * Get contact settings specifically as key-value pairs (phones & mobile only)
+     */
+    public function get_contact_settings() {
+        $settings = $this->db->where('category', 'contact')->get('system_settings')->result_array();
+        $res = [];
+        foreach ($settings as $s) {
+            $res[$s['setting_key']] = $s['setting_value'];
+        }
+        // Fallback for primary mobile if not set yet
+        if (empty($res['contact_primary_mobile'])) {
+            $gen = $this->db->where('setting_key', 'support_phone')->get('system_settings')->row_array();
+            if ($gen) {
+                $res['contact_primary_mobile'] = $gen['setting_value'];
+            }
+        }
+        return $res;
+    }
+
+    /**
+     * Update contact settings (strictly phone & mobile contacts, no emails)
+     */
+    public function update_contact_settings($data) {
+        $fields = ['contact_primary_mobile', 'contact_whatsapp_number', 'contact_emergency_helpline'];
+        foreach ($fields as $key) {
+            if (isset($data[$key])) {
+                $val = trim($data[$key]);
+                $exists = $this->db->where('setting_key', $key)->count_all_results('system_settings');
+                if ($exists) {
+                    $this->db->where('setting_key', $key)->update('system_settings', [
+                        'setting_value' => $val,
+                        'category' => 'contact',
+                        'updated_at' => date('Y-m-d H:i:s')
+                    ]);
+                } else {
+                    $desc = ($key === 'contact_primary_mobile') ? 'Primary Support Mobile Number' : (($key === 'contact_whatsapp_number') ? 'WhatsApp Business Number' : 'Emergency 24x7 Helpline Number');
+                    $this->db->insert('system_settings', [
+                        'category' => 'contact',
+                        'setting_key' => $key,
+                        'setting_value' => $val,
+                        'field_type' => 'tel',
+                        'description' => $desc
+                    ]);
+                }
+
+                // Synchronize support_phone when contact_primary_mobile changes
+                if ($key === 'contact_primary_mobile') {
+                    $this->db->where('setting_key', 'support_phone')->update('system_settings', ['setting_value' => $val]);
+                }
+            }
+        }
+        return true;
+    }
+
+    /**
      * Generate SQL Dump backup
      */
     public function generate_db_backup() {

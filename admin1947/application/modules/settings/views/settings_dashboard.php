@@ -404,6 +404,11 @@
             <i class="fa fa-globe"></i> General & Branding
           </a>
         </li>
+        <li class="<?=$active_tab === 'contact' ? 'active' : '';?>">
+          <a href="#tab_contact" data-toggle="tab">
+            <i class="fa fa-phone"></i> Contact Information
+          </a>
+        </li>
         <li class="<?=$active_tab === 'email' ? 'active' : '••••••••';?>">
           <a href="#tab_email" data-toggle="tab">
             <i class="fa fa-envelope-o"></i> Email Gateway
@@ -636,6 +641,71 @@
           </form>
         </div>
 
+        <!-- ==========================================
+             TAB: CONTACT INFORMATION (MOBILE & PHONE ONLY)
+             ========================================== -->
+        <div class="tab-pane <?=$active_tab === 'contact' ? 'active' : '';?>" id="tab_contact">
+          <form class="ajaxSettingsForm" action="<?=base_url('settings/save');?>" method="post">
+            <input type="hidden" name="category" value="contact">
+
+            <div class="settings-card">
+              <div class="d-flex justify-content-between align-items-center" style="margin-bottom: 15px; border-bottom: 2px solid #eef2f6; padding-bottom: 12px;">
+                <h3 class="card-section-title" style="margin: 0; padding: 0; border: none;">
+                  <span><i class="fa fa-phone text-primary"></i> Mobile & Phone Contact Directory</span>
+                </h3>
+              </div>
+              <p class="text-muted" style="margin-bottom: 20px; font-size: 13px;">
+                Manage platform-wide customer contact numbers, WhatsApp Business assistance, and emergency dispatch hotlines. <em>(Note: Email settings are configured separately in the Email Gateway tab.)</em>
+              </p>
+
+              <div class="row">
+                <!-- 1. Primary Support Mobile Number -->
+                <div class="col-md-4">
+                  <div class="form-group form-group-modern">
+                    <label for="contact_primary_mobile">Primary Support Mobile Number <span class="text-danger">*</span></label>
+                    <div class="input-group">
+                      <span class="input-group-addon" style="background: #f8fafc; border-color: #cbd5e1; color: var(--adm-primary);"><i class="fa fa-phone"></i></span>
+                      <input type="tel" name="contact_primary_mobile" id="contact_primary_mobile" class="form-control" placeholder="+91 98765 43210" pattern="[\+]?[0-9\s\-\(\)]{8,20}" value="<?=htmlspecialchars($settings['contact_primary_mobile']['value'] ?? ($settings['support_phone']['value'] ?? '+91 98765 43210'));?>" required>
+                    </div>
+                    <span class="input-hint"><i class="fa fa-info-circle"></i> Main support mobile line shown on patient website header, mobile app, and appointment slips</span>
+                  </div>
+                </div>
+
+                <!-- 2. WhatsApp Business Number -->
+                <div class="col-md-4">
+                  <div class="form-group form-group-modern">
+                    <label for="contact_whatsapp_number">WhatsApp Business Number <span class="text-danger">*</span></label>
+                    <div class="input-group">
+                      <span class="input-group-addon" style="background: #f8fafc; border-color: #cbd5e1; color: #25D366;"><i class="fa fa-whatsapp"></i></span>
+                      <input type="tel" name="contact_whatsapp_number" id="contact_whatsapp_number" class="form-control" placeholder="+91 98765 43210" pattern="[\+]?[0-9\s\-\(\)]{8,20}" value="<?=htmlspecialchars($settings['contact_whatsapp_number']['value'] ?? ($settings['support_phone']['value'] ?? '+91 98765 43210'));?>" required>
+                    </div>
+                    <span class="input-hint"><i class="fa fa-whatsapp text-success"></i> WhatsApp helpline number for automated chat widget, instant patient queries, and reminders</span>
+                  </div>
+                </div>
+
+                <!-- 3. Emergency / 24x7 Helpline Number -->
+                <div class="col-md-4">
+                  <div class="form-group form-group-modern">
+                    <label for="contact_emergency_helpline">Emergency / 24x7 Helpline Number <span class="text-danger">*</span></label>
+                    <div class="input-group">
+                      <span class="input-group-addon" style="background: #f8fafc; border-color: #cbd5e1; color: #dc2626;"><i class="fa fa-ambulance"></i></span>
+                      <input type="tel" name="contact_emergency_helpline" id="contact_emergency_helpline" class="form-control" placeholder="108 / +91 1800-123-4567" value="<?=htmlspecialchars($settings['contact_emergency_helpline']['value'] ?? '108 / 1800-123-4567');?>" required>
+                    </div>
+                    <span class="input-hint"><i class="fa fa-ambulance text-danger"></i> Dedicated emergency line displayed on emergency alert banners, ambulance dispatch, and critical care portals</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Sticky Save Bar -->
+            <div class="settings-save-bar">
+              <span class="text-muted"><i class="fa fa-info-circle"></i> Mobile contact numbers update immediately across platform</span>
+              <button type="submit" class="btn btn-adm-teal btn-lg">
+                <i class="fa fa-save"></i> Save Contact Settings
+              </button>
+            </div>
+          </form>
+        </div>
 
         <!-- ==========================================
              TAB 2: EMAIL GATEWAY (SMTP / ESP)
@@ -1601,31 +1671,43 @@
 
 <!-- Interactive Client-side Javascript Logic -->
 <script>
-  // Color Picker Sync
-  document.getElementById('primaryColorPicker').addEventListener('input', function() {
-    document.getElementById('primaryColorText').value = this.value;
-  });
-  document.getElementById('primaryColorText').addEventListener('input', function() {
-    document.getElementById('primaryColorPicker').value = this.value;
-  });
-  document.getElementById('secondaryColorPicker').addEventListener('input', function() {
-    document.getElementById('secondaryColorText').value = this.value;
-  });
-  document.getElementById('secondaryColorText').addEventListener('input', function() {
-    document.getElementById('secondaryColorPicker').value = this.value;
+  // Global Secret / Password Toggle Visibility (Reliably exposed for all tabs & buttons)
+  window.toggleSecretVisibility = function(btn) {
+    var $btn = $(btn);
+    var $input = $btn.siblings('input.secret-field');
+    if (!$input.length) {
+      $input = $btn.closest('.input-group-secret').find('input');
+    }
+    var $icon = $btn.find('i');
+    if ($input.attr('type') === 'password') {
+      $input.attr('type', 'text');
+      $icon.removeClass('fa-eye').addClass('fa-eye-slash');
+    } else {
+      $input.attr('type', 'password');
+      $icon.removeClass('fa-eye-slash').addClass('fa-eye');
+    }
+  };
+
+  // Delegated click listener for secret toggle buttons
+  $(document).on('click', '.btn-toggle-secret', function(e) {
+    if (!this.getAttribute('onclick')) {
+      window.toggleSecretVisibility(this);
+    }
   });
 
-  // Password / Secret Toggle Visibility
-  function toggleSecretVisibility(btn) {
-    var input = $(btn).siblings('input.secret-field');
-    var icon = $(btn).find('i');
-    if (input.attr('type') === 'password') {
-      input.attr('type', 'text');
-      icon.removeClass('fa-eye').addClass('fa-eye-slash');
-    } else {
-      input.attr('type', 'password');
-      icon.removeClass('fa-eye-slash').addClass('fa-eye');
-    }
+  // Color Picker Sync (Safe with null guards)
+  var pPicker = document.getElementById('primaryColorPicker');
+  var pText = document.getElementById('primaryColorText');
+  if (pPicker && pText) {
+    pPicker.addEventListener('input', function() { pText.value = this.value; });
+    pText.addEventListener('input', function() { pPicker.value = this.value; });
+  }
+
+  var sPicker = document.getElementById('secondaryColorPicker');
+  var sText = document.getElementById('secondaryColorText');
+  if (sPicker && sText) {
+    sPicker.addEventListener('input', function() { sText.value = this.value; });
+    sText.addEventListener('input', function() { sPicker.value = this.value; });
   }
 
   // Image Upload Preview
