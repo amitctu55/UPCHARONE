@@ -104,9 +104,11 @@ class User extends CI_Controller {
 		$otp = ($this->input->post('otp'));
         $login = $this->User_Model->verifyforgototp($userid,$otp);
 		if($login=='SUCCESS'){
-			$response=array('status'=>'success','msg'=>'Logged in Successfully');
+			$response=array('status'=>'success','msg'=>'OTP Verified Successfully! Please set your new password.');
+		}else if($login=='EXPIRED'){
+			$response=array('status'=>'failed','msg'=>'OTP has expired. Verification codes are valid for 10 minutes. Please request a new OTP.');
 		}else {
-			$response=array('status'=>'failed','msg'=>'Incorrect OTP');
+			$response=array('status'=>'failed','msg'=>'Incorrect OTP. Please enter the valid 6-digit code.');
 		}
 		echo json_encode($response);
 	}

@@ -346,8 +346,12 @@ class Notification_service {
         // Generate cryptographically secure 6-digit OTP
         $otp = str_pad((string)random_int(100000, 999999), 6, '0', STR_PAD_LEFT);
 
-        // Store OTP in database
-        $this->CI->db->where('USERID', $user->USERID)->update('userlogin', array('OTP' => $otp));
+        // Store OTP and 10-minute expiration in database
+        $expires_at = date('Y-m-d H:i:s', time() + 600);
+        $this->CI->db->where('USERID', $user->USERID)->update('userlogin', array(
+            'OTP'            => $otp,
+            'otp_expires_at' => $expires_at
+        ));
         $this->CI->session->set_userdata('forgotuserid', $user->USERID);
 
         $name = trim($user->FNAME . ' ' . $user->LNAME) ?: 'User';

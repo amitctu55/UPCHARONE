@@ -156,39 +156,29 @@ class User_Model extends CI_Model {
 	}
 	
 	public function verifyforgototp($userid,$otp){
-		$this -> db -> select(' * ');
-        $this -> db -> from('userlogin');
-        $this -> db -> where('USERID', $userid);        
-		$this -> db -> where('OTP', $otp);
-		//$this -> db -> where('STATUS', '0');
-       // $this -> db -> where('APPROVED', '1');
-        $this -> db -> limit(1);
-        $query = $this -> db -> get();//echo  $this->db->last_query();
-		if($query -> num_rows() > 0)
+		$this->db->select('*');
+        $this->db->from('userlogin');
+        $this->db->where('USERID', $userid);        
+		$this->db->where('OTP', $otp);
+        $this->db->limit(1);
+        $query = $this->db->get();
+		if($query->num_rows() > 0)
         {			
 			$row = $query->row();
-            if($row->OTP==$otp){
-				$this->db->where('USERID',$userid)->set('STATUS','1')->update('userlogin');
-               /*  $this->session->set_userdata('userid', $row->USERID);
-                $this->session->set_userdata('useremail', $row->EMAIL);				           
-				$this->session->set_userdata('username', $row->FNAME); */
-           
-			/* if($row->CART!=''){
-				$cartArray = unserialize($row->CART);
-				$this->cart->insert($cartArray);
+			if (!empty($row->otp_expires_at) && strtotime($row->otp_expires_at) < time()) {
+				return 'EXPIRED';
 			}
-			$this->load->model('Cart_Model');
-			$this->Cart_Model->update_cart_db(); */
-			return 'SUCCESS';
+            if($row->OTP == $otp){
+				$this->db->where('USERID', $userid)->update('userlogin', [
+					'STATUS'         => '1',
+					'OTP'            => null,
+					'otp_expires_at' => null
+				]);
+				return 'SUCCESS';
 			}
-			else {
-				return 'FAILED';
-			}
+			return 'FAILED';
         }
-        else
-        {
-            return 'FAILED';
-        }
+        return 'FAILED';
 	}
 	
 	public function register(){
