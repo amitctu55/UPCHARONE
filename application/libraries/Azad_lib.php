@@ -29,58 +29,80 @@ class Azad_lib {
 
 public function sendMail($to,$subject,$body,$variables=array(),$attachment='')
 { 
-
-//mail($to,$subject,$body);
 		$this->CI->load->helper('settings');
-		$setting = new stdClass();
-		$setting->smtpserver = function_exists('get_system_setting') ? get_system_setting('smtp_host', 'mail.upchar.info') : 'mail.upchar.info';
-		$setting->smtpport   = function_exists('get_system_setting') ? get_system_setting('smtp_port', '465') : '465';
-		$setting->smtpuser   = function_exists('get_system_setting') ? get_system_setting('smtp_username', 'support@upchar.info') : 'support@upchar.info';
-		$setting->smtppass   = function_exists('get_system_setting') ? get_system_setting('smtp_password', 'Abc@28010') : 'Abc@28010';
-		$setting->fromemail  = function_exists('get_system_setting') ? get_system_setting('email_from_address', 'support@upchar.info') : 'support@upchar.info';
-		$setting->fromname   = function_exists('get_system_setting') ? get_system_setting('email_from_name', 'Upchar Healthcare') : 'Upchar Healthcare';
-	if(strlen($body) < 30)
-	$templateid=$body;
-	$templatefile='templates/'.@$templateid.'.html';
-	if (file_exists($templatefile)) {
-	 	$templatedata = file_get_contents($templatefile);
-		
-		foreach($variables as $key => $value)
-		{
-				$templatedata = str_replace('!@#'.$key.'#@!', $value, $templatedata);
+
+		// Handle template substitution if body is a template identifier
+		if(strlen($body) < 40 && !strpos($body, ' ')) {
+			$templatefile = 'templates/' . $body . '.html';
+			if (file_exists($templatefile)) {
+				$templatedata = file_get_contents($templatefile);
+				foreach($variables as $key => $value) {
+					$templatedata = str_replace('!@#'.$key.'#@!', $value, $templatedata);
+				}
+				$body = $templatedata;
+			}
 		}
-		$body=$templatedata;
-	}	
-	 $config = array(
+
+		// Use Notification_service if loaded or load it
+		try {
+			if (!isset($this->CI->notification_service)) {
+				$this->CI->load->library('notification_service');
+			}
+			return $this->CI->notification_service->send_email($to, $subject, $body);
+		} catch (\Throwable $e) {
+			log_message('error', 'Azad_lib sendMail fallback error: ' . $e->getMessage());
+		}
+
+		$raw_host  = function_exists('get_system_setting') ? get_system_setting('smtp_host', 'mail.upchar.info') : 'mail.upchar.info';
+		$port      = function_exists('get_system_setting') ? (int)get_system_setting('smtp_port', '587') : 587;
+		$user      = function_exists('get_system_setting') ? get_system_setting('smtp_user', get_system_setting('smtp_username', 'support@upchar.info')) : 'support@upchar.info';
+		$pass      = function_exists('get_system_setting') ? get_system_setting('smtp_pass', get_system_setting('smtp_password', 'Abc@28010')) : 'Abc@28010';
+		$fromemail = function_exists('get_system_setting') ? get_system_setting('mail_from_email', get_system_setting('email_from_address', 'support@upchar.info')) : 'support@upchar.info';
+		$fromname  = function_exists('get_system_setting') ? get_system_setting('mail_from_name', get_system_setting('email_from_name', 'Upchar Medical Solution')) : 'Upchar Medical Solution';
+
+		// Decrypt password if encrypted
+		if (strpos($pass, 'ENC:') === 0) {
+			$encryption_key = config_item('encryption_key') ?: 'MyIndiaAtTheTop';
+			$key_secret = hash('sha256', $encryption_key, true);
+			$raw = base64_decode(substr($pass, 4));
+			$iv = substr($raw, 0, 16);
+			$hmac = substr($raw, 16, 32);
+			$cipher_raw = substr($raw, 48);
+			if (hash_equals($hmac, hash_hmac('sha256', $cipher_raw, $key_secret, true))) {
+				$pass = openssl_decrypt($cipher_raw, 'AES-256-CBC', $key_secret, OPENSSL_RAW_DATA, $iv);
+			}
+		}
+
+		// DNS fallback
+		$host = $raw_host;
+		$ip = @gethostbyname($raw_host);
+		if ($ip === $raw_host && !filter_var($raw_host, FILTER_VALIDATE_IP)) {
+			$host = '87.232.72.4';
+		}
+
+		$crypto = ($port == 465) ? 'ssl' : (($port == 587) ? 'tls' : '');
+
+		$config = array(
 			'protocol'    => 'smtp',
-			'smtp_host'   => $setting->smtpserver,
-			'smtp_port'   => $setting->smtpport,
-			'smtp_user'   => $setting->smtpuser,
-			'smtp_pass'   => $setting->smtppass,
-			'smtp_crypto' => ($setting->smtpport == '465') ? 'ssl' : 'tls',
-			'charset'=>'utf-8',
-			'crlf' => "\r\n",
-			'newline' => "\r\n",
-			//'protocol' => 'mail',
-			'mailtype' => 'html'
-			);  //print_r($config);
-	$this->CI->load->library('email',$config);
-	$this->CI->email->initialize($config);
-	//$this->CI->email->set_newline("\r\n"); 
-	$this->CI->email->from($setting->fromemail, 'Upchar Medical Solution');
-	$this->CI->email->to($to);
-	$this->CI->email->subject($subject);
-	$this->CI->email->message($body);
-	$res=$this->CI->email->send();
-	 //echo $this->CI->email->print_debugger();
+			'smtp_host'   => $host,
+			'smtp_port'   => $port,
+			'smtp_user'   => $user,
+			'smtp_pass'   => $pass,
+			'smtp_crypto' => $crypto,
+			'charset'     => 'utf-8',
+			'crlf'        => "\r\n",
+			'newline'     => "\r\n",
+			'mailtype'    => 'html',
+			'wordwrap'    => TRUE
+		);
 
-	 
-	 
-	if($res)
-		return true;
-	else
-		return false;
-
+		$this->CI->load->library('email');
+		$this->CI->email->initialize($config);
+		$this->CI->email->from($fromemail, $fromname);
+		$this->CI->email->to($to);
+		$this->CI->email->subject($subject);
+		$this->CI->email->message($body);
+		return @$this->CI->email->send();
 }	
 	
 

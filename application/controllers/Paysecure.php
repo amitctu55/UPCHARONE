@@ -638,39 +638,12 @@ class Paysecure extends CI_Controller {
 			$this->Financial_Model->record_transaction($OrderId, 'PATIENT', $patient_uid, $payee_type, $payee_id, $ordertotal, 'COD');
 		}
 
-		// Send SMS Confirmation
-		if (!empty($mobile) && function_exists('sendsms')) {
-			$msg = "Your Appointment booked successfully! Appointment# $aid. Please Pay the Fee Rs. $ordertotal at Counter, Request# $OrderId https://www.upchar.info";
-			@sendsms($msg, $mobile);
-		}
-
-		// Send Email Notifications
-		$user = $this->User_Model->get_appointment_details($aid);
-		if (!empty($user) && is_array($user)) {
-			$this->load->library('azad_lib');
-			$pt_name = !empty($user['appointment_name']) ? $user['appointment_name'] : 'Patient';
-			$dr_name = !empty($user['fname']) ? $user['fname'] : 'Doctor';
-			$inst_name = !empty($user['name']) ? $user['name'] : 'Clinic/Hospital';
-			$timing = (!empty($user['from_timing']) && !empty($user['to_timing'])) ? ($user['from_timing'] . ' to ' . $user['to_timing']) : 'Consultation Hours';
-			$appt_date = !empty($user['appointment_date']) ? $user['appointment_date'] : date('d-m-Y');
-			$fee_val = !empty($user['fee']) ? $user['fee'] : $ordertotal;
-			$pmode = !empty($user['payment_mode']) ? $user['payment_mode'] : 'COC';
-
-			/* Admin Email */
-			$body = "Hello Upchar,<br>You have a new booking by $pt_name for Dr. $dr_name at $inst_name.<br>Timing: $timing, Date: $appt_date<br>Fee: Rs. $fee_val ($pmode), Appointment No: $aid.<br>Thank You.<br>Email: info@upchar.info";
-			@$this->azad_lib->sendMail('info@upchar.info', 'New Appointment Booking', $body);
-
-			/* User Email */
-			if (!empty($user['appointment_email'])) {
-				$body = "Dear $pt_name,<br>Thank you for using Upchar services.<br>Your appointment no is $aid for Dr. $dr_name at $inst_name.<br>Timing: $timing, Date: $appt_date, Fee: Rs. $fee_val ($pmode).<br>Please pay the fee at the counter upon arrival.<br>Feel free to call 8448449603 for assistance.<br>Thank You.<br>Email: info@upchar.info<br>www.upchar.info";
-				@$this->azad_lib->sendMail($user['appointment_email'], 'Appointment Booking Confirmation', $body);
-			}
-
-			/* Doctor Email */
-			if (!empty($user['dr_email'])) {
-				$body = "Dear Dr. $dr_name,<br>You have a new appointment at $inst_name.<br>Patient: $pt_name, Appointment No: $aid.<br>Date: $appt_date, Timing: $timing.<br>Thank you for partnering with Upchar.<br>Email: partner@upchar.info";
-				@$this->azad_lib->sendMail($user['dr_email'], 'Upchar Appointment Booking', $body);
-			}
+		// Send Post-Booking Notifications (Patient confirmation, Doctor alert, Clinic alert, Admin alert)
+		try {
+			$this->load->library('notification_service');
+			$this->notification_service->send_appointment_notifications($aid);
+		} catch (\Throwable $e) {
+			log_message('error', 'Post-booking notification error: ' . $e->getMessage());
 		}
 
 		$this->session->unset_userdata('SecurePay');
@@ -779,34 +752,12 @@ class Paysecure extends CI_Controller {
 			$this->Financial_Model->record_transaction($OrderId, 'PATIENT', $patient_uid, $payee_type, $payee_id, $ordertotal, 'COD_HOSPITAL');
 		}
 
-		if (!empty($mobile) && function_exists('sendsms')) {
-			$msg = "Your Appointment booked successfully! Appointment# $aid. Please Pay the Fee Rs. $ordertotal at Counter, Request# $OrderId WWW.UPCHAR.INFO";
-			@sendsms($msg, $mobile);
-		}
-
-		$user = $this->User_Model->get_appointment_details($aid);
-		if (!empty($user) && is_array($user)) {
-			$this->load->library('azad_lib');
-			$pt_name = !empty($user['appointment_name']) ? $user['appointment_name'] : 'Patient';
-			$dr_name = !empty($user['fname']) ? $user['fname'] : 'Doctor';
-			$inst_name = !empty($user['name']) ? $user['name'] : 'Hospital';
-			$timing = (!empty($user['from_timing']) && !empty($user['to_timing'])) ? ($user['from_timing'] . ' to ' . $user['to_timing']) : 'Consultation Hours';
-			$appt_date = !empty($user['appointment_date']) ? $user['appointment_date'] : date('d-m-Y');
-			$fee_val = !empty($user['fee']) ? $user['fee'] : $ordertotal;
-			$pmode = !empty($user['payment_mode']) ? $user['payment_mode'] : 'COC';
-
-			$body = "Hello Upchar,<br>You have a new booking by $pt_name for Dr. $dr_name at $inst_name.<br>Timing: $timing, Date: $appt_date<br>Fee: Rs. $fee_val ($pmode), Appointment No: $aid.<br>Thank You.<br>Email: info@upchar.info";
-			@$this->azad_lib->sendMail('info@upchar.info', 'New Appointment Booking', $body);
-
-			if (!empty($user['appointment_email'])) {
-				$body = "Dear $pt_name,<br>Thank you for using Upchar services.<br>Your appointment no is $aid for Dr. $dr_name at $inst_name.<br>Timing: $timing, Date: $appt_date, Fee: Rs. $fee_val ($pmode).<br>Thank You.<br>Email: info@upchar.info<br>www.upchar.info";
-				@$this->azad_lib->sendMail($user['appointment_email'], 'Appointment Booking Confirmation', $body);
-			}
-
-			if (!empty($user['dr_email'])) {
-				$body = "Dear Dr. $dr_name,<br>You have a new appointment at $inst_name.<br>Patient: $pt_name, Appointment No: $aid.<br>Date: $appt_date, Timing: $timing.<br>Thank you.<br>Email: partner@upchar.info";
-				@$this->azad_lib->sendMail($user['dr_email'], 'Upchar Appointment Booking', $body);
-			}
+		// Send Post-Booking Notifications (Patient confirmation, Doctor alert, Clinic alert, Admin alert)
+		try {
+			$this->load->library('notification_service');
+			$this->notification_service->send_appointment_notifications($aid);
+		} catch (\Throwable $e) {
+			log_message('error', 'Post-booking notification error: ' . $e->getMessage());
 		}
 
 		$this->session->unset_userdata('SecurePay');
@@ -1180,9 +1131,13 @@ class Paysecure extends CI_Controller {
 		$this->db->where('appointment_id',$aid);
 		$this->db->update('appointment',$updateuserdata);
  
-          $this->load->library('azad_lib');
-			$body="Thank You  <BR>   Email: info@upchar.info  ";
-			$this->azad_lib->sendMail('info@upchar.info','Thanks for book appointment ',$body);
+          // Send Post-Booking Notifications (Patient confirmation, Doctor alert, Clinic alert, Admin alert)
+          try {
+              $this->load->library('notification_service');
+              $this->notification_service->send_appointment_notifications($aid);
+          } catch (\Throwable $e) {
+              log_message('error', 'Post-booking notification error: ' . $e->getMessage());
+          }
 		//$this->session->set_flashdata('pgresponse', 'Thank you! Payment Successful The Appointment detail has been sent to the registered  mobile no.');
 
 			//-------------------------End code for delivery and entry of codes -----------------------------

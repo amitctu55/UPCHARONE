@@ -30,70 +30,26 @@ class User_Model extends CI_Model {
 	}
 	
     public function forgotpass($mobile){
-		$this -> db -> select(' * ');
-        $this -> db -> from('userlogin');
-        $this -> db -> where('EMAIL', $mobile);        
-		$this -> db -> or_where('MOBILE', $mobile);
-        //$this -> db -> where('STATUS', '1');
-       // $this -> db -> where('APPROVED', '1');
-        $this -> db -> limit(1);
-        $query = $this -> db -> get();//echo  $this->db->last_query();
-		if($query -> num_rows() > 0)
-        {			
-			$row = $query->row();
-			//if($row->STATUS==1)
-			//{
-                
-			
-			
-				$otp=rand(100000,999999);
-				$this->db->where('USERID',$row->USERID)->set('OTP',$otp)->update('userlogin');
-				$this->session->set_userdata('forgotuserid', $row->USERID);
-				send_verification_otp($row->MOBILE, $otp, $row->EMAIL, $row->FNAME . ' ' . $row->LNAME);
-				return 'SUCCESS';
-			/*}
-			else 
-			{
-				return 'FAILED';
-			}*/
-        }
-        else
-        {
+        $this->load->library('notification_service');
+        $res = $this->notification_service->send_forgot_password_otp($mobile);
+        if (isset($res['status']) && $res['status'] === 'success') {
+            return 'SUCCESS';
+        } elseif (isset($res['status']) && $res['status'] === 'invalid') {
             return 'INVALID';
         }
-	}
+        return 'FAILED';
+    }
 	
 	public function resendotp($mobile)
 	{
-		$this -> db -> select(' * ');
-        $this -> db -> from('userlogin');
-		$this->db->group_start();
-        $this -> db -> where('EMAIL', $mobile);        
-		$this -> db -> or_where('MOBILE', $mobile);
-		$this -> db -> group_end();
-       // $this -> db -> where('STATUS', '1');
-        $this -> db -> where('APPROVED', '1');
-        $this -> db -> limit(1);
-        $query = $this -> db -> get();//echo  $this->db->last_query();
-		if($query -> num_rows() > 0)
-        {			
-			$row = $query->row();//echo $row->OTP;
-			if($row->OTP!= null ||$row->OTP!= ''){
-                
-			
-			
-				$otp=$row->OTP;
-				send_verification_otp($row->MOBILE, $otp, $row->EMAIL, $row->FNAME . ' ' . $row->LNAME);
-				return 'SUCCESS';
-			}
-			else {
-				return 'FAILED';
-			}
-        }
-        else
-        {
-            return 'INVALID';
-        }
+		$this->load->library('notification_service');
+		$res = $this->notification_service->send_forgot_password_otp($mobile);
+		if (isset($res['status']) && $res['status'] === 'success') {
+			return 'SUCCESS';
+		} elseif (isset($res['status']) && $res['status'] === 'invalid') {
+			return 'INVALID';
+		}
+		return 'FAILED';
 	}
 	 
     public function login($email,$password){
@@ -279,7 +235,17 @@ class User_Model extends CI_Model {
 				$thisid = $this->db->insert_id();
 				$this->session->set_userdata('signupuserid', $thisid);
 			
-				$response=array('status'=>'success','msg'=>'Registration Successful, Please Verify Email!');
+				// Send secure email verification link upon registration
+				if (!empty($email)) {
+					try {
+						$this->load->library('notification_service');
+						$this->notification_service->send_email_verification($thisid, $email, $fname . ' ' . $lname);
+					} catch (\Throwable $e) {
+						log_message('error', 'Registration verification email error: ' . $e->getMessage());
+					}
+				}
+
+				$response=array('status'=>'success','msg'=>'Registration Successful! A verification link has been sent to your email.');
 			}
 			else
 			{

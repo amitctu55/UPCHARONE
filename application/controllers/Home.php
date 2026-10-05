@@ -51,6 +51,44 @@ class Home extends CI_Controller
 	{
 		$this->load->view('otp_send_pass');
 	}
+
+	public function verify_email($token = null)
+	{
+		$token = $token ?: ($this->input->get('token', TRUE) ?: $this->input->post('token', TRUE));
+		$token = trim($token);
+
+		if (empty($token)) {
+			$this->session->set_flashdata('flashmsg', '<div class="alert alert-danger" style="margin-top:15px;"><i class="fa fa-exclamation-triangle"></i> Verification token is missing. Please click the link sent to your email.</div>');
+			redirect(base_url('login'));
+			return;
+		}
+
+		$this->load->library('notification_service');
+		$user = $this->notification_service->verify_email_token($token);
+
+		if ($user) {
+			$data['user'] = $user;
+			$data['status'] = 'success';
+			$data['message'] = 'Your email (' . htmlspecialchars($user->EMAIL) . ') has been successfully verified! Your account is now active.';
+			$this->session->set_flashdata('flashmsg', '<div class="alert alert-success" style="margin-top:15px;"><i class="fa fa-check-circle"></i> <strong>Email Verified!</strong> Your account has been activated. Please log in to continue.</div>');
+			
+			if (file_exists(APPPATH . 'views/email_verified.php')) {
+				$this->load->view('email_verified', $data);
+			} else {
+				redirect(base_url('login'));
+			}
+		} else {
+			$data['status'] = 'failed';
+			$data['message'] = 'The verification link is invalid, expired, or has already been used.';
+			$this->session->set_flashdata('flashmsg', '<div class="alert alert-danger" style="margin-top:15px;"><i class="fa fa-exclamation-triangle"></i> <strong>Verification Failed:</strong> The verification link is invalid, expired, or has already been used.</div>');
+			
+			if (file_exists(APPPATH . 'views/email_verified.php')) {
+				$this->load->view('email_verified', $data);
+			} else {
+				redirect(base_url('login'));
+			}
+		}
+	}
 	
 	public function bed_availability()
 	{

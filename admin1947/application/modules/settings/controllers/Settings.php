@@ -222,18 +222,45 @@ class Settings extends CI_Controller {
         }
 
         // Standard SMTP or Native Mail
-        $smtp_host   = trim($this->input->post('smtp_host', TRUE)) ?: get_system_setting('smtp_host', 'smtp.gmail.com');
+        $raw_host    = trim($this->input->post('smtp_host', TRUE)) ?: get_system_setting('smtp_host', 'mail.upchar.info');
         $smtp_port   = (int)($this->input->post('smtp_port', TRUE) ?: get_system_setting('smtp_port', '587'));
         $smtp_crypto = trim($this->input->post('smtp_crypto', TRUE)) ?: get_system_setting('smtp_crypto', 'tls');
         $smtp_user   = trim($this->input->post('smtp_user', TRUE)) ?: get_system_setting('smtp_user', '');
         $smtp_pass   = $this->input->post('smtp_pass', TRUE) ?: get_system_setting('smtp_pass', '');
+
+        // Decrypt password if still in ENC format
+        if (strpos($smtp_pass, 'ENC:') === 0) {
+            $encryption_key = config_item('encryption_key') ?: 'MyIndiaAtTheTop';
+            $key_secret = hash('sha256', $encryption_key, true);
+            $raw = base64_decode(substr($smtp_pass, 4));
+            $iv = substr($raw, 0, 16);
+            $hmac = substr($raw, 16, 32);
+            $cipher_raw = substr($raw, 48);
+            if (hash_equals($hmac, hash_hmac('sha256', $cipher_raw, $key_secret, true))) {
+                $smtp_pass = openssl_decrypt($cipher_raw, 'AES-256-CBC', $key_secret, OPENSSL_RAW_DATA, $iv);
+            }
+        }
+
+        // Host and DNS resolution fallback
+        $smtp_host = $raw_host;
+        $dns_note = '';
+        $ip = @gethostbyname($raw_host);
+        if ($ip === $raw_host && !filter_var($raw_host, FILTER_VALIDATE_IP)) {
+            $smtp_host = '87.232.72.4';
+            $dns_note = " (Note: Host '{$raw_host}' has no public DNS record; auto-routed to server IP 87.232.72.4)";
+        } elseif (in_array(strtolower($raw_host), array('smtp.upchar.info', 'mail.upchar.info'))) {
+            if ($ip === '104.21.57.170' || $ip === '172.67.182.110') {
+                $smtp_host = '87.232.72.4';
+                $dns_note = " (Note: Host '{$raw_host}' is proxied by Cloudflare; routed directly to 87.232.72.4)";
+            }
+        }
 
         // Auto-detect crypto by port
         if ($smtp_port == 587) {
             $smtp_crypto = 'tls';
         } else if ($smtp_port == 465) {
             $smtp_crypto = 'ssl';
-        } else if ($smtp_crypto === 'none') {
+        } else if ($smtp_port == 25 || $smtp_crypto === 'none') {
             $smtp_crypto = '';
         }
 
@@ -246,7 +273,7 @@ class Settings extends CI_Controller {
             'smtp_user'   => $smtp_user,
             'smtp_pass'   => $smtp_pass,
             'smtp_crypto' => $smtp_crypto,
-            'smtp_timeout'=> 8,
+            'smtp_timeout'=> 10,
             'mailtype'    => 'html',
             'charset'     => 'utf-8',
             'crlf'        => "\r\n",
@@ -265,10 +292,29 @@ class Settings extends CI_Controller {
         $send_res = @$this->email->send();
         $raw_output = ob_get_clean();
 
+        // Secondary fallback to port 587 if port 465 timed out or failed
+        if (!$send_res && $smtp_port == 465) {
+            $config['smtp_port'] = 587;
+            $config['smtp_crypto'] = 'tls';
+            $this->email->clear(true);
+            $this->email->initialize($config);
+            $this->email->from($from_email, $from_name);
+            $this->email->to($to_email);
+            $this->email->subject($subject);
+            $this->email->message($body);
+            ob_start();
+            $send_res = @$this->email->send();
+            $raw_output .= ob_get_clean();
+            if ($send_res) {
+                $smtp_port = 587;
+                $dns_note .= " (Port 465 was closed; automatically connected via Port 587 TLS)";
+            }
+        }
+
         if ($send_res) {
             $resp = [
                 'status'  => 'success',
-                'message' => "Test email successfully delivered to {$to_email} via SMTP ({$smtp_host}:{$smtp_port}).",
+                'message' => "Test email successfully delivered to {$to_email} via SMTP ({$smtp_host}:{$smtp_port}){$dns_note}.",
                 'debug'   => strip_tags($this->email->print_debugger(['headers']))
             ];
         } else {
@@ -278,7 +324,7 @@ class Settings extends CI_Controller {
             }
             $resp = [
                 'status'  => 'error',
-                'message' => "SMTP delivery failed. Check your host, port, authentication credentials, and firewall settings.",
+                'message' => "SMTP delivery failed. Check your host, port, authentication credentials, and firewall settings." . $dns_note,
                 'debug'   => $debug_log ?: 'Connection timed out or remote SMTP server rejected the recipient.'
             ];
         }
