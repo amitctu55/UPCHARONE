@@ -103,6 +103,16 @@ class Notification_service {
         $raw_host    = trim($this->get_setting('smtp_host', 'mail.upchar.info'));
         $smtp_port   = (int)$this->get_setting('smtp_port', 587);
         $smtp_crypto = strtolower(trim($this->get_setting('smtp_crypto', 'tls')));
+        
+        // Strip ssl:// or tls:// protocol prefix if user entered it in the host field
+        if (strpos($raw_host, 'ssl://') === 0) {
+            $raw_host = substr($raw_host, 6);
+            $smtp_crypto = 'ssl';
+        } elseif (strpos($raw_host, 'tls://') === 0) {
+            $raw_host = substr($raw_host, 6);
+            $smtp_crypto = 'tls';
+        }
+
         $smtp_user   = trim($this->get_setting('smtp_user', $this->get_setting('smtp_username', 'support@upchar.info')));
         $smtp_pass   = $this->get_setting('smtp_pass', $this->get_setting('smtp_password', 'Abc@28010'));
 

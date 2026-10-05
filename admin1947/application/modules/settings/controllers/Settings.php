@@ -231,6 +231,16 @@ class Settings extends CI_Controller {
                 $raw_host    = trim($this->input->post('smtp_host', TRUE) ?: ($this->input->get('smtp_host', TRUE) ?: get_system_setting('smtp_host', 'mail.upchar.info')));
                 $smtp_port   = (int)($this->input->post('smtp_port', TRUE) ?: ($this->input->get('smtp_port', TRUE) ?: get_system_setting('smtp_port', '587')));
                 $smtp_crypto = trim($this->input->post('smtp_crypto', TRUE) ?: ($this->input->get('smtp_crypto', TRUE) ?: get_system_setting('smtp_crypto', 'tls')));
+
+                // Strip ssl:// or tls:// protocol prefix if user entered it in the host field
+                if (strpos($raw_host, 'ssl://') === 0) {
+                    $raw_host = substr($raw_host, 6);
+                    $smtp_crypto = 'ssl';
+                } elseif (strpos($raw_host, 'tls://') === 0) {
+                    $raw_host = substr($raw_host, 6);
+                    $smtp_crypto = 'tls';
+                }
+
                 $smtp_user   = trim($this->input->post('smtp_user', TRUE) ?: ($this->input->get('smtp_user', TRUE) ?: get_system_setting('smtp_user', '')));
                 $smtp_pass   = $this->input->post('smtp_pass', TRUE) ?: ($this->input->get('smtp_pass', TRUE) ?: get_system_setting('smtp_pass', ''));
 
