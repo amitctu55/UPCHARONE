@@ -123,11 +123,12 @@
               <th style="padding: 12px 16px; width: 140px;">Medical ID</th>
               <th>Patient Profile</th>
               <th>Contact Details</th>
-              <th style="text-align: center; width: 100px;">Blood Group</th>
-              <th style="text-align: center; width: 90px;">Bookings</th>
-              <th style="text-align: center; width: 120px;">Upchar Wallet</th>
-              <th style="text-align: center; width: 100px;">Status</th>
-              <th style="text-align: center; width: 150px;">Actions</th>
+              <th style="text-align: center; width: 150px;">Vitals &amp; BMI</th>
+              <th style="text-align: center; width: 90px;">Blood Group</th>
+              <th style="text-align: center; width: 80px;">Bookings</th>
+              <th style="text-align: center; width: 110px;">Upchar Wallet</th>
+              <th style="text-align: center; width: 90px;">Status</th>
+              <th style="text-align: center; width: 170px;">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -140,16 +141,33 @@
                   <div style="font-size: 11px; color: #94a3b8; margin-top: 4px;">#UID: <?=$p['USERID'];?></div>
                 </td>
                 <td>
-                  <strong style="color: #1e293b; font-size: 13.5px;"><?=html_escape($p['FNAME'].' '.$p['LNAME']);?></strong>
+                  <strong style="color: #1e293b; font-size: 13.5px;" id="row-name-<?=$p['USERID'];?>"><?=html_escape($p['FNAME'].' '.$p['LNAME']);?></strong>
                   <div style="font-size: 11.5px; color: #64748b; margin-top: 2px;">
-                    <?=html_escape($p['GENDER'] ?: 'Gender: Unspecified');?> &bull; <?=html_escape($p['DOB'] ? 'DOB: '.$p['DOB'] : 'Age: N/A');?>
+                    <span id="row-gender-<?=$p['USERID'];?>"><?=html_escape($p['GENDER'] ?: 'Unspecified');?></span> &bull; 
+                    <span id="row-dob-<?=$p['USERID'];?>"><?=!empty($p['DOB']) ? html_escape($p['DOB']) . ' (' . ($p['age'] ?? 30) . ' yrs)' : 'Age: N/A';?></span>
                   </div>
                 </td>
                 <td>
-                  <div style="color: #334155; font-size: 12.5px;"><i class="fa fa-phone text-muted" style="width: 14px;"></i> <?=html_escape($p['MOBILE']);?></div>
-                  <div style="font-size: 11.5px; color: #64748b; margin-top: 2px;"><i class="fa fa-envelope-o text-muted" style="width: 14px;"></i> <?=html_escape($p['EMAIL'] ?: 'N/A');?></div>
+                  <div style="color: #334155; font-size: 12.5px;"><i class="fa fa-phone text-muted" style="width: 14px;"></i> <span id="row-mobile-<?=$p['USERID'];?>"><?=html_escape($p['MOBILE']);?></span></div>
+                  <div style="font-size: 11.5px; color: #64748b; margin-top: 2px;"><i class="fa fa-envelope-o text-muted" style="width: 14px;"></i> <span id="row-email-<?=$p['USERID'];?>"><?=html_escape($p['EMAIL'] ?: 'N/A');?></span></div>
                 </td>
-                <td style="text-align: center;">
+                <td style="text-align: center;" id="row-vitals-<?=$p['USERID'];?>">
+                  <?php if (!empty($p['bmi']) && $p['bmi'] > 0): ?>
+                    <div style="font-weight: 700; color: #1e293b; font-size: 12px;">
+                      <?=round($p['height_cm']);?> cm &bull; <?=round($p['weight_kg']);?> kg
+                    </div>
+                    <span class="label" style="background: <?=$p['bmi_color'];?>18; color: <?=$p['bmi_color'];?>; border: 1px solid <?=$p['bmi_color'];?>60; font-weight: 700; font-size: 10px; padding: 2px 6px; border-radius: 4px; display: inline-block; margin-top: 3px;">
+                      BMI <?=$p['bmi'];?> (<?=$p['bmi_status'];?>)
+                    </span>
+                  <?php elseif (!empty($p['HEIGHT']) || !empty($p['WEIGHT'])): ?>
+                    <div style="font-size: 12px; color: #475569; font-weight: 600;">
+                      <?=html_escape($p['HEIGHT'] ?: '-');?> / <?=html_escape($p['WEIGHT'] ?: '-');?>
+                    </div>
+                  <?php else: ?>
+                    <span style="color: #94a3b8; font-size: 11.5px;">No vitals</span>
+                  <?php endif; ?>
+                </td>
+                <td style="text-align: center;" id="row-bgroup-<?=$p['USERID'];?>">
                   <?php if (!empty($p['BGROUP'])): ?>
                     <span class="label label-danger" style="background-color: #fee2e2 !important; color: #dc2626 !important; border: 1px solid #fecaca; font-weight: 700; font-size: 11px; padding: 3px 8px; border-radius: 4px;">
                       <?=html_escape($p['BGROUP']);?>
@@ -178,6 +196,9 @@
                     <button type="button" onclick="openPatientDossier(<?=$p['USERID'];?>)" class="btn btn-xs btn-info" style="border-radius: 4px; font-weight: 600; background: #0284c7; border-color: #0284c7;" title="View Complete Dossier">
                       <i class="fa fa-folder-open-o"></i> Dossier
                     </button>
+                    <button type="button" onclick="openEditPatientModal(<?=$p['USERID'];?>)" class="btn btn-xs btn-primary" style="border-radius: 4px; font-weight: 600; background: #00a896; border-color: #00a896;" title="Edit Patient Information">
+                      <i class="fa fa-pencil"></i> Edit
+                    </button>
                     <button type="button" onclick="openPasswordModal(<?=$p['USERID'];?>, '<?=html_escape(addslashes($p['FNAME'].' '.$p['LNAME']));?>')" class="btn btn-xs btn-warning" style="border-radius: 4px; font-weight: 600; background: #f59e0b; border-color: #f59e0b;" title="Reset Password">
                       <i class="fa fa-key"></i>
                     </button>
@@ -186,7 +207,7 @@
               </tr>
             <?php endforeach; else: ?>
               <tr>
-                <td colspan="8" style="text-align: center; padding: 40px; color: #94a3b8;">
+                <td colspan="9" style="text-align: center; padding: 40px; color: #94a3b8;">
                   <i class="fa fa-users fa-3x" style="opacity: 0.3; margin-bottom: 10px; display: block;"></i>
                   No patient records found matching your filters.
                 </td>
@@ -223,7 +244,12 @@
             <span id="modal-patient-medical-id" class="label" style="background: rgba(255,255,255,0.25); font-size: 11px; margin-top: 4px; display: inline-block;"></span>
           </div>
         </div>
-        <button type="button" class="close" data-dismiss="modal" style="color: #ffffff; opacity: 0.9; font-size: 26px; line-height: 1;">&times;</button>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <button type="button" onclick="editCurrentPatient()" class="btn btn-xs btn-default" style="font-weight: 700; color: #00a896; background: #ffffff; border: none; padding: 5px 12px; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+            <i class="fa fa-pencil"></i> Edit Details
+          </button>
+          <button type="button" class="close" data-dismiss="modal" style="color: #ffffff; opacity: 0.9; font-size: 26px; line-height: 1;">&times;</button>
+        </div>
       </div>
 
       <!-- Modal Body with Tabs -->
@@ -243,7 +269,7 @@
             <div class="row">
               <div class="col-md-6">
                 <h5 style="font-weight: 700; color: #334155; border-bottom: 2px solid #00a896; padding-bottom: 6px; margin-top: 0;">
-                  <i class="fa fa-id-card-o text-primary"></i> Demographic Information
+                  <i class="fa fa-id-card-o text-primary"></i> Demographic &amp; Vitals Information
                 </h5>
                 <style>
                   .patient-info-table tr > th:first-child,
@@ -267,17 +293,34 @@
                   <tr><th>Full Name</th><td id="dt-name">--</td></tr>
                   <tr><th>Mobile Number</th><td id="dt-mobile">--</td></tr>
                   <tr><th>Email Address</th><td id="dt-email">--</td></tr>
-                  <tr><th>DOB / Gender</th><td id="dt-dob-gender">--</td></tr>
+                  <tr><th>DOB &amp; Age</th><td id="dt-dob-gender">--</td></tr>
+                  <tr><th>Gender</th><td id="dt-gender">--</td></tr>
                   <tr><th>Blood Group</th><td id="dt-blood">--</td></tr>
-                  <tr><th>Height / Weight</th><td id="dt-vitals">--</td></tr>
-                  <tr><th>Registration Date</th><td id="dt-regdate">--</td></tr>
+                  <tr><th>Height &amp; Weight</th><td id="dt-vitals">--</td></tr>
+                  <tr><th>BMI Classification</th><td id="dt-bmi-status">--</td></tr>
+                  <tr><th>Account Status</th><td id="dt-status">--</td></tr>
+                  <tr><th>Registered Date</th><td id="dt-regdate">--</td></tr>
                 </table>
               </div>
               <div class="col-md-6">
                 <h5 style="font-weight: 700; color: #334155; border-bottom: 2px solid #00a896; padding-bottom: 6px; margin-top: 0;">
-                  <i class="fa fa-users text-primary"></i> Family Dependents
+                  <i class="fa fa-users text-primary"></i> Family Members &amp; Dependents
                 </h5>
                 <div id="dt-dependents-wrapper" style="margin-top: 10px;"></div>
+              </div>
+            </div>
+
+            <!-- Full Width Clinical Health Goals & Metabolic Assessment Panel -->
+            <div style="margin-top: 20px; border-top: 1px solid #e2e8f0; padding-top: 18px;" id="dt-clinical-section">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+                <h5 style="font-weight: 700; color: #0d9488; margin: 0; font-size: 15px;">
+                  <i class="fa fa-heartbeat"></i> Clinical Health Goals &amp; Metabolic Assessment
+                </h5>
+                <div id="dt-clinical-header-badge"></div>
+              </div>
+
+              <div id="dt-clinical-panel">
+                <!-- Rendered dynamically -->
               </div>
             </div>
           </div>
@@ -404,13 +447,113 @@
   </div>
 </div>
 
+<!-- Complete Edit Patient Information Modal -->
+<div class="modal fade" id="editPatientModal" tabindex="-1" role="dialog" aria-labelledby="editPatientModalLabel">
+  <div class="modal-dialog modal-md" style="margin-top: 50px; max-width: 680px;">
+    <div class="modal-content" style="border-radius: 12px; overflow: hidden; border: none; box-shadow: 0 20px 30px rgba(0,0,0,0.2);">
+      <div class="modal-header" style="background: #00a896; color: #ffffff; padding: 14px 20px; display: flex; justify-content: space-between; align-items: center;">
+        <h4 class="modal-title" style="font-weight: 700; font-size: 16px; margin: 0;">
+          <i class="fa fa-pencil-square-o"></i> Edit Complete Patient Record
+        </h4>
+        <button type="button" class="close" data-dismiss="modal" style="color: #ffffff; opacity: 0.9; font-size: 24px;">&times;</button>
+      </div>
+      <form id="editPatientForm" onsubmit="submitEditPatientForm(event)">
+        <input type="hidden" name="patient_id" id="edit_patient_id">
+        <div class="modal-body" style="padding: 20px; max-height: 75vh; overflow-y: auto;">
+          <div id="editPatientAlert" style="display: none; margin-bottom: 14px;"></div>
+
+          <div class="row">
+            <div class="col-sm-6" style="margin-bottom: 12px;">
+              <label style="font-size: 12px; font-weight: 700; color: #334155;">First Name <span class="text-danger">*</span></label>
+              <input type="text" name="fname" id="edit_fname" class="form-control" required style="border-radius: 6px; font-size: 13px;">
+            </div>
+            <div class="col-sm-6" style="margin-bottom: 12px;">
+              <label style="font-size: 12px; font-weight: 700; color: #334155;">Last Name</label>
+              <input type="text" name="lname" id="edit_lname" class="form-control" style="border-radius: 6px; font-size: 13px;">
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-sm-6" style="margin-bottom: 12px;">
+              <label style="font-size: 12px; font-weight: 700; color: #334155;">Mobile Number</label>
+              <input type="text" name="mobile" id="edit_mobile" class="form-control" placeholder="10-digit mobile" maxlength="15" style="border-radius: 6px; font-size: 13px;">
+            </div>
+            <div class="col-sm-6" style="margin-bottom: 12px;">
+              <label style="font-size: 12px; font-weight: 700; color: #334155;">Email Address</label>
+              <input type="email" name="email" id="edit_email" class="form-control" placeholder="patient@example.com" style="border-radius: 6px; font-size: 13px;">
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-sm-6" style="margin-bottom: 12px;">
+              <label style="font-size: 12px; font-weight: 700; color: #334155;">Date of Birth</label>
+              <input type="date" name="dob" id="edit_dob" class="form-control" style="border-radius: 6px; font-size: 13px;">
+            </div>
+            <div class="col-sm-6" style="margin-bottom: 12px;">
+              <label style="font-size: 12px; font-weight: 700; color: #334155;">Gender</label>
+              <select name="gender" id="edit_gender" class="form-control" style="border-radius: 6px; font-size: 13px;">
+                <option value="">-- Select --</option>
+                <option value="M">Male</option>
+                <option value="F">Female</option>
+                <option value="O">Other</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-sm-4" style="margin-bottom: 12px;">
+              <label style="font-size: 12px; font-weight: 700; color: #334155;">Blood Group</label>
+              <select name="bgroup" id="edit_bgroup" class="form-control" style="border-radius: 6px; font-size: 13px;">
+                <option value="">-- Select --</option>
+                <?php foreach(['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'] as $bg): ?>
+                  <option value="<?=$bg;?>"><?=$bg;?></option>
+                <?php endforeach; ?>
+              </select>
+            </div>
+            <div class="col-sm-4" style="margin-bottom: 12px;">
+              <label style="font-size: 12px; font-weight: 700; color: #334155;">Height (cm)</label>
+              <input type="text" name="height" id="edit_height" placeholder="e.g. 155" class="form-control" style="border-radius: 6px; font-size: 13px;">
+            </div>
+            <div class="col-sm-4" style="margin-bottom: 12px;">
+              <label style="font-size: 12px; font-weight: 700; color: #334155;">Weight (kg)</label>
+              <input type="text" name="weight" id="edit_weight" placeholder="e.g. 46" class="form-control" style="border-radius: 6px; font-size: 13px;">
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-sm-12" style="margin-bottom: 6px;">
+              <label style="font-size: 12px; font-weight: 700; color: #334155;">Account Status</label>
+              <select name="status" id="edit_status" class="form-control" style="border-radius: 6px; font-size: 13px;">
+                <option value="1">ACTIVE</option>
+                <option value="2">BLOCKED</option>
+              </select>
+            </div>
+          </div>
+
+        </div>
+        <div class="modal-footer" style="background: #f8fafc; padding: 12px 20px; display: flex; justify-content: flex-end; gap: 8px;">
+          <button type="button" class="btn btn-default" data-dismiss="modal" style="border-radius: 6px;">Cancel</button>
+          <button type="submit" id="btnSavePatient" class="btn btn-primary" style="background: #00a896; border-color: #00a896; font-weight: 600; border-radius: 6px;">
+            <i class="fa fa-check"></i> <span>Save Changes</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
 <script>
+let currentDossierPatientId = 0;
+let currentDossierData = null;
+
 function openPatientDossier(patientId) {
+  currentDossierPatientId = patientId;
   $('#patientDetailModal').modal('show');
   
   // Set loading placeholders
   $('#modal-patient-name').text('Loading Patient Details...');
   $('#modal-patient-medical-id').text('');
+  $('#dt-clinical-panel').html('<div class="text-center text-muted" style="padding: 20px;"><i class="fa fa-spinner fa-spin"></i> Calculating clinical metrics...</div>');
   $('#dt-appointments-body').html('<tr><td colspan="6" class="text-center text-muted"><i class="fa fa-spinner fa-spin"></i> Loading appointments...</td></tr>');
   $('#dt-medical-timeline').html('<div class="text-center text-muted" style="padding: 30px;"><i class="fa fa-spinner fa-spin"></i> Loading medical records...</div>');
   $('#dt-payments-body').html('<tr><td colspan="5" class="text-center text-muted"><i class="fa fa-spinner fa-spin"></i> Loading payments...</td></tr>');
@@ -420,29 +563,152 @@ function openPatientDossier(patientId) {
     .then(res => res.json())
     .then(data => {
       if (data.status === 'success') {
+        currentDossierData = data;
         const p = data.profile;
         $('#modal-patient-name').text(p.FNAME + ' ' + (p.LNAME || ''));
         $('#modal-patient-medical-id').text(p.medical_id);
 
         $('#dt-name').text(p.FNAME + ' ' + (p.LNAME || ''));
-        $('#dt-mobile').text(p.MOBILE);
-        $('#dt-email').text(p.EMAIL || 'N/A');
-        $('#dt-dob-gender').text((p.DOB || 'N/A') + ' / ' + (p.GENDER || 'N/A'));
-        $('#dt-blood').text(p.BGROUP || 'Not Specified');
-        $('#dt-vitals').text((p.HEIGHT ? p.HEIGHT + ' cm' : '-') + ' / ' + (p.WEIGHT ? p.WEIGHT + ' kg' : '-'));
+        $('#dt-mobile').text(p.MOBILE || 'Not registered');
+        $('#dt-email').text(p.EMAIL || 'Not registered');
+        
+        const ageStr = p.calculated_age ? ' (' + p.calculated_age + ' yrs)' : '';
+        $('#dt-dob-gender').text((p.DOB ? p.DOB + ageStr : 'Not specified'));
+        
+        let genText = p.GENDER || 'Not specified';
+        if (p.GENDER === 'M' || p.GENDER === 'Male') genText = '<i class="fa fa-mars" style="color: #0284c7;"></i> Male';
+        else if (p.GENDER === 'F' || p.GENDER === 'Female') genText = '<i class="fa fa-venus" style="color: #ec4899;"></i> Female';
+        $('#dt-gender').html(genText);
+
+        if (p.BGROUP) {
+          $('#dt-blood').html('<span class="label label-danger" style="background-color: #fee2e2 !important; color: #dc2626 !important; border: 1px solid #fecaca; font-weight: 700; font-size: 11px; padding: 3px 8px; border-radius: 4px;"><i class="fa fa-tint"></i> ' + p.BGROUP + '</span>');
+        } else {
+          $('#dt-blood').text('Not specified');
+        }
+
+        const vitalsStr = (p.HEIGHT ? p.HEIGHT + ' cm' : 'Height: --') + ' &bull; ' + (p.WEIGHT ? p.WEIGHT + ' kg' : 'Weight: --');
+        $('#dt-vitals').html('<strong>' + vitalsStr + '</strong>');
+
+        // BMI Status
+        if (p.clinical_assessment && p.clinical_assessment.bmi > 0) {
+          const ca = p.clinical_assessment;
+          $('#dt-bmi-status').html('<span class="label" style="background: ' + ca.bmi_color + '18; color: ' + ca.bmi_color + '; border: 1px solid ' + ca.bmi_color + '60; font-weight: 700; font-size: 11px; padding: 3px 8px; border-radius: 4px;">BMI ' + ca.bmi + ' (' + ca.bmi_status + ')</span>');
+          $('#dt-clinical-header-badge').html('<span class="label" style="background: ' + ca.bmi_color + '18; color: ' + ca.bmi_color + '; border: 1px solid ' + ca.bmi_color + '60; font-weight: 700; font-size: 11px; padding: 4px 10px; border-radius: 20px;"><i class="fa fa-circle" style="font-size: 7px;"></i> BMI ' + ca.bmi + ' (' + ca.bmi_status + ')</span>');
+        } else {
+          $('#dt-bmi-status').html('<span class="text-muted">Incomplete vitals</span>');
+          $('#dt-clinical-header-badge').html('');
+        }
+
+        // Account Status & Regdate
+        const stLabel = p.STATUS === '1' ? '<span class="label label-success">ACTIVE</span>' : '<span class="label label-danger">BLOCKED</span>';
+        $('#dt-status').html(stLabel);
         $('#dt-regdate').text(p.REG_DATE || 'N/A');
 
         // Dependents
         let depHtml = '<ul class="list-group" style="margin: 0;">';
         if (p.dependents && p.dependents.length > 0) {
           p.dependents.forEach(d => {
-            depHtml += '<li class="list-group-item" style="font-size: 12px; display: flex; justify-content: space-between;"><span><strong>' + d.name + '</strong> (' + d.relationship + ')</span> <span class="label label-default">' + (d.blood_group || 'Blood: N/A') + '</span></li>';
+            depHtml += '<li class="list-group-item" style="font-size: 12px; display: flex; justify-content: space-between; align-items: center; padding: 9px 12px;">' +
+              '<div><strong>' + d.name + '</strong> <span style="background: #e0f2fe; color: #0369a1; font-size: 10.5px; font-weight: 700; padding: 1px 6px; border-radius: 4px; margin-left: 4px;">' + d.relationship + '</span>' +
+              '<div style="font-size: 11px; color: #64748b; margin-top: 2px;">' + (d.gender === 'F' ? 'Female' : 'Male') + (d.dob ? ' &bull; DOB: ' + d.dob : '') + '</div></div>' +
+              '<div>' + (d.blood_group ? '<span class="label label-danger" style="background: #fee2e2; color: #dc2626; border: 1px solid #fecaca; font-weight: 700; font-size: 10.5px;"><i class="fa fa-tint"></i> ' + d.blood_group + '</span>' : '<span class="text-muted" style="font-size: 11px;">Blood: N/A</span>') + '</div></li>';
           });
         } else {
-          depHtml += '<li class="list-group-item text-muted" style="font-size: 12px;">No family dependents registered</li>';
+          depHtml += '<li class="list-group-item text-muted" style="font-size: 12px; text-align: center; padding: 20px;">No family dependents registered yet</li>';
         }
         depHtml += '</ul>';
         $('#dt-dependents-wrapper').html(depHtml);
+
+        // Clinical Health Goals & Metabolic Assessment Rendering
+        if (p.clinical_assessment && p.clinical_assessment.bmi > 0) {
+          const ca = p.clinical_assessment;
+          const ng = p.nutrition_goals;
+
+          let goalDiffBadge = '';
+          if (ca.goal_action === 'gain') {
+            goalDiffBadge = '<span style="color: #10b981; font-weight: 700;"><i class="fa fa-arrow-up"></i> +' + ca.min_gain + ' kg target</span>';
+          } else if (ca.goal_action === 'lose') {
+            goalDiffBadge = '<span style="color: #ef4444; font-weight: 700;"><i class="fa fa-arrow-down"></i> -' + ca.min_loss + ' kg target</span>';
+          } else {
+            goalDiffBadge = '<span style="color: #10b981; font-weight: 700;"><i class="fa fa-check"></i> Balanced</span>';
+          }
+
+          let clinHtml = '<div class="row" style="margin: 0 -6px 14px;">' +
+            // Metric 1: BMI
+            '<div class="col-sm-3 col-xs-6" style="padding: 6px;">' +
+              '<div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; height: 100%;">' +
+                '<div style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase;">Body Mass Index (BMI)</div>' +
+                '<div style="font-size: 22px; font-weight: 800; color: ' + ca.bmi_color + '; margin-top: 3px;">' + ca.bmi + ' <small style="font-size: 12px; font-weight: 700;">' + ca.bmi_status + '</small></div>' +
+                '<div style="font-size: 11px; color: #64748b; margin-top: 4px;">Height: ' + ca.height_cm + 'cm | Weight: ' + ca.weight_kg + 'kg</div>' +
+              '</div>' +
+            '</div>' +
+
+            // Metric 2: BMR
+            '<div class="col-sm-3 col-xs-6" style="padding: 6px;">' +
+              '<div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; height: 100%;">' +
+                '<div style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase;">Basal Metabolic Rate (BMR)</div>' +
+                '<div style="font-size: 22px; font-weight: 800; color: #ea580c; margin-top: 3px;">' + ca.bmr.toLocaleString() + ' <small style="font-size: 11px; color: #64748b; font-weight: 600;">kcal/day</small></div>' +
+                '<div style="font-size: 11px; color: #64748b; margin-top: 4px;">Mifflin-St Jeor Energy Expenditure</div>' +
+              '</div>' +
+            '</div>' +
+
+            // Metric 3: Target Weight Range
+            '<div class="col-sm-3 col-xs-6" style="padding: 6px;">' +
+              '<div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; height: 100%;">' +
+                '<div style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase;">Healthy Target Weight</div>' +
+                '<div style="font-size: 20px; font-weight: 800; color: #0284c7; margin-top: 3px;">' + ca.target_min_weight + ' – ' + ca.target_max_weight + ' <small style="font-size: 11px; font-weight: 600;">kg</small></div>' +
+                '<div style="font-size: 11px; margin-top: 4px;">' + goalDiffBadge + '</div>' +
+              '</div>' +
+            '</div>' +
+
+            // Metric 4: Daily Caloric Recommendation
+            '<div class="col-sm-3 col-xs-6" style="padding: 6px;">' +
+              '<div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; height: 100%;">' +
+                '<div style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase;">Maintenance (TDEE)</div>' +
+                '<div style="font-size: 22px; font-weight: 800; color: #7c3aed; margin-top: 3px;">' + ca.maintenance_calories.toLocaleString() + ' <small style="font-size: 11px; color: #64748b; font-weight: 600;">kcal/day</small></div>' +
+                '<div style="font-size: 11px; color: #64748b; margin-top: 4px;">Sedentary Baseline Expenditure</div>' +
+              '</div>' +
+            '</div>' +
+          '</div>';
+
+          // Clinical Guidance Text Box
+          clinHtml += '<div style="background: #f0fdfa; border: 1px solid #99f6e4; border-radius: 8px; padding: 12px 16px; margin-bottom: 12px;">' +
+            '<div style="display: flex; gap: 10px; align-items: flex-start;">' +
+              '<div style="color: #0d9488; font-size: 18px; margin-top: 2px;"><i class="fa fa-user-md"></i></div>' +
+              '<div>' +
+                '<strong style="font-size: 13px; color: #0f766e;">Clinical Nutritionist Recommendation:</strong>' +
+                '<p style="font-size: 12.5px; color: #334155; margin: 4px 0 0 0; line-height: 1.5;">' + ca.summary_text + '</p>' +
+              '</div>' +
+            '</div>' +
+          '</div>';
+
+          // If patient_nutrition_goals saved, display exact macronutrient plan
+          if (ng && ng.target_calories > 0) {
+            clinHtml += '<div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 14px;">' +
+              '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap;">' +
+                '<strong style="font-size: 12.5px; color: #1e293b;"><i class="fa fa-cutlery text-primary"></i> Stored Daily Nutrition &amp; Macronutrient Plan</strong>' +
+                '<span class="label label-info" style="font-size: 10.5px; text-transform: uppercase;">Goal: ' + (ng.fitness_goal || 'Maintain') + ' &bull; ' + (ng.activity_level || 'Sedentary') + '</span>' +
+              '</div>' +
+              '<div class="row" style="margin: 0 -4px; text-align: center;">' +
+                '<div class="col-xs-3" style="padding: 4px;"><div style="background: #f8fafc; padding: 8px; border-radius: 6px;"><div style="font-size: 11px; color: #64748b;">Target Cal</div><strong style="color: #0f172a; font-size: 15px;">' + parseInt(ng.target_calories).toLocaleString() + '</strong><div style="font-size: 10px; color: #94a3b8;">kcal</div></div></div>' +
+                '<div class="col-xs-3" style="padding: 4px;"><div style="background: #f8fafc; padding: 8px; border-radius: 6px;"><div style="font-size: 11px; color: #64748b;">Carbs</div><strong style="color: #0284c7; font-size: 15px;">' + Math.round(ng.carbs_g || 0) + 'g</strong><div style="font-size: 10px; color: #94a3b8;">40%</div></div></div>' +
+                '<div class="col-xs-3" style="padding: 4px;"><div style="background: #f8fafc; padding: 8px; border-radius: 6px;"><div style="font-size: 11px; color: #64748b;">Protein</div><strong style="color: #16a34a; font-size: 15px;">' + Math.round(ng.protein_g || 0) + 'g</strong><div style="font-size: 10px; color: #94a3b8;">30%</div></div></div>' +
+                '<div class="col-xs-3" style="padding: 4px;"><div style="background: #f8fafc; padding: 8px; border-radius: 6px;"><div style="font-size: 11px; color: #64748b;">Fats</div><strong style="color: #d97706; font-size: 15px;">' + Math.round(ng.fat_g || 0) + 'g</strong><div style="font-size: 10px; color: #94a3b8;">30%</div></div></div>' +
+              '</div>' +
+            '</div>';
+          }
+
+          $('#dt-clinical-panel').html(clinHtml);
+        } else {
+          $('#dt-clinical-panel').html(
+            '<div style="text-align: center; padding: 18px; background: #f8fafc; border-radius: 8px; border: 1px dashed #cbd5e1;">' +
+              '<i class="fa fa-line-chart" style="font-size: 24px; color: #94a3b8; margin-bottom: 6px; display: block;"></i>' +
+              '<strong style="font-size: 13px; color: #334155;">Height &amp; Weight vitals not yet provided.</strong>' +
+              '<p style="font-size: 12px; color: #64748b; margin: 4px 0 10px 0;">Add the patient\'s height and weight using the Edit button to generate instant Mifflin-St Jeor BMR, BMI, and clinical nutritionist goals.</p>' +
+              '<button type="button" onclick="editCurrentPatient()" class="btn btn-xs btn-primary" style="background: #00a896; border-color: #00a896; font-weight: 600;"><i class="fa fa-pencil"></i> Add Height &amp; Weight</button>' +
+            '</div>'
+          );
+        }
 
         // Appointments
         $('#count-appts').text(data.appointments.length);
@@ -526,6 +792,151 @@ function openPatientDossier(patientId) {
         $('#dt-rewards-body').html(rewHtml);
       }
     });
+}
+
+function editCurrentPatient() {
+  if (currentDossierPatientId > 0) {
+    openEditPatientModal(currentDossierPatientId);
+  }
+}
+
+function openEditPatientModal(patientId) {
+  $('#editPatientAlert').hide().removeClass('alert-success alert-danger').text('');
+  $('#edit_patient_id').val(patientId);
+
+  // If dossier data matches, populate immediately
+  if (currentDossierData && currentDossierData.profile && parseInt(currentDossierData.profile.USERID) === parseInt(patientId)) {
+    populateEditModalFields(currentDossierData.profile);
+    $('#editPatientModal').modal('show');
+    return;
+  }
+
+  // Otherwise fetch via AJAX
+  fetch('<?=base_url("users/patient/details_ajax/");?>' + patientId + '?ajax=1')
+    .then(r => r.json())
+    .then(data => {
+      if (data.status === 'success' && data.profile) {
+        populateEditModalFields(data.profile);
+        $('#editPatientModal').modal('show');
+      } else {
+        alert('Could not load patient information for editing.');
+      }
+    })
+    .catch(err => {
+      console.error(err);
+      alert('Error fetching patient data.');
+    });
+}
+
+function populateEditModalFields(p) {
+  $('#edit_fname').val(p.FNAME || '');
+  $('#edit_lname').val(p.LNAME || '');
+  $('#edit_mobile').val(p.MOBILE || '');
+  $('#edit_email').val(p.EMAIL || '');
+  $('#edit_dob').val(p.DOB || '');
+  
+  let g = p.GENDER ? p.GENDER.toUpperCase() : '';
+  if (g.startsWith('F')) $('#edit_gender').val('F');
+  else if (g.startsWith('M')) $('#edit_gender').val('M');
+  else if (g.startsWith('O')) $('#edit_gender').val('O');
+  else $('#edit_gender').val('');
+
+  $('#edit_bgroup').val(p.BGROUP ? p.BGROUP.toUpperCase().trim() : '');
+  $('#edit_height').val(p.HEIGHT || '');
+  $('#edit_weight').val(p.WEIGHT || '');
+  $('#edit_status').val(p.STATUS === '2' ? '2' : '1');
+}
+
+function submitEditPatientForm(e) {
+  e.preventDefault();
+  const form = document.getElementById('editPatientForm');
+  const btn = document.getElementById('btnSavePatient');
+  const origBtnText = btn ? btn.innerHTML : '';
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Saving...';
+  }
+
+  const formData = new FormData(form);
+  const patientId = formData.get('patient_id');
+
+  fetch('<?=base_url("users/patient/save_patient_ajax");?>', {
+    method: 'POST',
+    body: formData
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = origBtnText;
+    }
+
+    const alertBox = $('#editPatientAlert');
+    if (data.status === 'success') {
+      alertBox.removeClass('alert-danger').addClass('alert alert-success').html('<i class="fa fa-check-circle"></i> ' + (data.message || 'Saved successfully!')).show();
+
+      // Update table row values
+      const fn = formData.get('fname') || '';
+      const ln = formData.get('lname') || '';
+      const mob = formData.get('mobile') || '';
+      const em = formData.get('email') || '';
+      const gen = formData.get('gender') || '';
+      const dob = formData.get('dob') || '';
+      const bg = formData.get('bgroup') || '';
+      const ht = formData.get('height') || '';
+      const wt = formData.get('weight') || '';
+      const st = formData.get('status');
+
+      $('#row-name-' + patientId).text(fn + ' ' + ln);
+      $('#row-mobile-' + patientId).text(mob);
+      $('#row-email-' + patientId).text(em || 'N/A');
+      $('#row-gender-' + patientId).text(gen === 'F' ? 'Female' : (gen === 'M' ? 'Male' : 'Unspecified'));
+      $('#row-dob-' + patientId).text(dob || 'Age: N/A');
+
+      if (bg) {
+        $('#row-bgroup-' + patientId).html('<span class="label label-danger" style="background-color: #fee2e2 !important; color: #dc2626 !important; border: 1px solid #fecaca; font-weight: 700; font-size: 11px; padding: 3px 8px; border-radius: 4px;">' + bg + '</span>');
+      } else {
+        $('#row-bgroup-' + patientId).html('<span style="color: #94a3b8;">--</span>');
+      }
+
+      // Update Vitals & BMI in row if available
+      if (data.profile && data.profile.clinical_assessment && data.profile.clinical_assessment.bmi > 0) {
+        const ca = data.profile.clinical_assessment;
+        $('#row-vitals-' + patientId).html(
+          '<div style="font-weight: 700; color: #1e293b; font-size: 12px;">' + Math.round(ca.height_cm) + ' cm &bull; ' + Math.round(ca.weight_kg) + ' kg</div>' +
+          '<span class="label" style="background: ' + ca.bmi_color + '18; color: ' + ca.bmi_color + '; border: 1px solid ' + ca.bmi_color + '60; font-weight: 700; font-size: 10px; padding: 2px 6px; border-radius: 4px; display: inline-block; margin-top: 3px;">BMI ' + ca.bmi + ' (' + ca.bmi_status + ')</span>'
+        );
+      } else if (ht || wt) {
+        $('#row-vitals-' + patientId).html('<div style="font-size: 12px; color: #475569; font-weight: 600;">' + (ht || '-') + ' / ' + (wt || '-') + '</div>');
+      }
+
+      const stBtn = document.getElementById('status-btn-' + patientId);
+      if (stBtn) {
+        stBtn.textContent = st === '1' ? 'ACTIVE' : 'BLOCKED';
+        stBtn.className = 'btn btn-xs label label-' + (st === '1' ? 'success' : 'danger');
+      }
+
+      // If Dossier is currently open, refresh it in background
+      if ($('#patientDetailModal').hasClass('in') || $('#patientDetailModal').is(':visible')) {
+        openPatientDossier(patientId);
+      }
+
+      setTimeout(() => {
+        $('#editPatientModal').modal('hide');
+      }, 1200);
+
+    } else {
+      alertBox.removeClass('alert-success').addClass('alert alert-danger').html('<i class="fa fa-exclamation-triangle"></i> ' + (data.message || 'Error updating patient.')).show();
+    }
+  })
+  .catch(err => {
+    console.error(err);
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = origBtnText;
+    }
+    $('#editPatientAlert').removeClass('alert-success').addClass('alert alert-danger').text('Network or server error while saving.').show();
+  });
 }
 
 function openPasswordModal(patientId, name) {

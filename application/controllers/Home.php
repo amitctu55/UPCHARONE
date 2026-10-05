@@ -3530,6 +3530,19 @@ class Home extends CI_Controller
 				$this->db->where('USERID', $userid)->update('userlogin', $sync);
 			}
 
+			// Sync with patient_profiles
+			try {
+				if ($this->db->table_exists('patient_profiles')) {
+					$profSync = array('updated_at' => date('Y-m-d H:i:s'));
+					if ($height_cm > 0 && $this->db->field_exists('height_cm', 'patient_profiles')) $profSync['height_cm'] = $height_cm;
+					if ($weight_kg > 0 && $this->db->field_exists('weight_kg', 'patient_profiles')) $profSync['weight_kg'] = $weight_kg;
+					if (!empty($gender)) $profSync['gender'] = ($gender === 'FEMALE' ? 'F' : ($gender === 'MALE' ? 'M' : $gender));
+					if ($this->db->where('user_id', $userid)->get('patient_profiles')->row()) {
+						$this->db->where('user_id', $userid)->update('patient_profiles', $profSync);
+					}
+				}
+			} catch (\Throwable $e) {}
+
 			$is_ajax = $this->input->is_ajax_request() || $this->input->post('ajax');
 			if ($is_ajax) {
 				$this->output->set_content_type('application/json')->set_output(json_encode([

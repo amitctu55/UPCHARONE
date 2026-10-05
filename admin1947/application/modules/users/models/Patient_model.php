@@ -5,6 +5,7 @@ class Patient_model extends CI_Model {
 
     public function __construct() {
         parent::__construct();
+        $this->load->helper('clinical_helper');
         $this->ensure_schema();
     }
 
@@ -27,6 +28,27 @@ class Patient_model extends CI_Model {
                   PRIMARY KEY (`id`),
                   KEY `idx_dep_user` (`primary_user_id`)
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+            }
+            if ($this->db && $this->db->table_exists('patient_nutrition_goals') === FALSE) {
+                $this->db->query("CREATE TABLE IF NOT EXISTS `patient_nutrition_goals` (
+                  `id` INT AUTO_INCREMENT PRIMARY KEY,
+                  `user_id` INT NOT NULL,
+                  `age` INT DEFAULT NULL,
+                  `gender` VARCHAR(20) DEFAULT NULL,
+                  `height_cm` DECIMAL(6,2) DEFAULT NULL,
+                  `weight_kg` DECIMAL(6,2) DEFAULT NULL,
+                  `activity_level` VARCHAR(50) DEFAULT 'sedentary',
+                  `fitness_goal` VARCHAR(50) DEFAULT 'maintain',
+                  `bmr` DECIMAL(8,2) DEFAULT NULL,
+                  `tdee` DECIMAL(8,2) DEFAULT NULL,
+                  `target_calories` DECIMAL(8,2) DEFAULT NULL,
+                  `carbs_g` DECIMAL(8,2) DEFAULT NULL,
+                  `protein_g` DECIMAL(8,2) DEFAULT NULL,
+                  `fat_g` DECIMAL(8,2) DEFAULT NULL,
+                  `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+                  `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                  UNIQUE KEY `uk_user` (`user_id`)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
             }
         } catch (Throwable $e) {}
     }
@@ -77,11 +99,28 @@ class Patient_model extends CI_Model {
         $this->db->limit($limit, $offset);
 
         $query = $this->db->get();
-        return ($query && is_object($query)) ? $query->result_array() : array();
+        $patients = ($query && is_object($query)) ? $query->result_array() : array();
+
+        // Enrich each patient with clinical calculations
+        foreach ($patients as &$p) {
+            $h = function_exists('parse_clinical_height') ? parse_clinical_height($p['HEIGHT'] ?? '') : 0.0;
+            $w = function_exists('parse_clinical_weight') ? parse_clinical_weight($p['WEIGHT'] ?? '') : 0.0;
+            $bmiData = function_exists('calculate_bmi') ? calculate_bmi($h, $w) : ['bmi' => 0.0, 'status' => 'Unknown', 'color' => '#64748b', 'badge' => 'secondary'];
+            
+            $p['height_cm']  = $h;
+            $p['weight_kg']  = $w;
+            $p['bmi']        = $bmiData['bmi'];
+            $p['bmi_status'] = $bmiData['status'];
+            $p['bmi_color']  = $bmiData['color'];
+            $p['bmi_badge']  = $bmiData['badge'];
+            $p['age']        = function_exists('calculate_patient_age') ? calculate_patient_age($p['DOB'] ?? '') : 30;
+        }
+
+        return $patients;
     }
 
     /**
-     * Get complete patient profile & dependents
+     * Get complete patient profile, dependents, nutrition goals & metabolic assessment
      */
     public function get_patient_profile($patient_id) {
         $patient_id = (int)$patient_id;
@@ -99,12 +138,31 @@ class Patient_model extends CI_Model {
         $patient = ($res && is_object($res)) ? $res->row_array() : null;
 
         if ($patient) {
+            // Dependents
             if ($this->db->table_exists('patient_dependents')) {
                 $dep_q = $this->db->get_where('patient_dependents', array('primary_user_id' => $patient_id));
                 $patient['dependents'] = ($dep_q && is_object($dep_q)) ? $dep_q->result_array() : array();
             } else {
                 $patient['dependents'] = array();
             }
+
+            // Stored Nutrition Goals
+            if ($this->db->table_exists('patient_nutrition_goals')) {
+                $ng_q = $this->db->get_where('patient_nutrition_goals', array('user_id' => $patient_id));
+                $patient['nutrition_goals'] = ($ng_q && is_object($ng_q)) ? $ng_q->row_array() : null;
+            } else {
+                $patient['nutrition_goals'] = null;
+            }
+
+            // Clinical & Metabolic Assessment
+            if (function_exists('calculate_patient_health_goals')) {
+                $patient['clinical_assessment'] = calculate_patient_health_goals($patient);
+            } else {
+                $patient['clinical_assessment'] = null;
+            }
+
+            // Calculated Age & Clean DOB
+            $patient['calculated_age'] = function_exists('calculate_patient_age') ? calculate_patient_age($patient['DOB'] ?? '') : 30;
         }
 
         return $patient;
@@ -262,5 +320,151 @@ class Patient_model extends CI_Model {
         $patient_id = (int)$patient_id;
         $pwd = md5($new_password);
         return $this->db->where('USERID', $patient_id)->update('userlogin', array('PASSWORD' => $pwd));
+    }
+
+    /**
+     * Update complete patient profile and sync across system tables
+     */
+    public function update_patient($patient_id, $data) {
+        $patient_id = (int)$patient_id;
+        if (!$patient_id) {
+            return array('status' => 'error', 'message' => 'Invalid patient ID.');
+        }
+
+        $fname  = trim($data['fname'] ?? '');
+        $lname  = trim($data['lname'] ?? '');
+        $email  = trim($data['email'] ?? '');
+        $mobile = trim($data['mobile'] ?? '');
+        $gender = trim($data['gender'] ?? '');
+        $dob    = trim($data['dob'] ?? '');
+        $bgroup = trim($data['bgroup'] ?? '');
+        $height = trim($data['height'] ?? '');
+        $weight = trim($data['weight'] ?? '');
+        $status = isset($data['status']) ? (string)$data['status'] : '1';
+
+        if (empty($fname)) {
+            return array('status' => 'error', 'message' => 'First name is required.');
+        }
+
+        // Clean mobile
+        $cleanMobile = null;
+        if (!empty($mobile)) {
+            $cleanMobile = preg_replace('/[^0-9]/', '', $mobile);
+            if (strlen($cleanMobile) == 12 && substr($cleanMobile, 0, 2) === '91') {
+                $cleanMobile = substr($cleanMobile, 2);
+            }
+            if (strlen($cleanMobile) < 10) {
+                return array('status' => 'error', 'message' => 'Please provide a valid 10-digit mobile number.');
+            }
+            // Check collision with another user
+            $dupMob = $this->db->group_start()
+                ->where('MOBILE', $cleanMobile)
+                ->or_where('MOBILE', $mobile)
+                ->group_end()
+                ->where('USERID !=', $patient_id)
+                ->get('userlogin')->row();
+            if ($dupMob) {
+                return array('status' => 'error', 'message' => 'Mobile number ' . html_escape($cleanMobile) . ' is already used by another patient.');
+            }
+        }
+
+        // Validate Email
+        $cleanEmail = null;
+        if (!empty($email)) {
+            if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                return array('status' => 'error', 'message' => 'Please enter a valid email address.');
+            }
+            $cleanEmail = strtolower($email);
+            $dupEmail = $this->db->where('LOWER(EMAIL)', $cleanEmail)
+                ->where('USERID !=', $patient_id)
+                ->get('userlogin')->row();
+            if ($dupEmail) {
+                return array('status' => 'error', 'message' => 'Email address ' . html_escape($email) . ' is already registered with another account.');
+            }
+        }
+
+        // Update userlogin
+        $udata = array(
+            'FNAME'       => $fname,
+            'LNAME'       => $lname,
+            'GENDER'      => !empty($gender) ? $gender : null,
+            'DOB'         => !empty($dob) ? $dob : null,
+            'BGROUP'      => !empty($bgroup) ? $bgroup : null,
+            'HEIGHT'      => !empty($height) ? $height : null,
+            'WEIGHT'      => !empty($weight) ? $weight : null,
+            'STATUS'      => ($status === '2' ? '2' : '1'),
+            'UPDATE_DATE' => date('Y-m-d')
+        );
+        if ($cleanMobile !== null) $udata['MOBILE'] = $cleanMobile;
+        if ($cleanEmail !== null) $udata['EMAIL'] = $cleanEmail;
+
+        $this->db->where('USERID', $patient_id)->update('userlogin', $udata);
+
+        // Sync with upchar_users if table exists
+        if ($this->db->table_exists('upchar_users')) {
+            $fullName = trim($fname . ' ' . $lname);
+            $uuData = array(
+                'name'       => $fullName,
+                'status'     => ($status === '2' ? 'Suspended' : 'Active'),
+                'updated_at' => date('Y-m-d H:i:s')
+            );
+            if ($cleanMobile !== null) $uuData['mobile'] = $cleanMobile;
+            if ($cleanEmail !== null) $uuData['email'] = $cleanEmail;
+
+            $existsUu = $this->db->where('id', $patient_id)->get('upchar_users')->row();
+            if ($existsUu) {
+                $this->db->where('id', $patient_id)->update('upchar_users', $uuData);
+            }
+        }
+
+        // Sync with patient_profiles if table exists
+        if ($this->db->table_exists('patient_profiles')) {
+            $profData = array(
+                'dob'         => !empty($dob) ? $dob : null,
+                'gender'      => !empty($gender) ? $gender : null,
+                'blood_group' => !empty($bgroup) ? $bgroup : null,
+                'updated_at'  => date('Y-m-d H:i:s')
+            );
+            $h_cm = function_exists('parse_clinical_height') ? parse_clinical_height($height) : 0;
+            $w_kg = function_exists('parse_clinical_weight') ? parse_clinical_weight($weight) : 0;
+            if ($this->db->field_exists('height_cm', 'patient_profiles') && $h_cm > 0) {
+                $profData['height_cm'] = $h_cm;
+            }
+            if ($this->db->field_exists('weight_kg', 'patient_profiles') && $w_kg > 0) {
+                $profData['weight_kg'] = $w_kg;
+            }
+
+            $existsProf = $this->db->where('user_id', $patient_id)->get('patient_profiles')->row();
+            if ($existsProf) {
+                $this->db->where('user_id', $patient_id)->update('patient_profiles', $profData);
+            } else {
+                $profData['user_id'] = $patient_id;
+                $profData['created_at'] = date('Y-m-d H:i:s');
+                $this->db->insert('patient_profiles', $profData);
+            }
+        }
+
+        // If patient_nutrition_goals exists, sync height and weight
+        if ($this->db->table_exists('patient_nutrition_goals')) {
+            $h_cm = function_exists('parse_clinical_height') ? parse_clinical_height($height) : 0;
+            $w_kg = function_exists('parse_clinical_weight') ? parse_clinical_weight($weight) : 0;
+            if ($h_cm > 0 || $w_kg > 0) {
+                $ngSync = array();
+                if ($h_cm > 0) $ngSync['height_cm'] = $h_cm;
+                if ($w_kg > 0) $ngSync['weight_kg'] = $w_kg;
+                if (!empty($gender)) $ngSync['gender'] = ($gender === 'F' ? 'F' : 'M');
+                $ngSync['updated_at'] = date('Y-m-d H:i:s');
+
+                $existsNg = $this->db->where('user_id', $patient_id)->get('patient_nutrition_goals')->row();
+                if ($existsNg) {
+                    $this->db->where('user_id', $patient_id)->update('patient_nutrition_goals', $ngSync);
+                }
+            }
+        }
+
+        return array(
+            'status'  => 'success',
+            'message' => 'Patient information updated and synchronized successfully across all records!'
+        );
     }
 }

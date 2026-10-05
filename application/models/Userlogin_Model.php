@@ -163,6 +163,50 @@ function __construct() {
             $this->session->set_userdata('mobile', $cleanMobile);
         }
 
+        // Cross-table synchronization for comprehensive admin storage
+        try {
+            if ($this->db->table_exists('upchar_users')) {
+                $uuData = array(
+                    'name'       => $fullNameDisplay,
+                    'updated_at' => date('Y-m-d H:i:s')
+                );
+                if (!empty($cleanMobile)) $uuData['mobile'] = $cleanMobile;
+                if (!empty($cleanEmail))  $uuData['email']  = $cleanEmail;
+                $existsUu = $this->db->where('id', $userid)->get('upchar_users')->row();
+                if ($existsUu) {
+                    $this->db->where('id', $userid)->update('upchar_users', $uuData);
+                }
+            }
+
+            if ($this->db->table_exists('patient_profiles')) {
+                $profData = array(
+                    'dob'         => !empty($dob) ? $dob : null,
+                    'gender'      => !empty($gender) ? $gender : null,
+                    'blood_group' => !empty($bgroup) ? $bgroup : null,
+                    'updated_at'  => date('Y-m-d H:i:s')
+                );
+                $h_val = floatval(preg_replace('/[^0-9.]/', '', (string)$height));
+                $w_val = floatval(preg_replace('/[^0-9.]/', '', (string)$weight));
+                if ($this->db->field_exists('height_cm', 'patient_profiles') && $h_val > 0) {
+                    $profData['height_cm'] = ($h_val < 10) ? round($h_val * 30.48, 1) : $h_val;
+                }
+                if ($this->db->field_exists('weight_kg', 'patient_profiles') && $w_val > 0) {
+                    $profData['weight_kg'] = $w_val;
+                }
+
+                $existsProf = $this->db->where('user_id', $userid)->get('patient_profiles')->row();
+                if ($existsProf) {
+                    $this->db->where('user_id', $userid)->update('patient_profiles', $profData);
+                } else {
+                    $profData['user_id'] = $userid;
+                    $profData['created_at'] = date('Y-m-d H:i:s');
+                    $this->db->insert('patient_profiles', $profData);
+                }
+            }
+        } catch (\Throwable $ex) {
+            log_message('error', 'Profile sync error: ' . $ex->getMessage());
+        }
+
         return array(
             'status'       => 'success', 
             'message'      => 'Profile details updated successfully!',

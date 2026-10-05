@@ -7,7 +7,7 @@ class Patient extends CI_Controller {
         parent::__construct();
         date_default_timezone_set("Asia/Kolkata");
         $this->load->model('Patient_model');
-        $this->load->helper(array('query_string_helper', 'dbquery_helper', 'admin_helper'));
+        $this->load->helper(array('query_string_helper', 'dbquery_helper', 'admin_helper', 'clinical_helper'));
     }
 
     public function index() {
@@ -163,5 +163,39 @@ class Patient extends CI_Controller {
             $this->session->set_flashdata('flashmsg', '<div class="alert alert-danger">Failed to reset password.</div>');
         }
         redirect($_SERVER['HTTP_REFERER'] ?: base_url('users/patient'));
+    }
+
+    /**
+     * AJAX endpoint to save/update complete patient information from admin
+     */
+    public function save_patient_ajax() {
+        $patient_id = (int)$this->input->post('patient_id');
+        if (!$patient_id) {
+            echo json_encode(array('status' => 'error', 'message' => 'Invalid patient ID.'));
+            return;
+        }
+
+        $data = array(
+            'fname'  => trim($this->input->post('fname', TRUE)),
+            'lname'  => trim($this->input->post('lname', TRUE)),
+            'email'  => trim($this->input->post('email', TRUE)),
+            'mobile' => trim($this->input->post('mobile', TRUE)),
+            'gender' => trim($this->input->post('gender', TRUE)),
+            'dob'    => trim($this->input->post('dob', TRUE)),
+            'bgroup' => trim($this->input->post('bgroup', TRUE)),
+            'height' => trim($this->input->post('height', TRUE)),
+            'weight' => trim($this->input->post('weight', TRUE)),
+            'status' => trim($this->input->post('status', TRUE))
+        );
+
+        $result = $this->Patient_model->update_patient($patient_id, $data);
+
+        // Fetch refreshed profile to return back
+        if ($result['status'] === 'success') {
+            $result['profile'] = $this->Patient_model->get_patient_profile($patient_id);
+        }
+
+        header('Content-Type: application/json');
+        echo json_encode($result);
     }
 }
