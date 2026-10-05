@@ -46,37 +46,46 @@ class Auth_model extends CI_Model {
             return null;
         }
 
-        $clean = trim($identifier);
+        try {
+            if (!$this->db || !$this->db->conn_id || !$this->db->table_exists(self::TABLE_MASTER_USERS)) {
+                return null;
+            }
 
-        $this->db->select('*');
-        $this->db->from(self::TABLE_MASTER_USERS);
+            $clean = trim($identifier);
 
-        if (is_numeric($clean)) {
-            // Check numeric ID or 10-digit mobile
-            $this->db->group_start();
-            $this->db->where('id', (int)$clean);
-            $this->db->or_where('mobile', $clean);
-            $this->db->group_end();
-        } else if (filter_var($clean, FILTER_VALIDATE_EMAIL)) {
-            $this->db->where('LOWER(email)', strtolower($clean));
-        } else if (strlen($clean) === 36 && strpos($clean, '-') !== false) {
-            $this->db->where('uuid', $clean);
-        } else {
-            // Fallback search across mobile or email
-            $this->db->group_start();
-            $this->db->where('mobile', $clean);
-            $this->db->or_where('LOWER(email)', strtolower($clean));
-            $this->db->group_end();
+            $this->db->select('*');
+            $this->db->from(self::TABLE_MASTER_USERS);
+
+            if (is_numeric($clean)) {
+                // Check numeric ID or 10-digit mobile
+                $this->db->group_start();
+                $this->db->where('id', (int)$clean);
+                $this->db->or_where('mobile', $clean);
+                $this->db->group_end();
+            } else if (filter_var($clean, FILTER_VALIDATE_EMAIL)) {
+                $this->db->where('LOWER(email)', strtolower($clean));
+            } else if (strlen($clean) === 36 && strpos($clean, '-') !== false) {
+                $this->db->where('uuid', $clean);
+            } else {
+                // Fallback search across mobile or email
+                $this->db->group_start();
+                $this->db->where('mobile', $clean);
+                $this->db->or_where('LOWER(email)', strtolower($clean));
+                $this->db->group_end();
+            }
+
+            $user = $this->db->limit(1)->get()->row_array();
+
+            if ($user) {
+                $user['roles'] = $this->get_user_roles($user['id']);
+                $user['profiles'] = $this->get_user_profiles($user['id']);
+            }
+
+            return $user;
+        } catch (\Throwable $e) {
+            log_message('error', 'Auth_model find_master_user error: ' . $e->getMessage());
+            return null;
         }
-
-        $user = $this->db->limit(1)->get()->row_array();
-
-        if ($user) {
-            $user['roles'] = $this->get_user_roles($user['id']);
-            $user['profiles'] = $this->get_user_profiles($user['id']);
-        }
-
-        return $user;
     }
 
     /**
@@ -207,19 +216,22 @@ class Auth_model extends CI_Model {
      */
     public function get_user_roles($userId) {
         $roles = [];
+        try {
+            if (!$this->db || !$this->db->conn_id) return $roles;
 
-        if ($this->db->where('user_id', $userId)->count_all_results(self::TABLE_PATIENT_PROFILES) > 0) {
-            $roles[] = 'patient';
-        }
-        if ($this->db->where('user_id', $userId)->count_all_results(self::TABLE_AMB_PROVIDERS) > 0) {
-            $roles[] = 'ambulance_provider';
-        }
-        if ($this->db->where('user_id', $userId)->count_all_results(self::TABLE_DOCTOR_PROFILES) > 0) {
-            $roles[] = 'doctor';
-        }
-        if ($this->db->where('user_id', $userId)->count_all_results(self::TABLE_HOSPITAL_ADMINS) > 0) {
-            $roles[] = 'hospital_admin';
-        }
+            if ($this->db->table_exists(self::TABLE_PATIENT_PROFILES) && $this->db->where('user_id', $userId)->count_all_results(self::TABLE_PATIENT_PROFILES) > 0) {
+                $roles[] = 'patient';
+            }
+            if ($this->db->table_exists(self::TABLE_AMB_PROVIDERS) && $this->db->where('user_id', $userId)->count_all_results(self::TABLE_AMB_PROVIDERS) > 0) {
+                $roles[] = 'ambulance_provider';
+            }
+            if ($this->db->table_exists(self::TABLE_DOCTOR_PROFILES) && $this->db->where('user_id', $userId)->count_all_results(self::TABLE_DOCTOR_PROFILES) > 0) {
+                $roles[] = 'doctor';
+            }
+            if ($this->db->table_exists(self::TABLE_HOSPITAL_ADMINS) && $this->db->where('user_id', $userId)->count_all_results(self::TABLE_HOSPITAL_ADMINS) > 0) {
+                $roles[] = 'hospital_admin';
+            }
+        } catch (\Throwable $e) {}
 
         return $roles;
     }
@@ -228,12 +240,30 @@ class Auth_model extends CI_Model {
      * Get all profile detail models for a master user
      */
     public function get_user_profiles($userId) {
-        return [
-            'patient'            => $this->db->where('user_id', $userId)->get(self::TABLE_PATIENT_PROFILES)->row_array(),
-            'ambulance_provider' => $this->db->where('user_id', $userId)->get(self::TABLE_AMB_PROVIDERS)->row_array(),
-            'doctor'             => $this->db->where('user_id', $userId)->get(self::TABLE_DOCTOR_PROFILES)->row_array(),
-            'hospital_admin'     => $this->db->where('user_id', $userId)->get(self::TABLE_HOSPITAL_ADMINS)->row_array(),
+        $profiles = [
+            'patient'            => null,
+            'ambulance_provider' => null,
+            'doctor'             => null,
+            'hospital_admin'     => null,
         ];
+        try {
+            if (!$this->db || !$this->db->conn_id) return $profiles;
+
+            if ($this->db->table_exists(self::TABLE_PATIENT_PROFILES)) {
+                $profiles['patient'] = $this->db->where('user_id', $userId)->get(self::TABLE_PATIENT_PROFILES)->row_array();
+            }
+            if ($this->db->table_exists(self::TABLE_AMB_PROVIDERS)) {
+                $profiles['ambulance_provider'] = $this->db->where('user_id', $userId)->get(self::TABLE_AMB_PROVIDERS)->row_array();
+            }
+            if ($this->db->table_exists(self::TABLE_DOCTOR_PROFILES)) {
+                $profiles['doctor'] = $this->db->where('user_id', $userId)->get(self::TABLE_DOCTOR_PROFILES)->row_array();
+            }
+            if ($this->db->table_exists(self::TABLE_HOSPITAL_ADMINS)) {
+                $profiles['hospital_admin'] = $this->db->where('user_id', $userId)->get(self::TABLE_HOSPITAL_ADMINS)->row_array();
+            }
+        } catch (\Throwable $e) {}
+
+        return $profiles;
     }
 
     /**

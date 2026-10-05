@@ -24,44 +24,55 @@ class User extends CI_Controller {
         $login = $this->User_Model->login($email,$password);
 
 		// Centralized Identity & SSO Integration
-		$this->load->model('Auth_model');
-		if ($login != 'SUCCESS') {
-			$masterUser = $this->Auth_model->find_master_user($email);
-			if ($masterUser && $this->Auth_model->verify_master_password($masterUser, $rawPassword)) {
-				$this->session->set_userdata([
-					'USERID'   => $masterUser['id'],
-					'userid'   => $masterUser['id'],
-					'WEB_UID'  => $masterUser['id'],
-					'username' => $masterUser['name'],
-					'name'     => $masterUser['name'],
-					'email'    => $masterUser['email'],
-					'mobile'   => $masterUser['mobile'],
-					'status'   => $masterUser['status'],
-				]);
-				$login = 'SUCCESS';
-			}
-		}
-		if($login=='SUCCESS'){
-			$last_page = $this->session->userdata('last_page');
-			$this->session->unset_userdata('last_page');
-			$redirect_url = $last_page ?: base_url('myappointments');
-			$userId = $this->session->userdata('USERID') ?: $this->session->userdata('userid');
-			if ($userId) {
-				$mUser = $this->Auth_model->find_master_user($userId);
-				if ($mUser) {
-					$ssoToken = $this->Auth_model->generate_sso_token($mUser);
-					setcookie('upchar_sso_token', $ssoToken, time() + 604800, '/demo/', '', false, false);
+		try {
+			$this->load->model('Auth_model');
+			if ($login != 'SUCCESS') {
+				$masterUser = $this->Auth_model->find_master_user($email);
+				if ($masterUser && $this->Auth_model->verify_master_password($masterUser, $rawPassword)) {
+					$this->session->set_userdata([
+						'USERID'   => $masterUser['id'],
+						'userid'   => $masterUser['id'],
+						'WEB_UID'  => $masterUser['id'],
+						'username' => $masterUser['name'],
+						'name'     => $masterUser['name'],
+						'email'    => $masterUser['email'],
+						'mobile'   => $masterUser['mobile'],
+						'status'   => $masterUser['status'],
+					]);
+					$login = 'SUCCESS';
 				}
 			}
-			$response=array('status'=>'success','msg'=>'Logged in Successfully', 'redirect_url' => $redirect_url);
-		}else if($login=='UNVERIFIED'){
-			$response=array('status'=>'failed','msg'=>'Your account is pending verification and approval by the Administrator. You cannot login until approved.');
-		}else if($login=='OTP'){
-			$response=array('status'=>'otp','msg'=>'Please Verify Mobile no');
-		}else if($login=='BLOCKED'){
-			$response=array('status'=>'failed','msg'=>'User Blocked by Administrator!');
-		}else {
-			$response=array('status'=>'failed','msg'=>'Incorrect Email or Password');
+			if($login=='SUCCESS'){
+				$last_page = $this->session->userdata('last_page');
+				$this->session->unset_userdata('last_page');
+				$redirect_url = $last_page ?: base_url('myappointments');
+				$userId = $this->session->userdata('USERID') ?: $this->session->userdata('userid');
+				if ($userId) {
+					$mUser = $this->Auth_model->find_master_user($userId);
+					if ($mUser) {
+						$ssoToken = $this->Auth_model->generate_sso_token($mUser);
+						$cookiePath = config_item('cookie_path') ?: '/';
+						setcookie('upchar_sso_token', $ssoToken, time() + 604800, $cookiePath, '', false, false);
+					}
+				}
+				$response=array('status'=>'success','msg'=>'Logged in Successfully', 'redirect_url' => $redirect_url);
+			}else if($login=='UNVERIFIED'){
+				$response=array('status'=>'failed','msg'=>'Your account is pending verification and approval by the Administrator. You cannot login until approved.');
+			}else if($login=='OTP'){
+				$response=array('status'=>'otp','msg'=>'Please Verify Mobile no');
+			}else if($login=='BLOCKED'){
+				$response=array('status'=>'failed','msg'=>'User Blocked by Administrator!');
+			}else {
+				$response=array('status'=>'failed','msg'=>'Incorrect Email or Password');
+			}
+		} catch (\Throwable $e) {
+			log_message('error', 'Login SSO integration exception: ' . $e->getMessage());
+			if ($login == 'SUCCESS') {
+				$redirect_url = base_url('myappointments');
+				$response=array('status'=>'success','msg'=>'Logged in Successfully', 'redirect_url' => $redirect_url);
+			} else {
+				$response=array('status'=>'failed','msg'=>'Incorrect Email or Password');
+			}
 		}
 		while (ob_get_level() > 0) { @ob_end_clean(); }
 		session_write_close();
