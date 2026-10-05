@@ -109,6 +109,44 @@ class Settings_model extends CI_Model {
     }
 
     /**
+     * Get email settings specifically as key-value pairs
+     */
+    public function get_email_settings() {
+        $settings = $this->db->where('setting_group', 'email')->get('system_settings')->result_array();
+        $res = [];
+        foreach ($settings as $s) {
+            $res[$s['setting_key']] = $s['setting_value'];
+        }
+        return $res;
+    }
+
+    /**
+     * Update email settings
+     */
+    public function update_email_settings($data) {
+        $fields = ['email_provider', 'mail_from_name', 'mail_from_email', 'from_name', 'from_email', 'smtp_host', 'smtp_port', 'smtp_crypto', 'smtp_user', 'smtp_pass', 'sendgrid_api_key'];
+        foreach ($fields as $key) {
+            if (isset($data[$key])) {
+                $val = $data[$key];
+                if ($key === 'smtp_pass' && (empty($val) || strpos($val, '••') !== false)) {
+                    continue; // Keep existing password if blank or dots
+                }
+                $db_key = $key;
+                if ($key === 'from_name') $db_key = 'mail_from_name';
+                if ($key === 'from_email') $db_key = 'mail_from_email';
+
+                $exists = $this->db->where('setting_key', $db_key)->count_all_results('system_settings');
+                if ($exists) {
+                    $this->db->where('setting_key', $db_key)->update('system_settings', ['setting_value' => $val]);
+                } else {
+                    $this->db->insert('system_settings', ['setting_group' => 'email', 'setting_key' => $db_key, 'setting_value' => $val]);
+                }
+            }
+        }
+        return true;
+    }
+
+    /**
      * Generate SQL Dump backup
      */
     public function generate_db_backup() {

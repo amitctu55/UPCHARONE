@@ -645,12 +645,22 @@
             <input type="hidden" name="category" value="email">
 
             <div class="settings-card">
-              <h3 class="card-section-title">
-                <span><i class="fa fa-send-o text-primary"></i> Email Provider Configuration</span>
-                <button type="button" class="btn btn-sm btn-adm-teal" data-toggle="modal" data-target="#testEmailModal">
-                  <i class="fa fa-paper-plane"></i> Send Test Email
-                </button>
-              </h3>
+              <div class="d-flex justify-content-between align-items-center" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 2px solid #eef2f6; padding-bottom: 12px;">
+                <h3 class="card-section-title" style="margin: 0; padding: 0; border: none;">
+                  <span><i class="fa fa-envelope text-primary"></i> Email Provider Configuration</span>
+                </h3>
+                <div>
+                  <button type="button" id="verifyGatewayBtn" class="btn btn-info btn-sm text-white" style="font-weight: 600; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-right: 8px;">
+                    <i class="fa fa-paper-plane"></i> Verify Gateway & Send Test
+                  </button>
+                  <button type="button" class="btn btn-sm btn-adm-teal" data-toggle="modal" data-target="#testEmailModal">
+                    <i class="fa fa-envelope-o"></i> Test Recipient Modal
+                  </button>
+                </div>
+              </div>
+
+              <!-- Display AJAX response here directly on the screen without crashing or blank screen -->
+              <div id="verificationResult" class="alert d-none" style="display: none; white-space: pre-wrap; font-family: monospace; font-size: 12px; margin-bottom: 20px;"></div>
 
               <div class="row">
                 <div class="col-md-4">
@@ -669,13 +679,13 @@
                 <div class="col-md-4">
                   <div class="form-group form-group-modern">
                     <label>Default "From Name"</label>
-                    <input type="text" name="mail_from_name" class="form-control" value="<?=htmlspecialchars($settings['mail_from_name']['value'] ?? 'Upchar Healthcare');?>">
+                    <input type="text" name="mail_from_name" id="mail_from_name" class="form-control" value="<?=htmlspecialchars($settings['mail_from_name']['value'] ?? 'Upchar Healthcare');?>">
                   </div>
                 </div>
                 <div class="col-md-4">
                   <div class="form-group form-group-modern">
                     <label>Default "From Email Address"</label>
-                    <input type="email" name="mail_from_email" class="form-control" value="<?=htmlspecialchars($settings['mail_from_email']['value'] ?? 'noreply@upchar.com');?>">
+                    <input type="email" name="mail_from_email" id="mail_from_email" class="form-control" value="<?=htmlspecialchars($settings['mail_from_email']['value'] ?? 'noreply@upchar.info');?>">
                   </div>
                 </div>
               </div>
@@ -689,19 +699,19 @@
                   <div class="col-md-4">
                     <div class="form-group form-group-modern">
                       <label>SMTP Host</label>
-                      <input type="text" name="smtp_host" class="form-control" value="<?=htmlspecialchars($settings['smtp_host']['value'] ?? 'smtp.gmail.com');?>" placeholder="smtp.gmail.com">
+                      <input type="text" name="smtp_host" id="smtp_host" class="form-control" value="<?=htmlspecialchars($settings['smtp_host']['value'] ?? 'mail.upchar.info');?>" placeholder="mail.upchar.info">
                     </div>
                   </div>
                   <div class="col-md-4">
                     <div class="form-group form-group-modern">
                       <label>SMTP Port</label>
-                      <input type="number" name="smtp_port" class="form-control" value="<?=htmlspecialchars($settings['smtp_port']['value'] ?? '587');?>" placeholder="587">
+                      <input type="number" name="smtp_port" id="smtp_port" class="form-control" value="<?=htmlspecialchars($settings['smtp_port']['value'] ?? '587');?>" placeholder="587">
                     </div>
                   </div>
                   <div class="col-md-4">
                     <div class="form-group form-group-modern">
                       <label>Encryption Protocol</label>
-                      <select name="smtp_crypto" class="form-control">
+                      <select name="smtp_crypto" id="smtp_crypto" class="form-control">
                         <?php $sc = $settings['smtp_crypto']['value'] ?? 'tls'; ?>
                         <option value="tls" <?=$sc === 'tls' ? 'selected' : '••••••••';?>>TLS (Recommended on Port 587)</option>
                         <option value="ssl" <?=$sc === 'ssl' ? 'selected' : '••••••••';?>>SSL (Port 465)</option>
@@ -715,14 +725,14 @@
                   <div class="col-md-6">
                     <div class="form-group form-group-modern">
                       <label>SMTP Username / Email</label>
-                      <input type="text" name="smtp_user" class="form-control" value="<?=htmlspecialchars($settings['smtp_user']['value'] ?? '••••••••');?>">
+                      <input type="text" name="smtp_user" id="smtp_user" class="form-control" value="<?=htmlspecialchars($settings['smtp_user']['value'] ?? '••••••••');?>">
                     </div>
                   </div>
                   <div class="col-md-6">
                     <div class="form-group form-group-modern">
                       <label>SMTP Password (Encrypted)</label>
                       <div class="input-group-secret">
-                        <input type="password" name="smtp_pass" class="form-control secret-field" placeholder="••••••••" value="<?=!empty($settings['smtp_pass']['value']) ? '••••••••' : '••••••••';?>">
+                        <input type="password" name="smtp_pass" id="smtp_pass" class="form-control secret-field" placeholder="••••••••" value="<?=!empty($settings['smtp_pass']['value']) ? '••••••••' : '••••••••';?>">
                         <button type="button" class="btn-toggle-secret" onclick="toggleSecretVisibility(this)">
                           <i class="fa fa-eye"></i>
                         </button>
@@ -1723,6 +1733,75 @@
       btn.prop('disabled', false).html('<i class="fa fa-refresh"></i> Flush Cache');
       showNotification('success', 'Application settings cache flushed successfully!');
     }, 'json');
+  });
+
+  // AJAX Gateway Verification Button (Inline Verification directly on the Email settings card)
+  $('#verifyGatewayBtn').on('click', function(e) {
+    e.preventDefault();
+    var btn = $(this);
+    var origHtml = btn.html();
+    var resultDiv = $('#verificationResult');
+
+    btn.html('<i class="fa fa-spinner fa-spin"></i> Verifying...').prop('disabled', true);
+    resultDiv.hide().removeClass('alert-success alert-danger alert-warning d-none').empty();
+
+    var postData = {
+      is_ajax: 1,
+      email_provider: $('#emailProviderSelect').val(),
+      from_name: $('input[name="mail_from_name"]').val(),
+      from_email: $('input[name="mail_from_email"]').val(),
+      mail_from_name: $('input[name="mail_from_name"]').val(),
+      mail_from_email: $('input[name="mail_from_email"]').val(),
+      smtp_host: $('#smtp_host').val() || $('input[name="smtp_host"]').val(),
+      smtp_port: $('#smtp_port').val() || $('input[name="smtp_port"]').val(),
+      smtp_crypto: $('#smtp_crypto').val() || $('select[name="smtp_crypto"]').val(),
+      smtp_user: $('#smtp_user').val() || $('input[name="smtp_user"]').val(),
+      smtp_pass: $('#smtp_pass').val() || $('input[name="smtp_pass"]').val(),
+      sendgrid_api_key: $('input[name="sendgrid_api_key"]').val(),
+      test_email: $('input[name="mail_from_email"]').val()
+    };
+
+    $.ajax({
+      url: '<?=base_url("settings/verify_gateway");?>',
+      type: 'POST',
+      data: postData,
+      dataType: 'json',
+      timeout: 20000,
+      success: function(response) {
+        btn.html(origHtml).prop('disabled', false);
+        resultDiv.removeClass('d-none').show();
+        if (response && response.status === 'success') {
+          var out = '<strong><i class="fa fa-check-circle"></i> Verification Successful!</strong> ' + (response.message || 'Email gateway is configured correctly.');
+          if (response.debug) {
+            out += '<pre style="margin-top: 10px; font-size: 11px; max-height: 180px; overflow-y: auto; background: rgba(0,0,0,0.04); padding: 8px; border-radius: 4px;">' + response.debug + '</pre>';
+          }
+          resultDiv.addClass('alert-success').html(out);
+        } else {
+          var out = '<strong><i class="fa fa-exclamation-triangle"></i> Verification Failed:</strong> ' + ((response && response.message) ? response.message : 'Unknown gateway error.');
+          if (response && response.debug) {
+            out += '<pre style="margin-top: 10px; font-size: 11px; max-height: 220px; overflow-y: auto; background: rgba(0,0,0,0.04); padding: 8px; border-radius: 4px;">' + response.debug + '</pre>';
+          }
+          resultDiv.addClass('alert-danger').html(out);
+        }
+      },
+      error: function(xhr, status, errorThrown) {
+        btn.html(origHtml).prop('disabled', false);
+        resultDiv.removeClass('d-none').show().addClass('alert-danger');
+        var msg = 'Request failed (' + (status || 'error') + '). ';
+        if (status === 'timeout') {
+          msg = 'Gateway Timeout: The SMTP server did not respond within 20 seconds. Please check host, port, or firewall restrictions.';
+        } else if (xhr && xhr.responseText) {
+          try {
+            var parsed = JSON.parse(xhr.responseText);
+            if (parsed.message) msg = parsed.message;
+            if (parsed.debug) msg += '\n\n' + parsed.debug;
+          } catch(err) {
+            msg += (xhr.status ? 'HTTP ' + xhr.status + ': ' : '') + (errorThrown || 'Check server error logs.');
+          }
+        }
+        resultDiv.html('<strong>Error:</strong> ' + msg);
+      }
+    });
   });
 
   // Test Email

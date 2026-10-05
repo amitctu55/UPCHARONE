@@ -75,6 +75,36 @@ class Settings extends CI_Controller {
     public function health() { $this->index('health'); }
 
     /**
+     * Dedicated Email Settings Save handler (supports both direct POST and AJAX)
+     */
+    public function save_email() {
+        $_POST['category'] = 'email';
+        $is_ajax = $this->input->is_ajax_request()
+            || $this->input->post('is_ajax')
+            || (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest');
+        
+        // Also ensure Settings_model updates directly if called
+        $postData = $this->input->post();
+        if (!empty($postData) && is_array($postData)) {
+            $this->settings_model->update_email_settings($postData);
+        }
+
+        $this->save();
+        if (!$is_ajax) {
+            $this->session->set_flashdata('success', 'Email settings updated successfully.');
+            redirect('settings?tab=email');
+        }
+    }
+
+    /**
+     * AJAX Endpoint for Gateway Verification
+     */
+    public function verify_gateway() {
+        $_POST['is_ajax'] = 1;
+        $this->send_test_email();
+    }
+
+    /**
      * Save Configuration Form Submission (AJAX & standard POST)
      */
     public function save() {
@@ -177,7 +207,11 @@ class Settings extends CI_Controller {
             || (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest')
             || (isset($_SERVER['HTTP_ACCEPT']) && stripos($_SERVER['HTTP_ACCEPT'], 'application/json') !== false);
 
-        $to_email = trim($this->input->post('test_email', TRUE) ?: ($this->input->get('to', TRUE) ?: get_system_setting('support_email', 'info@upchar.info')));
+        $to_email = trim($this->input->post('test_email', TRUE) 
+            ?: ($this->input->post('from_email', TRUE) 
+            ?: ($this->input->post('mail_from_email', TRUE) 
+            ?: ($this->input->get('to', TRUE) 
+            ?: get_system_setting('mail_from_email', get_system_setting('support_email', 'info@upchar.info'))))));
         $provider = $this->input->post('email_provider', TRUE) ?: ($this->input->get('provider', TRUE) ?: get_system_setting('email_provider', 'smtp'));
 
         try {
@@ -192,8 +226,8 @@ class Settings extends CI_Controller {
                 return;
             }
 
-            $from_name  = get_system_setting('mail_from_name', 'Upchar Healthcare');
-            $from_email = get_system_setting('mail_from_email', 'noreply@upchar.info');
+            $from_name  = trim($this->input->post('from_name', TRUE) ?: ($this->input->post('mail_from_name', TRUE) ?: get_system_setting('mail_from_name', 'Upchar Healthcare')));
+            $from_email = trim($this->input->post('from_email', TRUE) ?: ($this->input->post('mail_from_email', TRUE) ?: get_system_setting('mail_from_email', 'noreply@upchar.info')));
             $subject    = "Upchar Gateway Test Email - " . date('d M Y H:i:s');
             $body       = "<h2>Upchar Healthcare System Test Email</h2><p>This is a verification test email sent from the Upchar Admin Settings Portal.</p><p><strong>Provider:</strong> " . strtoupper($provider) . "<br><strong>Timestamp:</strong> " . date('Y-m-d H:i:s T') . "<br><strong>Status:</strong> Gateway is operating properly.</p>";
 
@@ -242,7 +276,10 @@ class Settings extends CI_Controller {
                 }
 
                 $smtp_user   = trim($this->input->post('smtp_user', TRUE) ?: ($this->input->get('smtp_user', TRUE) ?: get_system_setting('smtp_user', '')));
-                $smtp_pass   = $this->input->post('smtp_pass', TRUE) ?: ($this->input->get('smtp_pass', TRUE) ?: get_system_setting('smtp_pass', ''));
+                $smtp_pass   = $this->input->post('smtp_pass', TRUE) ?: ($this->input->get('smtp_pass', TRUE) ?: '');
+                if (empty($smtp_pass) || strpos($smtp_pass, '••') !== false) {
+                    $smtp_pass = get_system_setting('smtp_pass', '');
+                }
 
                 // Decrypt password if still in ENC format
                 if (strpos($smtp_pass, 'ENC:') === 0) {
