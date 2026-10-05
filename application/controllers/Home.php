@@ -3577,6 +3577,20 @@ class Home extends CI_Controller
 			);
 		}
 
+		// Normalize user vitals and identity attributes
+		if ($user) {
+			$user->blood_group = !empty($user->BGROUP) ? $user->BGROUP : (!empty($user->blood_group) ? $user->blood_group : (!empty($user->bgroup) ? $user->bgroup : ''));
+			$user->BGROUP      = $user->blood_group;
+			$user->height      = !empty($user->HEIGHT) ? $user->HEIGHT : (!empty($user->height) ? $user->height : '');
+			$user->HEIGHT      = $user->height;
+			$user->weight      = !empty($user->WEIGHT) ? $user->WEIGHT : (!empty($user->weight) ? $user->weight : '');
+			$user->WEIGHT      = $user->weight;
+			$user->dob         = !empty($user->DOB) ? $user->DOB : (!empty($user->dob) ? $user->dob : '');
+			$user->DOB         = $user->dob;
+			$user->gender      = !empty($user->GENDER) ? $user->GENDER : (!empty($user->gender) ? $user->gender : '');
+			$user->GENDER      = $user->gender;
+		}
+
 		$data['data'] = $user;
 		$data['user'] = $user;
 
@@ -3590,13 +3604,27 @@ class Home extends CI_Controller
 			$data['dependents'] = [];
 		}
 
+		$this->load->helper('clinical');
 		$data['health_goals'] = null;
 		try {
 			$data['health_goals'] = $this->calculate_patient_health_goals($user);
 		} catch (\Throwable $e) {
 			log_message('error', 'Error calculating health goals: ' . $e->getMessage());
-			$data['health_goals'] = null;
+			$data['health_goals'] = function_exists('calculate_patient_health_goals') ? calculate_patient_health_goals($user) : null;
 		}
+
+		// Pass explicit dynamic variables to view
+		$hg = $data['health_goals'];
+		$data['calculated_bmi']        = !empty($hg['bmi']) ? $hg['bmi'] : null;
+		$data['calculated_bmi_status'] = !empty($hg['bmi_status']) ? $hg['bmi_status'] : '';
+		$data['calculated_bmi_color']  = !empty($hg['bmi_color']) ? $hg['bmi_color'] : '#10b981';
+		$data['calculated_bmr']        = !empty($hg['bmr']) ? $hg['bmr'] : null;
+		$data['calculated_age']        = !empty($hg['age']) ? $hg['age'] : null;
+		$data['calculated_gender']     = !empty($hg['gender']) ? $hg['gender'] : '';
+		$data['target_min_weight']     = !empty($hg['target_min_weight']) ? $hg['target_min_weight'] : null;
+		$data['target_ideal_weight']   = !empty($hg['target_ideal_weight']) ? $hg['target_ideal_weight'] : null;
+		$data['target_max_weight']     = !empty($hg['target_max_weight']) ? $hg['target_max_weight'] : null;
+		$data['user_blood_group']      = !empty($user->blood_group) ? $user->blood_group : (!empty($user->BGROUP) ? $user->BGROUP : '');
 
 		$data['nutrition_goals'] = null;
 		try {
@@ -3617,6 +3645,7 @@ class Home extends CI_Controller
 			echo "<div style='font-family: sans-serif; padding: 40px; text-align: center;'><h2>Profile temporarily unavailable</h2><p>Please refresh in a moment or contact support.</p><a href='" . base_url() . "'>Return to Home</a></div>";
 		}
 	}
+
 	public function save_nutrition_goals()
 	{
 		$userid = $this->session->userdata('userid') ?: $this->session->userdata('user_id') ?: $this->session->userdata('USERID');
@@ -3913,133 +3942,11 @@ class Home extends CI_Controller
 	 */
 	public function calculate_patient_health_goals($user)
 	{
-		if (!$user) return null;
-
-		$dob = !empty($user->DOB) ? $user->DOB : (!empty($user->dob) ? $user->dob : '');
-		$gender = strtoupper(trim(!empty($user->GENDER) ? $user->GENDER : (!empty($user->gender) ? $user->gender : 'F')));
-		$heightRaw = !empty($user->HEIGHT) ? $user->HEIGHT : (!empty($user->height) ? $user->height : '');
-		$weightRaw = !empty($user->WEIGHT) ? $user->WEIGHT : (!empty($user->weight) ? $user->weight : '');
-
-		preg_match('/(\d+(\.\d+)?)/', (string)$heightRaw, $h_m);
-		preg_match('/(\d+(\.\d+)?)/', (string)$weightRaw, $w_m);
-
-		if (empty($h_m[1]) || empty($w_m[1])) {
-			return null;
+		$this->load->helper('clinical');
+		if (function_exists('calculate_patient_health_goals')) {
+			return calculate_patient_health_goals($user);
 		}
-
-		$height_val = floatval($h_m[1]);
-		$weight_val = floatval($w_m[1]);
-
-		if ($height_val < 10) {
-			$height_cm = round($height_val * 30.48, 1);
-			$height_m  = round($height_cm / 100, 2);
-		} elseif ($height_val <= 300) {
-			$height_cm = $height_val;
-			$height_m  = round($height_cm / 100, 2);
-		} else {
-			return null;
-		}
-
-		if ($height_m < 0.5 || $weight_val <= 0) {
-			return null;
-		}
-
-		$weight_kg = $weight_val;
-
-		$age = 30;
-		$dob_formatted = '';
-		if (!empty($dob)) {
-			try {
-				$dob_dt = new DateTime($dob);
-				$now_dt = new DateTime();
-				$age = $now_dt->diff($dob_dt)->y;
-				$dob_formatted = $dob_dt->format('M d, Y');
-			} catch (\Throwable $e) {
-				$age = 30;
-			}
-		}
-
-		$bmi = round($weight_kg / ($height_m * $height_m), 1);
-
-		if ($bmi < 18.5) {
-			$bmi_status = 'Underweight';
-			$bmi_color  = '#f59e0b';
-			$bmi_badge  = 'warning';
-		} elseif ($bmi <= 24.9) {
-			$bmi_status = 'Normal';
-			$bmi_color  = '#10b981';
-			$bmi_badge  = 'success';
-		} elseif ($bmi <= 29.9) {
-			$bmi_status = 'Overweight';
-			$bmi_color  = '#f97316';
-			$bmi_badge  = 'warning';
-		} else {
-			$bmi_status = 'Obese';
-			$bmi_color  = '#ef4444';
-			$bmi_badge  = 'danger';
-		}
-
-		$is_female = in_array($gender, array('F', 'FEMALE'));
-		if ($is_female) {
-			$bmr = round((10 * $weight_kg) + (6.25 * $height_cm) - (5 * $age) - 161);
-		} else {
-			$bmr = round((10 * $weight_kg) + (6.25 * $height_cm) - (5 * $age) + 5);
-		}
-
-		$target_min_weight   = round(18.5 * ($height_m * $height_m), 1);
-		$target_ideal_weight = round(21.0 * ($height_m * $height_m), 1);
-		$target_max_weight   = round(24.9 * ($height_m * $height_m), 1);
-
-		$est_daily_calories = round($bmr * 1.2);
-
-		if ($bmi < 18.5) {
-			$goal_action = 'gain';
-			$min_gain = round($target_min_weight - $weight_kg, 1);
-			if ($min_gain <= 0) $min_gain = 0.5;
-			$ideal_gain = round($target_ideal_weight - $weight_kg, 1);
-			$target_daily_calories = $est_daily_calories + 400;
-
-			$summary_text = "Your Basal Metabolic Rate (BMR) is {$bmr} kcal/day, meaning your body burns approximately {$bmr} calories at rest. To reach a minimum healthy BMI of 18.5, aim to gain at least {$min_gain} kg (with an optimal target of {$ideal_gain} kg for a BMI of 21.0). We recommend a gentle daily calorie surplus of +300 to +500 kcal (targeting ~{$target_daily_calories} kcal/day) focusing on nutrient-dense proteins and healthy fats.";
-			$caloric_recommendation = "+300 to +500 kcal/day surplus (Target: ~" . number_format($target_daily_calories) . " kcal/day)";
-		} elseif ($bmi > 24.9) {
-			$goal_action = 'lose';
-			$min_loss = round($weight_kg - $target_max_weight, 1);
-			if ($min_loss <= 0) $min_loss = 0.5;
-			$ideal_loss = round($weight_kg - $target_ideal_weight, 1);
-			$target_daily_calories = max(1200, $est_daily_calories - 400);
-
-			$summary_text = "Your Basal Metabolic Rate (BMR) is {$bmr} kcal/day, representing your baseline resting expenditure. To achieve a healthy BMI of 24.9, your initial goal is to lose {$min_loss} kg (with an ideal target of {$ideal_loss} kg for optimal wellness). We recommend a moderate daily calorie deficit of 300 to 500 kcal (targeting ~{$target_daily_calories} kcal/day) paired with regular low-impact physical activity.";
-			$caloric_recommendation = "-300 to -500 kcal/day deficit (Target: ~" . number_format($target_daily_calories) . " kcal/day)";
-		} else {
-			$goal_action = 'maintain';
-			$summary_text = "Your Basal Metabolic Rate (BMR) is {$bmr} kcal/day, and your current BMI of {$bmi} is within the optimal healthy range. Continue your balanced nutrition and hydration to maintain your healthy weight. Aim for approximately " . number_format($est_daily_calories) . " kcal/day to sustain your daily energy needs.";
-			$caloric_recommendation = "Maintain ~" . number_format($est_daily_calories) . " kcal/day for energy balance";
-		}
-
-		return array(
-			'age'                    => $age,
-			'dob_formatted'          => $dob_formatted,
-			'gender'                 => $is_female ? 'Female' : 'Male',
-			'height_cm'              => $height_cm,
-			'height_m'               => $height_m,
-			'weight_kg'              => $weight_kg,
-			'bmi'                    => $bmi,
-			'bmi_status'             => $bmi_status,
-			'bmi_color'              => $bmi_color,
-			'bmi_badge'              => $bmi_badge,
-			'bmr'                    => $bmr,
-			'maintenance_calories'   => $est_daily_calories,
-			'target_min_weight'      => $target_min_weight,
-			'target_ideal_weight'    => $target_ideal_weight,
-			'target_max_weight'      => $target_max_weight,
-			'goal_action'            => $goal_action,
-			'min_gain'               => $bmi < 18.5 ? $min_gain : 0,
-			'ideal_gain'             => $bmi < 18.5 ? $ideal_gain : 0,
-			'min_loss'               => $bmi > 24.9 ? $min_loss : 0,
-			'ideal_loss'             => $bmi > 24.9 ? $ideal_loss : 0,
-			'summary_text'           => $summary_text,
-			'caloric_recommendation' => $caloric_recommendation
-		);
+		return null;
 	}
 
 }

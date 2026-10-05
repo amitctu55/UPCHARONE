@@ -18,11 +18,11 @@ $fname   = get_prop($userObj, 'FNAME');
 $lname   = get_prop($userObj, 'LNAME');
 $email   = get_prop($userObj, 'EMAIL');
 $mobile  = get_prop($userObj, 'MOBILE');
-$dob     = get_prop($userObj, 'DOB');
-$gender  = get_prop($userObj, 'GENDER');
-$bgroup  = get_prop($userObj, 'BGROUP');
-$height  = get_prop($userObj, 'HEIGHT');
-$weight  = get_prop($userObj, 'WEIGHT');
+$dob     = get_prop($userObj, 'DOB') ?: get_prop($userObj, 'dob');
+$gender  = get_prop($userObj, 'GENDER') ?: get_prop($userObj, 'gender');
+$bgroup  = get_prop($userObj, 'BGROUP') ?: (get_prop($userObj, 'blood_group') ?: (get_prop($userObj, 'bgroup') ?: (!empty($user_blood_group) ? $user_blood_group : '')));
+$height  = get_prop($userObj, 'HEIGHT') ?: get_prop($userObj, 'height');
+$weight  = get_prop($userObj, 'WEIGHT') ?: get_prop($userObj, 'weight');
 $image   = get_prop($userObj, 'IMAGE') ?: get_prop($userObj, 'PROFILEIMG');
 $userid  = get_prop($userObj, 'USERID') ?: ($this->session->userdata('userid') ?: 0);
 
@@ -40,6 +40,11 @@ $dep_list = !empty($dependents) ? $dependents : [];
 $dep_count = count($dep_list);
 
 // Comprehensive Clinical Health Goals & BMR Calculation
+if (empty($health_goals)) {
+    if (function_exists('calculate_patient_health_goals')) {
+        $health_goals = calculate_patient_health_goals($userObj ?: ['HEIGHT' => $height, 'WEIGHT' => $weight, 'DOB' => $dob, 'GENDER' => $gender, 'BGROUP' => $bgroup]);
+    }
+}
 if (empty($health_goals) && (!empty($height) && !empty($weight))) {
     preg_match('/(\d+(\.\d+)?)/', (string)$height, $h_m);
     preg_match('/(\d+(\.\d+)?)/', (string)$weight, $w_m);
@@ -530,8 +535,11 @@ $bmiColor = !empty($health_goals['bmi_color']) ? $health_goals['bmi_color'] : '#
                 <div class="prof-meta-line">
                     <span id="header_email_span"><i class="fa fa-envelope-o" style="color: #00a896;"></i> <?=html_escape(!empty($email) ? $email : 'No email added');?></span>
                     <span id="header_mobile_span"><i class="fa fa-phone" style="color: #00a896;"></i> <?=html_escape(!empty($mobile) ? $mobile : 'No mobile added');?></span>
-                    <?php if(!empty($bgroup)): ?>
-                        <span><i class="fa fa-tint" style="color: #ef4444;"></i> Blood: <strong><?=html_escape($bgroup);?></strong></span>
+                    <?php 
+                        $effective_bgroup = !empty($bgroup) ? $bgroup : (!empty($user_blood_group) ? $user_blood_group : get_prop($userObj, 'blood_group'));
+                        if(!empty($effective_bgroup)): 
+                    ?>
+                        <span><i class="fa fa-tint" style="color: #ef4444;"></i> Blood: <strong id="header_bgroup_val"><?=html_escape($effective_bgroup);?></strong></span>
                     <?php endif; ?>
                     <?php if(!empty($health_goals)): ?>
                         <span><i class="fa fa-heartbeat" style="color: <?=$health_goals['bmi_color'];?>;"></i> BMI: <strong><?=$health_goals['bmi'];?></strong> (<?=$health_goals['bmi_status'];?>)</span>
@@ -540,6 +548,8 @@ $bmiColor = !empty($health_goals['bmi_color']) ? $health_goals['bmi_color'] : '#
                             <span><i class="fa fa-arrow-up" style="color: #10b981;"></i> Goal: <strong>+<?=$health_goals['min_gain'];?> kg</strong></span>
                         <?php elseif($health_goals['goal_action'] === 'lose'): ?>
                             <span><i class="fa fa-arrow-down" style="color: #ef4444;"></i> Goal: <strong>-<?=$health_goals['min_loss'];?> kg</strong></span>
+                        <?php else: ?>
+                            <span><i class="fa fa-check" style="color: #10b981;"></i> Goal: <strong>Maintain Weight</strong></span>
                         <?php endif; ?>
                     <?php elseif($bmi !== null): ?>
                         <span><i class="fa fa-heartbeat" style="color: <?=$bmiColor;?>;"></i> BMI: <strong><?=$bmi;?></strong> (<?=$bmiLabel;?>)</span>
@@ -869,14 +879,14 @@ $bmiColor = !empty($health_goals['bmi_color']) ? $health_goals['bmi_color'] : '#
                     <div class="col-lg-3 col-sm-6 col-12">
                         <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 13px 15px; height: 100%;">
                             <div style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">
-                                Target Weight (BMI 18.5)
+                                Target Weight (Healthy Range)
                             </div>
                             <div style="display: flex; align-items: baseline; gap: 6px;">
                                 <span style="font-size: 24px; font-weight: 800; color: #0d9488; line-height: 1;">
-                                    <?=$health_goals['target_min_weight'];?>
+                                    <?=$health_goals['target_ideal_weight'];?>
                                 </span>
                                 <span style="font-size: 11.5px; font-weight: 600; color: #64748b;">
-                                    kg
+                                    kg (Optimal)
                                 </span>
                             </div>
                             <div style="margin-top: 6px; font-size: 11px; color: #64748b;">
@@ -889,7 +899,7 @@ $bmiColor = !empty($health_goals['bmi_color']) ? $health_goals['bmi_color'] : '#
                                 <?php endif; ?>
                             </div>
                             <div style="margin-top: 6px; font-size: 11px; color: #0284c7; font-weight: 600;">
-                                Optimal BMI 21.0: <strong><?=$health_goals['target_ideal_weight'];?> kg</strong> (+<?=$health_goals['ideal_gain'];?> kg)
+                                Healthy Range: <strong><?=$health_goals['target_min_weight'];?> – <?=$health_goals['target_max_weight'];?> kg</strong>
                             </div>
                         </div>
                     </div>
@@ -918,7 +928,13 @@ $bmiColor = !empty($health_goals['bmi_color']) ? $health_goals['bmi_color'] : '#
                                 <?=$health_goals['caloric_recommendation'];?>
                             </div>
                             <div style="margin-top: 6px; font-size: 11px; color: #7c3aed; font-weight: 600;">
-                                <i class="fa fa-apple"></i> High caloric density
+                                <?php if ($health_goals['goal_action'] === 'gain'): ?>
+                                    <i class="fa fa-apple"></i> High caloric density
+                                <?php elseif ($health_goals['goal_action'] === 'lose'): ?>
+                                    <i class="fa fa-leaf"></i> Calorie deficit &amp; fiber
+                                <?php else: ?>
+                                    <i class="fa fa-cutlery"></i> Energy balance &amp; hydration
+                                <?php endif; ?>
                             </div>
                         </div>
                     </div>
