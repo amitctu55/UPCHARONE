@@ -168,167 +168,198 @@ class Settings extends CI_Controller {
     }
 
     /**
-     * Send Test Email Verification
+     * Send Test Email Verification (Safely wrapped with diagnostics, zero fatal crashing)
      */
     public function send_test_email() {
-        $to_email = trim($this->input->post('test_email', TRUE));
-        $provider = $this->input->post('email_provider', TRUE) ?: get_system_setting('email_provider', 'smtp');
+        @set_time_limit(20);
+        $is_ajax = $this->input->is_ajax_request() 
+            || $this->input->post('is_ajax') 
+            || (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest')
+            || (isset($_SERVER['HTTP_ACCEPT']) && stripos($_SERVER['HTTP_ACCEPT'], 'application/json') !== false);
 
-        while (ob_get_level()) { ob_end_clean(); }
-        header('Content-Type: application/json; charset=utf-8');
+        $to_email = trim($this->input->post('test_email', TRUE) ?: ($this->input->get('to', TRUE) ?: get_system_setting('support_email', 'info@upchar.info')));
+        $provider = $this->input->post('email_provider', TRUE) ?: ($this->input->get('provider', TRUE) ?: get_system_setting('email_provider', 'smtp'));
 
-        if (empty($to_email) || !filter_var($to_email, FILTER_VALIDATE_EMAIL)) {
-            echo json_encode(['status' => 'error', 'message' => 'Please provide a valid recipient email address.']);
-            return;
-        }
-
-        $from_name = get_system_setting('mail_from_name', 'Upchar Healthcare');
-        $from_email = get_system_setting('mail_from_email', 'noreply@upchar.com');
-        $subject = "Upchar Gateway Test Email - " . date('d M Y H:i:s');
-        $body = "<h2>Upchar Healthcare System Test Email</h2><p>This is a verification test email sent from the Upchar Admin System Settings Portal.</p><p><strong>Provider:</strong> " . strtoupper($provider) . "<br><strong>Timestamp:</strong> " . date('Y-m-d H:i:s T') . "<br><strong>Status:</strong> Gateway is operating properly.</p>";
-
-        if ($provider === 'sendgrid') {
-            $api_key = get_system_setting('sendgrid_api_key');
-            if (empty($api_key)) {
-                echo json_encode(['status' => 'error', 'message' => 'SendGrid API Key is not configured.']);
+        try {
+            if (empty($to_email) || !filter_var($to_email, FILTER_VALIDATE_EMAIL)) {
+                if ($is_ajax) {
+                    while (ob_get_level()) { ob_end_clean(); }
+                    header('Content-Type: application/json; charset=utf-8');
+                    echo json_encode(['status' => 'error', 'message' => 'Please provide a valid recipient email address.']);
+                    return;
+                }
+                echo "<h3>Invalid recipient email: '$to_email'. Please provide a valid email in '?to=yourname@domain.com'.</h3>";
                 return;
             }
 
-            $payload = [
-                'personalizations' => [['to' => [['email' => $to_email]]]],
-                'from' => ['email' => $from_email, 'name' => $from_name],
-                'subject' => $subject,
-                'content' => [['type' => 'text/html', 'value' => $body]]
-            ];
+            $from_name  = get_system_setting('mail_from_name', 'Upchar Healthcare');
+            $from_email = get_system_setting('mail_from_email', 'noreply@upchar.info');
+            $subject    = "Upchar Gateway Test Email - " . date('d M Y H:i:s');
+            $body       = "<h2>Upchar Healthcare System Test Email</h2><p>This is a verification test email sent from the Upchar Admin Settings Portal.</p><p><strong>Provider:</strong> " . strtoupper($provider) . "<br><strong>Timestamp:</strong> " . date('Y-m-d H:i:s T') . "<br><strong>Status:</strong> Gateway is operating properly.</p>";
 
-            $ch = curl_init('https://api.sendgrid.com/v3/mail/send');
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($ch, CURLOPT_POST, true);
-            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
-            curl_setopt($ch, CURLOPT_HTTPHEADER, [
-                'Authorization: Bearer ' . $api_key,
-                'Content-Type: application/json'
-            ]);
-            $response = curl_exec($ch);
-            $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-            curl_close($ch);
-
-            if ($http_code >= 200 && $http_code < 300) {
-                echo json_encode(['status' => 'success', 'message' => "Test email delivered successfully via SendGrid to {$to_email}.", 'debug' => "HTTP {$http_code} Accepted."]);
+            if ($provider === 'sendgrid') {
+                $api_key = get_system_setting('sendgrid_api_key');
+                if (empty($api_key)) {
+                    $resp = ['status' => 'error', 'message' => 'SendGrid API Key is not configured.'];
+                } else {
+                    $payload = [
+                        'personalizations' => [['to' => [['email' => $to_email]]]],
+                        'from' => ['email' => $from_email, 'name' => $from_name],
+                        'subject' => $subject,
+                        'content' => [['type' => 'text/html', 'value' => $body]]
+                    ];
+                    $ch = curl_init('https://api.sendgrid.com/v3/mail/send');
+                    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                    curl_setopt($ch, CURLOPT_POST, true);
+                    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
+                    curl_setopt($ch, CURLOPT_TIMEOUT, 8);
+                    curl_setopt($ch, CURLOPT_HTTPHEADER, [
+                        'Authorization: Bearer ' . $api_key,
+                        'Content-Type: application/json'
+                    ]);
+                    $response = curl_exec($ch);
+                    $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+                    curl_close($ch);
+                    if ($http_code >= 200 && $http_code < 300) {
+                        $resp = ['status' => 'success', 'message' => "Test email delivered successfully via SendGrid to {$to_email}.", 'debug' => "HTTP {$http_code} Accepted."];
+                    } else {
+                        $resp = ['status' => 'error', 'message' => "SendGrid API returned HTTP {$http_code}: {$response}", 'debug' => $response];
+                    }
+                }
             } else {
-                echo json_encode(['status' => 'error', 'message' => "SendGrid API returned HTTP {$http_code}: {$response}", 'debug' => $response]);
+                // Standard SMTP Delivery
+                $raw_host    = trim($this->input->post('smtp_host', TRUE) ?: ($this->input->get('smtp_host', TRUE) ?: get_system_setting('smtp_host', 'mail.upchar.info')));
+                $smtp_port   = (int)($this->input->post('smtp_port', TRUE) ?: ($this->input->get('smtp_port', TRUE) ?: get_system_setting('smtp_port', '587')));
+                $smtp_crypto = trim($this->input->post('smtp_crypto', TRUE) ?: ($this->input->get('smtp_crypto', TRUE) ?: get_system_setting('smtp_crypto', 'tls')));
+                $smtp_user   = trim($this->input->post('smtp_user', TRUE) ?: ($this->input->get('smtp_user', TRUE) ?: get_system_setting('smtp_user', '')));
+                $smtp_pass   = $this->input->post('smtp_pass', TRUE) ?: ($this->input->get('smtp_pass', TRUE) ?: get_system_setting('smtp_pass', ''));
+
+                // Decrypt password if still in ENC format
+                if (strpos($smtp_pass, 'ENC:') === 0) {
+                    $encryption_key = config_item('encryption_key') ?: 'MyIndiaAtTheTop';
+                    $key_secret = hash('sha256', $encryption_key, true);
+                    $raw = base64_decode(substr($smtp_pass, 4));
+                    $iv = substr($raw, 0, 16);
+                    $hmac = substr($raw, 16, 32);
+                    $cipher_raw = substr($raw, 48);
+                    if (hash_equals($hmac, hash_hmac('sha256', $cipher_raw, $key_secret, true))) {
+                        $smtp_pass = openssl_decrypt($cipher_raw, 'AES-256-CBC', $key_secret, OPENSSL_RAW_DATA, $iv);
+                    }
+                }
+
+                // Host and DNS resolution fallback
+                $smtp_host = $raw_host;
+                $dns_note = '';
+                $ip = @gethostbyname($raw_host);
+                if ($ip === $raw_host && !filter_var($raw_host, FILTER_VALIDATE_IP)) {
+                    $smtp_host = '87.232.72.4';
+                    $dns_note = " (Note: Host '{$raw_host}' has no public DNS record; auto-routed to server IP 87.232.72.4)";
+                } elseif (in_array(strtolower($raw_host), array('smtp.upchar.info', 'mail.upchar.info'))) {
+                    if ($ip === '104.21.57.170' || $ip === '172.67.182.110') {
+                        $smtp_host = '87.232.72.4';
+                        $dns_note = " (Note: Host '{$raw_host}' is proxied by Cloudflare; routed directly to 87.232.72.4)";
+                    }
+                }
+
+                // Auto-detect crypto by port
+                if ($smtp_port == 587) {
+                    $smtp_crypto = 'tls';
+                } else if ($smtp_port == 465) {
+                    $smtp_crypto = 'ssl';
+                } else if ($smtp_port == 25 || $smtp_crypto === 'none') {
+                    $smtp_crypto = '';
+                }
+
+                $this->load->library('email');
+                $this->email->clear(true);
+                $config = array(
+                    'protocol'    => 'smtp',
+                    'smtp_host'   => $smtp_host,
+                    'smtp_port'   => $smtp_port,
+                    'smtp_user'   => $smtp_user,
+                    'smtp_pass'   => $smtp_pass,
+                    'smtp_crypto' => $smtp_crypto,
+                    'smtp_timeout'=> 6,
+                    'mailtype'    => 'html',
+                    'charset'     => 'utf-8',
+                    'crlf'        => "\r\n",
+                    'newline'     => "\r\n",
+                    'wordwrap'    => TRUE
+                );
+
+                $this->email->initialize($config);
+                $this->email->from($from_email, $from_name);
+                $this->email->to($to_email);
+                $this->email->subject($subject);
+                $this->email->message($body);
+
+                ob_start();
+                $send_res = @$this->email->send();
+                $raw_output = ob_get_clean();
+
+                // Secondary fallback to port 587 if port 465 timed out or failed
+                if (!$send_res && $smtp_port == 465) {
+                    $config['smtp_port'] = 587;
+                    $config['smtp_crypto'] = 'tls';
+                    $this->email->clear(true);
+                    $this->email->initialize($config);
+                    $this->email->from($from_email, $from_name);
+                    $this->email->to($to_email);
+                    $this->email->subject($subject);
+                    $this->email->message($body);
+                    ob_start();
+                    $send_res = @$this->email->send();
+                    $raw_output .= ob_get_clean();
+                    if ($send_res) {
+                        $smtp_port = 587;
+                        $dns_note .= " (Port 465 closed/timed out; delivered via Port 587 TLS fallback)";
+                    }
+                }
+
+                if ($send_res) {
+                    $resp = [
+                        'status'  => 'success',
+                        'message' => "Test email successfully delivered to {$to_email} via SMTP ({$smtp_host}:{$smtp_port}){$dns_note}.",
+                        'debug'   => strip_tags($this->email->print_debugger(['headers']))
+                    ];
+                } else {
+                    $debug_log = strip_tags($this->email->print_debugger());
+                    if (empty($debug_log) && !empty($raw_output)) {
+                        $debug_log = strip_tags($raw_output);
+                    }
+                    $resp = [
+                        'status'  => 'error',
+                        'message' => "SMTP delivery failed. Check your host, port, authentication credentials, and firewall settings." . $dns_note,
+                        'debug'   => $debug_log ?: 'Connection timed out or remote SMTP server rejected the recipient.'
+                    ];
+                }
             }
+        } catch (\Throwable $e) {
+            $resp = [
+                'status'  => 'error',
+                'message' => 'Exception occurred during email dispatch: ' . $e->getMessage(),
+                'debug'   => $e->getTraceAsString()
+            ];
+        }
+
+        if ($is_ajax) {
+            while (ob_get_level()) { ob_end_clean(); }
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode($resp);
             return;
         }
 
-        // Standard SMTP or Native Mail
-        $raw_host    = trim($this->input->post('smtp_host', TRUE)) ?: get_system_setting('smtp_host', 'mail.upchar.info');
-        $smtp_port   = (int)($this->input->post('smtp_port', TRUE) ?: get_system_setting('smtp_port', '587'));
-        $smtp_crypto = trim($this->input->post('smtp_crypto', TRUE)) ?: get_system_setting('smtp_crypto', 'tls');
-        $smtp_user   = trim($this->input->post('smtp_user', TRUE)) ?: get_system_setting('smtp_user', '');
-        $smtp_pass   = $this->input->post('smtp_pass', TRUE) ?: get_system_setting('smtp_pass', '');
-
-        // Decrypt password if still in ENC format
-        if (strpos($smtp_pass, 'ENC:') === 0) {
-            $encryption_key = config_item('encryption_key') ?: 'MyIndiaAtTheTop';
-            $key_secret = hash('sha256', $encryption_key, true);
-            $raw = base64_decode(substr($smtp_pass, 4));
-            $iv = substr($raw, 0, 16);
-            $hmac = substr($raw, 16, 32);
-            $cipher_raw = substr($raw, 48);
-            if (hash_equals($hmac, hash_hmac('sha256', $cipher_raw, $key_secret, true))) {
-                $smtp_pass = openssl_decrypt($cipher_raw, 'AES-256-CBC', $key_secret, OPENSSL_RAW_DATA, $iv);
-            }
+        // Direct Browser HTML View
+        echo "<div style='font-family:sans-serif;max-width:700px;margin:30px auto;padding:25px;border:1px solid #e2e8f0;border-radius:10px;box-shadow:0 4px 12px rgba(0,0,0,0.05);'>";
+        echo "<h2 style='margin-top:0;color:#0F172A;'>Upchar SMTP Diagnostic Test Result</h2>";
+        $color = ($resp['status'] === 'success') ? '#059669' : '#DC2626';
+        echo "<div style='padding:12px 16px;background:" . ($resp['status'] === 'success' ? '#ECFDF5' : '#FEF2F2') . ";color:$color;border-radius:6px;font-weight:bold;margin-bottom:15px;'>" . htmlspecialchars($resp['message']) . "</div>";
+        if (!empty($resp['debug'])) {
+            echo "<h4>Debugger Output:</h4>";
+            echo "<pre style='background:#f8fafc;padding:12px;border:1px solid #cbd5e1;border-radius:6px;overflow-x:auto;font-size:12px;'>" . htmlspecialchars($resp['debug']) . "</pre>";
         }
-
-        // Host and DNS resolution fallback
-        $smtp_host = $raw_host;
-        $dns_note = '';
-        $ip = @gethostbyname($raw_host);
-        if ($ip === $raw_host && !filter_var($raw_host, FILTER_VALIDATE_IP)) {
-            $smtp_host = '87.232.72.4';
-            $dns_note = " (Note: Host '{$raw_host}' has no public DNS record; auto-routed to server IP 87.232.72.4)";
-        } elseif (in_array(strtolower($raw_host), array('smtp.upchar.info', 'mail.upchar.info'))) {
-            if ($ip === '104.21.57.170' || $ip === '172.67.182.110') {
-                $smtp_host = '87.232.72.4';
-                $dns_note = " (Note: Host '{$raw_host}' is proxied by Cloudflare; routed directly to 87.232.72.4)";
-            }
-        }
-
-        // Auto-detect crypto by port
-        if ($smtp_port == 587) {
-            $smtp_crypto = 'tls';
-        } else if ($smtp_port == 465) {
-            $smtp_crypto = 'ssl';
-        } else if ($smtp_port == 25 || $smtp_crypto === 'none') {
-            $smtp_crypto = '';
-        }
-
-        $this->load->library('email');
-        $this->email->clear(true);
-        $config = array(
-            'protocol'    => 'smtp',
-            'smtp_host'   => $smtp_host,
-            'smtp_port'   => $smtp_port,
-            'smtp_user'   => $smtp_user,
-            'smtp_pass'   => $smtp_pass,
-            'smtp_crypto' => $smtp_crypto,
-            'smtp_timeout'=> 10,
-            'mailtype'    => 'html',
-            'charset'     => 'utf-8',
-            'crlf'        => "\r\n",
-            'newline'     => "\r\n",
-            'wordwrap'    => TRUE
-        );
-
-        $this->email->initialize($config);
-        $this->email->from($from_email, $from_name);
-        $this->email->to($to_email);
-        $this->email->subject($subject);
-        $this->email->message($body);
-
-        // Buffer any raw socket warnings to prevent breaking JSON response
-        ob_start();
-        $send_res = @$this->email->send();
-        $raw_output = ob_get_clean();
-
-        // Secondary fallback to port 587 if port 465 timed out or failed
-        if (!$send_res && $smtp_port == 465) {
-            $config['smtp_port'] = 587;
-            $config['smtp_crypto'] = 'tls';
-            $this->email->clear(true);
-            $this->email->initialize($config);
-            $this->email->from($from_email, $from_name);
-            $this->email->to($to_email);
-            $this->email->subject($subject);
-            $this->email->message($body);
-            ob_start();
-            $send_res = @$this->email->send();
-            $raw_output .= ob_get_clean();
-            if ($send_res) {
-                $smtp_port = 587;
-                $dns_note .= " (Port 465 was closed; automatically connected via Port 587 TLS)";
-            }
-        }
-
-        if ($send_res) {
-            $resp = [
-                'status'  => 'success',
-                'message' => "Test email successfully delivered to {$to_email} via SMTP ({$smtp_host}:{$smtp_port}){$dns_note}.",
-                'debug'   => strip_tags($this->email->print_debugger(['headers']))
-            ];
-        } else {
-            $debug_log = strip_tags($this->email->print_debugger());
-            if (empty($debug_log) && !empty($raw_output)) {
-                $debug_log = strip_tags($raw_output);
-            }
-            $resp = [
-                'status'  => 'error',
-                'message' => "SMTP delivery failed. Check your host, port, authentication credentials, and firewall settings." . $dns_note,
-                'debug'   => $debug_log ?: 'Connection timed out or remote SMTP server rejected the recipient.'
-            ];
-        }
-        echo json_encode($resp);
+        echo "<p><a href='" . base_url('settings?tab=email') . "' style='color:#00A896;'>&larr; Back to Email Settings</a></p>";
+        echo "</div>";
         return;
     }
 
