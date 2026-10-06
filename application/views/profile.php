@@ -582,6 +582,9 @@ $bmiColor = !empty($health_goals['bmi_color']) ? $health_goals['bmi_color'] : '#
         <button type="button" class="prof-tab-btn" id="tabBtnNutrition" onclick="switchProfTab('nutrition')">
             <i class="fa fa-calculator"></i> Calorie &amp; Macro Calculator
         </button>
+        <button type="button" class="prof-tab-btn" id="tabBtnDiet" onclick="switchProfTab('diet')">
+            <i class="fa fa-cutlery"></i> Daily Diet Tracker
+        </button>
         <button type="button" class="prof-tab-btn" id="tabBtnDependents" onclick="switchProfTab('dependents')">
             <i class="fa fa-users"></i> Family Dependents
             <span class="prof-tab-badge"><?=$dep_count;?></span>
@@ -1163,8 +1166,6 @@ $bmiColor = !empty($health_goals['bmi_color']) ? $health_goals['bmi_color'] : '#
 
     </div>
 
-</div>
-
     <!-- ======================================================== -->
     <!-- TAB 3: CALORIE & MACRONUTRIENT CALCULATOR                -->
     <!-- ======================================================== -->
@@ -1446,6 +1447,15 @@ $bmiColor = !empty($health_goals['bmi_color']) ? $health_goals['bmi_color'] : '#
         </div>
     </div>
 
+    <!-- ======================================================== -->
+    <!-- TAB 4: DAILY DIET TRACKER                                -->
+    <!-- ======================================================== -->
+    <div id="profTabDietContent" style="display: none;">
+        <?php $this->load->view('diet_tracker', ['summary' => isset($diet_summary) ? $diet_summary : null]); ?>
+    </div>
+
+</div>
+
 <!-- ======================================================== -->
 <!-- 3. COMPACT INTERACTIVE SCRIPTS                           -->
 <!-- ======================================================== -->
@@ -1454,17 +1464,21 @@ function switchProfTab(tabName) {
     var tabProfile   = document.getElementById('profTabProfileContent');
     var tabDep       = document.getElementById('profTabDependentsContent');
     var tabNutrition = document.getElementById('profTabNutritionContent');
+    var tabDiet      = document.getElementById('profTabDietContent');
     var btnProfile   = document.getElementById('tabBtnProfile');
     var btnDep       = document.getElementById('tabBtnDependents');
     var btnNutrition = document.getElementById('tabBtnNutrition');
+    var btnDiet      = document.getElementById('tabBtnDiet');
 
     if (tabProfile)   tabProfile.style.display = 'none';
     if (tabDep)       tabDep.style.display = 'none';
     if (tabNutrition) tabNutrition.style.display = 'none';
+    if (tabDiet)      tabDiet.style.display = 'none';
 
     if (btnProfile)   btnProfile.classList.remove('active');
     if (btnDep)       btnDep.classList.remove('active');
     if (btnNutrition) btnNutrition.classList.remove('active');
+    if (btnDiet)      btnDiet.classList.remove('active');
 
     if (tabName === 'dependents') {
         if (tabDep) tabDep.style.display = 'block';
@@ -1472,7 +1486,10 @@ function switchProfTab(tabName) {
     } else if (tabName === 'nutrition') {
         if (tabNutrition) tabNutrition.style.display = 'block';
         if (btnNutrition) btnNutrition.classList.add('active');
-        recalcMacros();
+        if (typeof recalcMacros === 'function') recalcMacros();
+    } else if (tabName === 'diet') {
+        if (tabDiet) tabDiet.style.display = 'block';
+        if (btnDiet) btnDiet.classList.add('active');
     } else {
         if (tabProfile) tabProfile.style.display = 'block';
         if (btnProfile) btnProfile.classList.add('active');
@@ -1542,6 +1559,10 @@ document.addEventListener('DOMContentLoaded', function() {
         toggleEditMode(true);
     } else if (urlParams.get('tab') === 'dependents') {
         switchProfTab('dependents');
+    } else if (urlParams.get('tab') === 'diet') {
+        switchProfTab('diet');
+    } else if (urlParams.get('tab') === 'nutrition') {
+        switchProfTab('nutrition');
     }
 
     var profForm = document.getElementById('profForm');

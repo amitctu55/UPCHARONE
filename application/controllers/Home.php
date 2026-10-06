@@ -3686,6 +3686,17 @@ class Home extends CI_Controller
 			log_message('error', 'Error fetching nutrition goals: ' . $e->getMessage());
 			$data['nutrition_goals'] = null;
 		}
+
+		// Daily Diet Tracker Summary
+		$data['diet_summary'] = null;
+		try {
+			$this->load->model('Diet_model');
+			$selected_diet_date = $this->input->get('diet_date') ?: date('Y-m-d');
+			$data['diet_summary'] = $this->Diet_model->get_daily_summary($userid, $selected_diet_date);
+		} catch (\Throwable $e) {
+			log_message('error', 'Error fetching diet summary in profile: ' . $e->getMessage());
+			$data['diet_summary'] = null;
+		}
 		
 		try {
 			$this->load->view('patient_header', $data);
