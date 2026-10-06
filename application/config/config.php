@@ -537,7 +537,11 @@ $config['csrf_exclude_uris'] = array(
 	'ambulance/.*',
 	'Ambulance/.*',
 	'diet/.*',
-	'Diet/.*'
+	'Diet/.*',
+	'home/getlocalitydd',
+	'Home/getlocalitydd',
+	'home/getlocality.*',
+	'Home/getlocality.*'
 );
 
 /*

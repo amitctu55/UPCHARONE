@@ -23,8 +23,8 @@
 
                                     <div class="col-sm-12 padding0">
                                         <label>City</label>
-                                        <select class="form-control" name='cliniccity' required>
-                                            <option value="">Select</option>
+                                        <select class="form-control getlocality" name='cliniccity' required>
+                                            <option value="">Select City</option>
 						<?php
 						$citylist=$this->db->get_where('master_city',array('status'=>'1'));
 						foreach(@$citylist->result() as $list){
@@ -37,10 +37,8 @@
 
                                     <div class="col-sm-12 padding0">
                                         <label>Locality</label>
-                                        <select class="form-control" name='cliniclocality'>
-                                            <option>Select locality</option>
-                                            <option  value='1'>Yamuna Vihar</option>
-
+                                        <select class="form-control setlocality" name='cliniclocality' required>
+                                            <option value="">Select locality</option>
                                         </select>
                                     </div>
 
@@ -67,3 +65,41 @@
         </div>
 
         <?php include ("assets/includes/footer_hospital.php"); ?>
+
+<script>
+$('.getlocality').change(function(){
+    var city = $(this).val();
+    if(city != '' && city != undefined){
+        var csrfName = '<?=$this->security->get_csrf_token_name();?>';
+        var csrfHash = '<?=$this->security->get_csrf_hash();?>';
+        var postData = { city: city };
+        postData[csrfName] = csrfHash;
+
+        $('.setlocality').html('<option value="">Loading localities...</option>');
+
+        $.ajax({ 
+            type: 'POST', 
+            url: '<?=base_url();?>home/getlocalitydd', 
+            data: postData, 
+            success: function (data) { 
+                $('.setlocality').html(data);
+            },
+            error: function () {
+                $.ajax({
+                    type: 'GET',
+                    url: '<?=base_url();?>home/getlocalitydd',
+                    data: { city: city },
+                    success: function (data) {
+                        $('.setlocality').html(data);
+                    },
+                    error: function() {
+                        $('.setlocality').html('<option value="General">General / Main City Area</option><option value="Other">Other</option>');
+                    }
+                });
+            }
+        });
+    } else {
+        $('.setlocality').html('<option value="">Select locality</option>');
+    }
+});
+</script>

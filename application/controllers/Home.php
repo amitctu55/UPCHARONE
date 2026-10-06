@@ -2737,12 +2737,18 @@ class Home extends CI_Controller
 
 
 	public function getlocalitydd(){
-		$city=$this->input->post('city');
-		$citylist=$this->db->get_where('master_locality',array('status'=>'1','city_id'=>$city));
-		echo '<option value=""  >--Select Locality--</option>';
+		$city = $this->input->post('city', TRUE) ?: $this->input->get('city', TRUE);
+		$citylist = $this->db->get_where('master_locality', array('status'=>'1', 'city_id'=>$city));
+		echo '<option value="">--Select Locality--</option>';
 
-		foreach(@$citylist->result() as $list){
-		echo '<option value="'.$list->id.'"  >'.$list->name.'</option>';
+		if ($citylist && $citylist->num_rows() > 0) {
+			foreach(@$citylist->result() as $list){
+				echo '<option value="'.$list->id.'">'.$list->name.'</option>';
+			}
+			echo '<option value="Other">Other / Main Area</option>';
+		} else {
+			echo '<option value="General">General / Main City Area</option>';
+			echo '<option value="Other">Other</option>';
 		}
 	}
 

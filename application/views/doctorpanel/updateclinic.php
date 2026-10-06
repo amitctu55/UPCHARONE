@@ -171,14 +171,36 @@
 $('.getlocality').change(function(){
     var city = $(this).val();
     if(city != '' && city != undefined){
+        var csrfName = '<?=$this->security->get_csrf_token_name();?>';
+        var csrfHash = '<?=$this->security->get_csrf_hash();?>';
+        var postData = { city: city };
+        postData[csrfName] = csrfHash;
+
+        $('.setlocality').html('<option value="">Loading localities...</option>');
+
         $.ajax({ 
             type: 'POST', 
             url: '<?=base_url();?>home/getlocalitydd', 
-            data: { city: city }, 
+            data: postData, 
             success: function (data) { 
                 $('.setlocality').html(data);
+            },
+            error: function () {
+                $.ajax({
+                    type: 'GET',
+                    url: '<?=base_url();?>home/getlocalitydd',
+                    data: { city: city },
+                    success: function (data) {
+                        $('.setlocality').html(data);
+                    },
+                    error: function() {
+                        $('.setlocality').html('<option value="General">General / Main City Area</option><option value="Other">Other</option>');
+                    }
+                });
             }
         });
+    } else {
+        $('.setlocality').html('<option value="">-- Select Locality --</option>');
     }
 });
 </script>
