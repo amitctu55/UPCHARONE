@@ -126,6 +126,35 @@ class Diet_model extends CI_Model {
     }
 
     /**
+     * Standardize and normalize dates (supports Y-m-d, d-m-Y, d/m/Y, etc.)
+     */
+    public function normalize_date($date_str = null) {
+        $date_str = trim($date_str ?? '');
+        if (empty($date_str)) {
+            return date('Y-m-d');
+        }
+        // YYYY-MM-DD
+        if (preg_match('/^(\d{4})-(\d{1,2})-(\d{1,2})$/', $date_str, $m)) {
+            return sprintf('%04d-%02d-%02d', (int)$m[1], (int)$m[2], (int)$m[3]);
+        }
+        // DD-MM-YYYY
+        if (preg_match('/^(\d{1,2})-(\d{1,2})-(\d{4})$/', $date_str, $m)) {
+            return sprintf('%04d-%02d-%02d', (int)$m[3], (int)$m[2], (int)$m[1]);
+        }
+        // DD/MM/YYYY
+        if (preg_match('/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/', $date_str, $m)) {
+            return sprintf('%04d-%02d-%02d', (int)$m[3], (int)$m[2], (int)$m[1]);
+        }
+        // YYYY/MM/DD
+        if (preg_match('/^(\d{4})\/(\d{1,2})\/(\d{1,2})$/', $date_str, $m)) {
+            return sprintf('%04d-%02d-%02d', (int)$m[1], (int)$m[2], (int)$m[3]);
+        }
+
+        $ts = strtotime($date_str);
+        return $ts ? date('Y-m-d', $ts) : date('Y-m-d');
+    }
+
+    /**
      * Log a meal item for a user with calculated nutrition
      */
     public function log_meal($user_id, $data) {
@@ -141,7 +170,7 @@ class Diet_model extends CI_Model {
             $meal_category = 'breakfast';
         }
 
-        $log_date = !empty($data['log_date']) ? date('Y-m-d', strtotime($data['log_date'])) : date('Y-m-d');
+        $log_date = $this->normalize_date($data['log_date'] ?? null);
 
         // Defaults
         $food_name    = trim($data['food_name'] ?? 'Meal Item');
@@ -223,7 +252,7 @@ class Diet_model extends CI_Model {
      */
     public function get_logs_by_date($user_id, $date = null) {
         $user_id = intval($user_id);
-        $date = !empty($date) ? date('Y-m-d', strtotime($date)) : date('Y-m-d');
+        $date = $this->normalize_date($date);
 
         $rows = $this->db->select('*')
             ->from('user_diet_logs')
@@ -351,7 +380,7 @@ class Diet_model extends CI_Model {
      */
     public function get_daily_summary($user_id, $date = null) {
         $user_id = intval($user_id);
-        $date = !empty($date) ? date('Y-m-d', strtotime($date)) : date('Y-m-d');
+        $date = $this->normalize_date($date);
 
         $meal_categories = $this->get_logs_by_date($user_id, $date);
         $targets = $this->get_user_targets($user_id);

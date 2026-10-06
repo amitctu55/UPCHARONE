@@ -734,7 +734,10 @@ $meals = $summary['meal_categories'] ?? [];
           <span aria-hidden="true">&times;</span>
         </button>
       </div>
-      <form id="dtLogFoodForm" onsubmit="submitDietLog(event)">
+      <form id="dtLogFoodForm" onsubmit="return submitDietLog(event);">
+        <!-- Security & CSRF Token -->
+        <input type="hidden" name="<?= $this->security->get_csrf_token_name(); ?>" value="<?= $this->security->get_csrf_hash(); ?>" id="dtCsrfToken">
+
         <div class="modal-body" style="padding: 22px 24px;">
           <!-- Meal Category Picker -->
           <div class="form-group mb-3">
@@ -817,7 +820,7 @@ $meals = $summary['meal_categories'] ?? [];
         </div>
         <div class="modal-footer" style="background: #F8FAFC; border-top: 1px solid #E2E8F0; padding: 14px 24px;">
           <button type="button" class="btn btn-light" data-dismiss="modal" style="font-weight: 600; border-radius: 8px;">Cancel</button>
-          <button type="submit" id="dtSubmitBtn" class="btn btn-primary" style="background: #00A896; border-color: #00A896; font-weight: 700; border-radius: 8px; padding: 8px 22px;">
+          <button type="button" id="dtSubmitBtn" onclick="submitDietLog(event)" class="btn btn-primary" style="background: #00A896; border-color: #00A896; font-weight: 700; border-radius: 8px; padding: 8px 22px;">
             <i class="fas fa-check"></i> Log Food Item
           </button>
         </div>
@@ -865,6 +868,9 @@ $(document).on('click', function(e) {
   }
 });
 
+// Storage for autocomplete results & base item
+window.dtSearchResults = [];
+
 function searchFoodApi(q) {
   var dropdown = $('#dtSearchDropdown');
   $.ajax({
@@ -874,35 +880,54 @@ function searchFoodApi(q) {
     dataType: "json",
     success: function(res) {
       if (res && res.status === 'success' && res.data && res.data.length > 0) {
+        window.dtSearchResults = res.data;
         var html = '';
-        res.data.forEach(function(item) {
-          html += '<div class="dt-dropdown-item" onclick="selectFoodItem(' + JSON.stringify(item).replace(/"/g, '&quot;') + ')">';
+        res.data.forEach(function(item, idx) {
+          var safeName = escapeHtml(item.name);
+          var safeCat = escapeHtml(item.category || 'General');
+          var safeUnit = escapeHtml(item.serving_unit || 'g');
+          html += '<div class="dt-dropdown-item" data-index="' + idx + '" style="cursor: pointer;">';
           html += '  <div class="dt-dropdown-item-info">';
-          html += '    <strong>' + item.name + '</strong>';
-          html += '    <small>' + (item.category || 'General') + ' &bull; ' + item.serving_size + ' ' + item.serving_unit + '</small>';
+          html += '    <strong>' + safeName + '</strong>';
+          html += '    <small>' + safeCat + ' &bull; ' + parseFloat(item.serving_size) + ' ' + safeUnit + '</small>';
           html += '  </div>';
           html += '  <div class="dt-dropdown-item-cal">' + Math.round(item.calories) + ' kcal</div>';
           html += '</div>';
         });
         dropdown.html(html).show();
       } else {
-        dropdown.html('<div style="padding:12px 16px; color:#94A3B8; font-size:13px;">No foods found. Enter a custom name to log anyway.</div>').show();
+        window.dtSearchResults = [];
+        dropdown.html('<div style="padding:12px 16px; color:#94A3B8; font-size:13px;">No foods found. Enter custom details to log anyway.</div>').show();
         // Allow custom entry
         $('#dtFieldFoodId').val('');
         $('#dtFieldFoodName').val(q);
       }
+    },
+    error: function() {
+      dropdown.hide();
     }
   });
 }
 
+// Delegated click handler on search dropdown items
+$(document).on('click', '.dt-dropdown-item', function(e) {
+  e.preventDefault();
+  e.stopPropagation();
+  var idx = $(this).data('index');
+  if (window.dtSearchResults && window.dtSearchResults[idx] !== undefined) {
+    selectFoodItem(window.dtSearchResults[idx]);
+  }
+});
+
 function selectFoodItem(item) {
+  if (!item) return;
   dtCurrentBaseFood = item;
   $('#dtSearchFoodInput').val(item.name);
   $('#dtSearchDropdown').hide();
 
   $('#dtFieldFoodId').val(item.id);
   $('#dtFieldFoodName').val(item.name);
-  $('#dtFieldServingUnit').val(item.serving_unit);
+  $('#dtFieldServingUnit').val(item.serving_unit || 'serving');
   $('#dtBaseServing').val(item.serving_size > 0 ? item.serving_size : 1);
   $('#dtFieldQuantity').val('1');
 
@@ -937,7 +962,8 @@ function recalcModalNutrition() {
   $('#dtFieldCalcium').val(calc);
   $('#dtFieldVitaminC').val(vitc);
 
-  $('#dtPreviewName').text(dtCurrentBaseFood.name + ' (' + qty + ' ' + $('#dtFieldServingUnit').val() + ')');
+  var unit = $('#dtFieldServingUnit').val() || dtCurrentBaseFood.serving_unit || 'serving';
+  $('#dtPreviewName').text(dtCurrentBaseFood.name + ' (' + qty + ' ' + unit + ')');
   $('#dtPreviewCal').text(cal + ' kcal');
   $('#dtPrevPro').text(pro + 'g');
   $('#dtPrevCarb').text(carb + 'g');
@@ -947,52 +973,148 @@ function recalcModalNutrition() {
 
 // Submit Log Form
 function submitDietLog(e) {
-  e.preventDefault();
+  if (e && e.preventDefault) {
+    e.preventDefault();
+  }
+  if (e && e.stopPropagation) {
+    e.stopPropagation();
+  }
+
   var btn = $('#dtSubmitBtn');
   var origHtml = btn.html();
-  btn.html('<i class="fas fa-spinner fa-spin"></i> Saving...').prop('disabled', true);
 
   // If custom food without selecting from dropdown
-  if (!$('#dtFieldFoodId').val() && $('#dtSearchFoodInput').val().trim()) {
-    $('#dtFieldFoodName').val($('#dtSearchFoodInput').val().trim());
+  var foodName = $('#dtFieldFoodName').val().trim() || $('#dtSearchFoodInput').val().trim();
+  if (!foodName) {
+    showDietToast('Please search and select a food item or enter a food name.', 'error');
+    $('#dtSearchFoodInput').focus();
+    return false;
   }
+  $('#dtFieldFoodName').val(foodName);
+
+  var qty = parseFloat($('#dtFieldQuantity').val());
+  if (isNaN(qty) || qty <= 0) {
+    showDietToast('Please enter a valid quantity greater than 0.', 'error');
+    $('#dtFieldQuantity').focus();
+    return false;
+  }
+
+  // Ensure active date is attached
+  if (!$('#dtModalLogDate').val()) {
+    $('#dtModalLogDate').val(dtActiveDate);
+  }
+
+  // Recalculate nutrition one final time to guarantee synchronicity
+  recalcModalNutrition();
+
+  // Loading state
+  btn.html('<i class="fas fa-spinner fa-spin"></i> Saving...').prop('disabled', true);
+
+  var formData = $('#dtLogFoodForm').serialize();
 
   $.ajax({
     url: "<?= base_url('diet/add_log'); ?>",
     type: "POST",
-    data: $('#dtLogFoodForm').serialize(),
+    data: formData,
     dataType: "json",
     success: function(res) {
       btn.html(origHtml).prop('disabled', false);
       if (res && res.status === 'success') {
+        // Close modal cleanly
         $('#dtAddFoodModal').modal('hide');
-        applyDietSummary(res.summary);
+        $('body').removeClass('modal-open');
+        $('.modal-backdrop').remove();
+
+        // Update dashboard state, meal cards, and macro progress bars
+        if (res.summary) {
+          applyDietSummary(res.summary);
+        }
+
+        // Show feedback notification
+        showDietToast(res.message || 'Food item logged successfully!', 'success');
+
+        // Reset modal form fields
+        $('#dtSearchFoodInput').val('');
+        $('#dtFieldFoodId').val('');
+        $('#dtFieldFoodName').val('');
+        $('#dtFieldNotes').val('');
+        $('#dtPreviewCard').hide();
+        dtCurrentBaseFood = null;
       } else {
-        alert(res ? res.message : 'Failed to save food log.');
+        var msg = res && res.message ? res.message : 'Failed to save food log.';
+        btn.html(origHtml).prop('disabled', false);
+        showDietToast(msg, 'error');
+        alert(msg);
       }
     },
-    error: function() {
+    error: function(xhr) {
       btn.html(origHtml).prop('disabled', false);
-      alert('Network error while saving meal. Please try again.');
+      var msg = 'Network error while saving meal. Please try again.';
+      if (xhr.status === 401) {
+        msg = 'Your session has expired. Please login again to track diet.';
+      } else if (xhr.responseJSON && xhr.responseJSON.message) {
+        msg = xhr.responseJSON.message;
+      }
+      showDietToast(msg, 'error');
+      alert(msg);
     }
   });
+
+  return false;
 }
 
 // Delete Log Item
 function deleteDietItem(logId) {
   if (!confirm('Are you sure you want to remove this logged food item?')) return;
+  
+  var postData = {
+    log_id: logId,
+    log_date: dtActiveDate,
+    "<?= $this->security->get_csrf_token_name(); ?>": "<?= $this->security->get_csrf_hash(); ?>"
+  };
+
   $.ajax({
     url: "<?= base_url('diet/delete_log'); ?>",
     type: "POST",
-    data: { log_id: logId, log_date: dtActiveDate },
+    data: postData,
     dataType: "json",
     success: function(res) {
       if (res && res.status === 'success') {
         $('#dtItem_' + logId).fadeOut(200, function() { $(this).remove(); });
-        applyDietSummary(res.summary);
+        if (res.summary) {
+          applyDietSummary(res.summary);
+        }
+        showDietToast(res.message || 'Food item removed.', 'success');
+      } else {
+        showDietToast(res ? res.message : 'Could not remove item.', 'error');
       }
+    },
+    error: function() {
+      showDietToast('Network error while deleting item.', 'error');
     }
   });
+}
+
+// Escape HTML helper
+function escapeHtml(text) {
+  if (!text) return '';
+  var map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
+  return String(text).replace(/[&<>"']/g, function(m) { return map[m]; });
+}
+
+// Toast notification helper
+function showDietToast(msg, type) {
+  var toastId = 'dtToastNotification';
+  $('#' + toastId).remove();
+  var bg = (type === 'success') ? '#10B981' : '#EF4444';
+  var icon = (type === 'success') ? 'fa-check-circle' : 'fa-exclamation-circle';
+  var html = '<div id="' + toastId + '" style="position:fixed; bottom:25px; right:25px; z-index:99999; background:' + bg + '; color:#fff; padding:12px 20px; border-radius:10px; box-shadow:0 10px 25px rgba(0,0,0,0.2); display:flex; align-items:center; gap:10px; font-weight:600; font-size:14px; animation:fadeIn 0.3s;">' +
+             '<i class="fas ' + icon + '"></i> ' + escapeHtml(msg) +
+             '</div>';
+  $('body').append(html);
+  setTimeout(function() {
+    $('#' + toastId).fadeOut(400, function() { $(this).remove(); });
+  }, 3500);
 }
 
 // Update UI with summary payload
@@ -1000,56 +1122,67 @@ function applyDietSummary(s) {
   if (!s) return;
   dtActiveDate = s.date;
   $('#dtDatePicker').val(s.date);
+  $('#dtModalLogDate').val(s.date);
 
   // Calories
-  $('#dtCalConsumed').text(Math.round(s.consumed.calories));
-  $('#dtCalBar').css('width', Math.min(100, s.percentages.calories) + '%');
-  $('#dtCalPct').text(s.percentages.calories + '% of target');
-  $('#dtCalRem').text(Math.round(s.remaining.calories) + ' kcal left');
+  if (s.consumed && s.percentages && s.remaining) {
+    $('#dtCalConsumed').text(Math.round(s.consumed.calories));
+    $('#dtCalBar').css('width', Math.min(100, Math.max(0, s.percentages.calories)) + '%');
+    $('#dtCalPct').text(s.percentages.calories + '% of target');
+    $('#dtCalRem').text(Math.round(s.remaining.calories) + ' kcal left');
 
-  // Protein
-  $('#dtProConsumed').text(parseFloat(s.consumed.protein).toFixed(1));
-  $('#dtProBar').css('width', Math.min(100, s.percentages.protein) + '%');
-  $('#dtProPct').text(s.percentages.protein + '%');
-  $('#dtProRem').text(parseFloat(s.remaining.protein).toFixed(1) + ' g left');
+    // Protein
+    $('#dtProConsumed').text(parseFloat(s.consumed.protein).toFixed(1));
+    $('#dtProBar').css('width', Math.min(100, Math.max(0, s.percentages.protein)) + '%');
+    $('#dtProPct').text(s.percentages.protein + '%');
+    $('#dtProRem').text(parseFloat(s.remaining.protein).toFixed(1) + ' g left');
 
-  // Carbs
-  $('#dtCarbConsumed').text(parseFloat(s.consumed.carbs).toFixed(1));
-  $('#dtCarbBar').css('width', Math.min(100, s.percentages.carbs) + '%');
-  $('#dtCarbPct').text(s.percentages.carbs + '%');
-  $('#dtCarbRem').text(parseFloat(s.remaining.carbs).toFixed(1) + ' g left');
+    // Carbs
+    $('#dtCarbConsumed').text(parseFloat(s.consumed.carbs).toFixed(1));
+    $('#dtCarbBar').css('width', Math.min(100, Math.max(0, s.percentages.carbs)) + '%');
+    $('#dtCarbPct').text(s.percentages.carbs + '%');
+    $('#dtCarbRem').text(parseFloat(s.remaining.carbs).toFixed(1) + ' g left');
 
-  // Fats
-  $('#dtFatConsumed').text(parseFloat(s.consumed.fats).toFixed(1));
-  $('#dtFatBar').css('width', Math.min(100, s.percentages.fats) + '%');
-  $('#dtFatPct').text(s.percentages.fats + '%');
-  $('#dtFatRem').text(parseFloat(s.remaining.fats).toFixed(1) + ' g left');
+    // Fats
+    $('#dtFatConsumed').text(parseFloat(s.consumed.fats).toFixed(1));
+    $('#dtFatBar').css('width', Math.min(100, Math.max(0, s.percentages.fats)) + '%');
+    $('#dtFatPct').text(s.percentages.fats + '%');
+    $('#dtFatRem').text(parseFloat(s.remaining.fats).toFixed(1) + ' g left');
 
-  // Fiber
-  $('#dtFiberConsumed').text(parseFloat(s.consumed.fiber).toFixed(1));
-  $('#dtFiberBar').css('width', Math.min(100, s.percentages.fiber) + '%');
-  $('#dtFiberPct').text(s.percentages.fiber + '%');
-  $('#dtFiberRem').text(parseFloat(s.remaining.fiber).toFixed(1) + ' g left');
+    // Fiber
+    $('#dtFiberConsumed').text(parseFloat(s.consumed.fiber).toFixed(1));
+    $('#dtFiberBar').css('width', Math.min(100, Math.max(0, s.percentages.fiber)) + '%');
+    $('#dtFiberPct').text(s.percentages.fiber + '%');
+    $('#dtFiberRem').text(parseFloat(s.remaining.fiber).toFixed(1) + ' g left');
 
-  // Micronutrients
-  $('#dtIronVal').text(parseFloat(s.consumed.iron).toFixed(2) + ' mg');
-  $('#dtIronPct').text(s.percentages.iron + '%');
-  $('#dtCalcVal').text(parseFloat(s.consumed.calcium).toFixed(1) + ' mg');
-  $('#dtCalcPct').text(s.percentages.calcium + '%');
-  $('#dtVitCVal').text(parseFloat(s.consumed.vitamin_c).toFixed(1) + ' mg');
-  $('#dtVitCPct').text(s.percentages.vitamin_c + '%');
+    // Micronutrients
+    $('#dtIronVal').text(parseFloat(s.consumed.iron).toFixed(2) + ' mg');
+    $('#dtIronPct').text(s.percentages.iron + '%')
+      .attr('class', 'badge ' + (s.percentages.iron >= 100 ? 'badge-success' : 'badge-light'));
 
-  // Update Badge in Profile if embedded
-  if ($('#dietLoggedItemsCount').length) {
-    $('#dietLoggedItemsCount').text(s.consumed.total_items || 0);
+    $('#dtCalcVal').text(parseFloat(s.consumed.calcium).toFixed(1) + ' mg');
+    $('#dtCalcPct').text(s.percentages.calcium + '%')
+      .attr('class', 'badge ' + (s.percentages.calcium >= 100 ? 'badge-success' : 'badge-light'));
+
+    $('#dtVitCVal').text(parseFloat(s.consumed.vitamin_c).toFixed(1) + ' mg');
+    $('#dtVitCPct').text(s.percentages.vitamin_c + '%')
+      .attr('class', 'badge ' + (s.percentages.vitamin_c >= 100 ? 'badge-success' : 'badge-light'));
+
+    // Update Badge in Profile if embedded
+    if ($('#dietLoggedItemsCount').length) {
+      $('#dietLoggedItemsCount').text(s.consumed.total_items || 0);
+    }
   }
 
   // Update Meal Sections
   if (s.meal_categories) {
     Object.keys(s.meal_categories).forEach(function(catKey) {
       var cat = s.meal_categories[catKey];
-      $('#dtCount_' + catKey).text(cat.count || (cat.items ? cat.items.length : 0));
-      $('#dtBadgeCal_' + catKey).html('<i class="fas fa-fire"></i> ' + Math.round(cat.subtotal.calories) + ' kcal');
+      var count = cat.count !== undefined ? cat.count : (cat.items ? cat.items.length : 0);
+      var subCal = cat.subtotal && cat.subtotal.calories !== undefined ? cat.subtotal.calories : 0;
+
+      $('#dtCount_' + catKey).text(count);
+      $('#dtBadgeCal_' + catKey).html('<i class="fas fa-fire"></i> ' + Math.round(subCal) + ' kcal');
 
       var list = $('#dtFoodList_' + catKey);
       if (cat.items && cat.items.length > 0) {
@@ -1057,8 +1190,8 @@ function applyDietSummary(s) {
         cat.items.forEach(function(item) {
           itemsHtml += '<li class="dt-food-item" id="dtItem_' + item.id + '">';
           itemsHtml += '  <div>';
-          itemsHtml += '    <div class="dt-food-name">' + item.food_name + '</div>';
-          itemsHtml += '    <div class="dt-food-portion">' + parseFloat(item.quantity) + ' ' + item.serving_unit + (item.notes ? ' &bull; <span class="text-muted font-italic">' + item.notes + '</span>' : '') + '</div>';
+          itemsHtml += '    <div class="dt-food-name">' + escapeHtml(item.food_name) + '</div>';
+          itemsHtml += '    <div class="dt-food-portion">' + parseFloat(item.quantity) + ' ' + escapeHtml(item.serving_unit) + (item.notes ? ' &bull; <span class="text-muted font-italic">' + escapeHtml(item.notes) + '</span>' : '') + '</div>';
           itemsHtml += '  </div>';
           itemsHtml += '  <div class="dt-food-macros">';
           itemsHtml += '    <span><strong>' + Math.round(item.calories) + ' kcal</strong><small>Energy</small></span>';
@@ -1071,7 +1204,7 @@ function applyDietSummary(s) {
         });
         list.html(itemsHtml);
       } else {
-        list.html('<div class="dt-empty-meal"><i class="fas fa-utensils"></i>No food logged for ' + cat.title + ' yet. Click "+ Add Item" to log.</div>');
+        list.html('<div class="dt-empty-meal"><i class="fas fa-utensils"></i>No food logged for ' + escapeHtml(cat.title) + ' yet. Click "+ Add Item" to log.</div>');
       }
     });
   }
@@ -1092,26 +1225,42 @@ function loadDateSummary(dt) {
   });
 }
 
-$('#dtDatePicker').on('change', function() {
-  loadDateSummary($(this).val());
-});
+// Attach Document Ready Event Listeners
+$(document).ready(function() {
+  // Bind form submission event handler
+  $('#dtLogFoodForm').off('submit').on('submit', function(e) {
+    e.preventDefault();
+    return submitDietLog(e);
+  });
 
-$('#dtPrevDayBtn').click(function() {
-  var d = new Date(dtActiveDate);
-  d.setDate(d.getDate() - 1);
-  var newDt = d.toISOString().split('T')[0];
-  loadDateSummary(newDt);
-});
+  // Bind submit button click explicitly
+  $('#dtSubmitBtn').off('click').on('click', function(e) {
+    e.preventDefault();
+    return submitDietLog(e);
+  });
 
-$('#dtNextDayBtn').click(function() {
-  var d = new Date(dtActiveDate);
-  d.setDate(d.getDate() + 1);
-  var newDt = d.toISOString().split('T')[0];
-  loadDateSummary(newDt);
-});
+  // Date Navigation controls
+  $('#dtDatePicker').on('change', function() {
+    loadDateSummary($(this).val());
+  });
 
-$('#dtTodayBtn').click(function() {
-  var today = new Date().toISOString().split('T')[0];
-  loadDateSummary(today);
+  $('#dtPrevDayBtn').click(function() {
+    var d = new Date(dtActiveDate);
+    d.setDate(d.getDate() - 1);
+    var newDt = d.toISOString().split('T')[0];
+    loadDateSummary(newDt);
+  });
+
+  $('#dtNextDayBtn').click(function() {
+    var d = new Date(dtActiveDate);
+    d.setDate(d.getDate() + 1);
+    var newDt = d.toISOString().split('T')[0];
+    loadDateSummary(newDt);
+  });
+
+  $('#dtTodayBtn').click(function() {
+    var today = new Date().toISOString().split('T')[0];
+    loadDateSummary(today);
+  });
 });
 </script>

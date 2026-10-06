@@ -96,7 +96,7 @@ class Diet extends CI_Controller {
     public function index() {
         $this->require_login();
 
-        $selected_date = $this->input->get('date') ? date('Y-m-d', strtotime($this->input->get('date'))) : date('Y-m-d');
+        $selected_date = $this->Diet_model->normalize_date($this->input->get('date'));
         $data['summary'] = $this->Diet_model->get_daily_summary($this->user_id, $selected_date);
         $data['user'] = $this->user_obj;
         $data['active_tab'] = 'diet';
@@ -138,7 +138,7 @@ class Diet extends CI_Controller {
         $quantity = max(0.1, floatval($this->input->post('quantity', TRUE) ?: 1));
         $food_id  = intval($this->input->post('food_id', TRUE) ?: 0);
         $food_name = trim($this->input->post('food_name', TRUE) ?: '');
-        $log_date = $this->input->post('log_date', TRUE) ? date('Y-m-d', strtotime($this->input->post('log_date', TRUE))) : date('Y-m-d');
+        $log_date = $this->Diet_model->normalize_date($this->input->post('log_date', TRUE));
 
         if ($food_id <= 0 && empty($food_name)) {
             $this->output
@@ -197,8 +197,7 @@ class Diet extends CI_Controller {
         $this->require_login();
 
         $log_id   = intval($this->input->post('log_id', TRUE) ?: ($this->input->get('log_id', TRUE) ?: 0));
-        $log_date = $this->input->post('log_date', TRUE) ?: ($this->input->get('log_date', TRUE) ?: date('Y-m-d'));
-        $log_date = date('Y-m-d', strtotime($log_date));
+        $log_date = $this->Diet_model->normalize_date($this->input->post('log_date', TRUE) ?: ($this->input->get('log_date', TRUE) ?: date('Y-m-d')));
 
         if ($log_id <= 0) {
             $this->output
@@ -230,8 +229,7 @@ class Diet extends CI_Controller {
     public function get_summary() {
         $this->require_login();
 
-        $date = $this->input->get('date', TRUE) ?: ($this->input->post('date', TRUE) ?: date('Y-m-d'));
-        $date = date('Y-m-d', strtotime($date));
+        $date = $this->Diet_model->normalize_date($this->input->get('date', TRUE) ?: ($this->input->post('date', TRUE) ?: date('Y-m-d')));
 
         $summary = $this->Diet_model->get_daily_summary($this->user_id, $date);
 

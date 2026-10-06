@@ -535,7 +535,9 @@ $config['csrf_exclude_uris'] = array(
 	'cart/.*',
 	'Cart/.*',
 	'ambulance/.*',
-	'Ambulance/.*'
+	'Ambulance/.*',
+	'diet/.*',
+	'Diet/.*'
 );
 
 /*
