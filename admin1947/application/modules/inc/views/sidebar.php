@@ -335,6 +335,36 @@ try {
         </ul>
       </li>
 
+      <!-- Daily Diet & Clinical Nutrition -->
+      <?php 
+      $is_diet_active = in_array($pageurl1, ['diet', 'admin_diet']);
+      ?>
+      <li class="treeview <?php if($is_diet_active){ ?> active menu-open <?php }?>">
+        <a href="#">
+          <i class="fa fa-cutlery" style="color: #10b981;"></i> <span>Daily Diet &amp; Nutrition</span>
+          <span class="pull-right-container">
+            <i class="fa fa-angle-left pull-right"></i>
+          </span>
+        </a>
+        <ul class="treeview-menu" <?php if($is_diet_active){ ?> style="display: block;" <?php }?>>
+          <li class="<?php if($is_diet_active && ($pageurl2 == 'foods' || empty($pageurl2))){ ?>active<?php }?>">
+            <a href="<?=base_url('diet/foods');?>">
+              <i class="fa fa-database"></i> Food Master Database
+            </a>
+          </li>
+          <li class="<?php if($is_diet_active && $pageurl2 == 'targets'){ ?>active<?php }?>">
+            <a href="<?=base_url('diet/targets');?>">
+              <i class="fa fa-bullseye"></i> Patient Diet Targets
+            </a>
+          </li>
+          <li class="<?php if($is_diet_active && $pageurl2 == 'logs'){ ?>active<?php }?>">
+            <a href="<?=base_url('diet/logs');?>">
+              <i class="fa fa-book"></i> Meal Logs Monitor
+            </a>
+          </li>
+        </ul>
+      </li>
+
       <!-- Inquiries & Applications -->
       <?php 
       $is_inquiries_active = ($pageurl1 == 'contactus' || ($pageurl1 == 'doctor' && $pageurl2 == 'career'));

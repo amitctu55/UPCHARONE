@@ -20,13 +20,14 @@ $config['access_public_action']          	= array();
 $config['access_admin_module']          	= array(
 	'masters', 'doctor', 'users', 'seo', 'admin_revenue', 'admin_payment', 
 	'settings', 'abdm', 'contactus', 'inquiries', 'centers', 'subcenters',
-	'faculty', 'trainee', 'batches', 'attendance', 'results', 'placements'
+	'faculty', 'trainee', 'batches', 'attendance', 'results', 'placements',
+	'diet'
 );
 $config['access_admin_controller']      	= array(
 	'dashboard', 'changepassword', 'meta', 'career', 'appointment', 'clinicreg', 
 	'doctorview', 'pathology', 'pathtest', 'pathlabreg', 'usercreate', 'userlogincreate', 'patient', 
 	'walletadmin', 'settings', 'admin_revenue', 'admin_payment', 'abdm', 'contactus', 'inquiries',
-	'pharmacy_fleet', 'location', 'city', 'council', 'degree'
+	'pharmacy_fleet', 'location', 'city', 'council', 'degree', 'diet', 'admin_diet'
 );
 $config['access_admin_action']          	= array();
 

@@ -199,6 +199,9 @@
                     <button type="button" onclick="openEditPatientModal(<?=$p['USERID'];?>)" class="btn btn-xs btn-primary" style="border-radius: 4px; font-weight: 600; background: #00a896; border-color: #00a896;" title="Edit Patient Information">
                       <i class="fa fa-pencil"></i> Edit
                     </button>
+                    <a href="<?=base_url('diet/targets/' . $p['USERID']);?>" class="btn btn-xs btn-default" style="border-radius: 4px; font-weight: 700; color: #0d9488; border-color: #99f6e4; background: #f0fdfa;" title="Manage Clinical Diet Targets &amp; Logs">
+                      <i class="fa fa-cutlery"></i> Diet
+                    </a>
                     <button type="button" onclick="openPasswordModal(<?=$p['USERID'];?>, '<?=html_escape(addslashes($p['FNAME'].' '.$p['LNAME']));?>')" class="btn btn-xs btn-warning" style="border-radius: 4px; font-weight: 600; background: #f59e0b; border-color: #f59e0b;" title="Reset Password">
                       <i class="fa fa-key"></i>
                     </button>

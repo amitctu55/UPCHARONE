@@ -118,3 +118,21 @@ $route['pharmacy-fleet'] = 'masters/pharmacy_fleet';
 $route['admin/pharmacy-fleet'] = 'masters/pharmacy_fleet';
 $route['masters/pharmacy_fleet'] = 'masters/pharmacy_fleet';
 $route['masters/pharmacy_fleet/(:any)'] = 'masters/pharmacy_fleet/$1';
+
+// Daily Diet & Clinical Nutrition Management
+$route['diet']                      = 'diet/Diet/index';
+$route['diet/foods']                = 'diet/Diet/foods';
+$route['diet/add_food']             = 'diet/Diet/add_food';
+$route['diet/edit_food/(:any)']     = 'diet/Diet/edit_food/$1';
+$route['diet/delete_food/(:any)']   = 'diet/Diet/delete_food/$1';
+$route['diet/toggle_status/(:any)'] = 'diet/Diet/toggle_status/$1';
+$route['diet/targets']              = 'diet/Diet/targets';
+$route['diet/targets/(:any)']       = 'diet/Diet/targets/$1';
+$route['diet/logs']                 = 'diet/Diet/logs';
+$route['diet/logs/(:any)']          = 'diet/Diet/logs/$1';
+$route['diet/(:any)']               = 'diet/Diet/$1';
+$route['diet/(:any)/(:any)']        = 'diet/Diet/$1/$2';
+
+$route['admin_diet']                = 'diet/Diet/index';
+$route['admin_diet/(:any)']         = 'diet/Diet/$1';
+$route['admin_diet/(:any)/(:any)']  = 'diet/Diet/$1/$2';
