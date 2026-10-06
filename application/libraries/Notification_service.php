@@ -83,7 +83,7 @@ class Notification_service {
                 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
                 curl_setopt($ch, CURLOPT_POST, true);
                 curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
-                curl_setopt($ch, CURLOPT_TIMEOUT, 8);
+                curl_setopt($ch, CURLOPT_TIMEOUT, 6);
                 curl_setopt($ch, CURLOPT_HTTPHEADER, [
                     'Authorization: Bearer ' . $sendgrid_key,
                     'Content-Type: application/json'
@@ -94,6 +94,20 @@ class Notification_service {
                 if ($code >= 200 && $code < 300) {
                     $sent = true;
                     $this->log("Sent via SendGrid to $to_email | Subject: $subject");
+                    return true;
+                }
+            }
+        } elseif ($provider === 'mail' || $provider === 'sendmail') {
+            // Direct native local MTA dispatch (0.05s)
+            if (function_exists('mail')) {
+                $headers  = "MIME-Version: 1.0\r\n";
+                $headers .= "Content-Type: text/html; charset=UTF-8\r\n";
+                $headers .= "From: $from_name <$from_email>\r\n";
+                $headers .= "Reply-To: $from_email\r\n";
+                $headers .= "X-Mailer: PHP/" . phpversion();
+                $sent = @mail($to_email, $subject, $html_body, $headers);
+                if ($sent) {
+                    $this->log("Sent via native local MTA to $to_email | Subject: $subject");
                     return true;
                 }
             }
@@ -129,21 +143,28 @@ class Notification_service {
             }
         }
 
-        // DNS and Host Fallback Resolution
+        // Instant resolution for Upchar and local mail server (avoids 12-second DNS timeout)
         $resolved_host = $raw_host;
-        $ip = @gethostbyname($raw_host);
-        if ($ip === $raw_host && !filter_var($raw_host, FILTER_VALIDATE_IP)) {
-            // DNS lookup failed for configured host (e.g. smtp.upchar.info has no A record)
-            $resolved_host = '87.232.72.4'; // Direct production mail server
-            $this->log("DNS lookup failed for '$raw_host'. Falling back to '$resolved_host'.");
-        } elseif (in_array(strtolower($raw_host), array('smtp.upchar.info', 'mail.upchar.info'))) {
-            // If DNS resolves to Cloudflare proxy (which blocks direct SMTP), use server IP
-            if ($ip === '104.21.57.170' || $ip === '172.67.182.110') {
-                $resolved_host = '87.232.72.4';
+        $clean_host_lower = strtolower($raw_host);
+
+        if (in_array($clean_host_lower, array('mail.upchar.info', 'smtp.upchar.info', 'upchar.info', 'web.cloudonfire.com', 'localhost', '127.0.0.1'))) {
+            $resolved_host = '127.0.0.1';
+        } else {
+            $ip = @gethostbyname($raw_host);
+            if ($ip === $raw_host && !filter_var($raw_host, FILTER_VALIDATE_IP)) {
+                $resolved_host = '127.0.0.1';
+                $this->log("DNS lookup failed for '$raw_host'. Falling back to '127.0.0.1'.");
             }
         }
 
-        // Port & Crypto Auto-Negotiation
+        // Port & Crypto Auto-Negotiation (Port 465 SSL is filtered by hosting firewall; auto-switch to Port 587 TLS)
+        if ($resolved_host === '127.0.0.1' || $resolved_host === '87.232.72.4') {
+            if ($smtp_port == 465 || $smtp_crypto === 'ssl') {
+                $smtp_port = 587;
+                $smtp_crypto = 'tls';
+            }
+        }
+
         if ($smtp_port == 587) {
             $smtp_crypto = 'tls';
         } elseif ($smtp_port == 465) {
@@ -162,7 +183,7 @@ class Notification_service {
                 'smtp_user'   => $smtp_user,
                 'smtp_pass'   => $smtp_pass,
                 'smtp_crypto' => $smtp_crypto,
-                'smtp_timeout'=> 10,
+                'smtp_timeout'=> 4,
                 'mailtype'    => 'html',
                 'charset'     => 'utf-8',
                 'priority'    => 1,

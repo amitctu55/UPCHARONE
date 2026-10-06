@@ -18,6 +18,7 @@
         <?php $ep = $email_settings['email_provider'] ?? ($settings['email_provider']['value'] ?? 'smtp'); ?>
         <select name="email_provider" id="emailProviderSelect" class="form-control" style="border-radius: 6px;">
           <option value="smtp" <?= $ep === 'smtp' ? 'selected' : ''; ?>>Standard SMTP (Gmail, Hostinger, Custom)</option>
+          <option value="mail" <?= $ep === 'mail' ? 'selected' : ''; ?>>Local Server (Sendmail / Exim MTA - Instant & High Reliability)</option>
           <option value="sendgrid" <?= $ep === 'sendgrid' ? 'selected' : ''; ?>>SendGrid API</option>
           <option value="ses" <?= $ep === 'ses' ? 'selected' : ''; ?>>Amazon SES</option>
           <option value="mailgun" <?= $ep === 'mailgun' ? 'selected' : ''; ?>>Mailgun API</option>
@@ -101,7 +102,7 @@ $(document).ready(function() {
       type: "POST",
       data: $('#emailSettingsForm').serialize(),
       dataType: "json",
-      timeout: 20000,
+      timeout: 35000,
       success: function(response) {
         btn.html(origHtml).prop('disabled', false);
         resultDiv.removeClass('d-none').show();
@@ -122,7 +123,7 @@ $(document).ready(function() {
         resultDiv.removeClass('d-none').show().addClass('alert-danger');
         var msg = "Server Error: Could not complete the request. ";
         if (status === 'timeout') {
-          msg = "Timeout: The SMTP server did not respond within 20 seconds.";
+          msg = "Timeout: The email gateway verification did not complete within 35 seconds. Please check host, port, or firewall restrictions.";
         } else if (xhr && xhr.responseText) {
           try {
             var parsed = JSON.parse(xhr.responseText);
