@@ -167,7 +167,9 @@ class Userlogincreate extends CI_Controller {
 
 	public function website()
 	{
-		$data['userlogin'] = $this->db->get_where('userlogin', array('USERID !=' => ''))->result();
+		$data['userlogin'] = $this->db->order_by('USERID', 'DESC')->get('userlogin')->result();
+		$data['total_patients'] = $this->db->count_all('userlogin');
+		$data['total_staff']    = $this->db->count_all('login');
 
 		$this->load->view('inc/topheaderlink');
 		$this->load->view('inc/topheader');
@@ -176,6 +178,141 @@ class Userlogincreate extends CI_Controller {
 		$this->load->view('inc/headersetting');
 		$this->load->view('inc/footerlink');
 		$this->load->view('inc/table_footer');
+	}
+
+	/**
+	 * Dynamic POST Action: Handles User & Patient Onboarding
+	 */
+	public function create_unified()
+	{
+		if (!$this->input->post()) {
+			redirect(base_url('users/userlogincreate/website_users'));
+			return;
+		}
+
+		$role_type = $this->input->post('role_type') ?: 'patient';
+		$fname     = trim($this->input->post('fname'));
+		$lname     = trim($this->input->post('lname'));
+		$email     = trim($this->input->post('email'));
+		$mobile    = trim($this->input->post('mobile'));
+		$password  = $this->input->post('password');
+
+		// Server-Side Validation
+		$errors = [];
+		if (empty($fname)) $errors[] = "First Name is required.";
+		if (empty($mobile) || !preg_match('/^[0-9]{10}$/', $mobile)) $errors[] = "Mobile must be a valid 10-digit numeric number.";
+		if (empty($password) || strlen($password) < 6) $errors[] = "Password must be at least 6 characters.";
+		if (!empty($email) && !filter_var($email, FILTER_VALIDATE_EMAIL)) $errors[] = "Please provide a valid email address.";
+
+		if ($role_type === 'patient') {
+			if (empty($this->input->post('dob'))) $errors[] = "Date of Birth is mandatory for clinical patient registration.";
+		}
+
+		if (!empty($errors)) {
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-danger'><strong>Validation Error:</strong><br>" . implode('<br>', $errors) . "</div>");
+			redirect(base_url('users/userlogincreate/website_users'));
+			return;
+		}
+
+		// Delegate to Model Transaction
+		$result = $this->user->create_unified_account($this->input->post());
+
+		if ($result['status'] !== 'success') {
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-danger'><strong>Registration Failed:</strong> " . htmlspecialchars($result['message']) . "</div>");
+			redirect(base_url('users/userlogincreate/website_users'));
+			return;
+		}
+
+		// -------------------------------------------------------------
+		// SERVICE DISPATCH 1: Resilient SMTP Email Notification
+		// -------------------------------------------------------------
+		$notify_email = $this->input->post('notify_email');
+		if ($notify_email && !empty($result['email'])) {
+			$this->dispatch_welcome_email($result);
+		}
+
+		// -------------------------------------------------------------
+		// SERVICE DISPATCH 2: SMS / WhatsApp Gateway Hook
+		// -------------------------------------------------------------
+		$notify_sms = $this->input->post('notify_sms');
+		if ($notify_sms && !empty($result['mobile'])) {
+			$this->dispatch_welcome_sms($result);
+		}
+
+		$badge_label = ucfirst(str_replace('_', ' ', $result['role']));
+		$success_msg = "<div class='alert alert-success'><strong>Success!</strong> {$badge_label} account for <strong>" . htmlspecialchars($result['name']) . "</strong> created successfully (ID #{$result['user_id']}). Notifications dispatched.</div>";
+		$this->session->set_flashdata('flashmsg', $success_msg);
+
+		redirect(base_url('users/userlogincreate/website_users'));
+	}
+
+	/**
+	 * Dispatch Branded Welcome Email via Upchar Notification Service
+	 */
+	protected function dispatch_welcome_email($user_info)
+	{
+		$service = null;
+		if (class_exists('Notification_service')) {
+			$service = new Notification_service();
+		} else {
+			$p1 = APPPATH . 'libraries/Notification_service.php';
+			$p2 = FCPATH . 'application/libraries/Notification_service.php';
+			if (file_exists($p1)) {
+				require_once($p1);
+				$service = new Notification_service();
+			} elseif (file_exists($p2)) {
+				require_once($p2);
+				$service = new Notification_service();
+			}
+		}
+
+		if ($service) {
+			$name = htmlspecialchars($user_info['name']);
+			$email = $user_info['email'];
+			$pass = htmlspecialchars($user_info['temp_pass']);
+			$portal_url = base_url('login');
+
+			$subject = "Welcome to Upchar Healthcare - Your Account is Ready";
+			$html = '
+			<div style="font-family: -apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
+				<div style="background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%); padding: 24px; text-align: center; border-bottom: 3px solid #00A896;">
+					<h1 style="color: #ffffff; margin: 0; font-size: 24px;">UPCHAR<span style="color:#00A896;">.INFO</span></h1>
+					<p style="color: #94A3B8; font-size: 12px; margin: 4px 0 0; text-transform: uppercase; letter-spacing: 1px;">Healthcare & Medical Solutions</p>
+				</div>
+				<div style="padding: 28px;">
+					<h2 style="color: #0F172A; font-size: 19px; margin: 0 0 12px;">Welcome, ' . $name . '!</h2>
+					<p style="color: #475569; font-size: 14px; line-height: 1.6;">Your healthcare profile on Upchar has been successfully provisioned by the administrative desk. You can now log in to view clinical reports, book doctor appointments, and manage your health records.</p>
+					<div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 16px; margin: 20px 0;">
+						<div style="font-size: 13px; color: #334155; margin-bottom: 6px;"><strong>Registered Login:</strong> ' . $email . '</div>
+						<div style="font-size: 13px; color: #334155;"><strong>Temporary Password:</strong> <code style="background: #E2E8F0; padding: 2px 6px; border-radius: 4px; color: #0d9488;">' . $pass . '</code></div>
+					</div>
+					<div style="text-align: center; margin: 28px 0;">
+						<a href="' . $portal_url . '" style="background: #00A896; color: #ffffff; text-decoration: none; font-weight: 700; padding: 12px 30px; border-radius: 8px; font-size: 14px; display: inline-block;">Access Patient Portal &rarr;</a>
+					</div>
+					<p style="font-size: 12px; color: #94A3B8; line-height: 1.5; margin: 0;">Please change your password immediately upon your first login for maximum security.</p>
+				</div>
+			</div>';
+
+			try {
+				@$service->send_email($email, $subject, $html);
+			} catch (\Throwable $e) {}
+		}
+	}
+
+	/**
+	 * Dispatch SMS / WhatsApp Alert
+	 */
+	protected function dispatch_welcome_sms($user_info)
+	{
+		$mobile = $user_info['mobile'];
+		$name   = $user_info['name'];
+		$pass   = $user_info['temp_pass'];
+
+		$sms_msg = "Hello {$name}, your Upchar Healthcare account is active. Login at upchar.info with Mobile: {$mobile} and Pass: {$pass}. Helpline: 8448449603";
+
+		if (function_exists('sendsms')) {
+			@sendsms($sms_msg, $mobile);
+		}
 	}
 
 	public function toggle_user_status($id = null)

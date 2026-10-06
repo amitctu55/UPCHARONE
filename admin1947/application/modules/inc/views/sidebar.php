@@ -296,7 +296,7 @@ try {
       ?>
       <li class="treeview <?php if($is_user_mgmt_active){ ?> active menu-open <?php }?>">
         <a href="#">
-          <i class="fa fa-users" style="color: #a855f7;"></i> <span>Patient &amp; Users</span>
+          <i class="fa fa-users" style="color: #a855f7;"></i> <span>Patient &amp; Users Hub</span>
           <span class="pull-right-container">
             <i class="fa fa-angle-left pull-right"></i>
           </span>
@@ -304,12 +304,12 @@ try {
         <ul class="treeview-menu" <?php if($is_user_mgmt_active){ ?> style="display: block;" <?php }?>>
           <li class="<?php if($pageurl1=='users' && $pageurl2=='patient'){ ?>active<?php }?>">
             <a href="<?=base_url('users/patient');?>">
-              <i class="fa fa-address-book"></i> Patient Dossiers &amp; History
+              <i class="fa fa-folder-open-o" style="color: #0284c7;"></i> Clinical Dossiers &amp; History
             </a>
           </li>
           <li class="<?php if($pageurl1=='users' && $pageurl2=='userlogincreate' && $pageurl3=='website_users'){ ?>active<?php }?>">
             <a href="<?=base_url('users/userlogincreate/website_users');?>">
-              <i class="fa fa-globe"></i> Registered Web Patients
+              <i class="fa fa-user-plus" style="color: #0d9488;"></i> Unified Onboarding Hub
             </a>
           </li>
           <li class="<?php if($pageurl1=='users' && $pageurl2=='userlogincreate' && (in_array($pageurl3, ['gmail_users', 'gmail']) || ($pageurl2=='userlogincreate' && empty($pageurl3)))){ ?>active<?php }?>">
@@ -324,12 +324,12 @@ try {
           </li>
           <li class="<?php if($pageurl1=='users' && $pageurl2=='usercreate'){ ?>active<?php }?>">
             <a href="<?=base_url('users/usercreate');?>">
-              <i class="fa fa-user-plus"></i> Create Admin User
+              <i class="fa fa-user-secret" style="color: #64748b;"></i> Admin Staff Provisioning
             </a>
           </li>
           <li class="<?php if($pageurl1=='users' && $pageurl2=='changepassword'){ ?>active<?php }?>">
             <a href="<?=base_url('users/changepassword');?>">
-              <i class="fa fa-key"></i> Change Admin Password
+              <i class="fa fa-key" style="color: #eab308;"></i> Change Admin Password
             </a>
           </li>
         </ul>
