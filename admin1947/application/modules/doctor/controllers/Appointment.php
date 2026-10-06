@@ -942,6 +942,26 @@ class Appointment extends CI_Controller
 			$id = (int)$this->uri->segment(4);
 		}
 
+		$has_h_cancel = $this->db->field_exists('cancellation_hours', 'hospital');
+		$has_c_cancel = $this->db->field_exists('cancellation_hours', 'clinic');
+		$cancel_hours_sql = ($has_h_cancel && $has_c_cancel)
+			? "COALESCE(hospital.cancellation_hours, clinic.cancellation_hours, 3) as cancellation_hours"
+			: ($has_h_cancel
+				? "COALESCE(hospital.cancellation_hours, 3) as cancellation_hours"
+				: ($has_c_cancel
+					? "COALESCE(clinic.cancellation_hours, 3) as cancellation_hours"
+					: "3 as cancellation_hours"));
+
+		$has_h_pol = $this->db->field_exists('cancellation_policy_text', 'hospital');
+		$has_c_pol = $this->db->field_exists('cancellation_policy_text', 'clinic');
+		$cancel_pol_sql = ($has_h_pol && $has_c_pol)
+			? "COALESCE(hospital.cancellation_policy_text, clinic.cancellation_policy_text, 'Cancellations allowed up to 3 hours prior to consultation slot.') as cancellation_policy_text"
+			: ($has_h_pol
+				? "COALESCE(hospital.cancellation_policy_text, 'Cancellations allowed up to 3 hours prior to consultation slot.') as cancellation_policy_text"
+				: ($has_c_pol
+					? "COALESCE(clinic.cancellation_policy_text, 'Cancellations allowed up to 3 hours prior to consultation slot.') as cancellation_policy_text"
+					: "'Cancellations allowed up to 3 hours prior to consultation slot.' as cancellation_policy_text"));
+
 		$query = $this->db->select("
 			appointment.*,
 			COALESCE(profile_dr.id, 0) as dr_id,
@@ -961,8 +981,8 @@ class Appointment extends CI_Controller
 			COALESCE(profile_dr.verified, 0) as dr_verified,
 			COALESCE(ms.name, 'General Consultation') as dr_speciality,
 			COALESCE(hospital.name, clinic.name, 'Upchar Partner Clinic / Consultation Chamber') as facility_name,
-			COALESCE(hospital.cancellation_hours, clinic.cancellation_hours, 3) as cancellation_hours,
-			COALESCE(hospital.cancellation_policy_text, clinic.cancellation_policy_text, 'Cancellations allowed up to 3 hours prior to consultation slot.') as cancellation_policy_text,
+			{$cancel_hours_sql},
+			{$cancel_pol_sql},
 			COALESCE(hospital.address, clinic.address, '') as facility_address,
 			COALESCE(mc.name, hospital.city, clinic.city, '') as facility_city,
 			COALESCE(hospital.mobile, clinic.mobile, '') as facility_mobile,
@@ -1058,18 +1078,30 @@ class Appointment extends CI_Controller
 			$inst_type = (!empty($current_app->institution_type) && $current_app->institution_type === 'C') ? 'clinic' : 'hospital';
 
 			if ($inst_id > 0) {
-				$this->db->where('id', $inst_id)->update($inst_type, array(
-					'cancellation_hours'       => $h_hours,
-					'cancellation_policy_text' => $h_text
-				));
+				$inst_update = array();
+				if ($this->db->field_exists('cancellation_hours', $inst_type)) {
+					$inst_update['cancellation_hours'] = $h_hours;
+				}
+				if ($this->db->field_exists('cancellation_policy_text', $inst_type)) {
+					$inst_update['cancellation_policy_text'] = $h_text;
+				}
+				if (!empty($inst_update)) {
+					$this->db->where('id', $inst_id)->update($inst_type, $inst_update);
+				}
 			}
 
 			// If linked hospital table exists
-			if ($inst_id > 0 && $this->db->table_exists('hospital')) {
-				$this->db->where('id', $inst_id)->update('hospital', array(
-					'cancellation_hours'       => $h_hours,
-					'cancellation_policy_text' => $h_text
-				));
+			if ($inst_id > 0 && $inst_type !== 'hospital' && $this->db->table_exists('hospital')) {
+				$hosp_update = array();
+				if ($this->db->field_exists('cancellation_hours', 'hospital')) {
+					$hosp_update['cancellation_hours'] = $h_hours;
+				}
+				if ($this->db->field_exists('cancellation_policy_text', 'hospital')) {
+					$hosp_update['cancellation_policy_text'] = $h_text;
+				}
+				if (!empty($hosp_update)) {
+					$this->db->where('id', $inst_id)->update('hospital', $hosp_update);
+				}
 			}
 
 			$success_msg = "Hospital cancellation policy updated: Patient cancellation cutoff set to {$h_hours} hour(s) before consultation.";
