@@ -670,6 +670,7 @@
         text-decoration: none !important;
         width: 100% !important;
         white-space: nowrap !important;
+        overflow: hidden !important;
     }
 
     .sidebar .nav-sidebar > li > a i {
@@ -685,6 +686,9 @@
         color: #e2e8f0 !important;
         font-size: 13px !important;
         font-weight: 500 !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
     }
 
     .sidebar .nav-sidebar > li:hover > a {
@@ -724,15 +728,40 @@
         letter-spacing: 0.5px !important;
     }
 
-    /* Submenu Accordions */
+    /* Submenu Accordions (Strict In-Flow Containment: Overrides Rogue Popout Absolute Styles) */
     .sidebar .nav-sidebar .children,
-    .sidebar .submenu {
-        background: rgba(0, 0, 0, 0.2) !important;
+    .sidebar .submenu,
+    .sidebar-inner .nav-sidebar .children,
+    .sidebar-inner .nav-sidebar .nav-parent .children,
+    .submenu-hover .sidebar .sidebar-inner .nav-sidebar .nav-parent .children,
+    .submenu-hover.sidebar-collapsed .sidebar .sidebar-inner .nav-sidebar .children,
+    .submenu-hover.sidebar-collapsed .sidebar .sidebar-inner .nav-sidebar .nav-hover .children,
+    .submenu-hover .sidebar .sidebar-inner .nav-sidebar .children {
+        position: static !important;
+        left: auto !important;
+        right: auto !important;
+        top: auto !important;
+        bottom: auto !important;
+        width: 100% !important;
+        min-width: 0 !important;
+        max-width: 100% !important;
+        box-shadow: none !important;
+        -webkit-box-shadow: none !important;
+        z-index: 1 !important;
+        float: none !important;
+        background: rgba(0, 0, 0, 0.25) !important;
         padding: 4px 0 !important;
         list-style: none !important;
-        margin: 2px 0 4px 12px !important;
+        margin: 2px 0 4px 0 !important;
         border-radius: var(--radius-sm) !important;
-        border-left: 1px solid rgba(255, 255, 255, 0.1) !important;
+        border-left: 2px solid rgba(2, 132, 199, 0.4) !important;
+    }
+
+    .sidebar .nav-sidebar .children > li,
+    .sidebar .submenu > li {
+        width: 100% !important;
+        display: block !important;
+        position: static !important;
     }
 
     .sidebar .nav-sidebar .children > li > a,
@@ -747,6 +776,8 @@
         transition: all 0.15s ease !important;
         white-space: nowrap !important;
         border-radius: var(--radius-sm) !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
     }
 
     .sidebar .nav-sidebar .children > li > a:hover,
@@ -767,6 +798,7 @@
         margin-left: auto !important;
         font-size: 11px;
         color: var(--text-muted);
+        flex-shrink: 0 !important;
     }
 
     /* Fluid Main Content Container */
@@ -973,25 +1005,56 @@
             min-width: 70px !important;
             max-width: 70px !important;
             flex: 0 0 70px !important;
-        }
-
-        body.sidebar-collapsed .sidebar .nav-sidebar > li > a span,
-        body.sidebar-collapsed .sidebar .arrow-icon,
-        body.sidebar-collapsed .sidebar .children,
-        body.sidebar-collapsed .sidebar .submenu,
-        body.sidebar-collapsed .sidebar .sidebar-group-title,
-        body.sidebar-collapsed .sidebar .menu-badge-ehr {
-            display: none !important;
+            overflow-x: hidden !important;
         }
 
         body.sidebar-collapsed .sidebar .nav-sidebar > li > a {
             justify-content: center !important;
             padding: 12px 0 !important;
+            gap: 0 !important;
+            width: 100% !important;
+            text-align: center !important;
         }
 
         body.sidebar-collapsed .sidebar .nav-sidebar > li > a i {
             margin: 0 !important;
-            font-size: 16px !important;
+            font-size: 18px !important;
+            width: auto !important;
+            float: none !important;
+        }
+
+        body.sidebar-collapsed .sidebar .nav-sidebar > li > a span,
+        body.sidebar-collapsed .sidebar .arrow-icon,
+        body.sidebar-collapsed .sidebar .arrow,
+        body.sidebar-collapsed .sidebar .sidebar-group-title,
+        body.sidebar-collapsed .sidebar .menu-badge-ehr {
+            display: none !important;
+            visibility: hidden !important;
+            opacity: 0 !important;
+            width: 0 !important;
+            max-width: 0 !important;
+            height: 0 !important;
+            overflow: hidden !important;
+            pointer-events: none !important;
+        }
+
+        body.sidebar-collapsed .sidebar .children,
+        body.sidebar-collapsed .sidebar .submenu,
+        body.sidebar-collapsed .sidebar .nav-sidebar .children,
+        body.sidebar-collapsed .sidebar .nav-sidebar .submenu,
+        body.sidebar-collapsed .submenu-hover .sidebar .children,
+        body.sidebar-collapsed .submenu-hover.sidebar-collapsed .sidebar .children,
+        body.sidebar-collapsed .submenu-hover.sidebar-collapsed .sidebar .sidebar-inner .nav-sidebar .children,
+        body.sidebar-collapsed .submenu-hover.sidebar-collapsed .sidebar .sidebar-inner .nav-sidebar .nav-hover .children {
+            display: none !important;
+            visibility: hidden !important;
+            opacity: 0 !important;
+            width: 0 !important;
+            max-width: 0 !important;
+            height: 0 !important;
+            min-width: 0 !important;
+            overflow: hidden !important;
+            pointer-events: none !important;
         }
 
         body.sidebar-collapsed .dashboard-layout .main-content,
@@ -1009,25 +1072,54 @@
             min-width: 70px !important;
             max-width: 70px !important;
             flex: 0 0 70px !important;
-        }
-
-        .sidebar .nav-sidebar > li > a span,
-        .sidebar .arrow-icon,
-        .sidebar .children,
-        .sidebar .submenu,
-        .sidebar .sidebar-group-title,
-        .sidebar .menu-badge-ehr {
-            display: none !important;
+            overflow-x: hidden !important;
         }
 
         .sidebar .nav-sidebar > li > a {
             justify-content: center !important;
             padding: 12px 0 !important;
+            gap: 0 !important;
+            width: 100% !important;
+            text-align: center !important;
         }
 
         .sidebar .nav-sidebar > li > a i {
             margin: 0 !important;
-            font-size: 16px !important;
+            font-size: 18px !important;
+            width: auto !important;
+            float: none !important;
+        }
+
+        .sidebar .nav-sidebar > li > a span,
+        .sidebar .arrow-icon,
+        .sidebar .arrow,
+        .sidebar .sidebar-group-title,
+        .sidebar .menu-badge-ehr {
+            display: none !important;
+            visibility: hidden !important;
+            opacity: 0 !important;
+            width: 0 !important;
+            max-width: 0 !important;
+            height: 0 !important;
+            overflow: hidden !important;
+            pointer-events: none !important;
+        }
+
+        .sidebar .children,
+        .sidebar .submenu,
+        .sidebar .nav-sidebar .children,
+        .sidebar .nav-sidebar .submenu,
+        .submenu-hover .sidebar .children,
+        .submenu-hover.sidebar-collapsed .sidebar .children {
+            display: none !important;
+            visibility: hidden !important;
+            opacity: 0 !important;
+            width: 0 !important;
+            max-width: 0 !important;
+            height: 0 !important;
+            min-width: 0 !important;
+            overflow: hidden !important;
+            pointer-events: none !important;
         }
 
         .dashboard-layout .main-content,
@@ -1107,7 +1199,7 @@
     <header class="topbar">
         <!-- Brand Section (Left Flex Container) -->
         <div class="header-left">
-            <a class="menu-toggle-btn MENUTOGGLE" href="#" data-toggle="sidebar-collapsed" id="sidebarToggleBtn" title="Toggle Navigation">
+            <a class="menu-toggle-btn MENUTOGGLE" href="#" id="sidebarToggleBtn" title="Toggle Navigation">
                 <i class="fa fa-bars" aria-hidden="true"></i>
             </a>
             

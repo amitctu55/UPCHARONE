@@ -82,7 +82,7 @@ $isNewsOpen    = ($seg1 == 'doctorpanel' && in_array($seg2, array('news', 'manag
       
       <!-- Gallery Management Submenu -->
       <li class="nav-item has-submenu nav-parent <?=$isGalleryOpen ? 'active' : '';?>">
-        <a href="#" class="submenu-toggle">
+        <a href="#" class="submenu-toggle" title="Media Gallery">
           <i class="fa fa-picture-o"></i><span>Media Gallery</span>
           <i class="fa fa-angle-right arrow-icon" style="<?=$isGalleryOpen ? 'transform: rotate(90deg);' : '';?>"></i>
         </a>
@@ -98,7 +98,7 @@ $isNewsOpen    = ($seg1 == 'doctorpanel' && in_array($seg2, array('news', 'manag
 
       <!-- News & Articles Submenu -->
       <li class="nav-item has-submenu nav-parent <?=$isNewsOpen ? 'active' : '';?>">
-        <a href="#" class="submenu-toggle">
+        <a href="#" class="submenu-toggle" title="Health Articles">
           <i class="fa fa-newspaper-o"></i><span>Health Articles</span>
           <i class="fa fa-angle-right arrow-icon" style="<?=$isNewsOpen ? 'transform: rotate(90deg);' : '';?>"></i>
         </a>

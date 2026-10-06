@@ -909,57 +909,59 @@ class Doctorpanel extends CI_Controller
 
 
 public function gallery()
-{
+	{
+		if ($this->input->server('REQUEST_METHOD') === 'POST' || isset($_POST['submit'])) {
+			if (!empty($_FILES['uploadimage']['name'])) {
+				$extsign = strtolower(pathinfo($_FILES['uploadimage']['name'], PATHINFO_EXTENSION));
+				$allowed_exts = array('jpg', 'jpeg', 'png', 'gif');
 
-    if(isset($_POST['submit']))
-			$uploadimage='';
-		//	$id=base64_decode($this->input->post('id'));
-        $uploadimage=$_FILES['uploadimage']['name'];
-		$extsign = pathinfo($_FILES['uploadimage']['name'],PATHINFO_EXTENSION);
-       
+				if (!in_array($extsign, $allowed_exts)) {
+					$flashmsg = '<div class="alert alert-danger"><strong>Failed!</strong> Invalid file format. Only JPG, PNG, and JPEG files are allowed.</div>';
+					$this->session->set_flashdata('flashmsg', $flashmsg);
+					redirect('doctorpanel/gallery');
+					return;
+				}
 
-					if($uploadimage != '') 
-				{	
-					$rname=rand(1111111,999999999);
-					$date=date('Y-m-d');
-					$uploadimage=$typename.'_profile_pic_'.$rname.$date.'.'.$extsign;
-					
-					$config['upload_path']          = './admin1947/public/assets/upload/';
-					$config['allowed_types'] = 'jpg|png|jpeg|JPG|PNG|JPEG';
-					$config['max_size']             = 2048;
-					$config['quality'] = '60%';
-					$config['file_name']  = $uploadimage;
-					$this->load->library('upload', $config);
-					
-					if ( ! $this->upload->do_upload('uploadimage'))
-					{
-						$error = $this->upload->display_errors();
-						$flashmsg='<div class="alert alert-danger">
-						  <strong>Failed!</strong>'.$error.'
-						</div>';
-						$this->session->set_flashdata('flashmsg',$flashmsg);
-						redirect(base_url().'doctorpanel/gallery');
-						exit();
-					}
+				$rname = rand(1111111, 999999999);
+				$date = date('Y-m-d');
+				$uploadimage = 'dr_gallery_' . $rname . '_' . $date . '.' . $extsign;
 
+				$config['upload_path']   = './admin1947/public/assets/upload/';
+				$config['allowed_types'] = 'jpg|png|jpeg|JPG|PNG|JPEG';
+				$config['max_size']      = 2048;
+				$config['file_name']     = $uploadimage;
+				$this->load->library('upload', $config);
 
-					if($this->Doctor_Model->gallery($uploadimage)) 
-						{
-							$msg="<div class='alert alert-success'><strong>Success!</strong> Data Added Successfully</div>";
-							$this->session->set_flashdata('flashmsg',$msg);
-							
-						
-						}
-						else{
-							$msg="<div class='alert alert-danger'><strong>Failed!</strong> Something went wrong. Please try again.</div>";
-							$this->session->set_flashdata('flashmsg',$msg);
-						}
-						
-						}
-					
-                    
-	       $this->load->view('doctorpanel/gallery');
-        }
+				if (!$this->upload->do_upload('uploadimage')) {
+					$error = $this->upload->display_errors('', '');
+					$flashmsg = '<div class="alert alert-danger"><strong>Failed!</strong> ' . $error . '</div>';
+					$this->session->set_flashdata('flashmsg', $flashmsg);
+					redirect('doctorpanel/gallery');
+					return;
+				}
+
+				$upload_data = $this->upload->data();
+				$final_filename = !empty($upload_data['file_name']) ? $upload_data['file_name'] : $uploadimage;
+
+				if ($this->Doctor_Model->gallery($final_filename)) {
+					$msg = "<div class='alert alert-success'><strong>Success!</strong> Photo added to gallery successfully.</div>";
+					$this->session->set_flashdata('flashmsg', $msg);
+				} else {
+					$msg = "<div class='alert alert-danger'><strong>Failed!</strong> Something went wrong saving to database.</div>";
+					$this->session->set_flashdata('flashmsg', $msg);
+				}
+
+				redirect('doctorpanel/gallery');
+				return;
+			} else {
+				$this->session->set_flashdata('flashmsg', '<div class="alert alert-warning"><strong>Notice:</strong> Please select an image file to upload.</div>');
+				redirect('doctorpanel/gallery');
+				return;
+			}
+		}
+
+		$this->load->view('doctorpanel/gallery');
+	}
 
 	public function managegallery()
 	{ 	
