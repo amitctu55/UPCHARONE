@@ -124,9 +124,10 @@ class Diet extends CI_Controller {
     }
 
     /**
-     * AJAX: Log a food item into a meal category
+     * AJAX: Add food log entry to a meal category
+     * Fetches base nutritional values, calculates portions, and appends to user_diet_logs
      */
-    public function add_log() {
+    public function add_food_log() {
         $this->require_login();
 
         $meal_category = strtolower(trim($this->input->post('meal_category', TRUE) ?: 'breakfast'));
@@ -135,10 +136,10 @@ class Diet extends CI_Controller {
             $meal_category = 'breakfast';
         }
 
-        $quantity = max(0.1, floatval($this->input->post('quantity', TRUE) ?: 1));
-        $food_id  = intval($this->input->post('food_id', TRUE) ?: 0);
+        $quantity  = max(0.1, floatval($this->input->post('quantity', TRUE) ?: 1));
+        $food_id   = intval($this->input->post('food_id', TRUE) ?: 0);
         $food_name = trim($this->input->post('food_name', TRUE) ?: '');
-        $log_date = $this->Diet_model->normalize_date($this->input->post('log_date', TRUE));
+        $log_date  = $this->Diet_model->normalize_date($this->input->post('log_date', TRUE));
 
         if ($food_id <= 0 && empty($food_name)) {
             $this->output
@@ -150,35 +151,91 @@ class Diet extends CI_Controller {
             return;
         }
 
+        // Fetch base nutritional values of the selected food from food_master / food_database
+        $base_food = null;
+        if ($food_id > 0) {
+            $base_food = $this->Diet_model->get_food_by_id($food_id);
+            if ($base_food && empty($food_name)) {
+                $food_name = $base_food['name'];
+            }
+        }
+
+        $serving_unit = trim($this->input->post('serving_unit', TRUE) ?: ($base_food['serving_unit'] ?? 'serving'));
+
+        // Multiply base macros by selected portion quantity
+        if ($base_food) {
+            $base_serv  = floatval($base_food['serving_size']) > 0 ? floatval($base_food['serving_size']) : 1.0;
+            $multiplier = $quantity / $base_serv;
+
+            $calories  = round(floatval($base_food['calories'] ?? 0) * $multiplier, 1);
+            $protein   = round(floatval($base_food['protein'] ?? 0) * $multiplier, 1);
+            $carbs     = round(floatval($base_food['carbs'] ?? 0) * $multiplier, 1);
+            $fats      = round(floatval($base_food['fats'] ?? 0) * $multiplier, 1);
+            $fiber     = round(floatval($base_food['fiber'] ?? 0) * $multiplier, 1);
+            $iron      = round(floatval($base_food['iron'] ?? 0) * $multiplier, 2);
+            $calcium   = round(floatval($base_food['calcium'] ?? 0) * $multiplier, 1);
+            $vitamin_c = round(floatval($base_food['vitamin_c'] ?? 0) * $multiplier, 1);
+        } else {
+            $calories  = round(floatval($this->input->post('calories', TRUE) ?: 0), 1);
+            $protein   = round(floatval($this->input->post('protein', TRUE) ?: 0), 1);
+            $carbs     = round(floatval($this->input->post('carbs', TRUE) ?: 0), 1);
+            $fats      = round(floatval($this->input->post('fats', TRUE) ?: 0), 1);
+            $fiber     = round(floatval($this->input->post('fiber', TRUE) ?: 0), 1);
+            $iron      = round(floatval($this->input->post('iron', TRUE) ?: 0), 2);
+            $calcium   = round(floatval($this->input->post('calcium', TRUE) ?: 0), 1);
+            $vitamin_c = round(floatval($this->input->post('vitamin_c', TRUE) ?: 0), 1);
+        }
+
         $log_data = [
+            'user_id'       => $this->user_id,
             'food_id'       => $food_id > 0 ? $food_id : null,
             'food_name'     => $food_name,
             'meal_category' => $meal_category,
             'quantity'      => $quantity,
-            'serving_unit'  => trim($this->input->post('serving_unit', TRUE) ?: 'serving'),
+            'serving_unit'  => $serving_unit,
             'log_date'      => $log_date,
-            'calories'      => floatval($this->input->post('calories', TRUE) ?: 0),
-            'protein'       => floatval($this->input->post('protein', TRUE) ?: 0),
-            'carbs'         => floatval($this->input->post('carbs', TRUE) ?: 0),
-            'fats'          => floatval($this->input->post('fats', TRUE) ?: 0),
-            'fiber'         => floatval($this->input->post('fiber', TRUE) ?: 0),
-            'iron'          => floatval($this->input->post('iron', TRUE) ?: 0),
-            'calcium'       => floatval($this->input->post('calcium', TRUE) ?: 0),
-            'vitamin_c'     => floatval($this->input->post('vitamin_c', TRUE) ?: 0),
+            'calories'      => $calories,
+            'protein'       => $protein,
+            'carbs'         => $carbs,
+            'fats'          => $fats,
+            'fiber'         => $fiber,
+            'iron'          => $iron,
+            'calcium'       => $calcium,
+            'vitamin_c'     => $vitamin_c,
             'notes'         => trim($this->input->post('notes', TRUE) ?: '')
         ];
 
-        $insert_id = $this->Diet_model->log_meal($this->user_id, $log_data);
+        // Insert new entry into user_diet_logs (supports stacking multiple items per meal)
+        $insert_id = $this->Diet_model->insert_diet_log($log_data);
 
         if ($insert_id) {
             $summary = $this->Diet_model->get_daily_summary($this->user_id, $log_date);
+
             $this->output
                 ->set_content_type('application/json', 'utf-8')
                 ->set_output(json_encode([
-                    'status'    => 'success',
-                    'message'   => 'Food logged successfully to ' . ucfirst($meal_category) . '!',
-                    'insert_id' => $insert_id,
-                    'summary'   => $summary
+                    'status'        => 'success',
+                    'message'       => 'Logged "' . $food_name . '" to ' . ucfirst($meal_category) . '!',
+                    'insert_id'     => $insert_id,
+                    'meal_category' => $meal_category,
+                    'logged_item'   => [
+                        'id'           => $insert_id,
+                        'food_id'      => $food_id,
+                        'food_name'    => $food_name,
+                        'meal_category'=> $meal_category,
+                        'quantity'     => $quantity,
+                        'serving_unit' => $serving_unit,
+                        'calories'     => $calories,
+                        'protein'      => $protein,
+                        'carbs'        => $carbs,
+                        'fats'         => $fats,
+                        'fiber'        => $fiber,
+                        'iron'         => $iron,
+                        'calcium'      => $calcium,
+                        'vitamin_c'    => $vitamin_c,
+                        'notes'        => $log_data['notes']
+                    ],
+                    'summary'       => $summary
                 ]));
         } else {
             $this->output
@@ -188,6 +245,13 @@ class Diet extends CI_Controller {
                     'message' => 'Unable to save food log. Please try again.'
                 ]));
         }
+    }
+
+    /**
+     * Backward-compatible alias for add_food_log
+     */
+    public function add_log() {
+        return $this->add_food_log();
     }
 
     /**

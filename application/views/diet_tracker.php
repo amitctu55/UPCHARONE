@@ -1479,28 +1479,64 @@ function submitDietLog(e) {
   var formData = $('#dtLogFoodForm').serialize();
 
   $.ajax({
-    url: "<?= base_url('diet/add_log'); ?>",
+    url: "<?= base_url('diet/add_food_log'); ?>",
     type: "POST",
     data: formData,
     dataType: "json",
     success: function(res) {
       btn.html(origHtml).prop('disabled', false);
       if (res && res.status === 'success') {
+        var catKey = res.meal_category || $('#dtModalMealCat').val();
+        var item = res.logged_item;
+
+        // If res.summary is available, update all progress bars and meal sections
+        if (res.summary) {
+          applyDietSummary(res.summary);
+        } else if (item) {
+          // Direct fallback DOM append to stack items under meal category
+          var $list = $('#dtFoodList_' + catKey);
+          $list.find('.dt-empty-meal').remove();
+
+          var rowHtml = '<li class="dt-food-row" id="dtItem_' + item.id + '" style="display:none;">' +
+            '<div class="dt-food-row-main">' +
+              '<span class="dt-food-name">' + escapeHtml(item.food_name) + '</span>' +
+              (item.notes ? '<span class="dt-food-notes">' + escapeHtml(item.notes) + '</span>' : '') +
+            '</div>' +
+            '<div class="dt-food-row-meta">' +
+              '<span class="dt-pill-qty">' + parseFloat(item.quantity) + ' ' + escapeHtml(item.serving_unit) + '</span>' +
+              '<span class="dt-pill-cal">' + Math.round(item.calories).toLocaleString() + ' kcal</span>' +
+              '<div class="dt-macro-chips">' +
+                '<span class="dt-chip dt-chip-pro">P: ' + parseFloat(item.protein).toFixed(1) + 'g</span>' +
+                '<span class="dt-chip dt-chip-carb">C: ' + parseFloat(item.carbs).toFixed(1) + 'g</span>' +
+                '<span class="dt-chip dt-chip-fat">F: ' + parseFloat(item.fats).toFixed(1) + 'g</span>' +
+              '</div>' +
+              '<button type="button" class="dt-btn-del" onclick="deleteDietItem(' + item.id + ')" title="Remove item"><i class="fa fa-trash-o fa-trash-alt"></i></button>' +
+            '</div>' +
+          '</li>';
+
+          var $row = $(rowHtml);
+          $list.append($row);
+          $row.fadeIn(250);
+
+          var currentCount = $list.find('.dt-food-row').length;
+          $('#dtCount_' + catKey).text(currentCount + ' items');
+        }
+
+        // Close modal cleanly
         $('#dtAddFoodModal').modal('hide');
         $('body').removeClass('modal-open');
         $('.modal-backdrop').remove();
 
-        if (res.summary) {
-          applyDietSummary(res.summary);
-        }
-
         showDietToast(res.message || 'Food item logged successfully!', 'success');
 
-        // Reset fields
+        // Clear all modal inputs so the user can easily log next item
         $('#dtSearchFoodInput').val('');
         $('#dtFieldFoodId').val('');
         $('#dtFieldFoodName').val('');
         $('#dtFieldNotes').val('');
+        $('#dtFieldQuantity').val('1');
+        $('#dtFieldServingUnit').val('serving');
+        $('#dtSearchDropdown').hide();
         $('#dtPreviewCard').hide();
         dtCurrentBaseFood = null;
       } else {

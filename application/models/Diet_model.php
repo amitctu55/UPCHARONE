@@ -95,10 +95,18 @@ class Diet_model extends CI_Model {
     }
 
     /**
-     * Get single food item by ID
+     * Get single food item by ID from food_master or food_database
      */
     public function get_food_by_id($id) {
-        return $this->db->get_where('food_database', array('id' => intval($id)))->row_array();
+        $id = intval($id);
+        if ($id <= 0) return null;
+
+        $table = $this->db->table_exists('food_master') ? 'food_master' : 'food_database';
+        $food = $this->db->get_where($table, array('id' => $id))->row_array();
+        if (!$food && $table !== 'food_database' && $this->db->table_exists('food_database')) {
+            $food = $this->db->get_where('food_database', array('id' => $id))->row_array();
+        }
+        return $food;
     }
 
     /**
@@ -152,6 +160,30 @@ class Diet_model extends CI_Model {
 
         $ts = strtotime($date_str);
         return $ts ? date('Y-m-d', $ts) : date('Y-m-d');
+    }
+
+    /**
+     * Insert diet log entry into user_diet_logs
+     * Allows multiple rows per user, date, and meal category (stacking items)
+     *
+     * @param array|int $data_or_user_id
+     * @param array|null $data
+     * @return int|bool Insert ID on success
+     */
+    public function insert_diet_log($data_or_user_id, $data = null) {
+        if (is_array($data_or_user_id)) {
+            $log_data = $data_or_user_id;
+            $user_id  = intval($log_data['user_id'] ?? 0);
+        } else {
+            $user_id  = intval($data_or_user_id);
+            $log_data = is_array($data) ? $data : [];
+        }
+
+        if ($user_id <= 0 && !empty($log_data['user_id'])) {
+            $user_id = intval($log_data['user_id']);
+        }
+
+        return $this->log_meal($user_id, $log_data);
     }
 
     /**
