@@ -5,20 +5,48 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.4/dist/Chart.min.js"></script>
 
 <style>
-/* Medical-Grade Clean EHR Dashboard Stylesheet */
+/* ==========================================================
+   Design Tokens & Usability Heuristics Standardization
+   ========================================================== */
 .ehr-dashboard-container {
     padding: 20px 24px 40px 24px;
     background-color: var(--upchar-slate-50);
     min-height: calc(100vh - 64px);
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    color: var(--upchar-slate-700);
+    color: var(--text-secondary);
+}
+
+/* Usability Fix 8: Semantic Accessible Page Title (H1) */
+.page-title-bar {
+    margin-bottom: 16px;
+}
+
+.page-main-heading {
+    font-size: 20px;
+    font-weight: 800;
+    color: var(--text-primary);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    line-height: 1.2;
+}
+
+.page-main-heading i {
+    color: var(--text-brand);
+}
+
+.page-heading-sub {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-muted);
 }
 
 /* Secondary Sub-Navigation Toolbar */
 .subnav-toolbar {
     background: #ffffff;
     border: 1px solid var(--upchar-border);
-    border-radius: 12px;
+    border-radius: var(--radius-lg);
     padding: 10px 16px;
     margin-bottom: 20px;
     display: flex;
@@ -41,10 +69,10 @@
     align-items: center;
     gap: 8px;
     padding: 7px 14px;
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     font-size: 12.5px;
     font-weight: 600;
-    color: var(--upchar-slate-600);
+    color: var(--text-secondary);
     text-decoration: none !important;
     background: transparent;
     border: 1px solid transparent;
@@ -54,28 +82,28 @@
 
 .subnav-tab-btn:hover {
     background: var(--upchar-slate-100);
-    color: var(--upchar-slate-900);
+    color: var(--text-primary);
 }
 
 .subnav-tab-btn.active {
     background: var(--upchar-blue-light);
-    color: var(--upchar-blue-dark);
+    color: var(--text-brand);
     border-color: #bae6fd;
     font-weight: 700;
 }
 
 .subnav-badge {
     background: #e2e8f0;
-    color: var(--upchar-slate-700);
-    font-size: 10.5px;
+    color: var(--text-secondary);
+    font-size: 12px;
     font-weight: 700;
-    padding: 2px 6px;
-    border-radius: 10px;
+    padding: 2px 7px;
+    border-radius: var(--radius-sm);
 }
 
 .subnav-tab-btn.active .subnav-badge {
-    background: var(--upchar-blue);
-    color: #ffffff;
+    background: var(--text-brand);
+    color: var(--text-white);
 }
 
 .subnav-right-tools {
@@ -89,22 +117,22 @@
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    font-size: 12px;
+    font-size: 12.5px;
     font-weight: 600;
-    color: var(--upchar-slate-500);
+    color: var(--text-muted);
     background: var(--upchar-slate-100);
     padding: 6px 12px;
-    border-radius: 8px;
+    border-radius: var(--radius-full);
     border: 1px solid var(--upchar-border);
 }
 
 /* Executive Section Banner */
 .executive-banner {
     background: linear-gradient(135deg, #0d1b2a 0%, #034b75 60%, #008f80 100%);
-    border-radius: 14px;
-    padding: 24px 28px;
+    border-radius: var(--radius-lg);
+    padding: 22px 26px;
     margin-bottom: 24px;
-    color: #ffffff;
+    color: var(--text-white);
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -130,9 +158,9 @@
 
 .banner-title-area h2 {
     margin: 0 0 6px 0;
-    font-size: 21px;
+    font-size: 20px;
     font-weight: 800;
-    color: #ffffff;
+    color: var(--text-white);
     display: flex;
     align-items: center;
     gap: 10px;
@@ -151,10 +179,10 @@
     background: rgba(45, 212, 191, 0.2);
     border: 1px solid #2dd4bf;
     color: #2dd4bf;
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 700;
-    padding: 2px 8px;
-    border-radius: 12px;
+    padding: 2px 10px;
+    border-radius: var(--radius-full);
     display: inline-flex;
     align-items: center;
     gap: 5px;
@@ -169,43 +197,47 @@
     z-index: 2;
 }
 
-.btn-banner-light {
-    background: rgba(255, 255, 255, 0.15);
-    color: #ffffff !important;
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    font-weight: 700;
+/* Standardized Button System (Usability Fix 3) */
+.btn-ehr-primary {
+    background: var(--upchar-blue);
+    color: var(--text-white) !important;
+    font-weight: 600;
     font-size: 12.5px;
     padding: 8px 16px;
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     text-decoration: none !important;
     display: inline-flex;
     align-items: center;
     gap: 6px;
+    border: none;
+    box-shadow: 0 2px 6px rgba(2, 132, 199, 0.2);
     transition: all 0.2s ease;
+    cursor: pointer;
 }
 
-.btn-banner-light:hover {
-    background: rgba(255, 255, 255, 0.25);
-}
-
-.btn-banner-primary {
-    background: #ffffff;
-    color: #034b75 !important;
-    font-weight: 800;
-    font-size: 12.5px;
-    padding: 8px 18px;
-    border-radius: 8px;
-    text-decoration: none !important;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
-    transition: all 0.2s ease;
-}
-
-.btn-banner-primary:hover {
-    background: #f8fafc;
+.btn-ehr-primary:hover {
+    background: var(--upchar-blue-dark);
     transform: translateY(-1px);
+}
+
+.btn-ehr-secondary {
+    background: rgba(255, 255, 255, 0.15);
+    color: var(--text-white) !important;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    font-weight: 600;
+    font-size: 12.5px;
+    padding: 8px 16px;
+    border-radius: var(--radius-md);
+    text-decoration: none !important;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.btn-ehr-secondary:hover {
+    background: rgba(255, 255, 255, 0.25);
 }
 
 /* 5 Metrics Summary Cards Grid */
@@ -243,7 +275,7 @@
 
 .metric-card {
     background: #ffffff;
-    border-radius: 12px;
+    border-radius: var(--radius-lg);
     padding: 16px 18px;
     border: 1px solid var(--upchar-border);
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
@@ -259,7 +291,7 @@
 .metric-card:hover {
     transform: translateY(-2px);
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
-    border-color: var(--upchar-blue);
+    border-color: var(--text-brand);
 }
 
 .metric-card-top {
@@ -272,7 +304,7 @@
 .metric-icon-wrap {
     width: 42px;
     height: 42px;
-    border-radius: 10px;
+    border-radius: var(--radius-md);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -280,25 +312,25 @@
 }
 
 .metric-trend-pill {
-    font-size: 10.5px;
+    font-size: 12px;
     font-weight: 700;
-    padding: 2px 7px;
-    border-radius: 6px;
+    padding: 2px 8px;
+    border-radius: var(--radius-sm);
     display: inline-flex;
     align-items: center;
     gap: 4px;
 }
 
-.trend-amber { background: #fef3c7; color: #b45309; }
-.trend-green { background: #dcfce7; color: #15803d; }
-.trend-blue  { background: #e0f2fe; color: #0369a1; }
-.trend-teal  { background: #ccfbf1; color: #0f766e; }
-.trend-indigo{ background: #e0e7ff; color: #4338ca; }
+.trend-amber { background: #fef3c7; color: var(--text-warning); }
+.trend-green { background: #dcfce7; color: var(--text-success); }
+.trend-blue  { background: #e0f2fe; color: var(--text-brand); }
+.trend-teal  { background: #ccfbf1; color: var(--text-brand); }
+.trend-indigo{ background: #e0e7ff; color: var(--text-brand); }
 
 .metric-num {
     font-size: 24px;
     font-weight: 800;
-    color: var(--upchar-slate-900);
+    color: var(--text-primary);
     line-height: 1.1;
     margin-bottom: 4px;
 }
@@ -306,12 +338,12 @@
 .metric-label {
     font-size: 12.5px;
     font-weight: 600;
-    color: var(--upchar-slate-600);
+    color: var(--text-secondary);
 }
 
 .metric-footer {
-    font-size: 11px;
-    color: var(--upchar-slate-500);
+    font-size: 12px;
+    color: var(--text-muted);
     margin-top: 8px;
     padding-top: 8px;
     border-top: 1px solid #f1f5f9;
@@ -334,7 +366,7 @@
 /* Card Box Containers */
 .ehr-card {
     background: #ffffff;
-    border-radius: 12px;
+    border-radius: var(--radius-lg);
     border: 1px solid var(--upchar-border);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
     margin-bottom: 24px;
@@ -355,7 +387,7 @@
 .ehr-card-title {
     font-size: 14.5px;
     font-weight: 800;
-    color: var(--upchar-slate-900);
+    color: var(--text-primary);
     margin: 0;
     display: flex;
     align-items: center;
@@ -378,10 +410,10 @@
 .table-search-input {
     background: #f8fafc;
     border: 1px solid var(--upchar-border);
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     padding: 6px 12px;
-    font-size: 12px;
-    color: var(--upchar-slate-700);
+    font-size: 12.5px;
+    color: var(--text-secondary);
     outline: none;
     min-width: 240px;
     transition: all 0.2s ease;
@@ -389,7 +421,7 @@
 
 .table-search-input:focus {
     background: #ffffff;
-    border-color: var(--upchar-blue);
+    border-color: var(--text-brand);
     box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.1);
 }
 
@@ -402,11 +434,11 @@
 .filter-pill {
     border: 1px solid var(--upchar-border);
     background: #ffffff;
-    padding: 4px 10px;
-    border-radius: 6px;
-    font-size: 11.5px;
+    padding: 5px 12px;
+    border-radius: var(--radius-sm);
+    font-size: 12px;
     font-weight: 600;
-    color: var(--upchar-slate-600);
+    color: var(--text-secondary);
     cursor: pointer;
     transition: all 0.15s ease;
 }
@@ -414,13 +446,13 @@
 .filter-pill:hover,
 .filter-pill.active {
     background: var(--upchar-slate-100);
-    color: var(--upchar-slate-900);
+    color: var(--text-primary);
     border-color: #cbd5e1;
 }
 
 .filter-pill.active {
     background: var(--upchar-blue);
-    color: #ffffff;
+    color: var(--text-white);
     border-color: var(--upchar-blue);
 }
 
@@ -435,7 +467,7 @@
 
 .ehr-table thead th {
     background: #f8fafc;
-    color: var(--upchar-slate-600);
+    color: var(--text-secondary);
     font-weight: 700;
     padding: 11px 14px;
     border-bottom: 1px solid var(--upchar-border);
@@ -467,8 +499,8 @@
     height: 34px;
     border-radius: 50%;
     background: #e0f2fe;
-    color: #0284c7;
-    font-size: 12px;
+    color: var(--text-brand);
+    font-size: 12.5px;
     font-weight: 700;
     display: flex;
     align-items: center;
@@ -479,22 +511,22 @@
 
 .patient-name-text {
     font-weight: 700;
-    color: var(--upchar-slate-900);
+    color: var(--text-primary);
     font-size: 13px;
     line-height: 1.2;
 }
 
 .patient-sub-text {
-    font-size: 11px;
-    color: var(--upchar-slate-500);
+    font-size: 12px;
+    color: var(--text-muted);
     margin-top: 2px;
 }
 
 /* Status Badges */
 .badge-ehr {
     padding: 3px 8px;
-    border-radius: 6px;
-    font-size: 11px;
+    border-radius: var(--radius-sm);
+    font-size: 12px;
     font-weight: 700;
     display: inline-flex;
     align-items: center;
@@ -502,47 +534,49 @@
     white-space: nowrap;
 }
 
-.badge-ehr-confirmed { background: #e0f2fe; color: #0284c7; }
-.badge-ehr-completed { background: #dcfce7; color: #15803d; }
-.badge-ehr-cancelled { background: #fee2e2; color: #b91c1c; }
-.badge-ehr-video     { background: #e0e7ff; color: #4338ca; }
-.badge-ehr-clinic    { background: #f0fdfa; color: #0f766e; }
+.badge-ehr-confirmed { background: #e0f2fe; color: var(--text-brand); }
+.badge-ehr-completed { background: #dcfce7; color: var(--text-success); }
+.badge-ehr-cancelled { background: #fee2e2; color: var(--text-danger); }
+.badge-ehr-video     { background: #e0e7ff; color: var(--text-brand); }
+.badge-ehr-clinic    { background: #f0fdfa; color: var(--text-brand); }
 
-/* Table Action Buttons */
+/* Usability Fix 7: Standardize button font-size >= 12.5px */
 .btn-table-action {
     display: inline-flex;
     align-items: center;
     gap: 5px;
-    padding: 4px 9px;
-    border-radius: 6px;
-    font-size: 11.5px;
-    font-weight: 700;
+    padding: 6px 12px;
+    border-radius: var(--radius-sm);
+    font-size: 12.5px;
+    font-weight: 600;
     text-decoration: none !important;
     transition: all 0.15s ease;
     border: 1px solid transparent;
+    cursor: pointer;
 }
 
 .btn-action-video {
-    background: #2563eb;
-    color: #ffffff !important;
+    background: var(--upchar-blue);
+    color: var(--text-white) !important;
 }
 .btn-action-video:hover {
-    background: #1d4ed8;
+    background: var(--upchar-blue-dark);
 }
 
 .btn-action-rx {
     background: #f1f5f9;
     border-color: #cbd5e1;
-    color: #0f766e !important;
+    color: var(--text-secondary) !important;
 }
 .btn-action-rx:hover {
     background: #e2e8f0;
+    color: var(--text-primary) !important;
 }
 
 .btn-action-complete {
     background: #fef3c7;
     border-color: #fde68a;
-    color: #b45309 !important;
+    color: var(--text-warning) !important;
 }
 .btn-action-complete:hover {
     background: #fde68a;
@@ -551,8 +585,8 @@
 /* Side Panel Widgets */
 .teleconsult-room-widget {
     background: linear-gradient(135deg, #0369a1 0%, #0284c7 100%);
-    color: #ffffff;
-    border-radius: 12px;
+    color: var(--text-white);
+    border-radius: var(--radius-lg);
     padding: 18px 20px;
     margin-bottom: 20px;
     box-shadow: 0 4px 14px rgba(2, 132, 199, 0.2);
@@ -594,15 +628,15 @@
 }
 
 .diet-icon-pill {
-    width: 32px;
-    height: 32px;
-    border-radius: 8px;
+    width: 34px;
+    height: 34px;
+    border-radius: var(--radius-md);
     background: #dcfce7;
-    color: #16a34a;
+    color: var(--text-success);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 13px;
+    font-size: 14px;
     flex-shrink: 0;
 }
 
@@ -610,11 +644,11 @@
     width: 100%;
     min-height: 110px;
     border: 1px solid var(--upchar-border);
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     padding: 10px 12px;
     font-size: 12.5px;
     font-family: inherit;
-    color: var(--upchar-slate-700);
+    color: var(--text-secondary);
     resize: vertical;
     outline: none;
     background: #f8fafc;
@@ -623,55 +657,64 @@
 
 .scratchpad-textarea:focus {
     background: #ffffff;
-    border-color: var(--upchar-blue);
+    border-color: var(--text-brand);
     box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.08);
 }
 </style>
 
 <div class="ehr-dashboard-container pag_cstm">
+    <!-- Usability Heuristic Fix 8: Semantic H1 Page Heading -->
+    <header class="page-title-bar">
+        <h1 class="page-main-heading">
+            <i class="fa fa-stethoscope" aria-hidden="true"></i>
+            Doctor EHR Portal
+            <span class="page-heading-sub">&bull; Clinical Practitioner Workspace</span>
+        </h1>
+    </header>
+
     <!-- 1. Secondary Sub-Navigation Toolbar -->
-    <div class="subnav-toolbar">
+    <nav class="subnav-toolbar" aria-label="Dashboard Sub-sections">
         <div class="subnav-tabs">
             <button type="button" class="subnav-tab-btn active" onclick="switchDashboardTab('overview', this)">
-                <i class="fa fa-th-large"></i>
+                <i class="fa fa-th-large" aria-hidden="true"></i>
                 <span>Overview &amp; Telemetry</span>
             </button>
             <button type="button" class="subnav-tab-btn" onclick="switchDashboardTab('today', this)">
-                <i class="fa fa-calendar-check-o"></i>
+                <i class="fa fa-calendar-check-o" aria-hidden="true"></i>
                 <span>Today's Schedule</span>
                 <span class="subnav-badge"><?=isset($today_appointments_list) ? count($today_appointments_list) : $todayappointment;?></span>
             </button>
             <button type="button" class="subnav-tab-btn" onclick="switchDashboardTab('pending', this)">
-                <i class="fa fa-clock-o"></i>
+                <i class="fa fa-clock-o" aria-hidden="true"></i>
                 <span>Pending Review</span>
                 <span class="subnav-badge"><?=$pending_appointments;?></span>
             </button>
             <a href="<?=base_url('diet');?>" class="subnav-tab-btn">
-                <i class="fa fa-cutlery" style="color: #10b981;"></i>
+                <i class="fa fa-cutlery" style="color: var(--text-success);" aria-hidden="true"></i>
                 <span>Diet Tracker EHR</span>
-                <span class="subnav-badge" style="background: #10b981; color: #fff;">LIVE</span>
+                <span class="subnav-badge" style="background: var(--text-success); color: #fff;">LIVE</span>
             </a>
             <a href="<?=base_url('manageownclinic');?>" class="subnav-tab-btn">
-                <i class="fa fa-hospital-o"></i>
+                <i class="fa fa-hospital-o" aria-hidden="true"></i>
                 <span>Practice Chambers</span>
             </a>
             <a href="<?=base_url('doctorpanel/earnings');?>" class="subnav-tab-btn">
-                <i class="fa fa-line-chart"></i>
+                <i class="fa fa-line-chart" aria-hidden="true"></i>
                 <span>Earnings &amp; Reports</span>
             </a>
         </div>
 
         <div class="subnav-right-tools">
             <div class="date-pill">
-                <i class="fa fa-calendar" style="color: var(--upchar-blue);"></i>
+                <i class="fa fa-calendar" style="color: var(--text-brand);" aria-hidden="true"></i>
                 <span><?=date('l, d M Y');?></span>
             </div>
-            <a href="<?=base_url('doctorpanel/datetime');?>" class="btn-banner-primary" style="padding: 6px 14px; font-size: 12px; background: var(--upchar-blue); color: #fff !important; box-shadow: none;">
-                <i class="fa fa-clock-o"></i>
+            <a href="<?=base_url('doctorpanel/datetime');?>" class="btn-ehr-primary" style="padding: 7px 14px;">
+                <i class="fa fa-clock-o" aria-hidden="true"></i>
                 <span>Set Slot Timings</span>
             </a>
         </div>
-    </div>
+    </nav>
 
     <!-- 2. Executive Section Banner -->
     <?php 
@@ -679,32 +722,32 @@
     $doc_lname = $this->session->userdata('druserlname') ?: '';
     $dr_room_id = 'upchar_teleconsult_'.(isset($doctor->id) ? $doctor->id : ($this->session->userdata('druserid') ?: 'dr_default'));
     ?>
-    <div class="executive-banner">
+    <section class="executive-banner" aria-label="Practitioner Status">
         <div class="banner-title-area">
             <h2>
-                <i class="fa fa-stethoscope" style="color: #2dd4bf;"></i>
+                <i class="fa fa-user-md" style="color: #2dd4bf;" aria-hidden="true"></i>
                 Dr. <?=$doc_name;?> <?=$doc_lname;?>
             </h2>
             <div class="banner-meta">
                 <span class="banner-badge-verified">
-                    <i class="fa fa-check-circle"></i> Verified Medical Practitioner
+                    <i class="fa fa-check-circle" aria-hidden="true"></i> Verified Medical Practitioner
                 </span>
-                <span><i class="fa fa-clock-o"></i> Telemetry Synced: <?=date('h:i A');?></span>
+                <span><i class="fa fa-clock-o" aria-hidden="true"></i> Telemetry Synced: <?=date('h:i A');?></span>
                 <span>&bull;</span>
-                <span><i class="fa fa-map-marker"></i> <?=$total_clinics;?> Chambers &bull; <?=$total_hospitals;?> Visiting Hospitals</span>
+                <span><i class="fa fa-map-marker" aria-hidden="true"></i> <?=$total_clinics;?> Chambers &bull; <?=$total_hospitals;?> Visiting Hospitals</span>
             </div>
         </div>
         <div class="banner-actions">
-            <a href="<?=base_url('doctorpanel/videocall/'.$dr_room_id);?>" target="_blank" class="btn-banner-light" title="Open Virtual Consultation Room">
-                <i class="fa fa-video-camera" style="color: #2dd4bf;"></i>
+            <a href="<?=base_url('doctorpanel/videocall/'.$dr_room_id);?>" target="_blank" class="btn-ehr-secondary" title="Open Virtual Consultation Room">
+                <i class="fa fa-video-camera" style="color: #2dd4bf;" aria-hidden="true"></i>
                 <span>Launch Teleconsult Room</span>
             </a>
-            <a href="<?=base_url('manageappointment');?>" class="btn-banner-primary" title="View Patient Appointments">
-                <i class="fa fa-calendar-check-o"></i>
+            <a href="<?=base_url('manageappointment');?>" class="btn-ehr-primary" title="View Patient Appointments" style="background: #ffffff; color: var(--text-primary) !important;">
+                <i class="fa fa-calendar-check-o" style="color: var(--text-brand);" aria-hidden="true"></i>
                 <span>Consultation Queue</span>
             </a>
         </div>
-    </div>
+    </section>
 
     <!-- Flash Alert -->
     <?php if($this->session->flashdata('flashmsg')): ?>
@@ -716,14 +759,14 @@
     <!-- 3. Metrics Summary Row (5 Modern Cards) -->
     <div class="metrics-row">
         <!-- 1. Today's Consultations -->
-        <a href="<?=base_url('manageappointment');?>" class="metric-card-link">
+        <a href="<?=base_url('manageappointment');?>" class="metric-card-link" aria-label="Today's scheduled visits: <?=number_format($todayappointment);?>">
             <div class="metric-card">
                 <div class="metric-card-top">
-                    <div class="metric-icon-wrap" style="background: #fef3c7; color: #d97706;">
-                        <i class="fa fa-calendar-check-o"></i>
+                    <div class="metric-icon-wrap" style="background: #fef3c7; color: var(--text-warning);">
+                        <i class="fa fa-calendar-check-o" aria-hidden="true"></i>
                     </div>
                     <span class="metric-trend-pill trend-amber">
-                        <i class="fa fa-calendar"></i> Today
+                        <i class="fa fa-calendar" aria-hidden="true"></i> Today
                     </span>
                 </div>
                 <div>
@@ -737,14 +780,14 @@
         </a>
 
         <!-- 2. Unique Patients -->
-        <a href="<?=base_url('manageappointment');?>" class="metric-card-link">
+        <a href="<?=base_url('manageappointment');?>" class="metric-card-link" aria-label="Unique registered patients: <?=number_format($total_patients);?>">
             <div class="metric-card">
                 <div class="metric-card-top">
-                    <div class="metric-icon-wrap" style="background: #dcfce7; color: #16a34a;">
-                        <i class="fa fa-users"></i>
+                    <div class="metric-icon-wrap" style="background: #dcfce7; color: var(--text-success);">
+                        <i class="fa fa-users" aria-hidden="true"></i>
                     </div>
                     <span class="metric-trend-pill trend-green">
-                        <i class="fa fa-heartbeat"></i> Registry
+                        <i class="fa fa-heartbeat" aria-hidden="true"></i> Registry
                     </span>
                 </div>
                 <div>
@@ -758,14 +801,14 @@
         </a>
 
         <!-- 3. Pending Consultations -->
-        <a href="<?=base_url('manageappointment');?>" class="metric-card-link">
+        <a href="<?=base_url('manageappointment');?>" class="metric-card-link" aria-label="Pending consultation reviews: <?=number_format($pending_appointments);?>">
             <div class="metric-card">
                 <div class="metric-card-top">
-                    <div class="metric-icon-wrap" style="background: #e0f2fe; color: #0284c7;">
-                        <i class="fa fa-hourglass-half"></i>
+                    <div class="metric-icon-wrap" style="background: #e0f2fe; color: var(--text-brand);">
+                        <i class="fa fa-hourglass-half" aria-hidden="true"></i>
                     </div>
                     <span class="metric-trend-pill trend-blue">
-                        <i class="fa fa-clock-o"></i> Queue
+                        <i class="fa fa-clock-o" aria-hidden="true"></i> Queue
                     </span>
                 </div>
                 <div>
@@ -779,14 +822,14 @@
         </a>
 
         <!-- 4. Completed Visits -->
-        <a href="<?=base_url('manageappointment');?>" class="metric-card-link">
+        <a href="<?=base_url('manageappointment');?>" class="metric-card-link" aria-label="Completed consultation visits: <?=number_format($completed_appointments);?>">
             <div class="metric-card">
                 <div class="metric-card-top">
-                    <div class="metric-icon-wrap" style="background: #ccfbf1; color: #0f766e;">
-                        <i class="fa fa-check-circle"></i>
+                    <div class="metric-icon-wrap" style="background: #ccfbf1; color: var(--text-brand);">
+                        <i class="fa fa-check-circle" aria-hidden="true"></i>
                     </div>
                     <span class="metric-trend-pill trend-teal">
-                        <i class="fa fa-stethoscope"></i> Visited
+                        <i class="fa fa-stethoscope" aria-hidden="true"></i> Visited
                     </span>
                 </div>
                 <div>
@@ -800,14 +843,14 @@
         </a>
 
         <!-- 5. Net Doctor Earnings -->
-        <a href="<?=base_url('doctorpanel/earnings');?>" class="metric-card-link">
+        <a href="<?=base_url('doctorpanel/earnings');?>" class="metric-card-link" aria-label="Net doctor earnings: ₹<?=number_format(@$earnings->total_net, 2);?>">
             <div class="metric-card">
                 <div class="metric-card-top">
-                    <div class="metric-icon-wrap" style="background: #e0e7ff; color: #4338ca;">
-                        <i class="fa fa-inr"></i>
+                    <div class="metric-icon-wrap" style="background: #e0e7ff; color: var(--text-brand);">
+                        <i class="fa fa-inr" aria-hidden="true"></i>
                     </div>
                     <span class="metric-trend-pill trend-indigo">
-                        <i class="fa fa-line-chart"></i> Net
+                        <i class="fa fa-line-chart" aria-hidden="true"></i> Net
                     </span>
                 </div>
                 <div>
@@ -830,23 +873,23 @@
                 <div class="ehr-card-header">
                     <div>
                         <h3 class="ehr-card-title">
-                            <i class="fa fa-calendar-check-o" style="color: var(--upchar-blue);"></i>
+                            <i class="fa fa-calendar-check-o" style="color: var(--text-brand);" aria-hidden="true"></i>
                             <span id="tableTitleText">Consultation Appointments &amp; Queue</span>
                         </h3>
-                        <p style="font-size: 12px; color: var(--upchar-slate-500); margin: 3px 0 0 0;">Interactive patient visit queue with instant actions</p>
+                        <p style="font-size: 12px; color: var(--text-muted); margin: 3px 0 0 0;">Interactive patient visit queue with instant actions</p>
                     </div>
-                    <a href="<?=base_url('manageappointment');?>" class="btn-banner-primary" style="padding: 6px 12px; font-size: 11.5px; background: #f1f5f9; color: var(--upchar-slate-700) !important; border: 1px solid var(--upchar-border); box-shadow: none;">
+                    <a href="<?=base_url('manageappointment');?>" class="btn-table-action btn-action-rx">
                         <span>View All (<?=number_format($totalappointment);?>)</span>
-                        <i class="fa fa-arrow-right"></i>
+                        <i class="fa fa-arrow-right" aria-hidden="true"></i>
                     </a>
                 </div>
 
                 <div class="ehr-card-body" style="padding-bottom: 8px;">
                     <!-- Filter Toolbar -->
                     <div class="table-filter-bar">
-                        <input type="text" id="patientFilterInput" class="table-search-input" placeholder="Search patient name, phone, or appointment #...">
+                        <input type="text" id="patientFilterInput" class="table-search-input" placeholder="Search patient name, phone, or appointment #..." aria-label="Filter patient appointments">
                         
-                        <div class="status-filter-pills">
+                        <div class="status-filter-pills" role="toolbar" aria-label="Table status filters">
                             <button type="button" class="filter-pill active" onclick="filterTableStatus('all', this)">All (<?=count($recent_appointments);?>)</button>
                             <button type="button" class="filter-pill" onclick="filterTableStatus('confirmed', this)">Upcoming</button>
                             <button type="button" class="filter-pill" onclick="filterTableStatus('completed', this)">Visited</button>
@@ -879,64 +922,64 @@
                                         $row_status = ($a->status == '2') ? 'completed' : (($a->status == '0') ? 'cancelled' : 'confirmed');
                                     ?>
                                     <tr class="appt-row" data-status="<?=$row_status;?>" data-type="<?=$is_video ? 'video' : 'clinic';?>" data-search="<?=strtolower($p_name.' '.$p_mobile.' #'.$a->appointment_id);?>">
-                                        <td style="font-weight: 700; color: var(--upchar-blue);">
+                                        <td style="font-weight: 700; color: var(--text-brand);">
                                             #<?=$a->appointment_id;?>
                                         </td>
                                         <td>
                                             <div class="patient-cell">
-                                                <div class="patient-avatar-circle"><?=$p_initials;?></div>
+                                                <div class="patient-avatar-circle" aria-hidden="true"><?=$p_initials;?></div>
                                                 <div>
                                                     <div class="patient-name-text"><?=htmlspecialchars($p_name);?></div>
-                                                    <div class="patient-sub-text"><i class="fa fa-phone"></i> <?=htmlspecialchars($p_mobile);?></div>
+                                                    <div class="patient-sub-text"><i class="fa fa-phone" aria-hidden="true"></i> <?=htmlspecialchars($p_mobile);?></div>
                                                 </div>
                                             </div>
                                         </td>
                                         <td>
-                                            <div style="font-weight: 600; color: var(--upchar-slate-900);"><?=date('d M Y', strtotime($a->appointment_date));?></div>
-                                            <div style="font-size: 11px; color: var(--upchar-slate-500);"><i class="fa fa-clock-o"></i> <?=$a->appointment_time;?></div>
+                                            <div style="font-weight: 600; color: var(--text-primary);"><?=date('d M Y', strtotime($a->appointment_date));?></div>
+                                            <div style="font-size: 12px; color: var(--text-muted);"><i class="fa fa-clock-o" aria-hidden="true"></i> <?=$a->appointment_time;?></div>
                                         </td>
                                         <td>
                                             <?php if($is_video): ?>
-                                                <span class="badge-ehr badge-ehr-video"><i class="fa fa-video-camera"></i> Teleconsult</span>
+                                                <span class="badge-ehr badge-ehr-video"><i class="fa fa-video-camera" aria-hidden="true"></i> Teleconsult</span>
                                             <?php elseif(isset($a->institution_type) && $a->institution_type == 'H'): ?>
-                                                <span class="badge-ehr badge-ehr-clinic"><i class="fa fa-building-o"></i> Hospital</span>
+                                                <span class="badge-ehr badge-ehr-clinic"><i class="fa fa-building-o" aria-hidden="true"></i> Hospital</span>
                                             <?php else: ?>
-                                                <span class="badge-ehr badge-ehr-clinic"><i class="fa fa-hospital-o"></i> Clinic</span>
+                                                <span class="badge-ehr badge-ehr-clinic"><i class="fa fa-hospital-o" aria-hidden="true"></i> Clinic</span>
                                             <?php endif; ?>
                                         </td>
                                         <td>
-                                            <div style="font-weight: 700; color: var(--upchar-slate-900);">₹<?=number_format($fee_val, 2);?></div>
+                                            <div style="font-weight: 700; color: var(--text-primary);">₹<?=number_format($fee_val, 2);?></div>
                                             <?php if($is_paid): ?>
-                                                <span style="font-size: 11px; color: #16a34a; font-weight: 700;"><i class="fa fa-check-circle"></i> Paid</span>
+                                                <span style="font-size: 12px; color: var(--text-success); font-weight: 700;"><i class="fa fa-check-circle" aria-hidden="true"></i> Paid</span>
                                             <?php else: ?>
-                                                <span style="font-size: 11px; color: #dc2626; font-weight: 700;"><i class="fa fa-clock-o"></i> Unpaid</span>
+                                                <span style="font-size: 12px; color: var(--text-danger); font-weight: 700;"><i class="fa fa-clock-o" aria-hidden="true"></i> Unpaid</span>
                                             <?php endif; ?>
                                         </td>
                                         <td style="text-align: right; white-space: nowrap;">
                                             <?php if ($is_video || !empty($a->room_id)): ?>
                                                 <a href="<?=base_url('doctorpanel/videocall/'.($a->room_id ?: 'upchar_consult_'.$a->appointment_id));?>" target="_blank" class="btn-table-action btn-action-video" title="Launch WebRTC Video Consultation">
-                                                    <i class="fa fa-video-camera"></i> Call
+                                                    <i class="fa fa-video-camera" aria-hidden="true"></i> Call
                                                 </a>
                                             <?php endif; ?>
                                             <a href="<?=base_url('doctorpanel/prescription/'.$a->appointment_id);?>" class="btn-table-action btn-action-rx" title="Write Clinical Prescription">
-                                                <i class="fa fa-stethoscope"></i> Rx
+                                                <i class="fa fa-stethoscope" aria-hidden="true"></i> Rx
                                             </a>
                                             <?php if($a->status != '2'): ?>
                                                 <a href="<?=base_url('doctorpanel/complete_appointment?aid='.$a->appointment_id);?>" onclick="return confirm('Complete consultation visit and mark completed?');" class="btn-table-action btn-action-complete" title="Mark Visited &amp; Complete">
-                                                    <i class="fa fa-check"></i> Complete
+                                                    <i class="fa fa-check" aria-hidden="true"></i> Complete
                                                 </a>
                                             <?php else: ?>
-                                                <span class="badge-ehr badge-ehr-completed"><i class="fa fa-check-circle"></i> Visited</span>
+                                                <span class="badge-ehr badge-ehr-completed"><i class="fa fa-check-circle" aria-hidden="true"></i> Visited</span>
                                             <?php endif; ?>
                                         </td>
                                     </tr>
                                     <?php endforeach; ?>
                                 <?php else: ?>
                                     <tr>
-                                        <td colspan="6" style="padding: 40px; text-align: center; color: var(--upchar-slate-500);">
-                                            <i class="fa fa-calendar-o" style="font-size: 36px; display: block; margin-bottom: 10px; color: #cbd5e1;"></i>
-                                            <div style="font-weight: 700; color: var(--upchar-slate-700);">No consultations currently in queue</div>
-                                            <div style="font-size: 12px; margin-top: 4px;">New patient bookings will appear here instantly.</div>
+                                        <td colspan="6" style="padding: 40px; text-align: center; color: var(--text-muted);">
+                                            <i class="fa fa-calendar-o" style="font-size: 36px; display: block; margin-bottom: 10px; color: #cbd5e1;" aria-hidden="true"></i>
+                                            <div style="font-weight: 700; color: var(--text-primary);">No consultations currently in queue</div>
+                                            <div style="font-size: 12.5px; margin-top: 4px;">New patient bookings will appear here instantly.</div>
                                         </td>
                                     </tr>
                                 <?php endif; ?>
@@ -953,7 +996,7 @@
                     <div class="ehr-card">
                         <div class="ehr-card-header">
                             <h3 class="ehr-card-title">
-                                <i class="fa fa-line-chart" style="color: var(--upchar-teal);"></i>
+                                <i class="fa fa-line-chart" style="color: var(--text-brand);" aria-hidden="true"></i>
                                 6-Month Patient Consultation Trend
                             </h3>
                         </div>
@@ -970,7 +1013,7 @@
                     <div class="ehr-card">
                         <div class="ehr-card-header">
                             <h3 class="ehr-card-title">
-                                <i class="fa fa-pie-chart" style="color: var(--upchar-blue);"></i>
+                                <i class="fa fa-pie-chart" style="color: var(--text-brand);" aria-hidden="true"></i>
                                 Visit Distribution
                             </h3>
                         </div>
@@ -990,20 +1033,20 @@
             <div class="teleconsult-room-widget">
                 <div class="teleconsult-widget-header">
                     <div style="display: flex; align-items: center; gap: 8px;">
-                        <span class="pulse-dot"></span>
+                        <span class="pulse-dot" aria-hidden="true"></span>
                         <strong style="font-size: 13.5px;">Virtual Consult Room</strong>
                     </div>
-                    <span style="font-size: 11px; background: rgba(255,255,255,0.2); padding: 2px 7px; border-radius: 10px;">WebRTC 1080p</span>
+                    <span style="font-size: 12px; background: rgba(255,255,255,0.2); padding: 2px 8px; border-radius: var(--radius-sm);">WebRTC 1080p</span>
                 </div>
-                <p style="font-size: 12px; color: rgba(255,255,255,0.9); margin-bottom: 14px;">
+                <p style="font-size: 12.5px; color: rgba(255,255,255,0.92); margin-bottom: 14px;">
                     Instantly conduct live audio/video consultations with connected patients.
                 </p>
                 <div style="display: flex; gap: 8px;">
-                    <a href="<?=base_url('doctorpanel/videocall/'.$dr_room_id);?>" target="_blank" class="btn-banner-primary" style="flex: 1; text-align: center; justify-content: center; font-size: 12px; padding: 8px 10px;">
-                        <i class="fa fa-video-camera"></i> Launch Room
+                    <a href="<?=base_url('doctorpanel/videocall/'.$dr_room_id);?>" target="_blank" class="btn-ehr-primary" style="flex: 1; text-align: center; justify-content: center; background: #ffffff; color: var(--text-primary) !important;">
+                        <i class="fa fa-video-camera" style="color: var(--text-brand);" aria-hidden="true"></i> Launch Room
                     </a>
-                    <button type="button" onclick="copyTeleconsultLink('<?=base_url('doctorpanel/videocall/'.$dr_room_id);?>')" class="btn-banner-light" style="padding: 8px 12px;" title="Copy Video Room Link">
-                        <i class="fa fa-clipboard"></i> Copy Link
+                    <button type="button" onclick="copyTeleconsultLink('<?=base_url('doctorpanel/videocall/'.$dr_room_id);?>')" class="btn-ehr-secondary" title="Copy Video Room Link">
+                        <i class="fa fa-clipboard" aria-hidden="true"></i> Copy Link
                     </button>
                 </div>
             </div>
@@ -1013,12 +1056,12 @@
                 <div class="ehr-card-header">
                     <div>
                         <h4 class="ehr-card-title" style="font-size: 13.5px;">
-                            <i class="fa fa-cutlery" style="color: #10b981;"></i>
+                            <i class="fa fa-cutlery" style="color: var(--text-success);" aria-hidden="true"></i>
                             Patient Diet &amp; Nutrition (EHR)
                         </h4>
-                        <span style="font-size: 11px; color: var(--upchar-slate-500);">Live intake logged by patients</span>
+                        <span style="font-size: 12px; color: var(--text-muted);">Live intake logged by patients</span>
                     </div>
-                    <a href="<?=base_url('diet');?>" class="btn-table-action btn-action-rx" style="font-size: 11px; padding: 3px 8px;">
+                    <a href="<?=base_url('diet');?>" class="btn-table-action btn-action-rx" style="padding: 4px 10px;">
                         Open Tracker &rarr;
                     </a>
                 </div>
@@ -1028,7 +1071,7 @@
                             $patient_diet_name = !empty($dl->user_fname) ? trim($dl->user_fname.' '.$dl->user_lname) : 'Registered Patient';
                         ?>
                         <div class="diet-log-item">
-                            <div class="diet-icon-pill">
+                            <div class="diet-icon-pill" aria-hidden="true">
                                 <i class="fa fa-apple"></i>
                             </div>
                             <div style="flex: 1;">
@@ -1039,23 +1082,23 @@
                                     $c_val = isset($dl->carbs) ? $dl->carbs : (isset($dl->carbs_g) ? $dl->carbs_g : 0);
                                     $f_val = isset($dl->fats) ? $dl->fats : (isset($dl->fat_g) ? $dl->fat_g : 0);
                                     ?>
-                                    <strong style="font-size: 12.5px; color: var(--upchar-slate-900);"><?=htmlspecialchars($item_name);?></strong>
-                                    <span class="badge" style="background: #e0f2fe; color: #0369a1; font-size: 10px;"><?=ucfirst($dl->meal_category);?></span>
+                                    <strong style="font-size: 12.5px; color: var(--text-primary);"><?=htmlspecialchars($item_name);?></strong>
+                                    <span class="badge" style="background: #e0f2fe; color: var(--text-brand); font-size: 12px;"><?=ucfirst($dl->meal_category);?></span>
                                 </div>
-                                <div style="font-size: 11px; color: var(--upchar-slate-500); margin-top: 2px;">
+                                <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">
                                     Patient: <?=htmlspecialchars($patient_diet_name);?> &bull; <?=number_format($dl->calories, 0);?> kcal
                                 </div>
-                                <div style="font-size: 10px; color: #64748b; margin-top: 2px;">
+                                <div style="font-size: 12px; color: var(--text-secondary); margin-top: 2px;">
                                     P: <?=number_format($p_val, 1);?>g &bull; C: <?=number_format($c_val, 1);?>g &bull; F: <?=number_format($f_val, 1);?>g
                                 </div>
                             </div>
                         </div>
                         <?php endforeach; ?>
                     <?php else: ?>
-                        <div style="text-align: center; padding: 20px 0; color: var(--upchar-slate-500);">
-                            <i class="fa fa-cutlery" style="font-size: 24px; color: #cbd5e1; margin-bottom: 6px;"></i>
-                            <div style="font-size: 12px; font-weight: 600;">No nutrition logs recorded yet today</div>
-                            <div style="font-size: 11px; margin-top: 2px;">Patient meal logs will stream here in real-time.</div>
+                        <div style="text-align: center; padding: 20px 0; color: var(--text-muted);">
+                            <i class="fa fa-cutlery" style="font-size: 24px; color: #cbd5e1; margin-bottom: 6px;" aria-hidden="true"></i>
+                            <div style="font-size: 12.5px; font-weight: 600;">No nutrition logs recorded yet today</div>
+                            <div style="font-size: 12px; margin-top: 2px;">Patient meal logs will stream here in real-time.</div>
                         </div>
                     <?php endif; ?>
                 </div>
@@ -1065,52 +1108,52 @@
             <div class="ehr-card">
                 <div class="ehr-card-header">
                     <h4 class="ehr-card-title" style="font-size: 13.5px;">
-                        <i class="fa fa-pencil-square-o" style="color: #f59e0b;"></i>
+                        <i class="fa fa-pencil-square-o" style="color: var(--text-warning);" aria-hidden="true"></i>
                         Clinical Quick Notes &amp; Scratchpad
                     </h4>
-                    <span id="scratchpadStatus" style="font-size: 11px; color: #10b981; font-weight: 700;">
-                        <i class="fa fa-check"></i> Saved locally
+                    <span id="scratchpadStatus" style="font-size: 12px; color: var(--text-success); font-weight: 700;">
+                        <i class="fa fa-check" aria-hidden="true"></i> Saved locally
                     </span>
                 </div>
                 <div class="ehr-card-body" style="padding: 14px 18px;">
-                    <textarea id="doctorScratchpad" class="scratchpad-textarea" placeholder="Jot down quick patient observations, medicine reminders, or clinical follow-ups (auto-saved)..."></textarea>
+                    <textarea id="doctorScratchpad" class="scratchpad-textarea" placeholder="Jot down quick patient observations, medicine reminders, or clinical follow-ups (auto-saved)..." aria-label="Clinical quick notes"></textarea>
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
-                        <span style="font-size: 11px; color: var(--upchar-slate-500);">Auto-saved to your browser</span>
-                        <button type="button" onclick="clearScratchpad()" style="background: none; border: none; font-size: 11px; color: var(--upchar-slate-500); cursor: pointer; padding: 0;">
-                            <i class="fa fa-trash-o"></i> Clear
+                        <span style="font-size: 12px; color: var(--text-muted);">Auto-saved to your browser</span>
+                        <button type="button" onclick="clearScratchpad()" style="background: none; border: none; font-size: 12px; color: var(--text-muted); cursor: pointer; padding: 0;">
+                            <i class="fa fa-trash-o" aria-hidden="true"></i> Clear
                         </button>
                     </div>
                 </div>
             </div>
 
-            <!-- 4. Practice Chambers Quick Glance -->
+            <!-- 4. Practice Chambers Quick Glance (Usability Fix 7: font-size >= 12.5px) -->
             <div class="ehr-card">
                 <div class="ehr-card-header">
                     <h4 class="ehr-card-title" style="font-size: 13.5px;">
-                        <i class="fa fa-hospital-o" style="color: var(--upchar-blue);"></i>
+                        <i class="fa fa-hospital-o" style="color: var(--text-brand);" aria-hidden="true"></i>
                         Practice Chambers &amp; Hospitals
                     </h4>
-                    <a href="<?=base_url('manageownclinic');?>" style="font-size: 11px; font-weight: 700; color: var(--upchar-blue); text-decoration: none;">
+                    <a href="<?=base_url('manageownclinic');?>" style="font-size: 12px; font-weight: 700; color: var(--text-brand); text-decoration: none;">
                         Setup &rarr;
                     </a>
                 </div>
                 <div class="ehr-card-body" style="padding: 14px 18px;">
                     <div style="display: flex; gap: 12px; margin-bottom: 12px;">
-                        <div style="flex: 1; background: #f8fafc; border: 1px solid var(--upchar-border); border-radius: 8px; padding: 10px; text-align: center;">
-                            <div style="font-size: 18px; font-weight: 800; color: var(--upchar-slate-900);"><?=$total_clinics;?></div>
-                            <div style="font-size: 11px; color: var(--upchar-slate-500); font-weight: 600;">Own Clinics</div>
+                        <div style="flex: 1; background: #f8fafc; border: 1px solid var(--upchar-border); border-radius: var(--radius-md); padding: 10px; text-align: center;">
+                            <div style="font-size: 18px; font-weight: 800; color: var(--text-primary);"><?=$total_clinics;?></div>
+                            <div style="font-size: 12px; color: var(--text-muted); font-weight: 600;">Own Clinics</div>
                         </div>
-                        <div style="flex: 1; background: #f8fafc; border: 1px solid var(--upchar-border); border-radius: 8px; padding: 10px; text-align: center;">
-                            <div style="font-size: 18px; font-weight: 800; color: var(--upchar-slate-900);"><?=$total_hospitals;?></div>
-                            <div style="font-size: 11px; color: var(--upchar-slate-500); font-weight: 600;">Hospitals</div>
+                        <div style="flex: 1; background: #f8fafc; border: 1px solid var(--upchar-border); border-radius: var(--radius-md); padding: 10px; text-align: center;">
+                            <div style="font-size: 18px; font-weight: 800; color: var(--text-primary);"><?=$total_hospitals;?></div>
+                            <div style="font-size: 12px; color: var(--text-muted); font-weight: 600;">Hospitals</div>
                         </div>
                     </div>
-                    <div style="display: flex; flex-direction: column; gap: 6px;">
-                        <a href="<?=base_url('manageownclinic');?>" class="btn-table-action btn-action-rx" style="justify-content: center; padding: 6px 10px;">
-                            <i class="fa fa-plus"></i> Add New Clinic Chamber
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        <a href="<?=base_url('manageownclinic');?>" class="btn-table-action btn-action-rx" style="justify-content: center; padding: 7px 12px;">
+                            <i class="fa fa-plus" aria-hidden="true"></i> Add New Clinic Chamber
                         </a>
-                        <a href="<?=base_url('managepractice');?>" class="btn-table-action btn-action-rx" style="justify-content: center; padding: 6px 10px;">
-                            <i class="fa fa-cog"></i> Configure Consultation Fees
+                        <a href="<?=base_url('managepractice');?>" class="btn-table-action btn-action-rx" style="justify-content: center; padding: 7px 12px;">
+                            <i class="fa fa-cog" aria-hidden="true"></i> Configure Consultation Fees
                         </a>
                     </div>
                 </div>
@@ -1148,11 +1191,11 @@ if (pad) {
 
     var saveTimeout;
     pad.addEventListener('input', function() {
-        if (padStatus) padStatus.innerHTML = '<i class="fa fa-refresh fa-spin"></i> Saving...';
+        if (padStatus) padStatus.innerHTML = '<i class="fa fa-refresh fa-spin" aria-hidden="true"></i> Saving...';
         clearTimeout(saveTimeout);
         saveTimeout = setTimeout(function() {
             localStorage.setItem('upchar_doctor_scratchpad', pad.value);
-            if (padStatus) padStatus.innerHTML = '<i class="fa fa-check"></i> Saved locally';
+            if (padStatus) padStatus.innerHTML = '<i class="fa fa-check" aria-hidden="true"></i> Saved locally';
         }, 500);
     });
 }
@@ -1161,7 +1204,7 @@ function clearScratchpad() {
     if (confirm('Clear your scratchpad notes?')) {
         if (pad) pad.value = '';
         localStorage.removeItem('upchar_doctor_scratchpad');
-        if (padStatus) padStatus.innerHTML = '<i class="fa fa-check"></i> Cleared';
+        if (padStatus) padStatus.innerHTML = '<i class="fa fa-check" aria-hidden="true"></i> Cleared';
     }
 }
 
@@ -1257,7 +1300,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     position: 'bottom',
                     labels: {
                         boxWidth: 10,
-                        fontSize: 11,
+                        fontSize: 12,
                         fontColor: '#475569',
                         padding: 12
                     }
@@ -1302,7 +1345,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         },
                         ticks: {
                             fontColor: '#64748b',
-                            fontSize: 11
+                            fontSize: 12
                         }
                     }],
                     yAxes: [{
@@ -1314,7 +1357,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             beginAtZero: true,
                             stepSize: 1,
                             fontColor: '#64748b',
-                            fontSize: 11
+                            fontSize: 12
                         }
                     }]
                 }
