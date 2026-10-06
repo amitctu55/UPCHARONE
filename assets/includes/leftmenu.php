@@ -3,11 +3,13 @@ $seg1 = $this->uri->segment(1);
 $seg2 = $this->uri->segment(2);
 
 $isDashboard   = ($seg1 == 'doctor-dashboard' || ($seg1 == 'doctorpanel' && ($seg2 == 'dashboard' || $seg2 == '')));
-$isProfile     = ($seg1 == 'doctorpanel' && in_array($seg2, array('updateprofile', 'change_password')));
+$isProfile     = ($seg1 == 'doctorpanel' && $seg2 == 'updateprofile');
+$isSecurity    = ($seg1 == 'doctorpanel' && $seg2 == 'change_password');
 $isProfileStep = in_array($seg1, array('profile_step1', 'profile_step2', 'profile_step3', 'profile_step4', 'profile_step5', 'profile_step6', 'profile_step7', 'profile_step8', 'profile_step9', 'profile_step10'));
 $isClinic      = ($seg1 == 'manageownclinic');
 $isPractice    = ($seg1 == 'managepractice');
-$isApt         = ($seg1 == 'manageappointment' || ($seg1 == 'doctorpanel' && in_array($seg2, array('manageappointment', 'addappointment', 'viewappointment'))));
+$isApt         = ($seg1 == 'manageappointment' || ($seg1 == 'doctorpanel' && in_array($seg2, array('manageappointment', 'addappointment', 'viewappointment', 'prescription'))));
+$isDiet        = ($seg1 == 'diet');
 $isEarnings    = ($seg1 == 'doctorpanel' && in_array($seg2, array('earnings', 'invoice_view')));
 $isGalleryOpen = ($seg1 == 'doctorpanel' && in_array($seg2, array('gallery', 'managegallery')));
 $isDateTime    = ($seg1 == 'doctorpanel' && $seg2 == 'datetime');
@@ -17,37 +19,71 @@ $isNewsOpen    = ($seg1 == 'doctorpanel' && in_array($seg2, array('news', 'manag
 
 <aside class="sidebar">
   <div class="sidebar-inner">
-    <div class="sidebar-heading" style="padding: 10px 20px 6px 20px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: #64748b;">
-      Clinical Workspace
-    </div>
-
+    <!-- Section 1: Main Workspace -->
+    <div class="sidebar-group-title">Main Workspace</div>
     <ul class="nav nav-sidebar">
       <li class="<?=$isDashboard ? 'active' : '';?>">
-        <a href="<?=base_url('doctor-dashboard');?>"><i class="fa fa-user-md"></i><span>Dashboard</span></a>
+        <a href="<?=base_url('doctor-dashboard');?>" title="Clinical Dashboard">
+          <i class="fa fa-th-large"></i><span>Dashboard</span>
+        </a>
       </li>
-      <li class="<?=$isProfile ? 'active' : '';?>">
-        <a href="<?=base_url('doctorpanel/updateprofile');?>"><i class="fa fa-pencil-square-o"></i><span>Update Profile</span></a>
+      <li class="<?=$isDateTime ? 'active' : '';?>">
+        <a href="<?=base_url('doctorpanel/datetime');?>" title="Availability & Slot Timings">
+          <i class="fa fa-clock-o"></i><span>Schedule &amp; Timings</span>
+        </a>
       </li>
-      <li class="<?=$isProfileStep ? 'active' : '';?>">
-        <a href="<?=base_url('profile_step1');?>"><i class="fa fa-id-card-o"></i><span>Manage Profile</span></a>
+    </ul>
+
+    <!-- Section 2: Clinical Practice -->
+    <div class="sidebar-group-title">Clinical Practice</div>
+    <ul class="nav nav-sidebar">
+      <li class="<?=$isApt ? 'active' : '';?>">
+        <a href="<?=base_url('manageappointment');?>" title="Patient Consultations">
+          <i class="fa fa-calendar-check-o"></i><span>Appointments &amp; Queue</span>
+        </a>
       </li>
       <li class="<?=$isClinic ? 'active' : '';?>">
-        <a href="<?=base_url('manageownclinic');?>"><i class="fa fa-hospital-o"></i><span>Manage Own Clinic</span></a>
+        <a href="<?=base_url('manageownclinic');?>" title="Own Chambers &amp; Clinics">
+          <i class="fa fa-hospital-o"></i><span>Manage Own Clinic</span>
+        </a>
       </li>
       <li class="<?=$isPractice ? 'active' : '';?>">
-        <a href="<?=base_url('managepractice');?>"><i class="fa fa-medkit"></i><span>Manage Practice</span></a>
+        <a href="<?=base_url('managepractice');?>" title="Practice Setup &amp; Pricing">
+          <i class="fa fa-medkit"></i><span>Practice Setup &amp; Fees</span>
+        </a>
       </li>
-      <li class="<?=$isApt ? 'active' : '';?>">
-        <a href="<?=base_url('manageappointment');?>"><i class="fa fa-calendar"></i><span>Manage Appointment</span></a>
+      <li class="<?=$isUpcharHosp ? 'active' : '';?>">
+        <a href="<?=base_url('doctorpanel/upcharhospital');?>" title="Visiting Hospitals">
+          <i class="fa fa-building-o"></i><span>Visiting Hospitals</span>
+        </a>
       </li>
+    </ul>
+
+    <!-- Section 3: Patient Care & Telemetry -->
+    <div class="sidebar-group-title">Patient Care</div>
+    <ul class="nav nav-sidebar">
+      <li class="<?=$isDiet ? 'active' : '';?>">
+        <a href="<?=base_url('diet');?>" title="Daily Diet &amp; Nutrition Telemetry">
+          <i class="fa fa-cutlery" style="color: #2dd4bf;"></i>
+          <span>Diet Tracker</span>
+          <span class="menu-badge-ehr">EHR</span>
+        </a>
+      </li>
+    </ul>
+
+    <!-- Section 4: Financials & Media -->
+    <div class="sidebar-group-title">Financials &amp; Media</div>
+    <ul class="nav nav-sidebar">
       <li class="<?=$isEarnings ? 'active' : '';?>">
-        <a href="<?=base_url('doctorpanel/earnings');?>"><i class="fa fa-line-chart"></i><span>Earnings &amp; Payouts</span></a>
+        <a href="<?=base_url('doctorpanel/earnings');?>" title="Escrow Ledger &amp; Payouts">
+          <i class="fa fa-line-chart"></i><span>Earnings &amp; Payouts</span>
+        </a>
       </li>
       
       <!-- Gallery Management Submenu -->
       <li class="nav-item has-submenu nav-parent <?=$isGalleryOpen ? 'active' : '';?>">
         <a href="#" class="submenu-toggle">
-          <i class="fa fa-picture-o"></i><span>Gallery Management</span>
+          <i class="fa fa-picture-o"></i><span>Media Gallery</span>
           <i class="fa fa-angle-right arrow-icon" style="<?=$isGalleryOpen ? 'transform: rotate(90deg);' : '';?>"></i>
         </a>
         <ul class="children submenu <?=$isGalleryOpen ? '' : 'collapse';?>" style="<?=$isGalleryOpen ? 'display: block;' : 'display: none;';?>">
@@ -60,17 +96,10 @@ $isNewsOpen    = ($seg1 == 'doctorpanel' && in_array($seg2, array('news', 'manag
         </ul>
       </li>
 
-      <li class="<?=$isDateTime ? 'active' : '';?>">
-        <a href="<?=base_url('doctorpanel/datetime');?>"><i class="fa fa-clock-o"></i><span>Date &amp; Time</span></a>
-      </li>
-      <li class="<?=$isUpcharHosp ? 'active' : '';?>">
-        <a href="<?=base_url('doctorpanel/upcharhospital');?>"><i class="fa fa-building-o"></i><span>Upchar Hospital</span></a>
-      </li>
-
-      <!-- News Management Submenu -->
+      <!-- News & Articles Submenu -->
       <li class="nav-item has-submenu nav-parent <?=$isNewsOpen ? 'active' : '';?>">
         <a href="#" class="submenu-toggle">
-          <i class="fa fa-newspaper-o"></i><span>News Management</span>
+          <i class="fa fa-newspaper-o"></i><span>Health Articles</span>
           <i class="fa fa-angle-right arrow-icon" style="<?=$isNewsOpen ? 'transform: rotate(90deg);' : '';?>"></i>
         </a>
         <ul class="children submenu <?=$isNewsOpen ? '' : 'collapse';?>" style="<?=$isNewsOpen ? 'display: block;' : 'display: none;';?>">
@@ -78,9 +107,34 @@ $isNewsOpen    = ($seg1 == 'doctorpanel' && in_array($seg2, array('news', 'manag
             <a href="<?=base_url('doctorpanel/news');?>"><i class="fa fa-plus-square-o"></i><span>Post Article</span></a>
           </li>
           <li class="<?=($seg2 == 'managenews') ? 'active' : '';?>">
-            <a href="<?=base_url('doctorpanel/managenews');?>"><i class="fa fa-bullhorn"></i><span>Manage News</span></a>
+            <a href="<?=base_url('doctorpanel/managenews');?>"><i class="fa fa-bullhorn"></i><span>Manage Articles</span></a>
           </li>
         </ul>
+      </li>
+    </ul>
+
+    <!-- Section 5: Settings & Profile -->
+    <div class="sidebar-group-title">Settings &amp; Profile</div>
+    <ul class="nav nav-sidebar">
+      <li class="<?=$isProfile ? 'active' : '';?>">
+        <a href="<?=base_url('doctorpanel/updateprofile');?>" title="Doctor Profile &amp; Bio">
+          <i class="fa fa-user-md"></i><span>Doctor Profile</span>
+        </a>
+      </li>
+      <li class="<?=$isProfileStep ? 'active' : '';?>">
+        <a href="<?=base_url('profile_step1');?>" title="Medical Registration Verification">
+          <i class="fa fa-id-card-o"></i><span>Verification Steps</span>
+        </a>
+      </li>
+      <li class="<?=$isSecurity ? 'active' : '';?>">
+        <a href="<?=base_url('doctorpanel/change_password');?>" title="Change Password">
+          <i class="fa fa-lock" style="color: #f59e0b;"></i><span>Security &amp; Password</span>
+        </a>
+      </li>
+      <li>
+        <a href="<?=base_url('doctoruser/logout');?>" title="Sign Out of Portal" style="color: #f87171;">
+          <i class="fa fa-sign-out" style="color: #ef4444;"></i><span style="color: #fca5a5;">Logout Portal</span>
+        </a>
       </li>
     </ul>
   </div>

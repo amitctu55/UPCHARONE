@@ -1,717 +1,1244 @@
 <?php include ("assets/includes/header.php"); ?>
 <?php include ("assets/includes/leftmenu.php"); ?>
 
-<!-- Chart.js for High-Definition Clinical Telemetry & Visualizations -->
+<!-- Chart.js 2.9.4 CDN for Clinical Telemetry Visualizations -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.4/dist/Chart.min.js"></script>
 
 <style>
-:root {
-    --adm-navy: #0d1b2a;
-    --adm-navy-light: #1b263b;
-    --adm-teal: #00a896;
-    --adm-teal-dark: #008f80;
-    --adm-slate-900: #0f172a;
-    --adm-slate-800: #1e293b;
-    --adm-slate-700: #334155;
-    --adm-slate-600: #475569;
-    --adm-slate-100: #f8fafc;
-    --adm-border: #e2e8f0;
-}
-
-.dashboard-wrapper {
+/* Medical-Grade Clean EHR Dashboard Stylesheet */
+.ehr-dashboard-container {
+    padding: 20px 24px 40px 24px;
+    background-color: var(--upchar-slate-50);
+    min-height: calc(100vh - 64px);
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    color: var(--adm-slate-800);
-    padding: 20px 24px;
-    background: #f8fafc;
-    min-height: 88vh;
+    color: var(--upchar-slate-700);
 }
 
-/* Breadcrumb Header */
-.content-header {
+/* Secondary Sub-Navigation Toolbar */
+.subnav-toolbar {
+    background: #ffffff;
+    border: 1px solid var(--upchar-border);
+    border-radius: 12px;
+    padding: 10px 16px;
+    margin-bottom: 20px;
     display: flex;
-    justify-content: space-between;
     align-items: center;
+    justify-content: space-between;
     flex-wrap: wrap;
     gap: 12px;
-    margin-bottom: 20px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
 }
 
-.content-header h1 {
-    color: var(--adm-slate-900) !important;
-    font-weight: 800;
-    font-size: 22px;
-    margin: 0;
-    line-height: 1.2;
-}
-
-.content-header h1 small {
-    color: var(--adm-slate-600) !important;
-    font-size: 13px;
-    font-weight: 500;
-    display: block;
-    margin-top: 4px;
-}
-
-.breadcrumb-custom {
+.subnav-tabs {
     display: flex;
     align-items: center;
     gap: 6px;
-    font-size: 12.5px;
-    color: var(--adm-slate-600);
-    list-style: none;
-    margin: 0;
-    padding: 0;
+    flex-wrap: wrap;
 }
 
-.breadcrumb-custom a {
-    color: var(--adm-teal);
-    text-decoration: none;
+.subnav-tab-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 14px;
+    border-radius: 8px;
+    font-size: 12.5px;
     font-weight: 600;
+    color: var(--upchar-slate-600);
+    text-decoration: none !important;
+    background: transparent;
+    border: 1px solid transparent;
+    transition: all 0.18s ease;
+    cursor: pointer;
+}
+
+.subnav-tab-btn:hover {
+    background: var(--upchar-slate-100);
+    color: var(--upchar-slate-900);
+}
+
+.subnav-tab-btn.active {
+    background: var(--upchar-blue-light);
+    color: var(--upchar-blue-dark);
+    border-color: #bae6fd;
+    font-weight: 700;
+}
+
+.subnav-badge {
+    background: #e2e8f0;
+    color: var(--upchar-slate-700);
+    font-size: 10.5px;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 10px;
+}
+
+.subnav-tab-btn.active .subnav-badge {
+    background: var(--upchar-blue);
+    color: #ffffff;
+}
+
+.subnav-right-tools {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.date-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--upchar-slate-500);
+    background: var(--upchar-slate-100);
+    padding: 6px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--upchar-border);
 }
 
 /* Executive Section Banner */
-.section-banner {
-    background: linear-gradient(135deg, #0d1b2a 0%, #043d5b 55%, #008f80 100%);
-    color: #ffffff;
+.executive-banner {
+    background: linear-gradient(135deg, #0d1b2a 0%, #034b75 60%, #008f80 100%);
     border-radius: 14px;
-    padding: 22px 26px;
+    padding: 24px 28px;
     margin-bottom: 24px;
+    color: #ffffff;
     display: flex;
     align-items: center;
     justify-content: space-between;
     flex-wrap: wrap;
-    gap: 16px;
-    box-shadow: 0 10px 25px -5px rgba(13, 27, 42, 0.25);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    gap: 20px;
     position: relative;
     overflow: hidden;
+    box-shadow: 0 8px 25px -4px rgba(13, 27, 42, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.12);
 }
 
-.section-banner::after {
+.executive-banner::before {
     content: '';
     position: absolute;
-    right: -40px;
+    right: -30px;
     top: -40px;
-    width: 220px;
-    height: 220px;
-    background: radial-gradient(circle, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0) 70%);
+    width: 240px;
+    height: 240px;
+    background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 70%);
     border-radius: 50%;
     pointer-events: none;
 }
 
-.section-banner h2 {
+.banner-title-area h2 {
     margin: 0 0 6px 0;
-    font-size: 20px;
+    font-size: 21px;
     font-weight: 800;
-    letter-spacing: -0.3px;
+    color: #ffffff;
     display: flex;
     align-items: center;
     gap: 10px;
-    color: #ffffff;
 }
 
-/* 8 Core Metrics Grid */
-.dash-metric-grid {
+.banner-meta {
+    font-size: 12.5px;
+    color: rgba(255, 255, 255, 0.85);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.banner-badge-verified {
+    background: rgba(45, 212, 191, 0.2);
+    border: 1px solid #2dd4bf;
+    color: #2dd4bf;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 12px;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.banner-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    position: relative;
+    z-index: 2;
+}
+
+.btn-banner-light {
+    background: rgba(255, 255, 255, 0.15);
+    color: #ffffff !important;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    font-weight: 700;
+    font-size: 12.5px;
+    padding: 8px 16px;
+    border-radius: 8px;
+    text-decoration: none !important;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s ease;
+}
+
+.btn-banner-light:hover {
+    background: rgba(255, 255, 255, 0.25);
+}
+
+.btn-banner-primary {
+    background: #ffffff;
+    color: #034b75 !important;
+    font-weight: 800;
+    font-size: 12.5px;
+    padding: 8px 18px;
+    border-radius: 8px;
+    text-decoration: none !important;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+    transition: all 0.2s ease;
+}
+
+.btn-banner-primary:hover {
+    background: #f8fafc;
+    transform: translateY(-1px);
+}
+
+/* 5 Metrics Summary Cards Grid */
+.metrics-row {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 18px;
-    margin-bottom: 25px;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
 }
 
-@media (max-width: 1200px) {
-    .dash-metric-grid {
+@media (max-width: 1280px) {
+    .metrics-row {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 900px) {
+    .metrics-row {
         grid-template-columns: repeat(2, 1fr);
     }
 }
 
-@media (max-width: 640px) {
-    .dash-metric-grid {
+@media (max-width: 600px) {
+    .metrics-row {
         grid-template-columns: 1fr;
     }
 }
 
-.dash-metric-link {
+.metric-card-link {
     text-decoration: none !important;
+    color: inherit;
     display: flex;
     height: 100%;
-    color: inherit;
 }
 
-/* Metric Cards */
-.dash-metric-card {
+.metric-card {
     background: #ffffff;
     border-radius: 12px;
-    padding: 18px 20px;
-    border: 1px solid var(--adm-border);
-    box-shadow: 0 4px 16px rgba(0,0,0,0.04);
-    margin-bottom: 0;
-    transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
-    position: relative;
-    overflow: hidden;
+    padding: 16px 18px;
+    border: 1px solid var(--upchar-border);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
     width: 100%;
-    height: 100%;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
+    transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+    position: relative;
+    overflow: hidden;
 }
 
-.dash-metric-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 10px 24px -2px rgba(0,0,0,0.08);
-    border-color: var(--adm-teal);
+.metric-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+    border-color: var(--upchar-blue);
 }
 
-.dash-metric-top {
+.metric-card-top {
     display: flex;
-    flex-direction: column;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 10px;
 }
 
-.dash-metric-icon-wrap {
-    width: 48px;
-    height: 48px;
+.metric-icon-wrap {
+    width: 42px;
+    height: 42px;
     border-radius: 10px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 20px;
-    margin-bottom: 12px;
+    font-size: 18px;
 }
 
-.icon-blue { background: #e0f2fe; color: #0284c7; }
-.icon-green { background: #dcfce7; color: #16a34a; }
-.icon-amber { background: #fef3c7; color: #d97706; }
-.icon-purple { background: #f3e8ff; color: #9333ea; }
-.icon-red { background: #fee2e2; color: #dc2626; }
-.icon-teal { background: #ccfbf1; color: #0d9488; }
-.icon-indigo { background: #e0e7ff; color: #4f46e5; }
-.icon-rose { background: #ffe4e6; color: #e11d48; }
+.metric-trend-pill {
+    font-size: 10.5px;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
 
-.dash-metric-num {
+.trend-amber { background: #fef3c7; color: #b45309; }
+.trend-green { background: #dcfce7; color: #15803d; }
+.trend-blue  { background: #e0f2fe; color: #0369a1; }
+.trend-teal  { background: #ccfbf1; color: #0f766e; }
+.trend-indigo{ background: #e0e7ff; color: #4338ca; }
+
+.metric-num {
     font-size: 24px;
     font-weight: 800;
-    color: var(--adm-slate-900);
+    color: var(--upchar-slate-900);
     line-height: 1.1;
     margin-bottom: 4px;
 }
 
-.dash-metric-label {
-    font-size: 13px;
-    font-weight: 700;
-    color: var(--adm-slate-700);
+.metric-label {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--upchar-slate-600);
 }
 
-.dash-metric-sub {
-    font-size: 11.5px;
-    color: var(--adm-slate-600);
-    margin-top: 10px;
-    font-weight: 500;
+.metric-footer {
+    font-size: 11px;
+    color: var(--upchar-slate-500);
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid #f1f5f9;
 }
 
-/* Chart & Card Boxes */
-.dash-box {
+/* Main Dashboard 2-Column Layout */
+.dashboard-grid-layout {
+    display: grid;
+    grid-template-columns: 8fr 4fr;
+    gap: 24px;
+    align-items: start;
+}
+
+@media (max-width: 1024px) {
+    .dashboard-grid-layout {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Card Box Containers */
+.ehr-card {
     background: #ffffff;
     border-radius: 12px;
-    border: 1px solid var(--adm-border);
-    box-shadow: 0 4px 16px rgba(0,0,0,0.04);
-    margin-bottom: 25px;
+    border: 1px solid var(--upchar-border);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+    margin-bottom: 24px;
     overflow: hidden;
 }
 
-.dash-box-header {
+.ehr-card-header {
     padding: 16px 20px;
-    border-bottom: 1px solid var(--adm-border);
+    border-bottom: 1px solid var(--upchar-border);
     display: flex;
     align-items: center;
     justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
     background: #ffffff;
 }
 
-.dash-box-title {
-    font-size: 15px;
+.ehr-card-title {
+    font-size: 14.5px;
     font-weight: 800;
-    color: var(--adm-slate-900);
+    color: var(--upchar-slate-900);
     margin: 0;
     display: flex;
     align-items: center;
     gap: 8px;
 }
 
-.dash-box-body {
+.ehr-card-body {
     padding: 20px;
 }
 
-/* Quick Actions Grid */
-.quick-actions-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 14px;
-}
-
-@media (max-width: 600px) {
-    .quick-actions-grid {
-        grid-template-columns: 1fr;
-    }
-}
-
-.quick-action-card {
+/* Filter Controls in Table Header */
+.table-filter-bar {
     display: flex;
     align-items: center;
-    gap: 14px;
-    padding: 14px 16px;
-    border-radius: 10px;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 14px;
+}
+
+.table-search-input {
     background: #f8fafc;
-    border: 1px solid var(--adm-border);
-    color: var(--adm-slate-800);
-    text-decoration: none !important;
-    transition: all 0.2s;
-    margin-bottom: 0;
-    height: 100%;
-}
-
-.quick-action-card:hover {
-    background: #ffffff;
-    border-color: var(--adm-teal);
-    box-shadow: 0 4px 12px rgba(0, 168, 150, 0.1);
-    color: var(--adm-teal);
-    transform: translateX(3px);
-}
-
-.quick-action-icon {
-    width: 42px;
-    height: 42px;
+    border: 1px solid var(--upchar-border);
     border-radius: 8px;
+    padding: 6px 12px;
+    font-size: 12px;
+    color: var(--upchar-slate-700);
+    outline: none;
+    min-width: 240px;
+    transition: all 0.2s ease;
+}
+
+.table-search-input:focus {
+    background: #ffffff;
+    border-color: var(--upchar-blue);
+    box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.1);
+}
+
+.status-filter-pills {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.filter-pill {
+    border: 1px solid var(--upchar-border);
+    background: #ffffff;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--upchar-slate-600);
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.filter-pill:hover,
+.filter-pill.active {
+    background: var(--upchar-slate-100);
+    color: var(--upchar-slate-900);
+    border-color: #cbd5e1;
+}
+
+.filter-pill.active {
+    background: var(--upchar-blue);
+    color: #ffffff;
+    border-color: var(--upchar-blue);
+}
+
+/* High-Legibility Consultation Table */
+.ehr-table {
+    width: 100%;
+    margin-bottom: 0;
+    font-size: 12.5px;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.ehr-table thead th {
+    background: #f8fafc;
+    color: var(--upchar-slate-600);
+    font-weight: 700;
+    padding: 11px 14px;
+    border-bottom: 1px solid var(--upchar-border);
+    white-space: nowrap;
+    text-transform: uppercase;
+    font-size: 11px;
+    letter-spacing: 0.5px;
+}
+
+.ehr-table tbody td {
+    padding: 12px 14px;
+    border-bottom: 1px solid #f1f5f9;
+    vertical-align: middle;
+}
+
+.ehr-table tbody tr:hover {
+    background-color: #f8fafc;
+}
+
+/* Patient Avatar & Details */
+.patient-cell {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.patient-avatar-circle {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: #e0f2fe;
+    color: #0284c7;
+    font-size: 12px;
+    font-weight: 700;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 18px;
     flex-shrink: 0;
+    border: 1px solid #bae6fd;
 }
 
-/* Badges */
-.badge-status {
-    padding: 4px 9px;
-    border-radius: 12px;
+.patient-name-text {
+    font-weight: 700;
+    color: var(--upchar-slate-900);
+    font-size: 13px;
+    line-height: 1.2;
+}
+
+.patient-sub-text {
+    font-size: 11px;
+    color: var(--upchar-slate-500);
+    margin-top: 2px;
+}
+
+/* Status Badges */
+.badge-ehr {
+    padding: 3px 8px;
+    border-radius: 6px;
     font-size: 11px;
     font-weight: 700;
     display: inline-flex;
     align-items: center;
     gap: 4px;
+    white-space: nowrap;
 }
-.badge-paid { background: #dcfce7; color: #15803d; }
-.badge-unpaid { background: #fee2e2; color: #991b1b; }
-.badge-visited { background: #e0f2fe; color: #0369a1; }
+
+.badge-ehr-confirmed { background: #e0f2fe; color: #0284c7; }
+.badge-ehr-completed { background: #dcfce7; color: #15803d; }
+.badge-ehr-cancelled { background: #fee2e2; color: #b91c1c; }
+.badge-ehr-video     { background: #e0e7ff; color: #4338ca; }
+.badge-ehr-clinic    { background: #f0fdfa; color: #0f766e; }
+
+/* Table Action Buttons */
+.btn-table-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 9px;
+    border-radius: 6px;
+    font-size: 11.5px;
+    font-weight: 700;
+    text-decoration: none !important;
+    transition: all 0.15s ease;
+    border: 1px solid transparent;
+}
+
+.btn-action-video {
+    background: #2563eb;
+    color: #ffffff !important;
+}
+.btn-action-video:hover {
+    background: #1d4ed8;
+}
+
+.btn-action-rx {
+    background: #f1f5f9;
+    border-color: #cbd5e1;
+    color: #0f766e !important;
+}
+.btn-action-rx:hover {
+    background: #e2e8f0;
+}
+
+.btn-action-complete {
+    background: #fef3c7;
+    border-color: #fde68a;
+    color: #b45309 !important;
+}
+.btn-action-complete:hover {
+    background: #fde68a;
+}
+
+/* Side Panel Widgets */
+.teleconsult-room-widget {
+    background: linear-gradient(135deg, #0369a1 0%, #0284c7 100%);
+    color: #ffffff;
+    border-radius: 12px;
+    padding: 18px 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 14px rgba(2, 132, 199, 0.2);
+}
+
+.teleconsult-widget-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.pulse-dot {
+    width: 8px;
+    height: 8px;
+    background: #2dd4bf;
+    border-radius: 50%;
+    box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.3);
+    animation: pulseAnim 2s infinite;
+}
+
+@keyframes pulseAnim {
+    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(45, 212, 191, 0.5); }
+    70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(45, 212, 191, 0); }
+    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(45, 212, 191, 0); }
+}
+
+.diet-log-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px 0;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.diet-log-item:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.diet-icon-pill {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: #dcfce7;
+    color: #16a34a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    flex-shrink: 0;
+}
+
+.scratchpad-textarea {
+    width: 100%;
+    min-height: 110px;
+    border: 1px solid var(--upchar-border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 12.5px;
+    font-family: inherit;
+    color: var(--upchar-slate-700);
+    resize: vertical;
+    outline: none;
+    background: #f8fafc;
+    transition: all 0.2s ease;
+}
+
+.scratchpad-textarea:focus {
+    background: #ffffff;
+    border-color: var(--upchar-blue);
+    box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.08);
+}
 </style>
 
-<div class="pag_cstm dashboard-wrapper">
-    <!-- Breadcrumb Header -->
-    <div class="content-header">
-        <div>
-            <h1>
-                <i class="fa fa-user-md" style="color: var(--adm-teal);"></i> Clinical Practitioner Workspace
-                <small>Doctor Telemetry, Consultations Schedule &amp; Financial Analytics</small>
-            </h1>
+<div class="ehr-dashboard-container pag_cstm">
+    <!-- 1. Secondary Sub-Navigation Toolbar -->
+    <div class="subnav-toolbar">
+        <div class="subnav-tabs">
+            <button type="button" class="subnav-tab-btn active" onclick="switchDashboardTab('overview', this)">
+                <i class="fa fa-th-large"></i>
+                <span>Overview &amp; Telemetry</span>
+            </button>
+            <button type="button" class="subnav-tab-btn" onclick="switchDashboardTab('today', this)">
+                <i class="fa fa-calendar-check-o"></i>
+                <span>Today's Schedule</span>
+                <span class="subnav-badge"><?=isset($today_appointments_list) ? count($today_appointments_list) : $todayappointment;?></span>
+            </button>
+            <button type="button" class="subnav-tab-btn" onclick="switchDashboardTab('pending', this)">
+                <i class="fa fa-clock-o"></i>
+                <span>Pending Review</span>
+                <span class="subnav-badge"><?=$pending_appointments;?></span>
+            </button>
+            <a href="<?=base_url('diet');?>" class="subnav-tab-btn">
+                <i class="fa fa-cutlery" style="color: #10b981;"></i>
+                <span>Diet Tracker EHR</span>
+                <span class="subnav-badge" style="background: #10b981; color: #fff;">LIVE</span>
+            </a>
+            <a href="<?=base_url('manageownclinic');?>" class="subnav-tab-btn">
+                <i class="fa fa-hospital-o"></i>
+                <span>Practice Chambers</span>
+            </a>
+            <a href="<?=base_url('doctorpanel/earnings');?>" class="subnav-tab-btn">
+                <i class="fa fa-line-chart"></i>
+                <span>Earnings &amp; Reports</span>
+            </a>
         </div>
-        <ul class="breadcrumb-custom">
-            <li><a href="<?=base_url('doctor-dashboard');?>"><i class="fa fa-home"></i> Home</a></li>
-            <li><i class="fa fa-angle-right" style="font-size: 11px;"></i></li>
-            <li style="color: var(--adm-slate-800); font-weight: 700;">Doctor Dashboard</li>
-        </ul>
+
+        <div class="subnav-right-tools">
+            <div class="date-pill">
+                <i class="fa fa-calendar" style="color: var(--upchar-blue);"></i>
+                <span><?=date('l, d M Y');?></span>
+            </div>
+            <a href="<?=base_url('doctorpanel/datetime');?>" class="btn-banner-primary" style="padding: 6px 14px; font-size: 12px; background: var(--upchar-blue); color: #fff !important; box-shadow: none;">
+                <i class="fa fa-clock-o"></i>
+                <span>Set Slot Timings</span>
+            </a>
+        </div>
     </div>
 
-    <!-- Executive Section Banner -->
+    <!-- 2. Executive Section Banner -->
     <?php 
     $doc_name = $this->session->userdata('drusername') ?: 'Anushka';
     $doc_lname = $this->session->userdata('druserlname') ?: '';
+    $dr_room_id = 'upchar_teleconsult_'.(isset($doctor->id) ? $doctor->id : ($this->session->userdata('druserid') ?: 'dr_default'));
     ?>
-    <div class="section-banner">
-        <div>
+    <div class="executive-banner">
+        <div class="banner-title-area">
             <h2>
-                <i class="fa fa-stethoscope" style="color: #2dd4bf;"></i> 
-                Welcome back, Dr. <?=$doc_name;?> <?=$doc_lname;?>
+                <i class="fa fa-stethoscope" style="color: #2dd4bf;"></i>
+                Dr. <?=$doc_name;?> <?=$doc_lname;?>
             </h2>
-            <div style="font-size: 13px; color: rgba(255, 255, 255, 0.9);">
-                <i class="fa fa-clock-o"></i> Live Synchronized: <?=date('d M Y, h:i A');?> &bull; Verified Medical Practitioner
+            <div class="banner-meta">
+                <span class="banner-badge-verified">
+                    <i class="fa fa-check-circle"></i> Verified Medical Practitioner
+                </span>
+                <span><i class="fa fa-clock-o"></i> Telemetry Synced: <?=date('h:i A');?></span>
+                <span>&bull;</span>
+                <span><i class="fa fa-map-marker"></i> <?=$total_clinics;?> Chambers &bull; <?=$total_hospitals;?> Visiting Hospitals</span>
             </div>
         </div>
-        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-            <a href="<?=base_url('doctorpanel/datetime');?>" class="btn" style="background: rgba(255,255,255,0.18); color: #ffffff; font-weight: 700; border-radius: 8px; padding: 8px 16px; border: 1px solid rgba(255,255,255,0.3);">
-                <i class="fa fa-clock-o"></i> Set Slot Availability
+        <div class="banner-actions">
+            <a href="<?=base_url('doctorpanel/videocall/'.$dr_room_id);?>" target="_blank" class="btn-banner-light" title="Open Virtual Consultation Room">
+                <i class="fa fa-video-camera" style="color: #2dd4bf;"></i>
+                <span>Launch Teleconsult Room</span>
             </a>
-            <a href="<?=base_url('doctorpanel/earnings');?>" class="btn" style="background: #ffffff; color: #043d5b; font-weight: 800; border-radius: 8px; padding: 8px 18px; box-shadow: 0 4px 14px rgba(0,0,0,0.15);">
-                <i class="fa fa-line-chart"></i> View Financials
+            <a href="<?=base_url('manageappointment');?>" class="btn-banner-primary" title="View Patient Appointments">
+                <i class="fa fa-calendar-check-o"></i>
+                <span>Consultation Queue</span>
             </a>
         </div>
     </div>
 
     <!-- Flash Alert -->
     <?php if($this->session->flashdata('flashmsg')): ?>
-        <?=$this->session->flashdata('flashmsg');?>
+        <div style="margin-bottom: 20px;">
+            <?=$this->session->flashdata('flashmsg');?>
+        </div>
     <?php endif; ?>
 
-    <!-- 8 Core Metrics Grid (Auto-responsive & Equal Height) -->
-    <div class="dash-metric-grid">
+    <!-- 3. Metrics Summary Row (5 Modern Cards) -->
+    <div class="metrics-row">
         <!-- 1. Today's Consultations -->
-        <a href="<?=base_url('manageappointment');?>" class="dash-metric-link">
-            <div class="dash-metric-card">
-                <div class="dash-metric-top">
-                    <div class="dash-metric-icon-wrap icon-amber">
+        <a href="<?=base_url('manageappointment');?>" class="metric-card-link">
+            <div class="metric-card">
+                <div class="metric-card-top">
+                    <div class="metric-icon-wrap" style="background: #fef3c7; color: #d97706;">
                         <i class="fa fa-calendar-check-o"></i>
                     </div>
-                    <div class="dash-metric-num"><?=number_format($todayappointment);?></div>
-                    <div class="dash-metric-label">Today's Visits</div>
-                </div>
-                <div class="dash-metric-sub">
-                    <span class="label label-warning" style="background: #fef3c7 !important; color: #d97706 !important; border: 1px solid #fde68a; font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 4px;">
-                        <i class="fa fa-calendar"></i> Scheduled for <?=date('d M Y');?>
+                    <span class="metric-trend-pill trend-amber">
+                        <i class="fa fa-calendar"></i> Today
                     </span>
+                </div>
+                <div>
+                    <div class="metric-num"><?=number_format($todayappointment);?></div>
+                    <div class="metric-label">Today's Visits</div>
+                </div>
+                <div class="metric-footer">
+                    <span>Scheduled for <?=date('d M Y');?></span>
                 </div>
             </div>
         </a>
 
-        <!-- 2. Net Doctor Earnings -->
-        <a href="<?=base_url('doctorpanel/earnings');?>" class="dash-metric-link">
-            <div class="dash-metric-card">
-                <div class="dash-metric-top">
-                    <div class="dash-metric-icon-wrap icon-teal">
-                        <i class="fa fa-inr"></i>
-                    </div>
-                    <div class="dash-metric-num">₹<?=number_format(@$earnings->total_net, 2);?></div>
-                    <div class="dash-metric-label">Net Doctor Earnings</div>
-                </div>
-                <div class="dash-metric-sub">
-                    <span class="label label-success" style="background: #dcfce7 !important; color: #16a34a !important; border: 1px solid #bbf7d0; font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 4px;">
-                        <i class="fa fa-check-circle"></i> Minus 10% Platform Fee
-                    </span>
-                </div>
-            </div>
-        </a>
-
-        <!-- 3. Total Booked Consultations -->
-        <a href="<?=base_url('manageappointment');?>" class="dash-metric-link">
-            <div class="dash-metric-card">
-                <div class="dash-metric-top">
-                    <div class="dash-metric-icon-wrap icon-blue">
-                        <i class="fa fa-stethoscope"></i>
-                    </div>
-                    <div class="dash-metric-num"><?=number_format($totalappointment);?></div>
-                    <div class="dash-metric-label">Total Consultations</div>
-                </div>
-                <div class="dash-metric-sub" style="display: flex; gap: 6px; flex-wrap: wrap;">
-                    <span class="label label-success" style="background: #dcfce7 !important; color: #16a34a !important; border: 1px solid #bbf7d0; font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 4px;">
-                        <i class="fa fa-check"></i> <?=number_format($completed_appointments);?> Visited
-                    </span>
-                    <span class="label label-info" style="background: #e0f2fe !important; color: #0284c7 !important; border: 1px solid #bae6fd; font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 4px;">
-                        <i class="fa fa-clock-o"></i> <?=number_format($pending_appointments);?> Upcoming
-                    </span>
-                </div>
-            </div>
-        </a>
-
-        <!-- 4. Active Patients -->
-        <a href="<?=base_url('manageappointment');?>" class="dash-metric-link">
-            <div class="dash-metric-card">
-                <div class="dash-metric-top">
-                    <div class="dash-metric-icon-wrap icon-green">
+        <!-- 2. Unique Patients -->
+        <a href="<?=base_url('manageappointment');?>" class="metric-card-link">
+            <div class="metric-card">
+                <div class="metric-card-top">
+                    <div class="metric-icon-wrap" style="background: #dcfce7; color: #16a34a;">
                         <i class="fa fa-users"></i>
                     </div>
-                    <div class="dash-metric-num"><?=number_format($total_patients);?></div>
-                    <div class="dash-metric-label">Unique Patients</div>
+                    <span class="metric-trend-pill trend-green">
+                        <i class="fa fa-heartbeat"></i> Registry
+                    </span>
                 </div>
-                <div class="dash-metric-sub">
-                    <span class="text-success" style="font-weight: 700;"><i class="fa fa-heartbeat"></i> Lifetime Patient Registry</span>
+                <div>
+                    <div class="metric-num"><?=number_format($total_patients);?></div>
+                    <div class="metric-label">Unique Patients</div>
                 </div>
-            </div>
-        </a>
-
-        <!-- 5. Practice Locations -->
-        <a href="<?=base_url('manageownclinic');?>" class="dash-metric-link">
-            <div class="dash-metric-card">
-                <div class="dash-metric-top">
-                    <div class="dash-metric-icon-wrap icon-purple">
-                        <i class="fa fa-hospital-o"></i>
-                    </div>
-                    <div class="dash-metric-num"><?=intval($total_clinics) + intval($total_hospitals);?></div>
-                    <div class="dash-metric-label">Practice Centers</div>
-                </div>
-                <div class="dash-metric-sub">
-                    <span class="text-primary" style="font-weight: 600;"><i class="fa fa-map-marker"></i> <?=$total_clinics;?> Clinics &bull; <?=$total_hospitals;?> Hospitals</span>
+                <div class="metric-footer">
+                    <span>Lifetime Registered Patients</span>
                 </div>
             </div>
         </a>
 
-        <!-- 6. Video Teleconsultations -->
-        <a href="<?=base_url('manageappointment');?>" class="dash-metric-link">
-            <div class="dash-metric-card">
-                <div class="dash-metric-top">
-                    <div class="dash-metric-icon-wrap icon-indigo">
-                        <i class="fa fa-video-camera"></i>
+        <!-- 3. Pending Consultations -->
+        <a href="<?=base_url('manageappointment');?>" class="metric-card-link">
+            <div class="metric-card">
+                <div class="metric-card-top">
+                    <div class="metric-icon-wrap" style="background: #e0f2fe; color: #0284c7;">
+                        <i class="fa fa-hourglass-half"></i>
                     </div>
-                    <div class="dash-metric-num"><?=number_format($video_appointments);?></div>
-                    <div class="dash-metric-label">Digital Consultations</div>
+                    <span class="metric-trend-pill trend-blue">
+                        <i class="fa fa-clock-o"></i> Queue
+                    </span>
                 </div>
-                <div class="dash-metric-sub">
-                    <span class="text-primary" style="font-weight: 600;"><i class="fa fa-desktop"></i> Secure WebRTC Video Calls</span>
+                <div>
+                    <div class="metric-num"><?=number_format($pending_appointments);?></div>
+                    <div class="metric-label">Pending Reviews</div>
+                </div>
+                <div class="metric-footer">
+                    <span>Awaiting Doctor Visit Completion</span>
                 </div>
             </div>
         </a>
 
-        <!-- 7. Pending Fee Payouts -->
-        <a href="<?=base_url('doctorpanel/earnings');?>" class="dash-metric-link">
-            <div class="dash-metric-card">
-                <div class="dash-metric-top">
-                    <div class="dash-metric-icon-wrap icon-rose">
-                        <i class="fa fa-money"></i>
+        <!-- 4. Completed Visits -->
+        <a href="<?=base_url('manageappointment');?>" class="metric-card-link">
+            <div class="metric-card">
+                <div class="metric-card-top">
+                    <div class="metric-icon-wrap" style="background: #ccfbf1; color: #0f766e;">
+                        <i class="fa fa-check-circle"></i>
                     </div>
-                    <div class="dash-metric-num">₹<?=number_format(@$earnings->pending_payout, 2);?></div>
-                    <div class="dash-metric-label">Escrow Settlement</div>
+                    <span class="metric-trend-pill trend-teal">
+                        <i class="fa fa-stethoscope"></i> Visited
+                    </span>
                 </div>
-                <div class="dash-metric-sub">
-                    <span class="text-warning" style="font-weight: 700;"><i class="fa fa-clock-o"></i> Weekly Payout Cycle</span>
+                <div>
+                    <div class="metric-num"><?=number_format($completed_appointments);?></div>
+                    <div class="metric-label">Completed Consults</div>
+                </div>
+                <div class="metric-footer">
+                    <span>Successfully Closed Visits</span>
                 </div>
             </div>
         </a>
 
-        <!-- 8. Practitioner Verification -->
-        <a href="<?=base_url('profile_step1');?>" class="dash-metric-link">
-            <div class="dash-metric-card">
-                <div class="dash-metric-top">
-                    <div class="dash-metric-icon-wrap icon-teal">
-                        <i class="fa fa-shield"></i>
+        <!-- 5. Net Doctor Earnings -->
+        <a href="<?=base_url('doctorpanel/earnings');?>" class="metric-card-link">
+            <div class="metric-card">
+                <div class="metric-card-top">
+                    <div class="metric-icon-wrap" style="background: #e0e7ff; color: #4338ca;">
+                        <i class="fa fa-inr"></i>
                     </div>
-                    <div class="dash-metric-num" style="font-size: 20px; color: #0d9488;"><i class="fa fa-check-circle"></i> Active</div>
-                    <div class="dash-metric-label">Medical Council Status</div>
+                    <span class="metric-trend-pill trend-indigo">
+                        <i class="fa fa-line-chart"></i> Net
+                    </span>
                 </div>
-                <div class="dash-metric-sub">
-                    <span class="text-success" style="font-weight: 700;"><i class="fa fa-id-card"></i> Verified Practitioner</span>
+                <div>
+                    <div class="metric-num">₹<?=number_format(@$earnings->total_net, 2);?></div>
+                    <div class="metric-label">Net Doctor Earnings</div>
+                </div>
+                <div class="metric-footer">
+                    <span>Pending Escrow: ₹<?=number_format(@$earnings->pending_payout, 2);?></span>
                 </div>
             </div>
         </a>
     </div>
 
-    <!-- Analytics Charts Row (Interactive Chart.js) -->
-    <div class="row">
-        <!-- Chart 1: Consultation Status Doughnut -->
-        <div class="col-md-6 col-xs-12">
-            <div class="dash-box">
-                <div class="dash-box-header">
-                    <h3 class="dash-box-title">
-                        <i class="fa fa-pie-chart" style="color: #0284c7;"></i> Consultation Status Distribution
-                    </h3>
-                </div>
-                <div class="dash-box-body">
-                    <div style="position: relative; height: 240px;">
-                        <canvas id="consultationStatusChart"></canvas>
+    <!-- 4. Main Content Dashboard Grid (8 cols Main Area / 4 cols Side Panel) -->
+    <div class="dashboard-grid-layout">
+        <!-- PRIMARY VIEW (Left Column - 8 cols) -->
+        <div class="primary-column">
+            <!-- Consultations Table Card -->
+            <div class="ehr-card">
+                <div class="ehr-card-header">
+                    <div>
+                        <h3 class="ehr-card-title">
+                            <i class="fa fa-calendar-check-o" style="color: var(--upchar-blue);"></i>
+                            <span id="tableTitleText">Consultation Appointments &amp; Queue</span>
+                        </h3>
+                        <p style="font-size: 12px; color: var(--upchar-slate-500); margin: 3px 0 0 0;">Interactive patient visit queue with instant actions</p>
                     </div>
+                    <a href="<?=base_url('manageappointment');?>" class="btn-banner-primary" style="padding: 6px 12px; font-size: 11.5px; background: #f1f5f9; color: var(--upchar-slate-700) !important; border: 1px solid var(--upchar-border); box-shadow: none;">
+                        <span>View All (<?=number_format($totalappointment);?>)</span>
+                        <i class="fa fa-arrow-right"></i>
+                    </a>
                 </div>
-            </div>
-        </div>
 
-        <!-- Chart 2: 6-Month Patient Visit Trend -->
-        <div class="col-md-6 col-xs-12">
-            <div class="dash-box">
-                <div class="dash-box-header">
-                    <h3 class="dash-box-title">
-                        <i class="fa fa-line-chart" style="color: #10b981;"></i> Patient Consultation Trend (Last 6 Months)
-                    </h3>
-                </div>
-                <div class="dash-box-body">
-                    <div style="position: relative; height: 240px;">
-                        <canvas id="consultationTrendChart"></canvas>
+                <div class="ehr-card-body" style="padding-bottom: 8px;">
+                    <!-- Filter Toolbar -->
+                    <div class="table-filter-bar">
+                        <input type="text" id="patientFilterInput" class="table-search-input" placeholder="Search patient name, phone, or appointment #...">
+                        
+                        <div class="status-filter-pills">
+                            <button type="button" class="filter-pill active" onclick="filterTableStatus('all', this)">All (<?=count($recent_appointments);?>)</button>
+                            <button type="button" class="filter-pill" onclick="filterTableStatus('confirmed', this)">Upcoming</button>
+                            <button type="button" class="filter-pill" onclick="filterTableStatus('completed', this)">Visited</button>
+                            <button type="button" class="filter-pill" onclick="filterTableStatus('video', this)">Teleconsult</button>
+                        </div>
                     </div>
-                </div>
-            </div>
-        </div>
-    </div>
 
-    <!-- Quick Operations & Clinical Tools Grid -->
-    <div class="dash-box">
-        <div class="dash-box-header">
-            <h3 class="dash-box-title">
-                <i class="fa fa-bolt" style="color: var(--adm-teal);"></i> Clinical Tools &amp; Management Operations
-            </h3>
-        </div>
-        <div class="dash-box-body">
-            <div class="quick-actions-grid">
-                <a href="<?=base_url('manageappointment');?>" class="quick-action-card">
-                    <div class="quick-action-icon icon-amber"><i class="fa fa-calendar"></i></div>
-                    <div>
-                        <div style="font-weight: 700; font-size: 13.5px; color: #0f172a;">Manage Appointments</div>
-                        <div style="font-size: 11.5px; color: #64748b;">Review scheduled visits &amp; consult queue</div>
-                    </div>
-                </a>
-                <a href="<?=base_url('doctorpanel/earnings');?>" class="quick-action-card">
-                    <div class="quick-action-icon icon-teal"><i class="fa fa-line-chart"></i></div>
-                    <div>
-                        <div style="font-weight: 700; font-size: 13.5px; color: #0f172a;">Financials &amp; Settlements</div>
-                        <div style="font-size: 11.5px; color: #64748b;">Escrow ledger &amp; payout statements</div>
-                    </div>
-                </a>
-                <a href="<?=base_url('manageownclinic');?>" class="quick-action-card">
-                    <div class="quick-action-icon icon-blue"><i class="fa fa-hospital-o"></i></div>
-                    <div>
-                        <div style="font-weight: 700; font-size: 13.5px; color: #0f172a;">Own Clinic Setup</div>
-                        <div style="font-size: 11.5px; color: #64748b;">Chamber locations &amp; consultation rooms</div>
-                    </div>
-                </a>
-                <a href="<?=base_url('managepractice');?>" class="quick-action-card">
-                    <div class="quick-action-icon icon-green"><i class="fa fa-medkit"></i></div>
-                    <div>
-                        <div style="font-weight: 700; font-size: 13.5px; color: #0f172a;">Manage Practice &amp; Fees</div>
-                        <div style="font-size: 11.5px; color: #64748b;">Consultation pricing &amp; patient quotas</div>
-                    </div>
-                </a>
-                <a href="<?=base_url('doctorpanel/datetime');?>" class="quick-action-card">
-                    <div class="quick-action-icon icon-purple"><i class="fa fa-clock-o"></i></div>
-                    <div>
-                        <div style="font-weight: 700; font-size: 13.5px; color: #0f172a;">Working Hours &amp; Schedule</div>
-                        <div style="font-size: 11.5px; color: #64748b;">Day-wise slot availability timings</div>
-                    </div>
-                </a>
-                <a href="<?=base_url('doctorpanel/upcharhospital');?>" class="quick-action-card">
-                    <div class="quick-action-icon icon-indigo"><i class="fa fa-building-o"></i></div>
-                    <div>
-                        <div style="font-weight: 700; font-size: 13.5px; color: #0f172a;">Visiting Hospitals</div>
-                        <div style="font-size: 11.5px; color: #64748b;">Affiliated medical center branches</div>
-                    </div>
-                </a>
-                <a href="<?=base_url('doctorpanel/managegallery');?>" class="quick-action-card">
-                    <div class="quick-action-icon icon-rose"><i class="fa fa-picture-o"></i></div>
-                    <div>
-                        <div style="font-weight: 700; font-size: 13.5px; color: #0f172a;">Clinical Gallery</div>
-                        <div style="font-size: 11.5px; color: #64748b;">Clinic showcase &amp; equipment media</div>
-                    </div>
-                </a>
-                <a href="<?=base_url('doctorpanel/managenews');?>" class="quick-action-card">
-                    <div class="quick-action-icon icon-teal"><i class="fa fa-newspaper-o"></i></div>
-                    <div>
-                        <div style="font-weight: 700; font-size: 13.5px; color: #0f172a;">News &amp; Health Articles</div>
-                        <div style="font-size: 11.5px; color: #64748b;">Publish patient guidance &amp; insights</div>
-                    </div>
-                </a>
-            </div>
-        </div>
-    </div>
-
-    <!-- Recent Appointments Data Table -->
-    <div class="dash-box">
-        <div class="dash-box-header">
-            <div>
-                <h3 class="dash-box-title">
-                    <i class="fa fa-list" style="color: var(--adm-teal);"></i> Recent &amp; Upcoming Consultations
-                </h3>
-                <p style="font-size: 12px; color: #64748b; margin: 3px 0 0 0;">Latest bookings across your clinics and visiting hospitals</p>
-            </div>
-            <a href="<?=base_url('manageappointment');?>" class="btn btn-xs btn-default" style="font-weight: 700; border-radius: 6px; padding: 6px 14px; border: 1px solid #cbd5e1;">
-                View All Bookings <i class="fa fa-arrow-right"></i>
-            </a>
-        </div>
-        <div class="table-responsive">
-            <table class="table table-hover" style="margin-bottom: 0; font-size: 13px;">
-                <thead>
-                    <tr style="background: #f8fafc; color: #475569; font-weight: 700;">
-                        <th style="padding: 12px 16px;">Appt #</th>
-                        <th style="padding: 12px 16px;">Patient Name</th>
-                        <th style="padding: 12px 16px;">Contact</th>
-                        <th style="padding: 12px 16px;">Visit Date &amp; Slot</th>
-                        <th style="padding: 12px 16px;">Type</th>
-                        <th style="padding: 12px 16px;">Fee</th>
-                        <th style="padding: 12px 16px;">Payment</th>
-                        <th style="padding: 12px 16px; text-align: right;">Clinical Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php if(!empty($recent_appointments)): ?>
-                        <?php foreach($recent_appointments as $a): ?>
-                        <tr>
-                            <td style="padding: 12px 16px; font-weight: 700; color: #00a896;">
-                                #<?=$a->appointment_id;?>
-                            </td>
-                            <td style="padding: 12px 16px;">
-                                <div style="font-weight: 700; color: #0f172a;">
-                                    <?php
-                                    $p_name = !empty($a->user_fname) ? trim($a->user_fname.' '.$a->user_lname) : (!empty($a->appointment_name) ? $a->appointment_name : (!empty($a->name) ? $a->name : 'Patient'));
-                                    echo htmlspecialchars($p_name);
+                    <!-- Appointments Table -->
+                    <div class="table-responsive">
+                        <table class="ehr-table" id="appointmentsTable">
+                            <thead>
+                                <tr>
+                                    <th>Appt #</th>
+                                    <th>Patient Details</th>
+                                    <th>Visit Date &amp; Slot</th>
+                                    <th>Type</th>
+                                    <th>Fee &amp; Payment</th>
+                                    <th style="text-align: right;">Clinical Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php if(!empty($recent_appointments)): ?>
+                                    <?php foreach($recent_appointments as $a): 
+                                        $p_name = !empty($a->user_fname) ? trim($a->user_fname.' '.$a->user_lname) : (!empty($a->appointment_name) ? $a->appointment_name : (!empty($a->name) ? $a->name : 'Patient'));
+                                        $p_initials = strtoupper(substr($p_name, 0, 1));
+                                        $p_mobile = !empty($a->user_mobile) ? $a->user_mobile : (!empty($a->appointment_mobile) ? $a->appointment_mobile : (!empty($a->mobile) ? $a->mobile : 'N/A'));
+                                        $is_video = (isset($a->appointment_type) && $a->appointment_type == 'video');
+                                        $fee_val = !empty($a->fee) ? $a->fee : (!empty($a->amount) ? $a->amount : (!empty($a->fees) ? $a->fees : 0));
+                                        $is_paid = (isset($a->payment_status) && in_array(strtoupper($a->payment_status), array('1', 'PAID', 'SUCCESS', 'COMPLETE'))) || (isset($a->pay_status) && ($a->pay_status == '1' || $a->pay_status == 'SUCCESS'));
+                                        $row_status = ($a->status == '2') ? 'completed' : (($a->status == '0') ? 'cancelled' : 'confirmed');
                                     ?>
+                                    <tr class="appt-row" data-status="<?=$row_status;?>" data-type="<?=$is_video ? 'video' : 'clinic';?>" data-search="<?=strtolower($p_name.' '.$p_mobile.' #'.$a->appointment_id);?>">
+                                        <td style="font-weight: 700; color: var(--upchar-blue);">
+                                            #<?=$a->appointment_id;?>
+                                        </td>
+                                        <td>
+                                            <div class="patient-cell">
+                                                <div class="patient-avatar-circle"><?=$p_initials;?></div>
+                                                <div>
+                                                    <div class="patient-name-text"><?=htmlspecialchars($p_name);?></div>
+                                                    <div class="patient-sub-text"><i class="fa fa-phone"></i> <?=htmlspecialchars($p_mobile);?></div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div style="font-weight: 600; color: var(--upchar-slate-900);"><?=date('d M Y', strtotime($a->appointment_date));?></div>
+                                            <div style="font-size: 11px; color: var(--upchar-slate-500);"><i class="fa fa-clock-o"></i> <?=$a->appointment_time;?></div>
+                                        </td>
+                                        <td>
+                                            <?php if($is_video): ?>
+                                                <span class="badge-ehr badge-ehr-video"><i class="fa fa-video-camera"></i> Teleconsult</span>
+                                            <?php elseif(isset($a->institution_type) && $a->institution_type == 'H'): ?>
+                                                <span class="badge-ehr badge-ehr-clinic"><i class="fa fa-building-o"></i> Hospital</span>
+                                            <?php else: ?>
+                                                <span class="badge-ehr badge-ehr-clinic"><i class="fa fa-hospital-o"></i> Clinic</span>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td>
+                                            <div style="font-weight: 700; color: var(--upchar-slate-900);">₹<?=number_format($fee_val, 2);?></div>
+                                            <?php if($is_paid): ?>
+                                                <span style="font-size: 11px; color: #16a34a; font-weight: 700;"><i class="fa fa-check-circle"></i> Paid</span>
+                                            <?php else: ?>
+                                                <span style="font-size: 11px; color: #dc2626; font-weight: 700;"><i class="fa fa-clock-o"></i> Unpaid</span>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td style="text-align: right; white-space: nowrap;">
+                                            <?php if ($is_video || !empty($a->room_id)): ?>
+                                                <a href="<?=base_url('doctorpanel/videocall/'.($a->room_id ?: 'upchar_consult_'.$a->appointment_id));?>" target="_blank" class="btn-table-action btn-action-video" title="Launch WebRTC Video Consultation">
+                                                    <i class="fa fa-video-camera"></i> Call
+                                                </a>
+                                            <?php endif; ?>
+                                            <a href="<?=base_url('doctorpanel/prescription/'.$a->appointment_id);?>" class="btn-table-action btn-action-rx" title="Write Clinical Prescription">
+                                                <i class="fa fa-stethoscope"></i> Rx
+                                            </a>
+                                            <?php if($a->status != '2'): ?>
+                                                <a href="<?=base_url('doctorpanel/complete_appointment?aid='.$a->appointment_id);?>" onclick="return confirm('Complete consultation visit and mark completed?');" class="btn-table-action btn-action-complete" title="Mark Visited &amp; Complete">
+                                                    <i class="fa fa-check"></i> Complete
+                                                </a>
+                                            <?php else: ?>
+                                                <span class="badge-ehr badge-ehr-completed"><i class="fa fa-check-circle"></i> Visited</span>
+                                            <?php endif; ?>
+                                        </td>
+                                    </tr>
+                                    <?php endforeach; ?>
+                                <?php else: ?>
+                                    <tr>
+                                        <td colspan="6" style="padding: 40px; text-align: center; color: var(--upchar-slate-500);">
+                                            <i class="fa fa-calendar-o" style="font-size: 36px; display: block; margin-bottom: 10px; color: #cbd5e1;"></i>
+                                            <div style="font-weight: 700; color: var(--upchar-slate-700);">No consultations currently in queue</div>
+                                            <div style="font-size: 12px; margin-top: 4px;">New patient bookings will appear here instantly.</div>
+                                        </td>
+                                    </tr>
+                                <?php endif; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Analytics Visualizations Row (Interactive Chart.js) -->
+            <div class="row" style="margin-left: -12px; margin-right: -12px;">
+                <!-- Chart 1: 6-Month Patient Visit Trend -->
+                <div class="col-md-7 col-xs-12" style="padding: 0 12px;">
+                    <div class="ehr-card">
+                        <div class="ehr-card-header">
+                            <h3 class="ehr-card-title">
+                                <i class="fa fa-line-chart" style="color: var(--upchar-teal);"></i>
+                                6-Month Patient Consultation Trend
+                            </h3>
+                        </div>
+                        <div class="ehr-card-body">
+                            <div style="position: relative; height: 230px;">
+                                <canvas id="consultationTrendChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chart 2: Consultation Status Distribution -->
+                <div class="col-md-5 col-xs-12" style="padding: 0 12px;">
+                    <div class="ehr-card">
+                        <div class="ehr-card-header">
+                            <h3 class="ehr-card-title">
+                                <i class="fa fa-pie-chart" style="color: var(--upchar-blue);"></i>
+                                Visit Distribution
+                            </h3>
+                        </div>
+                        <div class="ehr-card-body">
+                            <div style="position: relative; height: 230px;">
+                                <canvas id="consultationStatusChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECONDARY VIEW (Right Side Panel - 4 cols) -->
+        <div class="secondary-column">
+            <!-- 1. WebRTC Teleconsult Room Card -->
+            <div class="teleconsult-room-widget">
+                <div class="teleconsult-widget-header">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span class="pulse-dot"></span>
+                        <strong style="font-size: 13.5px;">Virtual Consult Room</strong>
+                    </div>
+                    <span style="font-size: 11px; background: rgba(255,255,255,0.2); padding: 2px 7px; border-radius: 10px;">WebRTC 1080p</span>
+                </div>
+                <p style="font-size: 12px; color: rgba(255,255,255,0.9); margin-bottom: 14px;">
+                    Instantly conduct live audio/video consultations with connected patients.
+                </p>
+                <div style="display: flex; gap: 8px;">
+                    <a href="<?=base_url('doctorpanel/videocall/'.$dr_room_id);?>" target="_blank" class="btn-banner-primary" style="flex: 1; text-align: center; justify-content: center; font-size: 12px; padding: 8px 10px;">
+                        <i class="fa fa-video-camera"></i> Launch Room
+                    </a>
+                    <button type="button" onclick="copyTeleconsultLink('<?=base_url('doctorpanel/videocall/'.$dr_room_id);?>')" class="btn-banner-light" style="padding: 8px 12px;" title="Copy Video Room Link">
+                        <i class="fa fa-clipboard"></i> Copy Link
+                    </button>
+                </div>
+            </div>
+
+            <!-- 2. Live Patient Clinical Diet Tracker Widget -->
+            <div class="ehr-card">
+                <div class="ehr-card-header">
+                    <div>
+                        <h4 class="ehr-card-title" style="font-size: 13.5px;">
+                            <i class="fa fa-cutlery" style="color: #10b981;"></i>
+                            Patient Diet &amp; Nutrition (EHR)
+                        </h4>
+                        <span style="font-size: 11px; color: var(--upchar-slate-500);">Live intake logged by patients</span>
+                    </div>
+                    <a href="<?=base_url('diet');?>" class="btn-table-action btn-action-rx" style="font-size: 11px; padding: 3px 8px;">
+                        Open Tracker &rarr;
+                    </a>
+                </div>
+                <div class="ehr-card-body" style="padding: 14px 18px;">
+                    <?php if(!empty($recent_diet_logs)): ?>
+                        <?php foreach($recent_diet_logs as $dl): 
+                            $patient_diet_name = !empty($dl->user_fname) ? trim($dl->user_fname.' '.$dl->user_lname) : 'Registered Patient';
+                        ?>
+                        <div class="diet-log-item">
+                            <div class="diet-icon-pill">
+                                <i class="fa fa-apple"></i>
+                            </div>
+                            <div style="flex: 1;">
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <?php 
+                                    $item_name = !empty($dl->food_name) ? $dl->food_name : (!empty($dl->food_item_name) ? $dl->food_item_name : 'Meal Item');
+                                    $p_val = isset($dl->protein) ? $dl->protein : (isset($dl->protein_g) ? $dl->protein_g : 0);
+                                    $c_val = isset($dl->carbs) ? $dl->carbs : (isset($dl->carbs_g) ? $dl->carbs_g : 0);
+                                    $f_val = isset($dl->fats) ? $dl->fats : (isset($dl->fat_g) ? $dl->fat_g : 0);
+                                    ?>
+                                    <strong style="font-size: 12.5px; color: var(--upchar-slate-900);"><?=htmlspecialchars($item_name);?></strong>
+                                    <span class="badge" style="background: #e0f2fe; color: #0369a1; font-size: 10px;"><?=ucfirst($dl->meal_category);?></span>
                                 </div>
-                            </td>
-                            <td style="padding: 12px 16px; color: #64748b;">
-                                <?php
-                                $p_mobile = !empty($a->user_mobile) ? $a->user_mobile : (!empty($a->appointment_mobile) ? $a->appointment_mobile : (!empty($a->mobile) ? $a->mobile : 'N/A'));
-                                echo htmlspecialchars($p_mobile);
-                                ?>
-                            </td>
-                            <td style="padding: 12px 16px;">
-                                <div style="font-weight: 600; color: #1e293b;"><?=date('d M Y', strtotime($a->appointment_date));?></div>
-                                <div style="font-size: 11.5px; color: #64748b;"><?=$a->appointment_time;?></div>
-                            </td>
-                            <td style="padding: 12px 16px;">
-                                <?php if(isset($a->appointment_type) && $a->appointment_type == 'video'): ?>
-                                    <span class="badge" style="background: #e0e7ff; color: #4338ca; font-size: 11px; padding: 3px 8px; border-radius: 4px;"><i class="fa fa-video-camera"></i> Teleconsult</span>
-                                <?php elseif(isset($a->institution_type) && $a->institution_type == 'H'): ?>
-                                    <span class="badge" style="background: #f1f5f9; color: #475569; font-size: 11px; padding: 3px 8px; border-radius: 4px;"><i class="fa fa-building-o"></i> Hospital</span>
-                                <?php else: ?>
-                                    <span class="badge" style="background: #f0fdfa; color: #0f766e; font-size: 11px; padding: 3px 8px; border-radius: 4px;"><i class="fa fa-hospital-o"></i> Clinic</span>
-                                <?php endif; ?>
-                            </td>
-                            <td style="padding: 12px 16px; font-weight: 700; color: #0f172a;">
-                                <?php 
-                                $fee_val = !empty($a->fee) ? $a->fee : (!empty($a->amount) ? $a->amount : (!empty($a->fees) ? $a->fees : 0));
-                                ?>
-                                ₹<?=number_format($fee_val, 2);?>
-                            </td>
-                            <td style="padding: 12px 16px;">
-                                <?php 
-                                $is_paid = (isset($a->payment_status) && in_array(strtoupper($a->payment_status), array('1', 'PAID', 'SUCCESS', 'COMPLETE'))) || (isset($a->pay_status) && ($a->pay_status == '1' || $a->pay_status == 'SUCCESS'));
-                                ?>
-                                <?php if($is_paid): ?>
-                                    <span class="badge-status badge-paid"><i class="fa fa-check"></i> Paid</span>
-                                <?php else: ?>
-                                    <span class="badge-status badge-unpaid"><i class="fa fa-clock-o"></i> Unpaid</span>
-                                <?php endif; ?>
-                            </td>
-                            <td style="padding: 12px 16px; text-align: right; white-space: nowrap;">
-                                <?php if (!empty($a->room_id) || (isset($a->appointment_type) && $a->appointment_type == 'video')): ?>
-                                <a href="<?=base_url('doctorpanel/videocall/'.($a->room_id ?: 'upchar_consult_'.$a->appointment_id));?>" target="_blank" class="btn btn-xs btn-primary" style="background: #2563eb; border-color: #2563eb; font-weight: 700; border-radius: 4px; padding: 4px 8px; margin-right: 4px;">
-                                    <i class="fa fa-video-camera"></i> Join Call
-                                </a>
-                                <?php endif; ?>
-                                <a href="<?=base_url('doctorpanel/prescription/'.$a->appointment_id);?>" class="btn btn-xs btn-default" style="color: #00a896; font-weight: 700; border-radius: 4px; padding: 4px 8px; margin-right: 4px;">
-                                    <i class="fa fa-stethoscope"></i> Write Rx
-                                </a>
-                                <?php if($a->status != '2'): ?>
-                                <a href="<?=base_url('doctorpanel/complete_appointment?aid='.$a->appointment_id);?>" onclick="return confirm('Complete consultation visit and queue fee for settlement?');" class="btn btn-xs btn-warning" style="font-weight: 700; color: #ffffff; border-radius: 4px; padding: 4px 8px;">
-                                    <i class="fa fa-check"></i> Complete
-                                </a>
-                                <?php else: ?>
-                                <span class="badge-status badge-visited"><i class="fa fa-check-circle"></i> Visited</span>
-                                <?php endif; ?>
-                            </td>
-                        </tr>
+                                <div style="font-size: 11px; color: var(--upchar-slate-500); margin-top: 2px;">
+                                    Patient: <?=htmlspecialchars($patient_diet_name);?> &bull; <?=number_format($dl->calories, 0);?> kcal
+                                </div>
+                                <div style="font-size: 10px; color: #64748b; margin-top: 2px;">
+                                    P: <?=number_format($p_val, 1);?>g &bull; C: <?=number_format($c_val, 1);?>g &bull; F: <?=number_format($f_val, 1);?>g
+                                </div>
+                            </div>
+                        </div>
                         <?php endforeach; ?>
                     <?php else: ?>
-                        <tr>
-                            <td colspan="8" style="padding: 36px; text-align: center; color: #94a3b8;">
-                                <i class="fa fa-calendar-o" style="font-size: 32px; display: block; margin-bottom: 8px; color: #cbd5e1;"></i>
-                                <div style="font-weight: 600; color: #64748b;">No recent consultations recorded yet</div>
-                            </td>
-                        </tr>
+                        <div style="text-align: center; padding: 20px 0; color: var(--upchar-slate-500);">
+                            <i class="fa fa-cutlery" style="font-size: 24px; color: #cbd5e1; margin-bottom: 6px;"></i>
+                            <div style="font-size: 12px; font-weight: 600;">No nutrition logs recorded yet today</div>
+                            <div style="font-size: 11px; margin-top: 2px;">Patient meal logs will stream here in real-time.</div>
+                        </div>
                     <?php endif; ?>
-                </tbody>
-            </table>
+                </div>
+            </div>
+
+            <!-- 3. Doctor's Clinical Scratchpad / Quick Notes -->
+            <div class="ehr-card">
+                <div class="ehr-card-header">
+                    <h4 class="ehr-card-title" style="font-size: 13.5px;">
+                        <i class="fa fa-pencil-square-o" style="color: #f59e0b;"></i>
+                        Clinical Quick Notes &amp; Scratchpad
+                    </h4>
+                    <span id="scratchpadStatus" style="font-size: 11px; color: #10b981; font-weight: 700;">
+                        <i class="fa fa-check"></i> Saved locally
+                    </span>
+                </div>
+                <div class="ehr-card-body" style="padding: 14px 18px;">
+                    <textarea id="doctorScratchpad" class="scratchpad-textarea" placeholder="Jot down quick patient observations, medicine reminders, or clinical follow-ups (auto-saved)..."></textarea>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
+                        <span style="font-size: 11px; color: var(--upchar-slate-500);">Auto-saved to your browser</span>
+                        <button type="button" onclick="clearScratchpad()" style="background: none; border: none; font-size: 11px; color: var(--upchar-slate-500); cursor: pointer; padding: 0;">
+                            <i class="fa fa-trash-o"></i> Clear
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4. Practice Chambers Quick Glance -->
+            <div class="ehr-card">
+                <div class="ehr-card-header">
+                    <h4 class="ehr-card-title" style="font-size: 13.5px;">
+                        <i class="fa fa-hospital-o" style="color: var(--upchar-blue);"></i>
+                        Practice Chambers &amp; Hospitals
+                    </h4>
+                    <a href="<?=base_url('manageownclinic');?>" style="font-size: 11px; font-weight: 700; color: var(--upchar-blue); text-decoration: none;">
+                        Setup &rarr;
+                    </a>
+                </div>
+                <div class="ehr-card-body" style="padding: 14px 18px;">
+                    <div style="display: flex; gap: 12px; margin-bottom: 12px;">
+                        <div style="flex: 1; background: #f8fafc; border: 1px solid var(--upchar-border); border-radius: 8px; padding: 10px; text-align: center;">
+                            <div style="font-size: 18px; font-weight: 800; color: var(--upchar-slate-900);"><?=$total_clinics;?></div>
+                            <div style="font-size: 11px; color: var(--upchar-slate-500); font-weight: 600;">Own Clinics</div>
+                        </div>
+                        <div style="flex: 1; background: #f8fafc; border: 1px solid var(--upchar-border); border-radius: 8px; padding: 10px; text-align: center;">
+                            <div style="font-size: 18px; font-weight: 800; color: var(--upchar-slate-900);"><?=$total_hospitals;?></div>
+                            <div style="font-size: 11px; color: var(--upchar-slate-500); font-weight: 600;">Hospitals</div>
+                        </div>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 6px;">
+                        <a href="<?=base_url('manageownclinic');?>" class="btn-table-action btn-action-rx" style="justify-content: center; padding: 6px 10px;">
+                            <i class="fa fa-plus"></i> Add New Clinic Chamber
+                        </a>
+                        <a href="<?=base_url('managepractice');?>" class="btn-table-action btn-action-rx" style="justify-content: center; padding: 6px 10px;">
+                            <i class="fa fa-cog"></i> Configure Consultation Fees
+                        </a>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
 
-<!-- Chart Initialization Scripts -->
+<!-- Interactive Scripts -->
 <script>
+// 1. Copy Video Room Link Helper
+function copyTeleconsultLink(url) {
+    if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(url).then(function() {
+            if (window.showUpcharToast) window.showUpcharToast('Teleconsult room link copied to clipboard!');
+        });
+    } else {
+        var tempInput = document.createElement("input");
+        tempInput.value = url;
+        document.body.appendChild(tempInput);
+        tempInput.select();
+        document.execCommand("copy");
+        document.body.removeChild(tempInput);
+        if (window.showUpcharToast) window.showUpcharToast('Teleconsult room link copied to clipboard!');
+    }
+}
+
+// 2. Doctor Scratchpad Persistence
+var pad = document.getElementById('doctorScratchpad');
+var padStatus = document.getElementById('scratchpadStatus');
+
+if (pad) {
+    var savedNotes = localStorage.getItem('upchar_doctor_scratchpad');
+    if (savedNotes) pad.value = savedNotes;
+
+    var saveTimeout;
+    pad.addEventListener('input', function() {
+        if (padStatus) padStatus.innerHTML = '<i class="fa fa-refresh fa-spin"></i> Saving...';
+        clearTimeout(saveTimeout);
+        saveTimeout = setTimeout(function() {
+            localStorage.setItem('upchar_doctor_scratchpad', pad.value);
+            if (padStatus) padStatus.innerHTML = '<i class="fa fa-check"></i> Saved locally';
+        }, 500);
+    });
+}
+
+function clearScratchpad() {
+    if (confirm('Clear your scratchpad notes?')) {
+        if (pad) pad.value = '';
+        localStorage.removeItem('upchar_doctor_scratchpad');
+        if (padStatus) padStatus.innerHTML = '<i class="fa fa-check"></i> Cleared';
+    }
+}
+
+// 3. Appointments Table Live Search & Filter
+var searchInput = document.getElementById('patientFilterInput');
+var currentFilterStatus = 'all';
+
+function runTableFilter() {
+    var q = searchInput ? searchInput.value.toLowerCase().trim() : '';
+    var rows = document.querySelectorAll('.appt-row');
+    
+    rows.forEach(function(row) {
+        var rowText = row.getAttribute('data-search') || '';
+        var rowStatus = row.getAttribute('data-status') || '';
+        var rowType = row.getAttribute('data-type') || '';
+
+        var matchesSearch = (q === '' || rowText.indexOf(q) !== -1);
+        var matchesStatus = true;
+
+        if (currentFilterStatus === 'confirmed') matchesStatus = (rowStatus === 'confirmed');
+        else if (currentFilterStatus === 'completed') matchesStatus = (rowStatus === 'completed');
+        else if (currentFilterStatus === 'video') matchesStatus = (rowType === 'video');
+
+        if (matchesSearch && matchesStatus) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    });
+}
+
+if (searchInput) {
+    searchInput.addEventListener('input', runTableFilter);
+}
+
+function filterTableStatus(status, btn) {
+    currentFilterStatus = status;
+    var pills = document.querySelectorAll('.filter-pill');
+    pills.forEach(function(p) { p.classList.remove('active'); });
+    if (btn) btn.classList.add('active');
+    runTableFilter();
+}
+
+// 4. Secondary Subnav Tab Switcher
+function switchDashboardTab(tab, btn) {
+    var tabBtns = document.querySelectorAll('.subnav-tab-btn');
+    tabBtns.forEach(function(b) { b.classList.remove('active'); });
+    if (btn) btn.classList.add('active');
+
+    var titleEl = document.getElementById('tableTitleText');
+
+    if (tab === 'today') {
+        if (titleEl) titleEl.textContent = "Today's Scheduled Consultations";
+        var todayDateStr = "<?=date('d M Y');?>";
+        if (searchInput) {
+            searchInput.value = todayDateStr;
+            runTableFilter();
+        }
+    } else if (tab === 'pending') {
+        if (titleEl) titleEl.textContent = "Pending Doctor Reviews & Consultations";
+        filterTableStatus('confirmed', null);
+    } else {
+        if (titleEl) titleEl.textContent = "Consultation Appointments & Queue";
+        if (searchInput) searchInput.value = '';
+        filterTableStatus('all', null);
+    }
+}
+
+// 5. Chart.js High-Definition Visualizations
 document.addEventListener('DOMContentLoaded', function() {
-    // 1. Consultation Status Doughnut
+    // 5a. Consultation Status Doughnut
     var ctxDoughnut = document.getElementById('consultationStatusChart');
     if (ctxDoughnut) {
         new Chart(ctxDoughnut.getContext('2d'), {
             type: 'doughnut',
             data: {
-                labels: ['Visited (Completed)', 'Upcoming (Confirmed)', 'Cancelled'],
+                labels: ['Visited (Closed)', 'Upcoming (Queue)', 'Cancelled'],
                 datasets: [{
                     data: [
                         <?=intval($completed_appointments);?>,
@@ -729,18 +1256,18 @@ document.addEventListener('DOMContentLoaded', function() {
                 legend: {
                     position: 'bottom',
                     labels: {
-                        boxWidth: 12,
-                        fontSize: 12,
+                        boxWidth: 10,
+                        fontSize: 11,
                         fontColor: '#475569',
-                        padding: 14
+                        padding: 12
                     }
                 },
-                cutoutPercentage: 65
+                cutoutPercentage: 68
             }
         });
     }
 
-    // 2. Consultation Monthly Trend Line
+    // 5b. 6-Month Monthly Consultation Trend Line
     var ctxTrend = document.getElementById('consultationTrendChart');
     if (ctxTrend) {
         new Chart(ctxTrend.getContext('2d'), {
@@ -748,12 +1275,12 @@ document.addEventListener('DOMContentLoaded', function() {
             data: {
                 labels: <?=json_encode($monthly_labels);?>,
                 datasets: [{
-                    label: 'Booked Consultations',
+                    label: 'Patient Consultations',
                     data: <?=json_encode($monthly_data);?>,
-                    borderColor: '#00a896',
-                    backgroundColor: 'rgba(0, 168, 150, 0.08)',
+                    borderColor: '#0284c7',
+                    backgroundColor: 'rgba(2, 132, 199, 0.08)',
                     borderWidth: 2.5,
-                    pointBackgroundColor: '#00a896',
+                    pointBackgroundColor: '#0284c7',
                     pointBorderColor: '#ffffff',
                     pointBorderWidth: 2,
                     pointRadius: 4,

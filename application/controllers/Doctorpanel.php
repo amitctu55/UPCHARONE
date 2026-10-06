@@ -112,9 +112,31 @@ class Doctorpanel extends CI_Controller
 			->where('appointment.doctor_id', $userid)
 			->order_by('appointment.appointment_date', 'DESC')
 			->order_by('appointment.appointment_id', 'DESC')
-			->limit(10)
+			->limit(15)
 			->get()
 			->result();
+
+		// Today's appointments list
+		$data['today_appointments_list'] = $this->db->select('appointment.*, userlogin.FNAME as user_fname, userlogin.LNAME as user_lname, userlogin.MOBILE as user_mobile')
+			->from('appointment')
+			->join('userlogin', 'userlogin.USERID = appointment.user_id', 'left')
+			->where('appointment.doctor_id', $userid)
+			->where('appointment.appointment_date', date('Y-m-d'))
+			->order_by('appointment.appointment_time', 'ASC')
+			->get()
+			->result();
+
+		// Recent patient diet & nutrition logs
+		$data['recent_diet_logs'] = array();
+		if ($this->db->table_exists('user_diet_logs')) {
+			$data['recent_diet_logs'] = $this->db->select('user_diet_logs.*, userlogin.FNAME as user_fname, userlogin.LNAME as user_lname')
+				->from('user_diet_logs')
+				->join('userlogin', 'userlogin.USERID = user_diet_logs.user_id', 'left')
+				->order_by('user_diet_logs.id', 'DESC')
+				->limit(5)
+				->get()
+				->result();
+		}
 
 		$this->load->view('doctorpanel/dashboard', $data);
 	}

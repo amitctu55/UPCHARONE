@@ -4,8 +4,9 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <link rel="icon" href="<?=base_url();?>images/logo.png" type="image/png" sizes="32x32">
-    <title>Doctor Portal | Upchar Healthcare</title>
+    <title>Doctor EHR Portal | Upchar Healthcare</title>
     
+    <!-- Modern Typography: Google Fonts Inter -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
     <link href="<?=base_url();?>assets/css/bootstrap.min.css" rel="stylesheet">
@@ -16,15 +17,25 @@
 
     <style>
     :root {
+        --upchar-blue: #0284c7;
+        --upchar-blue-dark: #0369a1;
+        --upchar-blue-light: #e0f2fe;
         --upchar-teal: #00a896;
         --upchar-teal-dark: #008f80;
-        --upchar-teal-light: #2dd4bf;
-        --upchar-navy-dark: #0d1b2a;
-        --upchar-card-dark: #1b263b;
-        --upchar-slate: #0f172a;
-        --upchar-gray: #64748b;
-        --upchar-light: #f8fafc;
+        --upchar-teal-light: #ccfbf1;
+        --upchar-navy: #0d1b2a;
+        --upchar-navy-surface: #1b263b;
+        --upchar-slate-900: #0f172a;
+        --upchar-slate-800: #1e293b;
+        --upchar-slate-700: #334155;
+        --upchar-slate-600: #475569;
+        --upchar-slate-500: #64748b;
+        --upchar-slate-100: #f1f5f9;
+        --upchar-slate-50: #f8fafc;
         --upchar-border: #e2e8f0;
+        --upchar-success: #10b981;
+        --upchar-warning: #f59e0b;
+        --upchar-danger: #ef4444;
     }
 
     * {
@@ -33,14 +44,16 @@
 
     body {
         font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
-        background-color: #f8fafc;
-        color: #334155;
+        background-color: var(--upchar-slate-50);
+        color: var(--upchar-slate-700);
         margin: 0;
         padding: 0;
         overflow-x: hidden;
     }
 
-    /* 1. Topbar & Brand Logo Header */
+    /* ==========================================================
+       1. Topbar & Brand Header (Clean White / Frosted Glass)
+       ========================================================== */
     .topbar {
         position: fixed !important;
         top: 0 !important;
@@ -48,52 +61,56 @@
         right: 0 !important;
         width: 100% !important;
         height: 64px !important;
-        background: #0d1b2a !important;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+        background: rgba(255, 255, 255, 0.94) !important;
+        backdrop-filter: blur(12px) !important;
+        -webkit-backdrop-filter: blur(12px) !important;
+        border-bottom: 1px solid var(--upchar-border) !important;
         display: flex !important;
         align-items: center !important;
         justify-content: space-between !important;
-        padding: 0 24px !important;
+        padding: 0 20px !important;
         z-index: 1000 !important;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25) !important;
+        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.05) !important;
     }
 
     .header-left {
         display: flex !important;
         align-items: center !important;
-        gap: 16px !important;
+        gap: 14px !important;
+        flex-shrink: 0 !important;
     }
 
     .menu-toggle-btn {
-        background: rgba(255, 255, 255, 0.08) !important;
-        border: 1px solid rgba(255, 255, 255, 0.12) !important;
+        background: #f8fafc !important;
+        border: 1px solid var(--upchar-border) !important;
         border-radius: 8px !important;
-        width: 38px !important;
-        height: 38px !important;
+        width: 36px !important;
+        height: 36px !important;
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
-        color: #ffffff !important;
+        color: var(--upchar-slate-700) !important;
         cursor: pointer !important;
         transition: all 0.2s ease !important;
         text-decoration: none !important;
-        font-size: 16px !important;
+        font-size: 15px !important;
     }
 
     .menu-toggle-btn:hover {
-        background: rgba(255, 255, 255, 0.16) !important;
-        color: #2dd4bf !important;
+        background: var(--upchar-slate-100) !important;
+        color: var(--upchar-blue) !important;
+        border-color: #cbd5e1 !important;
     }
 
     .brand-link {
         display: flex !important;
         align-items: center !important;
-        gap: 12px !important;
+        gap: 10px !important;
         text-decoration: none !important;
     }
 
     .brand-logo-img {
-        height: 36px !important;
+        height: 34px !important;
         width: auto !important;
         object-fit: contain !important;
     }
@@ -106,29 +123,296 @@
 
     .sitename {
         font-family: 'Inter', sans-serif !important;
-        color: #ffffff !important;
-        font-size: 19px !important;
+        color: var(--upchar-slate-900) !important;
+        font-size: 18px !important;
         font-weight: 800 !important;
         margin: 0 !important;
-        letter-spacing: 1px !important;
+        letter-spacing: 0.8px !important;
         line-height: 1.1 !important;
     }
 
     .slowgon {
         font-size: 10px !important;
-        font-weight: 600 !important;
-        color: #2dd4bf !important;
+        font-weight: 700 !important;
+        color: var(--upchar-blue) !important;
         margin: 0 !important;
         text-transform: uppercase !important;
-        letter-spacing: 0.8px !important;
+        letter-spacing: 0.6px !important;
     }
 
-    /* 2. Profile Dropdown Menu & Pill */
+    .header-breadcrumbs-pill {
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 6px !important;
+        background: var(--upchar-slate-100) !important;
+        border: 1px solid var(--upchar-border) !important;
+        padding: 4px 10px !important;
+        border-radius: 20px !important;
+        font-size: 11.5px !important;
+        font-weight: 600 !important;
+        color: var(--upchar-slate-600) !important;
+        margin-left: 6px !important;
+    }
+
+    .header-breadcrumbs-pill i {
+        color: var(--upchar-teal) !important;
+    }
+
+    /* 2. Global Quick-Search Bar (Center) */
+    .header-center {
+        flex: 1 1 auto !important;
+        max-width: 440px !important;
+        margin: 0 20px !important;
+    }
+
+    .header-search-bar {
+        position: relative !important;
+        display: flex !important;
+        align-items: center !important;
+        background: #f8fafc !important;
+        border: 1px solid var(--upchar-border) !important;
+        border-radius: 8px !important;
+        padding: 6px 12px !important;
+        cursor: pointer !important;
+        transition: all 0.2s ease !important;
+        width: 100% !important;
+    }
+
+    .header-search-bar:hover {
+        background: #ffffff !important;
+        border-color: var(--upchar-blue) !important;
+        box-shadow: 0 2px 8px rgba(2, 132, 199, 0.08) !important;
+    }
+
+    .header-search-bar i {
+        color: var(--upchar-slate-500) !important;
+        font-size: 13px !important;
+        margin-right: 8px !important;
+    }
+
+    .header-search-bar input {
+        border: none !important;
+        background: transparent !important;
+        font-size: 12.5px !important;
+        color: var(--upchar-slate-700) !important;
+        width: 100% !important;
+        outline: none !important;
+        cursor: pointer !important;
+        padding: 0 !important;
+    }
+
+    .search-kbd-badge {
+        background: #ffffff !important;
+        border: 1px solid #cbd5e1 !important;
+        border-radius: 4px !important;
+        padding: 2px 6px !important;
+        font-size: 10.5px !important;
+        font-weight: 700 !important;
+        color: var(--upchar-slate-500) !important;
+        font-family: inherit !important;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.05) !important;
+        white-space: nowrap !important;
+    }
+
+    /* 3. Header Utility Buttons & Profile (Right) */
     .header-right {
         display: flex !important;
         align-items: center !important;
+        gap: 12px !important;
+        flex-shrink: 0 !important;
     }
 
+    /* Quick Action Button (+ Appointment) */
+    .btn-quick-appointment {
+        background: var(--upchar-blue) !important;
+        color: #ffffff !important;
+        border: none !important;
+        border-radius: 7px !important;
+        padding: 6px 12px !important;
+        font-size: 12px !important;
+        font-weight: 700 !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 6px !important;
+        text-decoration: none !important;
+        transition: all 0.2s ease !important;
+        box-shadow: 0 2px 6px rgba(2, 132, 199, 0.25) !important;
+    }
+
+    .btn-quick-appointment:hover {
+        background: var(--upchar-blue-dark) !important;
+        color: #ffffff !important;
+        transform: translateY(-1px) !important;
+    }
+
+    /* Doctor Availability Switcher */
+    .btn-availability-toggle {
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 6px !important;
+        background: #f8fafc !important;
+        border: 1px solid var(--upchar-border) !important;
+        border-radius: 20px !important;
+        padding: 5px 11px !important;
+        font-size: 11.5px !important;
+        font-weight: 700 !important;
+        color: var(--upchar-slate-700) !important;
+        cursor: pointer !important;
+        transition: all 0.2s ease !important;
+    }
+
+    .btn-availability-toggle:hover {
+        background: #ffffff !important;
+        border-color: #cbd5e1 !important;
+    }
+
+    .avail-dot {
+        width: 8px !important;
+        height: 8px !important;
+        border-radius: 50% !important;
+        transition: all 0.2s ease !important;
+    }
+
+    .avail-online {
+        background: var(--upchar-success) !important;
+        box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2) !important;
+    }
+
+    .avail-away {
+        background: #94a3b8 !important;
+    }
+
+    /* Notification Bell Dropdown */
+    .header-notif-wrap {
+        position: relative !important;
+    }
+
+    .btn-notif-bell {
+        background: #f8fafc !important;
+        border: 1px solid var(--upchar-border) !important;
+        border-radius: 8px !important;
+        width: 36px !important;
+        height: 36px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        color: var(--upchar-slate-600) !important;
+        cursor: pointer !important;
+        position: relative !important;
+        transition: all 0.2s ease !important;
+    }
+
+    .btn-notif-bell:hover {
+        background: var(--upchar-slate-100) !important;
+        color: var(--upchar-blue) !important;
+    }
+
+    .notif-badge-count {
+        position: absolute !important;
+        top: -4px !important;
+        right: -4px !important;
+        background: var(--upchar-danger) !important;
+        color: #ffffff !important;
+        font-size: 10px !important;
+        font-weight: 800 !important;
+        border-radius: 10px !important;
+        padding: 1px 5px !important;
+        line-height: 1.2 !important;
+        border: 2px solid #ffffff !important;
+    }
+
+    .notif-dropdown-card {
+        position: absolute !important;
+        top: 100% !important;
+        right: 0 !important;
+        margin-top: 8px !important;
+        width: 320px !important;
+        background: #ffffff !important;
+        border: 1px solid var(--upchar-border) !important;
+        border-radius: 10px !important;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1) !important;
+        display: none;
+        z-index: 1050 !important;
+        overflow: hidden !important;
+    }
+
+    .notif-header {
+        padding: 12px 16px !important;
+        border-bottom: 1px solid var(--upchar-border) !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        background: #f8fafc !important;
+    }
+
+    .notif-title {
+        font-size: 13px !important;
+        font-weight: 800 !important;
+        color: var(--upchar-slate-900) !important;
+        margin: 0 !important;
+    }
+
+    .notif-list {
+        list-style: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        max-height: 280px !important;
+        overflow-y: auto !important;
+    }
+
+    .notif-item {
+        padding: 10px 16px !important;
+        border-bottom: 1px solid #f1f5f9 !important;
+        display: flex !important;
+        gap: 12px !important;
+        align-items: flex-start !important;
+        transition: background 0.15s ease !important;
+        text-decoration: none !important;
+        color: inherit !important;
+    }
+
+    .notif-item:hover {
+        background: #f8fafc !important;
+    }
+
+    .notif-item-icon {
+        width: 28px !important;
+        height: 28px !important;
+        border-radius: 6px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        font-size: 12px !important;
+        flex-shrink: 0 !important;
+    }
+
+    .notif-item-body {
+        font-size: 12px !important;
+        line-height: 1.3 !important;
+        color: var(--upchar-slate-700) !important;
+    }
+
+    .notif-item-time {
+        font-size: 10.5px !important;
+        color: var(--upchar-slate-500) !important;
+        margin-top: 3px !important;
+    }
+
+    .notif-footer {
+        padding: 10px !important;
+        text-align: center !important;
+        border-top: 1px solid var(--upchar-border) !important;
+        background: #f8fafc !important;
+    }
+
+    .notif-footer a {
+        font-size: 12px !important;
+        font-weight: 700 !important;
+        color: var(--upchar-blue) !important;
+        text-decoration: none !important;
+    }
+
+    /* 4. Profile Dropdown Menu & Pill */
     .user-header-wrap {
         position: relative !important;
         list-style: none !important;
@@ -139,10 +423,10 @@
     .profile-pill-trigger {
         display: flex !important;
         align-items: center !important;
-        gap: 10px !important;
-        background: rgba(255, 255, 255, 0.08) !important;
-        border: 1px solid rgba(255, 255, 255, 0.15) !important;
-        padding: 5px 14px !important;
+        gap: 9px !important;
+        background: #f8fafc !important;
+        border: 1px solid var(--upchar-border) !important;
+        padding: 4px 12px !important;
         border-radius: 30px !important;
         transition: all 0.2s ease !important;
         text-decoration: none !important;
@@ -151,19 +435,19 @@
 
     .profile-pill-trigger:hover,
     .profile-pill-trigger:focus {
-        background: rgba(255, 255, 255, 0.16) !important;
-        border-color: #2dd4bf !important;
-        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2) !important;
+        background: #ffffff !important;
+        border-color: var(--upchar-blue) !important;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05) !important;
     }
 
     .profile-avatar-wrap {
         position: relative !important;
-        width: 34px !important;
-        height: 34px !important;
+        width: 32px !important;
+        height: 32px !important;
         border-radius: 50% !important;
         overflow: hidden !important;
-        border: 2px solid #2dd4bf !important;
-        background: #1b263b !important;
+        border: 2px solid var(--upchar-teal) !important;
+        background: #f1f5f9 !important;
         flex-shrink: 0 !important;
     }
 
@@ -177,10 +461,10 @@
         position: absolute !important;
         bottom: 0 !important;
         right: 0 !important;
-        width: 9px !important;
-        height: 9px !important;
-        background: #10b981 !important;
-        border: 2px solid #0d1b2a !important;
+        width: 8px !important;
+        height: 8px !important;
+        background: var(--upchar-success) !important;
+        border: 1.5px solid #ffffff !important;
         border-radius: 50% !important;
     }
 
@@ -191,40 +475,39 @@
     }
 
     .profile-doc-name {
-        color: #ffffff !important;
-        font-size: 13px !important;
+        color: var(--upchar-slate-900) !important;
+        font-size: 12.5px !important;
         font-weight: 700 !important;
         line-height: 1.2 !important;
     }
 
     .profile-doc-role {
-        color: #94a3b8 !important;
-        font-size: 11px !important;
+        color: var(--upchar-slate-500) !important;
+        font-size: 10.5px !important;
         font-weight: 500 !important;
     }
 
-    /* Anchored Glassmorphism Dropdown Menu */
+    /* Anchored Dropdown Menu Card */
     .custom-doc-dropdown {
         position: absolute !important;
         top: 100% !important;
         right: 0 !important;
         margin-top: 8px !important;
-        min-width: 270px !important;
-        background: #1b263b !important;
-        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        min-width: 260px !important;
+        background: #ffffff !important;
+        border: 1px solid var(--upchar-border) !important;
         border-radius: 10px !important;
-        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5) !important;
-        backdrop-filter: blur(10px) !important;
-        padding: 12px 16px !important;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08) !important;
+        padding: 10px 12px !important;
         z-index: 1050 !important;
         list-style: none !important;
         display: none;
     }
 
     .dropdown-header-card {
-        padding: 0 0 10px 0 !important;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
-        margin-bottom: 8px !important;
+        padding: 4px 6px 10px 6px !important;
+        border-bottom: 1px solid var(--upchar-border) !important;
+        margin-bottom: 6px !important;
     }
 
     .custom-doc-dropdown li {
@@ -234,11 +517,11 @@
     .custom-doc-dropdown li a {
         display: flex !important;
         align-items: center !important;
-        gap: 12px !important;
-        padding: 8px 10px !important;
-        color: #e2e8f0 !important;
-        font-size: 13px !important;
-        font-weight: 500 !important;
+        gap: 10px !important;
+        padding: 7px 10px !important;
+        color: var(--upchar-slate-700) !important;
+        font-size: 12.5px !important;
+        font-weight: 600 !important;
         border-radius: 6px !important;
         transition: all 0.15s ease !important;
         text-decoration: none !important;
@@ -246,39 +529,41 @@
 
     .custom-doc-dropdown li a i {
         width: 18px !important;
-        font-size: 14px !important;
-        color: #2dd4bf !important;
+        font-size: 13px !important;
+        color: var(--upchar-blue) !important;
         text-align: center !important;
     }
 
     .custom-doc-dropdown li a:hover {
-        background: rgba(255, 255, 255, 0.08) !important;
-        color: #2dd4bf !important;
-        padding-left: 14px !important;
+        background: #f1f5f9 !important;
+        color: var(--upchar-blue) !important;
+        padding-left: 13px !important;
     }
 
     .custom-doc-dropdown .dropdown-divider {
         height: 1px !important;
-        background: rgba(255, 255, 255, 0.1) !important;
-        margin: 8px 0 !important;
+        background: var(--upchar-border) !important;
+        margin: 6px 0 !important;
         padding: 0 !important;
     }
 
     .custom-doc-dropdown .logout-link a {
-        color: #ef4444 !important;
+        color: var(--upchar-danger) !important;
         font-weight: 700 !important;
     }
 
     .custom-doc-dropdown .logout-link a i {
-        color: #ef4444 !important;
+        color: var(--upchar-danger) !important;
     }
 
     .custom-doc-dropdown .logout-link a:hover {
-        background: rgba(239, 68, 68, 0.12) !important;
-        color: #f87171 !important;
+        background: #fee2e2 !important;
+        color: #b91c1c !important;
     }
 
-    /* 3. Dashboard Layout & Flexbox Sidebar Integration */
+    /* ==========================================================
+       5. Modern Sleek High-Contrast Sidebar
+       ========================================================== */
     .dashboard-layout {
         display: flex !important;
         flex-direction: row !important;
@@ -287,44 +572,35 @@
         min-height: calc(100vh - 64px) !important;
         margin-top: 64px !important;
         padding: 0 !important;
-        background: #f8fafc !important;
+        background: var(--upchar-slate-50) !important;
         position: relative !important;
         box-sizing: border-box !important;
         overflow-x: hidden !important;
     }
 
-    /* Standard Flex item positioning for sidebar (Fixed width, zero float overlay) */
     .dashboard-layout .sidebar,
     .dashboard-layout aside.sidebar,
     aside.sidebar,
-    .sidebar,
-    .sidebar-wrapper {
+    .sidebar {
         position: -webkit-sticky !important;
         position: sticky !important;
         top: 64px !important;
         left: 0 !important;
-        bottom: auto !important;
-        right: auto !important;
         width: 260px !important;
         min-width: 260px !important;
         max-width: 260px !important;
         flex: 0 0 260px !important;
         flex-shrink: 0 !important;
-        flex-grow: 0 !important;
         height: calc(100vh - 64px) !important;
         max-height: calc(100vh - 64px) !important;
-        min-height: calc(100vh - 64px) !important;
         overflow-y: auto !important;
         overflow-x: hidden !important;
-        background: #0d1b2a !important;
-        border-right: 1px solid rgba(255, 255, 255, 0.06) !important;
-        box-shadow: 2px 0 12px rgba(0, 0, 0, 0.12) !important;
+        background: var(--upchar-navy) !important;
+        border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
+        box-shadow: 2px 0 12px rgba(0, 0, 0, 0.08) !important;
         z-index: 900 !important;
         margin: 0 !important;
         padding: 0 !important;
-        float: none !important;
-        clear: none !important;
-        transform: none !important;
         box-sizing: border-box !important;
         transition: width 0.25s ease, min-width 0.25s ease, flex 0.25s ease !important;
         scrollbar-width: thin !important;
@@ -341,12 +617,21 @@
     }
 
     .sidebar-inner {
-        padding: 12px 0 !important;
+        padding: 10px 0 30px 0 !important;
+    }
+
+    .sidebar-group-title {
+        padding: 14px 20px 6px 20px !important;
+        font-size: 10.5px !important;
+        font-weight: 800 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.9px !important;
+        color: #64748b !important;
     }
 
     .sidebar .nav-sidebar {
         list-style: none !important;
-        padding: 0 !important;
+        padding: 0 8px !important;
         margin: 0 !important;
     }
 
@@ -358,71 +643,100 @@
 
     .sidebar .nav-sidebar > li > a {
         color: #cbd5e1 !important;
-        font-size: 13.5px !important;
+        font-size: 13px !important;
         font-weight: 500 !important;
         display: flex !important;
         align-items: center !important;
         gap: 12px !important;
-        padding: 12px 20px !important;
-        transition: all 0.2s ease !important;
+        padding: 9px 14px !important;
+        border-radius: 8px !important;
+        transition: all 0.18s ease !important;
         text-decoration: none !important;
         width: 100% !important;
         white-space: nowrap !important;
     }
 
     .sidebar .nav-sidebar > li > a i {
-        color: #2dd4bf !important;
-        font-size: 15px !important;
+        color: #94a3b8 !important;
+        font-size: 14px !important;
         width: 20px !important;
         text-align: center !important;
         flex-shrink: 0 !important;
+        transition: color 0.18s ease !important;
     }
 
     .sidebar .nav-sidebar > li > a span {
-        color: #f1f5f9 !important;
-        font-size: 13.5px !important;
+        color: #e2e8f0 !important;
+        font-size: 13px !important;
         font-weight: 500 !important;
     }
 
-    .sidebar .nav-sidebar > li:hover > a,
-    .sidebar .nav-sidebar > li.active > a {
+    .sidebar .nav-sidebar > li:hover > a {
         background: rgba(255, 255, 255, 0.08) !important;
         color: #ffffff !important;
-        border-left: 3px solid #2dd4bf !important;
     }
 
-    .sidebar .nav-sidebar > li.active > a i,
     .sidebar .nav-sidebar > li:hover > a i {
-        color: #5eead4 !important;
+        color: var(--upchar-teal) !important;
+    }
+
+    /* Active State: Distinct Accent Pill */
+    .sidebar .nav-sidebar > li.active > a {
+        background: rgba(0, 168, 150, 0.16) !important;
+        color: #ffffff !important;
+        border-left: 3px solid var(--upchar-teal) !important;
+        box-shadow: inset 0 0 12px rgba(0, 168, 150, 0.1) !important;
+    }
+
+    .sidebar .nav-sidebar > li.active > a i {
+        color: #2dd4bf !important;
+    }
+
+    .sidebar .nav-sidebar > li.active > a span {
+        color: #ffffff !important;
+        font-weight: 700 !important;
+    }
+
+    .menu-badge-ehr {
+        background: #0284c7 !important;
+        color: #ffffff !important;
+        font-size: 9.5px !important;
+        font-weight: 800 !important;
+        padding: 1px 6px !important;
+        border-radius: 4px !important;
+        margin-left: auto !important;
+        letter-spacing: 0.5px !important;
     }
 
     /* Submenu Accordions */
     .sidebar .nav-sidebar .children,
     .sidebar .submenu {
-        background: #09131f !important;
-        padding: 6px 0 !important;
+        background: rgba(0, 0, 0, 0.2) !important;
+        padding: 4px 0 !important;
         list-style: none !important;
-        margin: 0 !important;
+        margin: 2px 0 4px 12px !important;
+        border-radius: 6px !important;
+        border-left: 1px solid rgba(255, 255, 255, 0.1) !important;
     }
 
     .sidebar .nav-sidebar .children > li > a,
     .sidebar .submenu > li > a {
         color: #94a3b8 !important;
-        padding: 9px 20px 9px 48px !important;
-        font-size: 12.5px !important;
+        padding: 7px 14px 7px 20px !important;
+        font-size: 12px !important;
         display: flex !important;
         align-items: center !important;
-        gap: 10px !important;
+        gap: 8px !important;
         text-decoration: none !important;
         transition: all 0.15s ease !important;
         white-space: nowrap !important;
+        border-radius: 4px !important;
     }
 
     .sidebar .nav-sidebar .children > li > a:hover,
     .sidebar .submenu > li > a:hover {
         color: #ffffff !important;
         background: rgba(255, 255, 255, 0.06) !important;
-        padding-left: 52px !important;
     }
 
     .sidebar .nav-sidebar .children > li.active > a,
@@ -430,13 +744,6 @@
         color: #2dd4bf !important;
         background: rgba(45, 212, 191, 0.12) !important;
         font-weight: 700 !important;
-        border-left: 3px solid #2dd4bf !important;
-        padding-left: 45px !important;
-    }
-
-    .sidebar .nav-sidebar .children > li.active > a i,
-    .sidebar .submenu > li.active > a i {
-        color: #2dd4bf !important;
     }
 
     .sidebar .arrow-icon, .sidebar .arrow {
@@ -446,62 +753,203 @@
         color: #64748b;
     }
 
-    /* 4. Fluid Main Content Container (Pushes smoothly to the right, ZERO overlap) */
+    /* Fluid Main Content Container */
     .dashboard-layout .main-content, 
     .dashboard-layout #content, 
-    .dashboard-layout main.main-content, 
-    main.main-content,
     .main-content,
     #content {
         flex: 1 1 auto !important;
-        flex-grow: 1 !important;
-        flex-shrink: 1 !important;
         min-width: 0 !important;
         width: calc(100% - 260px) !important;
         max-width: calc(100% - 260px) !important;
         display: flex !important;
         flex-direction: column !important;
-        background: #f8fafc !important;
+        background: var(--upchar-slate-50) !important;
         padding: 0 !important;
         margin: 0 !important;
-        margin-left: 0 !important;
-        margin-right: 0 !important;
-        margin-top: 0 !important;
         overflow-x: hidden !important;
         position: relative !important;
         z-index: 1 !important;
         box-sizing: border-box !important;
-        float: none !important;
         transition: width 0.25s ease, max-width 0.25s ease !important;
     }
 
     .main-content .page-content, 
     .main-content .pag_cstm,
-    .page-content,
     .pag_cstm {
         flex: 1 0 auto !important;
-        padding: 24px 28px !important;
+        padding: 20px 24px !important;
         margin: 0 !important;
         min-height: calc(100vh - 124px) !important;
         width: 100% !important;
         box-sizing: border-box !important;
     }
 
-    /* Force override legacy style.css / theme.css rules */
+    /* Force override legacy */
     body .main-content {
         margin-left: 0 !important;
     }
     body .sidebar .logopanel {
-        position: static !important;
-        width: 100% !important;
         display: none !important;
     }
 
     /* ==========================================================
-       5. Responsive Media Queries
+       6. Global Search Modal (Ctrl+K)
        ========================================================== */
-    
-    /* Desktop (>1024px): Standard 260px Persistent Sidebar */
+    .global-search-modal {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        bottom: 0 !important;
+        background: rgba(15, 23, 42, 0.6) !important;
+        backdrop-filter: blur(4px) !important;
+        -webkit-backdrop-filter: blur(4px) !important;
+        z-index: 2000 !important;
+        display: none;
+        align-items: flex-start !important;
+        justify-content: center !important;
+        padding: 80px 20px 20px 20px !important;
+    }
+
+    .global-search-dialog {
+        background: #ffffff !important;
+        border-radius: 12px !important;
+        width: 100% !important;
+        max-width: 620px !important;
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25) !important;
+        border: 1px solid var(--upchar-border) !important;
+        overflow: hidden !important;
+        animation: searchModalSlide 0.15s ease-out !important;
+    }
+
+    @keyframes searchModalSlide {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .global-search-header {
+        display: flex !important;
+        align-items: center !important;
+        padding: 14px 18px !important;
+        border-bottom: 1px solid var(--upchar-border) !important;
+        gap: 12px !important;
+    }
+
+    .global-search-header i {
+        color: var(--upchar-blue) !important;
+        font-size: 16px !important;
+    }
+
+    .global-search-input {
+        border: none !important;
+        outline: none !important;
+        font-size: 15px !important;
+        font-weight: 500 !important;
+        color: var(--upchar-slate-900) !important;
+        width: 100% !important;
+        background: transparent !important;
+    }
+
+    .global-search-close-btn {
+        background: var(--upchar-slate-100) !important;
+        border: 1px solid var(--upchar-border) !important;
+        border-radius: 6px !important;
+        padding: 4px 8px !important;
+        font-size: 11px !important;
+        font-weight: 700 !important;
+        color: var(--upchar-slate-500) !important;
+        cursor: pointer !important;
+    }
+
+    .global-search-results {
+        max-height: 380px !important;
+        overflow-y: auto !important;
+        padding: 10px 12px !important;
+    }
+
+    .search-group-heading {
+        font-size: 10.5px !important;
+        font-weight: 800 !important;
+        color: var(--upchar-slate-500) !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.8px !important;
+        padding: 8px 10px 4px 10px !important;
+    }
+
+    .search-nav-item {
+        display: flex !important;
+        align-items: center !important;
+        gap: 12px !important;
+        padding: 10px 12px !important;
+        border-radius: 8px !important;
+        color: var(--upchar-slate-700) !important;
+        text-decoration: none !important;
+        font-size: 13px !important;
+        font-weight: 600 !important;
+        transition: all 0.15s ease !important;
+    }
+
+    .search-nav-item:hover {
+        background: #f1f5f9 !important;
+        color: var(--upchar-blue) !important;
+    }
+
+    .search-nav-item i {
+        width: 22px !important;
+        text-align: center !important;
+        font-size: 14px !important;
+        color: var(--upchar-teal) !important;
+    }
+
+    .search-nav-badge {
+        margin-left: auto !important;
+        font-size: 11px !important;
+        color: var(--upchar-slate-500) !important;
+        font-weight: 500 !important;
+    }
+
+    .global-search-footer {
+        padding: 8px 16px !important;
+        background: #f8fafc !important;
+        border-top: 1px solid var(--upchar-border) !important;
+        display: flex !important;
+        justify-content: space-between !important;
+        font-size: 11.5px !important;
+        color: var(--upchar-slate-500) !important;
+    }
+
+    /* Floating Toast Notification */
+    .upchar-toast {
+        position: fixed !important;
+        bottom: 24px !important;
+        right: 24px !important;
+        background: #0f172a !important;
+        color: #ffffff !important;
+        padding: 12px 18px !important;
+        border-radius: 8px !important;
+        font-size: 12.5px !important;
+        font-weight: 600 !important;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2) !important;
+        display: flex !important;
+        align-items: center !important;
+        gap: 10px !important;
+        z-index: 2500 !important;
+        opacity: 0;
+        transform: translateY(10px);
+        transition: all 0.25s ease !important;
+        pointer-events: none;
+    }
+
+    .upchar-toast.show {
+        opacity: 1 !important;
+        transform: translateY(0) !important;
+        pointer-events: auto !important;
+    }
+
+    /* ==========================================================
+       7. Responsive Media Queries
+       ========================================================== */
     @media screen and (min-width: 1025px) {
         body.sidebar-collapsed .dashboard-layout .sidebar,
         .dashboard-layout.sidebar-collapsed .sidebar {
@@ -511,30 +959,23 @@
             flex: 0 0 70px !important;
         }
 
-        body.sidebar-collapsed .dashboard-layout .sidebar .nav-sidebar > li > a span,
-        body.sidebar-collapsed .dashboard-layout .sidebar .arrow-icon,
-        body.sidebar-collapsed .dashboard-layout .sidebar .arrow,
-        body.sidebar-collapsed .dashboard-layout .sidebar .children,
-        body.sidebar-collapsed .dashboard-layout .sidebar .submenu,
-        body.sidebar-collapsed .dashboard-layout .sidebar .sidebar-heading,
-        .sidebar-collapsed .sidebar .nav-sidebar > li > a span,
-        .sidebar-collapsed .sidebar .arrow-icon,
-        .sidebar-collapsed .sidebar .children,
-        .sidebar-collapsed .sidebar .submenu,
-        .sidebar-collapsed .sidebar .sidebar-heading {
+        body.sidebar-collapsed .sidebar .nav-sidebar > li > a span,
+        body.sidebar-collapsed .sidebar .arrow-icon,
+        body.sidebar-collapsed .sidebar .children,
+        body.sidebar-collapsed .sidebar .submenu,
+        body.sidebar-collapsed .sidebar .sidebar-group-title,
+        body.sidebar-collapsed .sidebar .menu-badge-ehr {
             display: none !important;
         }
 
-        body.sidebar-collapsed .dashboard-layout .sidebar .nav-sidebar > li > a,
-        .sidebar-collapsed .sidebar .nav-sidebar > li > a {
+        body.sidebar-collapsed .sidebar .nav-sidebar > li > a {
             justify-content: center !important;
-            padding: 14px 0 !important;
+            padding: 12px 0 !important;
         }
 
-        body.sidebar-collapsed .dashboard-layout .sidebar .nav-sidebar > li > a i,
-        .sidebar-collapsed .sidebar .nav-sidebar > li > a i {
+        body.sidebar-collapsed .sidebar .nav-sidebar > li > a i {
             margin: 0 !important;
-            font-size: 18px !important;
+            font-size: 16px !important;
         }
 
         body.sidebar-collapsed .dashboard-layout .main-content,
@@ -544,10 +985,8 @@
         }
     }
 
-    /* Tablet (768px - 1024px): Compact 70px Sidebar (Icons Only) */
     @media screen and (min-width: 768px) and (max-width: 1024px) {
         .dashboard-layout .sidebar,
-        .dashboard-layout aside.sidebar,
         aside.sidebar,
         .sidebar {
             width: 70px !important;
@@ -558,45 +997,43 @@
 
         .sidebar .nav-sidebar > li > a span,
         .sidebar .arrow-icon,
-        .sidebar .arrow,
         .sidebar .children,
         .sidebar .submenu,
-        .sidebar .sidebar-heading {
+        .sidebar .sidebar-group-title,
+        .sidebar .menu-badge-ehr {
             display: none !important;
         }
 
         .sidebar .nav-sidebar > li > a {
             justify-content: center !important;
-            padding: 14px 0 !important;
+            padding: 12px 0 !important;
         }
 
         .sidebar .nav-sidebar > li > a i {
             margin: 0 !important;
-            font-size: 18px !important;
+            font-size: 16px !important;
         }
 
         .dashboard-layout .main-content,
-        .dashboard-layout #content,
-        main.main-content,
         .main-content {
             width: calc(100% - 70px) !important;
             max-width: calc(100% - 70px) !important;
         }
     }
 
-    /* Mobile (<768px): Off-Screen Sidebar with Slide-In & Backdrop Blur */
     @media screen and (max-width: 767px) {
         .topbar {
-            padding: 0 14px !important;
+            padding: 0 12px !important;
         }
-        .profile-text-wrap {
+        .header-breadcrumbs-pill,
+        .profile-text-wrap,
+        .header-center {
             display: none !important;
         }
         .sitename {
-            font-size: 17px !important;
+            font-size: 16px !important;
         }
         .dashboard-layout .sidebar,
-        .dashboard-layout aside.sidebar,
         aside.sidebar,
         .sidebar {
             position: fixed !important;
@@ -619,16 +1056,13 @@
             transform: translateX(0) !important;
         }
         .dashboard-layout .main-content, 
-        .dashboard-layout #content, 
-        main.main-content, 
         .main-content {
             width: 100% !important;
             max-width: 100% !important;
         }
         .main-content .page-content,
-        .main-content .pag_cstm,
         .pag_cstm {
-            padding: 16px 14px !important;
+            padding: 14px 12px !important;
         }
         .sidebar-backdrop {
             position: fixed !important;
@@ -653,7 +1087,7 @@
 </head>
 
 <body class="sidebar-light fixed-topbar theme-sltl bg-light-dark color-default dashboard">
-    <!-- BEGIN TOPBAR (Fixed 100% Width, h-16/64px, #0d1b2a, Z-Index: 1000) -->
+    <!-- BEGIN TOPBAR (Frosted Glass Medical Header) -->
     <header class="topbar">
         <!-- Brand Section (Left Flex Container) -->
         <div class="header-left">
@@ -665,17 +1099,104 @@
                 <img src="<?=base_url();?>images/logo.png" alt="Upchar Logo" class="brand-logo-img">
                 <div class="sitenameadjeust">
                     <h3 class="sitename">UPCHAR</h3>
-                    <p class="slowgon">Doctor Partner Workspace</p>            
+                    <p class="slowgon">Doctor EHR Portal</p>            
                 </div>
             </a>
+
+            <div class="header-breadcrumbs-pill hidden-xs">
+                <i class="fa fa-stethoscope"></i>
+                <span>Clinical EHR Workspace</span>
+            </div>
         </div>
 
-        <!-- Profile Dropdown (Right Anchored Container) -->
-        <div class="header-right">	
+        <!-- Global Search Bar (Center Container) -->
+        <div class="header-center hidden-xs">
+            <div class="header-search-bar" id="globalSearchTrigger" title="Quick Search (Press Ctrl+K)">
+                <i class="fa fa-search"></i>
+                <input type="text" placeholder="Search patients, appointments, records..." readonly>
+                <kbd class="search-kbd-badge">Ctrl+K</kbd>
+            </div>
+        </div>
+
+        <!-- Utility Bar & Profile Dropdown (Right Anchored Container) -->
+        <div class="header-right">
+            <!-- Mobile Search Icon Button -->
+            <button class="btn-notif-bell visible-xs" id="mobileSearchTrigger" title="Search">
+                <i class="fa fa-search"></i>
+            </button>
+
+            <!-- Quick Appointment Button -->
+            <a href="<?=base_url('manageappointment');?>" class="btn-quick-appointment" title="Quick Appointments">
+                <i class="fa fa-plus"></i>
+                <span class="hidden-xs">Appointment</span>
+            </a>
+
+            <!-- Doctor Availability Toggle -->
+            <button type="button" class="btn-availability-toggle" id="doctorAvailabilityBtn" title="Click to toggle availability">
+                <span class="avail-dot avail-online" id="availDot"></span>
+                <span class="avail-text" id="availText">Available</span>
+            </button>
+
+            <!-- Notification Bell -->
+            <div class="header-notif-wrap" id="headerNotifWrap">
+                <button type="button" class="btn-notif-bell" id="notifBellBtn" title="Clinical Notifications">
+                    <i class="fa fa-bell-o"></i>
+                    <span class="notif-badge-count">3</span>
+                </button>
+
+                <div class="notif-dropdown-card" id="notifDropdownMenu">
+                    <div class="notif-header">
+                        <h4 class="notif-title"><i class="fa fa-bell-o" style="color: var(--upchar-blue);"></i> Notifications</h4>
+                        <span style="font-size: 11px; color: var(--upchar-teal); font-weight: 700;">Live Feed</span>
+                    </div>
+                    <ul class="notif-list">
+                        <li>
+                            <a href="<?=base_url('manageappointment');?>" class="notif-item">
+                                <div class="notif-item-icon" style="background: #e0f2fe; color: #0284c7;">
+                                    <i class="fa fa-calendar-check-o"></i>
+                                </div>
+                                <div>
+                                    <div class="notif-item-body"><strong>New Visit Confirmed:</strong> Consultation appointment scheduled for today.</div>
+                                    <div class="notif-item-time"><i class="fa fa-clock-o"></i> 15 mins ago</div>
+                                </div>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="<?=base_url('doctor-dashboard');?>" class="notif-item">
+                                <div class="notif-item-icon" style="background: #e0e7ff; color: #4338ca;">
+                                    <i class="fa fa-video-camera"></i>
+                                </div>
+                                <div>
+                                    <div class="notif-item-body"><strong>Teleconsult Room:</strong> Digital consultation room ready for WebRTC video call.</div>
+                                    <div class="notif-item-time"><i class="fa fa-clock-o"></i> 45 mins ago</div>
+                                </div>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="<?=base_url('diet');?>" class="notif-item">
+                                <div class="notif-item-icon" style="background: #dcfce7; color: #16a34a;">
+                                    <i class="fa fa-cutlery"></i>
+                                </div>
+                                <div>
+                                    <div class="notif-item-body"><strong>Diet Tracker Telemetry:</strong> Patient logged meal nutrition intake.</div>
+                                    <div class="notif-item-time"><i class="fa fa-clock-o"></i> 2 hours ago</div>
+                                </div>
+                            </a>
+                        </li>
+                    </ul>
+                    <div class="notif-footer">
+                        <a href="<?=base_url('manageappointment');?>">View All Appointments &rarr;</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Profile Dropdown -->
             <?php 
-            $profileimg = $this->db->select('drimage')->from('profile_dr')->where('user_id', $this->session->userdata('druserid'))->get()->row();
+            $druserid = $this->session->userdata('druserid');
+            $profileimg = $this->db->select('drimage, specialization, degree')->from('profile_dr')->where('user_id', $druserid)->get()->row();
             $img_src = ($profileimg && !empty($profileimg->drimage)) ? admin_url()."public/assets/upload/".$profileimg->drimage : base_url()."assets/images/user.jpg";
             $doc_display_name = $this->session->userdata('drusername') ? 'Dr. ' . $this->session->userdata('drusername') : 'Dr. Anushka';
+            $doc_specialty = ($profileimg && !empty($profileimg->specialization)) ? $profileimg->specialization : 'Clinical Practitioner';
             ?> 
             <div class="user-header-wrap" id="user-header">
                 <a href="#" class="profile-pill-trigger" id="docProfileDropdownTrigger">
@@ -685,34 +1206,33 @@
                     </div>
                     <div class="profile-text-wrap">
                         <span class="profile-doc-name"><?=$doc_display_name;?></span>
-                        <span class="profile-doc-role">Clinical Practitioner</span>
+                        <span class="profile-doc-role"><?=$doc_specialty;?></span>
                     </div>
-                    <i class="fa fa-angle-down" style="color: rgba(255,255,255,0.85); font-size: 12px; margin-left: 2px;"></i>
+                    <i class="fa fa-angle-down" style="color: #64748b; font-size: 12px; margin-left: 2px;"></i>
                 </a>
                 
-                <!-- Anchored Glassmorphism Dropdown Menu Card (Z-Index: 1050) -->
+                <!-- Anchored Dropdown Menu Card -->
                 <ul class="custom-doc-dropdown" id="docProfileDropdownMenu">
                     <li class="dropdown-header-card">
-                        <div style="font-weight: 800; color: #ffffff; font-size: 14px;"><?=$doc_display_name;?></div>
-                        <div style="font-size: 11.5px; color: #2dd4bf; font-weight: 700; display: flex; align-items: center; gap: 5px; margin-top: 3px;">
+                        <div style="font-weight: 800; color: #0f172a; font-size: 13.5px;"><?=$doc_display_name;?></div>
+                        <div style="font-size: 11px; color: #00a896; font-weight: 700; display: flex; align-items: center; gap: 4px; margin-top: 2px;">
                             <i class="fa fa-check-circle"></i> Verified Medical Practitioner
                         </div>
                     </li>
                     
-                    <li><a href="<?=base_url('doctor-dashboard');?>"><i class="fa fa-dashboard"></i> <span>Dashboard</span></a></li>
+                    <li><a href="<?=base_url('doctor-dashboard');?>"><i class="fa fa-dashboard"></i> <span>Dashboard Overview</span></a></li>
                     <li><a href="<?=base_url('doctorpanel/updateprofile');?>"><i class="fa fa-user-md"></i> <span>Edit Profile</span></a></li>
-                    <li><a href="<?=base_url('manageappointment');?>"><i class="fa fa-calendar"></i> <span>Appointments &amp; Visits</span></a></li>
-                    <li><a href="<?=base_url('doctorpanel/datetime');?>"><i class="fa fa-clock-o"></i> <span>Schedule &amp; Timings</span></a></li>
+                    <li><a href="<?=base_url('manageappointment');?>"><i class="fa fa-calendar-check-o"></i> <span>Appointments &amp; Queue</span></a></li>
+                    <li><a href="<?=base_url('doctorpanel/datetime');?>"><i class="fa fa-clock-o"></i> <span>Working Hours &amp; Slots</span></a></li>
                     <li><a href="<?=base_url('manageownclinic');?>"><i class="fa fa-hospital-o"></i> <span>Own Clinic Setup</span></a></li>
-                    <li><a href="<?=base_url('managepractice');?>"><i class="fa fa-medkit"></i> <span>Manage Practice</span></a></li>
+                    <li><a href="<?=base_url('managepractice');?>"><i class="fa fa-medkit"></i> <span>Manage Practice &amp; Fees</span></a></li>
+                    <li><a href="<?=base_url('diet');?>"><i class="fa fa-cutlery" style="color: #10b981;"></i> <span>Patient Diet Tracker (EHR)</span></a></li>
                     <li><a href="<?=base_url('doctorpanel/earnings');?>"><i class="fa fa-line-chart"></i> <span>Earnings &amp; Payouts</span></a></li>
                     <li><a href="<?=base_url('doctorpanel/upcharhospital');?>"><i class="fa fa-building-o"></i> <span>Affiliated Hospitals</span></a></li>
-                    <li><a href="<?=base_url('doctorpanel/gallery');?>"><i class="fa fa-picture-o"></i> <span>Media Gallery</span></a></li>
-                    <li><a href="<?=base_url('doctorpanel/news');?>"><i class="fa fa-newspaper-o"></i> <span>News &amp; Articles</span></a></li>
                     
                     <li class="dropdown-divider"></li>
                     <li><a href="<?=base_url('doctorpanel/change_password/');?>"><i class="fa fa-lock" style="color: #f59e0b;"></i> <span>Password &amp; Security</span></a></li>
-                    <li class="logout-link"><a href="<?=base_url('doctoruser/logout');?>"><i class="fa fa-sign-out"></i> <span>Logout</span></a></li>
+                    <li class="logout-link"><a href="<?=base_url('doctoruser/logout');?>"><i class="fa fa-sign-out"></i> <span>Logout Portal</span></a></li>
                 </ul>
             </div>
         </div>
@@ -722,23 +1242,112 @@
     <!-- Mobile Sidebar Dark Backdrop (Blur Filter) -->
     <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
 
+    <!-- Global Quick Search Modal (Ctrl+K) -->
+    <div class="global-search-modal" id="globalSearchModal">
+        <div class="global-search-dialog">
+            <div class="global-search-header">
+                <i class="fa fa-search"></i>
+                <input type="text" id="globalSearchModalInput" class="global-search-input" placeholder="Type a command or search feature..." autocomplete="off">
+                <button type="button" class="global-search-close-btn" id="closeSearchModalBtn">ESC</button>
+            </div>
+            <div class="global-search-results" id="globalSearchResults">
+                <div class="search-group-heading">Clinical Management</div>
+                <a href="<?=base_url('doctor-dashboard');?>" class="search-nav-item">
+                    <i class="fa fa-dashboard"></i>
+                    <span>Doctor Dashboard &amp; Clinical Overview</span>
+                    <span class="search-nav-badge">View</span>
+                </a>
+                <a href="<?=base_url('manageappointment');?>" class="search-nav-item">
+                    <i class="fa fa-calendar-check-o"></i>
+                    <span>Manage Appointments &amp; Patient Consultations</span>
+                    <span class="search-nav-badge">Visits</span>
+                </a>
+                <a href="<?=base_url('doctorpanel/datetime');?>" class="search-nav-item">
+                    <i class="fa fa-clock-o"></i>
+                    <span>Doctor Working Hours &amp; Slot Availability</span>
+                    <span class="search-nav-badge">Schedule</span>
+                </a>
+                <a href="<?=base_url('manageownclinic');?>" class="search-nav-item">
+                    <i class="fa fa-hospital-o"></i>
+                    <span>Own Clinic Setup &amp; Chambers</span>
+                    <span class="search-nav-badge">Clinic</span>
+                </a>
+                <a href="<?=base_url('managepractice');?>" class="search-nav-item">
+                    <i class="fa fa-medkit"></i>
+                    <span>Manage Practice &amp; Consultation Fees</span>
+                    <span class="search-nav-badge">Pricing</span>
+                </a>
+
+                <div class="search-group-heading">Patient Care &amp; Telemetry</div>
+                <a href="<?=base_url('diet');?>" class="search-nav-item">
+                    <i class="fa fa-cutlery" style="color: #10b981;"></i>
+                    <span>Daily Diet &amp; Clinical Nutrition Tracker (EHR)</span>
+                    <span class="search-nav-badge">Telemetry</span>
+                </a>
+                <a href="<?=base_url('doctorpanel/upcharhospital');?>" class="search-nav-item">
+                    <i class="fa fa-building-o"></i>
+                    <span>Visiting Hospitals &amp; Medical Centers</span>
+                    <span class="search-nav-badge">Network</span>
+                </a>
+
+                <div class="search-group-heading">Financials &amp; Settings</div>
+                <a href="<?=base_url('doctorpanel/earnings');?>" class="search-nav-item">
+                    <i class="fa fa-line-chart"></i>
+                    <span>Doctor Earnings, Escrow Ledger &amp; Payouts</span>
+                    <span class="search-nav-badge">Finance</span>
+                </a>
+                <a href="<?=base_url('doctorpanel/updateprofile');?>" class="search-nav-item">
+                    <i class="fa fa-user-md"></i>
+                    <span>Doctor Profile, Qualifications &amp; Bio</span>
+                    <span class="search-nav-badge">Profile</span>
+                </a>
+                <a href="<?=base_url('doctorpanel/change_password');?>" class="search-nav-item">
+                    <i class="fa fa-lock" style="color: #f59e0b;"></i>
+                    <span>Password &amp; Security Settings</span>
+                    <span class="search-nav-badge">Security</span>
+                </a>
+            </div>
+            <div class="global-search-footer">
+                <span>Navigate with <kbd>↑</kbd> <kbd>↓</kbd> &bull; Open with <kbd>Enter</kbd></span>
+                <span>Press <kbd>ESC</kbd> to close</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Toast Notification -->
+    <div class="upchar-toast" id="upcharToast">
+        <i class="fa fa-check-circle" style="color: #10b981; font-size: 15px;"></i>
+        <span id="toastMessage">Action completed successfully.</span>
+    </div>
+
     <!-- BEGIN DASHBOARD LAYOUT (Direct Flexbox Wrapper) -->
     <div class="dashboard-layout">
 
 <script>
+// Global UI Interactivity Handlers
 document.addEventListener('DOMContentLoaded', function() {
+    // 1. Toast Notification Helper
+    window.showUpcharToast = function(msg) {
+        var toast = document.getElementById('upcharToast');
+        var msgEl = document.getElementById('toastMessage');
+        if (toast && msgEl) {
+            msgEl.textContent = msg;
+            toast.classList.add('show');
+            setTimeout(function() {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+    };
+
+    // 2. Profile Dropdown Trigger
     var trigger = document.getElementById('docProfileDropdownTrigger');
     var menu = document.getElementById('docProfileDropdownMenu');
-
     if (trigger && menu) {
         trigger.addEventListener('click', function(e) {
             e.preventDefault();
             e.stopPropagation();
-            if (menu.style.display === 'block') {
-                menu.style.display = 'none';
-            } else {
-                menu.style.display = 'block';
-            }
+            menu.style.display = (menu.style.display === 'block') ? 'none' : 'block';
+            if (notifMenu) notifMenu.style.display = 'none';
         });
 
         document.addEventListener('click', function(e) {
@@ -748,6 +1357,114 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    // 3. Notification Bell Dropdown Trigger
+    var notifBtn = document.getElementById('notifBellBtn');
+    var notifMenu = document.getElementById('notifDropdownMenu');
+    if (notifBtn && notifMenu) {
+        notifBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            notifMenu.style.display = (notifMenu.style.display === 'block') ? 'none' : 'block';
+            if (menu) menu.style.display = 'none';
+        });
+
+        document.addEventListener('click', function(e) {
+            if (!notifBtn.contains(e.target) && !notifMenu.contains(e.target)) {
+                notifMenu.style.display = 'none';
+            }
+        });
+    }
+
+    // 4. Doctor Availability Toggle
+    var availBtn = document.getElementById('doctorAvailabilityBtn');
+    var availDot = document.getElementById('availDot');
+    var availText = document.getElementById('availText');
+    var isOnline = localStorage.getItem('upchar_doc_online') !== '0';
+
+    function updateAvailUI() {
+        if (availDot && availText) {
+            if (isOnline) {
+                availDot.className = 'avail-dot avail-online';
+                availText.textContent = 'Available';
+            } else {
+                availDot.className = 'avail-dot avail-away';
+                availText.textContent = 'Away';
+            }
+        }
+    }
+    updateAvailUI();
+
+    if (availBtn) {
+        availBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            isOnline = !isOnline;
+            localStorage.setItem('upchar_doc_online', isOnline ? '1' : '0');
+            updateAvailUI();
+            window.showUpcharToast(isOnline ? 'Status updated: Available for patient consults' : 'Status updated: Offline / Away');
+        });
+    }
+
+    // 5. Global Search Modal (Ctrl+K)
+    var searchModal = document.getElementById('globalSearchModal');
+    var searchInput = document.getElementById('globalSearchModalInput');
+    var searchTrigger = document.getElementById('globalSearchTrigger');
+    var mobileSearchTrigger = document.getElementById('mobileSearchTrigger');
+    var closeSearchBtn = document.getElementById('closeSearchModalBtn');
+    var searchResults = document.getElementById('globalSearchResults');
+
+    function openSearchModal() {
+        if (searchModal) {
+            searchModal.style.display = 'flex';
+            if (searchInput) {
+                searchInput.value = '';
+                filterSearchResults('');
+                searchInput.focus();
+            }
+        }
+    }
+
+    function closeSearchModal() {
+        if (searchModal) {
+            searchModal.style.display = 'none';
+        }
+    }
+
+    if (searchTrigger) searchTrigger.addEventListener('click', openSearchModal);
+    if (mobileSearchTrigger) mobileSearchTrigger.addEventListener('click', openSearchModal);
+    if (closeSearchBtn) closeSearchBtn.addEventListener('click', closeSearchModal);
+
+    if (searchModal) {
+        searchModal.addEventListener('click', function(e) {
+            if (e.target === searchModal) closeSearchModal();
+        });
+    }
+
+    document.addEventListener('keydown', function(e) {
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+            e.preventDefault();
+            openSearchModal();
+        } else if (e.key === 'Escape' && searchModal && searchModal.style.display === 'flex') {
+            closeSearchModal();
+        }
+    });
+
+    function filterSearchResults(query) {
+        if (!searchResults) return;
+        var items = searchResults.querySelectorAll('.search-nav-item');
+        var q = query.toLowerCase().trim();
+        items.forEach(function(item) {
+            var text = item.textContent.toLowerCase();
+            item.style.display = (q === '' || text.indexOf(q) !== -1) ? 'flex' : 'none';
+        });
+    }
+
+    if (searchInput) {
+        searchInput.addEventListener('input', function(e) {
+            filterSearchResults(e.target.value);
+        });
+    }
+
+    // 6. Sidebar Responsive Toggle
     var toggleBtn = document.getElementById('sidebarToggleBtn');
     var backdrop = document.getElementById('sidebarBackdrop');
 
