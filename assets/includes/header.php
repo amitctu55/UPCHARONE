@@ -877,9 +877,26 @@
         box-sizing: border-box !important;
     }
 
-    /* Force override legacy */
-    body .main-content {
-        margin-left: 0 !important;
+    /* Ensure main-content offsets past the fixed sidebar on desktop */
+    body .main-content,
+    .dashboard-layout .main-content {
+        margin-left: 260px !important;
+    }
+    body.sidebar-collapsed .main-content,
+    .dashboard-layout.sidebar-collapsed .main-content {
+        margin-left: 70px !important;
+    }
+    @media screen and (min-width: 768px) and (max-width: 1024px) {
+        body .main-content,
+        .dashboard-layout .main-content {
+            margin-left: 70px !important;
+        }
+    }
+    @media screen and (max-width: 767px) {
+        body .main-content,
+        .dashboard-layout .main-content {
+            margin-left: 0 !important;
+        }
     }
     body .sidebar .logopanel {
         display: none !important;

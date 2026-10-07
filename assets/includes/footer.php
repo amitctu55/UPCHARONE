@@ -1,11 +1,11 @@
         <footer class="footer">
-            <div class="copyright" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; color: #64748b; font-size: 13px;">
-                <p style="margin: 0;">
+            <div class="copyright" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; color: var(--text-muted); font-size: 13px;">
+                <p style="margin: 0; font-size: 13px;">
                     <span>Copyright <span class="copyright">©</span> <?=date('Y');?> </span>
-                    <strong style="color: #043d5b;">Upchar Healthcare Technologies</strong>.
-                    <span>All rights reserved. </span>
+                    <strong style="color: var(--text-primary);">Upchar Healthcare Technologies</strong>.
+                    <span style="font-size: 12.5px; opacity: 1;">All rights reserved. </span>
                 </p>
-                <div style="font-size: 12px; color: #94a3b8;">
+                <div style="font-size: 12.5px; color: var(--text-muted);">
                     <span>Clinical Practitioner Workspace v2.4</span>
                 </div>
             </div>
