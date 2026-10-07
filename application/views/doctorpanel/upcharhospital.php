@@ -176,6 +176,26 @@
     opacity: 0.4;
     pointer-events: none;
 }
+
+/* Responsive Media Queries */
+@media screen and (max-width: 768px) {
+    .hosp-container {
+        padding: 14px 12px;
+    }
+    .hosp-compact-card {
+        padding: 12px;
+    }
+    .hosp-kpi-card {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+    .pagination-wrap {
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+    }
+}
 </style>
 
 <div class="pag_cstm hosp-container">

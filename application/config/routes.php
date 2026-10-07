@@ -136,7 +136,11 @@ $route['linkpractice'] 					= 'doctorpanel/linkpractice';
 $route['profile_consultant_fee/:any'] 	= 'doctorpanel/profile_consultant_fee/$1';
 
 $route['managepractice'] 				= 'doctorpanel/managepractice';
-$route['manageownclinic'] 				= 'doctorpanel/manageownclinic';
+$route['manageownclinic'] 				= 'Manageownclinic/index';
+$route['manageownclinic/(:any)'] 		= 'Manageownclinic/$1';
+$route['doctorpanel/manageownclinic'] 	= 'Doctorpanel/manageownclinic';
+$route['doctorpanel/upcharhospital'] 	= 'Doctorpanel/upcharhospital';
+$route['upcharhospital'] 				= 'Doctorpanel/upcharhospital';
 $route['manageappointment'] 			= 'doctorpanel/manageappointment';
 
 $route['progress_profile'] 				= 'doctorpanel/progress_profile';

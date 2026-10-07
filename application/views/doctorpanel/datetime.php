@@ -1,6 +1,9 @@
 <?php include ("assets/includes/header.php"); ?>
 <?php include ("assets/includes/leftmenu.php"); ?>
 
+<!-- Select2 CSS CDN -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+
 <style>
 :root {
     --upchar-teal: #00a896;
@@ -9,6 +12,141 @@
     --upchar-slate: #0f172a;
     --upchar-gray: #64748b;
     --upchar-border: #e2e8f0;
+}
+
+/* Select2 Modern Upchar Theme & Searchable Dropdown Styling */
+.select2-container {
+    width: 100% !important;
+}
+
+.select2-container--default .select2-selection--single {
+    height: 46px !important;
+    border: 1px solid var(--upchar-border, #e2e8f0) !important;
+    border-radius: 10px !important;
+    background-color: #ffffff !important;
+    display: flex !important;
+    align-items: center !important;
+    padding: 0 12px !important;
+    transition: all 0.2s ease !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02) !important;
+}
+
+.select2-container--default .select2-selection--single:hover {
+    border-color: #cbd5e1 !important;
+}
+
+.select2-container--default.select2-container--open .select2-selection--single,
+.select2-container--default.select2-container--focus .select2-selection--single {
+    border-color: #00a896 !important;
+    box-shadow: 0 0 0 3px rgba(0, 168, 150, 0.15) !important;
+    outline: none !important;
+}
+
+.select2-container--default .select2-selection--single .select2-selection__rendered {
+    color: #1e293b !important;
+    font-size: 13.5px !important;
+    font-weight: 600 !important;
+    padding-left: 0 !important;
+    padding-right: 24px !important;
+    line-height: 44px !important;
+}
+
+.select2-container--default .select2-selection--single .select2-selection__arrow {
+    height: 44px !important;
+    right: 12px !important;
+    top: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+}
+
+.select2-container--default .select2-selection--single .select2-selection__arrow b {
+    border-color: #64748b transparent transparent transparent !important;
+    border-width: 6px 5px 0 5px !important;
+}
+
+.select2-container--default.select2-container--open .select2-selection--single .select2-selection__arrow b {
+    border-color: transparent transparent #00a896 transparent !important;
+    border-width: 0 5px 6px 5px !important;
+}
+
+/* Dropdown Menu Container */
+.select2-dropdown {
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 12px !important;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08) !important;
+    overflow: hidden !important;
+    background: #ffffff !important;
+    z-index: 1060 !important;
+    margin-top: 4px !important;
+}
+
+/* Search Box Inside Dropdown */
+.select2-container--default .select2-search--dropdown {
+    padding: 8px 10px !important;
+    background: #f8fafc !important;
+    border-bottom: 1px solid #f1f5f9 !important;
+}
+
+.select2-container--default .select2-search--dropdown .select2-search__field {
+    height: 38px !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 8px !important;
+    padding: 6px 12px !important;
+    font-size: 13px !important;
+    outline: none !important;
+    background: #ffffff !important;
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.04) !important;
+}
+
+.select2-container--default .select2-search--dropdown .select2-search__field:focus {
+    border-color: #00a896 !important;
+    box-shadow: 0 0 0 2px rgba(0, 168, 150, 0.15) !important;
+}
+
+/* Result Items */
+.select2-container--default .select2-results__option {
+    padding: 9px 14px !important;
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    color: #334155 !important;
+    transition: background 0.15s ease !important;
+}
+
+.select2-container--default .select2-results__option--highlighted[aria-selected] {
+    background-color: #f0fdfa !important;
+    color: #008f80 !important;
+    font-weight: 700 !important;
+}
+
+.select2-container--default .select2-results__option[aria-selected="true"] {
+    background-color: #e0f2fe !important;
+    color: #0284c7 !important;
+    font-weight: 700 !important;
+}
+
+/* Responsive Media Queries */
+@media screen and (max-width: 768px) {
+    .select2-container--default .select2-selection--single {
+        height: 48px !important;
+        font-size: 14px !important;
+    }
+    .select2-container--default .select2-selection--single .select2-selection__rendered {
+        line-height: 46px !important;
+        font-size: 13px !important;
+    }
+    .select2-dropdown {
+        font-size: 13px !important;
+    }
+    .select2-container--default .select2-results__option {
+        padding: 11px 12px !important;
+        min-height: 40px !important;
+    }
+}
+
+@media screen and (max-width: 480px) {
+    .select2-container--default .select2-search--dropdown .select2-search__field {
+        font-size: 14px !important;
+    }
 }
 
 .sched-container {
@@ -163,7 +301,7 @@
                                 <label style="font-size: 13px; font-weight: 700; color: #334155; margin-bottom: 6px; display: block;">
                                     Select Consulting Practice / Chamber *
                                 </label>
-                                <select name="practice_id" class="form-control" style="height: 46px; border-radius: 10px; border-color: var(--upchar-border);" required>
+                                <select name="practice_id" id="practice_id" class="form-control select2-practice" style="width: 100%;" required>
                                     <option value="0">-- General Practice (All Locations) --</option>
                                     <?php if(!empty($practices)): ?>
                                         <?php foreach($practices as $pr): ?>
@@ -311,3 +449,17 @@
 </div>
 
 <?php include ("assets/includes/footer.php"); ?>
+
+<!-- Select2 JavaScript CDN & Initialization Script -->
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script>
+$(document).ready(function() {
+    if ($.fn.select2) {
+        $('#practice_id').select2({
+            placeholder: "Search consulting practice or chamber...",
+            allowClear: false,
+            width: '100%'
+        });
+    }
+});
+</script>

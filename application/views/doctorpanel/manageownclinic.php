@@ -86,6 +86,26 @@
     align-items: center;
     gap: 4px;
 }
+
+/* Responsive Media Queries */
+@media screen and (max-width: 768px) {
+    .clinic-container {
+        padding: 14px 12px;
+    }
+    .clinic-card-box {
+        padding: 14px;
+    }
+    .btn-add-clinic {
+        width: 100%;
+        justify-content: center;
+        margin-top: 10px;
+    }
+    .clinic-stat-card {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+}
 </style>
 
 <div class="pag_cstm clinic-container">
