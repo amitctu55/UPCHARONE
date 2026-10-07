@@ -31,6 +31,22 @@ $isInquiries   = ($seg1 == 'hospitalpanel' && in_array($seg2, array('inquiries',
       <li class="<?=$isDashboard ? 'active' : '';?>"><a href="<?=base_url();?>hospital-dashboard"><i class="fa fa-home"></i><span>Dashboard</span></a></li>
       <li class="<?=$isProfile ? 'active' : '';?>"><a href="<?=base_url();?>hospitalpanel/updateprofile"><i class="fa fa-hospital-o" aria-hidden="true"></i><span>Hospital Profile</span></a></li>
       <li class="<?=$isDoc ? 'active' : '';?>"><a href="<?=base_url();?>hospitalpanel/managedoctor"><i class="fa fa-user-md" aria-hidden="true"></i><span>Manage Doctors</span></a></li>
+      <?php 
+      $isAffil = ($seg1 == 'hospitalpanel' && $seg2 == 'pending_affiliations');
+      $pending_affil_badge = 0;
+      if (isset($this->did) && $this->db->table_exists('doctor_hospital_links')) {
+          $pending_affil_badge = $this->db->where('hospital_id', $this->did)->where('status', 'pending')->count_all_results('doctor_hospital_links');
+      }
+      ?>
+      <li class="<?=$isAffil ? 'active' : '';?>">
+        <a href="<?=base_url();?>hospitalpanel/pending_affiliations">
+          <i class="fa fa-handshake-o" aria-hidden="true"></i>
+          <span>Affiliation Requests</span>
+          <?php if($pending_affil_badge > 0): ?>
+            <span class="badge pull-right" style="background: #e11d48; font-size: 11px; margin-top: 2px;"><?=$pending_affil_badge;?></span>
+          <?php endif; ?>
+        </a>
+      </li>
       <li class="<?=$isApt ? 'active' : '';?>"><a href="<?=base_url();?>hospitalpanel/manageappointment"><i class="fa fa-calendar" aria-hidden="true"></i><span>Manage Appointment</span></a></li>
       <li class="<?=$isInquiries ? 'active' : '';?>">
         <a href="<?=base_url();?>hospitalpanel/inquiries">

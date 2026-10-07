@@ -1025,4 +1025,51 @@ thank you for being a part of Upchar.";
 			$result = $this->db->get_where('hospital_bed')->result_array();	
 			return $result;
 		}
+
+		/**
+		 * Fetch verified doctors for a hospital
+		 * Strictly enforces status = 'verified' in doctor_hospital_links
+		 * and fallback status = '1' in legacy dr_practice.
+		 */
+		public function get_verified_doctors_by_hospital($hospital_id, $limit = 0, $offset = 0)
+		{
+			$hospital_id = intval($hospital_id);
+			if ($hospital_id <= 0) {
+				return array();
+			}
+
+			// First check doctor_hospital_links with status = 'verified'
+			if ($this->db->table_exists('doctor_hospital_links')) {
+				$this->db->select('profile_dr.*, dhl.status as link_status, dhl.fee as practice_fee, dhl.verified_at as verified_date');
+				$this->db->from('profile_dr');
+				$this->db->join('doctor_hospital_links dhl', 'dhl.doctor_id = profile_dr.id');
+				$this->db->where('dhl.hospital_id', $hospital_id);
+				$this->db->where('dhl.status', 'verified');
+				$this->db->where('profile_dr.status', '1');
+				$this->db->where('profile_dr.approved', '1');
+				$this->db->order_by('profile_dr.fname', 'ASC');
+				if ($limit > 0) {
+					$this->db->limit($limit, $offset);
+				}
+				$res = $this->db->get()->result();
+				if (!empty($res)) {
+					return $res;
+				}
+			}
+
+			// Fallback to legacy dr_practice with strict status = '1' (verified)
+			$this->db->select('profile_dr.*, dr_practice.status as link_status, dr_practice.fee as practice_fee');
+			$this->db->from('profile_dr');
+			$this->db->join('dr_practice', 'dr_practice.user_id = profile_dr.id');
+			$this->db->where('dr_practice.institution_id', $hospital_id);
+			$this->db->where('dr_practice.type', 'H');
+			$this->db->where('dr_practice.status', '1');
+			$this->db->where('profile_dr.status', '1');
+			$this->db->where('profile_dr.approved', '1');
+			$this->db->order_by('profile_dr.fname', 'ASC');
+			if ($limit > 0) {
+				$this->db->limit($limit, $offset);
+			}
+			return $this->db->get()->result();
+		}
    }

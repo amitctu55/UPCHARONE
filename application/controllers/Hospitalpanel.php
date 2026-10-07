@@ -160,6 +160,169 @@ class Hospitalpanel extends CI_Controller
 		$data['d']=$this->db->get_where('profile_dr',array('approved'=>'1','verified'=>'1','id'=>$id))->row();
 		$this->load->view('hospitalpanel/doctor_detail',$data);
 	}
+
+	/**
+	 * Doctor Affiliation Requests / Notifications for Hospital
+	 */
+	public function pending_affiliations()
+	{
+		$hospital_id = $this->did;
+
+		// Fetch pending affiliation links with doctor profiles
+		$this->db->select('dhl.id as link_id, dhl.doctor_id, dhl.hospital_id, dhl.status as link_status, dhl.fee as proposed_fee, dhl.created_at as request_date, profile_dr.fname, profile_dr.lname, profile_dr.email, profile_dr.mobile, profile_dr.drimage, profile_dr.qualification, profile_dr.designation');
+		$this->db->from('doctor_hospital_links dhl');
+		$this->db->join('profile_dr', 'profile_dr.id = dhl.doctor_id');
+		$this->db->where('dhl.hospital_id', $hospital_id);
+		$this->db->where('dhl.status', 'pending');
+		$this->db->order_by('dhl.created_at', 'DESC');
+		$requests = $this->db->get()->result();
+
+		if ($this->input->is_ajax_request()) {
+			header('Content-Type: application/json');
+			echo json_encode(array(
+				'status' => 'success',
+				'total'  => count($requests),
+				'data'   => $requests
+			));
+			return;
+		}
+
+		$data['requests'] = $requests;
+		$data['heading_title'] = 'Pending Doctor Affiliation Requests';
+		$this->load->view('hospitalpanel/pending_affiliations', $data);
+	}
+
+	/**
+	 * Hospital Admin Verifies / Approves Doctor Affiliation
+	 */
+	public function verify_affiliation($link_id = 0)
+	{
+		$hospital_id = $this->did;
+		$link_id = intval($link_id ?: $this->input->post('link_id'));
+
+		if ($link_id <= 0) {
+			if ($this->input->is_ajax_request()) {
+				header('Content-Type: application/json');
+				echo json_encode(array('status' => 'error', 'message' => 'Invalid affiliation link ID.'));
+				return;
+			}
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-danger'>Invalid affiliation link ID.</div>");
+			redirect('hospitalpanel/pending_affiliations');
+			return;
+		}
+
+		$link = $this->db->get_where('doctor_hospital_links', array('id' => $link_id, 'hospital_id' => $hospital_id))->row();
+		if (!$link) {
+			if ($this->input->is_ajax_request()) {
+				header('Content-Type: application/json');
+				echo json_encode(array('status' => 'error', 'message' => 'Affiliation request not found or unauthorized.'));
+				return;
+			}
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-danger'>Affiliation request not found.</div>");
+			redirect('hospitalpanel/pending_affiliations');
+			return;
+		}
+
+		// Update link to verified
+		$this->db->where('id', $link_id)->update('doctor_hospital_links', array(
+			'status'      => 'verified',
+			'verified_at' => date('Y-m-d H:i:s'),
+			'updated_at'  => date('Y-m-d H:i:s')
+		));
+
+		// Synchronize dr_practice to verified (status = 1)
+		$chk = $this->db->where(array(
+			'user_id'        => $link->doctor_id,
+			'institution_id' => $hospital_id,
+			'type'           => 'H'
+		))->get('dr_practice')->row();
+
+		if ($chk) {
+			$this->db->where('id', $chk->id)->update('dr_practice', array('status' => '1', 'fee' => $link->fee));
+		} else {
+			$this->db->insert('dr_practice', array(
+				'user_id'        => $link->doctor_id,
+				'institution_id' => $hospital_id,
+				'type'           => 'H',
+				'fee'            => $link->fee,
+				'status'         => '1'
+			));
+		}
+
+		// Doctor details for flash/response
+		$doc = $this->db->get_where('profile_dr', array('id' => $link->doctor_id))->row();
+		$doc_name = $doc ? ('Dr. ' . trim($doc->fname . ' ' . $doc->lname)) : 'Doctor';
+
+		if ($this->input->is_ajax_request()) {
+			header('Content-Type: application/json');
+			echo json_encode(array(
+				'status'  => 'success',
+				'message' => "Affiliation verified! {$doc_name} is now approved to practice at your hospital.",
+				'link_id' => $link_id,
+				'doctor_id' => $link->doctor_id
+			));
+			return;
+		}
+
+		$this->session->set_flashdata('flashmsg', "<div class='alert alert-success'><strong>Affiliation Approved!</strong> {$doc_name} is now verified and listed for your hospital.</div>");
+		redirect('hospitalpanel/pending_affiliations');
+	}
+
+	/**
+	 * Hospital Admin Rejects Doctor Affiliation
+	 */
+	public function reject_affiliation($link_id = 0)
+	{
+		$hospital_id = $this->did;
+		$link_id = intval($link_id ?: $this->input->post('link_id'));
+
+		if ($link_id <= 0) {
+			if ($this->input->is_ajax_request()) {
+				header('Content-Type: application/json');
+				echo json_encode(array('status' => 'error', 'message' => 'Invalid affiliation link ID.'));
+				return;
+			}
+			redirect('hospitalpanel/pending_affiliations');
+			return;
+		}
+
+		$link = $this->db->get_where('doctor_hospital_links', array('id' => $link_id, 'hospital_id' => $hospital_id))->row();
+		if (!$link) {
+			if ($this->input->is_ajax_request()) {
+				header('Content-Type: application/json');
+				echo json_encode(array('status' => 'error', 'message' => 'Affiliation request not found or unauthorized.'));
+				return;
+			}
+			redirect('hospitalpanel/pending_affiliations');
+			return;
+		}
+
+		// Update link to rejected
+		$this->db->where('id', $link_id)->update('doctor_hospital_links', array(
+			'status'     => 'rejected',
+			'updated_at' => date('Y-m-d H:i:s')
+		));
+
+		// Update dr_practice
+		$this->db->where(array(
+			'user_id'        => $link->doctor_id,
+			'institution_id' => $hospital_id,
+			'type'           => 'H'
+		))->update('dr_practice', array('status' => '2'));
+
+		if ($this->input->is_ajax_request()) {
+			header('Content-Type: application/json');
+			echo json_encode(array(
+				'status'  => 'success',
+				'message' => 'Affiliation request has been rejected.',
+				'link_id' => $link_id
+			));
+			return;
+		}
+
+		$this->session->set_flashdata('flashmsg', "<div class='alert alert-info'>Affiliation request has been rejected.</div>");
+		redirect('hospitalpanel/pending_affiliations');
+	}
 	public function report()
 	{
 		$data['clinic']=$this->db->select('profile_dr.*,dr_practice.status as p_status')->join('profile_dr','profile_dr.id=dr_practice.user_id')->get_where('dr_practice',array('institution_id'=>$this->did,'type'=>'H'))->result();	

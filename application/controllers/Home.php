@@ -319,7 +319,7 @@ class Home extends CI_Controller
 			return;
 		}
 		$hid = $data['hospital']->id;
-		$data['clinic'] = $this->db->order_by('profile_dr.fname','ASC')->select('profile_dr.*,dr_practice.status as p_status,dr_practice.fee as p_fee')->join('profile_dr','profile_dr.id=dr_practice.user_id')->get_where('dr_practice',array('institution_id'=>$hid,'type'=>'H'))->result();
+		$data['clinic'] = $this->Hospital_Model->get_verified_doctors_by_hospital($hid);
 		
 		// Fallback: If no doctors directly linked, fetch verified specialists
 		if (empty($data['clinic'])) {

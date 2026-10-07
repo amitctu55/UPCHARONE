@@ -68,6 +68,11 @@
     justify-content: center;
     font-size: 16px;
     flex-shrink: 0;
+    transition: transform 0.2s ease;
+}
+
+.hosp-mini-icon:hover {
+    transform: scale(1.08);
 }
 
 .hosp-title-text {
@@ -81,12 +86,17 @@
     -webkit-box-orient: vertical;
     overflow: hidden;
     text-overflow: ellipsis;
+    transition: color 0.2s ease;
+}
+
+.hosp-title-text:hover {
+    color: var(--upchar-teal);
 }
 
 .hosp-address-text {
     font-size: 11.5px;
     color: #64748b;
-    margin: 0 0 8px 0;
+    margin: 0 0 6px 0;
     line-height: 1.35;
     display: -webkit-box;
     -webkit-line-clamp: 2;
@@ -118,9 +128,49 @@
     background: var(--upchar-teal-dark);
 }
 
+.btn-pending-compact {
+    background: #fffbeb !important;
+    color: #b45309 !important;
+    border: 1px solid #fde68a !important;
+    font-weight: 700;
+    font-size: 11.5px;
+    border-radius: 6px;
+    padding: 6px 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    width: 100%;
+    cursor: default;
+}
+
 .badge-affiliated-pill {
     background: #dcfce7;
     color: #15803d;
+    font-weight: 700;
+    font-size: 10.5px;
+    padding: 3px 8px;
+    border-radius: 10px;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+}
+
+.badge-pending-pill {
+    background: #fef3c7;
+    color: #92400e;
+    font-weight: 700;
+    font-size: 10.5px;
+    padding: 3px 8px;
+    border-radius: 10px;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+}
+
+.badge-rejected-pill {
+    background: #fee2e2;
+    color: #b91c1c;
     font-weight: 700;
     font-size: 10.5px;
     padding: 3px 8px;
@@ -177,6 +227,24 @@
     pointer-events: none;
 }
 
+/* CRITICAL FIX: Prevent Black Screen Overlay Caused By Stacking Context & Backdrop */
+.modal {
+    z-index: 1060 !important;
+}
+
+.modal-backdrop {
+    z-index: 1050 !important;
+    background-color: #000000 !important;
+}
+
+.modal-backdrop.in {
+    opacity: 0.55 !important;
+}
+
+body.modal-open {
+    overflow: hidden !important;
+}
+
 /* Responsive Media Queries */
 @media screen and (max-width: 768px) {
     .hosp-container {
@@ -197,6 +265,9 @@
     }
 }
 </style>
+
+<!-- Top Toast Alert Container -->
+<div id="affiliation_toast_alert" style="display: none; position: fixed; top: 76px; right: 24px; z-index: 99999; min-width: 320px; max-width: 460px; box-shadow: 0 10px 30px rgba(0,0,0,0.18); border-radius: 10px; padding: 14px 18px; transition: all 0.3s ease;"></div>
 
 <div class="pag_cstm hosp-container">
     <div class="row">
@@ -229,9 +300,9 @@
                 <div class="col-md-4 col-sm-6 col-xs-12">
                     <div class="hosp-kpi-card" style="border-left: 4px solid #10b981;">
                         <div>
-                            <div style="font-size: 11.5px; font-weight: 700; color: #64748b; text-transform: uppercase;">My Affiliated Hospitals</div>
+                            <div style="font-size: 11.5px; font-weight: 700; color: #64748b; text-transform: uppercase;">Active Affiliations</div>
                             <div style="font-size: 24px; font-weight: 800; color: #059669; margin: 2px 0;"><?=count($affiliated_hospitals);?></div>
-                            <div style="font-size: 11px; color: #94a3b8;">Active visiting chambers</div>
+                            <div style="font-size: 11px; color: #94a3b8;">Verified visiting chambers</div>
                         </div>
                         <div style="width: 42px; height: 42px; border-radius: 10px; background: #ecfdf5; color: #059669; display: flex; align-items: center; justify-content: center; font-size: 18px;">
                             <i class="fa fa-check-circle"></i>
@@ -240,14 +311,14 @@
                 </div>
 
                 <div class="col-md-4 col-sm-6 col-xs-12">
-                    <div class="hosp-kpi-card" style="border-left: 4px solid #3b82f6;">
+                    <div class="hosp-kpi-card" style="border-left: 4px solid #f59e0b;">
                         <div>
-                            <div style="font-size: 11.5px; font-weight: 700; color: #64748b; text-transform: uppercase;">Network Partner Hospitals</div>
-                            <div style="font-size: 24px; font-weight: 800; color: #2563eb; margin: 2px 0;"><?=$total_hospitals;?></div>
-                            <div style="font-size: 11px; color: #94a3b8;">Available for empanelment</div>
+                            <div style="font-size: 11.5px; font-weight: 700; color: #64748b; text-transform: uppercase;">Pending Verification</div>
+                            <div style="font-size: 24px; font-weight: 800; color: #d97706; margin: 2px 0;"><?=isset($pending_count) ? $pending_count : 0;?></div>
+                            <div style="font-size: 11px; color: #94a3b8;">Awaiting hospital approval</div>
                         </div>
-                        <div style="width: 42px; height: 42px; border-radius: 10px; background: #e0f2fe; color: #0284c7; display: flex; align-items: center; justify-content: center; font-size: 18px;">
-                            <i class="fa fa-building"></i>
+                        <div style="width: 42px; height: 42px; border-radius: 10px; background: #fffbeb; color: #d97706; display: flex; align-items: center; justify-content: center; font-size: 18px;">
+                            <i class="fa fa-clock-o"></i>
                         </div>
                     </div>
                 </div>
@@ -255,12 +326,12 @@
                 <div class="col-md-4 col-sm-6 col-xs-12">
                     <div class="hosp-kpi-card" style="border-left: 4px solid #00a896;">
                         <div>
-                            <div style="font-size: 11.5px; font-weight: 700; color: #64748b; text-transform: uppercase;">Cities with Hospital Network</div>
-                            <div style="font-size: 24px; font-weight: 800; color: #00a896; margin: 2px 0;"><?=count($cities);?></div>
-                            <div style="font-size: 11px; color: #94a3b8;">Regional healthcare coverage</div>
+                            <div style="font-size: 11.5px; font-weight: 700; color: #64748b; text-transform: uppercase;">Network Partner Hospitals</div>
+                            <div style="font-size: 24px; font-weight: 800; color: #00a896; margin: 2px 0;"><?=$total_hospitals;?></div>
+                            <div style="font-size: 11px; color: #94a3b8;">In <?=count($cities);?> cities across network</div>
                         </div>
                         <div style="width: 42px; height: 42px; border-radius: 10px; background: #f0fdfa; color: #00a896; display: flex; align-items: center; justify-content: center; font-size: 18px;">
-                            <i class="fa fa-map-marker"></i>
+                            <i class="fa fa-building"></i>
                         </div>
                     </div>
                 </div>
@@ -279,14 +350,14 @@
                         <div class="hosp-compact-card" style="border-color: #a7f3d0; background: #f0fdf4;">
                             <div>
                                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                                    <div class="hosp-mini-icon" style="background: #dcfce7; color: #059669;">
+                                    <div class="hosp-mini-icon view-hospital-profile-btn" data-id="<?=$ah->id;?>" style="background: #dcfce7; color: #059669; cursor: pointer;" title="View Hospital Details">
                                         <i class="fa fa-hospital-o"></i>
                                     </div>
                                     <span class="badge-affiliated-pill">
                                         <i class="fa fa-check"></i> Linked
                                     </span>
                                 </div>
-                                <h4 class="hosp-title-text" title="<?=htmlspecialchars($ah->name);?>">
+                                <h4 class="hosp-title-text view-hospital-profile-btn" data-id="<?=$ah->id;?>" style="cursor: pointer;" title="View details: <?=htmlspecialchars($ah->name);?>">
                                     <?=htmlspecialchars($ah->name);?>
                                 </h4>
                                 <div class="hosp-address-text" title="<?=htmlspecialchars($ah->address ?: 'Address on file');?>">
@@ -351,39 +422,62 @@
                 <div class="row">
                     <?php if(!empty($partner_hospitals)): ?>
                         <?php foreach($partner_hospitals as $hosp): 
-                            $is_affiliated = in_array($hosp->id, $affiliated_ids);
+                            $affil_status = isset($affiliation_status_map[$hosp->id]) ? $affiliation_status_map[$hosp->id] : (in_array($hosp->id, $affiliated_ids) ? 'verified' : 'none');
                         ?>
-                        <div class="col-lg-3 col-md-4 col-sm-6 col-12" style="margin-bottom: 16px;">
+                        <div class="col-lg-3 col-md-4 col-sm-6 col-12 hosp-card-wrapper hosp-card-<?=$hosp->id;?>" style="margin-bottom: 16px;">
                             <div class="hosp-compact-card">
                                 <div>
                                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                                        <div class="hosp-mini-icon">
+                                        <div class="hosp-mini-icon view-hospital-profile-btn" data-id="<?=$hosp->id;?>" style="cursor: pointer;" title="View Hospital Details">
                                             <i class="fa fa-hospital-o"></i>
                                         </div>
-                                        <?php if($is_affiliated): ?>
-                                            <span class="badge-affiliated-pill"><i class="fa fa-check"></i> Linked</span>
-                                        <?php else: ?>
-                                            <span style="background: #f1f5f9; color: #475569; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px;">Partner</span>
-                                        <?php endif; ?>
+                                        <div class="badge-status-container">
+                                            <?php if($affil_status === 'verified'): ?>
+                                                <span class="badge-affiliated-pill"><i class="fa fa-check"></i> Linked</span>
+                                            <?php elseif($affil_status === 'pending'): ?>
+                                                <span class="badge-pending-pill"><i class="fa fa-clock-o"></i> Pending</span>
+                                            <?php elseif($affil_status === 'rejected'): ?>
+                                                <span class="badge-rejected-pill"><i class="fa fa-times"></i> Rejected</span>
+                                            <?php else: ?>
+                                                <span style="background: #f1f5f9; color: #475569; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px;">Partner</span>
+                                            <?php endif; ?>
+                                        </div>
                                     </div>
-                                    <h4 class="hosp-title-text" title="<?=htmlspecialchars($hosp->name);?>">
+                                    <h4 class="hosp-title-text view-hospital-profile-btn" data-id="<?=$hosp->id;?>" style="cursor: pointer;" title="Click to view full details: <?=htmlspecialchars($hosp->name);?>">
                                         <?=htmlspecialchars($hosp->name);?>
                                     </h4>
                                     <div class="hosp-address-text" title="<?=htmlspecialchars($hosp->address ?: 'Address on file');?>">
                                         <i class="fa fa-map-marker text-danger"></i> <?=htmlspecialchars($hosp->address ?: 'Address on file');?>
                                     </div>
-                                    <?php if(!empty($hosp->mobile)): ?>
-                                    <div style="font-size: 11px; color: #64748b; margin-bottom: 8px;">
-                                        <i class="fa fa-phone text-muted"></i> <?=htmlspecialchars($hosp->mobile);?>
+                                    
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                        <?php if(!empty($hosp->mobile)): ?>
+                                            <span style="font-size: 11px; color: #64748b;">
+                                                <i class="fa fa-phone text-muted"></i> <?=htmlspecialchars($hosp->mobile);?>
+                                            </span>
+                                        <?php else: ?>
+                                            <span></span>
+                                        <?php endif; ?>
+                                        
+                                        <a href="javascript:void(0);" class="view-hospital-profile-btn" data-id="<?=$hosp->id;?>" style="font-size: 11px; font-weight: 700; color: var(--upchar-teal); text-decoration: none;">
+                                            <i class="fa fa-info-circle"></i> Details
+                                        </a>
                                     </div>
-                                    <?php endif; ?>
                                 </div>
 
-                                <div style="border-top: 1px solid #f1f5f9; padding-top: 8px; margin-top: 4px;">
-                                    <?php if($is_affiliated): ?>
-                                        <a href="<?=base_url('doctorpanel/datetime');?>" class="btn btn-xs btn-default btn-block" style="font-weight: 700; color: #00a896; border-color: #ccfbf1; background: #f0fdfa; border-radius: 6px; padding: 5px;">
+                                <div class="action-btn-container" style="border-top: 1px solid #f1f5f9; padding-top: 8px; margin-top: 4px;">
+                                    <?php if($affil_status === 'verified'): ?>
+                                        <a href="<?=base_url('doctorpanel/datetime');?>" class="btn btn-xs btn-default btn-block" style="font-weight: 700; color: #00a896; border-color: #ccfbf1; background: #f0fdfa; border-radius: 6px; padding: 6px;">
                                             <i class="fa fa-clock-o"></i> Visiting Hours
                                         </a>
+                                    <?php elseif($affil_status === 'pending'): ?>
+                                        <button type="button" class="btn-pending-compact" disabled>
+                                            <i class="fa fa-clock-o"></i> Pending Verification
+                                        </button>
+                                    <?php elseif($affil_status === 'rejected'): ?>
+                                        <button type="button" class="btn-affiliate-compact open-affiliate-modal-btn" data-id="<?=$hosp->id;?>" data-name="<?=htmlspecialchars($hosp->name, ENT_QUOTES, 'UTF-8');?>" style="background: #f59e0b;">
+                                            <i class="fa fa-refresh"></i> Re-apply Affiliation
+                                        </button>
                                     <?php else: ?>
                                         <button type="button" class="btn-affiliate-compact open-affiliate-modal-btn" data-id="<?=$hosp->id;?>" data-name="<?=htmlspecialchars($hosp->name, ENT_QUOTES, 'UTF-8');?>">
                                             <i class="fa fa-plus-circle"></i> Affiliate / Link
@@ -456,40 +550,44 @@
     </div>
 </div>
 
-<!-- Quick Affiliation Modal -->
+<!-- Quick Affiliation Modal (AJAX Driven) -->
 <div class="modal fade" id="affiliateModal" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-sm" role="document">
-        <div class="modal-content" style="border-radius: 14px; overflow: hidden; border: none; box-shadow: 0 15px 35px rgba(0,0,0,0.2);">
+        <div class="modal-content" style="border-radius: 14px; overflow: hidden; border: none; box-shadow: 0 15px 35px rgba(0,0,0,0.25);">
             <div class="modal-header" style="background: linear-gradient(135deg, #043d5b 0%, #00a896 100%); color: #ffffff; padding: 16px 20px;">
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close" style="color: #ffffff; opacity: 0.8;">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close" style="color: #ffffff; opacity: 0.9;">
                     <span aria-hidden="true">&times;</span>
                 </button>
-                <h4 class="modal-title" style="font-size: 15px; font-weight: 800;"><i class="fa fa-hospital-o"></i> Link Visiting Hospital</h4>
+                <h4 class="modal-title" style="font-size: 15px; font-weight: 800;"><i class="fa fa-handshake-o"></i> Link Visiting Hospital</h4>
             </div>
-            <form action="<?=base_url('doctorpanel/upcharhospital');?>" method="post">
+            <form id="affiliateForm">
                 <input type="hidden" name="<?=$this->security->get_csrf_token_name();?>" value="<?=$this->security->get_csrf_hash();?>">
                 <input type="hidden" name="affiliate_hospital" value="1">
                 <input type="hidden" name="hospital_id" id="modal_hospital_id">
 
                 <div class="modal-body" style="padding: 20px;">
                     <div style="margin-bottom: 14px;">
-                        <span style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase;">Hospital Name:</span>
+                        <span style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase;">Selected Hospital:</span>
                         <div id="modal_hospital_name" style="font-weight: 800; color: #0f172a; font-size: 14px; margin-top: 2px;"></div>
                     </div>
                     <div class="form-group">
                         <label style="font-size: 12.5px; font-weight: 700; color: #334155;">OPD Consultation Fee (₹) *</label>
                         <div class="input-group">
                             <span class="input-group-addon" style="font-weight: 700; background: #f8fafc;">₹</span>
-                            <input type="number" name="fee" class="form-control" value="500" min="0" required autofocus>
+                            <input type="number" name="fee" id="modal_fee_input" class="form-control" value="500" min="0" step="50" required autofocus>
                         </div>
-                        <span style="font-size: 11px; color: #64748b; margin-top: 4px; display: block;">Your standard consultation fee at this hospital.</span>
+                        <span style="font-size: 11px; color: #64748b; margin-top: 4px; display: block;">Your standard consultation fee at this hospital chamber.</span>
+                    </div>
+
+                    <div style="background: #f8fafc; border-radius: 8px; padding: 10px 12px; border: 1px dashed #cbd5e1; font-size: 11.5px; color: #475569;">
+                        <i class="fa fa-info-circle text-info"></i> Affiliation status will become <strong>Pending Verification</strong> until approved by the hospital admin.
                     </div>
                 </div>
 
                 <div class="modal-footer" style="padding: 12px 20px; background: #f8fafc; border-top: 1px solid #e2e8f0;">
                     <button type="button" class="btn btn-default btn-sm" data-dismiss="modal" style="font-weight: 600;">Cancel</button>
-                    <button type="submit" class="btn btn-primary btn-sm" style="background: var(--upchar-teal); border-color: var(--upchar-teal); font-weight: 700;">
-                        <i class="fa fa-check"></i> Link Hospital
+                    <button type="submit" id="btnSubmitAffiliate" class="btn btn-primary btn-sm" style="background: var(--upchar-teal); border-color: var(--upchar-teal); font-weight: 700;">
+                        <i class="fa fa-paper-plane"></i> Send Request
                     </button>
                 </div>
             </form>
@@ -497,15 +595,248 @@
     </div>
 </div>
 
+<!-- Detailed Hospital Profile Modal -->
+<div class="modal fade" id="hospitalProfileModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-md" role="document">
+        <div class="modal-content" style="border-radius: 14px; overflow: hidden; border: none; box-shadow: 0 15px 40px rgba(0,0,0,0.25);">
+            <div class="modal-header" style="background: linear-gradient(135deg, #043d5b 0%, #00a896 100%); color: #ffffff; padding: 16px 20px;">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close" style="color: #ffffff; opacity: 0.9;">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+                <h4 class="modal-title" style="font-size: 16px; font-weight: 800;"><i class="fa fa-hospital-o"></i> Hospital Profile &amp; Facilities</h4>
+            </div>
+
+            <!-- Modal Loading State -->
+            <div id="hp_loader" style="text-align: center; padding: 40px;">
+                <i class="fa fa-spinner fa-spin" style="font-size: 32px; color: var(--upchar-teal);"></i>
+                <p style="font-size: 13px; color: #64748b; margin-top: 10px;">Loading hospital details...</p>
+            </div>
+
+            <!-- Modal Content State -->
+            <div id="hp_content" style="display: none;">
+                <div class="modal-body" style="padding: 22px;">
+                    <div style="display: flex; gap: 16px; align-items: flex-start; margin-bottom: 16px;">
+                        <div id="hp_avatar_wrap" style="width: 58px; height: 58px; border-radius: 12px; background: #f0fdfa; border: 1px solid #ccfbf1; display: flex; align-items: center; justify-content: center; flex-shrink: 0; overflow: hidden;">
+                            <img id="hp_image" src="" alt="Hospital" style="width: 100%; height: 100%; object-fit: cover; display: none;">
+                            <i id="hp_default_icon" class="fa fa-hospital-o" style="font-size: 26px; color: var(--upchar-teal);"></i>
+                        </div>
+                        <div>
+                            <h3 id="hp_name" style="font-size: 17px; font-weight: 800; color: #0f172a; margin: 0 0 4px 0;"></h3>
+                            <div style="font-size: 12.5px; color: #64748b;">
+                                <i class="fa fa-map-marker text-danger"></i> <span id="hp_address"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Contact Bar -->
+                    <div style="display: flex; flex-wrap: wrap; gap: 16px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px 14px; margin-bottom: 16px;">
+                        <div style="font-size: 12.5px; color: #334155;">
+                            <i class="fa fa-phone text-muted"></i> <strong>Phone:</strong> <span id="hp_phone"></span>
+                        </div>
+                        <div style="font-size: 12.5px; color: #334155;">
+                            <i class="fa fa-envelope-o text-muted"></i> <strong>Email:</strong> <span id="hp_email"></span>
+                        </div>
+                        <div id="hp_website_wrap" style="font-size: 12.5px; color: #334155; display: none;">
+                            <i class="fa fa-globe text-muted"></i> <strong>Website:</strong> <a id="hp_website" href="#" target="_blank" style="color: var(--upchar-teal); font-weight: 600;"></a>
+                        </div>
+                    </div>
+
+                    <!-- Facilities / Services Section -->
+                    <div style="margin-bottom: 16px;">
+                        <h5 style="font-size: 12.5px; font-weight: 800; color: #0f172a; text-transform: uppercase; margin: 0 0 8px 0;">
+                            <i class="fa fa-stethoscope text-aqua"></i> Medical Facilities &amp; Clinical Services:
+                        </h5>
+                        <div id="hp_facilities_list" style="display: flex; flex-wrap: wrap; gap: 6px;"></div>
+                    </div>
+
+                    <!-- About Hospital Section -->
+                    <div style="margin-bottom: 10px;">
+                        <h5 style="font-size: 12.5px; font-weight: 800; color: #0f172a; text-transform: uppercase; margin: 0 0 6px 0;">
+                            <i class="fa fa-info-circle text-muted"></i> About Institution:
+                        </h5>
+                        <p id="hp_about" style="font-size: 12.5px; color: #475569; line-height: 1.5; margin: 0; background: #ffffff; border-radius: 6px;"></p>
+                    </div>
+                </div>
+
+                <div class="modal-footer" style="padding: 12px 20px; background: #f8fafc; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
+                    <div id="hp_affiliation_action"></div>
+                    <button type="button" class="btn btn-default btn-sm" data-dismiss="modal" style="font-weight: 600;">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <?php include ("assets/includes/footer.php"); ?>
 
 <script>
-$(document).on('click', '.open-affiliate-modal-btn', function(e) {
-    e.preventDefault();
-    var id = $(this).attr('data-id');
-    var name = $(this).attr('data-name');
-    $('#modal_hospital_id').val(id);
-    $('#modal_hospital_name').text(name);
-    $('#affiliateModal').modal('show');
+$(document).ready(function() {
+
+    // CRITICAL FIX: Append modals directly to <body> to prevent stacking context clipping
+    // (which causes the backdrop to render on top of the modal, turning the screen completely black)
+    $('#affiliateModal, #hospitalProfileModal').appendTo('body');
+
+    // Clean up lingering modal backdrops and body locks on modal close
+    $('#affiliateModal, #hospitalProfileModal').on('hidden.bs.modal', function () {
+        $('.modal-backdrop').remove();
+        $('body').removeClass('modal-open').css('padding-right', '');
+    });
+
+    // Toast Alert Helper
+    function showAffiliationToast(type, msg) {
+        var $t = $('#affiliation_toast_alert');
+        if (type === 'success') {
+            $t.css({ background: '#065f46', color: '#ffffff', border: '1px solid #059669' })
+              .html('<div style="display:flex;align-items:center;gap:12px;"><i class="fa fa-check-circle" style="font-size:20px;"></i><div style="font-size:13px;font-weight:600;line-height:1.4;">' + msg + '</div></div>');
+        } else {
+            $t.css({ background: '#991b1b', color: '#ffffff', border: '1px solid #dc2626' })
+              .html('<div style="display:flex;align-items:center;gap:12px;"><i class="fa fa-exclamation-circle" style="font-size:20px;"></i><div style="font-size:13px;font-weight:600;line-height:1.4;">' + msg + '</div></div>');
+        }
+        $t.fadeIn(200).delay(4000).fadeOut(300);
+    }
+
+    // 1. OPEN AFFILIATION MODAL
+    $(document).on('click', '.open-affiliate-modal-btn', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        var id = $(this).attr('data-id');
+        var name = $(this).attr('data-name');
+
+        $('#modal_hospital_id').val(id);
+        $('#modal_hospital_name').text(name);
+        $('#modal_fee_input').val('500');
+
+        // If Hospital Profile Modal is open, close it cleanly first
+        $('#hospitalProfileModal').modal('hide');
+
+        $('#affiliateModal').modal('show');
+    });
+
+    // 2. SUBMIT AFFILIATION VIA AJAX (NO PAGE RELOAD, NO BLACK SCREEN)
+    $('#affiliateForm').on('submit', function(e) {
+        e.preventDefault();
+
+        var $form = $(this);
+        var $btn = $('#btnSubmitAffiliate');
+        var hospId = $('#modal_hospital_id').val();
+        var hospName = $('#modal_hospital_name').text();
+
+        $btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Submitting Request...');
+
+        $.ajax({
+            url: '<?=base_url("doctorpanel/ajax_affiliate_hospital");?>',
+            type: 'POST',
+            data: $form.serialize(),
+            dataType: 'json',
+            success: function(res) {
+                $btn.prop('disabled', false).html('<i class="fa fa-paper-plane"></i> Send Request');
+                
+                // Close modal and force backdrop removal
+                $('#affiliateModal').modal('hide');
+                $('.modal-backdrop').remove();
+                $('body').removeClass('modal-open').css('padding-right', '');
+
+                if (res.status === 'success' || res.status === 'info') {
+                    // Update the target hospital card immediately without reload
+                    var $card = $('.hosp-card-' + hospId);
+                    if ($card.length) {
+                        $card.find('.badge-status-container').html('<span class="badge-pending-pill"><i class="fa fa-clock-o"></i> Pending</span>');
+                        $card.find('.action-btn-container').html('<button type="button" class="btn-pending-compact" disabled><i class="fa fa-clock-o"></i> Pending Verification</button>');
+                    }
+
+                    showAffiliationToast('success', res.message || ('Affiliation request sent to ' + hospName + '!'));
+                } else {
+                    showAffiliationToast('error', res.message || 'Unable to submit affiliation request.');
+                }
+            },
+            error: function(xhr, status, error) {
+                $btn.prop('disabled', false).html('<i class="fa fa-paper-plane"></i> Send Request');
+                $('#affiliateModal').modal('hide');
+                $('.modal-backdrop').remove();
+                $('body').removeClass('modal-open').css('padding-right', '');
+                showAffiliationToast('error', 'A network error occurred. Please try again.');
+            }
+        });
+    });
+
+    // 3. VIEW HOSPITAL PROFILE & FACILITIES MODAL (DYNAMIC AJAX)
+    $(document).on('click', '.view-hospital-profile-btn', function(e) {
+        e.preventDefault();
+        var hid = $(this).attr('data-id');
+        if (!hid) return;
+
+        $('#hp_loader').show();
+        $('#hp_content').hide();
+        $('#hospitalProfileModal').modal('show');
+
+        $.ajax({
+            url: '<?=base_url("doctorpanel/ajax_get_hospital_profile");?>',
+            type: 'GET',
+            data: { hospital_id: hid },
+            dataType: 'json',
+            success: function(res) {
+                $('#hp_loader').hide();
+                if (res.status === 'success' && res.data) {
+                    var d = res.data;
+                    $('#hp_name').text(d.name || 'Hospital Profile');
+                    $('#hp_address').text(d.address + (d.city ? (', ' + d.city) : '') + (d.pincode ? (' - ' + d.pincode) : ''));
+                    $('#hp_phone').text(d.mobile || 'Not available');
+                    $('#hp_email').text(d.email || 'Not available');
+                    $('#hp_about').text(d.about || 'Specialized healthcare and clinical facility.');
+                    
+                    if (d.website && d.website.trim() !== '') {
+                        $('#hp_website_wrap').show();
+                        var wUrl = (d.website.indexOf('http') === 0) ? d.website : ('http://' + d.website);
+                        $('#hp_website').attr('href', wUrl).text(d.website);
+                    } else {
+                        $('#hp_website_wrap').hide();
+                    }
+
+                    if (d.image && d.image.trim() !== '') {
+                        $('#hp_image').attr('src', d.image).show();
+                        $('#hp_default_icon').hide();
+                    } else {
+                        $('#hp_image').hide();
+                        $('#hp_default_icon').show();
+                    }
+
+                    // Render facilities
+                    var $facWrap = $('#hp_facilities_list');
+                    $facWrap.empty();
+                    if (d.facilities && d.facilities.length > 0) {
+                        $.each(d.facilities, function(i, f) {
+                            $facWrap.append('<span style="background: #f0fdfa; color: #0f766e; border: 1px solid #ccfbf1; font-weight: 700; font-size: 11.5px; padding: 4px 10px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px;"><i class="fa fa-check text-success"></i> ' + f + '</span>');
+                        });
+                    } else {
+                        $facWrap.append('<span style="color: #94a3b8; font-size: 12px; font-style: italic;">General Inpatient & Outpatient Specialized Services</span>');
+                    }
+
+                    // Affiliation Action in Modal
+                    var $statusWrap = $('#hp_affiliation_action');
+                    if (d.affiliation_status === 'verified') {
+                        $statusWrap.html('<span style="background: #dcfce7; color: #15803d; font-weight: 700; font-size: 12px; padding: 6px 14px; border-radius: 8px;"><i class="fa fa-check-circle"></i> Affiliated & Verified</span>');
+                    } else if (d.affiliation_status === 'pending') {
+                        $statusWrap.html('<span style="background: #fef3c7; color: #b45309; font-weight: 700; font-size: 12px; padding: 6px 14px; border-radius: 8px;"><i class="fa fa-clock-o"></i> Pending Hospital Verification</span>');
+                    } else {
+                        $statusWrap.html('<button type="button" class="btn btn-sm btn-primary open-affiliate-modal-btn" data-id="' + d.id + '" data-name="' + $('<div>').text(d.name).html() + '" style="background: var(--upchar-teal); border-color: var(--upchar-teal); font-weight: 700;"><i class="fa fa-plus-circle"></i> Affiliate with this Hospital</button>');
+                    }
+
+                    $('#hp_content').fadeIn(150);
+                } else {
+                    $('#hp_name').text('Hospital Profile Not Found');
+                    $('#hp_about').text(res.message || 'Unable to load profile data.');
+                    $('#hp_content').show();
+                }
+            },
+            error: function() {
+                $('#hp_loader').hide();
+                $('#hp_name').text('Error Loading Profile');
+                $('#hp_about').text('Could not retrieve profile information. Please check your connection.');
+                $('#hp_content').show();
+            }
+        });
+    });
+
 });
 </script>

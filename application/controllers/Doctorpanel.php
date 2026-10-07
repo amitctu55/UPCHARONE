@@ -1115,34 +1115,73 @@ public function gallery()
 	{
 		$userid = $this->did;
 
-		// Handle Affiliation Action
+		// Doctor's Affiliation Status Mapping (from doctor_hospital_links and legacy dr_practice)
+		$status_map = array();
+		if ($this->db->table_exists('doctor_hospital_links')) {
+			$links = $this->db->get_where('doctor_hospital_links', array('doctor_id' => $userid))->result();
+			foreach ($links as $l) {
+				$status_map[$l->hospital_id] = $l->status;
+			}
+		}
+
+		// Legacy dr_practice fallback / sync
+		$practices = $this->db->get_where('dr_practice', array('user_id' => $userid, 'type' => 'H'))->result();
+		foreach ($practices as $p) {
+			if (!isset($status_map[$p->institution_id])) {
+				$status_map[$p->institution_id] = ($p->status == '1') ? 'verified' : 'pending';
+			}
+		}
+		$data['affiliation_status_map'] = $status_map;
+
+		// Handle Standard (Non-AJAX) Affiliation POST Fallback
 		if ($this->input->post('affiliate_hospital')) {
 			$hospital_id = intval($this->input->post('hospital_id'));
-			$fee = intval($this->input->post('fee')) ?: 500;
+			$fee = floatval($this->input->post('fee')) ?: 500.00;
 			
 			if ($hospital_id > 0) {
+				if ($this->db->table_exists('doctor_hospital_links')) {
+					$existing_link = $this->db->get_where('doctor_hospital_links', array('doctor_id' => $userid, 'hospital_id' => $hospital_id))->row();
+					if ($existing_link) {
+						$this->db->where('id', $existing_link->id)->update('doctor_hospital_links', array(
+							'status' => 'pending',
+							'fee' => $fee,
+							'updated_at' => date('Y-m-d H:i:s')
+						));
+					} else {
+						$this->db->insert('doctor_hospital_links', array(
+							'doctor_id' => $userid,
+							'hospital_id' => $hospital_id,
+							'status' => 'pending',
+							'fee' => $fee,
+							'created_at' => date('Y-m-d H:i:s')
+						));
+					}
+				}
+
+				// Sync dr_practice (status = '0' for pending verification)
 				$chk = $this->db->where(array('user_id' => $userid, 'institution_id' => $hospital_id, 'type' => 'H'))->get('dr_practice')->row();
 				if ($chk) {
-					$this->db->where('id', $chk->id)->update('dr_practice', array('status' => '1', 'fee' => $fee));
+					$this->db->where('id', $chk->id)->update('dr_practice', array('status' => '0', 'fee' => $fee));
 				} else {
 					$this->db->insert('dr_practice', array(
 						'user_id'        => $userid,
 						'institution_id' => $hospital_id,
 						'type'           => 'H',
 						'fee'            => $fee,
-						'status'         => '1'
+						'status'         => '0'
 					));
 				}
-				$this->session->set_flashdata('flashmsg', "<div class='alert alert-success'><strong>Success!</strong> Affiliated hospital linked to your visiting practice profile.</div>");
+
+				$this->session->set_flashdata('flashmsg', "<div class='alert alert-warning' style='border-radius: 8px;'><strong>Request Sent!</strong> Affiliation request submitted to hospital. Status is currently <strong>Pending Verification</strong>.</div>");
 				redirect('doctorpanel/upcharhospital');
 				return;
 			}
 		}
 
-		// Doctor's Currently Affiliated Hospitals
+		// Verified Affiliated Hospitals for this Doctor (only verified status = '1')
 		$data['affiliated_hospitals'] = $this->db->select('hospital.*, dr_practice.id as practice_id, dr_practice.fee as practice_fee, dr_practice.status as practice_status')
 			->join('hospital', 'hospital.id = dr_practice.institution_id')
-			->get_where('dr_practice', array('dr_practice.user_id' => $userid, 'dr_practice.type' => 'H'))
+			->get_where('dr_practice', array('dr_practice.user_id' => $userid, 'dr_practice.type' => 'H', 'dr_practice.status' => '1'))
 			->result();
 
 		$affiliated_ids = array();
@@ -1150,6 +1189,15 @@ public function gallery()
 			$affiliated_ids[] = $ah->id;
 		}
 		$data['affiliated_ids'] = $affiliated_ids;
+
+		// Calculate Pending Count
+		$pending_count = 0;
+		foreach ($status_map as $hid => $st) {
+			if ($st === 'pending') {
+				$pending_count++;
+			}
+		}
+		$data['pending_count'] = $pending_count;
 
 		// Partner Hospitals Directory with Pagination
 		$city_filter = $this->input->get('city', TRUE);
@@ -1195,6 +1243,230 @@ public function gallery()
 		$data['total_pages'] = max(1, ceil($total_rows / $per_page));
 
 		$this->load->view('doctorpanel/upcharhospital', $data);
+	}
+
+	/**
+	 * AJAX Doctor Affiliation Request to Hospital
+	 * Creates pending link in doctor_hospital_links and syncs dr_practice (status = 0)
+	 */
+	public function ajax_affiliate_hospital()
+	{
+		header('Content-Type: application/json');
+
+		if (!$this->session->userdata('docuserid') && empty($this->did)) {
+			echo json_encode(array(
+				'status' => 'error',
+				'message' => 'Your doctor session has expired. Please log in again.'
+			));
+			return;
+		}
+
+		$userid = $this->did;
+		$hospital_id = intval($this->input->post('hospital_id'));
+		$fee = floatval($this->input->post('fee')) ?: 500.00;
+
+		if ($hospital_id <= 0) {
+			echo json_encode(array(
+				'status' => 'error',
+				'message' => 'Invalid hospital selected.'
+			));
+			return;
+		}
+
+		$hospital = $this->db->get_where('hospital', array('id' => $hospital_id, 'status' => '1'))->row();
+		if (!$hospital) {
+			echo json_encode(array(
+				'status' => 'error',
+				'message' => 'Hospital not found or currently inactive.'
+			));
+			return;
+		}
+
+		// Check existing link in doctor_hospital_links
+		$existing_link = null;
+		if ($this->db->table_exists('doctor_hospital_links')) {
+			$existing_link = $this->db->get_where('doctor_hospital_links', array(
+				'doctor_id' => $userid,
+				'hospital_id' => $hospital_id
+			))->row();
+		}
+
+		if ($existing_link && $existing_link->status === 'verified') {
+			echo json_encode(array(
+				'status' => 'info',
+				'link_status' => 'verified',
+				'message' => 'You are already affiliated and verified with ' . $hospital->name . '.'
+			));
+			return;
+		}
+
+		if ($existing_link && $existing_link->status === 'pending') {
+			$this->db->where('id', $existing_link->id)->update('doctor_hospital_links', array(
+				'fee' => $fee,
+				'updated_at' => date('Y-m-d H:i:s')
+			));
+			echo json_encode(array(
+				'status' => 'success',
+				'link_status' => 'pending',
+				'hospital_id' => $hospital_id,
+				'hospital_name' => $hospital->name,
+				'message' => 'Affiliation request is already pending verification by ' . $hospital->name . '.'
+			));
+			return;
+		}
+
+		// Insert or update doctor_hospital_links with status = 'pending'
+		if ($this->db->table_exists('doctor_hospital_links')) {
+			if ($existing_link) {
+				$this->db->where('id', $existing_link->id)->update('doctor_hospital_links', array(
+					'status' => 'pending',
+					'fee' => $fee,
+					'updated_at' => date('Y-m-d H:i:s')
+				));
+			} else {
+				$this->db->insert('doctor_hospital_links', array(
+					'doctor_id' => $userid,
+					'hospital_id' => $hospital_id,
+					'status' => 'pending',
+					'fee' => $fee,
+					'created_at' => date('Y-m-d H:i:s')
+				));
+			}
+		}
+
+		// Synchronize legacy dr_practice (status = '0' for pending)
+		$chk = $this->db->where(array(
+			'user_id' => $userid,
+			'institution_id' => $hospital_id,
+			'type' => 'H'
+		))->get('dr_practice')->row();
+
+		if ($chk) {
+			$this->db->where('id', $chk->id)->update('dr_practice', array('status' => '0', 'fee' => $fee));
+		} else {
+			$this->db->insert('dr_practice', array(
+				'user_id'        => $userid,
+				'institution_id' => $hospital_id,
+				'type'           => 'H',
+				'fee'            => $fee,
+				'status'         => '0'
+			));
+		}
+
+		// Add notification for hospital if table exists
+		$dr_profile = $this->db->get_where('profile_dr', array('id' => $userid))->row();
+		$dr_name = ($dr_profile) ? ('Dr. ' . trim($dr_profile->fname . ' ' . $dr_profile->lname)) : 'A doctor';
+
+		if ($this->db->table_exists('notifications')) {
+			$this->db->insert('notifications', array(
+				'notify_type' => 'provider',
+				'description' => $dr_name . ' has requested affiliation with ' . $hospital->name . '.',
+				'status'      => 'active',
+				'created_at'  => date('Y-m-d H:i:s')
+			));
+		}
+
+		echo json_encode(array(
+			'status' => 'success',
+			'link_status' => 'pending',
+			'hospital_id' => $hospital_id,
+			'hospital_name' => $hospital->name,
+			'fee' => $fee,
+			'csrf_hash' => $this->security->get_csrf_hash(),
+			'message' => 'Affiliation request sent to ' . $hospital->name . '! Status is now Pending Verification.'
+		));
+	}
+
+	/**
+	 * AJAX Get Hospital Profile Details (Contact, Address, Facilities)
+	 */
+	public function ajax_get_hospital_profile()
+	{
+		header('Content-Type: application/json');
+
+		$hospital_id = intval($this->input->get_post('hospital_id'));
+		if ($hospital_id <= 0) {
+			echo json_encode(array('status' => 'error', 'message' => 'Hospital ID missing or invalid.'));
+			return;
+		}
+
+		$hosp = $this->db->get_where('hospital', array('id' => $hospital_id))->row();
+		if (!$hosp) {
+			echo json_encode(array('status' => 'error', 'message' => 'Hospital not found.'));
+			return;
+		}
+
+		// Fetch City Name
+		$city_name = '';
+		if (!empty($hosp->city)) {
+			$crow = $this->db->get_where('master_city', array('id' => $hosp->city))->row();
+			if ($crow) $city_name = $crow->name;
+		}
+
+		// Fetch Services / Facilities
+		$facilities = array();
+		if ($this->db->table_exists('instition_services') && $this->db->table_exists('master_services')) {
+			$servs = $this->db->select('master_services.name')
+				->join('master_services', 'master_services.id = instition_services.services_id')
+				->get_where('instition_services', array('institution_id' => $hospital_id, 'institution_type' => 'H'))
+				->result();
+			foreach ($servs as $s) {
+				$facilities[] = $s->name;
+			}
+		}
+
+		if (empty($facilities) && !empty($hosp->tag)) {
+			$tags = array_map('trim', explode(',', $hosp->tag));
+			foreach ($tags as $t) {
+				if (!empty($t)) $facilities[] = $t;
+			}
+		}
+
+		// Check current doctor's affiliation status with this hospital
+		$current_status = 'none';
+		if ($this->db->table_exists('doctor_hospital_links')) {
+			$link = $this->db->get_where('doctor_hospital_links', array(
+				'doctor_id' => $this->did,
+				'hospital_id' => $hospital_id
+			))->row();
+			if ($link) {
+				$current_status = $link->status;
+			}
+		}
+		if ($current_status === 'none') {
+			$pract = $this->db->get_where('dr_practice', array(
+				'user_id' => $this->did,
+				'institution_id' => $hospital_id,
+				'type' => 'H'
+			))->row();
+			if ($pract) {
+				$current_status = ($pract->status == '1') ? 'verified' : 'pending';
+			}
+		}
+
+		$image_url = '';
+		if (!empty($hosp->drimage)) {
+			$image_url = base_url('uploads/hospital/' . $hosp->drimage);
+		}
+
+		echo json_encode(array(
+			'status' => 'success',
+			'data' => array(
+				'id' => $hosp->id,
+				'name' => $hosp->name,
+				'email' => $hosp->email ?: 'Not publicly listed',
+				'mobile' => $hosp->mobile ?: 'Not available',
+				'address' => $hosp->address ?: 'Address on file',
+				'city' => $city_name,
+				'state' => $hosp->state ?: '',
+				'pincode' => $hosp->pincode ?: '',
+				'website' => $hosp->website ?: '',
+				'about' => $hosp->about ?: 'Leading healthcare and medical center dedicated to patient wellness and specialized clinical care.',
+				'image' => $image_url,
+				'facilities' => $facilities,
+				'affiliation_status' => $current_status
+			)
+		));
 	}
 
 	public function managenews()
