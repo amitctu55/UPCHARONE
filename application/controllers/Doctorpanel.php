@@ -994,64 +994,194 @@ public function gallery()
 	{
 		$userid = $this->did;
 
-		// Handle Form Submission (Add or Update Timing)
+		// Handle Form Submission (Add or Update Timing with Upsert & Overlap Prevention)
 		if ($this->input->post('submit')) {
 			$practice_id = intval($this->input->post('practice_id'));
-			$days = (array)$this->input->post('days');
-			$timing_id = intval($this->input->post('timing_id'));
+			$timing_id   = intval($this->input->post('timing_id'));
+			$day_sched   = $this->input->post('day_sched'); // Array from day-wise scheduler
 
-			$timing_data = array(
+			$day_map = array(
+				'MON' => 'M',
+				'TUE' => 'T',
+				'WED' => 'W',
+				'THU' => 'TH',
+				'FRI' => 'F',
+				'SAT' => 'SA',
+				'SUN' => 'S'
+			);
+
+			$configured_sessions = array();
+			$timing_flags = array('M' => 0, 'T' => 0, 'W' => 0, 'TH' => 0, 'F' => 0, 'SA' => 0, 'S' => 0);
+
+			// Support both new day_sched array and legacy form submission
+			if (!empty($day_sched) && is_array($day_sched)) {
+				foreach ($day_sched as $d_code => $cfg) {
+					if (!empty($cfg['active']) && isset($day_map[$d_code])) {
+						$timing_flags[$day_map[$d_code]] = 1;
+						$custom_fee = !empty($cfg['fee']) ? floatval($cfg['fee']) : 0.00;
+
+						// Morning Session
+						if (!empty($cfg['morning_active']) && !empty($cfg['morning_from']) && !empty($cfg['morning_to'])) {
+							$m_start = date('H:i:s', strtotime($cfg['morning_from']));
+							$m_end   = date('H:i:s', strtotime($cfg['morning_to']));
+							$m_max   = intval($cfg['morning_max'] ?? 15) ?: 15;
+
+							$configured_sessions[] = array(
+								'doctor_id'        => $userid,
+								'clinic_id'        => $practice_id,
+								'day_of_week'      => $d_code,
+								'session_type'     => 'MORNING',
+								'start_time'       => $m_start,
+								'end_time'         => $m_end,
+								'consultation_fee' => $custom_fee,
+								'max_patients'     => $m_max,
+								'is_active'        => 1
+							);
+						}
+
+						// Evening Session
+						if (!empty($cfg['evening_active']) && !empty($cfg['evening_from']) && !empty($cfg['evening_to'])) {
+							$e_start = date('H:i:s', strtotime($cfg['evening_from']));
+							$e_end   = date('H:i:s', strtotime($cfg['evening_to']));
+							$e_max   = intval($cfg['evening_max'] ?? 15) ?: 15;
+
+							$configured_sessions[] = array(
+								'doctor_id'        => $userid,
+								'clinic_id'        => $practice_id,
+								'day_of_week'      => $d_code,
+								'session_type'     => 'EVENING',
+								'start_time'       => $e_start,
+								'end_time'         => $e_end,
+								'consultation_fee' => $custom_fee,
+								'max_patients'     => $e_max,
+								'is_active'        => 1
+							);
+						}
+					}
+				}
+			} else {
+				// Legacy Fallback Handler
+				$days = (array)$this->input->post('days');
+				$morning_from = $this->input->post('morning_from', TRUE);
+				$morning_to   = $this->input->post('morning_to', TRUE);
+				$morning_max  = intval($this->input->post('morning_max')) ?: 15;
+				$evening_from = $this->input->post('evening_from', TRUE);
+				$evening_to   = $this->input->post('evening_to', TRUE);
+				$evening_max  = intval($this->input->post('evening_max')) ?: 15;
+
+				foreach ($day_map as $d_code => $d_key) {
+					if (in_array($d_key, $days)) {
+						$timing_flags[$d_key] = 1;
+						if (!empty($morning_from) && !empty($morning_to)) {
+							$configured_sessions[] = array(
+								'doctor_id'        => $userid,
+								'clinic_id'        => $practice_id,
+								'day_of_week'      => $d_code,
+								'session_type'     => 'MORNING',
+								'start_time'       => date('H:i:s', strtotime($morning_from)),
+								'end_time'         => date('H:i:s', strtotime($morning_to)),
+								'consultation_fee' => 0.00,
+								'max_patients'     => $morning_max,
+								'is_active'        => 1
+							);
+						}
+						if (!empty($evening_from) && !empty($evening_to)) {
+							$configured_sessions[] = array(
+								'doctor_id'        => $userid,
+								'clinic_id'        => $practice_id,
+								'day_of_week'      => $d_code,
+								'session_type'     => 'EVENING',
+								'start_time'       => date('H:i:s', strtotime($evening_from)),
+								'end_time'         => date('H:i:s', strtotime($evening_to)),
+								'consultation_fee' => 0.00,
+								'max_patients'     => $evening_max,
+								'is_active'        => 1
+							);
+						}
+					}
+				}
+			}
+
+			// 1. Cross-Clinic Schedule Overlap Validation
+			if ($this->db->table_exists('doctor_schedules') && !empty($configured_sessions)) {
+				foreach ($configured_sessions as $cs) {
+					$overlap_query = $this->db->query("
+						SELECT ds.*, 
+						       IFNULL(c.name, IFNULL(h.name, 'Another Practice Chamber')) as conflict_name
+						FROM doctor_schedules ds
+						LEFT JOIN dr_practice p ON p.id = ds.clinic_id
+						LEFT JOIN clinic c ON (p.type = 'C' AND c.id = p.institution_id)
+						LEFT JOIN hospital h ON (p.type = 'H' AND h.id = p.institution_id)
+						WHERE ds.doctor_id = ? 
+						  AND ds.clinic_id != ? 
+						  AND ds.day_of_week = ? 
+						  AND ds.is_active = 1
+						  AND (? < ds.end_time AND ? > ds.start_time)
+						LIMIT 1
+					", array($userid, $practice_id, $cs['day_of_week'], $cs['start_time'], $cs['end_time']))->row();
+
+					if ($overlap_query) {
+						$day_full = $cs['day_of_week'];
+						$this->session->set_flashdata('flashmsg', 
+							"<div class='alert alert-danger'><strong><i class='fa fa-exclamation-triangle'></i> Schedule Overlap Detected!</strong> On <strong>{$day_full}</strong>, you already have a scheduled session at <strong>{$overlap_query->conflict_name}</strong> from <strong>" . date('h:i A', strtotime($overlap_query->start_time)) . " to " . date('h:i A', strtotime($overlap_query->end_time)) . "</strong>. A doctor cannot be scheduled in two locations simultaneously. Please adjust your timings.</div>"
+						);
+						redirect('doctorpanel/datetime');
+						return;
+					}
+				}
+			}
+
+			// 2. Upsert Pattern to Prevent Duplicate Practice Records
+			// Check if a timing record already exists for this doctor and practice
+			$existing_timing = null;
+			if ($timing_id > 0) {
+				$existing_timing = $this->db->get_where('timing', array('id' => $timing_id, 'user_id' => $userid))->row();
+			} else {
+				$existing_timing = $this->db->get_where('timing', array('user_id' => $userid, 'practice_id' => $practice_id, 'user_type' => 'D'))->row();
+			}
+
+			$timing_data = array_merge(array(
 				'user_type'   => 'D',
 				'user_id'     => $userid,
 				'practice_id' => $practice_id,
-				'M'           => in_array('M', $days) ? 1 : 0,
-				'T'           => in_array('T', $days) ? 1 : 0,
-				'W'           => in_array('W', $days) ? 1 : 0,
-				'TH'          => in_array('TH', $days) ? 1 : 0,
-				'F'           => in_array('F', $days) ? 1 : 0,
-				'SA'          => in_array('SA', $days) ? 1 : 0,
-				'S'           => in_array('S', $days) ? 1 : 0,
 				'status'      => '1'
-			);
+			), $timing_flags);
 
-			if ($timing_id > 0) {
-				$this->db->where('id', $timing_id)->where('user_id', $userid)->update('timing', $timing_data);
-				$current_timing_id = $timing_id;
+			if ($existing_timing) {
+				$current_timing_id = $existing_timing->id;
+				$this->db->where('id', $current_timing_id)->update('timing', $timing_data);
 				$this->db->where('timing_id', $current_timing_id)->delete('timing_session');
 			} else {
 				$this->db->insert('timing', $timing_data);
 				$current_timing_id = $this->db->insert_id();
 			}
 
-			// Morning Session
-			$morning_from = $this->input->post('morning_from', TRUE);
-			$morning_to = $this->input->post('morning_to', TRUE);
-			$morning_max = intval($this->input->post('morning_max')) ?: 10;
-			if (!empty($morning_from) && !empty($morning_to)) {
-				$this->db->insert('timing_session', array(
-					'timing_id'   => $current_timing_id,
-					'from_timing' => $morning_from,
-					'to_timing'   => $morning_to,
-					'max_patient' => $morning_max,
-					'status'      => 1
-				));
+			// 3. Upsert into doctor_schedules table
+			if ($this->db->table_exists('doctor_schedules')) {
+				$this->db->where('doctor_id', $userid)->where('clinic_id', $practice_id)->delete('doctor_schedules');
+				foreach ($configured_sessions as $cs) {
+					$this->db->insert('doctor_schedules', $cs);
+				}
 			}
 
-			// Evening Session
-			$evening_from = $this->input->post('evening_from', TRUE);
-			$evening_to = $this->input->post('evening_to', TRUE);
-			$evening_max = intval($this->input->post('evening_max')) ?: 10;
-			if (!empty($evening_from) && !empty($evening_to)) {
-				$this->db->insert('timing_session', array(
-					'timing_id'   => $current_timing_id,
-					'from_timing' => $evening_from,
-					'to_timing'   => $evening_to,
-					'max_patient' => $evening_max,
-					'status'      => 1
-				));
+			// 4. Populate legacy timing_session rows for backward compatibility
+			$legacy_sessions_added = array();
+			foreach ($configured_sessions as $cs) {
+				$sess_key = $cs['start_time'] . '_' . $cs['end_time'];
+				if (!isset($legacy_sessions_added[$sess_key])) {
+					$this->db->insert('timing_session', array(
+						'timing_id'        => $current_timing_id,
+						'from_timing'      => date('h:i A', strtotime($cs['start_time'])),
+						'to_timing'        => date('h:i A', strtotime($cs['end_time'])),
+						'max_patient'      => $cs['max_patients'],
+						'consultation_fee' => $cs['consultation_fee'],
+						'status'           => 1
+					));
+					$legacy_sessions_added[$sess_key] = true;
+				}
 			}
 
-			$this->session->set_flashdata('flashmsg', "<div class='alert alert-success'><strong>Success!</strong> Schedule timings and slot availability saved successfully.</div>");
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-success'><strong><i class='fa fa-check-circle'></i> Success!</strong> Schedule timings and slot availability saved successfully with duplicate prevention.</div>");
 			redirect('doctorpanel/datetime');
 			return;
 		}
@@ -1079,9 +1209,11 @@ public function gallery()
 			$sessions = $this->db->where('timing_id', $t->id)->get('timing_session')->result();
 			$inst_name = 'General Practice';
 			$inst_address = '';
+			$inst_fee = 0;
 			if ($t->practice_id > 0) {
 				$pr = $this->db->get_where('dr_practice', array('id' => $t->practice_id))->row();
 				if ($pr) {
+					$inst_fee = $pr->fee;
 					$table = ($pr->type == 'H') ? 'hospital' : 'clinic';
 					$inst = $this->db->get_where($table, array('id' => $pr->institution_id))->row();
 					if ($inst) {
@@ -1090,11 +1222,24 @@ public function gallery()
 					}
 				}
 			}
+
+			// Also fetch detailed records from doctor_schedules if available
+			$day_records = array();
+			if ($this->db->table_exists('doctor_schedules') && $t->practice_id > 0) {
+				$day_records = $this->db->where('doctor_id', $userid)
+				                        ->where('clinic_id', $t->practice_id)
+				                        ->where('is_active', 1)
+				                        ->order_by('FIELD(day_of_week, "MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN")', 'ASC')
+				                        ->get('doctor_schedules')->result();
+			}
+
 			$schedules[] = array(
 				'timing'       => $t,
 				'sessions'     => $sessions,
+				'day_records'  => $day_records,
 				'inst_name'    => $inst_name,
-				'inst_address' => $inst_address
+				'inst_address' => $inst_address,
+				'inst_fee'     => $inst_fee
 			);
 		}
 		$data['schedules'] = $schedules;
@@ -1107,9 +1252,15 @@ public function gallery()
 		$userid = $this->did;
 		$id = intval($id ?: $this->input->get('id'));
 		if ($id) {
-			$this->db->where('id', $id)->where('user_id', $userid)->delete('timing');
-			$this->db->where('timing_id', $id)->delete('timing_session');
-			$this->session->set_flashdata('flashmsg', "<div class='alert alert-success'>Schedule timing removed successfully.</div>");
+			$t = $this->db->get_where('timing', array('id' => $id, 'user_id' => $userid))->row();
+			if ($t) {
+				if ($this->db->table_exists('doctor_schedules') && $t->practice_id > 0) {
+					$this->db->where('doctor_id', $userid)->where('clinic_id', $t->practice_id)->delete('doctor_schedules');
+				}
+				$this->db->where('id', $id)->where('user_id', $userid)->delete('timing');
+				$this->db->where('timing_id', $id)->delete('timing_session');
+			}
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-success'><strong><i class='fa fa-check-circle'></i></strong> Schedule timing removed successfully.</div>");
 		}
 		redirect('doctorpanel/datetime');
 	}

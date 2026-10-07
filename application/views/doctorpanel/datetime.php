@@ -292,7 +292,7 @@
                             </div>
                         </div>
 
-                        <form action="<?=base_url('doctorpanel/datetime');?>" method="post">
+                        <form action="<?=base_url('doctorpanel/datetime');?>" method="post" id="scheduleForm">
                             <input type="hidden" name="<?=$this->security->get_csrf_token_name();?>" value="<?=$this->security->get_csrf_hash();?>">
                             <input type="hidden" name="submit" value="1">
 
@@ -302,10 +302,10 @@
                                     Select Consulting Practice / Chamber *
                                 </label>
                                 <select name="practice_id" id="practice_id" class="form-control select2-practice" style="width: 100%;" required>
-                                    <option value="0">-- General Practice (All Locations) --</option>
+                                    <option value="0" data-fee="500">-- General Practice (All Locations) --</option>
                                     <?php if(!empty($practices)): ?>
                                         <?php foreach($practices as $pr): ?>
-                                        <option value="<?=$pr['practice_id'];?>">
+                                        <option value="<?=$pr['practice_id'];?>" data-fee="<?=$pr['fee'];?>">
                                             <?=$pr['type'] == 'H' ? '[Hospital] ' : '[Clinic] ';?><?=htmlspecialchars($pr['name']);?> (₹<?=$pr['fee'];?>)
                                         </option>
                                         <?php endforeach; ?>
@@ -313,66 +313,113 @@
                                 </select>
                             </div>
 
-                            <!-- Working Days -->
-                            <div class="form-group" style="margin-bottom: 22px;">
-                                <label style="font-size: 13px; font-weight: 700; color: #334155; margin-bottom: 8px; display: block;">
-                                    Weekly Consulting Days *
-                                </label>
-                                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                                    <label class="day-checkbox-pill"><input type="checkbox" name="days[]" value="M" checked> Mon</label>
-                                    <label class="day-checkbox-pill"><input type="checkbox" name="days[]" value="T" checked> Tue</label>
-                                    <label class="day-checkbox-pill"><input type="checkbox" name="days[]" value="W" checked> Wed</label>
-                                    <label class="day-checkbox-pill"><input type="checkbox" name="days[]" value="TH" checked> Thu</label>
-                                    <label class="day-checkbox-pill"><input type="checkbox" name="days[]" value="F" checked> Fri</label>
-                                    <label class="day-checkbox-pill"><input type="checkbox" name="days[]" value="SA" checked> Sat</label>
-                                    <label class="day-checkbox-pill"><input type="checkbox" name="days[]" value="S"> Sun</label>
+                            <!-- Day-Wise Quick Actions Toolbar -->
+                            <div style="display: flex; justify-content: space-between; align-items: center; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px 14px; margin-bottom: 18px;">
+                                <div>
+                                    <span style="font-size: 12.5px; font-weight: 700; color: #0f172a;">Day-Wise OPD Timings &amp; Custom Fees</span>
+                                    <span style="display: block; font-size: 11px; color: #64748b;">Configure unique morning/evening hours and fees per day</span>
                                 </div>
+                                <button type="button" class="btn btn-sm btn-default" id="btnCopyMonday" style="font-weight: 700; font-size: 11.5px; border-radius: 6px; color: #008f80; border-color: #ccfbf1; background: #f0fdfa;" title="Copy Monday settings to all active days">
+                                    <i class="fa fa-clone"></i> Copy Monday to All Days
+                                </button>
                             </div>
 
-                            <!-- Session 1: Morning Hours -->
-                            <div class="session-box">
-                                <div style="font-size: 13.5px; font-weight: 800; color: #0f172a; margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">
-                                    <i class="fa fa-sun-o text-yellow"></i> Morning Session Timings
+                            <!-- Dynamic Day-By-Day Scheduler List -->
+                            <div class="days-scheduler-container">
+                                <?php
+                                $weekdays = array(
+                                    'MON' => array('name' => 'Monday', 'default_on' => true),
+                                    'TUE' => array('name' => 'Tuesday', 'default_on' => true),
+                                    'WED' => array('name' => 'Wednesday', 'default_on' => true),
+                                    'THU' => array('name' => 'Thursday', 'default_on' => true),
+                                    'FRI' => array('name' => 'Friday', 'default_on' => true),
+                                    'SAT' => array('name' => 'Saturday', 'default_on' => true),
+                                    'SUN' => array('name' => 'Sunday', 'default_on' => false)
+                                );
+                                foreach ($weekdays as $d_code => $d_info):
+                                    $is_default_on = $d_info['default_on'];
+                                ?>
+                                <div class="day-sched-row card" style="border: 1px solid #e2e8f0; border-radius: 12px; margin-bottom: 14px; overflow: hidden; background: #ffffff;">
+                                    <!-- Day Header Bar -->
+                                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 16px; background: <?=$is_default_on ? '#f8fafc' : '#f1f5f9';?>; border-bottom: 1px solid #e2e8f0;">
+                                        <div style="display: flex; align-items: center; gap: 10px;">
+                                            <input type="checkbox" name="day_sched[<?=$d_code;?>][active]" class="day-active-toggle" id="active_<?=$d_code;?>" value="1" <?=$is_default_on ? 'checked' : '';?> style="width: 17px; height: 17px; cursor: pointer;">
+                                            <label for="active_<?=$d_code;?>" style="margin: 0; font-size: 13.5px; font-weight: 800; color: #0f172a; cursor: pointer;">
+                                                <?=$d_info['name'];?>
+                                            </label>
+                                            <span class="day-status-pill badge" style="font-size: 10px; font-weight: 700; background: <?=$is_default_on ? '#dcfce7' : '#e2e8f0';?>; color: <?=$is_default_on ? '#15803d' : '#64748b';?>;">
+                                                <?=$is_default_on ? 'Active' : 'Disabled';?>
+                                            </span>
+                                        </div>
+
+                                        <!-- Custom Fee for this Day -->
+                                        <div style="display: flex; align-items: center; gap: 6px;">
+                                            <label style="margin: 0; font-size: 11.5px; font-weight: 700; color: #64748b;">OPD Fee:</label>
+                                            <div class="input-group input-group-sm" style="width: 110px;">
+                                                <span class="input-group-addon" style="font-weight: 700; background: #f8fafc;">₹</span>
+                                                <input type="number" name="day_sched[<?=$d_code;?>][fee]" class="form-control day-fee-input" value="500" min="0" step="50" style="font-weight: 700;">
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Day Session Inputs (Accordion Body) -->
+                                    <div class="day-sched-body" id="body_<?=$d_code;?>" style="padding: 12px 16px; <?=$is_default_on ? '' : 'display: none;';?>">
+                                        <!-- Morning Session -->
+                                        <div style="background: #fffbeb; border: 1px solid #fef3c7; border-radius: 8px; padding: 10px 12px; margin-bottom: 10px;">
+                                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                                <label style="margin: 0; font-size: 12px; font-weight: 800; color: #92400e; display: flex; align-items: center; gap: 6px;">
+                                                    <input type="checkbox" name="day_sched[<?=$d_code;?>][morning_active]" class="sess-toggle" value="1" checked>
+                                                    <i class="fa fa-sun-o text-yellow"></i> Morning Session
+                                                </label>
+                                                <span style="font-size: 11px; color: #b45309; font-weight: 600;">Standard: 09:00 - 13:00</span>
+                                            </div>
+                                            <div class="row g-2">
+                                                <div class="col-xs-4">
+                                                    <label style="font-size: 11px; color: #78350f; font-weight: 600;">From</label>
+                                                    <input type="time" name="day_sched[<?=$d_code;?>][morning_from]" class="form-control input-sm m-from" value="09:00" style="border-radius: 6px;">
+                                                </div>
+                                                <div class="col-xs-4">
+                                                    <label style="font-size: 11px; color: #78350f; font-weight: 600;">To</label>
+                                                    <input type="time" name="day_sched[<?=$d_code;?>][morning_to]" class="form-control input-sm m-to" value="13:00" style="border-radius: 6px;">
+                                                </div>
+                                                <div class="col-xs-4">
+                                                    <label style="font-size: 11px; color: #78350f; font-weight: 600;">Slots/Max</label>
+                                                    <input type="number" name="day_sched[<?=$d_code;?>][morning_max]" class="form-control input-sm m-max" value="15" min="1" max="100" style="border-radius: 6px;">
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Evening Session -->
+                                        <div style="background: #faf5ff; border: 1px solid #f3e8ff; border-radius: 8px; padding: 10px 12px;">
+                                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                                <label style="margin: 0; font-size: 12px; font-weight: 800; color: #6b21a8; display: flex; align-items: center; gap: 6px;">
+                                                    <input type="checkbox" name="day_sched[<?=$d_code;?>][evening_active]" class="sess-toggle" value="1" checked>
+                                                    <i class="fa fa-moon-o" style="color: #9333ea;"></i> Evening Session
+                                                </label>
+                                                <span style="font-size: 11px; color: #7e22ce; font-weight: 600;">Standard: 17:00 - 21:00</span>
+                                            </div>
+                                            <div class="row g-2">
+                                                <div class="col-xs-4">
+                                                    <label style="font-size: 11px; color: #581c87; font-weight: 600;">From</label>
+                                                    <input type="time" name="day_sched[<?=$d_code;?>][evening_from]" class="form-control input-sm e-from" value="17:00" style="border-radius: 6px;">
+                                                </div>
+                                                <div class="col-xs-4">
+                                                    <label style="font-size: 11px; color: #581c87; font-weight: 600;">To</label>
+                                                    <input type="time" name="day_sched[<?=$d_code;?>][evening_to]" class="form-control input-sm e-to" value="21:00" style="border-radius: 6px;">
+                                                </div>
+                                                <div class="col-xs-4">
+                                                    <label style="font-size: 11px; color: #581c87; font-weight: 600;">Slots/Max</label>
+                                                    <input type="number" name="day_sched[<?=$d_code;?>][evening_max]" class="form-control input-sm e-max" value="15" min="1" max="100" style="border-radius: 6px;">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div class="row">
-                                    <div class="col-md-4 col-12" style="margin-bottom: 8px;">
-                                        <label style="font-size: 11.5px; font-weight: 700; color: #64748b;">From Time</label>
-                                        <input type="time" name="morning_from" class="form-control" value="09:00" style="border-radius: 8px;">
-                                    </div>
-                                    <div class="col-md-4 col-12" style="margin-bottom: 8px;">
-                                        <label style="font-size: 11.5px; font-weight: 700; color: #64748b;">To Time</label>
-                                        <input type="time" name="morning_to" class="form-control" value="13:00" style="border-radius: 8px;">
-                                    </div>
-                                    <div class="col-md-4 col-12" style="margin-bottom: 8px;">
-                                        <label style="font-size: 11.5px; font-weight: 700; color: #64748b;">Max Patients</label>
-                                        <input type="number" name="morning_max" class="form-control" value="15" min="1" max="100" style="border-radius: 8px;">
-                                    </div>
-                                </div>
+                                <?php endforeach; ?>
                             </div>
 
-                            <!-- Session 2: Evening Hours -->
-                            <div class="session-box">
-                                <div style="font-size: 13.5px; font-weight: 800; color: #0f172a; margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">
-                                    <i class="fa fa-moon-o text-purple" style="color: #7c3aed;"></i> Evening Session Timings
-                                </div>
-                                <div class="row">
-                                    <div class="col-md-4 col-12" style="margin-bottom: 8px;">
-                                        <label style="font-size: 11.5px; font-weight: 700; color: #64748b;">From Time</label>
-                                        <input type="time" name="evening_from" class="form-control" value="17:00" style="border-radius: 8px;">
-                                    </div>
-                                    <div class="col-md-4 col-12" style="margin-bottom: 8px;">
-                                        <label style="font-size: 11.5px; font-weight: 700; color: #64748b;">To Time</label>
-                                        <input type="time" name="evening_to" class="form-control" value="21:00" style="border-radius: 8px;">
-                                    </div>
-                                    <div class="col-md-4 col-12" style="margin-bottom: 8px;">
-                                        <label style="font-size: 11.5px; font-weight: 700; color: #64748b;">Max Patients</label>
-                                        <input type="number" name="evening_max" class="form-control" value="15" min="1" max="100" style="border-radius: 8px;">
-                                    </div>
-                                </div>
-                            </div>
-
-                            <button type="submit" class="btn-save-sched" style="width: 100%; margin-top: 8px;">
-                                <i class="fa fa-check"></i> Save Schedule &amp; Generate Slot Availability
+                            <button type="submit" id="btnSubmitSchedule" class="btn-save-sched" style="width: 100%; margin-top: 14px; font-weight: 700; height: 46px; border-radius: 10px; background: linear-gradient(135deg, #00a896 0%, #0284c7 100%); color: #ffffff; border: none; box-shadow: 0 4px 12px rgba(0, 168, 150, 0.25); cursor: pointer;">
+                                <i class="fa fa-check-circle"></i> Save Schedule &amp; Generate Slot Availability
                             </button>
                         </form>
                     </div>
@@ -417,8 +464,27 @@
                                     <span class="<?=$t->S ? 'day-badge-on' : 'day-badge-off';?>">Su</span>
                                 </div>
 
-                                <!-- Sessions -->
-                                <?php if(!empty($s['sessions'])): ?>
+                                <!-- Sessions & Day-Wise Fees -->
+                                <?php if(!empty($s['day_records'])): ?>
+                                    <div style="background: #f8fafc; border-radius: 8px; padding: 10px 12px; border: 1px solid #f1f5f9;">
+                                        <div style="font-size: 11px; font-weight: 800; color: #64748b; text-transform: uppercase; margin-bottom: 6px; letter-spacing: 0.5px;">
+                                            Day-Wise Hours &amp; Custom Fees
+                                        </div>
+                                        <?php foreach($s['day_records'] as $dr): ?>
+                                        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 12px; margin-bottom: 4px; border-bottom: 1px dashed #e2e8f0; padding-bottom: 3px;">
+                                            <span>
+                                                <strong style="color: #0f172a; width: 36px; display: inline-block;"><?=$dr->day_of_week;?>:</strong>
+                                                <span class="badge" style="font-size: 9.5px; background: <?=$dr->session_type == 'MORNING' ? '#fef3c7' : '#f3e8ff';?>; color: <?=$dr->session_type == 'MORNING' ? '#92400e' : '#6b21a8';?>; font-weight: 700;"><?=ucfirst(strtolower($dr->session_type));?></span>
+                                                <span style="color: #334155; margin-left: 4px;"><?=date('h:i A', strtotime($dr->start_time));?> - <?=date('h:i A', strtotime($dr->end_time));?></span>
+                                            </span>
+                                            <span>
+                                                <strong style="color: #008f80;">₹<?=$dr->consultation_fee;?></strong>
+                                                <span style="font-size: 10.5px; color: #94a3b8;">(<?=$dr->max_patients;?> max)</span>
+                                            </span>
+                                        </div>
+                                        <?php endforeach; ?>
+                                    </div>
+                                <?php elseif(!empty($s['sessions'])): ?>
                                     <div style="background: #f8fafc; border-radius: 8px; padding: 10px 14px; border: 1px solid #f1f5f9;">
                                         <?php foreach($s['sessions'] as $sess): ?>
                                         <div style="display: flex; justify-content: space-between; font-size: 12.5px; margin-bottom: 4px; color: #334155;">
@@ -454,6 +520,69 @@
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script>
 $(document).ready(function() {
+    // 1. Double-Submit Prevention on Schedule Form
+    $('#scheduleForm').on('submit', function() {
+        var $btn = $('#btnSubmitSchedule');
+        $btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Saving Schedule & Validating Overlaps...');
+    });
+
+    // 2. Toggle Day Card visibility when Active Checkbox changes
+    $('.day-active-toggle').on('change', function() {
+        var isChecked = $(this).is(':checked');
+        var $row = $(this).closest('.day-sched-row');
+        var $body = $row.find('.day-sched-body');
+        var $pill = $row.find('.day-status-pill');
+
+        if (isChecked) {
+            $body.slideDown(150);
+            $pill.text('Active').css({'background': '#dcfce7', 'color': '#15803d'});
+            $row.find('div:first').css('background', '#f8fafc');
+        } else {
+            $body.slideUp(150);
+            $pill.text('Disabled').css({'background': '#e2e8f0', 'color': '#64748b'});
+            $row.find('div:first').css('background', '#f1f5f9');
+        }
+    });
+
+    // 3. Practice Dropdown Change -> Auto-fill Default Fee
+    $('#practice_id').on('change', function() {
+        var defaultFee = $(this).find('option:selected').data('fee') || 500;
+        $('.day-fee-input').val(defaultFee);
+    });
+
+    // 4. "Copy Monday to All Days" Quick Action
+    $('#btnCopyMonday').on('click', function() {
+        var monFee    = $('input[name="day_sched[MON][fee]"]').val();
+        var monMFrom  = $('input[name="day_sched[MON][morning_from]"]').val();
+        var monMTo    = $('input[name="day_sched[MON][morning_to]"]').val();
+        var monMMax   = $('input[name="day_sched[MON][morning_max]"]').val();
+        var monMAct   = $('input[name="day_sched[MON][morning_active]"]').is(':checked');
+
+        var monEFrom  = $('input[name="day_sched[MON][evening_from]"]').val();
+        var monETo    = $('input[name="day_sched[MON][evening_to]"]').val();
+        var monEMax   = $('input[name="day_sched[MON][evening_max]"]').val();
+        var monEAct   = $('input[name="day_sched[MON][evening_active]"]').is(':checked');
+
+        var days = ['TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
+        days.forEach(function(d) {
+            $('input[name="day_sched[' + d + '][fee]"]').val(monFee);
+            $('input[name="day_sched[' + d + '][morning_from]"]').val(monMFrom);
+            $('input[name="day_sched[' + d + '][morning_to]"]').val(monMTo);
+            $('input[name="day_sched[' + d + '][morning_max]"]').val(monMMax);
+            $('input[name="day_sched[' + d + '][morning_active]"]').prop('checked', monMAct);
+
+            $('input[name="day_sched[' + d + '][evening_from]"]').val(monEFrom);
+            $('input[name="day_sched[' + d + '][evening_to]"]').val(monETo);
+            $('input[name="day_sched[' + d + '][evening_max]"]').val(monEMax);
+            $('input[name="day_sched[' + d + '][evening_active]"]').prop('checked', monEAct);
+        });
+
+        // Flash visual highlight
+        $('.day-sched-row:not(:first)').css('box-shadow', '0 0 0 2px #00a896');
+        setTimeout(function() {
+            $('.day-sched-row:not(:first)').css('box-shadow', 'none');
+        }, 800);
+    });
     if ($.fn.select2) {
         $('#practice_id').select2({
             placeholder: "Search consulting practice or chamber...",
