@@ -1332,6 +1332,31 @@ public function gallery()
 			}
 		}
 
+		// Handle Standard (Non-AJAX) Cancel / Unlink POST Fallback
+		if ($this->input->post('cancel_affiliation')) {
+			$hospital_id = intval($this->input->post('hospital_id'));
+			if ($hospital_id > 0) {
+				if ($this->db->table_exists('doctor_hospital_links')) {
+					$this->db->where(array('doctor_id' => $userid, 'hospital_id' => $hospital_id))->delete('doctor_hospital_links');
+				}
+
+				$practice = $this->db->get_where('dr_practice', array('user_id' => $userid, 'institution_id' => $hospital_id, 'type' => 'H'))->row();
+				if ($practice) {
+					if ($this->db->table_exists('doctor_schedules')) {
+						$this->db->where('doctor_id', $userid)->where('clinic_id', $practice->id)->delete('doctor_schedules');
+					}
+					if ($this->db->table_exists('timing')) {
+						$this->db->where('user_id', $userid)->where('practice_id', $practice->id)->delete('timing');
+					}
+					$this->db->where('id', $practice->id)->delete('dr_practice');
+				}
+
+				$this->session->set_flashdata('flashmsg', "<div class='alert alert-info' style='border-radius: 8px;'><strong>Affiliation Cancelled!</strong> Request / link has been removed.</div>");
+				redirect('doctorpanel/upcharhospital');
+				return;
+			}
+		}
+
 		// Verified Affiliated Hospitals for this Doctor (only verified status = '1')
 		$data['affiliated_hospitals'] = $this->db->select('hospital.*, dr_practice.id as practice_id, dr_practice.fee as practice_fee, dr_practice.status as practice_status')
 			->join('hospital', 'hospital.id = dr_practice.institution_id')
@@ -1520,15 +1545,140 @@ public function gallery()
 			));
 		}
 
+		// Recount pending & active counts for real-time KPI updates
+		$pending_count = 0;
+		if ($this->db->table_exists('doctor_hospital_links')) {
+			$pending_count = $this->db->where(array('doctor_id' => $userid, 'status' => 'pending'))->count_all_results('doctor_hospital_links');
+		} else {
+			$pending_count = $this->db->where(array('user_id' => $userid, 'type' => 'H', 'status' => '0'))->count_all_results('dr_practice');
+		}
+		$active_count = $this->db->where(array('user_id' => $userid, 'type' => 'H', 'status' => '1'))->count_all_results('dr_practice');
+
 		echo json_encode(array(
 			'status' => 'success',
 			'link_status' => 'pending',
 			'hospital_id' => $hospital_id,
 			'hospital_name' => $hospital->name,
 			'fee' => $fee,
+			'pending_count' => $pending_count,
+			'active_count' => $active_count,
 			'csrf_hash' => $this->security->get_csrf_hash(),
 			'message' => 'Affiliation request sent to ' . $hospital->name . '! Status is now Pending Verification.'
 		));
+	}
+
+	/**
+	 * AJAX Cancel Doctor Affiliation Request / Unlink Hospital
+	 * Removes doctor_hospital_links and cleans up dr_practice (type = 'H')
+	 */
+	public function ajax_cancel_affiliation()
+	{
+		header('Content-Type: application/json');
+
+		if (!$this->session->userdata('docuserid') && empty($this->did)) {
+			echo json_encode(array(
+				'status' => 'error',
+				'message' => 'Your doctor session has expired. Please log in again.'
+			));
+			return;
+		}
+
+		$userid = $this->did;
+		$hospital_id = intval($this->input->post('hospital_id'));
+
+		if ($hospital_id <= 0) {
+			echo json_encode(array(
+				'status' => 'error',
+				'message' => 'Invalid hospital selected.'
+			));
+			return;
+		}
+
+		$hospital = $this->db->get_where('hospital', array('id' => $hospital_id))->row();
+		$hosp_name = $hospital ? $hospital->name : 'Hospital';
+
+		// 1. Remove from doctor_hospital_links
+		if ($this->db->table_exists('doctor_hospital_links')) {
+			$this->db->where(array('doctor_id' => $userid, 'hospital_id' => $hospital_id))->delete('doctor_hospital_links');
+		}
+
+		// 2. Remove associated dr_practice entry and any linked timings/schedules
+		$practice = $this->db->get_where('dr_practice', array('user_id' => $userid, 'institution_id' => $hospital_id, 'type' => 'H'))->row();
+		if ($practice) {
+			$practice_id = $practice->id;
+
+			// Clean up schedules if table exists
+			if ($this->db->table_exists('doctor_schedules')) {
+				$this->db->where('doctor_id', $userid)->where('clinic_id', $practice_id)->delete('doctor_schedules');
+			}
+			// Clean up timing table if exists
+			if ($this->db->table_exists('timing')) {
+				$this->db->where('user_id', $userid)->where('practice_id', $practice_id)->delete('timing');
+			}
+
+			// Delete dr_practice entry
+			$this->db->where('id', $practice_id)->delete('dr_practice');
+		}
+
+		// 3. Add notification for hospital if table exists
+		if ($this->db->table_exists('notifications')) {
+			$dr_profile = $this->db->get_where('profile_dr', array('id' => $userid))->row();
+			$dr_name = ($dr_profile) ? ('Dr. ' . trim($dr_profile->fname . ' ' . $dr_profile->lname)) : 'A doctor';
+
+			$this->db->insert('notifications', array(
+				'notify_type' => 'provider',
+				'description' => $dr_name . ' has cancelled affiliation request / unlinked from ' . $hosp_name . '.',
+				'status'      => 'active',
+				'created_at'  => date('Y-m-d H:i:s')
+			));
+		}
+
+		// Recount pending & active counts for real-time KPI updates
+		$pending_count = 0;
+		if ($this->db->table_exists('doctor_hospital_links')) {
+			$pending_count = $this->db->where(array('doctor_id' => $userid, 'status' => 'pending'))->count_all_results('doctor_hospital_links');
+		} else {
+			$pending_count = $this->db->where(array('user_id' => $userid, 'type' => 'H', 'status' => '0'))->count_all_results('dr_practice');
+		}
+		$active_count = $this->db->where(array('user_id' => $userid, 'type' => 'H', 'status' => '1'))->count_all_results('dr_practice');
+
+		echo json_encode(array(
+			'status' => 'success',
+			'action' => 'cancelled',
+			'hospital_id' => $hospital_id,
+			'hospital_name' => $hosp_name,
+			'pending_count' => $pending_count,
+			'active_count' => $active_count,
+			'csrf_hash' => $this->security->get_csrf_hash(),
+			'message' => 'Affiliation request for ' . $hosp_name . ' has been cancelled successfully.'
+		));
+	}
+
+	/**
+	 * Non-AJAX Fallback to Cancel Affiliation / Unlink Hospital
+	 */
+	public function cancel_affiliation($hospital_id = 0)
+	{
+		$userid = $this->did;
+		$hospital_id = intval($hospital_id ?: $this->input->post('hospital_id'));
+
+		if ($hospital_id > 0) {
+			if ($this->db->table_exists('doctor_hospital_links')) {
+				$this->db->where(array('doctor_id' => $userid, 'hospital_id' => $hospital_id))->delete('doctor_hospital_links');
+			}
+			$practice = $this->db->get_where('dr_practice', array('user_id' => $userid, 'institution_id' => $hospital_id, 'type' => 'H'))->row();
+			if ($practice) {
+				if ($this->db->table_exists('doctor_schedules')) {
+					$this->db->where('doctor_id', $userid)->where('clinic_id', $practice->id)->delete('doctor_schedules');
+				}
+				if ($this->db->table_exists('timing')) {
+					$this->db->where('user_id', $userid)->where('practice_id', $practice->id)->delete('timing');
+				}
+				$this->db->where('id', $practice->id)->delete('dr_practice');
+			}
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-info' style='border-radius: 8px;'><strong>Affiliation Cancelled!</strong> Request / link has been removed.</div>");
+		}
+		redirect('doctorpanel/upcharhospital');
 	}
 
 	/**

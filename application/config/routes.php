@@ -141,6 +141,9 @@ $route['manageownclinic/(:any)'] 		= 'Manageownclinic/$1';
 $route['doctorpanel/manageownclinic'] 	= 'Doctorpanel/manageownclinic';
 $route['doctorpanel/upcharhospital'] 	= 'Doctorpanel/upcharhospital';
 $route['upcharhospital'] 				= 'Doctorpanel/upcharhospital';
+$route['doctorpanel/ajax_affiliate_hospital'] = 'Doctorpanel/ajax_affiliate_hospital';
+$route['doctorpanel/ajax_cancel_affiliation'] = 'Doctorpanel/ajax_cancel_affiliation';
+$route['doctorpanel/cancel_affiliation/(:any)'] = 'Doctorpanel/cancel_affiliation/$1';
 $route['manageappointment'] 			= 'doctorpanel/manageappointment';
 
 $route['progress_profile'] 				= 'doctorpanel/progress_profile';

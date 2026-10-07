@@ -135,12 +135,11 @@
     font-weight: 700;
     font-size: 11.5px;
     border-radius: 6px;
-    padding: 6px 12px;
+    padding: 6px 10px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 4px;
-    width: 100%;
     cursor: default;
 }
 
@@ -301,7 +300,7 @@ body.modal-open {
                     <div class="hosp-kpi-card" style="border-left: 4px solid #10b981;">
                         <div>
                             <div style="font-size: 11.5px; font-weight: 700; color: #64748b; text-transform: uppercase;">Active Affiliations</div>
-                            <div style="font-size: 24px; font-weight: 800; color: #059669; margin: 2px 0;"><?=count($affiliated_hospitals);?></div>
+                            <div id="kpi_active_count" style="font-size: 24px; font-weight: 800; color: #059669; margin: 2px 0;"><?=count($affiliated_hospitals);?></div>
                             <div style="font-size: 11px; color: #94a3b8;">Verified visiting chambers</div>
                         </div>
                         <div style="width: 42px; height: 42px; border-radius: 10px; background: #ecfdf5; color: #059669; display: flex; align-items: center; justify-content: center; font-size: 18px;">
@@ -314,7 +313,7 @@ body.modal-open {
                     <div class="hosp-kpi-card" style="border-left: 4px solid #f59e0b;">
                         <div>
                             <div style="font-size: 11.5px; font-weight: 700; color: #64748b; text-transform: uppercase;">Pending Verification</div>
-                            <div style="font-size: 24px; font-weight: 800; color: #d97706; margin: 2px 0;"><?=isset($pending_count) ? $pending_count : 0;?></div>
+                            <div id="kpi_pending_count" style="font-size: 24px; font-weight: 800; color: #d97706; margin: 2px 0;"><?=isset($pending_count) ? $pending_count : 0;?></div>
                             <div style="font-size: 11px; color: #94a3b8;">Awaiting hospital approval</div>
                         </div>
                         <div style="width: 42px; height: 42px; border-radius: 10px; background: #fffbeb; color: #d97706; display: flex; align-items: center; justify-content: center; font-size: 18px;">
@@ -339,14 +338,14 @@ body.modal-open {
 
             <!-- SECTION 1: My Affiliated Hospitals (if any) -->
             <?php if(!empty($affiliated_hospitals)): ?>
-            <div style="margin-bottom: 24px;">
+            <div id="section_active_affiliations" style="margin-bottom: 24px;">
                 <h3 style="font-size: 15px; font-weight: 800; color: #0f172a; margin: 0 0 12px 0;">
                     <i class="fa fa-check-circle text-green" style="margin-right: 6px;"></i> My Active Hospital Affiliations (<?=count($affiliated_hospitals);?>)
                 </h3>
 
-                <div class="row">
+                <div class="row" id="active_affiliations_container">
                     <?php foreach($affiliated_hospitals as $ah): ?>
-                    <div class="col-lg-3 col-md-4 col-sm-6 col-12" style="margin-bottom: 16px;">
+                    <div class="col-lg-3 col-md-4 col-sm-6 col-12 active-affil-card-<?=$ah->id;?>" style="margin-bottom: 16px;">
                         <div class="hosp-compact-card" style="border-color: #a7f3d0; background: #f0fdf4;">
                             <div>
                                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
@@ -368,12 +367,15 @@ body.modal-open {
                                 </div>
                             </div>
                             <div style="display: flex; gap: 4px; border-top: 1px solid #d1fae5; padding-top: 8px;">
-                                <a href="<?=base_url('doctorpanel/datetime');?>" class="btn btn-xs btn-default" style="flex: 1; font-weight: 600; font-size: 11px; border-radius: 4px; padding: 4px;">
+                                <a href="<?=base_url('doctorpanel/datetime');?>" class="btn btn-xs btn-default" style="flex: 1; font-weight: 600; font-size: 11px; border-radius: 4px; padding: 4px;" title="Configure OPD Timings">
                                     <i class="fa fa-clock-o"></i> Timings
                                 </a>
-                                <a href="<?=base_url('managepractice');?>" class="btn btn-xs btn-default" style="flex: 1; font-weight: 600; font-size: 11px; border-radius: 4px; padding: 4px;">
-                                    <i class="fa fa-pencil"></i> Edit Fee
+                                <a href="<?=base_url('managepractice');?>" class="btn btn-xs btn-default" style="flex: 1; font-weight: 600; font-size: 11px; border-radius: 4px; padding: 4px;" title="Edit Consultation Fee">
+                                    <i class="fa fa-pencil"></i> Fee
                                 </a>
+                                <button type="button" class="btn btn-xs btn-default cancel-affiliate-btn" data-id="<?=$ah->id;?>" data-name="<?=htmlspecialchars($ah->name, ENT_QUOTES, 'UTF-8');?>" data-action="unlink" title="Unlink Hospital" style="color: #dc2626; border-color: #fecaca; background: #fff5f5; font-size: 11px; font-weight: 700; border-radius: 4px; padding: 4px 8px;">
+                                    <i class="fa fa-chain-broken"></i> Unlink
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -467,13 +469,23 @@ body.modal-open {
 
                                 <div class="action-btn-container" style="border-top: 1px solid #f1f5f9; padding-top: 8px; margin-top: 4px;">
                                     <?php if($affil_status === 'verified'): ?>
-                                        <a href="<?=base_url('doctorpanel/datetime');?>" class="btn btn-xs btn-default btn-block" style="font-weight: 700; color: #00a896; border-color: #ccfbf1; background: #f0fdfa; border-radius: 6px; padding: 6px;">
-                                            <i class="fa fa-clock-o"></i> Visiting Hours
-                                        </a>
+                                        <div style="display: flex; gap: 6px;">
+                                            <a href="<?=base_url('doctorpanel/datetime');?>" class="btn btn-xs btn-default" style="flex: 1; font-weight: 700; color: #00a896; border-color: #ccfbf1; background: #f0fdfa; border-radius: 6px; padding: 6px;" title="Manage Schedule">
+                                                <i class="fa fa-clock-o"></i> Timings
+                                            </a>
+                                            <button type="button" class="btn btn-xs btn-default cancel-affiliate-btn" data-id="<?=$hosp->id;?>" data-name="<?=htmlspecialchars($hosp->name, ENT_QUOTES, 'UTF-8');?>" data-action="unlink" title="Unlink Hospital" style="color: #dc2626; border-color: #fecaca; background: #fff5f5; border-radius: 6px; padding: 6px 8px; font-weight: 700;">
+                                                <i class="fa fa-chain-broken"></i> Unlink
+                                            </button>
+                                        </div>
                                     <?php elseif($affil_status === 'pending'): ?>
-                                        <button type="button" class="btn-pending-compact" disabled>
-                                            <i class="fa fa-clock-o"></i> Pending Verification
-                                        </button>
+                                        <div style="display: flex; gap: 6px; align-items: center;">
+                                            <button type="button" class="btn-pending-compact" style="flex: 1; cursor: default;" disabled>
+                                                <i class="fa fa-clock-o"></i> Pending
+                                            </button>
+                                            <button type="button" class="btn btn-xs btn-default cancel-affiliate-btn" data-id="<?=$hosp->id;?>" data-name="<?=htmlspecialchars($hosp->name, ENT_QUOTES, 'UTF-8');?>" data-action="cancel" title="Cancel Affiliation Request" style="color: #dc2626; border-color: #fca5a5; background: #fef2f2; border-radius: 6px; padding: 6px 10px; font-weight: 700; font-size: 11px;">
+                                                <i class="fa fa-times-circle"></i> Cancel
+                                            </button>
+                                        </div>
                                     <?php elseif($affil_status === 'rejected'): ?>
                                         <button type="button" class="btn-affiliate-compact open-affiliate-modal-btn" data-id="<?=$hosp->id;?>" data-name="<?=htmlspecialchars($hosp->name, ENT_QUOTES, 'UTF-8');?>" style="background: #f59e0b;">
                                             <i class="fa fa-refresh"></i> Re-apply Affiliation
@@ -561,7 +573,7 @@ body.modal-open {
                 <h4 class="modal-title" style="font-size: 15px; font-weight: 800;"><i class="fa fa-handshake-o"></i> Link Visiting Hospital</h4>
             </div>
             <form id="affiliateForm">
-                <input type="hidden" name="<?=$this->security->get_csrf_token_name();?>" value="<?=$this->security->get_csrf_hash();?>">
+                <input type="hidden" name="<?=$this->security->get_csrf_token_name();?>" class="csrf_token_input" value="<?=$this->security->get_csrf_hash();?>">
                 <input type="hidden" name="affiliate_hospital" value="1">
                 <input type="hidden" name="hospital_id" id="modal_hospital_id">
 
@@ -585,9 +597,52 @@ body.modal-open {
                 </div>
 
                 <div class="modal-footer" style="padding: 12px 20px; background: #f8fafc; border-top: 1px solid #e2e8f0;">
-                    <button type="button" class="btn btn-default btn-sm" data-dismiss="modal" style="font-weight: 600;">Cancel</button>
+                    <button type="button" class="btn btn-default btn-sm" data-dismiss="modal" style="font-weight: 600;">Close</button>
                     <button type="submit" id="btnSubmitAffiliate" class="btn btn-primary btn-sm" style="background: var(--upchar-teal); border-color: var(--upchar-teal); font-weight: 700;">
                         <i class="fa fa-paper-plane"></i> Send Request
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Cancel Affiliation / Unlink Confirmation Modal -->
+<div class="modal fade" id="cancelAffiliationModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-sm" role="document">
+        <div class="modal-content" style="border-radius: 14px; overflow: hidden; border: none; box-shadow: 0 15px 35px rgba(0,0,0,0.25);">
+            <div class="modal-header" id="cancelModalHeader" style="background: linear-gradient(135deg, #b91c1c 0%, #ef4444 100%); color: #ffffff; padding: 16px 20px;">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close" style="color: #ffffff; opacity: 0.9;">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+                <h4 class="modal-title" id="cancelModalTitle" style="font-size: 15px; font-weight: 800;">
+                    <i class="fa fa-exclamation-triangle"></i> Cancel Affiliation
+                </h4>
+            </div>
+            <form id="cancelAffiliateForm">
+                <input type="hidden" name="<?=$this->security->get_csrf_token_name();?>" class="csrf_token_input" value="<?=$this->security->get_csrf_hash();?>">
+                <input type="hidden" name="hospital_id" id="cancel_modal_hospital_id">
+                <input type="hidden" name="cancel_action" id="cancel_modal_action" value="cancel">
+
+                <div class="modal-body" style="padding: 20px;">
+                    <div style="margin-bottom: 12px;">
+                        <span style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase;">Hospital:</span>
+                        <div id="cancel_modal_hospital_name" style="font-weight: 800; color: #0f172a; font-size: 14px; margin-top: 2px;"></div>
+                    </div>
+                    
+                    <p id="cancelModalMessage" style="font-size: 13px; color: #475569; line-height: 1.45; margin: 0 0 14px 0;">
+                        Are you sure you want to cancel your pending affiliation request with this hospital?
+                    </p>
+
+                    <div style="background: #fef2f2; border-radius: 8px; padding: 10px 12px; border: 1px dashed #fca5a5; font-size: 11.5px; color: #991b1b;">
+                        <i class="fa fa-info-circle text-danger"></i> <span id="cancelModalSubtext">This request will be withdrawn immediately and the hospital will not see your application.</span>
+                    </div>
+                </div>
+
+                <div class="modal-footer" style="padding: 12px 20px; background: #f8fafc; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end; gap: 8px;">
+                    <button type="button" class="btn btn-default btn-sm" data-dismiss="modal" style="font-weight: 600;">Keep Affiliation</button>
+                    <button type="submit" id="btnSubmitCancel" class="btn btn-danger btn-sm" style="background: #dc2626; border-color: #dc2626; font-weight: 700;">
+                        <i class="fa fa-times-circle"></i> Confirm Cancel
                     </button>
                 </div>
             </form>
@@ -674,10 +729,10 @@ $(document).ready(function() {
 
     // CRITICAL FIX: Append modals directly to <body> to prevent stacking context clipping
     // (which causes the backdrop to render on top of the modal, turning the screen completely black)
-    $('#affiliateModal, #hospitalProfileModal').appendTo('body');
+    $('#affiliateModal, #cancelAffiliationModal, #hospitalProfileModal').appendTo('body');
 
     // Clean up lingering modal backdrops and body locks on modal close
-    $('#affiliateModal, #hospitalProfileModal').on('hidden.bs.modal', function () {
+    $('#affiliateModal, #cancelAffiliationModal, #hospitalProfileModal').on('hidden.bs.modal', function () {
         $('.modal-backdrop').remove();
         $('body').removeClass('modal-open').css('padding-right', '');
     });
@@ -688,11 +743,21 @@ $(document).ready(function() {
         if (type === 'success') {
             $t.css({ background: '#065f46', color: '#ffffff', border: '1px solid #059669' })
               .html('<div style="display:flex;align-items:center;gap:12px;"><i class="fa fa-check-circle" style="font-size:20px;"></i><div style="font-size:13px;font-weight:600;line-height:1.4;">' + msg + '</div></div>');
+        } else if (type === 'info') {
+            $t.css({ background: '#0369a1', color: '#ffffff', border: '1px solid #0284c7' })
+              .html('<div style="display:flex;align-items:center;gap:12px;"><i class="fa fa-info-circle" style="font-size:20px;"></i><div style="font-size:13px;font-weight:600;line-height:1.4;">' + msg + '</div></div>');
         } else {
             $t.css({ background: '#991b1b', color: '#ffffff', border: '1px solid #dc2626' })
               .html('<div style="display:flex;align-items:center;gap:12px;"><i class="fa fa-exclamation-circle" style="font-size:20px;"></i><div style="font-size:13px;font-weight:600;line-height:1.4;">' + msg + '</div></div>');
         }
         $t.fadeIn(200).delay(4000).fadeOut(300);
+    }
+
+    // Update CSRF token helper
+    function refreshCsrfToken(newHash) {
+        if (newHash) {
+            $('.csrf_token_input').val(newHash);
+        }
     }
 
     // 1. OPEN AFFILIATION MODAL
@@ -713,7 +778,7 @@ $(document).ready(function() {
         $('#affiliateModal').modal('show');
     });
 
-    // 2. SUBMIT AFFILIATION VIA AJAX (NO PAGE RELOAD, NO BLACK SCREEN)
+    // 2. SUBMIT AFFILIATION REQUEST VIA AJAX
     $('#affiliateForm').on('submit', function(e) {
         e.preventDefault();
 
@@ -742,9 +807,29 @@ $(document).ready(function() {
                     var $card = $('.hosp-card-' + hospId);
                     if ($card.length) {
                         $card.find('.badge-status-container').html('<span class="badge-pending-pill"><i class="fa fa-clock-o"></i> Pending</span>');
-                        $card.find('.action-btn-container').html('<button type="button" class="btn-pending-compact" disabled><i class="fa fa-clock-o"></i> Pending Verification</button>');
+                        
+                        var safeHospName = $('<div>').text(hospName).html();
+                        $card.find('.action-btn-container').html(
+                            '<div style="display: flex; gap: 6px; align-items: center;">' +
+                                '<button type="button" class="btn-pending-compact" style="flex: 1; cursor: default;" disabled>' +
+                                    '<i class="fa fa-clock-o"></i> Pending' +
+                                '</button>' +
+                                '<button type="button" class="btn btn-xs btn-default cancel-affiliate-btn" data-id="' + hospId + '" data-name="' + safeHospName + '" data-action="cancel" title="Cancel Affiliation Request" style="color: #dc2626; border-color: #fca5a5; background: #fef2f2; border-radius: 6px; padding: 6px 10px; font-weight: 700; font-size: 11px;">' +
+                                    '<i class="fa fa-times-circle"></i> Cancel' +
+                                '</button>' +
+                            '</div>'
+                        );
                     }
 
+                    // Dynamically update Pending KPI counter
+                    if (res.pending_count !== undefined) {
+                        $('#kpi_pending_count').text(res.pending_count);
+                    }
+                    if (res.active_count !== undefined) {
+                        $('#kpi_active_count').text(res.active_count);
+                    }
+
+                    refreshCsrfToken(res.csrf_hash);
                     showAffiliationToast('success', res.message || ('Affiliation request sent to ' + hospName + '!'));
                 } else {
                     showAffiliationToast('error', res.message || 'Unable to submit affiliation request.');
@@ -760,7 +845,114 @@ $(document).ready(function() {
         });
     });
 
-    // 3. VIEW HOSPITAL PROFILE & FACILITIES MODAL (DYNAMIC AJAX)
+    // 3. OPEN CANCEL / UNLINK CONFIRMATION MODAL
+    $(document).on('click', '.cancel-affiliate-btn', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        var hid = $(this).attr('data-id');
+        var hname = $(this).attr('data-name');
+        var action = $(this).attr('data-action') || 'cancel'; // 'cancel' or 'unlink'
+
+        $('#cancel_modal_hospital_id').val(hid);
+        $('#cancel_modal_hospital_name').text(hname);
+        $('#cancel_modal_action').val(action);
+
+        if (action === 'unlink') {
+            $('#cancelModalHeader').css('background', 'linear-gradient(135deg, #b91c1c 0%, #dc2626 100%)');
+            $('#cancelModalTitle').html('<i class="fa fa-chain-broken"></i> Unlink Hospital Practice');
+            $('#cancelModalMessage').html('Are you sure you want to unlink your practice from <strong>' + hname + '</strong>? All configured OPD slots and visiting timings for this hospital will be cleared.');
+            $('#cancelModalSubtext').text('You can re-apply to affiliate with this partner hospital at any time in the future.');
+            $('#btnSubmitCancel').html('<i class="fa fa-chain-broken"></i> Unlink Hospital');
+        } else {
+            $('#cancelModalHeader').css('background', 'linear-gradient(135deg, #b91c1c 0%, #ef4444 100%)');
+            $('#cancelModalTitle').html('<i class="fa fa-times-circle"></i> Cancel Affiliation Request');
+            $('#cancelModalMessage').html('Are you sure you want to cancel your pending affiliation request with <strong>' + hname + '</strong>?');
+            $('#cancelModalSubtext').text('This request will be withdrawn immediately and the hospital will not see your pending application.');
+            $('#btnSubmitCancel').html('<i class="fa fa-times-circle"></i> Confirm Cancel');
+        }
+
+        // If Hospital Profile Modal is open, close it cleanly first
+        $('#hospitalProfileModal').modal('hide');
+
+        $('#cancelAffiliationModal').modal('show');
+    });
+
+    // 4. SUBMIT CANCEL / UNLINK VIA AJAX
+    $('#cancelAffiliateForm').on('submit', function(e) {
+        e.preventDefault();
+
+        var $form = $(this);
+        var $btn = $('#btnSubmitCancel');
+        var hospId = $('#cancel_modal_hospital_id').val();
+        var hospName = $('#cancel_modal_hospital_name').text();
+        var action = $('#cancel_modal_action').val();
+
+        $btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Processing...');
+
+        $.ajax({
+            url: '<?=base_url("doctorpanel/ajax_cancel_affiliation");?>',
+            type: 'POST',
+            data: $form.serialize(),
+            dataType: 'json',
+            success: function(res) {
+                $btn.prop('disabled', false).html('<i class="fa fa-times-circle"></i> Confirm Cancel');
+
+                // Close modal and force backdrop removal
+                $('#cancelAffiliationModal').modal('hide');
+                $('.modal-backdrop').remove();
+                $('body').removeClass('modal-open').css('padding-right', '');
+
+                if (res.status === 'success') {
+                    // Update target hospital card in Section 2 (Partner Directory)
+                    var $card = $('.hosp-card-' + hospId);
+                    if ($card.length) {
+                        $card.find('.badge-status-container').html('<span style="background: #f1f5f9; color: #475569; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px;">Partner</span>');
+                        
+                        var safeHospName = $('<div>').text(hospName).html();
+                        $card.find('.action-btn-container').html(
+                            '<button type="button" class="btn-affiliate-compact open-affiliate-modal-btn" data-id="' + hospId + '" data-name="' + safeHospName + '">' +
+                                '<i class="fa fa-plus-circle"></i> Affiliate / Link' +
+                            '</button>'
+                        );
+                    }
+
+                    // If unlinked from Section 1 (My Active Affiliations), remove card with smooth fade
+                    var $activeCard = $('.active-affil-card-' + hospId);
+                    if ($activeCard.length) {
+                        $activeCard.fadeOut(300, function() {
+                            $(this).remove();
+                            if ($('#active_affiliations_container').children().length === 0) {
+                                $('#section_active_affiliations').fadeOut(200);
+                            }
+                        });
+                    }
+
+                    // Dynamically update KPI counts
+                    if (res.pending_count !== undefined) {
+                        $('#kpi_pending_count').text(res.pending_count);
+                    }
+                    if (res.active_count !== undefined) {
+                        $('#kpi_active_count').text(res.active_count);
+                    }
+
+                    refreshCsrfToken(res.csrf_hash);
+                    showAffiliationToast('info', res.message || ('Affiliation removed for ' + hospName + '.'));
+                } else {
+                    showAffiliationToast('error', res.message || 'Unable to cancel affiliation request.');
+                }
+            },
+            error: function(xhr, status, error) {
+                $btn.prop('disabled', false).html('<i class="fa fa-times-circle"></i> Confirm Cancel');
+                $('#cancelAffiliationModal').modal('hide');
+                $('.modal-backdrop').remove();
+                $('body').removeClass('modal-open').css('padding-right', '');
+                showAffiliationToast('error', 'A network error occurred. Please try again.');
+            }
+        });
+    });
+
+    // 5. VIEW HOSPITAL PROFILE & FACILITIES MODAL (DYNAMIC AJAX)
     $(document).on('click', '.view-hospital-profile-btn', function(e) {
         e.preventDefault();
         var hid = $(this).attr('data-id');
@@ -814,12 +1006,26 @@ $(document).ready(function() {
 
                     // Affiliation Action in Modal
                     var $statusWrap = $('#hp_affiliation_action');
+                    var safeHospName = $('<div>').text(d.name).html();
+
                     if (d.affiliation_status === 'verified') {
-                        $statusWrap.html('<span style="background: #dcfce7; color: #15803d; font-weight: 700; font-size: 12px; padding: 6px 14px; border-radius: 8px;"><i class="fa fa-check-circle"></i> Affiliated & Verified</span>');
+                        $statusWrap.html(
+                            '<div style="display:inline-flex;align-items:center;gap:8px;">' +
+                                '<span style="background: #dcfce7; color: #15803d; font-weight: 700; font-size: 12px; padding: 6px 14px; border-radius: 8px;"><i class="fa fa-check-circle"></i> Affiliated &amp; Verified</span>' +
+                                '<button type="button" class="btn btn-xs btn-default cancel-affiliate-btn" data-id="' + d.id + '" data-name="' + safeHospName + '" data-action="unlink" style="color: #dc2626; border-color: #fecaca; background: #fff5f5; border-radius: 6px; padding: 6px 10px; font-weight: 700;"><i class="fa fa-chain-broken"></i> Unlink</button>' +
+                            '</div>'
+                        );
                     } else if (d.affiliation_status === 'pending') {
-                        $statusWrap.html('<span style="background: #fef3c7; color: #b45309; font-weight: 700; font-size: 12px; padding: 6px 14px; border-radius: 8px;"><i class="fa fa-clock-o"></i> Pending Hospital Verification</span>');
+                        $statusWrap.html(
+                            '<div style="display:inline-flex;align-items:center;gap:8px;">' +
+                                '<span style="background: #fef3c7; color: #b45309; font-weight: 700; font-size: 12px; padding: 6px 14px; border-radius: 8px;"><i class="fa fa-clock-o"></i> Pending Verification</span>' +
+                                '<button type="button" class="btn btn-xs btn-default cancel-affiliate-btn" data-id="' + d.id + '" data-name="' + safeHospName + '" data-action="cancel" style="color: #dc2626; border-color: #fca5a5; background: #fef2f2; border-radius: 6px; padding: 6px 10px; font-weight: 700;"><i class="fa fa-times-circle"></i> Cancel Request</button>' +
+                            '</div>'
+                        );
                     } else {
-                        $statusWrap.html('<button type="button" class="btn btn-sm btn-primary open-affiliate-modal-btn" data-id="' + d.id + '" data-name="' + $('<div>').text(d.name).html() + '" style="background: var(--upchar-teal); border-color: var(--upchar-teal); font-weight: 700;"><i class="fa fa-plus-circle"></i> Affiliate with this Hospital</button>');
+                        $statusWrap.html(
+                            '<button type="button" class="btn btn-sm btn-primary open-affiliate-modal-btn" data-id="' + d.id + '" data-name="' + safeHospName + '" style="background: var(--upchar-teal); border-color: var(--upchar-teal); font-weight: 700;"><i class="fa fa-plus-circle"></i> Affiliate with this Hospital</button>'
+                        );
                     }
 
                     $('#hp_content').fadeIn(150);
