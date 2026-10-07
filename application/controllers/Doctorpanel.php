@@ -960,7 +960,10 @@ public function gallery()
 			}
 		}
 
-		$this->load->view('doctorpanel/gallery');
+		$userid = $this->did;
+		$druserid = $this->session->userdata('druserid');
+		$data['gallery'] = $this->db->group_start()->where('user_id', $userid)->or_where('user_id', $druserid)->group_end()->order_by('id', 'DESC')->get('doctorgallery')->result_array();
+		$this->load->view('doctorpanel/gallery', $data);
 	}
 
 	public function managegallery()

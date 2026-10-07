@@ -613,10 +613,10 @@
     .sidebar,
     body.sidebar-light .sidebar,
     body.sidebar-light:not(.sidebar-collapsed) .sidebar {
-        position: -webkit-sticky !important;
-        position: sticky !important;
+        position: fixed !important;
         top: 64px !important;
         left: 0 !important;
+        bottom: 0 !important;
         width: 260px !important;
         min-width: 260px !important;
         max-width: 260px !important;
@@ -626,18 +626,27 @@
         max-height: calc(100vh - 64px) !important;
         overflow-y: auto !important;
         overflow-x: hidden !important;
+        -webkit-overflow-scrolling: touch !important;
         background-color: var(--sidebar-bg, #ffffff) !important;
         background: var(--sidebar-bg, #ffffff) !important;
         color: var(--sidebar-text-dark, #0f172a) !important;
         border-right: 1px solid var(--sidebar-border, #e2e8f0) !important;
         box-shadow: var(--sidebar-shadow, 2px 0 8px rgba(0, 0, 0, 0.04)) !important;
-        z-index: 900 !important;
+        z-index: 950 !important;
         margin: 0 !important;
         padding: 0 !important;
         box-sizing: border-box !important;
         transition: width 0.25s ease, min-width 0.25s ease, flex 0.25s ease !important;
         scrollbar-width: thin !important;
         scrollbar-color: #cbd5e1 transparent !important;
+    }
+
+    .dashboard-layout .main-content,
+    .main-content {
+        margin-left: 260px !important;
+        width: calc(100% - 260px) !important;
+        min-width: 0 !important;
+        flex: 1 1 auto !important;
     }
 
     .sidebar::-webkit-scrollbar {
@@ -657,8 +666,9 @@
         background: transparent !important;
         background-color: transparent !important;
         margin: 0 !important;
-        padding: 12px 0 30px 0 !important;
+        padding: 12px 0 90px 0 !important;
         border-radius: 0 !important;
+        min-height: 100% !important;
     }
 
     .sidebar-group-title {
