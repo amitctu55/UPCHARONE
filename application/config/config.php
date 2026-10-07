@@ -463,6 +463,8 @@ $config['csrf_cookie_name'] = 'csrf_cookie_name';
 $config['csrf_expire'] = 7200;
 $config['csrf_regenerate'] = FALSE;
 $config['csrf_exclude_uris'] = array(
+	'doctorpanel/update_step1',
+	'update_step1',
 	'doctorpanel/ajax_affiliate_hospital',
 	'doctorpanel/ajax_cancel_affiliation',
 	'doctorpanel/update_video_consult_status',

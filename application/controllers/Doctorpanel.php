@@ -231,8 +231,9 @@ class Doctorpanel extends CI_Controller
 	public function profile_step1()
 	{
 		$druserid = $this->session->userdata('druserid');
-		if($this->input->post('submit')) {
-			$this->Doctor_Model->profile_step1();
+		if($this->input->post('submit') || $this->input->post('name')) {
+			$this->update_step1();
+			return;
 		}
 		
 		$data['data'] = $this->db->where('id', $this->did)->or_where('user_id', $druserid)->get('profile_dr')->row();
@@ -246,6 +247,115 @@ class Doctorpanel extends CI_Controller
 		$this->load->view('doctorpanel/profile_step1', $data);
 	}
 	
+	/**
+	 * Dedicated Controller Handler for Doctor Profile Step 1 Form
+	 * Strict Form Validation & Secure Session Binding
+	 */
+	public function update_step1()
+	{
+		$is_ajax = $this->input->is_ajax_request() || ($this->input->post('is_ajax') == '1');
+
+		// Secure doctor ID strictly from session - NEVER from POST
+		$druserid = $this->session->userdata('druserid');
+		$doctor_id = $this->did ?: intval($druserid);
+
+		if ($doctor_id <= 0) {
+			if ($is_ajax) {
+				header('Content-Type: application/json');
+				echo json_encode(array(
+					'status'  => 'error',
+					'message' => 'Your doctor session has expired. Please log in again.'
+				));
+				return;
+			}
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-danger'>Session expired. Please log in again.</div>");
+			redirect('doctor-login');
+			return;
+		}
+
+		// Load CodeIgniter Form Validation Library
+		$this->load->library('form_validation');
+
+		// Strict Validation Rules
+		$this->form_validation->set_rules('name', 'Doctor Full Name', 'trim|required|min_length[3]|max_length[100]');
+		$this->form_validation->set_rules('email', 'Official Email Address', 'trim|required|valid_email|max_length[100]');
+		$this->form_validation->set_rules('mci_number', 'Medical Registration Number', 'trim|required|min_length[3]|max_length[50]');
+		$this->form_validation->set_rules('city', 'Practice City', 'trim|required');
+		$this->form_validation->set_rules('gender', 'Gender Identity', 'trim|required|in_list[M,F,O]');
+		$this->form_validation->set_rules('experience', 'Clinical Experience', 'trim|numeric|greater_than_equal_to[0]|less_than_equal_to[60]');
+
+		if ($this->input->post('mobile')) {
+			$this->form_validation->set_rules('mobile', 'Mobile Number', 'trim|regex_match[/^[0-9]{10}$/]');
+		}
+
+		if ($this->form_validation->run() == FALSE) {
+			if ($is_ajax) {
+				header('Content-Type: application/json');
+				echo json_encode(array(
+					'status'    => 'error',
+					'message'   => validation_errors('<p style="margin:2px 0;">', '</p>'),
+					'errors'    => $this->form_validation->error_array(),
+					'csrf_hash' => $this->security->get_csrf_hash()
+				));
+				return;
+			}
+
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-danger'>" . validation_errors() . "</div>");
+			redirect('profile_step1');
+			return;
+		}
+
+		// Validation Passed: Construct strictly whitelisted payload
+		$specializations = (array)$this->input->post('specialisation');
+		$primary_spl = (!empty($specializations) && isset($specializations[0])) ? intval($specializations[0]) : 0;
+
+		$update_data = array(
+			'fname'           => trim($this->input->post('name', TRUE)),
+			'email'           => trim($this->input->post('email', TRUE)),
+			'mobile'          => trim($this->input->post('mobile', TRUE)),
+			'regd_no'         => trim($this->input->post('mci_number', TRUE)),
+			'exp'             => intval($this->input->post('experience', TRUE)),
+			'city'            => trim($this->input->post('city', TRUE)),
+			'gender'          => trim($this->input->post('gender', TRUE)),
+			'specialization'  => $primary_spl,
+			'specializations' => $specializations
+		);
+
+		// Execute update via dedicated isolated model method
+		$result = $this->Doctor_Model->update_doctor_profile($doctor_id, $update_data);
+
+		if ($result) {
+			if ($is_ajax) {
+				header('Content-Type: application/json');
+				echo json_encode(array(
+					'status'    => 'success',
+					'message'   => 'Clinical profile details updated successfully!',
+					'next_step' => base_url('profile_step2'),
+					'csrf_hash' => $this->security->get_csrf_hash()
+				));
+				return;
+			}
+
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-success' style='border-radius: 8px;'><strong><i class='fa fa-check-circle'></i> Success!</strong> Profile details saved successfully.</div>");
+			redirect('profile_step2');
+			return;
+		} else {
+			if ($is_ajax) {
+				header('Content-Type: application/json');
+				echo json_encode(array(
+					'status'    => 'error',
+					'message'   => 'An error occurred while saving your profile. Please try again.',
+					'csrf_hash' => $this->security->get_csrf_hash()
+				));
+				return;
+			}
+
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-danger'>Unable to update profile at this time. Please try again.</div>");
+			redirect('profile_step1');
+			return;
+		}
+	}
+
 	public function profile_step2()
 	{
 		if(isset($_POST['submit']))
@@ -1225,7 +1335,7 @@ public function gallery()
 
 			// Also fetch detailed records from doctor_schedules if available
 			$day_records = array();
-			if ($this->db->table_exists('doctor_schedules') && $t->practice_id > 0) {
+			if ($this->db->table_exists('doctor_schedules')) {
 				$day_records = $this->db->where('doctor_id', $userid)
 				                        ->where('clinic_id', $t->practice_id)
 				                        ->where('is_active', 1)
@@ -1254,7 +1364,7 @@ public function gallery()
 		if ($id) {
 			$t = $this->db->get_where('timing', array('id' => $id, 'user_id' => $userid))->row();
 			if ($t) {
-				if ($this->db->table_exists('doctor_schedules') && $t->practice_id > 0) {
+				if ($this->db->table_exists('doctor_schedules')) {
 					$this->db->where('doctor_id', $userid)->where('clinic_id', $t->practice_id)->delete('doctor_schedules');
 				}
 				$this->db->where('id', $id)->where('user_id', $userid)->delete('timing');

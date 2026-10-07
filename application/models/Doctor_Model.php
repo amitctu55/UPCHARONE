@@ -65,6 +65,81 @@ class Doctor_Model extends CI_Model
 		}
 	}
 	
+	/**
+	 * Dedicated Doctor Profile Update Method
+	 * Completely isolated from patient/generic user updates.
+	 * Whitelists only safe profile fields and explicitly protects sensitive fields (passwords, balances, roles).
+	 *
+	 * @param int $doctor_id Secure doctor ID from active session
+	 * @param array $data Array of fields to update
+	 * @return bool True on success, False on failure
+	 */
+	public function update_doctor_profile($doctor_id, $data = array())
+	{
+		$doctor_id = intval($doctor_id);
+		if ($doctor_id <= 0 || empty($data) || !is_array($data)) {
+			return false;
+		}
+
+		// Strict whitelist of allowed fields to prevent mass assignment of sensitive data
+		$allowed_fields = array(
+			'fname',
+			'lname',
+			'email',
+			'mobile',
+			'gender',
+			'city',
+			'regd_no',
+			'regd_council',
+			'regd_year',
+			'exp',
+			'specialization'
+		);
+
+		$update_payload = array();
+		foreach ($allowed_fields as $field) {
+			if (array_key_exists($field, $data) && $data[$field] !== null) {
+				$update_payload[$field] = $data[$field];
+			}
+		}
+
+		if (empty($update_payload) && !isset($data['specializations'])) {
+			return false;
+		}
+
+		$this->db->trans_start();
+
+		// Update profile_dr if fields are present
+		if (!empty($update_payload)) {
+			$update_payload['modified_date'] = date('Y-m-d H:i:s');
+			$this->db->where('id', $doctor_id)
+			         ->or_where('user_id', $doctor_id)
+			         ->update('profile_dr', $update_payload);
+		}
+
+		// Update specializations if provided in payload
+		if (isset($data['specializations']) && is_array($data['specializations'])) {
+			$this->db->where('user_id', $doctor_id)->delete('dr_specialization');
+			$spldata = array();
+			foreach ($data['specializations'] as $sid) {
+				$sid = intval($sid);
+				if ($sid > 0) {
+					$spldata[] = array(
+						'user_id'           => $doctor_id,
+						'specialization_id' => $sid
+					);
+				}
+			}
+			if (!empty($spldata)) {
+				$this->db->insert_batch('dr_specialization', $spldata);
+			}
+		}
+
+		$this->db->trans_complete();
+
+		return $this->db->trans_status();
+	}
+
 	public function profile_step1()
 	{
 		$doc_id = $this->did ?: $this->session->userdata('druserid');

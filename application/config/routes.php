@@ -144,6 +144,10 @@ $route['upcharhospital'] 				= 'Doctorpanel/upcharhospital';
 $route['doctorpanel/ajax_affiliate_hospital'] = 'Doctorpanel/ajax_affiliate_hospital';
 $route['doctorpanel/ajax_cancel_affiliation'] = 'Doctorpanel/ajax_cancel_affiliation';
 $route['doctorpanel/cancel_affiliation/(:any)'] = 'Doctorpanel/cancel_affiliation/$1';
+$route['doctorpanel/datetime'] 				= 'Doctorpanel/datetime';
+$route['datetime'] 							= 'Doctorpanel/datetime';
+$route['doctorpanel/delete_timing'] 		= 'Doctorpanel/delete_timing';
+$route['doctorpanel/delete_timing/(:any)'] 	= 'Doctorpanel/delete_timing/$1';
 $route['manageappointment'] 			= 'doctorpanel/manageappointment';
 
 $route['progress_profile'] 				= 'doctorpanel/progress_profile';
@@ -152,6 +156,8 @@ $route['progress_profile3'] 			= 'doctorpanel/progress_profile3';
 $route['progress_profile4'] 			= 'doctorpanel/progress_profile4';
 
 $route['profile_step1'] 				= 'doctorpanel/profile_step1';
+$route['doctorpanel/update_step1'] 		= 'Doctorpanel/update_step1';
+$route['update_step1'] 					= 'Doctorpanel/update_step1';
 $route['profile_step2'] 				= 'doctorpanel/profile_step2';
 $route['profile_step3'] 				= 'doctorpanel/profile_step3';
 $route['profile_step4'] 				= 'doctorpanel/profile_step4';
