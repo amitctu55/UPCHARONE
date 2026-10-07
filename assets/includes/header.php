@@ -683,91 +683,96 @@
 
     .sidebar .nav-sidebar {
         list-style: none !important;
-        padding: 0 8px !important;
+        padding: 0 !important;
         margin: 0 !important;
         background: transparent !important;
     }
 
     .sidebar .nav-sidebar > li {
         display: block !important;
-        width: 100% !important;
-        margin-bottom: 2px !important;
+        width: auto !important;
+        margin: 4px 12px !important;
         background: transparent !important;
     }
 
     .sidebar .nav-sidebar > li > a {
-        color: var(--sidebar-text, #334155) !important;
+        color: #334155 !important;
         font-size: 13.5px !important;
         font-weight: 600 !important;
         display: flex !important;
         align-items: center !important;
         gap: 12px !important;
         padding: 9px 14px !important;
-        border-radius: var(--radius-md) !important;
-        transition: all 0.18s ease !important;
+        border-radius: 8px !important;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
         text-decoration: none !important;
         width: 100% !important;
         white-space: nowrap !important;
         overflow: hidden !important;
         background: transparent !important;
-        border-left: 3px solid transparent !important;
+        border: 1px solid transparent !important;
     }
 
     .sidebar .nav-sidebar > li > a i {
-        color: var(--sidebar-icon, #0284c7) !important;
+        color: #64748b !important;
         font-size: 15px !important;
         width: 20px !important;
         text-align: center !important;
         flex-shrink: 0 !important;
-        transition: color 0.18s ease !important;
+        transition: color 0.2s ease !important;
     }
 
     .sidebar .nav-sidebar > li > a span {
-        color: var(--sidebar-text, #334155) !important;
+        color: #334155 !important;
         font-size: 13px !important;
         font-weight: 600 !important;
         white-space: nowrap !important;
         overflow: hidden !important;
         text-overflow: ellipsis !important;
+        transition: color 0.2s ease !important;
     }
 
     .sidebar .nav-sidebar > li:hover > a {
-        background: var(--sidebar-hover-bg, #f1f5f9) !important;
-        color: var(--sidebar-text-dark, #0f172a) !important;
+        background: rgba(0, 168, 255, 0.08) !important;
+        color: #08364b !important;
     }
 
     .sidebar .nav-sidebar > li:hover > a i {
-        color: var(--text-brand, #0284c7) !important;
+        color: #00a8ff !important;
     }
 
     .sidebar .nav-sidebar > li:hover > a span {
-        color: var(--sidebar-text-dark, #0f172a) !important;
+        color: #08364b !important;
     }
 
-    /* Active State: High-Contrast Accent Pill */
+    /* Active State: Deep Navy Pill with Electric Cyan Icon */
     .sidebar .nav-sidebar > li.active > a {
-        background: var(--sidebar-active-bg, #e0f2fe) !important;
-        color: #0369a1 !important;
-        border-left: 3px solid var(--text-brand, #0284c7) !important;
-        box-shadow: 0 1px 3px rgba(2, 132, 199, 0.08) !important;
+        background: #08364b !important;
+        color: #ffffff !important;
+        font-weight: 600 !important;
+        box-shadow: 0 2px 8px rgba(8, 54, 75, 0.18) !important;
+        border: 1px solid rgba(0, 168, 255, 0.25) !important;
     }
 
     .sidebar .nav-sidebar > li.active > a i {
-        color: var(--text-brand, #0284c7) !important;
+        color: #00a8ff !important;
     }
 
     .sidebar .nav-sidebar > li.active > a span {
-        color: #0369a1 !important;
-        font-weight: 700 !important;
+        color: #ffffff !important;
+        font-weight: 600 !important;
     }
 
     .menu-badge-ehr {
-        background: var(--text-brand) !important;
-        color: var(--text-white) !important;
-        font-size: 10px !important;
-        font-weight: 800 !important;
-        padding: 1px 6px !important;
-        border-radius: var(--radius-sm) !important;
+        background: #e0f2fe !important;
+        color: #0369a1 !important;
+        font-size: 10.5px !important;
+        font-weight: 700 !important;
+        padding: 2px 7px !important;
+        border-radius: var(--radius-full) !important;
+        letter-spacing: 0.5px !important;
+        margin-left: auto !important;
+    }
         margin-left: auto !important;
         letter-spacing: 0.5px !important;
     }
@@ -846,7 +851,7 @@
         flex-shrink: 0 !important;
     }
 
-    /* Fluid Main Content Container */
+    /* Fluid Main Content Container (Pushed safely past fixed sidebar) */
     .dashboard-layout .main-content, 
     .dashboard-layout #content, 
     .main-content,
@@ -855,48 +860,61 @@
         min-width: 0 !important;
         width: calc(100% - 260px) !important;
         max-width: calc(100% - 260px) !important;
+        margin-left: 260px !important;
+        margin-top: 0 !important;
+        margin-right: 0 !important;
+        margin-bottom: 0 !important;
         display: flex !important;
         flex-direction: column !important;
         background: var(--upchar-slate-50) !important;
         padding: 0 !important;
-        margin: 0 !important;
         overflow-x: hidden !important;
         position: relative !important;
         z-index: 1 !important;
         box-sizing: border-box !important;
-        transition: width 0.25s ease, max-width 0.25s ease !important;
+        transition: margin-left 0.25s ease-in-out, width 0.25s ease-in-out, max-width 0.25s ease-in-out !important;
     }
 
     .main-content .page-content, 
     .main-content .pag_cstm,
     .pag_cstm {
         flex: 1 0 auto !important;
-        padding: 20px 24px !important;
+        padding: 24px 32px !important;
         margin: 0 !important;
         min-height: calc(100vh - 124px) !important;
         width: 100% !important;
         box-sizing: border-box !important;
     }
 
-    /* Ensure main-content offsets past the fixed sidebar on desktop */
-    body .main-content,
-    .dashboard-layout .main-content {
-        margin-left: 260px !important;
-    }
+    /* Collapsed Sidebar State (Desktop 72px) */
+    body.sidebar-collapsed #content,
     body.sidebar-collapsed .main-content,
+    .dashboard-layout.sidebar-collapsed #content,
     .dashboard-layout.sidebar-collapsed .main-content {
-        margin-left: 70px !important;
+        margin-left: 72px !important;
+        width: calc(100% - 72px) !important;
+        max-width: calc(100% - 72px) !important;
     }
+
     @media screen and (min-width: 768px) and (max-width: 1024px) {
+        body #content,
         body .main-content,
+        .dashboard-layout #content,
         .dashboard-layout .main-content {
-            margin-left: 70px !important;
+            margin-left: 72px !important;
+            width: calc(100% - 72px) !important;
+            max-width: calc(100% - 72px) !important;
         }
     }
+
     @media screen and (max-width: 767px) {
+        body #content,
         body .main-content,
+        .dashboard-layout #content,
         .dashboard-layout .main-content {
             margin-left: 0 !important;
+            width: 100% !important;
+            max-width: 100% !important;
         }
     }
     body .sidebar .logopanel {
@@ -1297,7 +1315,7 @@
         <div class="header-center hidden-xs">
             <div class="header-search-bar" id="globalSearchTrigger" title="Quick Search (Press Ctrl+K)">
                 <i class="fa fa-search" aria-hidden="true"></i>
-                <input type="text" placeholder="Search patients, appointments, records..." readonly aria-label="Search patients, appointments, and records">
+                <input type="text" placeholder="Search patient by name, mobile, ABHA ID..." readonly aria-label="Search patient by name, mobile, ABHA ID">
                 <kbd class="search-kbd-badge">Ctrl+K</kbd>
             </div>
         </div>
