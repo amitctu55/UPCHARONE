@@ -358,74 +358,1019 @@ class Doctorpanel extends CI_Controller
 
 	public function profile_step2()
 	{
-		if(isset($_POST['submit']))
-			$this->Doctor_Model->profile_step2();
-		$data['data']=$this->db->get_where('profile_dr',array('id'=>$this->did))->row();	
-		$this->load->view('doctorpanel/profile_step2',$data);
+		$druserid = $this->session->userdata('druserid');
+		if ($this->input->post('submit') || $this->input->post('regno')) {
+			$this->update_step2();
+			return;
+		}
+		$data['data'] = $this->db->where('id', $this->did)->or_where('user_id', $druserid)->get('profile_dr')->row();	
+		$this->load->view('doctorpanel/profile_step2', $data);
+	}
+
+	/**
+	 * Dedicated Controller Handler for Doctor Profile Step 2 Form (Medical Registration)
+	 * Strict Form Validation & Secure Session Binding
+	 */
+	public function update_step2()
+	{
+		$is_ajax = $this->input->is_ajax_request() || ($this->input->post('is_ajax') == '1');
+
+		// Secure doctor ID strictly from session - NEVER from POST
+		$druserid = $this->session->userdata('druserid');
+		$doctor_id = $this->did ?: intval($druserid);
+
+		if ($doctor_id <= 0) {
+			if ($is_ajax) {
+				header('Content-Type: application/json');
+				echo json_encode(array(
+					'status'  => 'error',
+					'message' => 'Your doctor session has expired. Please log in again.'
+				));
+				return;
+			}
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-danger'>Session expired. Please log in again.</div>");
+			redirect('doctor-login');
+			return;
+		}
+
+		// Load CodeIgniter Form Validation Library
+		$this->load->library('form_validation');
+
+		// Strict Validation Rules
+		$this->form_validation->set_rules('regno', 'Medical Council Registration Number', 'trim|required|min_length[3]|max_length[50]');
+		$this->form_validation->set_rules('council', 'Registration Council', 'trim|required|numeric');
+		$this->form_validation->set_rules('year', 'Registration Year', 'trim|required|numeric|greater_than_equal_to[1950]|less_than_equal_to[' . date('Y') . ']');
+
+		if ($this->form_validation->run() == FALSE) {
+			if ($is_ajax) {
+				header('Content-Type: application/json');
+				echo json_encode(array(
+					'status'    => 'error',
+					'message'   => validation_errors('<p style="margin:2px 0;">', '</p>'),
+					'errors'    => $this->form_validation->error_array(),
+					'csrf_hash' => $this->security->get_csrf_hash()
+				));
+				return;
+			}
+
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-danger'>" . validation_errors() . "</div>");
+			redirect('profile_step2');
+			return;
+		}
+
+		// Construct sanitized whitelisted payload
+		$update_data = array(
+			'regd_no'      => trim($this->input->post('regno', TRUE)),
+			'regd_council' => intval($this->input->post('council', TRUE)),
+			'regd_year'    => intval($this->input->post('year', TRUE))
+		);
+
+		// Update using dedicated isolated model method
+		$result = $this->Doctor_Model->update_doctor_profile($doctor_id, $update_data);
+
+		if ($result) {
+			if ($is_ajax) {
+				header('Content-Type: application/json');
+				echo json_encode(array(
+					'status'    => 'success',
+					'message'   => 'Medical registration verified and saved successfully!',
+					'next_step' => base_url('profile_step3'),
+					'csrf_hash' => $this->security->get_csrf_hash()
+				));
+				return;
+			}
+
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-success' style='border-radius: 8px;'><strong><i class='fa fa-check-circle'></i> Success!</strong> Medical registration credentials saved successfully.</div>");
+			redirect('profile_step3');
+			return;
+		} else {
+			if ($is_ajax) {
+				header('Content-Type: application/json');
+				echo json_encode(array(
+					'status'    => 'error',
+					'message'   => 'Unable to save medical registration. Please try again.',
+					'csrf_hash' => $this->security->get_csrf_hash()
+				));
+				return;
+			}
+
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-danger'>Unable to save medical registration. Please try again.</div>");
+			redirect('profile_step2');
+			return;
+		}
 	}
 	
+	/**
+	 * Dedicated Controller Handler for Doctor Profile Step 3 Form (Education & Qualifications)
+	 * Strict Form Validation & Secure Session Binding
+	 */
+	public function update_step3()
+	{
+		$is_ajax = $this->input->is_ajax_request() || ($this->input->post('is_ajax') == '1');
+
+		// Secure doctor ID strictly from session - NEVER from POST
+		$druserid = $this->session->userdata('druserid');
+		$doctor_id = $this->did ?: intval($druserid);
+
+		if ($doctor_id <= 0) {
+			if ($is_ajax) {
+				header('Content-Type: application/json');
+				echo json_encode(array(
+					'status'  => 'error',
+					'message' => 'Your doctor session has expired. Please log in again.'
+				));
+				return;
+			}
+			redirect('doctor-login');
+			return;
+		}
+
+		// CI Form Validation Rules
+		$this->load->library('form_validation');
+		$this->form_validation->set_rules('college', 'College / Institute', 'trim|required|max_length[120]');
+		$this->form_validation->set_rules('year', 'Year of Completion', 'trim|required|numeric|exact_length[4]|greater_than_equal_to[1950]|less_than_equal_to[' . date('Y') . ']');
+		$this->form_validation->set_rules('exp', 'Years of Experience', 'trim|required|numeric|greater_than_equal_to[0]|less_than_equal_to[75]');
+
+		// Validate qualification presence
+		$qual_post = $this->input->post('qualification');
+		$qual_valid = !empty($qual_post) && is_array($qual_post);
+
+		if ($this->form_validation->run() == FALSE || !$qual_valid) {
+			$errors = array();
+			$fields = array('college', 'year', 'exp');
+			foreach ($fields as $field) {
+				$err = form_error($field, '', '');
+				if (!empty($err)) {
+					$errors[$field] = strip_tags($err);
+				}
+			}
+
+			if (!$qual_valid) {
+				$errors['qualification'] = 'Please select at least one degree/qualification.';
+			}
+
+			if ($is_ajax) {
+				header('Content-Type: application/json');
+				echo json_encode(array(
+					'status'    => 'error',
+					'message'   => 'Please fill out all required academic details accurately.',
+					'errors'    => $errors,
+					'csrf_hash' => $this->security->get_csrf_hash()
+				));
+				return;
+			}
+
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-danger'>Please correct the highlighted errors.</div>");
+			redirect('profile_step3');
+			return;
+		}
+
+		// Construct sanitized whitelisted payload
+		$update_data = array(
+			'college'        => trim($this->input->post('college', TRUE)),
+			'year'           => intval($this->input->post('year', TRUE)),
+			'exp'            => intval($this->input->post('exp', TRUE)),
+			'qualifications' => array_map('intval', (array)$qual_post)
+		);
+
+		// Update using dedicated isolated model method
+		$result = $this->Doctor_Model->update_doctor_profile($doctor_id, $update_data);
+
+		if ($result) {
+			if ($is_ajax) {
+				header('Content-Type: application/json');
+				echo json_encode(array(
+					'status'    => 'success',
+					'message'   => 'Education qualifications and experience saved successfully!',
+					'next_step' => base_url('profile_about'),
+					'csrf_hash' => $this->security->get_csrf_hash()
+				));
+				return;
+			}
+
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-success' style='border-radius: 8px;'><strong><i class='fa fa-check-circle'></i> Success!</strong> Education qualifications saved successfully.</div>");
+			redirect('profile_about');
+			return;
+		} else {
+			if ($is_ajax) {
+				header('Content-Type: application/json');
+				echo json_encode(array(
+					'status'    => 'error',
+					'message'   => 'Unable to save education qualifications. Please try again.',
+					'csrf_hash' => $this->security->get_csrf_hash()
+				));
+				return;
+			}
+
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-danger'>Unable to save education qualifications. Please try again.</div>");
+			redirect('profile_step3');
+			return;
+		}
+	}
+
 	public function profile_step3()
 	{
-		if(isset($_POST['submit']))
-			$this->Doctor_Model->profile_step3();
-		$data['data']=$this->db->get_where('profile_dr',array('id'=>$this->did))->row();	
-		$data_qua=$this->db->select('qualification_id')->get_where('dr_qualifications',array('user_id'=>$this->did))->result_array();
-		$data['data_qua']= array_map (function($value){
-					return $value['qualification_id'];
-				} , $data_qua);	
-		$this->load->view('doctorpanel/profile_step3',$data);
+		$druserid = $this->session->userdata('druserid');
+		if ($this->input->post('submit') || $this->input->post('college')) {
+			$this->update_step3();
+			return;
+		}
+
+		$data['data'] = $this->db->where('id', $this->did)->or_where('user_id', $druserid)->get('profile_dr')->row();
+		$doc_id = $data['data'] ? $data['data']->id : ($this->did ?: $druserid);
+
+		$data_qua = $this->db->select('qualification_id')->where('user_id', $doc_id)->or_where('user_id', $druserid)->get('dr_qualifications')->result_array();
+		$data['data_qua'] = array_map(function($value) {
+			return $value['qualification_id'];
+		}, $data_qua);
+
+		$data['degrees'] = $this->db->where('status', 1)->order_by('name', 'ASC')->get('master_degree')->result();
+
+		$this->load->view('doctorpanel/profile_step3', $data);
 	}
 	
+	/**
+	 * Dedicated Controller Handler for Doctor Profile Bio/About (Step 4)
+	 * Strict Form Validation & Secure Session Binding
+	 */
+	public function update_about()
+	{
+		$is_ajax = $this->input->is_ajax_request() || ($this->input->post('is_ajax') == '1');
+
+		$druserid = $this->session->userdata('druserid');
+		$doctor_id = $this->did ?: intval($druserid);
+
+		if ($doctor_id <= 0) {
+			if ($is_ajax) {
+				header('Content-Type: application/json');
+				echo json_encode(array(
+					'status'  => 'error',
+					'message' => 'Your doctor session has expired. Please log in again.'
+				));
+				return;
+			}
+			redirect('doctor-login');
+			return;
+		}
+
+		$this->load->library('form_validation');
+		$this->form_validation->set_rules('short_about', 'Short Summary', 'trim|required|max_length[350]');
+		$this->form_validation->set_rules('about', 'Detailed Biography', 'trim|required|min_length[10]');
+
+		if ($this->form_validation->run() == FALSE) {
+			$errors = array();
+			foreach (array('short_about', 'about') as $field) {
+				$err = form_error($field, '', '');
+				if (!empty($err)) {
+					$errors[$field] = strip_tags($err);
+				}
+			}
+
+			if ($is_ajax) {
+				header('Content-Type: application/json');
+				echo json_encode(array(
+					'status'    => 'error',
+					'message'   => 'Please complete your doctor summary and biography.',
+					'errors'    => $errors,
+					'csrf_hash' => $this->security->get_csrf_hash()
+				));
+				return;
+			}
+
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-danger'>Please correct the highlighted errors.</div>");
+			redirect('profile_about');
+			return;
+		}
+
+		$update_data = array(
+			'short_about' => trim($this->input->post('short_about', TRUE)),
+			'about'       => trim($this->input->post('about', FALSE))
+		);
+
+		$result = $this->Doctor_Model->update_doctor_profile($doctor_id, $update_data);
+
+		if ($result) {
+			if ($is_ajax) {
+				header('Content-Type: application/json');
+				echo json_encode(array(
+					'status'    => 'success',
+					'message'   => 'Doctor biography and summary saved successfully!',
+					'next_step' => base_url('profile_drpic'),
+					'csrf_hash' => $this->security->get_csrf_hash()
+				));
+				return;
+			}
+
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-success' style='border-radius: 8px;'><strong><i class='fa fa-check-circle'></i> Success!</strong> Doctor summary and biography saved successfully.</div>");
+			redirect('profile_drpic');
+			return;
+		} else {
+			if ($is_ajax) {
+				header('Content-Type: application/json');
+				echo json_encode(array(
+					'status'    => 'error',
+					'message'   => 'Unable to save biography. Please try again.',
+					'csrf_hash' => $this->security->get_csrf_hash()
+				));
+				return;
+			}
+
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-danger'>Unable to save biography. Please try again.</div>");
+			redirect('profile_about');
+			return;
+		}
+	}
+
 	public function profile_about()
 	{
-		if(isset($_POST['submit']))
-			$this->Doctor_Model->about();
-		$data['data']=$this->db->select('about,short_about')->get_where('profile_dr',array('id'=>$this->did))->row();
-		$this->load->view('doctorpanel/about',$data);
+		$druserid = $this->session->userdata('druserid');
+		if ($this->input->post('submit') || $this->input->post('short_about')) {
+			$this->update_about();
+			return;
+		}
+
+		$data['data'] = $this->db->select('about, short_about, fname, lname')->where('id', $this->did)->or_where('user_id', $druserid)->get('profile_dr')->row();
+		$this->load->view('doctorpanel/about', $data);
 	}
 	
 	
+	/**
+	 * Dedicated Controller Handler for Doctor Profile Picture Upload (Step 5)
+	 * Supports Drag-and-Drop, AJAX FormData, and Standard Multipart Upload
+	 */
+	public function update_drpic()
+	{
+		$is_ajax = $this->input->is_ajax_request() || ($this->input->post('is_ajax') == '1');
+
+		$druserid = $this->session->userdata('druserid');
+		$doctor_id = $this->did ?: intval($druserid);
+
+		if ($doctor_id <= 0) {
+			if ($is_ajax) {
+				header('Content-Type: application/json');
+				echo json_encode(array(
+					'status'  => 'error',
+					'message' => 'Your doctor session has expired. Please log in again.'
+				));
+				return;
+			}
+			redirect('doctor-login');
+			return;
+		}
+
+		$file_input_name = isset($_FILES['images']) && !empty($_FILES['images']['name']) ? 'images' : (isset($_FILES['drimage']) && !empty($_FILES['drimage']['name']) ? 'drimage' : '');
+
+		if (empty($file_input_name) || empty($_FILES[$file_input_name]['name'])) {
+			$current_img = $this->db->select('drimage')->where('id', $doctor_id)->or_where('user_id', $doctor_id)->get('profile_dr')->row('drimage');
+			if (!empty($current_img)) {
+				if ($is_ajax) {
+					header('Content-Type: application/json');
+					echo json_encode(array(
+						'status'    => 'success',
+						'message'   => 'Current profile photo retained.',
+						'next_step' => base_url('profile_idproof'),
+						'csrf_hash' => $this->security->get_csrf_hash()
+					));
+					return;
+				}
+				redirect('profile_idproof');
+				return;
+			}
+
+			if ($is_ajax) {
+				header('Content-Type: application/json');
+				echo json_encode(array(
+					'status'    => 'error',
+					'message'   => 'Please select a profile photograph to upload.',
+					'csrf_hash' => $this->security->get_csrf_hash()
+				));
+				return;
+			}
+
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-danger'>Please select a photograph to upload.</div>");
+			redirect('profile_drpic');
+			return;
+		}
+
+		$upload_dir = FCPATH . 'admin1947/public/assets/upload/';
+		if (!is_dir($upload_dir)) {
+			@mkdir($upload_dir, 0777, true);
+		}
+		if (!is_dir($upload_dir) && isset($_SERVER['DOCUMENT_ROOT'])) {
+			$upload_dir = rtrim(str_replace('\\', '/', $_SERVER['DOCUMENT_ROOT']), '/') . '/admin1947/public/assets/upload/';
+			if (!is_dir($upload_dir)) {
+				@mkdir($upload_dir, 0777, true);
+			}
+		}
+
+		$orig_name = $_FILES[$file_input_name]['name'];
+		$ext = strtolower(pathinfo($orig_name, PATHINFO_EXTENSION));
+		$allowed_exts = array('jpg', 'jpeg', 'png', 'webp');
+
+		if (!in_array($ext, $allowed_exts)) {
+			$err_msg = 'Invalid file format. Please upload JPG, PNG, or WebP images.';
+			if ($is_ajax) {
+				header('Content-Type: application/json');
+				echo json_encode(array(
+					'status'    => 'error',
+					'message'   => $err_msg,
+					'csrf_hash' => $this->security->get_csrf_hash()
+				));
+				return;
+			}
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-danger'>" . $err_msg . "</div>");
+			redirect('profile_drpic');
+			return;
+		}
+
+		$new_filename = 'dr_profile_pic_' . rand(1111111, 9999999) . date('Ymd') . '.' . $ext;
+
+		$config = array(
+			'upload_path'   => $upload_dir,
+			'allowed_types' => 'jpg|jpeg|png|webp|JPG|JPEG|PNG|WEBP',
+			'max_size'      => 5120,
+			'file_name'     => $new_filename,
+			'overwrite'     => TRUE
+		);
+
+		$this->load->library('upload');
+		$this->upload->initialize($config);
+
+		if (!$this->upload->do_upload($file_input_name)) {
+			$upload_error = strip_tags($this->upload->display_errors());
+			if ($is_ajax) {
+				header('Content-Type: application/json');
+				echo json_encode(array(
+					'status'    => 'error',
+					'message'   => 'Upload failed: ' . $upload_error,
+					'csrf_hash' => $this->security->get_csrf_hash()
+				));
+				return;
+			}
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-danger'>Upload failed: " . $upload_error . "</div>");
+			redirect('profile_drpic');
+			return;
+		}
+
+		$upload_data = $this->upload->data();
+		$final_filename = $upload_data['file_name'];
+
+		$result = $this->Doctor_Model->update_doctor_profile($doctor_id, array('drimage' => $final_filename));
+		$img_url = base_url('admin1947/public/assets/upload/' . $final_filename);
+
+		if ($result) {
+			if ($is_ajax) {
+				header('Content-Type: application/json');
+				echo json_encode(array(
+					'status'    => 'success',
+					'message'   => 'Profile picture uploaded successfully!',
+					'image_url' => $img_url,
+					'next_step' => base_url('profile_idproof'),
+					'csrf_hash' => $this->security->get_csrf_hash()
+				));
+				return;
+			}
+
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-success' style='border-radius: 8px;'><strong><i class='fa fa-check-circle'></i> Success!</strong> Profile picture updated successfully.</div>");
+			redirect('profile_idproof');
+			return;
+		} else {
+			if ($is_ajax) {
+				header('Content-Type: application/json');
+				echo json_encode(array(
+					'status'    => 'error',
+					'message'   => 'Unable to save profile picture to database.',
+					'csrf_hash' => $this->security->get_csrf_hash()
+				));
+				return;
+			}
+
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-danger'>Unable to save image details. Please try again.</div>");
+			redirect('profile_drpic');
+			return;
+		}
+	}
+
 	public function profile_drpic()
 	{
-		if(isset($_POST['submit']))
-			$this->Doctor_Model->profile_drpic();
-		$data['src']=$this->db->select('drimage')->get_where('profile_dr',array('id'=>$this->did))->row('drimage');	
-		if($data['src']=='')
-			$data['imagerequired']='required';
-		$this->load->view('doctorpanel/profile_drpic',$data);
+		$druserid = $this->session->userdata('druserid');
+		if ($this->input->post('submit') || isset($_FILES['images']) || isset($_FILES['drimage'])) {
+			$this->update_drpic();
+			return;
+		}
+
+		$doctor_row = $this->db->where('id', $this->did)->or_where('user_id', $druserid)->get('profile_dr')->row();
+		$data['data'] = $doctor_row;
+		$data['src']  = $doctor_row ? $doctor_row->drimage : '';
+		$data['imagerequired'] = empty($data['src']) ? 'required' : '';
+
+		$this->load->view('doctorpanel/profile_drpic', $data);
 	}
+	public function update_idproof()
+	{
+		$is_ajax = $this->input->is_ajax_request() || (isset($_POST['is_ajax']) && $_POST['is_ajax'] == '1');
+		$druserid = $this->session->userdata('druserid');
+		if (!$druserid) {
+			if ($is_ajax) {
+				header('Content-Type: application/json');
+				echo json_encode(array('status' => 'error', 'message' => 'Your doctor session has expired. Please log in again.'));
+				return;
+			}
+			redirect('doctor-login');
+			return;
+		}
+
+		$doctor_id = $this->did ? $this->did : $druserid;
+		$file_input_name = isset($_FILES['images']) && !empty($_FILES['images']['name']) 
+			? 'images' 
+			: (isset($_FILES['id_proof']) && !empty($_FILES['id_proof']['name']) ? 'id_proof' : '');
+
+		// If no file was uploaded
+		if (empty($file_input_name) || empty($_FILES[$file_input_name]['name'])) {
+			$current_proof = $this->db->select('id_proof')->where('id', $doctor_id)->or_where('user_id', $doctor_id)->get('profile_dr')->row('id_proof');
+			if (!empty($current_proof)) {
+				if ($is_ajax) {
+					header('Content-Type: application/json');
+					echo json_encode(array(
+						'status'    => 'success',
+						'message'   => 'Current identity proof retained.',
+						'next_step' => base_url('mci_proof'),
+						'csrf_hash' => $this->security->get_csrf_hash()
+					));
+					return;
+				}
+				redirect('mci_proof');
+				return;
+			}
+
+			if ($is_ajax) {
+				header('Content-Type: application/json');
+				echo json_encode(array(
+					'status'    => 'error',
+					'message'   => 'Please select an identity proof document to upload.',
+					'csrf_hash' => $this->security->get_csrf_hash()
+				));
+				return;
+			}
+
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-danger'>Please select an identity proof document to upload.</div>");
+			redirect('profile_idproof');
+			return;
+		}
+
+		$upload_dir = FCPATH . 'admin1947/public/assets/upload/';
+		if (!is_dir($upload_dir)) {
+			@mkdir($upload_dir, 0777, true);
+		}
+		if (!is_dir($upload_dir) && isset($_SERVER['DOCUMENT_ROOT'])) {
+			$upload_dir = rtrim(str_replace('\\', '/', $_SERVER['DOCUMENT_ROOT']), '/') . '/admin1947/public/assets/upload/';
+			if (!is_dir($upload_dir)) {
+				@mkdir($upload_dir, 0777, true);
+			}
+		}
+
+		$orig_name = $_FILES[$file_input_name]['name'];
+		$ext = strtolower(pathinfo($orig_name, PATHINFO_EXTENSION));
+		$allowed_exts = array('jpg', 'jpeg', 'png', 'webp', 'pdf');
+
+		if (!in_array($ext, $allowed_exts)) {
+			$err_msg = 'Invalid document format. Please upload JPG, PNG, WebP, or PDF files.';
+			if ($is_ajax) {
+				header('Content-Type: application/json');
+				echo json_encode(array(
+					'status'    => 'error',
+					'message'   => $err_msg,
+					'csrf_hash' => $this->security->get_csrf_hash()
+				));
+				return;
+			}
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-danger'>" . $err_msg . "</div>");
+			redirect('profile_idproof');
+			return;
+		}
+
+		$new_filename = 'dr_idproof_' . rand(1111111, 9999999) . date('Ymd') . '.' . $ext;
+
+		$config = array(
+			'upload_path'   => $upload_dir,
+			'allowed_types' => 'jpg|jpeg|png|webp|pdf|JPG|JPEG|PNG|WEBP|PDF',
+			'max_size'      => 10240,
+			'file_name'     => $new_filename,
+			'overwrite'     => TRUE
+		);
+
+		$this->load->library('upload');
+		$this->upload->initialize($config);
+
+		if (!$this->upload->do_upload($file_input_name)) {
+			$upload_error = strip_tags($this->upload->display_errors());
+			if ($is_ajax) {
+				header('Content-Type: application/json');
+				echo json_encode(array(
+					'status'    => 'error',
+					'message'   => 'Upload failed: ' . $upload_error,
+					'csrf_hash' => $this->security->get_csrf_hash()
+				));
+				return;
+			}
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-danger'>Upload failed: " . $upload_error . "</div>");
+			redirect('profile_idproof');
+			return;
+		}
+
+		$upload_data = $this->upload->data();
+		$final_filename = $upload_data['file_name'];
+
+		$result = $this->Doctor_Model->update_doctor_profile($doctor_id, array('id_proof' => $final_filename));
+		$file_url = base_url('admin1947/public/assets/upload/' . $final_filename);
+
+		if ($result) {
+			if ($is_ajax) {
+				header('Content-Type: application/json');
+				echo json_encode(array(
+					'status'    => 'success',
+					'message'   => 'Identity proof document uploaded successfully!',
+					'file_url'  => $file_url,
+					'file_name' => $final_filename,
+					'is_pdf'    => ($ext === 'pdf'),
+					'next_step' => base_url('mci_proof'),
+					'csrf_hash' => $this->security->get_csrf_hash()
+				));
+				return;
+			}
+
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-success' style='border-radius: 8px;'><strong><i class='fa fa-check-circle'></i> Success!</strong> Identity proof document updated successfully.</div>");
+			redirect('mci_proof');
+			return;
+		} else {
+			if ($is_ajax) {
+				header('Content-Type: application/json');
+				echo json_encode(array(
+					'status'    => 'error',
+					'message'   => 'Unable to save identity proof in database.',
+					'csrf_hash' => $this->security->get_csrf_hash()
+				));
+				return;
+			}
+
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-danger'>Unable to save document details. Please try again.</div>");
+			redirect('profile_idproof');
+			return;
+		}
+	}
+
 	public function profile_idproof()
 	{
-		if(isset($_POST['submit']))
-			$this->Doctor_Model->profile_idproof();
-		
-		$data['src']=$this->db->select('id_proof')->get_where('profile_dr',array('id'=>$this->did))->row('id_proof');
-		if($data['src']=='')
-			$data['imagerequired']='required';
-		$this->load->view('doctorpanel/profile_idproof',$data);
+		$druserid = $this->session->userdata('druserid');
+		if ($this->input->post('submit') || isset($_FILES['images']) || isset($_FILES['id_proof'])) {
+			$this->update_idproof();
+			return;
+		}
+
+		$doctor_row = $this->db->where('id', $this->did)->or_where('user_id', $druserid)->get('profile_dr')->row();
+		$data['data'] = $doctor_row;
+		$data['src']  = $doctor_row ? $doctor_row->id_proof : '';
+		$data['imagerequired'] = empty($data['src']) ? 'required' : '';
+
+		$this->load->view('doctorpanel/profile_idproof', $data);
 	}
 	
+	public function update_mci_proof()
+	{
+		$is_ajax = $this->input->is_ajax_request() || (isset($_POST['is_ajax']) && $_POST['is_ajax'] == '1');
+		$druserid = $this->session->userdata('druserid');
+		if (!$druserid) {
+			if ($is_ajax) {
+				header('Content-Type: application/json');
+				echo json_encode(array('status' => 'error', 'message' => 'Your doctor session has expired. Please log in again.'));
+				return;
+			}
+			redirect('doctor-login');
+			return;
+		}
+
+		$doctor_id = $this->did ? $this->did : $druserid;
+		$file_input_name = isset($_FILES['images']) && !empty($_FILES['images']['name']) 
+			? 'images' 
+			: (isset($_FILES['mic_proof']) && !empty($_FILES['mic_proof']['name']) ? 'mic_proof' : (isset($_FILES['mci_proof']) && !empty($_FILES['mci_proof']['name']) ? 'mci_proof' : ''));
+
+		// If no file was uploaded
+		if (empty($file_input_name) || empty($_FILES[$file_input_name]['name'])) {
+			$current_proof = $this->db->select('mic_proof')->where('id', $doctor_id)->or_where('user_id', $doctor_id)->get('profile_dr')->row('mic_proof');
+			if (!empty($current_proof)) {
+				if ($is_ajax) {
+					header('Content-Type: application/json');
+					echo json_encode(array(
+						'status'    => 'success',
+						'message'   => 'Current MCI / Council certificate retained.',
+						'next_step' => base_url('profile_regproof'),
+						'csrf_hash' => $this->security->get_csrf_hash()
+					));
+					return;
+				}
+				redirect('profile_regproof');
+				return;
+			}
+
+			if ($is_ajax) {
+				header('Content-Type: application/json');
+				echo json_encode(array(
+					'status'    => 'error',
+					'message'   => 'Please select an MCI / State Medical Council registration certificate to upload.',
+					'csrf_hash' => $this->security->get_csrf_hash()
+				));
+				return;
+			}
+
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-danger'>Please select an MCI / State Council registration certificate to upload.</div>");
+			redirect('mci_proof');
+			return;
+		}
+
+		$upload_dir = FCPATH . 'admin1947/public/assets/upload/';
+		if (!is_dir($upload_dir)) {
+			@mkdir($upload_dir, 0777, true);
+		}
+		if (!is_dir($upload_dir) && isset($_SERVER['DOCUMENT_ROOT'])) {
+			$upload_dir = rtrim(str_replace('\\', '/', $_SERVER['DOCUMENT_ROOT']), '/') . '/admin1947/public/assets/upload/';
+			if (!is_dir($upload_dir)) {
+				@mkdir($upload_dir, 0777, true);
+			}
+		}
+
+		$orig_name = $_FILES[$file_input_name]['name'];
+		$ext = strtolower(pathinfo($orig_name, PATHINFO_EXTENSION));
+		$allowed_exts = array('jpg', 'jpeg', 'png', 'webp', 'pdf');
+
+		if (!in_array($ext, $allowed_exts)) {
+			$err_msg = 'Invalid document format. Please upload JPG, PNG, WebP, or PDF files.';
+			if ($is_ajax) {
+				header('Content-Type: application/json');
+				echo json_encode(array(
+					'status'    => 'error',
+					'message'   => $err_msg,
+					'csrf_hash' => $this->security->get_csrf_hash()
+				));
+				return;
+			}
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-danger'>" . $err_msg . "</div>");
+			redirect('mci_proof');
+			return;
+		}
+
+		$new_filename = 'dr_micidproof_pic_' . rand(1111111, 9999999) . date('Ymd') . '.' . $ext;
+
+		$config = array(
+			'upload_path'   => $upload_dir,
+			'allowed_types' => 'jpg|jpeg|png|webp|pdf|JPG|JPEG|PNG|WEBP|PDF',
+			'max_size'      => 10240, // 10MB
+			'file_name'     => $new_filename,
+			'overwrite'     => TRUE
+		);
+
+		$this->load->library('upload');
+		$this->upload->initialize($config);
+
+		if (!$this->upload->do_upload($file_input_name)) {
+			$upload_error = strip_tags($this->upload->display_errors());
+			if ($is_ajax) {
+				header('Content-Type: application/json');
+				echo json_encode(array(
+					'status'    => 'error',
+					'message'   => 'Upload failed: ' . $upload_error,
+					'csrf_hash' => $this->security->get_csrf_hash()
+				));
+				return;
+			}
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-danger'>Upload failed: " . $upload_error . "</div>");
+			redirect('mci_proof');
+			return;
+		}
+
+		$upload_data = $this->upload->data();
+		$final_filename = $upload_data['file_name'];
+
+		$result = $this->Doctor_Model->update_doctor_profile($doctor_id, array('mic_proof' => $final_filename));
+		$file_url = base_url('admin1947/public/assets/upload/' . $final_filename);
+
+		if ($result) {
+			if ($is_ajax) {
+				header('Content-Type: application/json');
+				echo json_encode(array(
+					'status'    => 'success',
+					'message'   => 'MCI / Council registration certificate uploaded successfully!',
+					'file_url'  => $file_url,
+					'file_name' => $final_filename,
+					'is_pdf'    => ($ext === 'pdf'),
+					'next_step' => base_url('profile_regproof'),
+					'csrf_hash' => $this->security->get_csrf_hash()
+				));
+				return;
+			}
+
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-success' style='border-radius: 8px;'><strong><i class='fa fa-check-circle'></i> Success!</strong> MCI / Council registration certificate updated successfully.</div>");
+			redirect('profile_regproof');
+			return;
+		} else {
+			if ($is_ajax) {
+				header('Content-Type: application/json');
+				echo json_encode(array(
+					'status'    => 'error',
+					'message'   => 'Unable to save registration certificate in database.',
+					'csrf_hash' => $this->security->get_csrf_hash()
+				));
+				return;
+			}
+
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-danger'>Unable to save document details. Please try again.</div>");
+			redirect('mci_proof');
+			return;
+		}
+	}
+
 	public function mci_proof()
-    {
-		if(isset($_POST['submit']))
-		$this->Doctor_Model->mci_proof();
-		
-	    $data['src']=$this->db->select('mic_proof')->get_where('profile_dr',array('id'=>$this->did))->row('mic_proof');
-		if($data['src']=='')
-			$data['imagerequired']='required';
-		
-		$this->load->view('doctorpanel/mci_proof',$data);
+	{
+		$druserid = $this->session->userdata('druserid');
+		if ($this->input->post('submit') || isset($_FILES['images']) || isset($_FILES['mic_proof'])) {
+			$this->update_mci_proof();
+			return;
+		}
+
+		$doctor_row = $this->db->where('id', $this->did)->or_where('user_id', $druserid)->get('profile_dr')->row();
+		$data['data'] = $doctor_row;
+		$data['src']  = $doctor_row ? $doctor_row->mic_proof : '';
+		$data['imagerequired'] = empty($data['src']) ? 'required' : '';
+
+		$this->load->view('doctorpanel/mci_proof', $data);
 	}
 	
+	public function update_regproof()
+	{
+		$is_ajax = $this->input->is_ajax_request() || (isset($_POST['is_ajax']) && $_POST['is_ajax'] == '1');
+		$druserid = $this->session->userdata('druserid');
+		if (!$druserid) {
+			if ($is_ajax) {
+				header('Content-Type: application/json');
+				echo json_encode(array('status' => 'error', 'message' => 'Your doctor session has expired. Please log in again.'));
+				return;
+			}
+			redirect('doctor-login');
+			return;
+		}
+
+		$doctor_id = $this->did ? $this->did : $druserid;
+		$file_input_name = isset($_FILES['images']) && !empty($_FILES['images']['name']) 
+			? 'images' 
+			: (isset($_FILES['med_reg_proof']) && !empty($_FILES['med_reg_proof']['name']) ? 'med_reg_proof' : (isset($_FILES['regproof']) && !empty($_FILES['regproof']['name']) ? 'regproof' : ''));
+
+		// If no file was uploaded
+		if (empty($file_input_name) || empty($_FILES[$file_input_name]['name'])) {
+			$current_proof = $this->db->select('med_reg_proof')->where('id', $doctor_id)->or_where('user_id', $doctor_id)->get('profile_dr')->row('med_reg_proof');
+			if (!empty($current_proof)) {
+				if ($is_ajax) {
+					header('Content-Type: application/json');
+					echo json_encode(array(
+						'status'    => 'success',
+						'message'   => 'Current medical registration certificate retained.',
+						'next_step' => base_url('managepractice'),
+						'csrf_hash' => $this->security->get_csrf_hash()
+					));
+					return;
+				}
+				redirect('managepractice');
+				return;
+			}
+
+			if ($is_ajax) {
+				header('Content-Type: application/json');
+				echo json_encode(array(
+					'status'    => 'error',
+					'message'   => 'Please select a medical registration proof document to upload.',
+					'csrf_hash' => $this->security->get_csrf_hash()
+				));
+				return;
+			}
+
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-danger'>Please select a medical registration proof document to upload.</div>");
+			redirect('profile_regproof');
+			return;
+		}
+
+		$upload_dir = FCPATH . 'admin1947/public/assets/upload/';
+		if (!is_dir($upload_dir)) {
+			@mkdir($upload_dir, 0777, true);
+		}
+		if (!is_dir($upload_dir) && isset($_SERVER['DOCUMENT_ROOT'])) {
+			$upload_dir = rtrim(str_replace('\\', '/', $_SERVER['DOCUMENT_ROOT']), '/') . '/admin1947/public/assets/upload/';
+			if (!is_dir($upload_dir)) {
+				@mkdir($upload_dir, 0777, true);
+			}
+		}
+
+		$orig_name = $_FILES[$file_input_name]['name'];
+		$ext = strtolower(pathinfo($orig_name, PATHINFO_EXTENSION));
+		$allowed_exts = array('jpg', 'jpeg', 'png', 'webp', 'pdf');
+
+		if (!in_array($ext, $allowed_exts)) {
+			$err_msg = 'Invalid document format. Please upload JPG, PNG, WebP, or PDF files.';
+			if ($is_ajax) {
+				header('Content-Type: application/json');
+				echo json_encode(array(
+					'status'    => 'error',
+					'message'   => $err_msg,
+					'csrf_hash' => $this->security->get_csrf_hash()
+				));
+				return;
+			}
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-danger'>" . $err_msg . "</div>");
+			redirect('profile_regproof');
+			return;
+		}
+
+		$new_filename = 'dr_regproof_pic_' . rand(1111111, 9999999) . date('Ymd') . '.' . $ext;
+
+		$config = array(
+			'upload_path'   => $upload_dir,
+			'allowed_types' => 'jpg|jpeg|png|webp|pdf|JPG|JPEG|PNG|WEBP|PDF',
+			'max_size'      => 10240, // 10MB
+			'file_name'     => $new_filename,
+			'overwrite'     => TRUE
+		);
+
+		$this->load->library('upload');
+		$this->upload->initialize($config);
+
+		if (!$this->upload->do_upload($file_input_name)) {
+			$upload_error = strip_tags($this->upload->display_errors());
+			if ($is_ajax) {
+				header('Content-Type: application/json');
+				echo json_encode(array(
+					'status'    => 'error',
+					'message'   => 'Upload failed: ' . $upload_error,
+					'csrf_hash' => $this->security->get_csrf_hash()
+				));
+				return;
+			}
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-danger'>Upload failed: " . $upload_error . "</div>");
+			redirect('profile_regproof');
+			return;
+		}
+
+		$upload_data = $this->upload->data();
+		$final_filename = $upload_data['file_name'];
+
+		$result = $this->Doctor_Model->update_doctor_profile($doctor_id, array('med_reg_proof' => $final_filename));
+		$file_url = base_url('admin1947/public/assets/upload/' . $final_filename);
+
+		if ($result) {
+			if ($is_ajax) {
+				header('Content-Type: application/json');
+				echo json_encode(array(
+					'status'    => 'success',
+					'message'   => 'Medical registration certificate uploaded successfully! Profile verification complete.',
+					'file_url'  => $file_url,
+					'file_name' => $final_filename,
+					'is_pdf'    => ($ext === 'pdf'),
+					'next_step' => base_url('managepractice'),
+					'csrf_hash' => $this->security->get_csrf_hash()
+				));
+				return;
+			}
+
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-success' style='border-radius: 8px;'><strong><i class='fa fa-check-circle'></i> Success!</strong> Medical registration proof updated successfully.</div>");
+			redirect('managepractice');
+			return;
+		} else {
+			if ($is_ajax) {
+				header('Content-Type: application/json');
+				echo json_encode(array(
+					'status'    => 'error',
+					'message'   => 'Unable to save registration certificate in database.',
+					'csrf_hash' => $this->security->get_csrf_hash()
+				));
+				return;
+			}
+
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-danger'>Unable to save document details. Please try again.</div>");
+			redirect('profile_regproof');
+			return;
+		}
+	}
+
 	public function profile_regproof()
 	{
-		if(isset($_POST['submit']))
-			$this->Doctor_Model->profile_regproof();
-		
-		$data['src']=$this->db->select('med_reg_proof')->get_where('profile_dr',array('id'=>$this->did))->row('med_reg_proof');
-		if($data['src']=='')
-			$data['imagerequired']='required';
-		$this->load->view('doctorpanel/profile_regproof',$data);
+		$druserid = $this->session->userdata('druserid');
+		if ($this->input->post('submit') || isset($_FILES['images']) || isset($_FILES['med_reg_proof']) || isset($_FILES['regproof'])) {
+			$this->update_regproof();
+			return;
+		}
+
+		$doctor_row = $this->db->where('id', $this->did)->or_where('user_id', $druserid)->get('profile_dr')->row();
+		$data['data'] = $doctor_row;
+		$data['src']  = $doctor_row ? $doctor_row->med_reg_proof : '';
+		$data['imagerequired'] = empty($data['src']) ? 'required' : '';
+
+		$this->load->view('doctorpanel/profile_regproof', $data);
 	}
 	
 	public function profile_step4()

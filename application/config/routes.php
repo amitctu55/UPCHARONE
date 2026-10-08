@@ -159,16 +159,30 @@ $route['profile_step1'] 				= 'doctorpanel/profile_step1';
 $route['doctorpanel/update_step1'] 		= 'Doctorpanel/update_step1';
 $route['update_step1'] 					= 'Doctorpanel/update_step1';
 $route['profile_step2'] 				= 'doctorpanel/profile_step2';
+$route['doctorpanel/update_step2'] 		= 'Doctorpanel/update_step2';
+$route['update_step2'] 					= 'Doctorpanel/update_step2';
 $route['profile_step3'] 				= 'doctorpanel/profile_step3';
+$route['doctorpanel/update_step3'] 		= 'Doctorpanel/update_step3';
+$route['update_step3'] 					= 'Doctorpanel/update_step3';
 $route['profile_step4'] 				= 'doctorpanel/profile_step4';
 $route['profile_step5'] 				= 'doctorpanel/profile_step5';
 $route['profile_step6'] 				= 'doctorpanel/profile_step6';
 
 $route['profile_about'] 				= 'doctorpanel/profile_about';
+$route['doctorpanel/update_about'] 		= 'Doctorpanel/update_about';
+$route['update_about'] 					= 'Doctorpanel/update_about';
 $route['profile_drpic'] 				= 'doctorpanel/profile_drpic';
+$route['doctorpanel/update_drpic'] 		= 'Doctorpanel/update_drpic';
+$route['update_drpic'] 					= 'Doctorpanel/update_drpic';
 $route['profile_idproof'] 				= 'doctorpanel/profile_idproof';
+$route['doctorpanel/update_idproof'] 		= 'Doctorpanel/update_idproof';
+$route['update_idproof'] 					= 'Doctorpanel/update_idproof';
 $route['mci_proof'] 					= 'doctorpanel/mci_proof';
+$route['doctorpanel/update_mci_proof'] 		= 'Doctorpanel/update_mci_proof';
+$route['update_mci_proof'] 					= 'Doctorpanel/update_mci_proof';
 $route['profile_regproof'] 				= 'doctorpanel/profile_regproof';
+$route['doctorpanel/update_regproof'] 		= 'Doctorpanel/update_regproof';
+$route['update_regproof'] 					= 'Doctorpanel/update_regproof';
 
 
 $route['updateclinic/:any'] 			= 'doctorpanel/updateclinic/$1';
@@ -560,4 +574,10 @@ $route['ambulance/tracking_api']        = 'Ambulance/tracking_api';
 $route['ambulance/tracking_api/(:any)'] = 'Ambulance/tracking_api/$1';
 $route['ambulance/hospitals']           = 'Ambulance/hospitals';
 $route['myambulance']                   = 'home/myappointments';
+
+// =========================================================
+// CLINICAL DIET TRACKER ROUTES (Role-Based Patient Access)
+// =========================================================
+$route['diet']                          = 'Diet/index';
+$route['diet/patients']                 = 'Diet/get_patients';
 

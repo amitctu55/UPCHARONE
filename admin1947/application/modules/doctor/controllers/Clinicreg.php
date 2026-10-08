@@ -661,69 +661,87 @@ class Clinicreg extends CI_Controller
 		$data['module']         = 'Hospital';
 		
 		$this->form_validation->set_rules('type','Hospital Type','trim|required|max_length[30]');
-		$this->form_validation->set_rules('name','Name','trim|required|max_length[155]');
+		$this->form_validation->set_rules('name','Hospital Name','trim|required|max_length[155]');
+		$this->form_validation->set_rules('mobile','Contact Phone','trim|required|max_length[30]');
+		$this->form_validation->set_rules('email','Email Address','trim|valid_email|max_length[100]');
 		$this->form_validation->set_rules('website','Website','trim|max_length[100]');
 		$this->form_validation->set_rules('city','City','trim|required|max_length[30]');
-		$this->form_validation->set_rules('location','Location','trim|max_length[30]');
-		$this->form_validation->set_rules('address','Address','trim|max_length[255]');
-		$this->form_validation->set_rules('about','About','trim|max_length[500]');
+		$this->form_validation->set_rules('location','Location','trim|max_length[50]');
+		$this->form_validation->set_rules('address','Address','trim|max_length[500]');
+		$this->form_validation->set_rules('pincode','Pincode','trim|max_length[10]');
+		$this->form_validation->set_rules('about','About','trim|max_length[2000]');
 		
 		if ($this->form_validation->run() == TRUE) {
+			$upload_dir = FCPATH . 'public/assets/upload/';
+			if (!is_dir($upload_dir)) {
+				@mkdir($upload_dir, 0777, true);
+			}
 			$config['upload_path']   = './public/assets/upload/';
-			$config['allowed_types'] = 'jpg|png|jpeg|JPG|PNG|JPEG';
-			$config['max_size']      = 2048;
-			$config['quality']       = '60%';
+			$config['allowed_types'] = 'jpg|png|jpeg|webp|pdf|JPG|PNG|JPEG|WEBP|PDF';
+			$config['max_size']      = 5120;
+			$config['quality']       = '75%';
 			$typename                = 'hospital';
-			$uploadimage             = $hospital->drimage;
+			$uploadimage             = !empty($hospital->drimage) ? $hospital->drimage : 'dummyhosp.jpg';
 			$unlink_image            = array('source_file' => $hospital->drimage);
 			
 			if (!empty($_FILES['uploadimage']['name'])) {	
-				$uploadimage = $_FILES['uploadimage']['name'];
 				$extsign = pathinfo($_FILES['uploadimage']['name'], PATHINFO_EXTENSION);
 				$rname = rand(1111111, 999999999);
 				$date = date('Y-m-d');
 				$uploadimage = $typename . '_profile_pic_' . $rname . $date . '.' . $extsign;
 				$config['file_name'] = $uploadimage;
 				$this->load->library('upload', $config);
-				$this->upload->do_upload('uploadimage');
-				removeImage($unlink_image);
+				$this->upload->initialize($config);
+				if ($this->upload->do_upload('uploadimage')) {
+					if (!empty($hospital->drimage) && $hospital->drimage != 'dummyhosp.jpg' && $hospital->drimage != 'dummyhospital.jpg' && function_exists('removeImage')) {
+						removeImage($unlink_image);
+					}
+				}
 			}	
 			$uploadimage2 = $hospital->id_proof;
 			$unlink_image2 = array('source_file' => $hospital->id_proof);
 			if (!empty($_FILES['idproof']['name'])) {
-				$uploadimage2 = $_FILES['idproof']['name'];
 				$extsign2 = pathinfo($_FILES['idproof']['name'], PATHINFO_EXTENSION);
 				$rname = rand(1111111, 999999999);
 				$date = date('Y-m-d');
 				$uploadimage2 = $typename . '_id_proof_' . $rname . $date . '.' . $extsign2;
 				$config['file_name'] = $uploadimage2;
 				$this->load->library('upload', $config);
-				$this->upload->do_upload('idproof');
-				removeImage($unlink_image2);
+				$this->upload->initialize($config);
+				if ($this->upload->do_upload('idproof')) {
+					if (!empty($hospital->id_proof) && function_exists('removeImage')) {
+						removeImage($unlink_image2);
+					}
+				}
 			}
 			
 			$uploadimage3 = $hospital->med_reg_proof;
 			$unlink_image3 = array('source_file' => $hospital->med_reg_proof);
 			if (!empty($_FILES['regproof']['name'])) {
-				$uploadimage3 = $_FILES['regproof']['name'];
 				$extsign3 = pathinfo($_FILES['regproof']['name'], PATHINFO_EXTENSION);
 				$rname = rand(1111111, 999999999);
 				$date = date('Y-m-d');
 				$uploadimage3 = $typename . '_reg_proof_' . $rname . $date . '.' . $extsign3;
 				$config['file_name'] = $uploadimage3;
 				$this->load->library('upload', $config);
-				$this->upload->do_upload('regproof');
-				removeImage($unlink_image3);
+				$this->upload->initialize($config);
+				if ($this->upload->do_upload('regproof')) {
+					if (!empty($hospital->med_reg_proof) && function_exists('removeImage')) {
+						removeImage($unlink_image3);
+					}
+				}
 			}
 			
 			if ($this->doctorregmodel->updatehospital($uploadimage, $uploadimage2, $uploadimage3, $id, $hospital->uid)) {
-				$msg = "<div class='alert alert-success'><strong>Success!</strong> Hospital Updated Successfully</div>";
+				$msg = "<div class='alert alert-success'><strong><i class='fa fa-check-circle'></i> Success!</strong> Hospital profile updated successfully. Identity records (Name, Mobile, Email) preserved.</div>";
 				$this->session->set_flashdata('flashmsg', $msg);
-				redirect(base_url('doctor/clinicreg/viewhospital'));
+				redirect(base_url('doctor/clinicreg/hospitalview/' . $id));
+				return;
 			} else {
-				$msg = "<div class='alert alert-danger'><strong>Failed!</strong> Something went wrong. Please try again.</div>";
+				$msg = "<div class='alert alert-danger'><strong><i class='fa fa-exclamation-triangle'></i> Failed!</strong> Something went wrong updating hospital. Please try again.</div>";
 				$this->session->set_flashdata('flashmsg', $msg);
 				redirect(base_url('doctor/clinicreg/updatehospital/' . $id));
+				return;
 			}
 		}
 		
@@ -1074,6 +1092,14 @@ class Clinicreg extends CI_Controller
 			if ($c_row) $city_name = $c_row->name;
 		}
 		$data['city_name'] = $city_name;
+
+		// Resolve Locality Name
+		$locality_name = $hospital->location;
+		if (is_numeric($hospital->location) && !empty($hospital->location)) {
+			$loc_row = $this->db->get_where('master_locality', array('id' => $hospital->location))->row();
+			if ($loc_row) $locality_name = $loc_row->name;
+		}
+		$data['locality_name'] = $locality_name;
 
 		// Resolve Services / Departments
 		$services = array();
@@ -1459,5 +1485,65 @@ class Clinicreg extends CI_Controller
 		$newSt = $this->doctorregmodel->toggle_ad_status($id);
 		$this->session->set_flashdata('flashmsg', '<div class="alert alert-info">Advertisement status updated to ' . ($newSt == '1' ? 'ACTIVE' : 'INACTIVE') . '.</div>');
 		redirect(base_url() . 'doctor/clinicreg/advertisment');
+	}
+
+	public function resethospitalpassword()
+	{
+		$hospital_id  = (int)($this->input->post('hospital_id') ?: $this->input->get_post('id'));
+		$new_password = trim($this->input->post('new_password'));
+		$redirect_url = $this->input->post('redirect_url');
+
+		if (!$hospital_id || empty($new_password)) {
+			$msg = "Hospital ID and New Password are required.";
+			if ($this->input->is_ajax_request()) {
+				echo json_encode(array('status' => 'error', 'message' => $msg));
+				return;
+			}
+			$this->session->set_flashdata('flashmsg', '<div class="alert alert-danger"><i class="fa fa-exclamation-triangle"></i> ' . $msg . '</div>');
+			redirect($redirect_url ?: base_url('doctor/clinicreg/viewhospital'));
+			return;
+		}
+
+		if (strlen($new_password) < 6) {
+			$msg = "Password must be at least 6 characters long.";
+			if ($this->input->is_ajax_request()) {
+				echo json_encode(array('status' => 'error', 'message' => $msg));
+				return;
+			}
+			$this->session->set_flashdata('flashmsg', '<div class="alert alert-danger"><i class="fa fa-exclamation-triangle"></i> ' . $msg . '</div>');
+			redirect($redirect_url ?: base_url('doctor/clinicreg/viewhospital'));
+			return;
+		}
+
+		$hosp = $this->db->get_where('hospital', array('id' => $hospital_id))->row();
+		if (!$hosp) {
+			$msg = "Hospital record not found.";
+			if ($this->input->is_ajax_request()) {
+				echo json_encode(array('status' => 'error', 'message' => $msg));
+				return;
+			}
+			$this->session->set_flashdata('flashmsg', '<div class="alert alert-danger"><i class="fa fa-exclamation-triangle"></i> ' . $msg . '</div>');
+			redirect(base_url('doctor/clinicreg/viewhospital'));
+			return;
+		}
+
+		$success = $this->doctorregmodel->resethospitalpassword($hospital_id, $new_password);
+		if ($success) {
+			$msg = "Portal login password for <strong>" . htmlspecialchars($hosp->name) . "</strong> has been reset successfully.";
+			if ($this->input->is_ajax_request()) {
+				echo json_encode(array('status' => 'success', 'message' => $msg));
+				return;
+			}
+			$this->session->set_flashdata('flashmsg', '<div class="alert alert-success"><i class="fa fa-check-circle"></i> ' . $msg . '</div>');
+		} else {
+			$msg = "Failed to update hospital password. Please try again.";
+			if ($this->input->is_ajax_request()) {
+				echo json_encode(array('status' => 'error', 'message' => $msg));
+				return;
+			}
+			$this->session->set_flashdata('flashmsg', '<div class="alert alert-danger"><i class="fa fa-exclamation-triangle"></i> ' . $msg . '</div>');
+		}
+
+		redirect($redirect_url ?: base_url('doctor/clinicreg/viewhospital'));
 	}
 }

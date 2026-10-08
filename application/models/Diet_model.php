@@ -485,4 +485,120 @@ class Diet_model extends CI_Model {
             'meal_categories' => $meal_categories
         ];
     }
+
+    /**
+     * Fetch list of patients strictly with pending or active appointments
+     * for a Doctor or Hospital Panel Partner
+     *
+     * @param string $role 'doctor' | 'hospital'
+     * @param int|array $entity_id Doctor ID(s) or Hospital ID(s)
+     * @return array List of authorized patient records
+     */
+    public function get_authorized_patients($role, $entity_id) {
+        $this->db->select("
+            a.user_id,
+            COALESCE(NULLIF(TRIM(CONCAT(u.FNAME, ' ', COALESCE(u.LNAME, ''))), ''), a.appointment_name, 'Patient') AS patient_name,
+            COALESCE(NULLIF(TRIM(u.MOBILE), ''), a.appointment_mobile, '') AS mobile,
+            COALESCE(NULLIF(TRIM(u.EMAIL), ''), a.appointment_email, '') AS email,
+            a.appointment_id,
+            a.appointment_date,
+            a.appointment_time,
+            a.appointment_status,
+            a.status,
+            COUNT(a.appointment_id) AS total_active_appointments,
+            MAX(a.appointment_date) AS latest_appointment_date
+        ");
+        $this->db->from('appointment a');
+        $this->db->join('userlogin u', 'a.user_id = u.USERID', 'left');
+
+        // Role-based entity filtering
+        if ($role === 'doctor') {
+            if (is_array($entity_id)) {
+                $this->db->where_in('a.doctor_id', $entity_id);
+            } else {
+                $this->db->where('a.doctor_id', intval($entity_id));
+            }
+        } elseif ($role === 'hospital') {
+            if (is_array($entity_id)) {
+                $this->db->where_in('a.institute_id', $entity_id);
+            } else {
+                $this->db->where('a.institute_id', intval($entity_id));
+            }
+            $this->db->where('a.institution_type', 'H');
+        } else {
+            return [];
+        }
+
+        // Must have valid patient user_id
+        $this->db->where('a.user_id >', 0);
+
+        // Filter strictly by appointment status IN ('pending', 'active')
+        $this->db->group_start();
+            $this->db->where_in('a.appointment_status', ['0', '1']);
+            $this->db->or_where_in('LOWER(a.appointment_status)', ['pending', 'active']);
+            $this->db->or_where_in('LOWER(a.status)', ['pending', 'active', 'confirmed', 'booked']);
+        $this->db->group_end();
+
+        $this->db->where('a.status !=', '2');
+        $this->db->where('a.appointment_status !=', '2');
+        $this->db->group_start();
+            $this->db->where('a.cancel_date IS NULL', null, false);
+            $this->db->or_where('a.cancel_date', '0000-00-00 00:00:00');
+        $this->db->group_end();
+
+        $this->db->group_by('a.user_id');
+        $this->db->order_by('latest_appointment_date', 'DESC');
+
+        return $this->db->get()->result_array();
+    }
+
+    /**
+     * Check if a specific patient is authorized for a Doctor or Hospital Partner
+     * (strictly requiring pending or active appointment)
+     *
+     * @param int $patient_id
+     * @param string $role 'doctor' | 'hospital'
+     * @param int|array $entity_id
+     * @return bool
+     */
+    public function is_patient_authorized($patient_id, $role, $entity_id) {
+        $patient_id = intval($patient_id);
+        if ($patient_id <= 0) return false;
+
+        $this->db->from('appointment a');
+        $this->db->where('a.user_id', $patient_id);
+
+        if ($role === 'doctor') {
+            if (is_array($entity_id)) {
+                $this->db->where_in('a.doctor_id', $entity_id);
+            } else {
+                $this->db->where('a.doctor_id', intval($entity_id));
+            }
+        } elseif ($role === 'hospital') {
+            if (is_array($entity_id)) {
+                $this->db->where_in('a.institute_id', $entity_id);
+            } else {
+                $this->db->where('a.institute_id', intval($entity_id));
+            }
+            $this->db->where('a.institution_type', 'H');
+        } else {
+            return false;
+        }
+
+        // Filter strictly by appointment status IN ('pending', 'active')
+        $this->db->group_start();
+            $this->db->where_in('a.appointment_status', ['0', '1']);
+            $this->db->or_where_in('LOWER(a.appointment_status)', ['pending', 'active']);
+            $this->db->or_where_in('LOWER(a.status)', ['pending', 'active', 'confirmed', 'booked']);
+        $this->db->group_end();
+
+        $this->db->where('a.status !=', '2');
+        $this->db->where('a.appointment_status !=', '2');
+        $this->db->group_start();
+            $this->db->where('a.cancel_date IS NULL', null, false);
+            $this->db->or_where('a.cancel_date', '0000-00-00 00:00:00');
+        $this->db->group_end();
+
+        return ($this->db->count_all_results() > 0);
+    }
 }

@@ -645,61 +645,75 @@ class Doctorregmodel extends CI_Model
 		return $result;
 	}
 
-    public function updatehospital($drimage='',$idproof='',$regproof='',$id='',$user_id='')
+    public function updatehospital($drimage='', $idproof='', $regproof='', $id='', $user_id='')
     {	
-		$date			=	date('Y-m-d h:i:s');
-		$type			=	$this->input->post('type');
-		$name			=	$this->input->post('name');
-		$website		=	$this->input->post('website');
-		$city			=   $this->input->post('city');
-		$location		=	$this->input->post('location');
-		$address		=	$this->input->post('address');
-		$tags			=	$this->input->post('tags');
-		$services		=	$this->input->post('services');
-		$about			=	$this->input->post('about');
-		$email			=	$this->input->post('email');
-		$mobile			=	$this->input->post('mobile');
-		$status			=	$this->input->post('status');
-		$package		=	$this->input->post('package');
-		
-		$udata	=	array(
-						'FNAME'		=>$name,
-						'EMAIL'		=>$email,
-						'MOBILE'	=>$mobile,
-						'STATUS'	=>'0',
-						'APPROVED'	=>'1',
-						'REG_DATE'	=>date('Y-m-d'),
-						'GENDER'	=>'M',
-						'TYPE'		=>$type,
-						); 
-		$this->db->where('USERID',$user_id);
-		if($this->db->update('hospitallogin',$udata))
-		{
-			$data	=	array(
-							'name'			=>$name,
-							'website'		=>$website,
-							'city'			=>$city,
-							'location'		=>$location,
-							'address'		=>$address,
-							//'tags'			=>$tags,
-							'services'		=>$services,
-							'about'			=>$about,
-							'mobile'		=>$mobile,
-							'email'			=>$email,
-							'drimage'		=>$drimage,
-							'id_proof'		=>$idproof,
-							'med_reg_proof'	=>$regproof,
-							'subscription'	=>$package,
-							'status'		=>$status,
-							'cancellation_hours'       => ($this->input->post('cancellation_hours') !== null) ? max(0, intval($this->input->post('cancellation_hours'))) : 3,
-							'cancellation_policy_text' => $this->input->post('cancellation_policy_text') ? trim($this->input->post('cancellation_policy_text')) : 'Cancellations allowed up to 3 hours prior to consultation slot.',
-							'modified_date'	=>$date,
-							'modified_by'	=>getUserId(),
-							);
-			$this->db->where('id',$id);
-			$qq= $this->db->update('hospital',$data);
-			return $qq;
+		$date = date('Y-m-d H:i:s');
+		$type = $this->input->post('type');
+		$existing = $this->db->get_where('hospital', array('id' => $id))->row();
+
+		$name   = ($this->input->post('name') !== null && trim($this->input->post('name')) !== '') ? trim($this->input->post('name')) : ($existing ? $existing->name : '');
+		$mobile = ($this->input->post('mobile') !== null && trim($this->input->post('mobile')) !== '') ? trim($this->input->post('mobile')) : ($existing ? $existing->mobile : '');
+		$email  = ($this->input->post('email') !== null) ? trim($this->input->post('email')) : ($existing ? $existing->email : '');
+
+		// Update hospitallogin credentials and classification
+		if (!empty($user_id)) {
+			$login_update = array(
+				'TYPE'   => $type,
+				'FNAME'  => $name,
+				'MOBILE' => $mobile,
+				'EMAIL'  => $email,
+			);
+			if ($this->input->post('status') !== null) {
+				$login_update['STATUS'] = ($this->input->post('status') == '1' || $this->input->post('status') == 'A') ? '1' : '0';
+			}
+			if ($this->input->post('approved') !== null) {
+				$login_update['APPROVED'] = ($this->input->post('approved') == '1') ? '1' : '0';
+			}
+			$this->db->where('USERID', $user_id)->update('hospitallogin', $login_update);
 		}
+
+		$data = array(
+			'name'                     => $name,
+			'mobile'                   => $mobile,
+			'email'                    => $email,
+			'website'                  => $this->input->post('website'),
+			'city'                     => $this->input->post('city'),
+			'location'                 => $this->input->post('location'),
+			'address'                  => $this->input->post('address'),
+			'about'                    => $this->input->post('about'),
+			'cancellation_hours'       => ($this->input->post('cancellation_hours') !== null) ? max(0, intval($this->input->post('cancellation_hours'))) : 3,
+			'cancellation_policy_text' => $this->input->post('cancellation_policy_text') ? trim($this->input->post('cancellation_policy_text')) : 'Cancellations allowed up to 3 hours prior to consultation slot.',
+			'drimage'                  => !empty($drimage) ? $drimage : ($existing && !empty($existing->drimage) ? $existing->drimage : 'dummyhosp.jpg'),
+			'id_proof'                 => !empty($idproof) ? $idproof : ($existing ? $existing->id_proof : ''),
+			'med_reg_proof'            => !empty($regproof) ? $regproof : ($existing ? $existing->med_reg_proof : ''),
+			'modified_date'            => $date,
+			'modified_by'              => function_exists('getUserId') ? getUserId() : 1,
+		);
+
+		if ($this->input->post('pincode') !== null) {
+			$data['pincode'] = $this->input->post('pincode');
+		}
+		if ($this->input->post('state') !== null) {
+			$data['state'] = $this->input->post('state');
+		}
+		if ($this->input->post('tag') !== null) {
+			$data['tag'] = $this->input->post('tag');
+		}
+		if ($this->input->post('services') !== null) {
+			$data['services'] = $this->input->post('services');
+		}
+		if ($this->input->post('status') !== null) {
+			$data['status'] = $this->input->post('status');
+		}
+		if ($this->input->post('approved') !== null) {
+			$data['approved'] = $this->input->post('approved');
+		}
+		if ($this->input->post('package') !== null) {
+			$data['subscription'] = $this->input->post('package');
+		}
+
+		$this->db->where('id', $id);
+		return $this->db->update('hospital', $data);
     }
 
     public function updategallery($id,$picture)
@@ -1056,5 +1070,54 @@ class Doctorregmodel extends CI_Model
 			return $newStatus;
 		}
 		return false;
+	}
+
+	public function resethospitalpassword($hospital_id, $new_password)
+	{
+		$hospital = $this->db->get_where('hospital', array('id' => (int)$hospital_id))->row();
+		if (!$hospital) {
+			return false;
+		}
+
+		$hashed = md5($new_password);
+		$login_row = null;
+
+		if (!empty($hospital->uid)) {
+			$login_row = $this->db->get_where('hospitallogin', array('USERID' => $hospital->uid))->row();
+		}
+		if (!$login_row && !empty($hospital->email)) {
+			$login_row = $this->db->get_where('hospitallogin', array('EMAIL' => $hospital->email))->row();
+		}
+		if (!$login_row && !empty($hospital->mobile)) {
+			$login_row = $this->db->get_where('hospitallogin', array('MOBILE' => $hospital->mobile))->row();
+		}
+
+		if ($login_row) {
+			$this->db->where('USERID', $login_row->USERID)->update('hospitallogin', array(
+				'PASSWORD'    => $hashed,
+				'STATUS'      => '1',
+				'UPDATE_DATE' => date('Y-m-d')
+			));
+			if (empty($hospital->uid) || $hospital->uid != $login_row->USERID) {
+				$this->db->where('id', $hospital->id)->update('hospital', array('uid' => $login_row->USERID));
+			}
+			return true;
+		} else {
+			$new_login = array(
+				'EMAIL'       => $hospital->email ?: '',
+				'MOBILE'      => $hospital->mobile ?: '',
+				'PASSWORD'    => $hashed,
+				'FNAME'       => $hospital->name ?: 'Hospital',
+				'STATUS'      => '1',
+				'APPROVED'    => '1',
+				'TYPE'        => '1',
+				'REG_DATE'    => date('Y-m-d H:i:s'),
+				'UPDATE_DATE' => date('Y-m-d')
+			);
+			$this->db->insert('hospitallogin', $new_login);
+			$new_uid = $this->db->insert_id();
+			$this->db->where('id', $hospital->id)->update('hospital', array('uid' => $new_uid));
+			return true;
+		}
 	}
 }

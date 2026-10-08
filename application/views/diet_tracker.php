@@ -899,6 +899,86 @@ $meals = $summary['meal_categories'] ?? [];
 
 <div class="dt-container">
 
+  <?php if (!empty($unauthorized_access)): ?>
+    <div style="background: #FEF2F2; border: 1.5px solid #FCA5A5; border-radius: 14px; padding: 18px 24px; margin-bottom: 22px; display: flex; align-items: center; gap: 14px;">
+      <i class="fa fa-shield-halved fa-shield-alt" style="font-size: 24px; color: #DC2626;"></i>
+      <div>
+        <h4 style="font-size: 15px; font-weight: 800; color: #991B1B; margin: 0;">Restricted Patient Access</h4>
+        <p style="font-size: 13px; color: #B91C1C; margin: 3px 0 0 0;">
+          Under Upchar clinical confidentiality policies, doctors and hospital panel partners may only access patient diet logs for patients with an <strong>active</strong> or <strong>pending</strong> appointment.
+        </p>
+      </div>
+    </div>
+  <?php endif; ?>
+
+  <?php if (!empty($is_practitioner)): ?>
+    <div style="background: #FFFFFF; border: 1.5px solid #CBD5E1; border-radius: 16px; padding: 18px 24px; margin-bottom: 22px; box-shadow: 0 4px 14px rgba(15, 23, 42, 0.04);">
+      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <div style="width: 44px; height: 44px; border-radius: 12px; background: #E6FFFA; color: #00A896; display: flex; align-items: center; justify-content: center; font-size: 20px;">
+            <i class="fa <?= ($user_role === 'doctor') ? 'fa-user-md' : 'fa-hospital'; ?>"></i>
+          </div>
+          <div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.6px; background: #00A896; color: #FFFFFF; padding: 2px 8px; border-radius: 12px;">
+                <?= ucfirst($user_role); ?> EHR View
+              </span>
+              <span style="font-size: 12px; color: #64748B; font-weight: 600;">Strict Appointment Filter</span>
+            </div>
+            <h3 style="font-size: 15px; font-weight: 800; color: #0F172A; margin: 2px 0 0 0;">
+              Patient Clinical Diet Monitor
+            </h3>
+          </div>
+        </div>
+
+        <!-- Patient Selector Dropdown -->
+        <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+          <label style="font-weight: 700; font-size: 13px; color: #334155; margin: 0;">
+            <i class="fa fa-users text-muted"></i> Patient (Pending / Active Only):
+          </label>
+          <select id="dtPractitionerPatientSelect" class="form-control" style="width: auto; min-width: 320px; height: 42px; border-radius: 9px; font-weight: 600; font-size: 13px; border: 1.5px solid #CBD5E1;" onchange="window.location.href='<?= base_url('diet'); ?>?patient_id=' + this.value">
+            <?php if (empty($authorized_patients)): ?>
+              <option value="">No patients with active/pending appointments</option>
+            <?php else: ?>
+              <?php foreach ($authorized_patients as $ap): 
+                $sel = ($ap['user_id'] == $active_patient_id) ? 'selected' : '';
+                $st_name = ($ap['appointment_status'] == '1' || strtolower($ap['status']) == 'active') ? 'Active' : 'Pending';
+                $st_icon = ($st_name === 'Active') ? '🟢' : '🟡';
+              ?>
+                <option value="<?= $ap['user_id']; ?>" <?= $sel; ?>>
+                  <?= $st_icon; ?> <?= htmlspecialchars($ap['patient_name']); ?> &mdash; Appt: <?= htmlspecialchars($ap['appointment_date']); ?> [<?= $st_name; ?>]
+                </option>
+              <?php endforeach; ?>
+            <?php endif; ?>
+          </select>
+
+          <span class="badge" style="background: #E0F2FE; color: #0369A1; font-size: 12px; padding: 6px 12px; border-radius: 12px; font-weight: 700;">
+            <?= count($authorized_patients); ?> Active/Pending
+          </span>
+        </div>
+      </div>
+
+      <?php if (!empty($active_patient_id) && !empty($user)): ?>
+        <div style="margin-top: 14px; padding-top: 12px; border-top: 1px solid #F1F5F9; display: flex; gap: 20px; font-size: 12.5px; color: #475569; flex-wrap: wrap;">
+          <span><strong>Viewing Patient:</strong> <?= htmlspecialchars(trim(($user->FNAME ?? '') . ' ' . ($user->LNAME ?? '')) ?: 'Patient #' . $active_patient_id); ?></span>
+          <?php if (!empty($user->MOBILE)): ?>
+            <span><i class="fa fa-phone text-muted"></i> <?= htmlspecialchars($user->MOBILE); ?></span>
+          <?php endif; ?>
+          <?php if (!empty($user->EMAIL)): ?>
+            <span><i class="fa fa-envelope text-muted"></i> <?= htmlspecialchars($user->EMAIL); ?></span>
+          <?php endif; ?>
+          <span style="margin-left: auto; color: #16A34A; font-weight: 700;">
+            <i class="fa fa-check-circle"></i> Appointment Verified (Pending/Active)
+          </span>
+        </div>
+      <?php elseif (empty($authorized_patients)): ?>
+        <div style="margin-top: 14px; padding: 12px 16px; background: #FFFBEB; border-radius: 10px; border: 1px solid #FDE68A; font-size: 12.5px; color: #92400E;">
+          <i class="fa fa-info-circle"></i> <strong>No Pending or Active Appointments:</strong> Under Upchar clinical privacy regulations, patient diet details can only be viewed when an appointment is pending review or currently active.
+        </div>
+      <?php endif; ?>
+    </div>
+  <?php endif; ?>
+
   <!-- ====================================================================== -->
   <!-- 1. TOP-LEVEL HERO CALORIES PROGRESS CARD & DATE SELECTOR               -->
   <!-- ====================================================================== -->
@@ -1184,6 +1264,7 @@ $meals = $summary['meal_categories'] ?? [];
       <form id="dtLogFoodForm" onsubmit="return submitDietLog(event);">
         <!-- CSRF Token -->
         <input type="hidden" name="<?= $this->security->get_csrf_token_name(); ?>" value="<?= $this->security->get_csrf_hash(); ?>" id="dtCsrfToken">
+        <input type="hidden" name="patient_id" value="<?= !empty($active_patient_id) ? $active_patient_id : ''; ?>" id="dtModalPatientId">
 
         <div class="modal-body" style="padding: 22px 24px;">
           <!-- 1. Meal Category Selector -->
@@ -1566,6 +1647,7 @@ function deleteDietItem(logId) {
   var postData = {
     log_id: logId,
     log_date: dtActiveDate,
+    patient_id: "<?= !empty($active_patient_id) ? $active_patient_id : ''; ?>",
     "<?= $this->security->get_csrf_token_name(); ?>": "<?= $this->security->get_csrf_hash(); ?>"
   };
 
@@ -1717,7 +1799,10 @@ function loadDateSummary(dt) {
   $.ajax({
     url: "<?= base_url('diet/get_summary'); ?>",
     type: "GET",
-    data: { date: dt },
+    data: { 
+      date: dt,
+      patient_id: "<?= !empty($active_patient_id) ? $active_patient_id : ''; ?>"
+    },
     dataType: "json",
     success: function(res) {
       if (res && res.status === 'success') {

@@ -5,7 +5,7 @@ $seg2 = $this->uri->segment(2);
 $isDashboard   = ($seg1 == 'doctor-dashboard' || ($seg1 == 'doctorpanel' && ($seg2 == 'dashboard' || $seg2 == '')));
 $isProfile     = ($seg1 == 'doctorpanel' && $seg2 == 'updateprofile');
 $isSecurity    = ($seg1 == 'doctorpanel' && $seg2 == 'change_password');
-$isProfileStep = in_array($seg1, array('profile_step1', 'profile_step2', 'profile_step3', 'profile_step4', 'profile_step5', 'profile_step6', 'profile_step7', 'profile_step8', 'profile_step9', 'profile_step10'));
+$isProfileStep = in_array($seg1, array('profile_step1', 'profile_step2', 'profile_step3', 'profile_step4', 'profile_step5', 'profile_step6', 'profile_step7', 'profile_step8', 'profile_step9', 'profile_step10', 'profile_about', 'profile_drpic', 'profile_idproof', 'mci_proof', 'profile_regproof'));
 $isClinic      = ($seg1 == 'manageownclinic');
 $isPractice    = ($seg1 == 'managepractice');
 $isApt         = ($seg1 == 'manageappointment' || ($seg1 == 'doctorpanel' && in_array($seg2, array('manageappointment', 'addappointment', 'viewappointment', 'prescription'))));

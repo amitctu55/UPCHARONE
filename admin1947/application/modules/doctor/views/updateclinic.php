@@ -75,9 +75,12 @@
               <select class="form-control" id="location" name="location" style="height: 42px; border-radius: 8px; border: 1px solid #CBD5E1; font-size: 14px;">
                 <option value="">-- Choose Location --</option>
                 <?php
-                $locations = $this->db->get_where('master_location', array('status'=>'1'));
-                foreach(@$locations->result() as $loc) { ?>
-                  <option value="<?=$loc->id;?>" <?php if(@$clinic->location == $loc->id){ echo "selected"; } ?>><?=$loc->name;?></option>
+                $all_localities = $this->db->select('id, city_id, name')->from('master_locality')->where('status', '1')->order_by('name', 'ASC')->get()->result();
+                $cur_loc = @$clinic->location;
+                foreach($all_localities as $loc) { 
+                  $is_sel = ($cur_loc == $loc->id || (!empty($cur_loc) && strtolower(trim($cur_loc)) == strtolower(trim($loc->name))));
+                ?>
+                  <option value="<?=$loc->id;?>" data-city="<?=$loc->city_id;?>" <?=$is_sel ? "selected" : "";?>><?=$loc->name;?></option>
                 <?php } ?>
               </select>
             </div>
@@ -117,5 +120,53 @@
 
 <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
 <script src="//cdnjs.cloudflare.com/ajax/libs/jquery-form-validator/2.3.26/jquery.form-validator.min.js"></script>
-<script> $.validate({}); </script>
+<script>
+  $.validate({});
+
+  // Dynamic Locality Filter by City
+  (function() {
+    var allLocalityOptions = [];
+    function initLocalityFilter() {
+      var citySelect = document.getElementById('city');
+      var locSelect = document.getElementById('location');
+      if (!citySelect || !locSelect) return;
+      if (allLocalityOptions.length === 0) {
+        for (var i = 0; i < locSelect.options.length; i++) {
+          var o = locSelect.options[i];
+          allLocalityOptions.push({
+            value: o.value, text: o.text,
+            city: o.getAttribute('data-city') || '',
+            selected: o.selected
+          });
+        }
+      }
+      function rebuildLocalities(cityId, preserveSelected) {
+        var prevVal = locSelect.value;
+        locSelect.innerHTML = '';
+        var foundSelected = false;
+        for (var j = 0; j < allLocalityOptions.length; j++) {
+          var item = allLocalityOptions[j];
+          if (!item.city || !cityId || String(item.city) === String(cityId)) {
+            var newOpt = document.createElement('option');
+            newOpt.value = item.value;
+            newOpt.textContent = item.text;
+            if (item.city) newOpt.setAttribute('data-city', item.city);
+            if (preserveSelected && (item.value === prevVal || item.selected)) {
+              newOpt.selected = true; foundSelected = true;
+            }
+            locSelect.appendChild(newOpt);
+          }
+        }
+        if (!preserveSelected && !foundSelected) locSelect.value = '';
+      }
+      citySelect.addEventListener('change', function() { rebuildLocalities(this.value, false); });
+      if (citySelect.value) rebuildLocalities(citySelect.value, true);
+    }
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initLocalityFilter);
+    } else {
+      initLocalityFilter();
+    }
+  })();
+</script>
 <?=$this->load->view('inc/footer');?>

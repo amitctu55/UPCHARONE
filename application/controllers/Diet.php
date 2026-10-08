@@ -3,21 +3,60 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 
 class Diet extends CI_Controller {
 
-    private $user_id = 0;
-    private $user_obj = null;
+    private $user_id = 0;          // Active patient ID being tracked
+    private $user_obj = null;       // Patient record
+    private $user_role = 'guest';   // 'patient', 'doctor', 'hospital', 'guest'
+    private $entity_ids = [];       // Doctor ID(s) or Hospital ID(s)
+    private $entity_obj = null;     // Doctor or Hospital profile row
+    private $is_practitioner = false;
 
     public function __construct() {
         parent::__construct();
         date_default_timezone_set('Asia/Kolkata');
         $this->load->model('Diet_model');
         $this->load->helper(['url', 'form']);
-        $this->resolve_user();
+        $this->resolve_session_and_role();
     }
 
     /**
-     * Resolve active patient user from session
+     * Resolve active user session, role (Doctor / Hospital / Patient), and permissions
      */
-    private function resolve_user() {
+    private function resolve_session_and_role() {
+        // 1. Check Doctor Session
+        $druserid = $this->session->userdata('druserid') ?: $this->session->userdata('doctor_id') ?: $this->session->userdata('did');
+        if (!empty($druserid)) {
+            $this->user_role = 'doctor';
+            $this->is_practitioner = true;
+
+            $dr_row = $this->db->where('user_id', $druserid)->or_where('id', $druserid)->get('profile_dr')->row();
+            $this->entity_obj = $dr_row;
+
+            $this->entity_ids = array_unique(array_filter([
+                intval($druserid),
+                $dr_row && isset($dr_row->id) ? intval($dr_row->id) : null,
+                $dr_row && isset($dr_row->user_id) ? intval($dr_row->user_id) : null
+            ]));
+            return;
+        }
+
+        // 2. Check Hospital Session
+        $hospuserid = $this->session->userdata('hospital_id') ?: $this->session->userdata('hospuserid') ?: $this->session->userdata('hospital_admin');
+        if (!empty($hospuserid)) {
+            $this->user_role = 'hospital';
+            $this->is_practitioner = true;
+
+            $hosp_row = $this->db->where('user_id', $hospuserid)->or_where('id', $hospuserid)->get('profile_hospital')->row();
+            $this->entity_obj = $hosp_row;
+
+            $this->entity_ids = array_unique(array_filter([
+                intval($hospuserid),
+                $hosp_row && isset($hosp_row->id) ? intval($hosp_row->id) : null,
+                $hosp_row && isset($hosp_row->user_id) ? intval($hosp_row->user_id) : null
+            ]));
+            return;
+        }
+
+        // 3. Check Patient Session
         $userid    = $this->session->userdata('userid') ?: $this->session->userdata('user_id') ?: $this->session->userdata('USERID');
         $useremail = $this->session->userdata('useremail');
         $username  = $this->session->userdata('username');
@@ -58,14 +97,49 @@ class Diet extends CI_Controller {
 
         if ($this->user_obj) {
             $this->user_id = intval($this->user_obj->USERID);
+            $this->user_role = 'patient';
         }
+    }
+
+    /**
+     * Resolve target patient based on role, parameters, and appointment status authorization
+     */
+    private function resolve_target_patient($param_patient_id = null) {
+        if (!$this->is_practitioner) {
+            return $this->user_id;
+        }
+
+        $req_id = intval($param_patient_id ?: ($this->input->get('patient_id') ?: $this->input->post('patient_id')));
+
+        // If specific patient requested, verify strict authorization
+        if ($req_id > 0) {
+            $is_auth = $this->Diet_model->is_patient_authorized($req_id, $this->user_role, $this->entity_ids);
+            if ($is_auth) {
+                $this->user_id = $req_id;
+                $this->user_obj = $this->db->get_where('userlogin', ['USERID' => $req_id])->row();
+                return $this->user_id;
+            } else {
+                return 0; // Unauthorized
+            }
+        }
+
+        // If no patient requested, default to first authorized patient
+        $authorized = $this->Diet_model->get_authorized_patients($this->user_role, $this->entity_ids);
+        if (!empty($authorized)) {
+            $first = $authorized[0];
+            $this->user_id = intval($first['user_id']);
+            $this->user_obj = $this->db->get_where('userlogin', ['USERID' => $this->user_id])->row();
+            return $this->user_id;
+        }
+
+        return 0;
     }
 
     /**
      * Verify session or return JSON 401
      */
     private function require_login() {
-        if ($this->user_id > 0) return true;
+        if ($this->is_practitioner || $this->user_id > 0) return true;
 
         $is_ajax = $this->input->is_ajax_request()
             || $this->input->post('ajax')
@@ -78,14 +152,14 @@ class Diet extends CI_Controller {
                 ->set_content_type('application/json', 'utf-8')
                 ->set_output(json_encode([
                     'status'   => 'error',
-                    'message'  => 'Your session has expired. Please login to track your diet.',
+                    'message'  => 'Your session has expired. Please login to track or view diet.',
                     'redirect' => base_url('login')
                 ]));
             exit;
         }
 
         $this->session->set_userdata('last_page', current_url());
-        $this->session->set_flashdata('flashmsg', '<div class="alert alert-warning">Please login to access your Daily Diet Tracker.</div>');
+        $this->session->set_flashdata('flashmsg', '<div class="alert alert-warning">Please login to access the Daily Diet Tracker.</div>');
         redirect('login');
         exit;
     }
@@ -96,14 +170,81 @@ class Diet extends CI_Controller {
     public function index() {
         $this->require_login();
 
+        $authorized_patients = [];
+        $unauthorized_access = false;
+
+        if ($this->is_practitioner) {
+            // Fetch patients strictly with pending or active appointments
+            $authorized_patients = $this->Diet_model->get_authorized_patients($this->user_role, $this->entity_ids);
+            
+            $req_patient_id = intval($this->input->get('patient_id'));
+            if ($req_patient_id > 0) {
+                $target_id = $this->resolve_target_patient($req_patient_id);
+                if ($target_id === 0) {
+                    $unauthorized_access = true;
+                }
+            } else {
+                $this->resolve_target_patient();
+            }
+        }
+
         $selected_date = $this->Diet_model->normalize_date($this->input->get('date'));
-        $data['summary'] = $this->Diet_model->get_daily_summary($this->user_id, $selected_date);
+        
+        $data['summary'] = ($this->user_id > 0 && !$unauthorized_access) 
+            ? $this->Diet_model->get_daily_summary($this->user_id, $selected_date) 
+            : null;
+
         $data['user'] = $this->user_obj;
         $data['active_tab'] = 'diet';
+        $data['is_practitioner'] = $this->is_practitioner;
+        $data['user_role'] = $this->user_role;
+        $data['authorized_patients'] = $authorized_patients;
+        $data['active_patient_id'] = $this->user_id;
+        $data['unauthorized_access'] = $unauthorized_access;
+        $data['practitioner_obj'] = $this->entity_obj;
 
-        $this->load->view('patient_header', $data);
-        $this->load->view('diet_tracker', $data);
-        $this->load->view('patient_footer');
+        // Choose appropriate header/footer based on role
+        if ($this->user_role === 'doctor') {
+            $this->load->view('assets/includes/header.php');
+            $this->load->view('assets/includes/leftmenu.php');
+            $this->load->view('diet_tracker', $data);
+            $this->load->view('assets/includes/footer.php');
+        } elseif ($this->user_role === 'hospital') {
+            $this->load->view('assets/includes/header.php');
+            $this->load->view('assets/includes/leftmenu.php');
+            $this->load->view('diet_tracker', $data);
+            $this->load->view('assets/includes/footer.php');
+        } else {
+            $this->load->view('patient_header', $data);
+            $this->load->view('diet_tracker', $data);
+            $this->load->view('patient_footer');
+        }
+    }
+
+    /**
+     * API: Get authorized patients list strictly for active/pending appointments
+     */
+    public function get_patients() {
+        $this->require_login();
+
+        if (!$this->is_practitioner) {
+            $this->output
+                ->set_status_header(403)
+                ->set_content_type('application/json', 'utf-8')
+                ->set_output(json_encode(['status' => 'error', 'message' => 'Available only for Doctor & Hospital Panel partners.']));
+            return;
+        }
+
+        $patients = $this->Diet_model->get_authorized_patients($this->user_role, $this->entity_ids);
+
+        $this->output
+            ->set_content_type('application/json', 'utf-8')
+            ->set_output(json_encode([
+                'status' => 'success',
+                'role'   => $this->user_role,
+                'count'  => count($patients),
+                'data'   => $patients
+            ]));
     }
 
     /**
@@ -125,10 +266,33 @@ class Diet extends CI_Controller {
 
     /**
      * AJAX: Add food log entry to a meal category
-     * Fetches base nutritional values, calculates portions, and appends to user_diet_logs
      */
     public function add_food_log() {
         $this->require_login();
+
+        $target_user_id = $this->user_id;
+        if ($this->is_practitioner) {
+            $req_pid = intval($this->input->post('patient_id') ?: $this->input->get('patient_id'));
+            $target_user_id = $this->resolve_target_patient($req_pid);
+            if ($target_user_id <= 0) {
+                $this->output
+                    ->set_status_header(403)
+                    ->set_content_type('application/json', 'utf-8')
+                    ->set_output(json_encode([
+                        'status'  => 'error',
+                        'message' => 'Unauthorized: Patient details can only be modified for patients with active or pending appointments.'
+                    ]));
+                return;
+            }
+        }
+
+        if ($target_user_id <= 0) {
+            $this->output
+                ->set_status_header(400)
+                ->set_content_type('application/json', 'utf-8')
+                ->set_output(json_encode(['status' => 'error', 'message' => 'No active patient selected.']));
+            return;
+        }
 
         $meal_category = strtolower(trim($this->input->post('meal_category', TRUE) ?: 'breakfast'));
         $allowed = ['breakfast', 'brunch', 'lunch', 'snacks', 'dinner'];
@@ -151,7 +315,7 @@ class Diet extends CI_Controller {
             return;
         }
 
-        // Fetch base nutritional values of the selected food from food_master / food_database
+        // Base nutritional values
         $base_food = null;
         if ($food_id > 0) {
             $base_food = $this->Diet_model->get_food_by_id($food_id);
@@ -162,7 +326,6 @@ class Diet extends CI_Controller {
 
         $serving_unit = trim($this->input->post('serving_unit', TRUE) ?: ($base_food['serving_unit'] ?? 'serving'));
 
-        // Multiply base macros by selected portion quantity
         if ($base_food) {
             $base_serv  = floatval($base_food['serving_size']) > 0 ? floatval($base_food['serving_size']) : 1.0;
             $multiplier = $quantity / $base_serv;
@@ -187,7 +350,7 @@ class Diet extends CI_Controller {
         }
 
         $log_data = [
-            'user_id'       => $this->user_id,
+            'user_id'       => $target_user_id,
             'food_id'       => $food_id > 0 ? $food_id : null,
             'food_name'     => $food_name,
             'meal_category' => $meal_category,
@@ -205,11 +368,10 @@ class Diet extends CI_Controller {
             'notes'         => trim($this->input->post('notes', TRUE) ?: '')
         ];
 
-        // Insert new entry into user_diet_logs (supports stacking multiple items per meal)
         $insert_id = $this->Diet_model->insert_diet_log($log_data);
 
         if ($insert_id) {
-            $summary = $this->Diet_model->get_daily_summary($this->user_id, $log_date);
+            $summary = $this->Diet_model->get_daily_summary($target_user_id, $log_date);
 
             $this->output
                 ->set_content_type('application/json', 'utf-8')
@@ -247,9 +409,6 @@ class Diet extends CI_Controller {
         }
     }
 
-    /**
-     * Backward-compatible alias for add_food_log
-     */
     public function add_log() {
         return $this->add_food_log();
     }
@@ -259,6 +418,19 @@ class Diet extends CI_Controller {
      */
     public function delete_log() {
         $this->require_login();
+
+        $target_user_id = $this->user_id;
+        if ($this->is_practitioner) {
+            $req_pid = intval($this->input->post('patient_id') ?: $this->input->get('patient_id'));
+            $target_user_id = $this->resolve_target_patient($req_pid);
+            if ($target_user_id <= 0) {
+                $this->output
+                    ->set_status_header(403)
+                    ->set_content_type('application/json', 'utf-8')
+                    ->set_output(json_encode(['status' => 'error', 'message' => 'Unauthorized access to patient data.']));
+                return;
+            }
+        }
 
         $log_id   = intval($this->input->post('log_id', TRUE) ?: ($this->input->get('log_id', TRUE) ?: 0));
         $log_date = $this->Diet_model->normalize_date($this->input->post('log_date', TRUE) ?: ($this->input->get('log_date', TRUE) ?: date('Y-m-d')));
@@ -270,9 +442,9 @@ class Diet extends CI_Controller {
             return;
         }
 
-        $res = $this->Diet_model->delete_log($log_id, $this->user_id);
+        $res = $this->Diet_model->delete_log($log_id, $target_user_id);
         if ($res) {
-            $summary = $this->Diet_model->get_daily_summary($this->user_id, $log_date);
+            $summary = $this->Diet_model->get_daily_summary($target_user_id, $log_date);
             $this->output
                 ->set_content_type('application/json', 'utf-8')
                 ->set_output(json_encode([
@@ -293,9 +465,22 @@ class Diet extends CI_Controller {
     public function get_summary() {
         $this->require_login();
 
+        $target_user_id = $this->user_id;
+        if ($this->is_practitioner) {
+            $req_pid = intval($this->input->get('patient_id') ?: $this->input->post('patient_id'));
+            $target_user_id = $this->resolve_target_patient($req_pid);
+            if ($target_user_id <= 0) {
+                $this->output
+                    ->set_status_header(403)
+                    ->set_content_type('application/json', 'utf-8')
+                    ->set_output(json_encode(['status' => 'error', 'message' => 'Unauthorized access to patient summary.']));
+                return;
+            }
+        }
+
         $date = $this->Diet_model->normalize_date($this->input->get('date', TRUE) ?: ($this->input->post('date', TRUE) ?: date('Y-m-d')));
 
-        $summary = $this->Diet_model->get_daily_summary($this->user_id, $date);
+        $summary = $this->Diet_model->get_daily_summary($target_user_id, $date);
 
         $this->output
             ->set_content_type('application/json', 'utf-8')

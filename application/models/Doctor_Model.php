@@ -92,8 +92,16 @@ class Doctor_Model extends CI_Model
 			'regd_no',
 			'regd_council',
 			'regd_year',
+			'college',
+			'year',
 			'exp',
-			'specialization'
+			'specialization',
+			'short_about',
+			'about',
+			'drimage',
+			'id_proof',
+			'mic_proof',
+			'med_reg_proof'
 		);
 
 		$update_payload = array();
@@ -103,7 +111,7 @@ class Doctor_Model extends CI_Model
 			}
 		}
 
-		if (empty($update_payload) && !isset($data['specializations'])) {
+		if (empty($update_payload) && !isset($data['specializations']) && !isset($data['qualifications'])) {
 			return false;
 		}
 
@@ -132,6 +140,24 @@ class Doctor_Model extends CI_Model
 			}
 			if (!empty($spldata)) {
 				$this->db->insert_batch('dr_specialization', $spldata);
+			}
+		}
+
+		// Update qualifications if provided in payload
+		if (isset($data['qualifications']) && is_array($data['qualifications'])) {
+			$this->db->where('user_id', $doctor_id)->delete('dr_qualifications');
+			$qualdata = array();
+			foreach ($data['qualifications'] as $qid) {
+				$qid = intval($qid);
+				if ($qid > 0) {
+					$qualdata[] = array(
+						'user_id'          => $doctor_id,
+						'qualification_id' => $qid
+					);
+				}
+			}
+			if (!empty($qualdata)) {
+				$this->db->insert_batch('dr_qualifications', $qualdata);
 			}
 		}
 
@@ -248,12 +274,23 @@ class Doctor_Model extends CI_Model
 			$rname=rand(1111111,999999999);
 			$date=date('Ymd');
 			$uploadimage='dr_idproof_pic_'.$rname.$date.'.'.$extsign;
-			$config['upload_path']          = $_SERVER['DOCUMENT_ROOT'].'/admin1947/public/assets/upload/';
-					$config['allowed_types'] = 'jpg|png|jpeg|JPG|PNG|JPEG';
-					$config['max_size']             = 0;
-					$config['quality'] = '50%';
-					$config['file_name']  = $uploadimage;
-					$this->load->library('upload', $config);
+			$upload_dir = FCPATH . 'admin1947/public/assets/upload/';
+			if (!is_dir($upload_dir)) {
+				@mkdir($upload_dir, 0777, true);
+			}
+			if (!is_dir($upload_dir) && isset($_SERVER['DOCUMENT_ROOT'])) {
+				$upload_dir = rtrim(str_replace('\\', '/', $_SERVER['DOCUMENT_ROOT']), '/') . '/admin1947/public/assets/upload/';
+				if (!is_dir($upload_dir)) {
+					@mkdir($upload_dir, 0777, true);
+				}
+			}
+			$config['upload_path']          = $upload_dir;
+			$config['allowed_types'] = 'jpg|png|jpeg|webp|pdf|JPG|PNG|JPEG|WEBP|PDF';
+			$config['max_size']             = 10240;
+			$config['quality'] = '80%';
+			$config['file_name']  = $uploadimage;
+			$this->load->library('upload', $config);
+			$this->upload->initialize($config);
 					
 					if ( ! $this->upload->do_upload('images'))
 					{
@@ -282,12 +319,23 @@ class Doctor_Model extends CI_Model
 			$rname=rand(1111111,999999999);
 			$date=date('Ymd');
 			$uploadimage='dr_micidproof_pic_'.$rname.$date.'.'.$extsign;
-			$config['upload_path']          = $_SERVER['DOCUMENT_ROOT'].'/admin1947/public/assets/upload/';
-					$config['allowed_types'] = 'jpg|png|jpeg|JPG|PNG|JPEG';
-					$config['max_size']             = 0;
-					$config['quality'] = '50%';
-					$config['file_name']  = $uploadimage;
-					$this->load->library('upload', $config);
+			$upload_dir = FCPATH . 'admin1947/public/assets/upload/';
+			if (!is_dir($upload_dir)) {
+				@mkdir($upload_dir, 0777, true);
+			}
+			if (!is_dir($upload_dir) && isset($_SERVER['DOCUMENT_ROOT'])) {
+				$upload_dir = rtrim(str_replace('\\', '/', $_SERVER['DOCUMENT_ROOT']), '/') . '/admin1947/public/assets/upload/';
+				if (!is_dir($upload_dir)) {
+					@mkdir($upload_dir, 0777, true);
+				}
+			}
+			$config['upload_path']          = $upload_dir;
+			$config['allowed_types'] = 'jpg|png|jpeg|webp|pdf|JPG|PNG|JPEG|WEBP|PDF';
+			$config['max_size']             = 10240;
+			$config['quality'] = '80%';
+			$config['file_name']  = $uploadimage;
+			$this->load->library('upload', $config);
+			$this->upload->initialize($config);
 					
 					if ( ! $this->upload->do_upload('images'))
 					{
@@ -316,12 +364,23 @@ class Doctor_Model extends CI_Model
 			$rname=rand(1111111,999999999);
 			$date=date('Ymd');
 			$uploadimage='dr_regproof_pic_'.$rname.$date.'.'.$extsign;
-			$config['upload_path']          = $_SERVER['DOCUMENT_ROOT'].'/admin1947/public/assets/upload/';
-					$config['allowed_types'] = 'jpg|png|jpeg|JPG|PNG|JPEG';
-					$config['max_size']             = 0;
-					$config['quality'] = '50%';
-					$config['file_name']  = $uploadimage;
-					$this->load->library('upload', $config);
+			$upload_dir = FCPATH . 'admin1947/public/assets/upload/';
+			if (!is_dir($upload_dir)) {
+				@mkdir($upload_dir, 0777, true);
+			}
+			if (!is_dir($upload_dir) && isset($_SERVER['DOCUMENT_ROOT'])) {
+				$upload_dir = rtrim(str_replace('\\', '/', $_SERVER['DOCUMENT_ROOT']), '/') . '/admin1947/public/assets/upload/';
+				if (!is_dir($upload_dir)) {
+					@mkdir($upload_dir, 0777, true);
+				}
+			}
+			$config['upload_path']          = $upload_dir;
+			$config['allowed_types'] = 'jpg|png|jpeg|webp|pdf|JPG|PNG|JPEG|WEBP|PDF';
+			$config['max_size']             = 10240;
+			$config['quality'] = '80%';
+			$config['file_name']  = $uploadimage;
+			$this->load->library('upload', $config);
+			$this->upload->initialize($config);
 					
 					if ( ! $this->upload->do_upload('images'))
 					{

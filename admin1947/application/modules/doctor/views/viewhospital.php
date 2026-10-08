@@ -13,6 +13,9 @@
         <a href="<?=base_url('doctor/clinicreg/updatehospital/'.@$hospital->id)?>" class="btn btn-sm btn-primary" style="background: #00A896; border-color: #00A896; color: #FFFFFF; font-weight: 600; padding: 7px 14px; border-radius: 6px; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
           <i class="fa fa-pencil"></i> Edit Hospital
         </a>
+        <button type="button" class="btn btn-sm" onclick="openHospResetModal(<?=$hospital->id;?>, '<?=htmlspecialchars(addslashes($hospital->name));?>', '<?=htmlspecialchars($hospital->email);?>', '<?=htmlspecialchars($hospital->mobile);?>')" style="background: #FFFBEB; border: 1px solid #FDE68A; color: #B45309; font-weight: 600; padding: 7px 14px; border-radius: 6px; display: inline-flex; align-items: center; gap: 6px;">
+          <i class="fa fa-key"></i> Reset Password
+        </button>
         <a href="<?=base_url('doctor/clinicreg/hospitalverify/'.@$hospital->id)?>" class="btn btn-sm" style="background: #FFFBEB; border: 1px solid #FDE68A; color: #B45309; font-weight: 600; padding: 7px 14px; border-radius: 6px; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
           <i class="fa fa-shield"></i> Verification Portal
         </a>
@@ -81,7 +84,7 @@
               </span>
             </div>
             <div style="color: #64748B; font-size: 13px; margin-top: 8px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
-              <span><i class="fa fa-map-marker" style="color: #00A896;"></i> <?=htmlspecialchars(@$city_name ?: 'City Unspecified');?><?=!empty($hospital->state) ? ', '.htmlspecialchars($hospital->state) : '';?></span>
+              <span><i class="fa fa-map-marker" style="color: #00A896;"></i> <?=htmlspecialchars(!empty($locality_name) ? $locality_name.', ' : '');?><?=htmlspecialchars(@$city_name ?: 'City Unspecified');?><?=!empty($hospital->state) ? ', '.htmlspecialchars($hospital->state) : '';?></span>
               <span><i class="fa fa-phone" style="color: #00A896;"></i> <?=htmlspecialchars($hospital->mobile);?></span>
               <span><i class="fa fa-envelope-o" style="color: #00A896;"></i> <?=htmlspecialchars($hospital->email);?></span>
               <span><i class="fa fa-calendar" style="color: #64748B;"></i> Registered: <?=date('d M Y, h:i A', strtotime($hospital->creat_date));?></span>
@@ -171,7 +174,7 @@
               </tr>
               <tr>
                 <th style="background: #F8FAFC; color: #475569; font-weight: 600;">Locality / Area</th>
-                <td><?=htmlspecialchars(@$hospital->location ?: 'Not specified');?></td>
+                <td><?=htmlspecialchars(!empty($locality_name) ? $locality_name : (@$hospital->location ?: 'Not specified'));?></td>
               </tr>
               <tr>
                 <th style="background: #F8FAFC; color: #475569; font-weight: 600;">Street Address</th>
@@ -431,6 +434,12 @@
                 </td>
               </tr>
             </table>
+
+            <div style="margin-top: 16px; padding-top: 14px; border-top: 1px solid #F1F5F9;">
+              <button type="button" onclick="openHospResetModal(<?=$hospital->id;?>, '<?=htmlspecialchars(addslashes($hospital->name));?>', '<?=htmlspecialchars($hospital->email);?>', '<?=htmlspecialchars($hospital->mobile);?>')" class="btn btn-block" style="background: #FFFBEB; border: 1px solid #FDE68A; color: #B45309; font-weight: 700; border-radius: 8px; padding: 10px; font-size: 13px; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                <i class="fa fa-key"></i> Reset Portal Login Password
+              </button>
+            </div>
           </div>
         </div>
 
@@ -439,3 +448,110 @@
 
   </section>
 </div>
+
+<!-- Admin Reset Hospital Password Modal -->
+<div class="modal fade" id="resetHospPasswordModal" tabindex="-1" role="dialog" aria-labelledby="resetHospPasswordModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" style="max-width: 440px; margin-top: 80px;">
+    <div class="modal-content" style="border-radius: 14px; border: none; box-shadow: 0 20px 40px rgba(0,0,0,0.18); overflow: hidden;">
+      <div class="modal-header" style="background: linear-gradient(135deg, #00A896 0%, #028090 100%); color: #ffffff; padding: 16px 22px; border-bottom: none;">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close" style="color: #ffffff; opacity: 0.85; text-shadow: none; font-size: 22px;">&times;</button>
+        <h4 class="modal-title" id="resetHospPasswordModalLabel" style="font-size: 16px; font-weight: 700; display: flex; align-items: center; gap: 8px; margin: 0;">
+          <i class="fa fa-key"></i> Reset Hospital Portal Password
+        </h4>
+      </div>
+      <form id="reset-hosp-password-form" action="<?=base_url('doctor/clinicreg/resethospitalpassword');?>" method="post">
+        <div class="modal-body" style="padding: 24px;">
+          <input type="hidden" name="hospital_id" id="modal_hosp_id">
+          <input type="hidden" name="redirect_url" id="modal_redirect_url" value="<?=current_url_query_string();?>">
+          
+          <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px; padding: 12px 16px; margin-bottom: 18px;">
+            <div style="font-size: 14px; font-weight: 700; color: #0F172A;" id="modal_hosp_name">-</div>
+            <div style="font-size: 12px; color: #64748B; margin-top: 4px; display: flex; flex-direction: column; gap: 2px;">
+              <span><i class="fa fa-envelope-o" style="color: #00A896; width: 14px;"></i> <span id="modal_hosp_email">-</span></span>
+              <span><i class="fa fa-phone" style="color: #00A896; width: 14px;"></i> <span id="modal_hosp_mobile">-</span></span>
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 16px;">
+            <label style="display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 6px;">
+              New Password <span style="color: #EF4444;">*</span>
+            </label>
+            <div class="input-group">
+              <input type="password" class="form-control" name="new_password" id="modal_hosp_new_password" required minlength="6" placeholder="Enter new password (min. 6 characters)..." style="height: 42px; border-radius: 8px 0 0 8px; border: 1px solid #CBD5E1; font-size: 14px; padding: 8px 12px;">
+              <span class="input-group-btn">
+                <button type="button" class="btn btn-default" id="toggle-hosp-pwd-btn" style="height: 42px; border: 1px solid #CBD5E1; border-left: none; padding: 0 12px; color: #64748B;" title="Show/Hide Password">
+                  <i class="fa fa-eye"></i>
+                </button>
+                <button type="button" class="btn btn-default" id="gen-hosp-pwd-btn" style="height: 42px; border-radius: 0 8px 8px 0; border: 1px solid #CBD5E1; border-left: none; font-weight: 600; color: #00A896; background: #F0FDFA; padding: 0 14px;" title="Generate Secure Password">
+                  <i class="fa fa-magic"></i> Generate
+                </button>
+              </span>
+            </div>
+            <small style="color: #94A3B8; font-size: 11px; display: block; margin-top: 5px;">
+              Minimum 6 characters. The hospital will use this password alongside their registered email/mobile to login.
+            </small>
+          </div>
+
+          <div id="reset-pwd-feedback" style="display: none; padding: 10px 14px; border-radius: 8px; font-size: 12.5px; font-weight: 500; margin-bottom: 10px;"></div>
+        </div>
+        <div class="modal-footer" style="background: #F8FAFC; padding: 14px 24px; border-top: 1px solid #E2E8F0; display: flex; justify-content: flex-end; gap: 10px;">
+          <button type="button" class="btn btn-default" data-dismiss="modal" style="border-radius: 8px; font-weight: 600; padding: 9px 18px;">
+            Cancel
+          </button>
+          <button type="submit" id="submit-reset-hosp-pwd-btn" class="btn" style="background: #00A896; color: #FFFFFF; font-weight: 700; border-radius: 8px; padding: 9px 24px; border: none; box-shadow: 0 4px 10px rgba(0,168,150,0.25);">
+            <i class="fa fa-check"></i> Update Password
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+function openHospResetModal(hospId, hospName, hospEmail, hospMobile) {
+  $('#modal_hosp_id').val(hospId);
+  $('#modal_hosp_name').text(hospName || 'Hospital #' + hospId);
+  $('#modal_hosp_email').text(hospEmail || 'No email specified');
+  $('#modal_hosp_mobile').text(hospMobile || 'No mobile specified');
+  $('#modal_hosp_new_password').val('').attr('type', 'password');
+  $('#toggle-hosp-pwd-btn i').removeClass('fa-eye-slash').addClass('fa-eye');
+  $('#reset-pwd-feedback').hide().removeClass('alert-success alert-danger');
+  $('#submit-reset-hosp-pwd-btn').prop('disabled', false).html('<i class="fa fa-check"></i> Update Password');
+  $('#resetHospPasswordModal').modal('show');
+}
+
+$(document).ready(function(){
+  // Password Generator
+  $('#gen-hosp-pwd-btn').click(function(){
+    var chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789!@#$%';
+    var pwd = '';
+    for (var i = 0; i < 10; i++) {
+      pwd += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    $('#modal_hosp_new_password').val(pwd).attr('type', 'text');
+    $('#toggle-hosp-pwd-btn i').removeClass('fa-eye').addClass('fa-eye-slash');
+  });
+
+  // Toggle Password Visibility
+  $('#toggle-hosp-pwd-btn').click(function(){
+    var $input = $('#modal_hosp_new_password');
+    if ($input.attr('type') === 'password') {
+      $input.attr('type', 'text');
+      $(this).find('i').removeClass('fa-eye').addClass('fa-eye-slash');
+    } else {
+      $input.attr('type', 'password');
+      $(this).find('i').removeClass('fa-eye-slash').addClass('fa-eye');
+    }
+  });
+
+  // Submit Password Reset
+  $('#reset-hosp-password-form').on('submit', function(e){
+    var newPwd = $('#modal_hosp_new_password').val();
+    if (!newPwd || newPwd.length < 6) {
+      e.preventDefault();
+      $('#reset-pwd-feedback').text('Password must be at least 6 characters long.').removeClass('alert-success').addClass('alert-danger').show();
+      return false;
+    }
+  });
+});
+</script>
