@@ -598,6 +598,95 @@ class Doctorregmodel extends CI_Model
 		$result = $this->db->get('hospital')->result_array();
 		return $result;
 	}
+
+	/**
+	 * Get Single Hospital by ID with Master City & Locality Joins
+	 */
+	public function get_hospital_by_id($id)
+	{
+		$this->db->select('hospital.*, mc.name as city_name, ml.name as locality_name', FALSE);
+		$this->db->from('hospital');
+		$this->db->join('master_city mc', 'mc.id = hospital.city', 'left');
+		$this->db->join('master_locality ml', 'ml.id = hospital.location', 'left');
+		$this->db->where('hospital.id', (int)$id);
+		$row = $this->db->get()->row();
+		if ($row) {
+			if (empty($row->locality_name) && !empty($row->location) && !is_numeric($row->location)) {
+				$row->locality_name = $row->location;
+			}
+			if (empty($row->city_name) && !empty($row->city) && !is_numeric($row->city)) {
+				$row->city_name = $row->city;
+			}
+		}
+		return $row;
+	}
+
+	/**
+	 * Get Affiliated Doctors for a Given Hospital
+	 * Joins dr_practice with profile_dr and master_specialization
+	 */
+	public function get_hospital_doctors($hospital_id, $hospital_uid = null)
+	{
+		if (!$this->db->table_exists('dr_practice') || !$this->db->table_exists('profile_dr')) {
+			return array();
+		}
+
+		$this->db->select('dp.id as practice_id, dp.fee, dp.status as practice_status, dp.is_video_consult_enabled, pd.id as doctor_id, pd.fname, pd.lname, pd.mobile, pd.email, pd.drimage, ms.name as speciality');
+		$this->db->from('dr_practice dp');
+		$this->db->join('profile_dr pd', '(pd.id = dp.user_id OR pd.user_id = dp.user_id)', 'left');
+		$this->db->join('master_specialization ms', 'ms.id = pd.specialization', 'left');
+		
+		$h_id = (int)$hospital_id;
+		$u_id = (int)$hospital_uid;
+		if ($u_id > 0) {
+			$this->db->where('(dp.institution_id = ' . $h_id . ' OR dp.institution_id = ' . $u_id . ')');
+		} else {
+			$this->db->where('dp.institution_id', $h_id);
+		}
+
+		$this->db->order_by('dp.id', 'DESC');
+		$query = $this->db->get();
+		return ($query && is_object($query)) ? $query->result_array() : array();
+	}
+
+	/**
+	 * Get Active Facilities/Services Mapped to a Given Hospital
+	 * Queries instition_services joined with master_services, with fallback to hospital.services
+	 */
+	public function get_hospital_services($hospital_id, $services_field = null)
+	{
+		$services = array();
+
+		if ($this->db->table_exists('instition_services')) {
+			$this->db->select('s.*, ms.name as service_name');
+			$this->db->from('instition_services s');
+			$this->db->join('master_services ms', 'ms.id = s.services_id', 'left');
+			$this->db->where('s.institution_id', (int)$hospital_id);
+			$this->db->where('s.institution_type', 'H');
+			$this->db->where('s.status', '1');
+			$query = $this->db->get();
+			if ($query && $query->num_rows() > 0) {
+				$services = $query->result_array();
+			}
+		}
+
+		// Fallback: check hospital.services column if no rows in instition_services
+		if (empty($services) && !empty($services_field)) {
+			$srv_ids = array_filter(array_map('trim', explode(',', $services_field)));
+			if (!empty($srv_ids) && $this->db->table_exists('master_services')) {
+				$this->db->select('id as services_id, name as service_name');
+				$this->db->from('master_services');
+				$this->db->where_in('id', $srv_ids);
+				$this->db->where('status', '1');
+				$query = $this->db->get();
+				if ($query && $query->num_rows() > 0) {
+					$services = $query->result_array();
+				}
+			}
+		}
+
+		return $services;
+	}
 	
 	public function get_clinic($limit = 10, $offset = 0, $param = array())
 	{	
