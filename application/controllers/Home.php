@@ -2008,11 +2008,19 @@ class Home extends CI_Controller
 					'GENDER'   => 'M'
 				);
 				if (!empty($email)) {
-					$newUserData['EMAIL'] = $email;
+					$emailExists = $this->db->where('EMAIL', $email)->count_all_results('userlogin');
+					if ($emailExists == 0) {
+						$newUserData['EMAIL'] = $email;
+					}
 				}
 
-				$this->db->insert('userlogin', $newUserData);
-				$userid = $this->db->insert_id();
+				try {
+					$this->db->insert('userlogin', $newUserData);
+					$userid = $this->db->insert_id();
+				} catch (\Throwable $dbEx) {
+					$fallback = $this->db->where('MOBILE', $mobile)->get('userlogin')->row();
+					$userid = $fallback ? $fallback->USERID : 0;
+				}
 
 				$this->session->set_userdata('userid', $userid);
 				$this->session->set_userdata('user_id', $userid);
@@ -2032,10 +2040,17 @@ class Home extends CI_Controller
 				$lname = isset($user->LNAME) ? (string)$user->LNAME : (isset($user->lname) ? (string)$user->lname : '');
 				$userEmail = !empty($user->EMAIL) ? (string)$user->EMAIL : (!empty($user->email) ? (string)$user->email : (!empty($email) ? $email : ''));
 
-				// Sync missing email if user provided one during booking
+				// Sync missing email if user provided one during booking and not conflicting with another account
 				if (!empty($email) && empty($user->EMAIL) && !empty($userid)) {
-					$this->db->where('USERID', $userid)->update('userlogin', array('EMAIL' => $email));
-					$userEmail = $email;
+					$emailExists = $this->db->where('EMAIL', $email)->where('USERID !=', $userid)->count_all_results('userlogin');
+					if ($emailExists == 0) {
+						try {
+							$this->db->where('USERID', $userid)->update('userlogin', array('EMAIL' => $email));
+							$userEmail = $email;
+						} catch (\Throwable $e) {}
+					} else {
+						$userEmail = $email;
+					}
 				}
 
 				$this->session->set_userdata('userid', $userid);
@@ -2183,13 +2198,21 @@ class Home extends CI_Controller
 							'UPDATE_DATE' => date('Y-m-d')
 						);
 						if ($email) {
-							$udata['EMAIL'] = $email;
+							$emailExists = $this->db->where('EMAIL', $email)->count_all_results('userlogin');
+							if ($emailExists == 0) {
+								$udata['EMAIL'] = $email;
+							}
 						}
 						if ($mobile) {
 							$udata['MOBILE'] = $mobile;
 						}
-						$this->db->insert('userlogin', $udata);
-						$userid = $this->db->insert_id();
+						try {
+							$this->db->insert('userlogin', $udata);
+							$userid = $this->db->insert_id();
+						} catch (\Throwable $e) {
+							$fallback = $this->db->where('MOBILE', $mobile)->get('userlogin')->row();
+							$userid = $fallback ? $fallback->USERID : 0;
+						}
 						$this->session->set_userdata('userid', $userid);
 						$this->session->set_userdata('USERID', $userid);
 						$this->session->set_userdata('useremail', $email);
