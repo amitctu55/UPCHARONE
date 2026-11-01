@@ -75,3 +75,4 @@ class Doctor extends CI_Controller {
 		$this->load->view('detail_page', $data);
 	}
 }
+

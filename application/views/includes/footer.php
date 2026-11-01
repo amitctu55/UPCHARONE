@@ -1180,9 +1180,18 @@ function isNumber(evt)
 					$('#auth_attempt_info').html('<i class="fas fa-exclamation-triangle"></i> ' + msg).fadeIn(150);
 				}
 			},
-			error: function() {
+			error: function(xhr) {
 				btn.prop('disabled', false).html(origText);
-				$('#auth_attempt_info').html('<i class="fas fa-wifi"></i> Network connection error. Please try again.').fadeIn(150);
+				var errMsg = 'Network connection error. Please try again.';
+				if (xhr && xhr.responseJSON && xhr.responseJSON.message) {
+					errMsg = xhr.responseJSON.message;
+				} else if (xhr && xhr.responseText) {
+					try {
+						var p = JSON.parse(xhr.responseText);
+						if (p && p.message) errMsg = p.message;
+					} catch(e) {}
+				}
+				$('#auth_attempt_info').html('<i class="fas fa-exclamation-triangle"></i> ' + errMsg).fadeIn(150);
 			}
 		});
 	});
