@@ -98,7 +98,7 @@ class Webservicescidoc extends CI_Controller {
 			$response=array('status'=>'success','msg'=>'OTP Sent To Registered Mobile','userid'=>$userid);
 		}else if($login=='INVALID'){
 			$response=array('status'=>'invalid','msg'=>'Invalid OTP');
-		}else if($login=='INVALID'){
+		}else if($login=='FAILED'){
 			$response=array('status'=>'failed','msg'=>'Invalid OTP');
 		}else {
 			$response=array('status'=>'failed','msg'=>'Something went wrong');
@@ -799,7 +799,7 @@ class Webservicescidoc extends CI_Controller {
 			$this->db->insert('user_device', $form_datan);
 			}			
 		}
-		$success = array('status' => "Success", "msg" => "Successfully Registered","OTP"=>$otp,"data"=>$userdata);
+		$success = array('status' => "Success", "msg" => "Successfully Registered","data"=>$userdata);
 		$this->json_output($success);
 		}else{
 				$error = array('status' => "Failed", "msg" => "Please Provide Valid Input");

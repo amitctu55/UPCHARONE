@@ -52,7 +52,7 @@ class Webservicescichem extends CI_Controller {
 			$response=array('status'=>'success','msg'=>'OTP Sent To Registered Mobile','userid'=>$userid);
 		}else if($login=='INVALID'){
 			$response=array('status'=>'invalid','msg'=>'Invalid OTP');
-		}else if($login=='INVALID'){
+		}else if($login=='FAILED'){
 			$response=array('status'=>'failed','msg'=>'Invalid OTP');
 		}else {
 			$response=array('status'=>'failed','msg'=>'Something went wrong');
@@ -135,10 +135,13 @@ class Webservicescichem extends CI_Controller {
 		if($this->input->post('qualification')){
 			$this->db->delete('dr_qualifications',array('user_id'=>$this->did));
 			$qualification =$this->input->post('qualification');
+			$qualdata = array();
 			foreach($qualification as $q){
 				$qualdata[]=array('user_id'=>$this->did,'qualification_id'=>$q);
 			}
-		}$this->db->insert_batch('dr_qualifications',$qualdata);
+			if(!empty($qualdata))
+				$this->db->insert_batch('dr_qualifications',$qualdata);
+		}
 		
 		
 		$response=array('status'=>'success','msg'=>'Successfully');
@@ -549,7 +552,7 @@ class Webservicescichem extends CI_Controller {
 			$this->db->insert('user_device', $form_datan);
 			}			
 		}
-		$success = array('status' => "Success", "msg" => "Successfully Registered","OTP"=>$otp,"data"=>$userdata);
+		$success = array('status' => "Success", "msg" => "Successfully Registered","data"=>$userdata);
 		$this->json_output($success);
 		}else{
 				$error = array('status' => "Failed", "msg" => "Please Provide Valid Input");

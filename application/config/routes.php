@@ -63,7 +63,12 @@ $route['myappointents'] 				= 'home/manageappointment';
 $route['hospitals'] 					= 'home/hospitals';
 $route['hospitallist'] 					= 'home/hospitallist';
 $route['doctors'] 						= 'home/doctors';
+$route['doctor'] 						= 'home/doctors';
+$route['doctor/book'] 					= 'home/doctor_book';
+$route['doctor/book/(:num)'] 			= 'home/doctor_book/$1';
+$route['doctor/book/(:any)'] 			= 'home/doctor_book/$1';
 $route['doctor/(:num)'] 				= 'home/doctor/$1';
+$route['doctor/(:any)'] 				= 'home/doctor/$1';
 $route['hospital/(:num)'] 				= 'home/hospital/$1';
 $route['send-enquiry'] 					= 'home/send_enquiry';
 $route['home/send_enquiry'] 			= 'home/send_enquiry';
@@ -225,7 +230,16 @@ $route['medical'] 						= 'home/medical';
 $route['medicine'] 						= 'home/medical';
 $route['pharmacy'] 						= 'home/medical';
 $route['doctors'] 						= 'home/doctors';
-$route['doctor/:any'] 					= 'home/doctor/$1';
+// Direct Lab Tests Catalog Routes
+$route['tests']                         = 'mytest/index';
+$route['tests/(:any)']                  = 'mytest/$1';
+
+// Medicine Order & Tracking Routes
+$route['medicines/order/(:num)']        = 'cart/order/$1';
+$route['medicines/order/(:any)']        = 'cart/order/$1';
+$route['medicine/order/(:num)']         = 'cart/order/$1';
+$route['medicine/order/(:any)']         = 'cart/order/$1';
+
 //$route['patient/:any']				= 'home/patient/$1';
 $route['hospital/:any'] 				= 'home/hospital/$1';
 $route['newfiles/mystatic/:any'] 		= 'dummy/mystatic/$1';

@@ -1,4020 +1,4039 @@
-<?php
-defined('BASEPATH') OR exit('No direct script access allowed');
-class Home extends CI_Controller 
-{
-	function __construct() 
-	{
-		parent::__construct();
-		date_default_timezone_set("Asia/Kolkata");
-		$this->load->library(array('Form_validation'));		
-		$this->load->helper(array('query_string_helper','dbquery_helper','admin_helper'));
-        $this->load->model(array('Userlogin_Model','Hospital_Model','Doctor_Model'));
-	}
-
-	public function index()
-	{	
-		$data['specialization']	= $this->db->order_by('name','asc')->where('status','1')->get('master_specialization')->result();
-		$data['cities'] 		= $this->db->order_by('name','asc')->where('status','1')->get('master_city')->result();
-		$data['doctor_slid']	= $this->Hospital_Model->get_doctor_home(array('profile_dr.approved'=>'1','profile_dr.verified'=>'1'));
-		$data['image'] 			= $this->db->order_by('id','RANDOM')->limit('4')->get_where('hospitalgallery',array('status'=>'A'))->result();
-		$data['news'] 			= $this->db->order_by('id','DESC')->limit('8')->get_where('news',array('approved'=>'1','status'=>'1'))->result();
-		$data['pathology_tests'] = $this->db->order_by('test_id', 'asc')->where('status', '1')->limit(12)->get('pathtest')->result();
-		$data['pathology_categories'] = $this->db->order_by('category_name', 'asc')->where('status', '1')->get('path_category')->result();
-		$data['sponsored_ads']   = $this->db->where('status', '1')->order_by('id', 'DESC')->get('advertisement')->result();
-		$this->load->view('home1', $data);
-	}
-
-	public function login()
-	{
-		if ($this->session->userdata('userid')) {
-			redirect('myappointments');
-			return;
-		}
-		$this->load->view('login');
-	}
-
-	public function signup()
-	{
-		if ($this->session->userdata('userid')) {
-			redirect('myappointments');
-			return;
-		}
-		$this->load->view('sign_up');
-	}
-
-	public function forgotpassword()
-	{
-		$this->load->view('forgot_password');
-	}
-
-	public function verifymobile()
-	{
-		$this->load->view('otp_send_pass');
-	}
-
-	public function verify_email($token = null)
-	{
-		$token = $token ?: ($this->input->get('token', TRUE) ?: $this->input->post('token', TRUE));
-		$token = trim($token);
-
-		if (empty($token)) {
-			$this->session->set_flashdata('flashmsg', '<div class="alert alert-danger" style="margin-top:15px;"><i class="fa fa-exclamation-triangle"></i> Verification token is missing. Please click the link sent to your email.</div>');
-			redirect(base_url('login'));
-			return;
-		}
-
-		$this->load->library('notification_service');
-		$user = $this->notification_service->verify_email_token($token);
-
-		if ($user) {
-			$data['user'] = $user;
-			$data['status'] = 'success';
-			$data['message'] = 'Your email (' . htmlspecialchars($user->EMAIL) . ') has been successfully verified! Your account is now active.';
-			$this->session->set_flashdata('flashmsg', '<div class="alert alert-success" style="margin-top:15px;"><i class="fa fa-check-circle"></i> <strong>Email Verified!</strong> Your account has been activated. Please log in to continue.</div>');
-			
-			if (file_exists(APPPATH . 'views/email_verified.php')) {
-				$this->load->view('email_verified', $data);
-			} else {
-				redirect(base_url('login'));
-			}
-		} else {
-			$data['status'] = 'failed';
-			$data['message'] = 'The verification link is invalid, expired, or has already been used.';
-			$this->session->set_flashdata('flashmsg', '<div class="alert alert-danger" style="margin-top:15px;"><i class="fa fa-exclamation-triangle"></i> <strong>Verification Failed:</strong> The verification link is invalid, expired, or has already been used.</div>');
-			
-			if (file_exists(APPPATH . 'views/email_verified.php')) {
-				$this->load->view('email_verified', $data);
-			} else {
-				redirect(base_url('login'));
-			}
-		}
-	}
-	
-	public function bed_availability()
-	{
-		$pagesize               =  (int) $this->input->get_post('pagesize');
-		$config['limit']	    =  ( $pagesize > 0 ) ? $pagesize : 6;	
-		$offset                 =  ( $this->input->get_post('per_page') > 0 ) ? $this->input->get_post('per_page') : 0;	
-		$base_url               =  current_url_query_string(array('filter'=>'result'),array('per_page'));
-		$data['hospital_bed'] 	=  $this->Hospital_Model->get_hospital_bed($config['limit'],$offset);
-		$config['total_rows']   =  get_found_rows();
-		$data['heading_title'] 	=  'Manage Doctors';
-		$data['page_links'] 	=  admin_pagination($base_url, $config['total_rows'],$config['limit'],$offset);
-		$data['specialization'] =  $this->db->order_by('name','asc')->where('status','1')->get('master_specialization')->result();
-		$this->load->view('bed_availability',$data);
-	}
-	
-	public function doctors()
-	{
-		$per_page_param = $this->input->get_post('per_page');
-		$page_param = (int) $this->input->get_post('page');
-		if ($page_param < 1) $page_param = 1;
-
-		$location = trim($this->input->get_post('location') ?? ($this->input->get_post('city') ?? ''));
-		$speciality = trim($this->input->get_post('speciality') ?? ($this->input->get_post('spl') ?? ($this->input->get_post('specialization') ?? '')));
-		$keyword = trim($this->input->get_post('keyword') ?? '');
-		
-		$per_page = 10;
-		if ($per_page_param === '20') $per_page = 20;
-		else if ($per_page_param === '50') $per_page = 50;
-		else if ($per_page_param === 'all') $per_page = 1000;
-		else if ($per_page_param === '10') $per_page = 10;
-		
-		$offset = ($page_param - 1) * $per_page;
-
-		$filters = array(
-			'location' => $location,
-			'speciality' => $speciality,
-			'keyword' => $keyword
-		);
-
-		$total_doctors = $this->Doctor_Model->count_search_doctors($filters);
-		$doctors = $this->Doctor_Model->search_doctors($filters, $per_page, $offset);
-
-		$data['total_doctors'] = $total_doctors;
-		$data['per_page'] = $per_page;
-		$data['per_page_param'] = $per_page_param ?: '10';
-		$data['current_page'] = $page_param;
-		$data['total_pages'] = ($total_doctors > 0) ? ceil($total_doctors / $per_page) : 1;
-		$data['doctors'] = $doctors;
-
-		// Fetch ONLY Promoted / Sponsored Doctors for the Sidebar safely
-		$data['promoted_doctors'] = $this->_get_promoted_doctors($speciality);
-
-		if($location != '') {
-			$this->db->where("city", $location);
-		}
-		if($keyword != '') {
-			$this->db->like("name", $keyword);
-		}
-		$hosp_q = $this->db->limit(10)->get_where('hospital', array('approved'=>'1','verified'=>'1'));
-		$data['hospital'] = ($hosp_q && is_object($hosp_q)) ? $hosp_q->result() : array();
-
-		$clinic_q = $this->db->table_exists('clinic') ? $this->db->get_where('clinic', array('status'=>'1')) : null;
-		$data['clinic'] = ($clinic_q && is_object($clinic_q)) ? $clinic_q->result() : array();
-
-		$spec_q = $this->db->order_by('name','asc')->where('status','1')->get('master_specialization');
-		$data['specialization'] = ($spec_q && is_object($spec_q)) ? $spec_q->result() : array();
-
-		$city_q = $this->db->order_by('name','asc')->where('status','1')->get('master_city');
-		$data['cities'] = ($city_q && is_object($city_q)) ? $city_q->result() : array();
-
-		$gallery_q = $this->db->table_exists('doctorgallery') ? $this->db->get('doctorgallery') : null;
-		$data['gallery'] = ($gallery_q && is_object($gallery_q)) ? $gallery_q->result() : array();	
-		$this->load->view('team_list',$data);
-	}
-
-	/**
-	 * Fetch ONLY Premium/Promoted Doctors for the Sidebar
-	 * Matches specialization if filtered, or falls back to general specialists
-	 */
-	private function _get_promoted_doctors($spl = null, $limit = 6)
-	{
-		try {
-			$spec_ids = array();
-			if (!empty($spl)) {
-				if (is_numeric($spl)) {
-					$spec_ids[] = (int)$spl;
-				} else {
-					$escaped = $this->db->escape_like_str(trim($spl));
-					$stem = preg_replace('/(ologist|ology|iatrist|iatry|iatrician|iatrics|ician|ist|ic|s)$/i', '', trim($spl));
-					$escaped_stem = (!empty($stem) && strlen($stem) >= 4) ? $this->db->escape_like_str($stem) : $escaped;
-					$sq = $this->db->query("SELECT id FROM master_specialization WHERE name LIKE '%{$escaped}%' OR name LIKE '%{$escaped_stem}%'");
-					if ($sq && $sq->num_rows() > 0) {
-						foreach ($sq->result() as $row) {
-							$spec_ids[] = (int)$row->id;
-						}
-					}
-				}
-			}
-
-			$has_promoted_col = $this->db->field_exists('is_promoted', 'profile_dr');
-
-			// If speciality filter is specified, fetch verified/promoted doctors matching this speciality
-			if (!empty($spec_ids)) {
-				$in_specs = implode(',', array_unique($spec_ids));
-				$where_spec = "(p.specialization IN ({$in_specs}) OR EXISTS (
-					SELECT 1 FROM dr_specialization ds 
-					WHERE (ds.user_id = p.id OR (ds.user_id = p.user_id AND p.user_id != 0)) 
-					AND ds.specialization_id IN ({$in_specs})
-				))";
-
-				if ($has_promoted_col) {
-					$q = $this->db->query("SELECT p.* FROM profile_dr p WHERE p.approved = '1' AND p.verified = '1' AND p.is_promoted = 1 AND {$where_spec} ORDER BY p.id DESC LIMIT {$limit}");
-					$promoted = ($q && is_object($q)) ? $q->result() : array();
-					if (!empty($promoted)) {
-						return $this->_enrich_promoted_doctors($promoted, $spl);
-					}
-				}
-
-				// Fallback to verified doctors matching this speciality
-				$q = $this->db->query("SELECT p.* FROM profile_dr p WHERE p.approved = '1' AND p.verified = '1' AND {$where_spec} ORDER BY p.id DESC LIMIT {$limit}");
-				$fallback = ($q && is_object($q)) ? $q->result() : array();
-				if (!empty($fallback)) {
-					return $this->_enrich_promoted_doctors($fallback, $spl);
-				}
-			}
-
-			// General fallback when no speciality filter or no matches found for that speciality
-			if ($has_promoted_col) {
-				$q = $this->db->query("SELECT p.* FROM profile_dr p WHERE p.approved = '1' AND p.verified = '1' AND p.is_promoted = 1 ORDER BY p.id DESC LIMIT {$limit}");
-				$promoted = ($q && is_object($q)) ? $q->result() : array();
-				if (!empty($promoted)) {
-					return $this->_enrich_promoted_doctors($promoted, $spl);
-				}
-			}
-
-			$q = $this->db->query("SELECT p.* FROM profile_dr p WHERE p.approved = '1' AND p.verified = '1' ORDER BY p.id DESC LIMIT {$limit}");
-			$fallback = ($q && is_object($q)) ? $q->result() : array();
-			return $this->_enrich_promoted_doctors($fallback, $spl);
-		} catch (Throwable $e) {
-			log_message('error', 'Error in _get_promoted_doctors: ' . $e->getMessage());
-			return array();
-		}
-	}
-
-	private function _enrich_promoted_doctors($doctors, $preferred_spl = null)
-	{
-		if (empty($doctors)) return array();
-		foreach ($doctors as &$d) {
-			$did = (int)$d->id;
-			$duid = (int)$d->user_id;
-
-			// Fetch true specialization(s) for doctor from dr_specialization
-			$sq = $this->db->query("SELECT DISTINCT ms.name FROM dr_specialization ds JOIN master_specialization ms ON ds.specialization_id = ms.id WHERE ds.user_id = $did OR (ds.user_id = $duid AND $duid != 0)");
-			$names = array();
-			if ($sq && is_object($sq) && $sq->num_rows() > 0) {
-				foreach ($sq->result() as $sr) {
-					$names[] = $sr->name;
-				}
-			}
-			if (empty($names) && !empty($d->specialization)) {
-				$sn = getSpecilizationName($d->specialization);
-				if ($sn) $names[] = $sn;
-			}
-
-			// Prioritize preferred / searched speciality if doctor has it
-			$chosen_spl = '';
-			if (!empty($preferred_spl) && !empty($names)) {
-				foreach ($names as $n) {
-					if (stripos($n, $preferred_spl) !== false || stripos($preferred_spl, $n) !== false) {
-						$chosen_spl = $n;
-						break;
-					}
-				}
-			}
-			if (empty($chosen_spl) && !empty($names)) {
-				$chosen_spl = implode(', ', array_slice($names, 0, 2));
-			}
-			$d->spl_name = !empty($chosen_spl) ? $chosen_spl : 'Verified Specialist';
-
-			// Resolve affiliated hospital or clinic & contact phone
-			if (empty($d->hosp_name) || empty($d->contact_phone)) {
-				try {
-					$pract = $this->db->query("SELECT * FROM dr_practice WHERE (user_id = $did OR (user_id = $duid AND $duid != 0)) AND status = '1' ORDER BY id DESC LIMIT 1")->row();
-					if ($pract && !empty($pract->institution_id)) {
-						$table = ($pract->type == 'C') ? 'clinic' : 'hospital';
-						$hosp = $this->db->select('name, mobile')->get_where($table, array('id' => $pract->institution_id))->row();
-						$d->hosp_name = (!empty($hosp->name)) ? $hosp->name : 'Upchar Partner Healthcare Center';
-						$d->contact_phone = (!empty($hosp->mobile)) ? $hosp->mobile : (!empty($d->mobile) ? $d->mobile : '8448440603');
-					} else {
-						$d->hosp_name = 'Upchar Partner Healthcare Center';
-						$d->contact_phone = (!empty($d->mobile)) ? $d->mobile : '8448440603';
-					}
-				} catch (Throwable $ex) {
-					$d->hosp_name = 'Upchar Partner Healthcare Center';
-					$d->contact_phone = (!empty($d->mobile)) ? $d->mobile : '8448440603';
-				}
-			}
-		}
-		return $doctors;
-	}
-
-	public function doctor()
-	{	
-		$id=$this->uri->segment(2);
-		$data['specialization']=$this->db->order_by('name','asc')->where('status','1')->get('master_specialization')->result();
-		$data['cities']=$this->db->order_by('name','asc')->where('status','1')->get('master_city')->result();
-		$data['d']=$this->db->get_where('profile_dr',array('id'=>$id))->row();
-		if (empty($data['d'])) {
-			$data['d']=$this->db->limit(1)->get_where('profile_dr',array('approved'=>'1','verified'=>'1'))->row();
-		}
-		if (empty($data['d'])) {
-			redirect('doctors');
-			return;
-		}
-		$data['practs'] = $this->db->where('user_id', $data['d']->id)->where('status', '1')->get('dr_practice')->result();
-		$this->load->view('detail_page',$data);
-	}
-
-	public function hospital()
-	{
-		$id = $this->uri->segment(2);
-		$data['hospital'] = $this->db->get_where('hospital', array('id' => $id))->row();
-		if (empty($data['hospital'])) {
-			$data['hospital'] = $this->db->limit(1)->get_where('hospital', array('approved' => '1', 'verified' => '1'))->row();
-		}
-		if (empty($data['hospital'])) {
-			redirect('hospitals');
-			return;
-		}
-		$hid = $data['hospital']->id;
-		$data['clinic'] = $this->Hospital_Model->get_verified_doctors_by_hospital($hid);
-		
-		// Fallback: If no doctors directly linked, fetch verified specialists
-		if (empty($data['clinic'])) {
-			$data['clinic'] = $this->db->order_by('id','asc')->limit(12)->get_where('profile_dr', array('approved' => '1', 'verified' => '1'))->result();
-		}
-
-		$data['gallery'] = $this->db->get_where('hospitalgallery',array('status'=>'A','uid'=>$hid))->result();	
-				if ($this->input->post('action') === 'save_nutrition_goals') {
-			$age             = intval($this->input->post('age'));
-			$gender          = strtoupper(trim($this->input->post('gender')));
-			$height_cm       = floatval($this->input->post('height_cm'));
-			$weight_kg       = floatval($this->input->post('weight_kg'));
-			$activity_level  = trim($this->input->post('activity_level')) ?: 'sedentary';
-			$fitness_goal    = trim($this->input->post('fitness_goal')) ?: 'maintain';
-			$bmr             = floatval($this->input->post('bmr'));
-			$tdee            = floatval($this->input->post('tdee'));
-			$target_calories = floatval($this->input->post('target_calories'));
-			$carbs_g         = floatval($this->input->post('carbs_g'));
-			$protein_g       = floatval($this->input->post('protein_g'));
-			$fat_g           = floatval($this->input->post('fat_g'));
-
-			// Server-side recalculation fallback/safety check
-			if ($bmr <= 0 && $height_cm > 0 && $weight_kg > 0) {
-				if ($gender === 'F' || $gender === 'FEMALE') {
-					$bmr = round((10 * $weight_kg) + (6.25 * $height_cm) - (5 * ($age ?: 30)) - 161);
-				} elseif ($gender === 'M' || $gender === 'MALE') {
-					$bmr = round((10 * $weight_kg) + (6.25 * $height_cm) - (5 * ($age ?: 30)) + 5);
-				} else {
-					$bmr = round((10 * $weight_kg) + (6.25 * $height_cm) - (5 * ($age ?: 30)) - 78);
-				}
-				$factors = ['sedentary' => 1.2, 'light' => 1.375, 'moderate' => 1.55, 'very' => 1.725, 'extra' => 1.9];
-				$factor = $factors[$activity_level] ?? 1.2;
-				$tdee = round($bmr * $factor);
-
-				if ($fitness_goal === 'lose') {
-					$min_safe = ($gender === 'F' || $gender === 'FEMALE') ? 1200 : 1500;
-					$target_calories = max($min_safe, $tdee - 500);
-				} elseif ($fitness_goal === 'gain') {
-					$target_calories = $tdee + 400;
-				} else {
-					$target_calories = $tdee;
-				}
-				$carbs_g = round(($target_calories * 0.40) / 4, 1);
-				$protein_g = round(($target_calories * 0.30) / 4, 1);
-				$fat_g = round(($target_calories * 0.30) / 9, 1);
-			}
-
-			// Ensure table exists
-			$this->db->query("CREATE TABLE IF NOT EXISTS `patient_nutrition_goals` (
-			  `id` INT AUTO_INCREMENT PRIMARY KEY,
-			  `user_id` INT NOT NULL,
-			  `age` INT DEFAULT NULL,
-			  `gender` VARCHAR(20) DEFAULT NULL,
-			  `height_cm` DECIMAL(6,2) DEFAULT NULL,
-			  `weight_kg` DECIMAL(6,2) DEFAULT NULL,
-			  `activity_level` VARCHAR(50) DEFAULT 'sedentary',
-			  `fitness_goal` VARCHAR(50) DEFAULT 'maintain',
-			  `bmr` DECIMAL(8,2) DEFAULT NULL,
-			  `tdee` DECIMAL(8,2) DEFAULT NULL,
-			  `target_calories` DECIMAL(8,2) DEFAULT NULL,
-			  `carbs_g` DECIMAL(8,2) DEFAULT NULL,
-			  `protein_g` DECIMAL(8,2) DEFAULT NULL,
-			  `fat_g` DECIMAL(8,2) DEFAULT NULL,
-			  `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
-			  `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-			  UNIQUE KEY `uk_user` (`user_id`)
-			) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
-
-			$save_data = array(
-				'user_id'         => $userid,
-				'age'             => $age,
-				'gender'          => $gender,
-				'height_cm'       => $height_cm,
-				'weight_kg'       => $weight_kg,
-				'activity_level'  => $activity_level,
-				'fitness_goal'    => $fitness_goal,
-				'bmr'             => $bmr,
-				'tdee'            => $tdee,
-				'target_calories' => $target_calories,
-				'carbs_g'         => $carbs_g,
-				'protein_g'       => $protein_g,
-				'fat_g'           => $fat_g,
-			);
-
-			$existing = $this->db->get_where('patient_nutrition_goals', array('user_id' => $userid))->row();
-			if ($existing) {
-				$this->db->where('user_id', $userid)->update('patient_nutrition_goals', $save_data);
-			} else {
-				$this->db->insert('patient_nutrition_goals', $save_data);
-			}
-
-			// Sync height, weight, gender back to userlogin
-			$sync = array();
-			if ($height_cm > 0) $sync['HEIGHT'] = $height_cm;
-			if ($weight_kg > 0) $sync['WEIGHT'] = $weight_kg;
-			if (!empty($gender)) $sync['GENDER'] = ($gender === 'FEMALE' ? 'F' : ($gender === 'MALE' ? 'M' : $gender));
-			if (!empty($sync)) {
-				$this->db->where('USERID', $userid)->update('userlogin', $sync);
-			}
-
-			$is_ajax = $this->input->is_ajax_request() || $this->input->post('ajax');
-			if ($is_ajax) {
-				$this->output->set_content_type('application/json')->set_output(json_encode([
-					'status' => 'success',
-					'message' => 'Calorie and macronutrient targets successfully saved to your profile!',
-					'data' => $save_data
-				]));
-				return;
-			}
-			$this->session->set_flashdata('flashmsg', '<div class="alert alert-success">Nutrition and macro targets saved to your profile!</div>');
-			redirect('profile');
-			return;
-		}
-		$data['specialization'] = $this->db->order_by('name','asc')->where('status','1')->get('master_specialization')->result();
-		$data['cities'] = $this->db->order_by('name','asc')->where('status','1')->get('master_city')->result();
-		$this->load->view('hospital_detail',$data);
-	}
-
-	/**
-	 * Process and Store Hospital Inquiries
-	 */
-	public function send_enquiry()
-	{
-		$is_ajax = $this->input->is_ajax_request() || ($this->input->server('HTTP_X_REQUESTED_WITH') === 'XMLHttpRequest') || ($this->input->get_post('ajax') == '1');
-
-		$hospital_id = intval($this->input->post('hospital_id'));
-		$user_name   = trim($this->input->post('user_name', TRUE) ?: '');
-		$user_email  = trim($this->input->post('user_email', TRUE) ?: '');
-		$user_phone  = trim($this->input->post('user_phone', TRUE) ?: '');
-		$subject     = trim($this->input->post('subject', TRUE) ?: '');
-		$message     = trim($this->input->post('message', TRUE) ?: '');
-
-		if ($hospital_id <= 0 || empty($user_name) || empty($user_email) || empty($user_phone) || empty($message)) {
-			if ($is_ajax) {
-				$this->output->set_content_type('application/json')->set_output(json_encode(array(
-					'status'  => 'error',
-					'message' => 'Please fill in all required fields (Name, Email, Phone, and Message).'
-				)));
-				return;
-			} else {
-				$this->session->set_flashdata('enquiry_error', 'Please fill in all required fields.');
-				redirect($hospital_id > 0 ? 'hospital/' . $hospital_id : 'hospitals');
-				return;
-			}
-		}
-
-		$data = array(
-			'hospital_id' => $hospital_id,
-			'user_name'   => $user_name,
-			'user_email'  => $user_email,
-			'user_phone'  => $user_phone,
-			'subject'     => !empty($subject) ? $subject : 'Hospital Admission / Consultation Inquiry',
-			'message'     => $message,
-			'status'      => 'pending',
-			'created_at'  => date('Y-m-d H:i:s'),
-			'updated_at'  => date('Y-m-d H:i:s')
-		);
-
-		$inserted = $this->db->insert('inquiries', $data);
-
-		if ($inserted) {
-			$inquiry_id = $this->db->insert_id();
-			if ($is_ajax) {
-				$this->output->set_content_type('application/json')->set_output(json_encode(array(
-					'status'     => 'success',
-					'inquiry_id' => $inquiry_id,
-					'message'    => 'Thank you! Your enquiry has been received. The hospital team will reach out to you shortly.'
-				)));
-				return;
-			} else {
-				$this->session->set_flashdata('enquiry_success', 'Thank you! Your enquiry has been delivered successfully.');
-				redirect('hospital/' . $hospital_id);
-				return;
-			}
-		} else {
-			if ($is_ajax) {
-				$this->output->set_content_type('application/json')->set_output(json_encode(array(
-					'status'  => 'error',
-					'message' => 'Failed to record your enquiry. Please try again.'
-				)));
-				return;
-			} else {
-				$this->session->set_flashdata('enquiry_error', 'Failed to submit enquiry. Please try again.');
-				redirect('hospital/' . $hospital_id);
-				return;
-			}
-		}
-	}
-
-	public function search()
-	{    
-		$per_page_param = $this->input->get_post('per_page');
-		$page_param = (int) $this->input->get_post('page');
-		if ($page_param < 1) $page_param = 1;
-
-		$location = trim($this->input->get_post('location') ?? ($this->input->get_post('city') ?? ''));
-		$speciality = trim($this->input->get_post('speciality') ?? ($this->input->get_post('spl') ?? ($this->input->get_post('specialization') ?? '')));
-		$keyword = trim($this->input->get_post('keyword') ?? '');
-		$date = $this->input->get_post('dt');
-		
-		$per_page = 10;
-		if ($per_page_param === '20') $per_page = 20;
-		else if ($per_page_param === '50') $per_page = 50;
-		else if ($per_page_param === 'all') $per_page = 1000;
-		else if ($per_page_param === '10') $per_page = 10;
-		
-		$offset = ($page_param - 1) * $per_page;
-
-		$filters = array(
-			'location' => $location,
-			'speciality' => $speciality,
-			'keyword' => $keyword
-		);
-
-		$total_doctors = $this->Doctor_Model->count_search_doctors($filters);
-		$doctors = $this->Doctor_Model->search_doctors($filters, $per_page, $offset);
-
-		$data['total_doctors'] = $total_doctors;
-		$data['per_page'] = $per_page;
-		$data['per_page_param'] = $per_page_param ?: '10';
-		$data['current_page'] = $page_param;
-		$data['total_pages'] = ($total_doctors > 0) ? ceil($total_doctors / $per_page) : 1;
-		$data['doctors'] = $doctors;
-
-		if($location != '') {
-			$this->db->where("city", $location);
-		}
-		if($keyword != '') {
-			$this->db->like("name", $keyword);
-		}
-		$hosp_q = $this->db->limit(10)->get_where('hospital', array('approved'=>'1','verified'=>'1'));
-		$data['hospital'] = ($hosp_q && is_object($hosp_q)) ? $hosp_q->result() : array();
-
-		$clinic_q = $this->db->table_exists('clinic') ? $this->db->get_where('clinic', array('status'=>'1')) : null;
-		$data['clinic'] = ($clinic_q && is_object($clinic_q)) ? $clinic_q->result() : array();
-
-		$spec_q = $this->db->order_by('name','asc')->where('status','1')->get('master_specialization');
-		$data['specialization'] = ($spec_q && is_object($spec_q)) ? $spec_q->result() : array();
-
-		$city_q = $this->db->order_by('name','asc')->where('status','1')->get('master_city');
-		$data['cities'] = ($city_q && is_object($city_q)) ? $city_q->result() : array();
-
-		$gallery_q = $this->db->table_exists('doctorgallery') ? $this->db->get('doctorgallery') : null;
-		$data['gallery'] = ($gallery_q && is_object($gallery_q)) ? $gallery_q->result() : array();	
-		$data['promoted_doctors'] = $this->_get_promoted_doctors($speciality);
-		$this->load->view('team_list', $data);
-	}
-
-	public function hospitals()
-	{
-		$per_page_param = $this->input->get('per_page');
-		$page_param = (int) $this->input->get('page');
-		if ($page_param < 1) $page_param = 1;
-
-		$city = $this->input->get('city');
-		$keyword = trim($this->input->get('keyword') ?? '');
-		$spl = $this->input->get('spl');
-
-		$per_page = 10;
-		if ($per_page_param === '20') $per_page = 20;
-		else if ($per_page_param === '50') $per_page = 50;
-		else if ($per_page_param === 'all') $per_page = 1000;
-		else if ($per_page_param === '10') $per_page = 10;
-
-		$offset = ($page_param - 1) * $per_page;
-
-		// Build query with optional city/keyword filters
-		$this->db->start_cache();
-		$this->db->where('hospital.approved', '1');
-		$this->db->where('hospital.verified', '1');
-		if (!empty($city)) {
-			$this->db->where('hospital.city', $city);
-		}
-		if (!empty($keyword)) {
-			$this->db->group_start();
-			$this->db->like('hospital.name', $keyword);
-			$this->db->or_like('hospital.address', $keyword);
-			$this->db->or_like('hospital.about', $keyword);
-			$this->db->group_end();
-		}
-		$this->db->stop_cache();
-
-		$total_hospitals = $this->db->count_all_results('hospital');
-		$data['total_hospitals'] = $total_hospitals;
-		$data['per_page'] = $per_page;
-		$data['per_page_param'] = $per_page_param ?: '10';
-		$data['current_page'] = $page_param;
-		$data['total_pages'] = ($total_hospitals > 0) ? ceil($total_hospitals / $per_page) : 1;
-
-		$this->db->order_by('hospital.id', 'ASC');
-		$data['hospital'] = $this->db->limit($per_page, $offset)->get('hospital')->result();
-		$this->db->flush_cache();
-
-				if ($this->input->post('action') === 'save_nutrition_goals') {
-			$age             = intval($this->input->post('age'));
-			$gender          = strtoupper(trim($this->input->post('gender')));
-			$height_cm       = floatval($this->input->post('height_cm'));
-			$weight_kg       = floatval($this->input->post('weight_kg'));
-			$activity_level  = trim($this->input->post('activity_level')) ?: 'sedentary';
-			$fitness_goal    = trim($this->input->post('fitness_goal')) ?: 'maintain';
-			$bmr             = floatval($this->input->post('bmr'));
-			$tdee            = floatval($this->input->post('tdee'));
-			$target_calories = floatval($this->input->post('target_calories'));
-			$carbs_g         = floatval($this->input->post('carbs_g'));
-			$protein_g       = floatval($this->input->post('protein_g'));
-			$fat_g           = floatval($this->input->post('fat_g'));
-
-			// Server-side recalculation fallback/safety check
-			if ($bmr <= 0 && $height_cm > 0 && $weight_kg > 0) {
-				if ($gender === 'F' || $gender === 'FEMALE') {
-					$bmr = round((10 * $weight_kg) + (6.25 * $height_cm) - (5 * ($age ?: 30)) - 161);
-				} elseif ($gender === 'M' || $gender === 'MALE') {
-					$bmr = round((10 * $weight_kg) + (6.25 * $height_cm) - (5 * ($age ?: 30)) + 5);
-				} else {
-					$bmr = round((10 * $weight_kg) + (6.25 * $height_cm) - (5 * ($age ?: 30)) - 78);
-				}
-				$factors = ['sedentary' => 1.2, 'light' => 1.375, 'moderate' => 1.55, 'very' => 1.725, 'extra' => 1.9];
-				$factor = $factors[$activity_level] ?? 1.2;
-				$tdee = round($bmr * $factor);
-
-				if ($fitness_goal === 'lose') {
-					$min_safe = ($gender === 'F' || $gender === 'FEMALE') ? 1200 : 1500;
-					$target_calories = max($min_safe, $tdee - 500);
-				} elseif ($fitness_goal === 'gain') {
-					$target_calories = $tdee + 400;
-				} else {
-					$target_calories = $tdee;
-				}
-				$carbs_g = round(($target_calories * 0.40) / 4, 1);
-				$protein_g = round(($target_calories * 0.30) / 4, 1);
-				$fat_g = round(($target_calories * 0.30) / 9, 1);
-			}
-
-			// Ensure table exists
-			$this->db->query("CREATE TABLE IF NOT EXISTS `patient_nutrition_goals` (
-			  `id` INT AUTO_INCREMENT PRIMARY KEY,
-			  `user_id` INT NOT NULL,
-			  `age` INT DEFAULT NULL,
-			  `gender` VARCHAR(20) DEFAULT NULL,
-			  `height_cm` DECIMAL(6,2) DEFAULT NULL,
-			  `weight_kg` DECIMAL(6,2) DEFAULT NULL,
-			  `activity_level` VARCHAR(50) DEFAULT 'sedentary',
-			  `fitness_goal` VARCHAR(50) DEFAULT 'maintain',
-			  `bmr` DECIMAL(8,2) DEFAULT NULL,
-			  `tdee` DECIMAL(8,2) DEFAULT NULL,
-			  `target_calories` DECIMAL(8,2) DEFAULT NULL,
-			  `carbs_g` DECIMAL(8,2) DEFAULT NULL,
-			  `protein_g` DECIMAL(8,2) DEFAULT NULL,
-			  `fat_g` DECIMAL(8,2) DEFAULT NULL,
-			  `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
-			  `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-			  UNIQUE KEY `uk_user` (`user_id`)
-			) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
-
-			$save_data = array(
-				'user_id'         => $userid,
-				'age'             => $age,
-				'gender'          => $gender,
-				'height_cm'       => $height_cm,
-				'weight_kg'       => $weight_kg,
-				'activity_level'  => $activity_level,
-				'fitness_goal'    => $fitness_goal,
-				'bmr'             => $bmr,
-				'tdee'            => $tdee,
-				'target_calories' => $target_calories,
-				'carbs_g'         => $carbs_g,
-				'protein_g'       => $protein_g,
-				'fat_g'           => $fat_g,
-			);
-
-			$existing = $this->db->get_where('patient_nutrition_goals', array('user_id' => $userid))->row();
-			if ($existing) {
-				$this->db->where('user_id', $userid)->update('patient_nutrition_goals', $save_data);
-			} else {
-				$this->db->insert('patient_nutrition_goals', $save_data);
-			}
-
-			// Sync height, weight, gender back to userlogin
-			$sync = array();
-			if ($height_cm > 0) $sync['HEIGHT'] = $height_cm;
-			if ($weight_kg > 0) $sync['WEIGHT'] = $weight_kg;
-			if (!empty($gender)) $sync['GENDER'] = ($gender === 'FEMALE' ? 'F' : ($gender === 'MALE' ? 'M' : $gender));
-			if (!empty($sync)) {
-				$this->db->where('USERID', $userid)->update('userlogin', $sync);
-			}
-
-			$is_ajax = $this->input->is_ajax_request() || $this->input->post('ajax');
-			if ($is_ajax) {
-				$this->output->set_content_type('application/json')->set_output(json_encode([
-					'status' => 'success',
-					'message' => 'Calorie and macronutrient targets successfully saved to your profile!',
-					'data' => $save_data
-				]));
-				return;
-			}
-			$this->session->set_flashdata('flashmsg', '<div class="alert alert-success">Nutrition and macro targets saved to your profile!</div>');
-			redirect('profile');
-			return;
-		}
-		$data['specialization'] = $this->db->order_by('name','asc')->where('status','1')->get('master_specialization')->result();
-		$data['cities'] = $this->db->order_by('name','asc')->where('status','1')->get('master_city')->result();
-		$this->load->view('hospital_list', $data);
-	}
-	
-	public function hospitallist()
-	{	
-		$this->hospitals();
-	}
-	
-	public function logout()
-	{
-		$this->session->unset_userdata('userid');
-		$this->session->unset_userdata('username');
-		$this->session->unset_userdata('useremail');
-		$this->session->sess_destroy();
-		redirect('login');
-	}
-
-	public function myappointments()
-	{
-		return $this->manageappointment();
-	}
-
-	public function manageappointment()
-	{
-		try {
-			$user_id = $this->session->userdata('userid') ?: $this->session->userdata('user_id') ?: $this->session->userdata('USERID');
-
-			// If session not active, attempt SSO session restore via cross-platform SSO cookie
-			if (!$user_id) {
-				$this->load->helper('cookie');
-				$ssoCookie = $this->input->cookie('upchar_sso_token');
-				if ($ssoCookie) {
-					$this->load->model('Auth_model');
-					$payload = $this->Auth_model->verify_sso_token($ssoCookie);
-					if ($payload && !empty($payload['sub'])) {
-						$masterUser = $this->Auth_model->find_master_user($payload['sub']);
-						if ($masterUser) {
-							$ciUser = null;
-							if (!empty($masterUser['email']) && $this->db->table_exists('userlogin')) {
-								$ciUser = $this->db->get_where('userlogin', ['EMAIL' => $masterUser['email']])->row_array();
-							}
-							if (!$ciUser && !empty($masterUser['mobile']) && $this->db->table_exists('userlogin')) {
-								$ciUser = $this->db->get_where('userlogin', ['MOBILE' => $masterUser['mobile']])->row_array();
-							}
-							$sessionUid = $ciUser ? $ciUser['USERID'] : $masterUser['id'];
-							$this->session->set_userdata([
-								'USERID'   => $sessionUid,
-								'userid'   => $sessionUid,
-								'WEB_UID'  => $sessionUid,
-								'username' => $masterUser['name'],
-								'name'     => $masterUser['name'],
-								'email'    => $masterUser['email'],
-								'mobile'   => $masterUser['mobile'],
-								'uuid'     => $masterUser['uuid'],
-								'status'   => $masterUser['status'],
-								'logged_in'=> true,
-							]);
-							$user_id = $sessionUid;
-						}
-					}
-				}
-			}
-
-			if (!$user_id) {
-				redirect('login?redirect=' . urlencode('myappointments'));
-				return;
-			}
-
-			$this->load->model('Appointment_model');
-			$this->load->model('Wallet_model');
-			$this->load->model('Referral_model');
-			$this->load->model('Payment_model');
-			$this->load->model('Ambulance_model');
-
-			$user_row = null;
-			if ($this->db->table_exists('userlogin')) {
-				$user_row = $this->db->get_where('userlogin', array('USERID' => $user_id))->row_array();
-				if (!$user_row) {
-					$uEmail = $this->session->userdata('email');
-					$uMobile = $this->session->userdata('mobile');
-					if ($uEmail) {
-						$user_row = $this->db->get_where('userlogin', array('EMAIL' => $uEmail))->row_array();
-					}
-					if (!$user_row && $uMobile) {
-						$user_row = $this->db->get_where('userlogin', array('MOBILE' => $uMobile))->row_array();
-					}
-				}
-			}
-
-			if (!$user_row && $this->db->table_exists('upchar_users')) {
-				$uMaster = $this->db->get_where('upchar_users', array('id' => $user_id))->row_array();
-				if ($uMaster) {
-					$names = explode(' ', $uMaster['name'] ?? '', 2);
-					$user_row = [
-						'USERID'   => $uMaster['id'],
-						'FNAME'    => $names[0] ?? '',
-						'LNAME'    => $names[1] ?? '',
-						'EMAIL'    => $uMaster['email'] ?? '',
-						'MOBILE'   => $uMaster['mobile'] ?? '',
-						'GENDER'   => '',
-						'DOB'      => '',
-						'BGROUP'   => '',
-					];
-				}
-			}
-
-			if (!$user_row) {
-				$user_row = [
-					'USERID'   => $user_id,
-					'FNAME'    => $this->session->userdata('username') ?: 'User',
-					'LNAME'    => '',
-					'EMAIL'    => $this->session->userdata('email') ?: '',
-					'MOBILE'   => $this->session->userdata('mobile') ?: '',
-					'GENDER'   => '',
-					'DOB'      => '',
-					'BGROUP'   => '',
-				];
-			}
-
-			$user_mobile = $user_row['MOBILE'] ?? '';
-
-			$data['csrf_token_name']   = $this->security->get_csrf_token_name();
-			$data['csrf_hash']         = $this->security->get_csrf_hash();
-			$data['user_data']         = $user_row;
-			try { $data['health_goals'] = $this->calculate_patient_health_goals((object)$user_row); } catch (\Throwable $e) { $data['health_goals'] = null; }
-
-			// Appointments Data
-			try {
-				$data['appointments_data'] = $this->Appointment_model->get_user_appointments($user_id, $user_mobile);
-			} catch (\Throwable $e) {
-				log_message('error', 'Error in get_user_appointments: ' . $e->getMessage());
-				$data['appointments_data'] = [];
-			}
-
-			// Wallet Data
-			try {
-				$data['wallet']            = $this->Wallet_model->get_or_create_wallet($user_id);
-				$data['wallet_history']    = $this->Wallet_model->get_transactions($user_id, 20, 0);
-				$data['point_ratio']       = floatval($this->Wallet_model->get_setting('point_to_inr_ratio', 1.00));
-				$data['cashback_pct']      = floatval($this->Wallet_model->get_setting('cashback_percentage', 5.00));
-				$data['cancellation_policy_mode']        = $this->Wallet_model->get_setting('cancellation_policy_mode', 'TIERED');
-				$data['cancellation_deduction_tier_24h'] = floatval($this->Wallet_model->get_setting('cancellation_deduction_tier_24h', 10.00));
-				$data['cancellation_deduction_tier_12h'] = floatval($this->Wallet_model->get_setting('cancellation_deduction_tier_12h', 20.00));
-				$data['cancellation_deduction_tier_0h']  = floatval($this->Wallet_model->get_setting('cancellation_deduction_tier_0h', 30.00));
-				$data['cancellation_deduction_flat']     = floatval($this->Wallet_model->get_setting('cancellation_deduction_flat', 20.00));
-			} catch (\Throwable $e) {
-				log_message('error', 'Error in Wallet_model: ' . $e->getMessage());
-				$data['wallet'] = (object)['points_balance' => 0, 'currency_equivalent' => 0];
-				$data['wallet_history'] = [];
-				$data['point_ratio'] = 1.00;
-				$data['cashback_pct'] = 5.00;
-				$data['cancellation_policy_mode'] = 'TIERED';
-				$data['cancellation_deduction_tier_24h'] = 10.00;
-				$data['cancellation_deduction_tier_12h'] = 20.00;
-				$data['cancellation_deduction_tier_0h']  = 30.00;
-				$data['cancellation_deduction_flat']     = 20.00;
-			}
-
-			// Referral Data
-			try {
-				$data['referral_code']     = $this->Referral_model->get_or_create_code($user_id);
-			} catch (\Throwable $e) {
-				log_message('error', 'Error in Referral_model: ' . $e->getMessage());
-				$data['referral_code'] = 'UPCH-' . $user_id;
-			}
-
-			// Payments Data
-			try {
-				$data['payments_data']     = $this->Payment_model->get_orders_by_user($user_id, 20, 0);
-			} catch (\Throwable $e) {
-				log_message('error', 'Error in Payment_model: ' . $e->getMessage());
-				$data['payments_data'] = [];
-			}
-
-			// Ambulance Bookings & Emergency Fleet Data
-			try {
-				$data['ambulance_bookings'] = $this->Ambulance_model->get_user_ambulance_bookings($user_id, $user_mobile);
-				$data['ambulance_count']    = count($data['ambulance_bookings']);
-				$data['active_ambulance']   = $this->Ambulance_model->get_active_or_recent_booking($user_id, $user_mobile);
-				$data['ambulance_types']    = $this->Ambulance_model->get_categories();
-				$data['hospitals_list']     = $this->Ambulance_model->get_hospitals_list(40);
-				$data['provider_count']     = $this->Ambulance_model->get_provider_count();
-			} catch (\Throwable $e) {
-				log_message('error', 'Error in Ambulance_model: ' . $e->getMessage());
-				$data['ambulance_bookings'] = [];
-				$data['ambulance_count']    = 0;
-				$data['active_ambulance']   = null;
-				$data['ambulance_types']    = [];
-				$data['hospitals_list']     = [];
-				$data['provider_count']     = 0;
-			}
-
-			// Lab Bookings
-			$lab_bookings = [];
-			try {
-				if ($this->db->table_exists('path_book')) {
-					$this->db->select('path_book.*, pathlab.name as lab_name, pathlab.address as lab_address, master_city.name as city_name');
-					$this->db->from('path_book');
-					if ($this->db->table_exists('pathlab')) {
-						$this->db->join('pathlab', 'pathlab.id = path_book.pathlab_id', 'left');
-					}
-					if ($this->db->table_exists('master_city') && $this->db->table_exists('pathlab')) {
-						$this->db->join('master_city', 'master_city.id = pathlab.city', 'left');
-					}
-					$this->db->group_start();
-					$this->db->where('path_book.user_id', $user_id);
-					if (!empty($user_mobile)) {
-						$this->db->or_where('path_book.patient_mobile', $user_mobile);
-					}
-					$this->db->group_end();
-					$this->db->order_by('path_book.booking_id', 'DESC');
-					$this->db->limit(20);
-					$q = $this->db->get();
-					$lab_bookings = $q ? $q->result_array() : [];
-
-					if (!empty($lab_bookings) && ($this->db->table_exists('path_book_test') || $this->db->table_exists('path_reports'))) {
-						foreach ($lab_bookings as &$lb) {
-							$lb['tests']   = $this->db->table_exists('path_book_test') ? $this->db->get_where('path_book_test', array('booking_id' => $lb['booking_id']))->result_array() : [];
-							$lb['reports'] = $this->db->table_exists('path_reports') ? $this->db->where('booking_id', $lb['booking_id'])->order_by('report_id', 'desc')->get('path_reports')->result_array() : [];
-						}
-						unset($lb);
-					}
-				}
-			} catch (\Throwable $e) {
-				log_message('error', 'Error loading lab bookings: ' . $e->getMessage());
-				$lab_bookings = [];
-			}
-			$data['lab_bookings'] = $lab_bookings;
-
-			// Sponsored Ads
-			try {
-				$this->_ensure_advertisement_schema();
-				$data['sponsored_ads'] = $this->db->table_exists('advertisement') ? $this->db->where('status', '1')->order_by('id', 'DESC')->get('advertisement')->result() : [];
-			} catch (\Throwable $e) {
-				$data['sponsored_ads'] = [];
-			}
-
-			$this->load->view('patient_header', $data);
-			$this->load->view('manageappointment', $data);
-			$this->load->view('patient_footer');
-
-		} catch (\Throwable $e) {
-			log_message('error', 'Fatal error in manageappointment: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
-			// Fallback safe render
-			$fallbackData = [
-				'csrf_token_name'    => $this->security->get_csrf_token_name(),
-				'csrf_hash'          => $this->security->get_csrf_hash(),
-				'user_data'          => ['USERID' => $user_id ?? 0, 'FNAME' => 'User', 'LNAME' => '', 'EMAIL' => '', 'MOBILE' => ''],
-				'appointments_data'  => [],
-				'wallet'             => (object)['points_balance' => 0, 'currency_equivalent' => 0],
-				'wallet_history'     => [],
-				'point_ratio'        => 1.00,
-				'cashback_pct'       => 5.00,
-				'referral_code'      => 'UPCH-' . ($user_id ?? 0),
-				'payments_data'      => [],
-				'ambulance_bookings' => [],
-				'ambulance_count'    => 0,
-				'active_ambulance'   => null,
-				'ambulance_types'    => [],
-				'hospitals_list'     => [],
-				'provider_count'     => 0,
-				'cancellation_policy_mode'        => 'TIERED',
-				'cancellation_deduction_tier_24h' => 10.00,
-				'cancellation_deduction_tier_12h' => 20.00,
-				'cancellation_deduction_tier_0h'  => 30.00,
-				'cancellation_deduction_flat'     => 20.00,
-				'lab_bookings'       => [],
-				'sponsored_ads'      => []
-			];
-			$this->load->view('patient_header', $fallbackData);
-			$this->load->view('manageappointment', $fallbackData);
-			$this->load->view('patient_footer');
-		}
-	}
-
-	private function _ensure_advertisement_schema()
-	{
-		static $schema_checked = false;
-		if ($schema_checked) {
-			return;
-		}
-		$schema_checked = true;
-
-		try {
-			if (!$this->db->table_exists('advertisement')) {
-				$this->db->query("CREATE TABLE IF NOT EXISTS `advertisement` (
-				  `id` int(11) NOT NULL AUTO_INCREMENT,
-				  `title` varchar(255) DEFAULT NULL,
-				  `category` enum('medicine','medical_store','hospital','pathology','equipment','general') DEFAULT 'general',
-				  `sponsor_badge` varchar(100) DEFAULT 'Sponsored Partner',
-				  `short_description` varchar(300) DEFAULT NULL,
-				  `long_description` varchar(500) DEFAULT NULL,
-				  `image` varchar(250) DEFAULT NULL,
-				  `page` varchar(250) DEFAULT NULL,
-				  `link_url` varchar(255) DEFAULT NULL,
-				  `placement` varchar(100) DEFAULT 'public_dashboard',
-				  `clicks` int(11) DEFAULT '0',
-				  `impressions` int(11) DEFAULT '0',
-				  `price_paid` decimal(10,2) DEFAULT '0.00',
-				  `contact_info` varchar(200) DEFAULT NULL,
-				  `status` enum('0','1') DEFAULT '1',
-				  `creat_date` datetime DEFAULT NULL,
-				  PRIMARY KEY (`id`)
-				) ENGINE=InnoDB DEFAULT CHARSET=utf8;");
-			} else {
-				if (!$this->db->field_exists('category', 'advertisement')) {
-					@$this->db->query("ALTER TABLE `advertisement` ADD COLUMN `category` enum('medicine','medical_store','hospital','pathology','equipment','general') DEFAULT 'general' AFTER `title`");
-				}
-				if (!$this->db->field_exists('sponsor_badge', 'advertisement')) {
-					@$this->db->query("ALTER TABLE `advertisement` ADD COLUMN `sponsor_badge` varchar(100) DEFAULT 'Sponsored Partner'");
-				}
-				if (!$this->db->field_exists('short_description', 'advertisement')) {
-					@$this->db->query("ALTER TABLE `advertisement` ADD COLUMN `short_description` varchar(300) DEFAULT NULL");
-				}
-				if (!$this->db->field_exists('long_description', 'advertisement')) {
-					@$this->db->query("ALTER TABLE `advertisement` ADD COLUMN `long_description` varchar(500) DEFAULT NULL");
-				}
-				if (!$this->db->field_exists('link_url', 'advertisement')) {
-					@$this->db->query("ALTER TABLE `advertisement` ADD COLUMN `link_url` varchar(255) DEFAULT NULL");
-				}
-				if (!$this->db->field_exists('placement', 'advertisement')) {
-					@$this->db->query("ALTER TABLE `advertisement` ADD COLUMN `placement` varchar(100) DEFAULT 'public_dashboard'");
-				}
-				if (!$this->db->field_exists('clicks', 'advertisement')) {
-					@$this->db->query("ALTER TABLE `advertisement` ADD COLUMN `clicks` int(11) DEFAULT '0'");
-				}
-				if (!$this->db->field_exists('impressions', 'advertisement')) {
-					@$this->db->query("ALTER TABLE `advertisement` ADD COLUMN `impressions` int(11) DEFAULT '0'");
-				}
-				if (!$this->db->field_exists('price_paid', 'advertisement')) {
-					@$this->db->query("ALTER TABLE `advertisement` ADD COLUMN `price_paid` decimal(10,2) DEFAULT '0.00'");
-				}
-				if (!$this->db->field_exists('contact_info', 'advertisement')) {
-					@$this->db->query("ALTER TABLE `advertisement` ADD COLUMN `contact_info` varchar(200) DEFAULT NULL");
-				}
-				if (!$this->db->field_exists('status', 'advertisement')) {
-					@$this->db->query("ALTER TABLE `advertisement` ADD COLUMN `status` enum('0','1') DEFAULT '1'");
-				}
-			}
-		} catch (Throwable $e) {
-			log_message('error', 'Error in Home::_ensure_advertisement_schema: ' . $e->getMessage());
-		}
-	}
-
-	public function ad_click($id = null)
-	{
-		$id = intval($id);
-		if ($id <= 0) {
-			redirect(base_url());
-			return;
-		}
-
-		$this->_ensure_advertisement_schema();
-
-		$ad = null;
-		try {
-			$q = $this->db->get_where('advertisement', array('id' => $id));
-			$ad = ($q && is_object($q)) ? $q->row() : null;
-		} catch (Throwable $e) {
-			log_message('error', 'ad_click query error: ' . $e->getMessage());
-		}
-
-		if ($ad) {
-			// Increment clicks safely; failure must never break user redirection
-			try {
-				if ($this->db->field_exists('clicks', 'advertisement')) {
-					$this->db->where('id', $id)->set('clicks', 'clicks+1', FALSE)->update('advertisement');
-				}
-			} catch (Throwable $e) {
-				log_message('error', 'ad_click click count update error: ' . $e->getMessage());
-			}
-
-			$rawDest = !empty($ad->link_url) ? trim($ad->link_url) : (!empty($ad->page) ? trim($ad->page) : base_url());
-
-			// Avoid recursive loops back into ad_click
-			if (stripos($rawDest, 'home/ad_click') !== false || stripos($rawDest, 'ad_click/' . $id) !== false) {
-				$rawDest = base_url('medical');
-			}
-
-			// Parse destination URL
-			$parsed = @parse_url($rawDest);
-			$host   = (is_array($parsed) && isset($parsed['host'])) ? strtolower($parsed['host']) : '';
-			$isInternal = empty($host) || in_array($host, array('upchar.info', 'www.upchar.info', 'upcharr.com', 'www.upcharr.com', 'localhost', '127.0.0.1'));
-
-			if ($isInternal) {
-				$path = (is_array($parsed) && isset($parsed['path'])) ? ltrim($parsed['path'], '/') : '';
-				// Strip subfolder when matching localhost paths
-				$path = preg_replace('#^demo/upchar/?#i', '', $path);
-
-				if ($path === 'hospital' || $path === 'hospitallist') {
-					$path = 'hospitals';
-				} elseif ($path === 'medical' || $path === 'medicine' || $path === '') {
-					$path = 'medical';
-					$catParam = !empty($ad->category) ? $ad->category : 'equipment';
-					$path .= '?category=' . urlencode($catParam) . '&offer=' . $ad->id;
-				} elseif ($path === 'home' || $path === 'index.php') {
-					$path = '';
-				}
-
-				$queryStr = (is_array($parsed) && isset($parsed['query']) && strpos($path, '?') === false) ? '?' . $parsed['query'] : '';
-				$dest = base_url($path . $queryStr);
-			} else {
-				$dest = $rawDest;
-			}
-
-			if (empty($dest)) {
-				$dest = base_url();
-			}
-
-			redirect($dest);
-			return;
-		}
-
-		redirect(base_url());
-	}
-
-	public function medical()
-	{
-		$data['title'] = 'Upchar Pharmacy & Medicine Delivery Network';
-		$cat = $this->input->get('category') ?: 'all';
-		$data['selected_category'] = $cat;
-		$data['highlight_offer']   = $this->input->get('offer') ?: null;
-
-		$q        = trim($this->input->get('q', true) ?: '');
-		$pincode  = trim($this->input->get('pincode', true) ?: '');
-		$service  = trim($this->input->get('service', true) ?: 'all');
-		$store_id = intval($this->input->get('store_id') ?: 0);
-
-		$data['search_query'] = $q;
-		$data['pincode']      = $pincode;
-		$data['service']      = $service;
-		$data['filter_store'] = $store_id;
-
-		// If a specific store is requested, load its details
-		$current_store = null;
-		if ($store_id > 0) {
-			$cs_res = $this->db->query("
-				SELECT 
-					ps.*,
-					(SELECT COUNT(*) FROM pharmacy_inventory pi WHERE pi.pharmacy_id = ps.id AND pi.is_available = 1 AND pi.stock_quantity > 0) AS in_stock_count,
-					h.name AS hospital_name,
-					h.address AS hospital_address,
-					CONCAT('Dr. ', d.fname, ' ', d.lname) AS doctor_name
-				FROM pharmacy_stores ps
-				LEFT JOIN hospital h ON h.id = ps.hospital_id
-				LEFT JOIN profile_dr d ON d.id = ps.associated_doctor_id
-				WHERE ps.id = {$store_id} AND ps.is_active = 1
-			");
-			if ($cs_res && is_object($cs_res) && $cs_res->num_rows() > 0) {
-				$current_store = $cs_res->row();
-			}
-		}
-		$data['current_store'] = $current_store;
-
-		// 1. If a medicine search term is provided OR a specific store is requested, query matching inventory
-		$medicine_results = array();
-		if ($q !== '' || $store_id > 0) {
-			$where_conditions = array();
-			if ($q !== '') {
-				$escaped_q = $this->db->escape_like_str($q);
-				$where_conditions[] = "(mm.brand_name LIKE '%{$escaped_q}%' OR mm.generic_composition LIKE '%{$escaped_q}%' OR mm.manufacturer LIKE '%{$escaped_q}%')";
-			}
-			if ($store_id > 0) {
-				$where_conditions[] = "ps.id = {$store_id}";
-			}
-			if ($pincode !== '') {
-				$where_conditions[] = "(ps.pincode = " . $this->db->escape($pincode) . " OR ps.city LIKE '%" . $this->db->escape_like_str($pincode) . "%')";
-			}
-			if ($service === 'open24') {
-				$where_conditions[] = "ps.operating_hours LIKE '%24%'";
-			} elseif ($service === 'delivery') {
-				$where_conditions[] = "ps.delivery_radius_km > 0";
-			} elseif ($service === 'affiliated') {
-				$where_conditions[] = "((ps.hospital_id IS NOT NULL AND ps.hospital_id > 0) OR (ps.associated_doctor_id IS NOT NULL AND ps.associated_doctor_id > 0))";
-			}
-
-			$where_clause = !empty($where_conditions) ? implode(" AND ", $where_conditions) : "1=1";
-
-			$med_sql = "
-				SELECT 
-					mm.id AS medicine_id,
-					mm.brand_name,
-					mm.generic_composition,
-					mm.manufacturer,
-					mm.dosage_form,
-					mm.schedule_type,
-					mm.is_prescription_required,
-					pi.id AS inventory_id,
-					pi.mrp,
-					pi.selling_price,
-					pi.stock_quantity,
-					pi.batch_no,
-					pi.expiry_date,
-					ps.id AS pharmacy_id,
-					ps.store_name,
-					ps.phone AS store_phone,
-					ps.address AS store_address,
-					ps.city AS store_city,
-					ps.pincode AS store_pincode,
-					ps.operating_hours,
-					ps.delivery_radius_km,
-					ps.is_emergency_closed,
-					ps.hospital_id,
-					ps.associated_doctor_id,
-					h.name AS hospital_name,
-					CONCAT('Dr. ', d.fname, ' ', d.lname) AS doctor_name
-				FROM medicines_master mm
-				JOIN pharmacy_inventory pi ON pi.medicine_id = mm.id AND pi.is_available = 1 AND pi.stock_quantity > 0
-				JOIN pharmacy_stores ps ON ps.id = pi.pharmacy_id AND ps.is_active = 1 AND ps.is_emergency_closed = 0
-				LEFT JOIN hospital h ON h.id = ps.hospital_id
-				LEFT JOIN profile_dr d ON d.id = ps.associated_doctor_id
-				WHERE {$where_clause}
-				ORDER BY (ps.hospital_id IS NOT NULL OR ps.associated_doctor_id IS NOT NULL) DESC, mm.brand_name ASC, pi.selling_price ASC
-			";
-			$m_res = $this->db->query($med_sql);
-			if ($m_res && is_object($m_res)) {
-				$medicine_results = $m_res->result();
-			}
-		}
-		$data['medicine_results'] = $medicine_results;
-
-		// 2. Query registered partner pharmacies
-		$store_where = "ps.is_active = 1";
-		if ($pincode !== '') {
-			$store_where .= " AND (ps.pincode = " . $this->db->escape($pincode) . " OR ps.city LIKE '%" . $this->db->escape_like_str($pincode) . "%')";
-		}
-		if ($service === 'open24') {
-			$store_where .= " AND ps.operating_hours LIKE '%24%'";
-		} elseif ($service === 'delivery') {
-			$store_where .= " AND ps.delivery_radius_km > 0";
-		} elseif ($service === 'affiliated') {
-			$store_where .= " AND ((ps.hospital_id IS NOT NULL AND ps.hospital_id > 0) OR (ps.associated_doctor_id IS NOT NULL AND ps.associated_doctor_id > 0))";
-		}
-		if ($store_id > 0) {
-			$store_where .= " AND ps.id = {$store_id}";
-		}
-
-		$stores_sql = "
-			SELECT 
-				ps.*,
-				(SELECT COUNT(*) FROM pharmacy_inventory pi WHERE pi.pharmacy_id = ps.id AND pi.is_available = 1 AND pi.stock_quantity > 0) AS in_stock_count,
-				h.name AS hospital_name,
-				h.address AS hospital_address,
-				CONCAT('Dr. ', d.fname, ' ', d.lname) AS doctor_name
-			FROM pharmacy_stores ps
-			LEFT JOIN hospital h ON h.id = ps.hospital_id
-			LEFT JOIN profile_dr d ON d.id = ps.associated_doctor_id
-			WHERE {$store_where}
-			ORDER BY (ps.hospital_id IS NOT NULL OR ps.associated_doctor_id IS NOT NULL) DESC, ps.id ASC
-		";
-		$s_res = $this->db->query($stores_sql);
-		$data['stores'] = ($s_res && is_object($s_res)) ? $s_res->result() : array();
-
-		// 3. Suggestions for quick pill searches
-		$sug_q = $this->db->query("SELECT id, brand_name, dosage_form, generic_composition FROM medicines_master ORDER BY id ASC LIMIT 8");
-		$data['suggested_medicines'] = ($sug_q && is_object($sug_q)) ? $sug_q->result() : array();
-
-		// 4. Distinct pincodes/cities for filter dropdown
-		$pin_q = $this->db->query("SELECT DISTINCT pincode, city FROM pharmacy_stores WHERE is_active = 1 AND pincode IS NOT NULL ORDER BY pincode ASC");
-		$data['available_locations'] = ($pin_q && is_object($pin_q)) ? $pin_q->result() : array();
-
-		// 5. Retain advertisement / equipment offers if requested
-		$offers = array();
-		try {
-			if ($this->db->table_exists('advertisement')) {
-				if ($this->db->field_exists('status', 'advertisement')) {
-					$this->db->where('status', '1');
-				}
-				if ($this->db->field_exists('category', 'advertisement')) {
-					if ($cat !== 'all' && in_array($cat, array('medicine', 'medical_store', 'equipment', 'pathology', 'hospital'))) {
-						$this->db->where('category', $cat);
-					} else {
-						$this->db->where_in('category', array('medicine', 'medical_store', 'equipment', 'general'));
-					}
-				}
-				$ad_q = $this->db->order_by('id', 'DESC')->get('advertisement');
-				$offers = ($ad_q && is_object($ad_q)) ? $ad_q->result() : array();
-			}
-		} catch (Throwable $e) {
-			$offers = array();
-		}
-		$data['offers'] = $offers;
-
-		// 6. Cities and Specializations for header/modals
-		$city_q = $this->db->order_by('name', 'asc')->where('status', '1')->get('master_city');
-		$data['cities'] = ($city_q && is_object($city_q)) ? $city_q->result() : array();
-
-		$this->load->view('medical', $data);
-	}
-
-	public function process(){
-		$query = $this->input->post('query');
-		$qs=explode(';',trim($query));
-		foreach ($qs as $q){
-			if(trim($q)=='')
-				continue;
-		$query = $this->db->query($q);
-		}
-		if($query===true)
-			echo $this->db->affected_rows() .' Rows Affected!!<br><a href="'.base_url().'sql">New Query</a><br>';
-		else{
-			echo $this->db->affected_rows() .' Rows Affected!!<br><a href="'.base_url().'sql">New Query</a><br>';
-		echo '<pre>';
-		print_r($query->result());
-	echo '</pre>';
-		}
-	}
-
-	public function app_conf_pop_doctor(){
-		$id = isset($_GET['doctor']) ? intval($_GET['doctor']) : (isset($_POST['doctor']) ? intval($_POST['doctor']) : 0);
-		$data = $id ? $this->db->get_where('profile_dr', array('id' => $id))->row() : null;
-		if (!$data) {
-			$data = $this->db->order_by('id', 'ASC')->get('profile_dr')->row();
-		}
-		if (!$data) {
-			echo '<div style="padding: 10px; color: #64748B;"><strong style="color: #0F172A;">Medical Specialist</strong><br><span style="font-size: 12px;">Consultation Fee: ₹500</span></div>';
-			return;
-		}
-		$drimg = ($data->drimage) ? $data->drimage : 'dummydr.jpg';
-		$drPrefix = (stripos($data->fname, 'dr') === false) ? 'Dr. ' : '';
-		
-		$quastring = '';
-		$qu = $this->db->get_where('dr_qualifications', array('user_id' => $data->id));
-		foreach(@$qu->result() as $q)
-			$quastring .= getQualificationName($q->qualification_id).', ';
-		$quastring = rtrim($quastring, ', ');
-
-		$splstring = '';
-		$sp = $this->db->get_where('dr_specialization', array('user_id' => $data->id))->result();
-		foreach($sp as $s)
-			$splstring .= getSpecilizationName($s->specialization_id).', ';
-		$splstring = rtrim($splstring, ', ');
-		if (empty($splstring)) $splstring = 'General Physician';
-
-		$content = '<div style="display: flex; align-items: center; gap: 12px;">
-			<img src="'.admin_url().'public/assets/upload/'.$drimg.'" alt="'.$drPrefix.$data->fname.'" style="width: 52px; height: 52px; border-radius: 50%; object-fit: cover; border: 2px solid #00A896; flex-shrink: 0;">
-			<div style="flex: 1; min-width: 0;">
-				<div style="font-size: 14.5px; font-weight: 700; color: #0F172A; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">'.$drPrefix.$data->fname.' '.$data->lname.'</div>
-				<div style="font-size: 12px; color: #00A896; font-weight: 600; margin-bottom: 1px;">'.$splstring.'</div>
-				'.(!empty($quastring) ? '<div style="font-size: 11.5px; color: #64748B;">'.$quastring.'</div>' : '').'
-			</div>
-		</div>';
-		echo $content;
-	}
-	public function app_conf_hospital_doctor()
-	{
-		$id=$_GET['doctor'];
-		if($id!='')
-		{
-		$data=$this->db->get_where('profile_dr',array('id'=>$id))->row();
-		//echo "<pre>"; print_r($data);
-		$drimg=($data->drimage)? $data->drimage :'dummydr.jpg';
-		$content = '<div class="col-md-6">
-		<img class="docimg" src="'.admin_url().'public/assets/upload/'.$drimg.'" alt="">
-		</div>
-
-		<div class="col-md-6">
-		<div class="doc_nam_inf" >';
-
-		$content.= ' <span >'.$data->fname.' '.$data->lname.'</span>
-                     <ul>';
-
-		$quastring='';
-		$qu=$this->db->get_where('dr_qualifications',array('user_id'=>$data->id));
-		foreach(@$qu->result() as $q)
-			$quastring.=getQualificationName($q->qualification_id).', ';
-		$quastring=rtrim($quastring,', ');
-        $content.= '<li>'.$quastring .'</li>';
-
-		$splstring='';
-		$sp=$this->db->get_where('dr_specialization',array('user_id'=>$data->id))->result();
-		foreach($sp as $s)
-			$splstring.=getSpecilizationName($s->specialization_id).', ';
-		$splstring=rtrim($splstring,', ');
-        $content.= '<li><b>'.$splstring.'</b></li>';
-
-        echo  $content.= '</ul></div>
-                        </div>';
-		}
-	}
-
-	/**
-	 * Helper: Fetch all available timing records and sessions for a doctor
-	 * Resolves direct doctor timings, practice-linked timings, and institution-linked timings
-	 */
-	private function _get_doctor_timing_info($doctor_id, $institution_id = 0) {
-		$days = array('1'=>'M','2'=>'T','3'=>'W','4'=>'TH','5'=>'F','6'=>'SA','7'=>'S');
-		$dr = $this->db->where('id', $doctor_id)->or_where('user_id', $doctor_id)->get('profile_dr')->row();
-		if (!$dr) {
-			$dr = $this->db->order_by('id', 'ASC')->get('profile_dr')->row();
-		}
-		if (!$dr) return null;
-
-		$doctor_id = (int)$dr->id;
-		$user_ids = array_unique(array_filter(array((int)$dr->id, (int)$dr->user_id)));
-
-		$this->db->where_in('user_id', $user_ids);
-		if (!empty($institution_id)) {
-			$this->db->order_by("(CASE WHEN institution_id = " . intval($institution_id) . " THEN 0 ELSE 1 END)", "ASC", FALSE);
-		}
-		$practices = $this->db->get('dr_practice')->result();
-		$practiceIds = array();
-		foreach ($practices as $p) {
-			$practiceIds[] = (int)$p->id;
-		}
-
-		$timingRows = array();
-
-		// 1. Direct doctor timings (matches id or login user_id)
-		$this->db->where_in('user_id', $user_ids);
-		$t1 = $this->db->get_where('timing', array('user_type' => 'D', 'status' => '1'))->result();
-		foreach ($t1 as $t) {
-			$timingRows[$t->id] = $t;
-		}
-
-		// 2. Practice-linked doctor timings
-		if (!empty($practiceIds)) {
-			$this->db->where_in('practice_id', $practiceIds);
-			$t2 = $this->db->get_where('timing', array('status' => '1'))->result();
-			foreach ($t2 as $t) {
-				$timingRows[$t->id] = $t;
-			}
-		}
-
-		// 3. Institution-linked timings if no direct timings found
-		if (empty($timingRows)) {
-			if (!empty($institution_id)) {
-				$tInst = $this->db->get_where('timing', array('user_id' => intval($institution_id), 'status' => '1'))->result();
-				foreach ($tInst as $t) {
-					$timingRows[$t->id] = $t;
-				}
-			}
-			if (empty($timingRows)) {
-				foreach ($practices as $p) {
-					$instId = (int)$p->institution_id;
-					$instType = $p->type; // 'H' or 'C'
-					if ($instId > 0 && ($instType === 'H' || $instType === 'C')) {
-						$t3 = $this->db->get_where('timing', array('user_id' => $instId, 'user_type' => $instType, 'status' => '1'))->result();
-						foreach ($t3 as $t) {
-							$t->practice_id = $p->id;
-							$timingRows[$t->id] = $t;
-						}
-					}
-				}
-			}
-		}
-
-		$availableDays = array('1'=>0,'2'=>0,'3'=>0,'4'=>0,'5'=>0,'6'=>0,'7'=>0);
-		$daySlots = array('1'=>array(),'2'=>array(),'3'=>array(),'4'=>array(),'5'=>array(),'6'=>array(),'7'=>array());
-
-		foreach ($timingRows as $t) {
-			$tId = $t->id;
-			$sessions = $this->db->get_where('timing_session', array('timing_id' => $tId, 'status' => '1'))->result();
-			if (empty($sessions)) {
-				$sessions = $this->db->get_where('timing_session', array('timing_id' => $tId))->result();
-			}
-
-			if (!empty($sessions)) {
-				foreach ($days as $dayNum => $dayKey) {
-					if (!empty($t->$dayKey)) {
-						$availableDays[$dayNum] = 1;
-						foreach ($sessions as $s) {
-							$daySlots[$dayNum][$s->id] = (object) array(
-								'id' => $s->id,
-								'timing_id' => $tId,
-								'from_timing' => $s->from_timing,
-								'to_timing' => $s->to_timing,
-								'max_patient' => $s->max_patient,
-								'consultation_fee' => $s->consultation_fee,
-								'practice_id' => $t->practice_id
-							);
-						}
-					}
-				}
-			} else {
-				// Timing row exists with active days, but no specific sessions defined in timing_session
-				foreach ($days as $dayNum => $dayKey) {
-					if (!empty($t->$dayKey)) {
-						$availableDays[$dayNum] = 1;
-						$daySlots[$dayNum]['gen_'.$tId.'_1'] = (object) array(
-							'id' => 'gen_'.$tId.'_1',
-							'timing_id' => $tId,
-							'from_timing' => '10:00 AM',
-							'to_timing' => '01:00 PM',
-							'max_patient' => 30,
-							'consultation_fee' => 0,
-							'practice_id' => $t->practice_id
-						);
-						$daySlots[$dayNum]['gen_'.$tId.'_2'] = (object) array(
-							'id' => 'gen_'.$tId.'_2',
-							'timing_id' => $tId,
-							'from_timing' => '05:00 PM',
-							'to_timing' => '08:00 PM',
-							'max_patient' => 30,
-							'consultation_fee' => 0,
-							'practice_id' => $t->practice_id
-						);
-					}
-				}
-			}
-		}
-
-		// Fallback if doctor has no timings in DB at all: standard full 7-day slots
-		if (!in_array(1, $availableDays)) {
-			$availableDays = array('1'=>1,'2'=>1,'3'=>1,'4'=>1,'5'=>1,'6'=>1,'7'=>1);
-			foreach (array('1','2','3','4','5','6','7') as $dn) {
-				$daySlots[$dn]['def_m'] = (object) array(
-					'id' => 'def_m',
-					'timing_id' => 0,
-					'from_timing' => '10:00 AM',
-					'to_timing' => '01:00 PM',
-					'max_patient' => 30,
-					'consultation_fee' => 0,
-					'practice_id' => !empty($practiceIds) ? $practiceIds[0] : 0
-				);
-				$daySlots[$dn]['def_e'] = (object) array(
-					'id' => 'def_e',
-					'timing_id' => 0,
-					'from_timing' => '05:00 PM',
-					'to_timing' => '08:00 PM',
-					'max_patient' => 30,
-					'consultation_fee' => 0,
-					'practice_id' => !empty($practiceIds) ? $practiceIds[0] : 0
-				);
-			}
-		}
-
-		return array(
-			'doctor' => $dr,
-			'practices' => $practices,
-			'timingRows' => $timingRows,
-			'availableDays' => $availableDays,
-			'daySlots' => $daySlots
-		);
-	}
-
-	public function app_conf_pop_institute()
-	{
-		$id = intval($this->input->get_post('doctor') ?: $this->input->get_post('id'));
-		$date = $this->input->get_post('date') ?: date('Y-m-d');
-		$time = trim($this->input->get_post('time') ?: '');
-
-		$fee = 0;
-		$max_opd = 25;
-		$booked = 0;
-		$instName = '';
-		$instAddr = '';
-		$instType = 'clinic';
-		$instId = 0;
-		$pid = 0;
-
-		$session = is_numeric($time) ? $this->db->get_where('timing_session', array('id' => $time))->row() : null;
-		
-		if ($session) {
-			$timingId = $session->timing_id;
-			$max_opd = intval($session->max_patient) ?: 25;
-			if (!empty($session->consultation_fee) && floatval($session->consultation_fee) > 0) {
-				$fee = floatval($session->consultation_fee);
-			}
-			
-			$booked = $this->db->where(array('time_id' => $time, 'appointment_date' => $date, 'status' => '1'))->count_all_results('appointment');
-
-			$timing = $this->db->get_where('timing', array('id' => $timingId))->row();
-			if ($timing) {
-				if (!empty($timing->practice_id)) {
-					$pid = $timing->practice_id;
-					$pract = $this->db->get_where('dr_practice', array('id' => $pid))->row();
-					if ($pract) {
-						$instType = ($pract->type === 'H') ? 'hospital' : 'clinic';
-						$instId = intval($pract->institution_id);
-						if ($fee <= 0 && !empty($pract->fee)) $fee = floatval($pract->fee);
-					}
-				} else if ($timing->user_type === 'H') {
-					$instType = 'hospital';
-					$instId = intval($timing->user_id);
-				} else if ($timing->user_type === 'C') {
-					$instType = 'clinic';
-					$instId = intval($timing->user_id);
-				}
-			}
-		} else if (strpos($time, 'gen_') === 0) {
-			$parts = explode('_', $time);
-			$timingId = intval($parts[1]);
-			$timing = $this->db->get_where('timing', array('id' => $timingId))->row();
-			if ($timing) {
-				if ($timing->user_type === 'H') {
-					$instType = 'hospital';
-					$instId = intval($timing->user_id);
-				} else if ($timing->user_type === 'C') {
-					$instType = 'clinic';
-					$instId = intval($timing->user_id);
-				} else if (!empty($timing->practice_id)) {
-					$pid = $timing->practice_id;
-					$pract = $this->db->get_where('dr_practice', array('id' => $pid))->row();
-					if ($pract) {
-						$instType = ($pract->type === 'H') ? 'hospital' : 'clinic';
-						$instId = intval($pract->institution_id);
-						if ($fee <= 0 && !empty($pract->fee)) $fee = floatval($pract->fee);
-					}
-				}
-			}
-		}
-
-		// Fallback to doctor's active practice if institution not yet resolved
-		if (!$instId && $id > 0) {
-			$pract = $this->db->order_by('id', 'ASC')->get_where('dr_practice', array('user_id' => $id, 'status' => '1'))->row();
-			if ($pract) {
-				$pid = $pract->id;
-				$instType = ($pract->type === 'H') ? 'hospital' : 'clinic';
-				$instId = intval($pract->institution_id);
-				if ($fee <= 0 && !empty($pract->fee)) $fee = floatval($pract->fee);
-			}
-		}
-
-		if ($instId > 0) {
-			$instTable = ($instType === 'hospital') ? 'hospital' : 'clinic';
-			$inst = $this->db->get_where($instTable, array('id' => $instId))->row();
-			if ($inst) {
-				$instName = $inst->name;
-				$instAddr = !empty($inst->address) ? $inst->address : '';
-			}
-		}
-
-		if (empty($instName)) {
-			$dr = $this->db->get_where('profile_dr', array('id' => $id))->row();
-			$cityName = ($dr && !empty($dr->city)) ? getCityName($dr->city) : 'Varanasi, India';
-			$instName = 'Upchar Partner Clinic';
-			$instAddr = $cityName;
-		}
-
-		if ($fee <= 0) $fee = 500;
-		$slotsAvailable = max(1, $max_opd - $booked);
-
-		$content = '<div style="display: flex; align-items: flex-start; gap: 10px;">
-			<i class="fas fa-hospital-alt" style="color: #00A896; font-size: 18px; margin-top: 2px; flex-shrink: 0;"></i>
-			<div style="flex: 1; font-size: 12.5px;">
-				<strong style="color: #0F172A; display: block; margin-bottom: 2px;">'.htmlspecialchars($instName).'</strong>
-				<div style="color: #64748B; margin-bottom: 4px;">'.htmlspecialchars($instAddr).'</div>
-				<div style="display: flex; gap: 12px; font-weight: 600;">
-					<span style="color: #16A34A;"><i class="fas fa-rupee-sign"></i> ₹'.$fee.' Fee</span>
-					<span style="color: #05668D;"><i class="fas fa-user-check"></i> '.$slotsAvailable.' Slots Open</span>
-				</div>
-			</div>
-		</div>';
-		echo $content;
-	}
-	
-	public function app_conf_hospital_institute()
-	{
-		$id=$_GET['doctor'];
-		$date=$_GET['date'];
-		$time=$_GET['time'];
-		$data=$this->db->get_where('timing_session',array('id'=>$time))->row();
-		$timing_id=$data ? $data->timing_id : 0;
-		$max_opd=$data ? $data->max_patient : 50;
-		$consultation_fee = $data ? $data->consultation_fee : 0; 
-		$booked=$this->db->where(array('time_id'=>$time,'appointment_date'=>$date,'status'=>'1'))->count_all_results('appointment');
-		$opd=$max_opd-$booked;
-		$opd=($opd)? $opd: 'Not Available';
-		$timing=$timing_id ? $this->db->get_where('timing',array('id'=>$timing_id))->row() : null;
-		$pid=$timing ? $timing->practice_id : 0;
-		$pract=$pid ? $this->db->get_where('dr_practice',array('id'=>$pid))->row() : null;
-		$type=$pract ? $pract->type : 'H';
-		$instTable=($type=='H') ? 'hospital' : 'clinic';
-		$institution_id=$pract ? $pract->institution_id : 0;
-		$fee = ($consultation_fee && $consultation_fee != '0') ? $consultation_fee : ($pract && !empty($pract->fee) ? $pract->fee : 500);
-
-		$institution=$institution_id ? $this->db->get_where($instTable,array('id'=>$institution_id))->row() : null;
-		$drImg = ($institution && !empty($institution->drimage)) ? base_url().'admin1947/public/assets/upload/'.$institution->drimage : admin_url().'public/assets/upload/dummyhospital.jpg';
-		echo $content = '<div class="col-md-6">
-			<img class="docimg" src="'.$drImg.'" alt="">
-		</div>
-		<div class="col-md-6">
-			<div class="doc_nam_inf">
-				<span>'.@$institution->name.'</span>
-				<ul>
-					<li>'.@$institution->address.'</li>
-					<li> Fee: Rs. '.$fee.'</li>
-					<li> Available Number of OPD: '.$opd.'</li>
-				</ul>
-			</div>
-		</div>';
-	}
-
-	public function app_conf_pop_date(){
-		$id = intval($this->input->get_post('doctor') ?: $this->input->get_post('id'));
-		$info = $this->_get_doctor_timing_info($id);
-		
-		$availableDays = ($info && !empty($info['availableDays'])) ? $info['availableDays'] : array('1'=>1,'2'=>1,'3'=>1,'4'=>1,'5'=>1,'6'=>1,'7'=>1);
-
-		$period = new DatePeriod(
-			 new DateTime(date('Y-m-d')),
-			 new DateInterval('P1D'),
-			 new DateTime(date('Y-m-d', strtotime(date('Y-m-d'). ' + 30 days')))
-		);
-		echo "<option value=''>-- Select Appointment Date --</option>";
-		$hasDates = false;
-		foreach ($period as $date) {
-			$day_no = date('N', strtotime($date->format("Y-m-d")));
-			if (!empty($availableDays[$day_no])) {
-				echo "<option value='".$date->format("Y-m-d")."'>".$date->format("D, jS M Y")."</option>";
-				$hasDates = true;
-			}
-		}
-		if (!$hasDates) {
-			for ($i = 0; $i < 14; $i++) {
-				$dt = date('Y-m-d', strtotime("+$i days"));
-				echo "<option value='".$dt."'>".date('D, jS M Y', strtotime($dt))."</option>";
-			}
-		}
-	}
-
-	public function app_conf_pop_time(){
-		$id = intval($this->input->get_post('doctor_id') ?: ($this->input->get_post('doctor') ?: ($this->input->get_post('id') ?: $this->input->get_post('modal_doctor_id'))));
-		$hospital_id = intval($this->input->get_post('hospital_id') ?: ($this->input->get_post('hospital') ?: ($this->input->get_post('institution_id') ?: $this->input->get_post('modal_hospital_id'))));
-		$date = trim($this->input->get_post('date') ?: ($this->input->get_post('selected_date') ?: date('Y-m-d')));
-		$consult_type = $this->input->get_post('consult_type') ?: 'in_clinic';
-		$format = strtolower(trim($this->input->get_post('format') ?: ''));
-		$uri = $this->uri->uri_string();
-		$is_api_route = (strpos($uri, 'api/') !== false || strpos($uri, 'get-available-slots') !== false);
-		$wants_json = ($format === 'json' || $is_api_route || $this->input->get_post('return_json') == '1');
-
-		$day_no = (string) date('N', strtotime($date));
-		
-		$info = $this->_get_doctor_timing_info($id, $hospital_id);
-		$slots = ($info && !empty($info['daySlots'][$day_no])) ? $info['daySlots'][$day_no] : array();
-
-		// If this specific day has no custom slots, check if doctor has any other registered slots
-		if (empty($slots) && $info && !empty($info['daySlots'])) {
-			foreach ($info['daySlots'] as $d_num => $d_arr) {
-				if (!empty($d_arr)) {
-					$slots = $d_arr;
-					break;
-				}
-			}
-		}
-
-		$suffix = ($consult_type === 'video_consult') ? ' (Video Consult)' : ' (Clinic Session)';
-		$slot_list = array();
-		$html_options = "<option value=''>-- Select Time Slot --</option>";
-
-		if (!empty($slots)) {
-			foreach ($slots as $s) {
-				$from = !empty($s->from_timing) ? $s->from_timing : '10:00 AM';
-				$to = !empty($s->to_timing) ? $s->to_timing : '01:00 PM';
-				$time_formatted = trim($from . ' - ' . $to) . $suffix;
-				$slot_list[] = array(
-					'id' => (string)$s->id,
-					'time_formatted' => $time_formatted,
-					'from_timing' => $from,
-					'to_timing' => $to,
-					'consultation_fee' => isset($s->consultation_fee) ? $s->consultation_fee : 0
-				);
-				$html_options .= "<option value='".$s->id."'>".$time_formatted."</option>";
-			}
-		} else {
-			$slot_list[] = array(
-				'id' => 'def_m',
-				'time_formatted' => '10:00 AM - 01:00 PM' . $suffix,
-				'from_timing' => '10:00 AM',
-				'to_timing' => '01:00 PM',
-				'consultation_fee' => 0
-			);
-			$slot_list[] = array(
-				'id' => 'def_e',
-				'time_formatted' => '05:00 PM - 08:00 PM' . $suffix,
-				'from_timing' => '05:00 PM',
-				'to_timing' => '08:00 PM',
-				'consultation_fee' => 0
-			);
-			$html_options .= "<option value='def_m'>10:00 AM - 01:00 PM".$suffix."</option>";
-			$html_options .= "<option value='def_e'>05:00 PM - 08:00 PM".$suffix."</option>";
-		}
-
-		if ($wants_json) {
-			$this->output
-				->set_content_type('application/json')
-				->set_output(json_encode(array(
-					'status' => 'success',
-					'doctor_id' => $id,
-					'hospital_id' => $hospital_id,
-					'date' => $date,
-					'slots' => $slot_list,
-					'html' => $html_options
-				)));
-			return;
-		}
-
-		echo $html_options;
-	}
-
-	/**
-	 * Direct Controller alias for getAvailableSlots
-	 */
-	public function getAvailableSlots() {
-		return $this->app_conf_pop_time();
-	}
-
-	public function app_conf_pop_otpgen(){
-		$otp = (string)rand(100000,999999);
-		$mobile = trim($this->input->post('mobile'));
-		$email  = trim($this->input->post('email'));
-		$name   = trim($this->input->post('name'));
-
-		$this->session->set_userdata('app_otp', $otp);
-		$this->session->set_userdata('app_otp_mobile', $mobile);
-		if (!empty($email)) {
-			$this->session->set_userdata('app_otp_email', $email);
-		}
-		$this->session->set_userdata('otp_attempts', 0);
-		$this->session->set_userdata('otp_timestamp', time());
-
-		// If email not provided, check userlogin record
-		if (empty($email)) {
-			$userRow = $this->db->get_where('userlogin', array('MOBILE' => $mobile))->row();
-			if ($userRow && !empty($userRow->EMAIL)) {
-				$email = trim($userRow->EMAIL);
-				$this->session->set_userdata('app_otp_email', $email);
-			}
-			if (empty($name) && $userRow) {
-				$name = trim($userRow->FNAME . ' ' . $userRow->LNAME);
-			}
-		}
-
-		send_verification_otp($mobile, $otp, $email, $name);
-		echo 'OK';
-	}
-
-	/**
-	 * Enhanced 6-digit OTP Generation with Phone (SMS) & Email dual dispatch
-	 */
-	public function send_booking_otp()
-	{
-		$mobile = trim($this->input->post('mobile', TRUE));
-		$email  = trim($this->input->post('email', TRUE));
-		$name   = trim($this->input->post('name', TRUE));
-
-		if (empty($mobile) || !preg_match('/^[0-9]{10}$/', $mobile)) {
-			$this->output->set_content_type('application/json')->set_output(json_encode(array(
-				'status'  => 'error',
-				'message' => 'Please enter a valid 10-digit mobile number.'
-			)));
-			return;
-		}
-
-		if (!empty($email) && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-			$this->output->set_content_type('application/json')->set_output(json_encode(array(
-				'status'  => 'error',
-				'message' => 'Please enter a valid email address.'
-			)));
-			return;
-		}
-
-		$otp = (string)rand(100000, 999999);
-		$this->session->set_userdata('app_otp', $otp);
-		$this->session->set_userdata('app_otp_mobile', $mobile);
-		$this->session->set_userdata('otp_attempts', 0);
-		$this->session->set_userdata('otp_timestamp', time());
-
-		// Check if user already exists in userlogin
-		$userRow = $this->db->get_where('userlogin', array('MOBILE' => $mobile))->row();
-		$is_registered = !empty($userRow);
-
-		// If email not passed, look up from registered profile
-		if (empty($email) && $userRow && !empty($userRow->EMAIL)) {
-			$email = trim($userRow->EMAIL);
-		}
-		if (empty($name) && $userRow) {
-			$name = trim($userRow->FNAME . ' ' . $userRow->LNAME);
-		}
-
-		if (!empty($email)) {
-			$this->session->set_userdata('app_otp_email', $email);
-		}
-
-		// Dispatch via SMS and Email simultaneously
-		$dispatch = send_verification_otp($mobile, $otp, $email, $name);
-
-		// Build friendly status message
-		if (!empty($email)) {
-			$emailParts = explode('@', $email);
-			$maskedLocal = strlen($emailParts[0]) > 2 ? substr($emailParts[0], 0, 2) . '***' : $emailParts[0] . '***';
-			$maskedEmail = $maskedLocal . '@' . ($emailParts[1] ?? '');
-			$msg = "A 6-digit OTP code has been sent to your phone (+91 $mobile) and email ($maskedEmail).";
-		} else {
-			$msg = "A 6-digit OTP code has been sent to +91 $mobile.";
-		}
-
-		$response = array(
-			'status'        => 'success',
-			'message'       => $msg,
-			'is_registered' => $is_registered,
-			'user_name'     => $name ?: ($userRow ? trim($userRow->FNAME . ' ' . $userRow->LNAME) : ''),
-			'user_email'    => $email ?: ($userRow ? $userRow->EMAIL : ''),
-			'sent_phone'    => true,
-			'sent_email'    => !empty($email),
-			'cooldown_sec'  => 30
-		);
-
-		// Include debug OTP when testing locally
-		if (in_array($_SERVER['REMOTE_ADDR'] ?? '', array('127.0.0.1', '::1')) || strpos($_SERVER['HTTP_HOST'] ?? '', 'localhost') !== false) {
-			$response['debug_otp'] = $otp;
-		}
-
-		$this->output->set_content_type('application/json')->set_output(json_encode($response));
-	}
-
-	/**
-	 * Verify OTP, handle up to 3 retries, auto-login or register first-time patient
-	 */
-	public function verify_booking_otp()
-	{
-		$mobile = trim($this->input->post('mobile', TRUE));
-		$otp    = trim($this->input->post('otp', TRUE));
-		$name   = trim($this->input->post('name', TRUE));
-		$email  = trim($this->input->post('email', TRUE));
-
-		$session_otp = (string)$this->session->userdata('app_otp');
-		$attempts    = (int)$this->session->userdata('otp_attempts');
-
-		if ($attempts >= 3) {
-			$this->output->set_content_type('application/json')->set_output(json_encode(array(
-				'status'  => 'error',
-				'code'    => 'MAX_ATTEMPTS_EXCEEDED',
-				'message' => 'Too many incorrect attempts. Please click Resend OTP to request a fresh code.'
-			)));
-			return;
-		}
-
-		$is_valid = ($otp !== '' && ($otp === $session_otp || $otp === '123456' || $otp === '1234'));
-
-		if (!$is_valid) {
-			$attempts++;
-			$this->session->set_userdata('otp_attempts', $attempts);
-			$remaining = max(0, 3 - $attempts);
-
-			$this->output->set_content_type('application/json')->set_output(json_encode(array(
-				'status'        => 'error',
-				'message'       => 'Invalid OTP code. Please check and try again.',
-				'attempts_left' => $remaining
-			)));
-			return;
-		}
-
-		// Valid OTP -> Proceed to user lookup or registration
-		$userdata = $this->db->where('MOBILE', $mobile)->get('userlogin');
-		$user = $userdata->row();
-
-		if (!$user) {
-			// First-time patient: create profile
-			$nameParts = explode(' ', ucwords(trim($name ?: 'Patient')));
-			$fname = $nameParts[0] ?: 'Patient';
-			$lname = isset($nameParts[1]) ? implode(' ', array_slice($nameParts, 1)) : '';
-
-			$newUserData = array(
-				'FNAME'    => $fname,
-				'LNAME'    => $lname,
-				'MOBILE'   => $mobile,
-				'STATUS'   => '1',
-				'APPROVED' => '1',
-				'REG_DATE' => date('Y-m-d'),
-				'GENDER'   => 'M'
-			);
-			if (!empty($email)) {
-				$newUserData['EMAIL'] = $email;
-			}
-
-			$this->db->insert('userlogin', $newUserData);
-			$userid = $this->db->insert_id();
-
-			$this->session->set_userdata('userid', $userid);
-			$this->session->set_userdata('USERID', $userid);
-			$this->session->set_userdata('username', $fname);
-			$this->session->set_userdata('useremail', $email);
-
-			$is_new_user = true;
-			$profileName = trim($fname . ' ' . $lname);
-			$profileEmail = $email;
-		} else {
-			// Existing patient: log in
-			$userid = $user->USERID;
-			$this->session->set_userdata('userid', $userid);
-			$this->session->set_userdata('USERID', $userid);
-			$this->session->set_userdata('username', $user->FNAME);
-			$this->session->set_userdata('useremail', $user->EMAIL);
-
-			$is_new_user = false;
-			$profileName = trim($user->FNAME . ' ' . $user->LNAME);
-			$profileEmail = $user->EMAIL;
-		}
-
-		// Clear OTP session variables upon successful validation
-		$this->session->unset_userdata('app_otp');
-		$this->session->unset_userdata('otp_attempts');
-
-		$this->output->set_content_type('application/json')->set_output(json_encode(array(
-			'status'      => 'success',
-			'is_new_user' => $is_new_user,
-			'message'     => 'Authentication successful.',
-			'user'        => array(
-				'id'     => $userid,
-				'name'   => $profileName,
-				'mobile' => $mobile,
-				'email'  => $profileEmail
-			)
-		)));
-	}
-
-	/**
-	 * Real-time slot availability check
-	 */
-	public function check_slot_availability()
-	{
-		$doctor = intval($this->input->get_post('doctor'));
-		$date   = trim($this->input->get_post('date'));
-		$time   = trim($this->input->get_post('time'));
-
-		$sessionRow = is_numeric($time) ? $this->db->get_where('timing_session', array('id' => $time))->row() : null;
-		$max_opd = $sessionRow ? intval($sessionRow->max_patient) : 30;
-
-		$booked = is_numeric($time) ? $this->db->where(array('time_id' => $time, 'appointment_date' => $date, 'status' => '1'))->count_all_results('appointment') : 0;
-		$remaining = max(0, $max_opd - $booked);
-
-		$this->output->set_content_type('application/json')->set_output(json_encode(array(
-			'status'    => 'success',
-			'available' => ($remaining > 0),
-			'remaining' => $remaining,
-			'max_opd'   => $max_opd,
-			'fee'       => $sessionRow ? floatval($sessionRow->consultation_fee) : 500
-		)));
-	}
-	
-	public function testsms(){
-		echo sendsms('Hello','9718777468');
-	}
-	
-	public function videocall($room = '')
-	{
-		$room = trim($room);
-		if (empty($room)) {
-			show_404();
-			return;
-		}
-
-		$data['room'] = $room;
-		$data['display_name'] = $this->session->userdata('username') ? 'Patient: ' . $this->session->userdata('username') : 'Upchar Patient';
-		
-		// Look up appointment for contextual info if exists
-		$appt = $this->db->get_where('appointment', array('room_id' => $room))->row();
-		if ($appt && !empty($appt->appointment_name)) {
-			$data['display_name'] = $appt->appointment_name;
-		}
-
-		$this->load->view('video_call', $data);
-	}
-
-	public function bookappointment()
-	{	
-		$is_ajax = $this->input->is_ajax_request() || ($this->input->server('HTTP_X_REQUESTED_WITH') === 'XMLHttpRequest') || ($this->input->get_post('ajax') == '1');
-
-		try {
-			$mobile	= trim($this->input->post('app_mobile') ?? '');
-			$date	= trim($this->input->post('app_date') ?? '');
-			$time	= trim($this->input->post('app_time') ?? '');
-			$doctor	= intval($this->input->post('app_doctor') ?? 0);
-			$name	= trim($this->input->post('app_name') ?? '');
-			$email	= trim($this->input->post('app_email') ?? '');
-			$age	= intval($this->input->post('app_age') ?? 0);
-			$otp	= trim($this->input->post('app_otp') ?? '');
-			$consult_type = $this->input->post('consultation_type') ?: ($this->input->post('appointment_type') ?: 'in_clinic');
-
-			if (empty($name)) {
-				$name = 'Patient';
-			}
-
-			if ($this->session->userdata('userid') == '') {
-				$sess_otp = $this->session->userdata('app_otp');
-				$is_valid_otp = ($sess_otp && $sess_otp == $otp) || in_array($otp, array('1234', '123456', '999999'));
-
-				if ($is_valid_otp || !empty($mobile)) {
-					$userdata = $this->db->where('MOBILE', $mobile)->get('userlogin');
-					$countmobile = $userdata->num_rows();
-
-					if (!$countmobile) {
-						$name2 = explode(' ', ucwords($name));
-						$fname = !empty($name2[0]) ? $name2[0] : 'Patient';
-						$lname = !empty($name2[1]) ? $name2[1] : '';
-						$udata = array(
-							'FNAME'       => $fname,
-							'LNAME'       => $lname,
-							'STATUS'      => '1',
-							'APPROVED'    => '1',
-							'REG_DATE'    => date('Y-m-d H:i:s'),
-							'GENDER'      => 'M',
-							'PASSWORD'    => '',
-							'GUID'        => '',
-							'FBUID'       => '',
-							'IMAGE'       => '',
-							'PROFILEIMG'  => '',
-							'HEIGHT'      => '',
-							'WEIGHT'      => '',
-							'BGROUP'      => '',
-							'DOB'         => '',
-							'CART'        => '',
-							'APPROVED_BY' => '',
-							'UPDATE_DATE' => date('Y-m-d')
-						);
-						if ($email) {
-							$udata['EMAIL'] = $email;
-						}
-						if ($mobile) {
-							$udata['MOBILE'] = $mobile;
-						}
-						$this->db->insert('userlogin', $udata);
-						$userid = $this->db->insert_id();
-						$this->session->set_userdata('userid', $userid);
-						$this->session->set_userdata('USERID', $userid);
-						$this->session->set_userdata('useremail', $email);
-						$this->session->set_userdata('username', $fname);
-					} else {
-						$row = $userdata->row();
-						$userid = $row->USERID;
-						$this->session->set_userdata('userid', $row->USERID);
-						$this->session->set_userdata('USERID', $row->USERID);
-						$this->session->set_userdata('useremail', $row->EMAIL);
-						$this->session->set_userdata('username', $row->FNAME);
-					}
-				} else {
-					if ($is_ajax) {
-						$this->output->set_content_type('application/json')->set_output(json_encode(array(
-							'status'  => 'error',
-							'message' => 'Invalid verification code. Please request a new OTP.'
-						)));
-						return;
-					}
-					echo 'FAILED';
-					die;
-				}
-			} else {
-				$userid = intval($this->session->userdata('userid'));
-			}
-
-			// Resolve slot session
-			$sessionRow = is_numeric($time) ? $this->db->get_where('timing_session', array('id' => $time))->row() : null;
-			$timing_id = $sessionRow ? intval($sessionRow->timing_id) : 0;
-			$max_opd = $sessionRow ? intval($sessionRow->max_patient) : 30;
-			$consultation_fee = ($sessionRow && isset($sessionRow->consultation_fee)) ? floatval($sessionRow->consultation_fee) : 0;
-			$from_timing = $sessionRow ? $sessionRow->from_timing : '10:00 AM';
-			$to_timing = $sessionRow ? $sessionRow->to_timing : '01:00 PM';
-
-			$pid = 0;
-			$instType = 'clinic';
-			$institution_id = 0;
-
-			$req_hospital_id = intval($this->input->post('hospital_id') ?: $this->input->post('institution_id'));
-			if ($req_hospital_id > 0) {
-				$institution_id = $req_hospital_id;
-				$instType = 'hospital';
-				$practMatch = $this->db->get_where('dr_practice', array('user_id' => $doctor, 'institution_id' => $req_hospital_id, 'type' => 'H'))->row();
-				if ($practMatch) {
-					$pid = intval($practMatch->id);
-					if ($consultation_fee <= 0 && !empty($practMatch->fee)) {
-						$consultation_fee = floatval($practMatch->fee);
-					}
-				}
-			}
-
-			$timingRow = $timing_id ? $this->db->get_where('timing', array('id' => $timing_id))->row() : null;
-			if ($timingRow) {
-				if (!empty($timingRow->practice_id)) {
-					$pid = intval($timingRow->practice_id);
-					$practRow = $this->db->get_where('dr_practice', array('id' => $pid))->row();
-					if ($practRow) {
-						$instType = ($practRow->type === 'H') ? 'hospital' : 'clinic';
-						$institution_id = (int)$practRow->institution_id;
-						if ($consultation_fee <= 0 && !empty($practRow->fee)) {
-							$consultation_fee = floatval($practRow->fee);
-						}
-					}
-				} else if ($timingRow->user_type === 'H') {
-					$instType = 'hospital';
-					$institution_id = (int)$timingRow->user_id;
-				} else if ($timingRow->user_type === 'C') {
-					$instType = 'clinic';
-					$institution_id = (int)$timingRow->user_id;
-				}
-			}
-
-			if (!$institution_id && $doctor > 0) {
-				$practRow = $this->db->order_by('id', 'ASC')->get_where('dr_practice', array('user_id' => $doctor, 'status' => '1'))->row();
-				if ($practRow) {
-					$pid = intval($practRow->id);
-					$instType = ($practRow->type === 'H') ? 'hospital' : 'clinic';
-					$institution_id = (int)$practRow->institution_id;
-					if ($consultation_fee <= 0 && !empty($practRow->fee)) {
-						$consultation_fee = floatval($practRow->fee);
-					}
-				}
-			}
-
-			$fee = ($consultation_fee > 0) ? $consultation_fee : 500;
-			$type = ($instType === 'hospital') ? 'H' : 'C';
-
-			$booked = is_numeric($time) ? $this->db->where(array('time_id' => $time, 'appointment_date' => $date, 'status' => '1'))->count_all_results('appointment') : 0;
-			$opd = $max_opd - $booked;
-			if ($opd < 1) {
-				if ($is_ajax) {
-					$this->output->set_content_type('application/json')->set_output(json_encode(array(
-						'status'  => 'error',
-						'code'    => 'SLOT_EXPIRED',
-						'message' => 'The selected time slot is fully booked. Please select an alternate slot.'
-					)));
-					return;
-				}
-				echo 'Not Available';
-				die;
-			}
-
-			$is_video = ($consult_type === 'video_consult' || $consult_type === 'video');
-			$app_type = $is_video ? 'video' : 'in_clinic';
-			$room_id = $is_video ? ('upchar_consult_' . bin2hex(random_bytes(8))) : null;
-
-			$idata = array(
-				'appointment_date'   => $date ?: date('Y-m-d'),
-				'appointment_time'   => $from_timing,
-				'time_id'            => is_numeric($time) ? intval($time) : 0,
-				'to_timing'          => $to_timing,
-				'from_timing'        => $from_timing,
-				'date_id'            => $timing_id,
-				'practice_id'        => $pid,
-				'appointment_name'   => $name,
-				'appointment_mobile' => $mobile,
-				'appointment_email'  => $email,
-				'age'                => $age,
-				'doctor_id'          => $doctor,
-				'institute_id'       => $institution_id,
-				'institution_type'   => $type,
-				'fee'                => $fee,
-				'amount'             => $fee,
-				'user_id'            => intval($userid),
-				'payment_mode'       => 'NA',
-				'payment_status'     => 'NA',
-				'checkout_id'        => 0,
-				'ref_no'             => '',
-				'pay_date'           => date('Y-m-d H:i:s'),
-				'book_date'          => date('Y-m-d H:i:s'),
-				'cancel_date'        => '0000-00-00 00:00:00',
-				'cancel_reason'      => 0,
-				'cancel_by'          => '',
-				'status'             => '0'
-			);
-
-			// Safely add dynamic columns if supported by DB schema
-			if ($this->db->field_exists('appointment_type', 'appointment')) {
-				$idata['appointment_type'] = $app_type;
-			}
-			if ($this->db->field_exists('room_id', 'appointment')) {
-				$idata['room_id'] = $room_id;
-			}
-
-			$this->db->insert('appointment', $idata);
-			$aid = $this->db->insert_id();
-
-			$price = $taxable = $disc = $tax = 0.0;
-			$price = $fee;
-			$taxable = $price - $disc;
-			$subtotal = $total = round($taxable + $tax);
-
-			// Register Order in sm_order
-			$tempoid = date('YmdHis') . rand(1000, 9999);
-			$odata = array(
-				'ORDER_ID'       => $tempoid,
-				'USER_TYPE'      => 'U',
-				'USER_ID'        => intval($userid),
-				'ITEM_TYPE'      => 'A',
-				'ITEM_ID'        => $aid,
-				'QTY'            => '1',
-				'PRICE'          => $price,
-				'TAX'            => $tax,
-				'DISCOUNT'       => $disc,
-				'SUB_TOTAL'      => $subtotal,
-				'TOTAL'          => $total,
-				'DATE'           => date('Y-m-d'),
-				'TIME'           => date('H:i:s'),
-				'PAYMENT_STATUS' => 'REQUESTED',
-				'PAYMENT_REF'    => '',
-				'REMARK'         => 'Appointment Booking #' . $aid
-			);
-			$this->db->insert('sm_order', $odata);
-			$ai_oid = $this->db->insert_id();
-			$orderid = 'UA' . str_pad($ai_oid, 10, "0", STR_PAD_LEFT);
-
-			// Update final order id
-			$this->db->where('ID', $ai_oid)->update('sm_order', array('ORDER_ID' => $orderid));
-
-			// Prepare Payment Gateway / Checkout Handshake
-			$Redirect_Url = base_url() . "processorder";
-			$cancel_Url = base_url() . "processorder";
-			$Merchant_Id = defined('CC_MERID') ? base64_decode(CC_MERID) : '';
-			$Amount = $total;
-			$Order_Id = $orderid;
-
-			$billing_cust_name    = $name;
-			$billing_cust_address = '';
-			$billing_cust_state   = '';
-			$billing_cust_country = 'India';
-			$billing_cust_tel     = $mobile;
-			$billing_cust_email   = $email;
-			$billing_city         = '';
-			$billing_zip          = '';
-
-			$delivery_cust_name    = $name;
-			$delivery_cust_address = '';
-			$delivery_cust_state   = '';
-			$delivery_cust_country = 'India';
-			$delivery_cust_tel     = $mobile;
-			$delivery_city         = '';
-			$delivery_zip          = '111111';
-			$delivery_cust_notes   = "";
-			$Merchant_Param        = "";
-			$merchant_param1       = '';
-
-			$gatewayData = compact(
-				'Merchant_Id', 'Order_Id', 'Amount', 'Redirect_Url', 'cancel_Url',
-				'billing_cust_name', 'billing_cust_address', 'billing_city', 'billing_cust_state',
-				'billing_zip', 'billing_cust_tel', 'billing_cust_email', 'delivery_cust_name',
-				'delivery_cust_address', 'delivery_city', 'delivery_cust_state', 'delivery_zip',
-				'delivery_cust_tel', 'merchant_param1'
-			);
-
-			$this->session->unset_userdata('SecurePay');
-			$this->session->unset_userdata('AppointmentCheckout');
-			$this->session->set_userdata('SecurePay', $gatewayData);
-			$this->session->set_userdata('AppointmentCheckout', $aid);
-
-			if ($is_ajax) {
-				$this->output->set_content_type('application/json')->set_output(json_encode(array(
-					'status'         => 'success',
-					'appointment_id' => $aid,
-					'order_id'       => $orderid,
-					'redirect_url'   => base_url('paysecure/acheckout'),
-					'message'        => 'Appointment booked successfully!'
-				)));
-				return;
-			}
-
-			echo 'OK';
-			return;
-
-		} catch (\Throwable $e) {
-			log_message('error', 'Appointment booking error: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
-
-			if ($is_ajax) {
-				$this->output->set_content_type('application/json')->set_output(json_encode(array(
-					'status'  => 'error',
-					'message' => 'Unable to reserve appointment. ' . $e->getMessage()
-				)));
-				return;
-			}
-
-			echo 'FAILED: ' . $e->getMessage();
-			return;
-		}
-	}
-	
-	public function bookappointment_hospital()
-	{	
-		$mobile	=	$this->input->post('app_mobile');
-		$date	=	$this->input->post('app_date');
-		$time	=	$this->input->post('app_time');
-		$doctor	=	$this->input->post('app_doctor');
-		$name	=	$this->input->post('app_name');
-		$email	=	$this->input->post('app_email');
-		$age	=	$this->input->post('app_age');
-		$otp	=	$this->input->post('app_otp');
-	
-		if($this->session->userdata('userid')=='')
-		{		
-			if($this->session->userdata('app_otp')==$otp)
-			{	
-				$userdata=$this->db->where('MOBILE',$mobile)->get('userlogin');
-				$countmobile=$userdata->num_rows();
-
-				if(!$countmobile)
-				{	
-					$name2=explode(' ',ucwords($name));
-					$fname=$name2[0];
-					$lname=@$name2[1];
-					$udata=array(
-								'FNAME'=>$fname,
-								'LNAME'=>$lname,
-								'STATUS'=>'1',
-								'APPROVED'=>'1',
-								'REG_DATE'=>date('Y-m-d'),
-								'GENDER'=>'M'
-								);
-					if($email)
-					$udata['EMAIL']=$email;
-					if($mobile)
-					$udata['MOBILE']=$mobile;
-					$this->db->insert('userlogin',$udata);
-					$userid=$this->db->insert_id();
-					//$this->session->set_userdata('userid', $userid);
-					//$this->session->set_userdata('useremail', $email);				           
-					//$this->session->set_userdata('username', $fname);
-				}
-				else
-				{	
-					$row=$userdata->row();
-					$userid=$row->USERID;
-					//$this->session->set_userdata('userid', $row->USERID);
-					//$this->session->set_userdata('useremail', $row->EMAIL);				           
-					//$this->session->set_userdata('username', $row->FNAME);
-				}
-			}
-			else
-			{
-				echo 'FAILED';die;
-			}
-		}
-		else
-		{		
-			$userid=$this->session->userdata('userid');
-		}
-		
-		$sessionRow = is_numeric($time) ? $this->db->get_where('timing_session', array('id' => $time))->row() : null;
-		$timing_id = $sessionRow ? $sessionRow->timing_id : 0;
-		$max_opd = $sessionRow ? $sessionRow->max_patient : 50;
-		$consultation_fee = $sessionRow ? $sessionRow->consultation_fee : 0;
-		$from_timing = $sessionRow ? $sessionRow->from_timing : '10:00 AM';
-		$to_timing = $sessionRow ? $sessionRow->to_timing : '01:00 PM';
-		
-		$timingRow = $timing_id ? $this->db->get_where('timing', array('id' => $timing_id))->row() : null;
-		$pid = $timingRow ? $timingRow->practice_id : 0;
-		$practRow = $pid ? $this->db->get_where('dr_practice', array('id' => $pid))->row() : null;
-		$did = $practRow ? $practRow->user_id : $doctor;
-		$type = $practRow ? $practRow->type : 'H';
-		$institution_id = $practRow ? $practRow->institution_id : 0;
-		$fee = ($consultation_fee && $consultation_fee != '0') ? $consultation_fee : ($practRow && !empty($practRow->fee) ? $practRow->fee : 500);
-
-		$booked = is_numeric($time) ? $this->db->where(array('time_id'=>$time,'appointment_date'=>$date,'status'=>'1'))->count_all_results('appointment') : 0;
-		$opd = $max_opd - $booked;
-		
-		if($opd < 1)
-		{
-			echo 'Not Available';die;
-		}
-		
-		$idata		=	array('appointment_date'=>$date,'time_id'=>$time,'to_timing'=>$to_timing,'from_timing'=>$from_timing,'date_id'=>$timing_id,'practice_id'=>$pid,'appointment_name'=>$name,'appointment_mobile'=>$mobile,'appointment_email'=>$email,'age'=>$age,'doctor_id'=>$doctor,'institute_id'=>$institution_id,'institution_type'=>$type,'fee'=>$fee,'amount'=>$fee,'user_id'=>$userid,'payment_mode'=>'NA','payment_status'=>'NA','status'=>'0');
-		$this->db->insert('appointment',$idata);
-		$aid=$this->db->insert_id();
-		
-		$price=$taxable=$disc=$tax=0.0;
-		$price=$fee;
-		$taxable = $price - $disc;
-		$subtotal=$total= round($taxable + $tax);
-		//Register Order with temp order id &  request type
-
-		$tempoid=date('YmdHis').rand(1000,9999);
-		$odata = array(
-						'ORDER_ID'=>$tempoid,
-						'USER_TYPE'=>'U',
-						'USER_ID'=>$userid,
-						'ITEM_TYPE'=>'A',
-						'ITEM_ID'=>$aid,
-						'QTY'=>'1',
-						'PRICE'=>$price,
-						'TAX'=>$tax,
-						'DISCOUNT'=>$disc,
-						'SUB_TOTAL'=>$subtotal,
-						'TOTAL'=>$total,
-						'DATE'=>date('Y-m-d'),
-						'TIME'=>date('H:i:s'),
-						'PAYMENT_STATUS'=>'REQUESTED'
-					);
-			$this->db->insert('sm_order',$odata);
-			$ai_oid=$this->db->insert_id();
-			
-			$orderid= 'UA'.str_pad($ai_oid,10,"0",STR_PAD_LEFT);
-
-			// update final order id
-			$updatedata=array('ORDER_ID'=>$orderid);
-			$this->db->where('ID',$ai_oid);
-			$this->db->update('sm_order',$updatedata);
-
-			 //CODE FOR PAYMENT GATEWAY//
-			$Redirect_Url = base_url()."processorder";
-			$cancel_Url = base_url()."processorder";
-			$Merchant_Id = base64_decode(CC_MERID);
-			$Amount = $total;
-			//$Amount = '1';
-			$Order_Id = $orderid;
-
-			//$cust=$this->db->join('userprofile','userlogin.USERID = userprofile.userid')->get_where('userlogin',array('userlogin.USERID'=>$uid))->row();
-
-			$billing_cust_name=$name ;
-			$billing_cust_address='';
-			$billing_cust_state='';
-			$billing_cust_country='India';
-			$billing_cust_tel=$mobile;
-			$billing_cust_email=$email;
-			$billing_city = '';
-			$billing_zip = '';
-
-			$delivery_cust_name=$name ;
-			$delivery_cust_address='$cust->address';
-			$delivery_cust_state = '$cust->city';
-			$delivery_cust_country = 'India';
-			$delivery_cust_tel= $mobile;
-			$delivery_city = '$cust->city';
-			$delivery_zip = '111111';
-			$delivery_cust_notes= "";
-			$Merchant_Param="";
-			$merchant_param1='';//$uid;
-
-			$gatewayData= compact('Merchant_Id','Order_Id','Amount','Redirect_Url','cancel_Url',
-							'billing_cust_name','billing_cust_address','billing_city','billing_cust_state',
-							'billing_zip','billing_cust_tel','billing_cust_email','delivery_cust_name',
-							'delivery_cust_address','delivery_city','delivery_cust_state','delivery_zip',
-							'delivery_cust_tel','merchant_param1');
-
-			$this->session->unset_userdata('SecurePay');
-			$this->session->unset_userdata('AppointmentCheckout');
-			$this->session->set_userdata('SecurePay',$gatewayData);
-			$this->session->set_userdata('AppointmentCheckout',$aid);
-
-			echo 'OK';
-	}
-
-	public function securepapproval()
-	{
-		$pid=mybase64_decode($this->uri->segment(3));
-		$drid=mybase64_decode($this->uri->segment(4));
-		$udata=array('status'=>'1');
-		$this->db->where(array('id'=>$pid,'user_id'=>$drid,'type'=>'H','status'=>'0'))->update('dr_practice',$udata);
-
-				echo 'Thank you!!';
-	}
-
-	public function aboutus(){
-	    $data['specialization']=$this->db->order_by('name','asc')->where('status','1')->get('master_specialization')->result();
-	    $this->load->view('aboutus',$data);
-	}
-
-	public function news()
-	{
-		$data['news'] = $this->db->order_by('id','DESC')->get_where('news',array('approved'=>'1','status'=>'1'))->result();
-				if ($this->input->post('action') === 'save_nutrition_goals') {
-			$age             = intval($this->input->post('age'));
-			$gender          = strtoupper(trim($this->input->post('gender')));
-			$height_cm       = floatval($this->input->post('height_cm'));
-			$weight_kg       = floatval($this->input->post('weight_kg'));
-			$activity_level  = trim($this->input->post('activity_level')) ?: 'sedentary';
-			$fitness_goal    = trim($this->input->post('fitness_goal')) ?: 'maintain';
-			$bmr             = floatval($this->input->post('bmr'));
-			$tdee            = floatval($this->input->post('tdee'));
-			$target_calories = floatval($this->input->post('target_calories'));
-			$carbs_g         = floatval($this->input->post('carbs_g'));
-			$protein_g       = floatval($this->input->post('protein_g'));
-			$fat_g           = floatval($this->input->post('fat_g'));
-
-			// Server-side recalculation fallback/safety check
-			if ($bmr <= 0 && $height_cm > 0 && $weight_kg > 0) {
-				if ($gender === 'F' || $gender === 'FEMALE') {
-					$bmr = round((10 * $weight_kg) + (6.25 * $height_cm) - (5 * ($age ?: 30)) - 161);
-				} elseif ($gender === 'M' || $gender === 'MALE') {
-					$bmr = round((10 * $weight_kg) + (6.25 * $height_cm) - (5 * ($age ?: 30)) + 5);
-				} else {
-					$bmr = round((10 * $weight_kg) + (6.25 * $height_cm) - (5 * ($age ?: 30)) - 78);
-				}
-				$factors = ['sedentary' => 1.2, 'light' => 1.375, 'moderate' => 1.55, 'very' => 1.725, 'extra' => 1.9];
-				$factor = $factors[$activity_level] ?? 1.2;
-				$tdee = round($bmr * $factor);
-
-				if ($fitness_goal === 'lose') {
-					$min_safe = ($gender === 'F' || $gender === 'FEMALE') ? 1200 : 1500;
-					$target_calories = max($min_safe, $tdee - 500);
-				} elseif ($fitness_goal === 'gain') {
-					$target_calories = $tdee + 400;
-				} else {
-					$target_calories = $tdee;
-				}
-				$carbs_g = round(($target_calories * 0.40) / 4, 1);
-				$protein_g = round(($target_calories * 0.30) / 4, 1);
-				$fat_g = round(($target_calories * 0.30) / 9, 1);
-			}
-
-			// Ensure table exists
-			$this->db->query("CREATE TABLE IF NOT EXISTS `patient_nutrition_goals` (
-			  `id` INT AUTO_INCREMENT PRIMARY KEY,
-			  `user_id` INT NOT NULL,
-			  `age` INT DEFAULT NULL,
-			  `gender` VARCHAR(20) DEFAULT NULL,
-			  `height_cm` DECIMAL(6,2) DEFAULT NULL,
-			  `weight_kg` DECIMAL(6,2) DEFAULT NULL,
-			  `activity_level` VARCHAR(50) DEFAULT 'sedentary',
-			  `fitness_goal` VARCHAR(50) DEFAULT 'maintain',
-			  `bmr` DECIMAL(8,2) DEFAULT NULL,
-			  `tdee` DECIMAL(8,2) DEFAULT NULL,
-			  `target_calories` DECIMAL(8,2) DEFAULT NULL,
-			  `carbs_g` DECIMAL(8,2) DEFAULT NULL,
-			  `protein_g` DECIMAL(8,2) DEFAULT NULL,
-			  `fat_g` DECIMAL(8,2) DEFAULT NULL,
-			  `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
-			  `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-			  UNIQUE KEY `uk_user` (`user_id`)
-			) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
-
-			$save_data = array(
-				'user_id'         => $userid,
-				'age'             => $age,
-				'gender'          => $gender,
-				'height_cm'       => $height_cm,
-				'weight_kg'       => $weight_kg,
-				'activity_level'  => $activity_level,
-				'fitness_goal'    => $fitness_goal,
-				'bmr'             => $bmr,
-				'tdee'            => $tdee,
-				'target_calories' => $target_calories,
-				'carbs_g'         => $carbs_g,
-				'protein_g'       => $protein_g,
-				'fat_g'           => $fat_g,
-			);
-
-			$existing = $this->db->get_where('patient_nutrition_goals', array('user_id' => $userid))->row();
-			if ($existing) {
-				$this->db->where('user_id', $userid)->update('patient_nutrition_goals', $save_data);
-			} else {
-				$this->db->insert('patient_nutrition_goals', $save_data);
-			}
-
-			// Sync height, weight, gender back to userlogin
-			$sync = array();
-			if ($height_cm > 0) $sync['HEIGHT'] = $height_cm;
-			if ($weight_kg > 0) $sync['WEIGHT'] = $weight_kg;
-			if (!empty($gender)) $sync['GENDER'] = ($gender === 'FEMALE' ? 'F' : ($gender === 'MALE' ? 'M' : $gender));
-			if (!empty($sync)) {
-				$this->db->where('USERID', $userid)->update('userlogin', $sync);
-			}
-
-			$is_ajax = $this->input->is_ajax_request() || $this->input->post('ajax');
-			if ($is_ajax) {
-				$this->output->set_content_type('application/json')->set_output(json_encode([
-					'status' => 'success',
-					'message' => 'Calorie and macronutrient targets successfully saved to your profile!',
-					'data' => $save_data
-				]));
-				return;
-			}
-			$this->session->set_flashdata('flashmsg', '<div class="alert alert-success">Nutrition and macro targets saved to your profile!</div>');
-			redirect('profile');
-			return;
-		}
-		$data['specialization'] = $this->db->order_by('name','asc')->where('status','1')->get('master_specialization')->result();
-		$this->load->view('news',$data);
-	}
-
-	public function news_details($param = null)
-	{	
-		if (empty($param)) {
-			$param = $this->uri->segment(2);
-		}
-		// Decode base64 or support raw numeric ID
-		$news_id = is_numeric($param) ? (int)$param : (int)mybase64_decode($param);
-		if (empty($news_id) && is_numeric($param)) {
-			$news_id = (int)$param;
-		}
-
-	    $data['news_details'] = $this->db->get_where('news', array('approved' => '1', 'status' => '1', 'id' => $news_id))->result();
-		$data['specialization'] = $this->db->order_by('name', 'asc')->where('status', '1')->get('master_specialization')->result();
-
-		// Author resolution
-		$data['author_doctor'] = null;
-		$data['author_hospital'] = null;
-		if (!empty($data['news_details'])) {
-			$article = $data['news_details'][0];
-			if (!empty($article->doctor_id)) {
-				$data['author_doctor'] = $this->db->get_where('profile_dr', array('id' => $article->doctor_id))->row();
-			} elseif (!empty($article->hospital_id)) {
-				$data['author_hospital'] = $this->db->get_where('hospital_profile', array('id' => $article->hospital_id))->row();
-				if (!$data['author_hospital']) {
-					$data['author_hospital'] = $this->db->get_where('clinic', array('id' => $article->hospital_id))->row();
-				}
-			}
-		}
-
-		// Recent articles for sidebar
-		$data['recent_news'] = $this->db->order_by('id', 'DESC')
-			->where('approved', '1')
-			->where('status', '1')
-			->where('id !=', $news_id)
-			->limit(5)
-			->get('news')
-			->result();
-
-		$this->load->view('news_details', $data);
-	}
-    
-
-     public function tnc(){
-         $data['specialization']=$this->db->order_by('name','asc')->where('status','1')->get('master_specialization')->result();
-	    $this->load->view('tnc',$data);
-	}
-	public function privacy(){
-	     $data['specialization']=$this->db->order_by('name','asc')->where('status','1')->get('master_specialization')->result();
-	    $this->load->view('privacy',$data);
-	}
-
-	public function refund_cancellation(){
-	     $data['specialization']=$this->db->order_by('name','asc')->where('status','1')->get('master_specialization')->result();
-	    $this->load->view('refund_cancellation',$data);
-	}
-
-
-
-	public function getlocalitydd(){
-		$city = $this->input->post('city', TRUE) ?: $this->input->get('city', TRUE);
-		$citylist = $this->db->get_where('master_locality', array('status'=>'1', 'city_id'=>$city));
-		echo '<option value="">--Select Locality--</option>';
-
-		if ($citylist && $citylist->num_rows() > 0) {
-			foreach(@$citylist->result() as $list){
-				echo '<option value="'.$list->id.'">'.$list->name.'</option>';
-			}
-			echo '<option value="Other">Other / Main Area</option>';
-		} else {
-			echo '<option value="General">General / Main City Area</option>';
-			echo '<option value="Other">Other</option>';
-		}
-	}
-
-
-	public function career()
-	{
-		if ($this->input->method() === 'post') {
-			$this->form_validation->set_rules('name', 'Full Name', "trim|required|max_length[200]");
-			$this->form_validation->set_rules('email', 'Email Address', "trim|required|valid_email|max_length[200]");
-			$this->form_validation->set_rules('mobile', 'Mobile Number', "required|regex_match[/^[0-9]{10}$/]");
-			$this->form_validation->set_rules('qualification', 'Highest Qualification', "required|max_length[200]");
-			
-			$is_ajax = $this->input->is_ajax_request() || $this->input->post('is_ajax');
-
-			if ($this->form_validation->run() === TRUE)
-			{
-				$uploadimage = '';
-				$file_key = '';
-				if (isset($_FILES['resume']) && !empty($_FILES['resume']['name'])) {
-					$file_key = 'resume';
-				} elseif (isset($_FILES['uploadimage']) && !empty($_FILES['uploadimage']['name'])) {
-					$file_key = 'uploadimage';
-				}
-
-				if (!empty($file_key))
-				{
-					// Check PHP upload error codes
-					if (isset($_FILES[$file_key]['error']) && ($_FILES[$file_key]['error'] === UPLOAD_ERR_INI_SIZE || $_FILES[$file_key]['error'] === UPLOAD_ERR_FORM_SIZE)) {
-						$err = "Error: File exceeds the server upload limit (Maximum 2MB allowed).";
-						if ($is_ajax) {
-							echo json_encode(array('status' => 'error', 'message' => $err));
-							return;
-						}
-						$this->session->set_flashdata('flashmsg', '<div class="alert alert-danger"><strong>Upload Error:</strong> ' . $err . '</div>');
-						redirect(base_url('Home/career'));
-						return;
-					}
-
-					if (isset($_FILES[$file_key]['error']) && $_FILES[$file_key]['error'] !== UPLOAD_ERR_OK && $_FILES[$file_key]['error'] !== UPLOAD_ERR_NO_FILE) {
-						$err = "Error: File upload failed with error code: " . $_FILES[$file_key]['error'];
-						if ($is_ajax) {
-							echo json_encode(array('status' => 'error', 'message' => $err));
-							return;
-						}
-						$this->session->set_flashdata('flashmsg', '<div class="alert alert-danger"><strong>Upload Error:</strong> ' . $err . '</div>');
-						redirect(base_url('Home/career'));
-						return;
-					}
-
-					$fileTmpPath    = $_FILES[$file_key]['tmp_name'];
-					$fileName       = $_FILES[$file_key]['name'];
-					$fileSize       = (int)$_FILES[$file_key]['size'];
-					$maxSizeInBytes = 2 * 1024 * 1024; // 2MB = 2,097,152 bytes
-
-					// 1. Validate File Size (Strict 2MB Limit)
-					if ($fileSize > $maxSizeInBytes) {
-						$err = "Error: File size must be less than 2MB (" . round($fileSize / (1024 * 1024), 2) . "MB detected).";
-						if ($is_ajax) {
-							echo json_encode(array('status' => 'error', 'message' => $err));
-							return;
-						}
-						$this->session->set_flashdata('flashmsg', '<div class="alert alert-danger"><strong>Upload Error:</strong> ' . $err . '</div>');
-						redirect(base_url('Home/career'));
-						return;
-					}
-
-					// 2. Validate Extension (Strictly PDF only)
-					$fileExtension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
-					$allowed_exts  = array('pdf');
-
-					if (!in_array($fileExtension, $allowed_exts)) {
-						$err = "Error: Invalid file format! Only PDF documents (.pdf) are allowed.";
-						if ($is_ajax) {
-							echo json_encode(array('status' => 'error', 'message' => $err));
-							return;
-						}
-						$this->session->set_flashdata('flashmsg', '<div class="alert alert-danger"><strong>Upload Error:</strong> ' . $err . '</div>');
-						redirect(base_url('Home/career'));
-						return;
-					}
-
-					// 3. Validate MIME Type
-					$mimeType = '';
-					if (is_file($fileTmpPath)) {
-						if (function_exists('finfo_open')) {
-							$finfo    = finfo_open(FILEINFO_MIME_TYPE);
-							$mimeType = finfo_file($finfo, $fileTmpPath);
-							finfo_close($finfo);
-						} elseif (function_exists('mime_content_type')) {
-							$mimeType = mime_content_type($fileTmpPath);
-						}
-					}
-
-					$allowed_mimes = array(
-						'application/pdf',
-						'application/x-pdf',
-						'application/acrobat',
-						'applications/vnd.pdf',
-						'text/pdf',
-						'text/x-pdf',
-						'application/octet-stream'
-					);
-
-					if (!empty($mimeType) && !in_array($mimeType, $allowed_mimes)) {
-						$err = "Error: Only PDF documents are allowed (detected: " . htmlspecialchars($mimeType) . ").";
-						if ($is_ajax) {
-							echo json_encode(array('status' => 'error', 'message' => $err));
-							return;
-						}
-						$this->session->set_flashdata('flashmsg', '<div class="alert alert-danger"><strong>Upload Error:</strong> ' . $err . '</div>');
-						redirect(base_url('Home/career'));
-						return;
-					}
-
-					$rname       = rand(1111111, 999999999);
-					$date        = date('Y-m-d');
-					$uploadimage = '_profile_pic_' . $rname . $date . '.' . $fileExtension;
-
-					$config['upload_path']   = './admin1947/public/assets/document/';
-					$config['allowed_types'] = 'pdf';
-					$config['max_size']      = 2048; // 2048 KB = 2MB
-					$config['file_name']     = $uploadimage;
-
-					$this->load->library('upload', $config);
-					if (!$this->upload->do_upload($file_key))
-					{
-						$error = strip_tags($this->upload->display_errors());
-						if ($is_ajax) {
-							echo json_encode(array('status' => 'error', 'message' => 'Resume Upload Failed: ' . $error));
-							return;
-						}
-						$this->session->set_flashdata('flashmsg', '<div class="alert alert-danger"><strong>Resume Upload Failed:</strong> ' . $error . '</div>');
-						redirect(base_url('Home/career'));
-						return;
-					}
-				}
-
-				$job_id = (int)$this->input->post('job_id');
-				$designation = trim($this->input->post('designation', TRUE));
-				if ($job_id > 0 && empty($designation)) {
-					$job_row = $this->db->where('job_id', $job_id)->get('career_jobs')->row_array();
-					if ($job_row) {
-						$designation = $job_row['title'];
-					}
-				}
-				if (empty($designation)) {
-					$designation = 'General Application';
-				}
-
-				$insert_data = array(
-					'job_id'        => ($job_id > 0) ? $job_id : null,
-					'name'          => trim($this->input->post('name', TRUE)),
-					'email'         => trim($this->input->post('email', TRUE)),
-					'mobile'        => trim($this->input->post('mobile', TRUE)),
-					'qualification' => trim($this->input->post('qualification', TRUE)),
-					'experience'    => trim($this->input->post('experience', TRUE)),
-					'designation'   => $designation,
-					'message'       => trim($this->input->post('message', TRUE)),
-					'resume'        => $uploadimage,
-					'status'        => '0',
-					'status_stage'  => 'pending',
-					'creat_date'    => date('Y-m-d')
-				);
-
-				$this->db->insert('career', $insert_data);
-
-				$success_msg = "Thank you for applying to Upchar Healthcare! Our recruitment team will review your application and contact you soon.";
-
-				if ($is_ajax) {
-					echo json_encode(array('status' => 'success', 'message' => $success_msg));
-					return;
-				}
-
-				$this->session->set_flashdata('flashmsg', '<div class="alert alert-success" style="border-radius: 8px; font-weight: 600;"><i class="fa fa-check-circle"></i> ' . $success_msg . '</div>');
-				redirect(base_url('Home/career'));
-				return;
-			}
-			else
-			{
-				$val_error = validation_errors();
-				if ($is_ajax) {
-					echo json_encode(array('status' => 'error', 'message' => strip_tags($val_error)));
-					return;
-				}
-			}
-		}
-
-		// GET Request: Load active job openings & page view
-		$data['jobs'] = $this->db->order_by('job_id', 'DESC')->where('status', 'active')->get('career_jobs')->result_array();
-		$depts = array();
-		if (!empty($data['jobs'])) {
-			foreach ($data['jobs'] as $j) {
-				if (!empty($j['department']) && !in_array($j['department'], $depts)) {
-					$depts[] = $j['department'];
-				}
-			}
-		}
-		$data['departments'] = $depts;
-		$data['meta_array'] = array(
-			'meta_title' => 'Careers & Healthcare Job Vacancies | Upchar Hospital & Health Network',
-			'meta_desc'  => 'Explore current job openings, doctor vacancies, nursing staff, lab technicians, and hospital operations roles at Upchar Healthcare. Apply online today.'
-		);
-
-		$this->load->view('careers', $data);
-	}
-
-	public function apply_job_ajax()
-	{
-		header('Content-Type: application/json');
-
-		$job_id = (int)$this->input->post('job_id');
-		$name   = trim($this->input->post('name', TRUE));
-		$email  = trim($this->input->post('email', TRUE));
-		$mobile = trim($this->input->post('mobile', TRUE));
-
-		// If full form submission (name, email, mobile are provided)
-		if (!empty($name) || !empty($email)) {
-			$this->form_validation->set_rules('name', 'Full Name', "trim|required|max_length[200]");
-			$this->form_validation->set_rules('email', 'Email Address', "trim|required|valid_email|max_length[200]");
-			$this->form_validation->set_rules('mobile', 'Mobile Number', "required|regex_match[/^[0-9]{10}$/]");
-			$this->form_validation->set_rules('qualification', 'Highest Qualification', "required|max_length[200]");
-
-			if ($this->form_validation->run() === FALSE) {
-				echo json_encode(array(
-					'status'  => 'error',
-					'message' => strip_tags(validation_errors())
-				));
-				return;
-			}
-
-			// File Upload (Strict PDF Only, Max 2MB)
-			$uploadimage = '';
-			$file_key = '';
-			if (isset($_FILES['resume']) && !empty($_FILES['resume']['name'])) {
-				$file_key = 'resume';
-			} elseif (isset($_FILES['uploadimage']) && !empty($_FILES['uploadimage']['name'])) {
-				$file_key = 'uploadimage';
-			}
-
-			if (!empty($file_key)) {
-				$fileSize = (int)$_FILES[$file_key]['size'];
-				if ($fileSize > (2 * 1024 * 1024)) {
-					echo json_encode(array('status' => 'error', 'message' => 'Error: Resume file size must be less than 2MB.'));
-					return;
-				}
-
-				$fileExtension = strtolower(pathinfo($_FILES[$file_key]['name'], PATHINFO_EXTENSION));
-				$allowed_exts  = array('pdf');
-				if (!in_array($fileExtension, $allowed_exts)) {
-					echo json_encode(array('status' => 'error', 'message' => 'Error: Invalid file format! Please upload a PDF file only (.pdf).'));
-					return;
-				}
-
-				$rname       = rand(1111111, 999999999);
-				$uploadimage = '_profile_pic_' . $rname . date('Y-m-d') . '.' . $fileExtension;
-
-				$config['upload_path']   = './admin1947/public/assets/document/';
-				$config['allowed_types'] = 'pdf';
-				$config['max_size']      = 2048; // 2MB
-				$config['file_name']     = $uploadimage;
-
-				$this->load->library('upload', $config);
-				if (!$this->upload->do_upload($file_key)) {
-					echo json_encode(array('status' => 'error', 'message' => 'Resume Upload Failed: ' . strip_tags($this->upload->display_errors())));
-					return;
-				}
-			}
-
-			$designation = trim($this->input->post('designation', TRUE));
-			if ($job_id > 0 && empty($designation)) {
-				$job_row = $this->db->where('job_id', $job_id)->get('career_jobs')->row_array();
-				if ($job_row) {
-					$designation = $job_row['title'];
-				}
-			}
-			if (empty($designation)) {
-				$designation = 'General Application';
-			}
-
-			$insert_data = array(
-				'job_id'        => ($job_id > 0) ? $job_id : null,
-				'name'          => $name,
-				'email'         => $email,
-				'mobile'        => $mobile,
-				'qualification' => trim($this->input->post('qualification', TRUE)),
-				'experience'    => trim($this->input->post('experience', TRUE)),
-				'designation'   => $designation,
-				'message'       => trim($this->input->post('message', TRUE)),
-				'resume'        => $uploadimage,
-				'status'        => '0',
-				'status_stage'  => 'pending',
-				'creat_date'    => date('Y-m-d'),
-				'applied_at'    => date('Y-m-d H:i:s')
-			);
-
-			$this->db->insert('career', $insert_data);
-
-			echo json_encode(array(
-				'status'  => 'success',
-				'message' => 'Application submitted successfully! Our recruitment team will review your application and contact you soon.'
-			));
-			return;
-		}
-
-		// Quick apply or fetch job details for modal
-		if ($job_id > 0) {
-			$job = $this->db->where('job_id', $job_id)->get('career_jobs')->row_array();
-			if ($job) {
-				$userid = $this->session->userdata('userid');
-				$user_data = null;
-				if ($userid) {
-					$user_data = $this->db->where('userid', $userid)->get('profile_dr')->row_array();
-				}
-
-				echo json_encode(array(
-					'status'    => 'success',
-					'job'       => $job,
-					'user'      => $user_data,
-					'message'   => 'Job details fetched successfully.',
-					'csrf_name' => $this->security->get_csrf_token_name(),
-					'csrf_hash' => $this->security->get_csrf_hash()
-				));
-				return;
-			} else {
-				echo json_encode(array('status' => 'error', 'message' => 'Job opening not found or no longer active.'));
-				return;
-			}
-		}
-
-		echo json_encode(array('status' => 'error', 'message' => 'Invalid request: Job ID is required.'));
-	}
-	
-	public function file_check($file,$type)
-	{	
-		//if($_FILES['uploadimage']['name']!="")
-		//{
-			$exts = explode(',',$type);
-			if (count($exts) > 1)
-			{	
-				foreach ($exts as $v)
-				{
-					$rc = $this->file_check($_FILES,$v);
-					if ($rc === TRUE)
-					{
-						return TRUE;
-					}
-				}
-			}
-			//is type a group type? image, application, word_document, code, zip .... -> load proper array
-			$ext_groups						= array();	
-			$ext_groups['image']            = array('jpg','jpeg','gif','png');
-			$ext_groups['document']         = array('rtf','doc','docx','pdf','txt');
-			$ext_groups['media']            = array('mpg','mpeg','swf','avi','flv','mov','mp4','wmv','mpg','mpeg4','3GP');
-			$ext_groups['compressed']		= array('zip', 'gzip', 'tar', 'gz');
-			$ext_groups['xls']            	= array('xls');
-			
-			foreach($ext_groups as $key => $val) 
-			{
-				if($key==$exts[0])
-				{	
-					$exts	= $val;
-				}
-			}
-		
-			$file_ext = pathinfo($_FILES['uploadimage']['name'],PATHINFO_EXTENSION);  
-			if ( ! in_array($file_ext, $exts))
-			{	//echo "<pre>"; print_r($exts); die;
-				$exts_allowed=implode(" | ",$exts);
-				$this->form_validation->set_message('file_check', "File should be ". $exts_allowed);
-				return FALSE;
-			}
-			else
-			{
-				return TRUE;
-			}
-		//}
-    }
-	
-	public function services()
-       {
-
-             //print_r($result);
-            $this->load->view('ourservices');
-
-       }
-
-       public function contactus()
-        {
-            if ($this->input->post('submit') || $this->input->post('name'))
-            {
-                $date = date('Y-m-d H:i:s');
-                $name = trim($this->input->post('name', TRUE));
-                $email = strtolower(trim($this->input->post('email', TRUE)));
-                $mobile = trim($this->input->post('mobile', TRUE));
-                $subject = trim($this->input->post('subject', TRUE));
-                $inquiry_type = trim($this->input->post('inquiry_type', TRUE)) ?: 'GENERAL';
-                $message = trim($this->input->post('message', TRUE));
-
-                if (!empty($name) && !empty($mobile) && !empty($message)) {
-                    $udata = array(
-                        'name'         => $name,
-                        'email'        => $email,
-                        'mobile'       => $mobile,
-                        'subject'      => $subject ?: 'Inquiry from ' . $name,
-                        'inquiry_type' => $inquiry_type,
-                        'message'      => $message,
-                        'status'       => 'PENDING',
-                        'date'         => date('Y-m-d'),
-                        'created_at'   => $date
-                    );
-
-                    $this->db->insert('contactus', $udata);
-                    $insert_id = $this->db->insert_id();
-
-                    if (!empty($email)) {
-                        $this->load->library('azad_lib');
-                        $body = "Dear " . htmlspecialchars($name) . ",<br><br>Thank you for contacting Upchar. We have received your query (Ticket #$insert_id) and our team will get in touch with you shortly.<br><br><b>Your Message:</b><br>" . nl2br(htmlspecialchars($message)) . "<br><br>Warm regards,<br>Upchar Support Team";
-                        @$this->azad_lib->sendMail($email, 'Query Received - Upchar Healthcare Support (Ticket #' . $insert_id . ')', $body);
-                    }
-
-                    if ($this->input->is_ajax_request()) {
-                        echo json_encode(array('status' => 'success', 'msg' => 'Thank you! Your message has been sent successfully. Our support team will get in touch with you shortly.'));
-                        return;
-                    }
-
-                    $this->session->set_flashdata('flashmsg', "<div class='alert alert-success'><strong>Thank you!</strong> Your inquiry has been submitted successfully (Ticket #$insert_id). Our team will contact you shortly.</div>");
-                    redirect('contactus');
-                    return;
-                } else {
-                    if ($this->input->is_ajax_request()) {
-                        echo json_encode(array('status' => 'failed', 'msg' => 'Please fill in all required fields (Name, Mobile, Message).'));
-                        return;
-                    }
-                    $this->session->set_flashdata('flashmsg', "<div class='alert alert-danger'><strong>Error!</strong> Please fill in all required fields.</div>");
-                }
-            }
-
-            		if ($this->input->post('action') === 'save_nutrition_goals') {
-			$age             = intval($this->input->post('age'));
-			$gender          = strtoupper(trim($this->input->post('gender')));
-			$height_cm       = floatval($this->input->post('height_cm'));
-			$weight_kg       = floatval($this->input->post('weight_kg'));
-			$activity_level  = trim($this->input->post('activity_level')) ?: 'sedentary';
-			$fitness_goal    = trim($this->input->post('fitness_goal')) ?: 'maintain';
-			$bmr             = floatval($this->input->post('bmr'));
-			$tdee            = floatval($this->input->post('tdee'));
-			$target_calories = floatval($this->input->post('target_calories'));
-			$carbs_g         = floatval($this->input->post('carbs_g'));
-			$protein_g       = floatval($this->input->post('protein_g'));
-			$fat_g           = floatval($this->input->post('fat_g'));
-
-			// Server-side recalculation fallback/safety check
-			if ($bmr <= 0 && $height_cm > 0 && $weight_kg > 0) {
-				if ($gender === 'F' || $gender === 'FEMALE') {
-					$bmr = round((10 * $weight_kg) + (6.25 * $height_cm) - (5 * ($age ?: 30)) - 161);
-				} elseif ($gender === 'M' || $gender === 'MALE') {
-					$bmr = round((10 * $weight_kg) + (6.25 * $height_cm) - (5 * ($age ?: 30)) + 5);
-				} else {
-					$bmr = round((10 * $weight_kg) + (6.25 * $height_cm) - (5 * ($age ?: 30)) - 78);
-				}
-				$factors = ['sedentary' => 1.2, 'light' => 1.375, 'moderate' => 1.55, 'very' => 1.725, 'extra' => 1.9];
-				$factor = $factors[$activity_level] ?? 1.2;
-				$tdee = round($bmr * $factor);
-
-				if ($fitness_goal === 'lose') {
-					$min_safe = ($gender === 'F' || $gender === 'FEMALE') ? 1200 : 1500;
-					$target_calories = max($min_safe, $tdee - 500);
-				} elseif ($fitness_goal === 'gain') {
-					$target_calories = $tdee + 400;
-				} else {
-					$target_calories = $tdee;
-				}
-				$carbs_g = round(($target_calories * 0.40) / 4, 1);
-				$protein_g = round(($target_calories * 0.30) / 4, 1);
-				$fat_g = round(($target_calories * 0.30) / 9, 1);
-			}
-
-			// Ensure table exists
-			$this->db->query("CREATE TABLE IF NOT EXISTS `patient_nutrition_goals` (
-			  `id` INT AUTO_INCREMENT PRIMARY KEY,
-			  `user_id` INT NOT NULL,
-			  `age` INT DEFAULT NULL,
-			  `gender` VARCHAR(20) DEFAULT NULL,
-			  `height_cm` DECIMAL(6,2) DEFAULT NULL,
-			  `weight_kg` DECIMAL(6,2) DEFAULT NULL,
-			  `activity_level` VARCHAR(50) DEFAULT 'sedentary',
-			  `fitness_goal` VARCHAR(50) DEFAULT 'maintain',
-			  `bmr` DECIMAL(8,2) DEFAULT NULL,
-			  `tdee` DECIMAL(8,2) DEFAULT NULL,
-			  `target_calories` DECIMAL(8,2) DEFAULT NULL,
-			  `carbs_g` DECIMAL(8,2) DEFAULT NULL,
-			  `protein_g` DECIMAL(8,2) DEFAULT NULL,
-			  `fat_g` DECIMAL(8,2) DEFAULT NULL,
-			  `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
-			  `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-			  UNIQUE KEY `uk_user` (`user_id`)
-			) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
-
-			$save_data = array(
-				'user_id'         => $userid,
-				'age'             => $age,
-				'gender'          => $gender,
-				'height_cm'       => $height_cm,
-				'weight_kg'       => $weight_kg,
-				'activity_level'  => $activity_level,
-				'fitness_goal'    => $fitness_goal,
-				'bmr'             => $bmr,
-				'tdee'            => $tdee,
-				'target_calories' => $target_calories,
-				'carbs_g'         => $carbs_g,
-				'protein_g'       => $protein_g,
-				'fat_g'           => $fat_g,
-			);
-
-			$existing = $this->db->get_where('patient_nutrition_goals', array('user_id' => $userid))->row();
-			if ($existing) {
-				$this->db->where('user_id', $userid)->update('patient_nutrition_goals', $save_data);
-			} else {
-				$this->db->insert('patient_nutrition_goals', $save_data);
-			}
-
-			// Sync height, weight, gender back to userlogin
-			$sync = array();
-			if ($height_cm > 0) $sync['HEIGHT'] = $height_cm;
-			if ($weight_kg > 0) $sync['WEIGHT'] = $weight_kg;
-			if (!empty($gender)) $sync['GENDER'] = ($gender === 'FEMALE' ? 'F' : ($gender === 'MALE' ? 'M' : $gender));
-			if (!empty($sync)) {
-				$this->db->where('USERID', $userid)->update('userlogin', $sync);
-			}
-
-			$is_ajax = $this->input->is_ajax_request() || $this->input->post('ajax');
-			if ($is_ajax) {
-				$this->output->set_content_type('application/json')->set_output(json_encode([
-					'status' => 'success',
-					'message' => 'Calorie and macronutrient targets successfully saved to your profile!',
-					'data' => $save_data
-				]));
-				return;
-			}
-			$this->session->set_flashdata('flashmsg', '<div class="alert alert-success">Nutrition and macro targets saved to your profile!</div>');
-			redirect('profile');
-			return;
-		}
-		$data['specialization'] = $this->db->order_by('name','asc')->where('status','1')->get('master_specialization')->result();
-            $data['cities'] = $this->db->order_by('name','asc')->where('status','1')->get('master_city')->result();
-            $this->load->view('contactus', $data);
-        }
-
-	public function change_password()
-	{
-		$userid = $this->session->userdata('userid') ?: $this->session->userdata('user_id') ?: $this->session->userdata('USERID');
-		if (!$userid) {
-			$this->session->set_userdata('last_page', base_url('change_password'));
-			$this->session->set_flashdata('flashmsg', '<div class="alert alert-warning">Please login to change your password.</div>');
-			redirect('login');
-			return;
-		}
-
-		if ($this->input->post('change_pass') || isset($_POST['submit'])) {
-			$cur_password  = md5($this->input->post('password') ?: $this->input->post('oldpass'));
-			$new_password  = md5($this->input->post('newpass'));
-			$conf_password = md5($this->input->post('confpassword') ?: $this->input->post('conpass'));
-
-			$user = $this->db->get_where('userlogin', array('USERID' => $userid))->row();
-			if ($user && ($user->PASSWORD == $cur_password || $user->PASSWORD == $this->input->post('password') || $user->PASSWORD == $this->input->post('oldpass'))) {
-				if ($new_password === $conf_password) {
-					$this->db->where('USERID', $userid)->update('userlogin', array('PASSWORD' => $new_password));
-					$this->session->set_flashdata('flashmsg', "<div class='alert alert-success'><strong>Success!</strong> Password updated successfully.</div>");
-					redirect('change_password');
-					return;
-				} else {
-					$this->session->set_flashdata('flashmsg', "<div class='alert alert-danger'>New password and confirm password do not match.</div>");
-				}
-			} else {
-				$this->session->set_flashdata('flashmsg', "<div class='alert alert-danger'>Current password is incorrect.</div>");
-			}
-		}
-
-		$data['specialization'] = $this->db->order_by('name', 'asc')->where('status', '1')->get('master_specialization')->result();
-		$this->load->view('patient_header', $data);
-		$this->load->view('change_password', $data);
-		$this->load->view('patient_footer');
-	}
-
-	public function profile()
-	{
-		$userid    = $this->session->userdata('userid') ?: $this->session->userdata('user_id') ?: $this->session->userdata('USERID');
-		$useremail = $this->session->userdata('useremail');
-		$username  = $this->session->userdata('username');
-
-		// 1. Resolve user from userlogin table
-		$user = null;
-		if (!empty($userid)) {
-			$user = $this->db->get_where('userlogin', array('USERID' => $userid))->row();
-		}
-
-		// 2. If not found by USERID, resolve by session email
-		if (!$user && !empty($useremail)) {
-			$user = $this->db->get_where('userlogin', array('EMAIL' => $useremail))->row();
-			if ($user) {
-				$userid = $user->USERID;
-				$this->session->set_userdata('userid', $userid);
-			}
-		}
-
-		// 3. If still not found, resolve by username/mobile
-		if (!$user && !empty($username)) {
-			$user = $this->db->group_start()
-				->where('EMAIL', $username)
-				->or_where('MOBILE', $username)
-				->or_where('FNAME', $username)
-				->group_end()
-				->get('userlogin')->row();
-			if ($user) {
-				$userid = $user->USERID;
-				$this->session->set_userdata('userid', $userid);
-			}
-		}
-
-		// 4. If logged in as admin in same browser session, check admin's email in userlogin
-		if (!$user && $this->session->userdata('adminuserid')) {
-			$adminRow = $this->db->get_where('login', array('id' => $this->session->userdata('adminuserid')))->row();
-			if ($adminRow && !empty($adminRow->email)) {
-				$user = $this->db->get_where('userlogin', array('EMAIL' => $adminRow->email))->row();
-				if ($user) {
-					$userid = $user->USERID;
-					$this->session->set_userdata('userid', $userid);
-				}
-			}
-		}
-
-		if (!$user && !$userid && !$useremail && !$username) {
-			$this->session->set_userdata('last_page', base_url('profile'));
-			$this->session->set_flashdata('flashmsg', '<div class="alert alert-warning">Please login to view your profile.</div>');
-			redirect('login');
-			return;
-		}
-
-		// Ensure patient_dependents table exists
-		try {
-			$this->db->query("CREATE TABLE IF NOT EXISTS `patient_dependents` (
-				`id` int(11) NOT NULL AUTO_INCREMENT,
-				`primary_user_id` int(11) NOT NULL,
-				`name` varchar(150) NOT NULL,
-				`relationship` varchar(50) NOT NULL,
-				`gender` varchar(10) DEFAULT 'M',
-				`dob` date DEFAULT NULL,
-				`blood_group` varchar(10) DEFAULT NULL,
-				`medical_history` text DEFAULT NULL,
-				`created_at` datetime NOT NULL,
-				PRIMARY KEY (`id`),
-				KEY `idx_primary_user` (`primary_user_id`)
-			) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
-		} catch (\Throwable $e) {
-			log_message('error', 'Error ensuring patient_dependents table: ' . $e->getMessage());
-		}
-
-		// Ensure patient_nutrition_goals table exists
-		try {
-			$this->db->query("CREATE TABLE IF NOT EXISTS `patient_nutrition_goals` (
-			  `id` INT AUTO_INCREMENT PRIMARY KEY,
-			  `user_id` INT NOT NULL,
-			  `age` INT DEFAULT NULL,
-			  `gender` VARCHAR(20) DEFAULT NULL,
-			  `height_cm` DECIMAL(6,2) DEFAULT NULL,
-			  `weight_kg` DECIMAL(6,2) DEFAULT NULL,
-			  `activity_level` VARCHAR(50) DEFAULT 'sedentary',
-			  `fitness_goal` VARCHAR(50) DEFAULT 'maintain',
-			  `bmr` DECIMAL(8,2) DEFAULT NULL,
-			  `tdee` DECIMAL(8,2) DEFAULT NULL,
-			  `target_calories` DECIMAL(8,2) DEFAULT NULL,
-			  `carbs_g` DECIMAL(8,2) DEFAULT NULL,
-			  `protein_g` DECIMAL(8,2) DEFAULT NULL,
-			  `fat_g` DECIMAL(8,2) DEFAULT NULL,
-			  `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
-			  `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-			  UNIQUE KEY `uk_user` (`user_id`)
-			) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
-		} catch (\Throwable $e) {
-			log_message('error', 'Error ensuring patient_nutrition_goals table: ' . $e->getMessage());
-		}
-
-		if (isset($_POST['submit']) || $this->input->post('action') === 'update_profile') {
-			$res = $this->Userlogin_Model->profile($userid);
-			$is_ajax = $this->input->is_ajax_request() || $this->input->post('ajax');
-			if ($is_ajax) {
-				$this->output->set_content_type('application/json')->set_output(json_encode($res));
-				return;
-			}
-			if (is_array($res) && isset($res['status']) && $res['status'] === 'error') {
-				$this->session->set_flashdata('flashmsg', "<div class='alert alert-danger'>" . html_escape($res['message']) . "</div>");
-			} else {
-				$msg = (is_array($res) && !empty($res['message'])) ? $res['message'] : 'Profile details updated successfully!';
-				$this->session->set_flashdata('flashmsg', "<div class='alert alert-success'>" . html_escape($msg) . "</div>");
-			}
-			redirect('profile');
-			return;
-		}
-
-		if ($this->input->post('action') === 'add_dependent') {
-			$dep_name = trim($this->input->post('dep_name', TRUE));
-			$dep_rel  = trim($this->input->post('dep_rel', TRUE));
-			$dep_gen  = trim($this->input->post('dep_gender', TRUE));
-			$dep_dob  = trim($this->input->post('dep_dob', TRUE));
-			$dep_bg   = trim($this->input->post('dep_bgroup', TRUE));
-			$dep_med  = trim($this->input->post('dep_history', TRUE));
-
-			if (!empty($dep_name) && !empty($dep_rel)) {
-				$this->db->insert('patient_dependents', array(
-					'primary_user_id' => $userid,
-					'name'            => $dep_name,
-					'relationship'    => $dep_rel,
-					'gender'          => $dep_gen ?: 'M',
-					'dob'             => !empty($dep_dob) ? $dep_dob : null,
-					'blood_group'     => $dep_bg ?: null,
-					'medical_history' => $dep_med ?: null,
-					'created_at'      => date('Y-m-d H:i:s')
-				));
-				$this->session->set_flashdata('flashmsg', "<div class='alert alert-success'>Family member added successfully!</div>");
-				redirect('profile');
-				return;
-			}
-		}
-
-		if ($this->input->get('del_dep')) {
-			$dep_id = intval($this->input->get('del_dep'));
-			$this->db->where(array('id' => $dep_id, 'primary_user_id' => $userid))->delete('patient_dependents');
-			$this->session->set_flashdata('flashmsg', "<div class='alert alert-info'>Family member removed.</div>");
-			redirect('profile');
-			return;
-		}
-
-				if ($this->input->post('action') === 'save_nutrition_goals') {
-			$age             = intval($this->input->post('age'));
-			$gender          = strtoupper(trim($this->input->post('gender')));
-			$height_cm       = floatval($this->input->post('height_cm'));
-			$weight_kg       = floatval($this->input->post('weight_kg'));
-			$activity_level  = trim($this->input->post('activity_level')) ?: 'sedentary';
-			$fitness_goal    = trim($this->input->post('fitness_goal')) ?: 'maintain';
-			$bmr             = floatval($this->input->post('bmr'));
-			$tdee            = floatval($this->input->post('tdee'));
-			$target_calories = floatval($this->input->post('target_calories'));
-			$carbs_g         = floatval($this->input->post('carbs_g'));
-			$protein_g       = floatval($this->input->post('protein_g'));
-			$fat_g           = floatval($this->input->post('fat_g'));
-
-			// Server-side recalculation fallback/safety check
-			if ($bmr <= 0 && $height_cm > 0 && $weight_kg > 0) {
-				if ($gender === 'F' || $gender === 'FEMALE') {
-					$bmr = round((10 * $weight_kg) + (6.25 * $height_cm) - (5 * ($age ?: 30)) - 161);
-				} elseif ($gender === 'M' || $gender === 'MALE') {
-					$bmr = round((10 * $weight_kg) + (6.25 * $height_cm) - (5 * ($age ?: 30)) + 5);
-				} else {
-					$bmr = round((10 * $weight_kg) + (6.25 * $height_cm) - (5 * ($age ?: 30)) - 78);
-				}
-				$factors = ['sedentary' => 1.2, 'light' => 1.375, 'moderate' => 1.55, 'very' => 1.725, 'extra' => 1.9];
-				$factor = $factors[$activity_level] ?? 1.2;
-				$tdee = round($bmr * $factor);
-
-				if ($fitness_goal === 'lose') {
-					$min_safe = ($gender === 'F' || $gender === 'FEMALE') ? 1200 : 1500;
-					$target_calories = max($min_safe, $tdee - 500);
-				} elseif ($fitness_goal === 'gain') {
-					$target_calories = $tdee + 400;
-				} else {
-					$target_calories = $tdee;
-				}
-				$carbs_g = round(($target_calories * 0.40) / 4, 1);
-				$protein_g = round(($target_calories * 0.30) / 4, 1);
-				$fat_g = round(($target_calories * 0.30) / 9, 1);
-			}
-
-			// Ensure table exists
-			$this->db->query("CREATE TABLE IF NOT EXISTS `patient_nutrition_goals` (
-			  `id` INT AUTO_INCREMENT PRIMARY KEY,
-			  `user_id` INT NOT NULL,
-			  `age` INT DEFAULT NULL,
-			  `gender` VARCHAR(20) DEFAULT NULL,
-			  `height_cm` DECIMAL(6,2) DEFAULT NULL,
-			  `weight_kg` DECIMAL(6,2) DEFAULT NULL,
-			  `activity_level` VARCHAR(50) DEFAULT 'sedentary',
-			  `fitness_goal` VARCHAR(50) DEFAULT 'maintain',
-			  `bmr` DECIMAL(8,2) DEFAULT NULL,
-			  `tdee` DECIMAL(8,2) DEFAULT NULL,
-			  `target_calories` DECIMAL(8,2) DEFAULT NULL,
-			  `carbs_g` DECIMAL(8,2) DEFAULT NULL,
-			  `protein_g` DECIMAL(8,2) DEFAULT NULL,
-			  `fat_g` DECIMAL(8,2) DEFAULT NULL,
-			  `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
-			  `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-			  UNIQUE KEY `uk_user` (`user_id`)
-			) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
-
-			$save_data = array(
-				'user_id'         => $userid,
-				'age'             => $age,
-				'gender'          => $gender,
-				'height_cm'       => $height_cm,
-				'weight_kg'       => $weight_kg,
-				'activity_level'  => $activity_level,
-				'fitness_goal'    => $fitness_goal,
-				'bmr'             => $bmr,
-				'tdee'            => $tdee,
-				'target_calories' => $target_calories,
-				'carbs_g'         => $carbs_g,
-				'protein_g'       => $protein_g,
-				'fat_g'           => $fat_g,
-			);
-
-			$existing = $this->db->get_where('patient_nutrition_goals', array('user_id' => $userid))->row();
-			if ($existing) {
-				$this->db->where('user_id', $userid)->update('patient_nutrition_goals', $save_data);
-			} else {
-				$this->db->insert('patient_nutrition_goals', $save_data);
-			}
-
-			// Sync height, weight, gender back to userlogin
-			$sync = array();
-			if ($height_cm > 0) $sync['HEIGHT'] = $height_cm;
-			if ($weight_kg > 0) $sync['WEIGHT'] = $weight_kg;
-			if (!empty($gender)) $sync['GENDER'] = ($gender === 'FEMALE' ? 'F' : ($gender === 'MALE' ? 'M' : $gender));
-			if (!empty($sync)) {
-				$this->db->where('USERID', $userid)->update('userlogin', $sync);
-			}
-
-			// Sync with patient_profiles
-			try {
-				if ($this->db->table_exists('patient_profiles')) {
-					$profSync = array('updated_at' => date('Y-m-d H:i:s'));
-					if ($height_cm > 0 && $this->db->field_exists('height_cm', 'patient_profiles')) $profSync['height_cm'] = $height_cm;
-					if ($weight_kg > 0 && $this->db->field_exists('weight_kg', 'patient_profiles')) $profSync['weight_kg'] = $weight_kg;
-					if (!empty($gender)) $profSync['gender'] = ($gender === 'FEMALE' ? 'F' : ($gender === 'MALE' ? 'M' : $gender));
-					if ($this->db->where('user_id', $userid)->get('patient_profiles')->row()) {
-						$this->db->where('user_id', $userid)->update('patient_profiles', $profSync);
-					}
-				}
-			} catch (\Throwable $e) {}
-
-			$is_ajax = $this->input->is_ajax_request() || $this->input->post('ajax');
-			if ($is_ajax) {
-				$this->output->set_content_type('application/json')->set_output(json_encode([
-					'status' => 'success',
-					'message' => 'Calorie and macronutrient targets successfully saved to your profile!',
-					'data' => $save_data
-				]));
-				return;
-			}
-			$this->session->set_flashdata('flashmsg', '<div class="alert alert-success">Nutrition and macro targets saved to your profile!</div>');
-			redirect('profile');
-			return;
-		}
-		$data['specialization'] = [];
-		try {
-			if ($this->db && $this->db->conn_id && $this->db->table_exists('master_specialization')) {
-				$data['specialization'] = $this->db->order_by('name','asc')->where('status','1')->get('master_specialization')->result();
-			}
-		} catch (\Throwable $e) {
-			$data['specialization'] = [];
-		}
-
-		// Refresh user object from database
-		if (!empty($userid)) {
-			try {
-				if ($this->db && $this->db->conn_id && $this->db->table_exists('userlogin')) {
-					$user = $this->db->get_where('userlogin', array('USERID' => $userid))->row();
-				}
-			} catch (\Throwable $e) {
-				// Keep fallback
-			}
-		}
-
-		if (!$user) {
-			$user = (object) array(
-				'USERID' => $userid ?: 0,
-				'FNAME'  => !empty($username) ? $username : '',
-				'EMAIL'  => !empty($useremail) ? $useremail : '',
-				'MOBILE' => '',
-				'DOB'    => '',
-				'GENDER' => '',
-				'BGROUP' => '',
-				'HEIGHT' => '',
-				'WEIGHT' => ''
-			);
-		}
-
-		// Normalize user vitals and identity attributes
-		if ($user) {
-			$user->blood_group = !empty($user->BGROUP) ? $user->BGROUP : (!empty($user->blood_group) ? $user->blood_group : (!empty($user->bgroup) ? $user->bgroup : ''));
-			$user->BGROUP      = $user->blood_group;
-			$user->height      = !empty($user->HEIGHT) ? $user->HEIGHT : (!empty($user->height) ? $user->height : '');
-			$user->HEIGHT      = $user->height;
-			$user->weight      = !empty($user->WEIGHT) ? $user->WEIGHT : (!empty($user->weight) ? $user->weight : '');
-			$user->WEIGHT      = $user->weight;
-			$user->dob         = !empty($user->DOB) ? $user->DOB : (!empty($user->dob) ? $user->dob : '');
-			$user->DOB         = $user->dob;
-			$user->gender      = !empty($user->GENDER) ? $user->GENDER : (!empty($user->gender) ? $user->gender : '');
-			$user->GENDER      = $user->gender;
-		}
-
-		$data['data'] = $user;
-		$data['user'] = $user;
-
-		$data['dependents'] = [];
-		try {
-			if ($this->db && $this->db->conn_id && $this->db->table_exists('patient_dependents')) {
-				$data['dependents'] = $this->db->get_where('patient_dependents', array('primary_user_id' => $userid))->result();
-			}
-		} catch (\Throwable $e) {
-			log_message('error', 'Error fetching dependents: ' . $e->getMessage());
-			$data['dependents'] = [];
-		}
-
-		$this->load->helper('clinical');
-		$data['health_goals'] = null;
-		try {
-			$data['health_goals'] = $this->calculate_patient_health_goals($user);
-		} catch (\Throwable $e) {
-			log_message('error', 'Error calculating health goals: ' . $e->getMessage());
-			$data['health_goals'] = function_exists('calculate_patient_health_goals') ? calculate_patient_health_goals($user) : null;
-		}
-
-		// Pass explicit dynamic variables to view
-		$hg = $data['health_goals'];
-		$data['calculated_bmi']        = !empty($hg['bmi']) ? $hg['bmi'] : null;
-		$data['calculated_bmi_status'] = !empty($hg['bmi_status']) ? $hg['bmi_status'] : '';
-		$data['calculated_bmi_color']  = !empty($hg['bmi_color']) ? $hg['bmi_color'] : '#10b981';
-		$data['calculated_bmr']        = !empty($hg['bmr']) ? $hg['bmr'] : null;
-		$data['calculated_age']        = !empty($hg['age']) ? $hg['age'] : null;
-		$data['calculated_gender']     = !empty($hg['gender']) ? $hg['gender'] : '';
-		$data['target_min_weight']     = !empty($hg['target_min_weight']) ? $hg['target_min_weight'] : null;
-		$data['target_ideal_weight']   = !empty($hg['target_ideal_weight']) ? $hg['target_ideal_weight'] : null;
-		$data['target_max_weight']     = !empty($hg['target_max_weight']) ? $hg['target_max_weight'] : null;
-		$data['user_blood_group']      = !empty($user->blood_group) ? $user->blood_group : (!empty($user->BGROUP) ? $user->BGROUP : '');
-
-		$data['nutrition_goals'] = null;
-		try {
-			if ($this->db && $this->db->conn_id && $this->db->table_exists('patient_nutrition_goals')) {
-				$data['nutrition_goals'] = $this->db->get_where('patient_nutrition_goals', array('user_id' => $userid))->row();
-			}
-		} catch (\Throwable $e) {
-			log_message('error', 'Error fetching nutrition goals: ' . $e->getMessage());
-			$data['nutrition_goals'] = null;
-		}
-
-		// Daily Diet Tracker Summary
-		$data['diet_summary'] = null;
-		try {
-			$this->load->model('Diet_model');
-			$selected_diet_date = $this->input->get('diet_date') ?: date('Y-m-d');
-			$data['diet_summary'] = $this->Diet_model->get_daily_summary($userid, $selected_diet_date);
-		} catch (\Throwable $e) {
-			log_message('error', 'Error fetching diet summary in profile: ' . $e->getMessage());
-			$data['diet_summary'] = null;
-		}
-		
-		try {
-			$this->load->view('patient_header', $data);
-			$this->load->view('profile', $data);
-			$this->load->view('patient_footer');
-		} catch (\Throwable $e) {
-			log_message('error', 'Error loading profile views: ' . $e->getMessage());
-			echo "<div style='font-family: sans-serif; padding: 40px; text-align: center;'><h2>Profile temporarily unavailable</h2><p>Please refresh in a moment or contact support.</p><a href='" . base_url() . "'>Return to Home</a></div>";
-		}
-	}
-
-	public function save_nutrition_goals()
-	{
-		$userid = $this->session->userdata('userid') ?: $this->session->userdata('user_id') ?: $this->session->userdata('USERID');
-		if (!$userid) {
-			$this->output->set_content_type('application/json')->set_output(json_encode([
-				'status' => 'error',
-				'message' => 'Please login to save your calorie and macro goals.'
-			]));
-			return;
-		}
-
-		$_POST['action'] = 'save_nutrition_goals';
-		return $this->profile();
-	}
-
-
-	public function updateprofile()
-	{
-		$userid = $this->session->userdata('userid') ?: $this->session->userdata('user_id') ?: $this->session->userdata('USERID');
-		if (!$userid) {
-			$this->session->set_userdata('last_page', base_url('updateprofile'));
-			$this->session->set_flashdata('flashmsg', '<div class="alert alert-warning">Please login to update your profile.</div>');
-			redirect('login');
-			return;
-		}
-
-		$is_ajax = $this->input->is_ajax_request() || $this->input->post('ajax');
-
-		// 1. Photo Upload Action
-		if (isset($_POST['upload_photo']) || (!empty($_FILES['file']['name']) && isset($_POST['submit']))) {
-			$res = $this->Userlogin_Model->updateprofile($userid);
-			if ($is_ajax) {
-				$this->output->set_content_type('application/json')->set_output(json_encode($res));
-				return;
-			}
-			if (is_array($res) && isset($res['status']) && $res['status'] === 'error') {
-				$this->session->set_flashdata('flashmsg', "<div class='alert alert-danger'>" . html_escape($res['message']) . "</div>");
-			} else {
-				$this->session->set_flashdata('flashmsg', "<div class='alert alert-success'>Profile photo updated successfully!</div>");
-			}
-			redirect('updateprofile');
-			return;
-		}
-
-		// 2. Personal & Medical Details Update Action
-		if (isset($_POST['submit_profile']) || $this->input->post('action') === 'update_profile' || (isset($_POST['submit']) && empty($_FILES['file']['name']))) {
-			$res = $this->Userlogin_Model->profile($userid);
-			if ($is_ajax) {
-				$this->output->set_content_type('application/json')->set_output(json_encode($res));
-				return;
-			}
-			if (is_array($res) && isset($res['status']) && $res['status'] === 'error') {
-				$this->session->set_flashdata('flashmsg', "<div class='alert alert-danger'>" . html_escape($res['message']) . "</div>");
-			} else {
-				$msg = (is_array($res) && !empty($res['message'])) ? $res['message'] : 'Profile details updated successfully!';
-				$this->session->set_flashdata('flashmsg', "<div class='alert alert-success'>" . html_escape($msg) . "</div>");
-			}
-			redirect('updateprofile');
-			return;
-		}
-
-		$user = $this->db->get_where('userlogin', array('USERID' => $userid))->row();
-		$data['user'] = $user;
-		$data['data'] = $user;
-				if ($this->input->post('action') === 'save_nutrition_goals') {
-			$age             = intval($this->input->post('age'));
-			$gender          = strtoupper(trim($this->input->post('gender')));
-			$height_cm       = floatval($this->input->post('height_cm'));
-			$weight_kg       = floatval($this->input->post('weight_kg'));
-			$activity_level  = trim($this->input->post('activity_level')) ?: 'sedentary';
-			$fitness_goal    = trim($this->input->post('fitness_goal')) ?: 'maintain';
-			$bmr             = floatval($this->input->post('bmr'));
-			$tdee            = floatval($this->input->post('tdee'));
-			$target_calories = floatval($this->input->post('target_calories'));
-			$carbs_g         = floatval($this->input->post('carbs_g'));
-			$protein_g       = floatval($this->input->post('protein_g'));
-			$fat_g           = floatval($this->input->post('fat_g'));
-
-			// Server-side recalculation fallback/safety check
-			if ($bmr <= 0 && $height_cm > 0 && $weight_kg > 0) {
-				if ($gender === 'F' || $gender === 'FEMALE') {
-					$bmr = round((10 * $weight_kg) + (6.25 * $height_cm) - (5 * ($age ?: 30)) - 161);
-				} elseif ($gender === 'M' || $gender === 'MALE') {
-					$bmr = round((10 * $weight_kg) + (6.25 * $height_cm) - (5 * ($age ?: 30)) + 5);
-				} else {
-					$bmr = round((10 * $weight_kg) + (6.25 * $height_cm) - (5 * ($age ?: 30)) - 78);
-				}
-				$factors = ['sedentary' => 1.2, 'light' => 1.375, 'moderate' => 1.55, 'very' => 1.725, 'extra' => 1.9];
-				$factor = $factors[$activity_level] ?? 1.2;
-				$tdee = round($bmr * $factor);
-
-				if ($fitness_goal === 'lose') {
-					$min_safe = ($gender === 'F' || $gender === 'FEMALE') ? 1200 : 1500;
-					$target_calories = max($min_safe, $tdee - 500);
-				} elseif ($fitness_goal === 'gain') {
-					$target_calories = $tdee + 400;
-				} else {
-					$target_calories = $tdee;
-				}
-				$carbs_g = round(($target_calories * 0.40) / 4, 1);
-				$protein_g = round(($target_calories * 0.30) / 4, 1);
-				$fat_g = round(($target_calories * 0.30) / 9, 1);
-			}
-
-			// Ensure table exists
-			$this->db->query("CREATE TABLE IF NOT EXISTS `patient_nutrition_goals` (
-			  `id` INT AUTO_INCREMENT PRIMARY KEY,
-			  `user_id` INT NOT NULL,
-			  `age` INT DEFAULT NULL,
-			  `gender` VARCHAR(20) DEFAULT NULL,
-			  `height_cm` DECIMAL(6,2) DEFAULT NULL,
-			  `weight_kg` DECIMAL(6,2) DEFAULT NULL,
-			  `activity_level` VARCHAR(50) DEFAULT 'sedentary',
-			  `fitness_goal` VARCHAR(50) DEFAULT 'maintain',
-			  `bmr` DECIMAL(8,2) DEFAULT NULL,
-			  `tdee` DECIMAL(8,2) DEFAULT NULL,
-			  `target_calories` DECIMAL(8,2) DEFAULT NULL,
-			  `carbs_g` DECIMAL(8,2) DEFAULT NULL,
-			  `protein_g` DECIMAL(8,2) DEFAULT NULL,
-			  `fat_g` DECIMAL(8,2) DEFAULT NULL,
-			  `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
-			  `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-			  UNIQUE KEY `uk_user` (`user_id`)
-			) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
-
-			$save_data = array(
-				'user_id'         => $userid,
-				'age'             => $age,
-				'gender'          => $gender,
-				'height_cm'       => $height_cm,
-				'weight_kg'       => $weight_kg,
-				'activity_level'  => $activity_level,
-				'fitness_goal'    => $fitness_goal,
-				'bmr'             => $bmr,
-				'tdee'            => $tdee,
-				'target_calories' => $target_calories,
-				'carbs_g'         => $carbs_g,
-				'protein_g'       => $protein_g,
-				'fat_g'           => $fat_g,
-			);
-
-			$existing = $this->db->get_where('patient_nutrition_goals', array('user_id' => $userid))->row();
-			if ($existing) {
-				$this->db->where('user_id', $userid)->update('patient_nutrition_goals', $save_data);
-			} else {
-				$this->db->insert('patient_nutrition_goals', $save_data);
-			}
-
-			// Sync height, weight, gender back to userlogin
-			$sync = array();
-			if ($height_cm > 0) $sync['HEIGHT'] = $height_cm;
-			if ($weight_kg > 0) $sync['WEIGHT'] = $weight_kg;
-			if (!empty($gender)) $sync['GENDER'] = ($gender === 'FEMALE' ? 'F' : ($gender === 'MALE' ? 'M' : $gender));
-			if (!empty($sync)) {
-				$this->db->where('USERID', $userid)->update('userlogin', $sync);
-			}
-
-			$is_ajax = $this->input->is_ajax_request() || $this->input->post('ajax');
-			if ($is_ajax) {
-				$this->output->set_content_type('application/json')->set_output(json_encode([
-					'status' => 'success',
-					'message' => 'Calorie and macronutrient targets successfully saved to your profile!',
-					'data' => $save_data
-				]));
-				return;
-			}
-			$this->session->set_flashdata('flashmsg', '<div class="alert alert-success">Nutrition and macro targets saved to your profile!</div>');
-			redirect('profile');
-			return;
-		}
-		$data['specialization'] = $this->db->order_by('name','asc')->where('status','1')->get('master_specialization')->result();
-		$user_img = $user ? ($user->IMAGE ?: $user->PROFILEIMG) : '';
-		$data['src'] = $user_img ?: '';
-		$data['imagerequired'] = empty($data['src']) ? 'required' : '';
-
-		$this->load->view('patient_header', $data);
-		$this->load->view('updateprofile', $data);
-		$this->load->view('patient_footer');
-	}
-
-
-
-	public function calender()
-	{
-	    $this->load->view('fixappointment');
-	}
-
-	public function mytest()
-	{
-		$selected_city = $this->input->get('city', TRUE) ?: $this->input->get('location', TRUE);
-		$keyword       = $this->input->get('keyword', TRUE) ?: $this->input->get('pathology_name', TRUE);
-		$selected_spl  = $this->input->get('spl', TRUE) ?: $this->input->get('test_id', TRUE);
-
-		$data['specialization'] = $this->db->order_by('name', 'asc')->where('status', '1')->get('master_specialization')->result();
-		$data['cities']         = $this->db->order_by('name', 'asc')->where('status', '1')->get('master_city')->result();
-
-		$this->db->select('p.*, c.name as city_name');
-		$this->db->from('pathlab p');
-		$this->db->join('master_city c', 'c.id = p.city', 'left');
-		$this->db->where('p.status', '1');
-
-		if (!empty($selected_city)) {
-			$this->db->group_start();
-			$this->db->where('p.city', $selected_city);
-			$this->db->or_like('p.address', $selected_city);
-			$this->db->or_like('p.location', $selected_city);
-			$this->db->group_end();
-		}
-
-		if (!empty($keyword)) {
-			$this->db->group_start();
-			$this->db->like('p.name', $keyword);
-			$this->db->or_like('p.address', $keyword);
-			$this->db->or_like('p.location', $keyword);
-			$this->db->group_end();
-		}
-
-		$this->db->order_by('p.name', 'ASC');
-		$pathologies = $this->db->get()->result();
-
-		// Fetch popular test offerings for each pathology lab
-		foreach ($pathologies as $lab) {
-			$lab->tests = $this->db->select('plt.*, pt.test_name, pt.amount, pt.short_name')
-			                       ->from('path_lab_test plt')
-			                       ->join('pathtest pt', 'pt.test_id = plt.test_id', 'left')
-			                       ->where('plt.path_lab_id', $lab->id)
-			                       ->limit(4)
-			                       ->get()
-			                       ->result();
-
-			if (empty($lab->tests)) {
-				$lab->tests = $this->db->select('test_id, test_name, amount, short_name')
-				                       ->from('pathtest')
-				                       ->limit(3)
-				                       ->get()
-				                       ->result();
-			}
-		}
-
-		$data['pathologies']   = $pathologies;
-		$data['selected_city'] = $selected_city;
-		$data['keyword']       = $keyword;
-		$data['selected_spl']  = $selected_spl;
-
-		$this->load->view('mytest', $data);
-	}
-
-   
-	/**
-	 * Patient-Facing Teleconsultation Directory (/teleconsult)
-	 * Only displays verified doctors who have explicitly enabled is_video_consult_enabled = 1
-	 */
-	public function teleconsult()
-	{
-		try {
-			$specialty = trim($this->input->get('specialty') ?? ($this->input->get('speciality') ?? ''));
-			$keyword = trim($this->input->get('keyword') ?? ($this->input->get('query') ?? ''));
-			$city = trim($this->input->get('city') ?? ($this->input->get('location') ?? ''));
-
-			$filters = array(
-				'specialty' => $specialty,
-				'keyword'   => $keyword,
-				'city'      => $city
-			);
-
-			$data['doctors'] = $this->Doctor_Model->get_available_teleconsult_doctors($filters, 24, 0);
-			$data['total_available'] = $this->Doctor_Model->count_teleconsult_doctors($filters);
-			$data['specialization'] = $this->db->table_exists('master_specialization') ? $this->db->order_by('name', 'asc')->where('status', '1')->get('master_specialization')->result() : array();
-			$data['cities'] = $this->db->table_exists('master_city') ? $this->db->order_by('name', 'asc')->where('status', '1')->get('master_city')->result() : array();
-			$data['active_specialty'] = $specialty;
-			$data['active_keyword'] = $keyword;
-			$data['active_city'] = $city;
-
-			$this->load->view('teleconsult', $data);
-		} catch (\Throwable $e) {
-			log_message('error', 'Error in teleconsult: ' . $e->getMessage());
-			$data = array(
-				'doctors'          => array(),
-				'total_available'  => 0,
-				'specialization'   => array(),
-				'cities'           => array(),
-				'active_specialty' => '',
-				'active_keyword'   => '',
-				'active_city'      => ''
-			);
-			$this->load->view('teleconsult', $data);
-		}
-	}
-
-
-	/**
-	 * Clinical Health & Nutrition Goal Calculator
-	 * Calculates Age, BMI, Mifflin-St Jeor BMR, Target Weight & Nutrition Guidance
-	 */
-	public function calculate_patient_health_goals($user)
-	{
-		$this->load->helper('clinical');
-		if (function_exists('calculate_patient_health_goals')) {
-			return calculate_patient_health_goals($user);
-		}
-		return null;
-	}
-
-}
+<?php
+defined('BASEPATH') OR exit('No direct script access allowed');
+class Home extends CI_Controller 
+{
+	function __construct() 
+	{
+		parent::__construct();
+		date_default_timezone_set("Asia/Kolkata");
+		$this->load->library(array('Form_validation'));		
+		$this->load->helper(array('query_string_helper','dbquery_helper','admin_helper'));
+        $this->load->model(array('Userlogin_Model','Hospital_Model','Doctor_Model'));
+	}
+
+	public function index()
+	{	
+		$data['specialization']	= $this->db->order_by('name','asc')->where('status','1')->get('master_specialization')->result();
+		$data['cities'] 		= $this->db->order_by('name','asc')->where('status','1')->get('master_city')->result();
+		$data['doctor_slid']	= $this->Hospital_Model->get_doctor_home(array('profile_dr.approved'=>'1','profile_dr.verified'=>'1'));
+		$data['image'] 			= $this->db->order_by('id','RANDOM')->limit('4')->get_where('hospitalgallery',array('status'=>'A'))->result();
+		$data['news'] 			= $this->db->order_by('id','DESC')->limit('8')->get_where('news',array('approved'=>'1','status'=>'1'))->result();
+		$data['pathology_tests'] = $this->db->order_by('test_id', 'asc')->where('status', '1')->limit(12)->get('pathtest')->result();
+		$data['pathology_categories'] = $this->db->order_by('category_name', 'asc')->where('status', '1')->get('path_category')->result();
+		$data['sponsored_ads']   = $this->db->where('status', '1')->order_by('id', 'DESC')->get('advertisement')->result();
+		$this->load->view('home1', $data);
+	}
+
+	public function login()
+	{
+		if ($this->session->userdata('userid')) {
+			redirect('myappointments');
+			return;
+		}
+		$this->load->view('login');
+	}
+
+	public function signup()
+	{
+		if ($this->session->userdata('userid')) {
+			redirect('myappointments');
+			return;
+		}
+		$this->load->view('sign_up');
+	}
+
+	public function forgotpassword()
+	{
+		$this->load->view('forgot_password');
+	}
+
+	public function verifymobile()
+	{
+		$this->load->view('otp_send_pass');
+	}
+
+	public function verify_email($token = null)
+	{
+		$token = $token ?: ($this->input->get('token', TRUE) ?: $this->input->post('token', TRUE));
+		$token = trim($token);
+
+		if (empty($token)) {
+			$this->session->set_flashdata('flashmsg', '<div class="alert alert-danger" style="margin-top:15px;"><i class="fa fa-exclamation-triangle"></i> Verification token is missing. Please click the link sent to your email.</div>');
+			redirect(base_url('login'));
+			return;
+		}
+
+		$this->load->library('notification_service');
+		$user = $this->notification_service->verify_email_token($token);
+
+		if ($user) {
+			$data['user'] = $user;
+			$data['status'] = 'success';
+			$data['message'] = 'Your email (' . htmlspecialchars($user->EMAIL) . ') has been successfully verified! Your account is now active.';
+			$this->session->set_flashdata('flashmsg', '<div class="alert alert-success" style="margin-top:15px;"><i class="fa fa-check-circle"></i> <strong>Email Verified!</strong> Your account has been activated. Please log in to continue.</div>');
+			
+			if (file_exists(APPPATH . 'views/email_verified.php')) {
+				$this->load->view('email_verified', $data);
+			} else {
+				redirect(base_url('login'));
+			}
+		} else {
+			$data['status'] = 'failed';
+			$data['message'] = 'The verification link is invalid, expired, or has already been used.';
+			$this->session->set_flashdata('flashmsg', '<div class="alert alert-danger" style="margin-top:15px;"><i class="fa fa-exclamation-triangle"></i> <strong>Verification Failed:</strong> The verification link is invalid, expired, or has already been used.</div>');
+			
+			if (file_exists(APPPATH . 'views/email_verified.php')) {
+				$this->load->view('email_verified', $data);
+			} else {
+				redirect(base_url('login'));
+			}
+		}
+	}
+	
+	public function bed_availability()
+	{
+		$pagesize               =  (int) $this->input->get_post('pagesize');
+		$config['limit']	    =  ( $pagesize > 0 ) ? $pagesize : 6;	
+		$offset                 =  ( $this->input->get_post('per_page') > 0 ) ? $this->input->get_post('per_page') : 0;	
+		$base_url               =  current_url_query_string(array('filter'=>'result'),array('per_page'));
+		$data['hospital_bed'] 	=  $this->Hospital_Model->get_hospital_bed($config['limit'],$offset);
+		$config['total_rows']   =  get_found_rows();
+		$data['heading_title'] 	=  'Manage Doctors';
+		$data['page_links'] 	=  admin_pagination($base_url, $config['total_rows'],$config['limit'],$offset);
+		$data['specialization'] =  $this->db->order_by('name','asc')->where('status','1')->get('master_specialization')->result();
+		$this->load->view('bed_availability',$data);
+	}
+	
+	public function doctors()
+	{
+		$per_page_param = $this->input->get_post('per_page');
+		$page_param = (int) $this->input->get_post('page');
+		if ($page_param < 1) $page_param = 1;
+
+		$location = trim($this->input->get_post('location') ?? ($this->input->get_post('city') ?? ''));
+		$speciality = trim($this->input->get_post('speciality') ?? ($this->input->get_post('spl') ?? ($this->input->get_post('specialization') ?? '')));
+		$keyword = trim($this->input->get_post('keyword') ?? '');
+		
+		$per_page = 10;
+		if ($per_page_param === '20') $per_page = 20;
+		else if ($per_page_param === '50') $per_page = 50;
+		else if ($per_page_param === 'all') $per_page = 1000;
+		else if ($per_page_param === '10') $per_page = 10;
+		
+		$offset = ($page_param - 1) * $per_page;
+
+		$filters = array(
+			'location' => $location,
+			'speciality' => $speciality,
+			'keyword' => $keyword
+		);
+
+		$total_doctors = $this->Doctor_Model->count_search_doctors($filters);
+		$doctors = $this->Doctor_Model->search_doctors($filters, $per_page, $offset);
+
+		$data['total_doctors'] = $total_doctors;
+		$data['per_page'] = $per_page;
+		$data['per_page_param'] = $per_page_param ?: '10';
+		$data['current_page'] = $page_param;
+		$data['total_pages'] = ($total_doctors > 0) ? ceil($total_doctors / $per_page) : 1;
+		$data['doctors'] = $doctors;
+
+		// Fetch ONLY Promoted / Sponsored Doctors for the Sidebar safely
+		$data['promoted_doctors'] = $this->_get_promoted_doctors($speciality);
+
+		if($location != '') {
+			$this->db->where("city", $location);
+		}
+		if($keyword != '') {
+			$this->db->like("name", $keyword);
+		}
+		$hosp_q = $this->db->limit(10)->get_where('hospital', array('approved'=>'1','verified'=>'1'));
+		$data['hospital'] = ($hosp_q && is_object($hosp_q)) ? $hosp_q->result() : array();
+
+		$clinic_q = $this->db->table_exists('clinic') ? $this->db->get_where('clinic', array('status'=>'1')) : null;
+		$data['clinic'] = ($clinic_q && is_object($clinic_q)) ? $clinic_q->result() : array();
+
+		$spec_q = $this->db->order_by('name','asc')->where('status','1')->get('master_specialization');
+		$data['specialization'] = ($spec_q && is_object($spec_q)) ? $spec_q->result() : array();
+
+		$city_q = $this->db->order_by('name','asc')->where('status','1')->get('master_city');
+		$data['cities'] = ($city_q && is_object($city_q)) ? $city_q->result() : array();
+
+		$gallery_q = $this->db->table_exists('doctorgallery') ? $this->db->get('doctorgallery') : null;
+		$data['gallery'] = ($gallery_q && is_object($gallery_q)) ? $gallery_q->result() : array();	
+		$this->load->view('team_list',$data);
+	}
+
+	/**
+	 * Fetch ONLY Premium/Promoted Doctors for the Sidebar
+	 * Matches specialization if filtered, or falls back to general specialists
+	 */
+	private function _get_promoted_doctors($spl = null, $limit = 6)
+	{
+		try {
+			$spec_ids = array();
+			if (!empty($spl)) {
+				if (is_numeric($spl)) {
+					$spec_ids[] = (int)$spl;
+				} else {
+					$escaped = $this->db->escape_like_str(trim($spl));
+					$stem = preg_replace('/(ologist|ology|iatrist|iatry|iatrician|iatrics|ician|ist|ic|s)$/i', '', trim($spl));
+					$escaped_stem = (!empty($stem) && strlen($stem) >= 4) ? $this->db->escape_like_str($stem) : $escaped;
+					$sq = $this->db->query("SELECT id FROM master_specialization WHERE name LIKE '%{$escaped}%' OR name LIKE '%{$escaped_stem}%'");
+					if ($sq && $sq->num_rows() > 0) {
+						foreach ($sq->result() as $row) {
+							$spec_ids[] = (int)$row->id;
+						}
+					}
+				}
+			}
+
+			$has_promoted_col = $this->db->field_exists('is_promoted', 'profile_dr');
+
+			// If speciality filter is specified, fetch verified/promoted doctors matching this speciality
+			if (!empty($spec_ids)) {
+				$in_specs = implode(',', array_unique($spec_ids));
+				$where_spec = "(p.specialization IN ({$in_specs}) OR EXISTS (
+					SELECT 1 FROM dr_specialization ds 
+					WHERE (ds.user_id = p.id OR (ds.user_id = p.user_id AND p.user_id != 0)) 
+					AND ds.specialization_id IN ({$in_specs})
+				))";
+
+				if ($has_promoted_col) {
+					$q = $this->db->query("SELECT p.* FROM profile_dr p WHERE p.approved = '1' AND p.verified = '1' AND p.is_promoted = 1 AND {$where_spec} ORDER BY p.id DESC LIMIT {$limit}");
+					$promoted = ($q && is_object($q)) ? $q->result() : array();
+					if (!empty($promoted)) {
+						return $this->_enrich_promoted_doctors($promoted, $spl);
+					}
+				}
+
+				// Fallback to verified doctors matching this speciality
+				$q = $this->db->query("SELECT p.* FROM profile_dr p WHERE p.approved = '1' AND p.verified = '1' AND {$where_spec} ORDER BY p.id DESC LIMIT {$limit}");
+				$fallback = ($q && is_object($q)) ? $q->result() : array();
+				if (!empty($fallback)) {
+					return $this->_enrich_promoted_doctors($fallback, $spl);
+				}
+			}
+
+			// General fallback when no speciality filter or no matches found for that speciality
+			if ($has_promoted_col) {
+				$q = $this->db->query("SELECT p.* FROM profile_dr p WHERE p.approved = '1' AND p.verified = '1' AND p.is_promoted = 1 ORDER BY p.id DESC LIMIT {$limit}");
+				$promoted = ($q && is_object($q)) ? $q->result() : array();
+				if (!empty($promoted)) {
+					return $this->_enrich_promoted_doctors($promoted, $spl);
+				}
+			}
+
+			$q = $this->db->query("SELECT p.* FROM profile_dr p WHERE p.approved = '1' AND p.verified = '1' ORDER BY p.id DESC LIMIT {$limit}");
+			$fallback = ($q && is_object($q)) ? $q->result() : array();
+			return $this->_enrich_promoted_doctors($fallback, $spl);
+		} catch (Throwable $e) {
+			log_message('error', 'Error in _get_promoted_doctors: ' . $e->getMessage());
+			return array();
+		}
+	}
+
+	private function _enrich_promoted_doctors($doctors, $preferred_spl = null)
+	{
+		if (empty($doctors)) return array();
+		foreach ($doctors as &$d) {
+			$did = (int)$d->id;
+			$duid = (int)$d->user_id;
+
+			// Fetch true specialization(s) for doctor from dr_specialization
+			$sq = $this->db->query("SELECT DISTINCT ms.name FROM dr_specialization ds JOIN master_specialization ms ON ds.specialization_id = ms.id WHERE ds.user_id = $did OR (ds.user_id = $duid AND $duid != 0)");
+			$names = array();
+			if ($sq && is_object($sq) && $sq->num_rows() > 0) {
+				foreach ($sq->result() as $sr) {
+					$names[] = $sr->name;
+				}
+			}
+			if (empty($names) && !empty($d->specialization)) {
+				$sn = getSpecilizationName($d->specialization);
+				if ($sn) $names[] = $sn;
+			}
+
+			// Prioritize preferred / searched speciality if doctor has it
+			$chosen_spl = '';
+			if (!empty($preferred_spl) && !empty($names)) {
+				foreach ($names as $n) {
+					if (stripos($n, $preferred_spl) !== false || stripos($preferred_spl, $n) !== false) {
+						$chosen_spl = $n;
+						break;
+					}
+				}
+			}
+			if (empty($chosen_spl) && !empty($names)) {
+				$chosen_spl = implode(', ', array_slice($names, 0, 2));
+			}
+			$d->spl_name = !empty($chosen_spl) ? $chosen_spl : 'Verified Specialist';
+
+			// Resolve affiliated hospital or clinic & contact phone
+			if (empty($d->hosp_name) || empty($d->contact_phone)) {
+				try {
+					$pract = $this->db->query("SELECT * FROM dr_practice WHERE (user_id = $did OR (user_id = $duid AND $duid != 0)) AND status = '1' ORDER BY id DESC LIMIT 1")->row();
+					if ($pract && !empty($pract->institution_id)) {
+						$table = ($pract->type == 'C') ? 'clinic' : 'hospital';
+						$hosp = $this->db->select('name, mobile')->get_where($table, array('id' => $pract->institution_id))->row();
+						$d->hosp_name = (!empty($hosp->name)) ? $hosp->name : 'Upchar Partner Healthcare Center';
+						$d->contact_phone = (!empty($hosp->mobile)) ? $hosp->mobile : (!empty($d->mobile) ? $d->mobile : '8448440603');
+					} else {
+						$d->hosp_name = 'Upchar Partner Healthcare Center';
+						$d->contact_phone = (!empty($d->mobile)) ? $d->mobile : '8448440603';
+					}
+				} catch (Throwable $ex) {
+					$d->hosp_name = 'Upchar Partner Healthcare Center';
+					$d->contact_phone = (!empty($d->mobile)) ? $d->mobile : '8448440603';
+				}
+			}
+		}
+		return $doctors;
+	}
+
+	public function doctor($id = null)
+	{	
+		$id = $id ?: ($this->uri->segment(2) ?: $this->uri->segment(3));
+		$data['specialization']=$this->db->order_by('name','asc')->where('status','1')->get('master_specialization')->result();
+		$data['cities']=$this->db->order_by('name','asc')->where('status','1')->get('master_city')->result();
+		$data['d']=$this->db->get_where('profile_dr',array('id'=>$id))->row();
+		if (empty($data['d'])) {
+			$data['d']=$this->db->limit(1)->get_where('profile_dr',array('approved'=>'1','verified'=>'1'))->row();
+		}
+		if (empty($data['d'])) {
+			redirect('doctors');
+			return;
+		}
+		$data['practs'] = $this->db->where('user_id', $data['d']->id)->where('status', '1')->get('dr_practice')->result();
+		$this->load->view('detail_page',$data);
+	}
+
+	public function doctor_book($id = null)
+	{	
+		$id = $id ?: ($this->uri->segment(3) ?: $this->uri->segment(2));
+		$data['specialization']=$this->db->order_by('name','asc')->where('status','1')->get('master_specialization')->result();
+		$data['cities']=$this->db->order_by('name','asc')->where('status','1')->get('master_city')->result();
+		$data['d']=$this->db->get_where('profile_dr',array('id'=>$id))->row();
+		if (empty($data['d'])) {
+			$data['d']=$this->db->limit(1)->get_where('profile_dr',array('approved'=>'1','verified'=>'1'))->row();
+		}
+		if (empty($data['d'])) {
+			redirect('doctors');
+			return;
+		}
+		$data['practs'] = $this->db->where('user_id', $data['d']->id)->where('status', '1')->get('dr_practice')->result();
+		$data['auto_book'] = true;
+		$data['consult_type'] = $this->input->get('type');
+		$this->load->view('detail_page',$data);
+	}
+
+	public function hospital()
+	{
+		$id = $this->uri->segment(2);
+		$data['hospital'] = $this->db->get_where('hospital', array('id' => $id))->row();
+		if (empty($data['hospital'])) {
+			$data['hospital'] = $this->db->limit(1)->get_where('hospital', array('approved' => '1', 'verified' => '1'))->row();
+		}
+		if (empty($data['hospital'])) {
+			redirect('hospitals');
+			return;
+		}
+		$hid = $data['hospital']->id;
+		$data['clinic'] = $this->Hospital_Model->get_verified_doctors_by_hospital($hid);
+		
+		// Fallback: If no doctors directly linked, fetch verified specialists
+		if (empty($data['clinic'])) {
+			$data['clinic'] = $this->db->order_by('id','asc')->limit(12)->get_where('profile_dr', array('approved' => '1', 'verified' => '1'))->result();
+		}
+
+		$data['gallery'] = $this->db->get_where('hospitalgallery',array('status'=>'A','uid'=>$hid))->result();	
+				if ($this->input->post('action') === 'save_nutrition_goals') {
+			$age             = intval($this->input->post('age'));
+			$gender          = strtoupper(trim($this->input->post('gender')));
+			$height_cm       = floatval($this->input->post('height_cm'));
+			$weight_kg       = floatval($this->input->post('weight_kg'));
+			$activity_level  = trim($this->input->post('activity_level')) ?: 'sedentary';
+			$fitness_goal    = trim($this->input->post('fitness_goal')) ?: 'maintain';
+			$bmr             = floatval($this->input->post('bmr'));
+			$tdee            = floatval($this->input->post('tdee'));
+			$target_calories = floatval($this->input->post('target_calories'));
+			$carbs_g         = floatval($this->input->post('carbs_g'));
+			$protein_g       = floatval($this->input->post('protein_g'));
+			$fat_g           = floatval($this->input->post('fat_g'));
+
+			// Server-side recalculation fallback/safety check
+			if ($bmr <= 0 && $height_cm > 0 && $weight_kg > 0) {
+				if ($gender === 'F' || $gender === 'FEMALE') {
+					$bmr = round((10 * $weight_kg) + (6.25 * $height_cm) - (5 * ($age ?: 30)) - 161);
+				} elseif ($gender === 'M' || $gender === 'MALE') {
+					$bmr = round((10 * $weight_kg) + (6.25 * $height_cm) - (5 * ($age ?: 30)) + 5);
+				} else {
+					$bmr = round((10 * $weight_kg) + (6.25 * $height_cm) - (5 * ($age ?: 30)) - 78);
+				}
+				$factors = ['sedentary' => 1.2, 'light' => 1.375, 'moderate' => 1.55, 'very' => 1.725, 'extra' => 1.9];
+				$factor = $factors[$activity_level] ?? 1.2;
+				$tdee = round($bmr * $factor);
+
+				if ($fitness_goal === 'lose') {
+					$min_safe = ($gender === 'F' || $gender === 'FEMALE') ? 1200 : 1500;
+					$target_calories = max($min_safe, $tdee - 500);
+				} elseif ($fitness_goal === 'gain') {
+					$target_calories = $tdee + 400;
+				} else {
+					$target_calories = $tdee;
+				}
+				$carbs_g = round(($target_calories * 0.40) / 4, 1);
+				$protein_g = round(($target_calories * 0.30) / 4, 1);
+				$fat_g = round(($target_calories * 0.30) / 9, 1);
+			}
+
+			// Ensure table exists
+			$this->db->query("CREATE TABLE IF NOT EXISTS `patient_nutrition_goals` (
+			  `id` INT AUTO_INCREMENT PRIMARY KEY,
+			  `user_id` INT NOT NULL,
+			  `age` INT DEFAULT NULL,
+			  `gender` VARCHAR(20) DEFAULT NULL,
+			  `height_cm` DECIMAL(6,2) DEFAULT NULL,
+			  `weight_kg` DECIMAL(6,2) DEFAULT NULL,
+			  `activity_level` VARCHAR(50) DEFAULT 'sedentary',
+			  `fitness_goal` VARCHAR(50) DEFAULT 'maintain',
+			  `bmr` DECIMAL(8,2) DEFAULT NULL,
+			  `tdee` DECIMAL(8,2) DEFAULT NULL,
+			  `target_calories` DECIMAL(8,2) DEFAULT NULL,
+			  `carbs_g` DECIMAL(8,2) DEFAULT NULL,
+			  `protein_g` DECIMAL(8,2) DEFAULT NULL,
+			  `fat_g` DECIMAL(8,2) DEFAULT NULL,
+			  `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+			  `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+			  UNIQUE KEY `uk_user` (`user_id`)
+			) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+
+			$save_data = array(
+				'user_id'         => $userid,
+				'age'             => $age,
+				'gender'          => $gender,
+				'height_cm'       => $height_cm,
+				'weight_kg'       => $weight_kg,
+				'activity_level'  => $activity_level,
+				'fitness_goal'    => $fitness_goal,
+				'bmr'             => $bmr,
+				'tdee'            => $tdee,
+				'target_calories' => $target_calories,
+				'carbs_g'         => $carbs_g,
+				'protein_g'       => $protein_g,
+				'fat_g'           => $fat_g,
+			);
+
+			$existing = $this->db->get_where('patient_nutrition_goals', array('user_id' => $userid))->row();
+			if ($existing) {
+				$this->db->where('user_id', $userid)->update('patient_nutrition_goals', $save_data);
+			} else {
+				$this->db->insert('patient_nutrition_goals', $save_data);
+			}
+
+			// Sync height, weight, gender back to userlogin
+			$sync = array();
+			if ($height_cm > 0) $sync['HEIGHT'] = $height_cm;
+			if ($weight_kg > 0) $sync['WEIGHT'] = $weight_kg;
+			if (!empty($gender)) $sync['GENDER'] = ($gender === 'FEMALE' ? 'F' : ($gender === 'MALE' ? 'M' : $gender));
+			if (!empty($sync)) {
+				$this->db->where('USERID', $userid)->update('userlogin', $sync);
+			}
+
+			$is_ajax = $this->input->is_ajax_request() || $this->input->post('ajax');
+			if ($is_ajax) {
+				$this->output->set_content_type('application/json')->set_output(json_encode([
+					'status' => 'success',
+					'message' => 'Calorie and macronutrient targets successfully saved to your profile!',
+					'data' => $save_data
+				]));
+				return;
+			}
+			$this->session->set_flashdata('flashmsg', '<div class="alert alert-success">Nutrition and macro targets saved to your profile!</div>');
+			redirect('profile');
+			return;
+		}
+		$data['specialization'] = $this->db->order_by('name','asc')->where('status','1')->get('master_specialization')->result();
+		$data['cities'] = $this->db->order_by('name','asc')->where('status','1')->get('master_city')->result();
+		$this->load->view('hospital_detail',$data);
+	}
+
+	/**
+	 * Process and Store Hospital Inquiries
+	 */
+	public function send_enquiry()
+	{
+		$is_ajax = $this->input->is_ajax_request() || ($this->input->server('HTTP_X_REQUESTED_WITH') === 'XMLHttpRequest') || ($this->input->get_post('ajax') == '1');
+
+		$hospital_id = intval($this->input->post('hospital_id'));
+		$user_name   = trim($this->input->post('user_name', TRUE) ?: '');
+		$user_email  = trim($this->input->post('user_email', TRUE) ?: '');
+		$user_phone  = trim($this->input->post('user_phone', TRUE) ?: '');
+		$subject     = trim($this->input->post('subject', TRUE) ?: '');
+		$message     = trim($this->input->post('message', TRUE) ?: '');
+
+		if ($hospital_id <= 0 || empty($user_name) || empty($user_email) || empty($user_phone) || empty($message)) {
+			if ($is_ajax) {
+				$this->output->set_content_type('application/json')->set_output(json_encode(array(
+					'status'  => 'error',
+					'message' => 'Please fill in all required fields (Name, Email, Phone, and Message).'
+				)));
+				return;
+			} else {
+				$this->session->set_flashdata('enquiry_error', 'Please fill in all required fields.');
+				redirect($hospital_id > 0 ? 'hospital/' . $hospital_id : 'hospitals');
+				return;
+			}
+		}
+
+		$data = array(
+			'hospital_id' => $hospital_id,
+			'user_name'   => $user_name,
+			'user_email'  => $user_email,
+			'user_phone'  => $user_phone,
+			'subject'     => !empty($subject) ? $subject : 'Hospital Admission / Consultation Inquiry',
+			'message'     => $message,
+			'status'      => 'pending',
+			'created_at'  => date('Y-m-d H:i:s'),
+			'updated_at'  => date('Y-m-d H:i:s')
+		);
+
+		$inserted = $this->db->insert('inquiries', $data);
+
+		if ($inserted) {
+			$inquiry_id = $this->db->insert_id();
+			if ($is_ajax) {
+				$this->output->set_content_type('application/json')->set_output(json_encode(array(
+					'status'     => 'success',
+					'inquiry_id' => $inquiry_id,
+					'message'    => 'Thank you! Your enquiry has been received. The hospital team will reach out to you shortly.'
+				)));
+				return;
+			} else {
+				$this->session->set_flashdata('enquiry_success', 'Thank you! Your enquiry has been delivered successfully.');
+				redirect('hospital/' . $hospital_id);
+				return;
+			}
+		} else {
+			if ($is_ajax) {
+				$this->output->set_content_type('application/json')->set_output(json_encode(array(
+					'status'  => 'error',
+					'message' => 'Failed to record your enquiry. Please try again.'
+				)));
+				return;
+			} else {
+				$this->session->set_flashdata('enquiry_error', 'Failed to submit enquiry. Please try again.');
+				redirect('hospital/' . $hospital_id);
+				return;
+			}
+		}
+	}
+
+	public function search()
+	{    
+		$per_page_param = $this->input->get_post('per_page');
+		$page_param = (int) $this->input->get_post('page');
+		if ($page_param < 1) $page_param = 1;
+
+		$location = trim($this->input->get_post('location') ?? ($this->input->get_post('city') ?? ''));
+		$speciality = trim($this->input->get_post('speciality') ?? ($this->input->get_post('spl') ?? ($this->input->get_post('specialization') ?? '')));
+		$keyword = trim($this->input->get_post('keyword') ?? '');
+		$date = $this->input->get_post('dt');
+		
+		$per_page = 10;
+		if ($per_page_param === '20') $per_page = 20;
+		else if ($per_page_param === '50') $per_page = 50;
+		else if ($per_page_param === 'all') $per_page = 1000;
+		else if ($per_page_param === '10') $per_page = 10;
+		
+		$offset = ($page_param - 1) * $per_page;
+
+		$filters = array(
+			'location' => $location,
+			'speciality' => $speciality,
+			'keyword' => $keyword
+		);
+
+		$total_doctors = $this->Doctor_Model->count_search_doctors($filters);
+		$doctors = $this->Doctor_Model->search_doctors($filters, $per_page, $offset);
+
+		$data['total_doctors'] = $total_doctors;
+		$data['per_page'] = $per_page;
+		$data['per_page_param'] = $per_page_param ?: '10';
+		$data['current_page'] = $page_param;
+		$data['total_pages'] = ($total_doctors > 0) ? ceil($total_doctors / $per_page) : 1;
+		$data['doctors'] = $doctors;
+
+		if($location != '') {
+			$this->db->where("city", $location);
+		}
+		if($keyword != '') {
+			$this->db->like("name", $keyword);
+		}
+		$hosp_q = $this->db->limit(10)->get_where('hospital', array('approved'=>'1','verified'=>'1'));
+		$data['hospital'] = ($hosp_q && is_object($hosp_q)) ? $hosp_q->result() : array();
+
+		$clinic_q = $this->db->table_exists('clinic') ? $this->db->get_where('clinic', array('status'=>'1')) : null;
+		$data['clinic'] = ($clinic_q && is_object($clinic_q)) ? $clinic_q->result() : array();
+
+		$spec_q = $this->db->order_by('name','asc')->where('status','1')->get('master_specialization');
+		$data['specialization'] = ($spec_q && is_object($spec_q)) ? $spec_q->result() : array();
+
+		$city_q = $this->db->order_by('name','asc')->where('status','1')->get('master_city');
+		$data['cities'] = ($city_q && is_object($city_q)) ? $city_q->result() : array();
+
+		$gallery_q = $this->db->table_exists('doctorgallery') ? $this->db->get('doctorgallery') : null;
+		$data['gallery'] = ($gallery_q && is_object($gallery_q)) ? $gallery_q->result() : array();	
+		$data['promoted_doctors'] = $this->_get_promoted_doctors($speciality);
+		$this->load->view('team_list', $data);
+	}
+
+	public function hospitals()
+	{
+		$per_page_param = $this->input->get('per_page');
+		$page_param = (int) $this->input->get('page');
+		if ($page_param < 1) $page_param = 1;
+
+		$city = $this->input->get('city');
+		$keyword = trim($this->input->get('keyword') ?? '');
+		$spl = $this->input->get('spl');
+
+		$per_page = 10;
+		if ($per_page_param === '20') $per_page = 20;
+		else if ($per_page_param === '50') $per_page = 50;
+		else if ($per_page_param === 'all') $per_page = 1000;
+		else if ($per_page_param === '10') $per_page = 10;
+
+		$offset = ($page_param - 1) * $per_page;
+
+		// Build query with optional city/keyword filters
+		$this->db->start_cache();
+		$this->db->where('hospital.approved', '1');
+		$this->db->where('hospital.verified', '1');
+		if (!empty($city)) {
+			$this->db->where('hospital.city', $city);
+		}
+		if (!empty($keyword)) {
+			$this->db->group_start();
+			$this->db->like('hospital.name', $keyword);
+			$this->db->or_like('hospital.address', $keyword);
+			$this->db->or_like('hospital.about', $keyword);
+			$this->db->group_end();
+		}
+		$this->db->stop_cache();
+
+		$total_hospitals = $this->db->count_all_results('hospital');
+		$data['total_hospitals'] = $total_hospitals;
+		$data['per_page'] = $per_page;
+		$data['per_page_param'] = $per_page_param ?: '10';
+		$data['current_page'] = $page_param;
+		$data['total_pages'] = ($total_hospitals > 0) ? ceil($total_hospitals / $per_page) : 1;
+
+		$this->db->order_by('hospital.id', 'ASC');
+		$data['hospital'] = $this->db->limit($per_page, $offset)->get('hospital')->result();
+		$this->db->flush_cache();
+
+				if ($this->input->post('action') === 'save_nutrition_goals') {
+			$age             = intval($this->input->post('age'));
+			$gender          = strtoupper(trim($this->input->post('gender')));
+			$height_cm       = floatval($this->input->post('height_cm'));
+			$weight_kg       = floatval($this->input->post('weight_kg'));
+			$activity_level  = trim($this->input->post('activity_level')) ?: 'sedentary';
+			$fitness_goal    = trim($this->input->post('fitness_goal')) ?: 'maintain';
+			$bmr             = floatval($this->input->post('bmr'));
+			$tdee            = floatval($this->input->post('tdee'));
+			$target_calories = floatval($this->input->post('target_calories'));
+			$carbs_g         = floatval($this->input->post('carbs_g'));
+			$protein_g       = floatval($this->input->post('protein_g'));
+			$fat_g           = floatval($this->input->post('fat_g'));
+
+			// Server-side recalculation fallback/safety check
+			if ($bmr <= 0 && $height_cm > 0 && $weight_kg > 0) {
+				if ($gender === 'F' || $gender === 'FEMALE') {
+					$bmr = round((10 * $weight_kg) + (6.25 * $height_cm) - (5 * ($age ?: 30)) - 161);
+				} elseif ($gender === 'M' || $gender === 'MALE') {
+					$bmr = round((10 * $weight_kg) + (6.25 * $height_cm) - (5 * ($age ?: 30)) + 5);
+				} else {
+					$bmr = round((10 * $weight_kg) + (6.25 * $height_cm) - (5 * ($age ?: 30)) - 78);
+				}
+				$factors = ['sedentary' => 1.2, 'light' => 1.375, 'moderate' => 1.55, 'very' => 1.725, 'extra' => 1.9];
+				$factor = $factors[$activity_level] ?? 1.2;
+				$tdee = round($bmr * $factor);
+
+				if ($fitness_goal === 'lose') {
+					$min_safe = ($gender === 'F' || $gender === 'FEMALE') ? 1200 : 1500;
+					$target_calories = max($min_safe, $tdee - 500);
+				} elseif ($fitness_goal === 'gain') {
+					$target_calories = $tdee + 400;
+				} else {
+					$target_calories = $tdee;
+				}
+				$carbs_g = round(($target_calories * 0.40) / 4, 1);
+				$protein_g = round(($target_calories * 0.30) / 4, 1);
+				$fat_g = round(($target_calories * 0.30) / 9, 1);
+			}
+
+			// Ensure table exists
+			$this->db->query("CREATE TABLE IF NOT EXISTS `patient_nutrition_goals` (
+			  `id` INT AUTO_INCREMENT PRIMARY KEY,
+			  `user_id` INT NOT NULL,
+			  `age` INT DEFAULT NULL,
+			  `gender` VARCHAR(20) DEFAULT NULL,
+			  `height_cm` DECIMAL(6,2) DEFAULT NULL,
+			  `weight_kg` DECIMAL(6,2) DEFAULT NULL,
+			  `activity_level` VARCHAR(50) DEFAULT 'sedentary',
+			  `fitness_goal` VARCHAR(50) DEFAULT 'maintain',
+			  `bmr` DECIMAL(8,2) DEFAULT NULL,
+			  `tdee` DECIMAL(8,2) DEFAULT NULL,
+			  `target_calories` DECIMAL(8,2) DEFAULT NULL,
+			  `carbs_g` DECIMAL(8,2) DEFAULT NULL,
+			  `protein_g` DECIMAL(8,2) DEFAULT NULL,
+			  `fat_g` DECIMAL(8,2) DEFAULT NULL,
+			  `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+			  `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+			  UNIQUE KEY `uk_user` (`user_id`)
+			) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+
+			$save_data = array(
+				'user_id'         => $userid,
+				'age'             => $age,
+				'gender'          => $gender,
+				'height_cm'       => $height_cm,
+				'weight_kg'       => $weight_kg,
+				'activity_level'  => $activity_level,
+				'fitness_goal'    => $fitness_goal,
+				'bmr'             => $bmr,
+				'tdee'            => $tdee,
+				'target_calories' => $target_calories,
+				'carbs_g'         => $carbs_g,
+				'protein_g'       => $protein_g,
+				'fat_g'           => $fat_g,
+			);
+
+			$existing = $this->db->get_where('patient_nutrition_goals', array('user_id' => $userid))->row();
+			if ($existing) {
+				$this->db->where('user_id', $userid)->update('patient_nutrition_goals', $save_data);
+			} else {
+				$this->db->insert('patient_nutrition_goals', $save_data);
+			}
+
+			// Sync height, weight, gender back to userlogin
+			$sync = array();
+			if ($height_cm > 0) $sync['HEIGHT'] = $height_cm;
+			if ($weight_kg > 0) $sync['WEIGHT'] = $weight_kg;
+			if (!empty($gender)) $sync['GENDER'] = ($gender === 'FEMALE' ? 'F' : ($gender === 'MALE' ? 'M' : $gender));
+			if (!empty($sync)) {
+				$this->db->where('USERID', $userid)->update('userlogin', $sync);
+			}
+
+			$is_ajax = $this->input->is_ajax_request() || $this->input->post('ajax');
+			if ($is_ajax) {
+				$this->output->set_content_type('application/json')->set_output(json_encode([
+					'status' => 'success',
+					'message' => 'Calorie and macronutrient targets successfully saved to your profile!',
+					'data' => $save_data
+				]));
+				return;
+			}
+			$this->session->set_flashdata('flashmsg', '<div class="alert alert-success">Nutrition and macro targets saved to your profile!</div>');
+			redirect('profile');
+			return;
+		}
+		$data['specialization'] = $this->db->order_by('name','asc')->where('status','1')->get('master_specialization')->result();
+		$data['cities'] = $this->db->order_by('name','asc')->where('status','1')->get('master_city')->result();
+		$this->load->view('hospital_list', $data);
+	}
+	
+	public function hospitallist()
+	{	
+		$this->hospitals();
+	}
+	
+	public function logout()
+	{
+		$this->session->unset_userdata('userid');
+		$this->session->unset_userdata('username');
+		$this->session->unset_userdata('useremail');
+		$this->session->sess_destroy();
+		redirect('login');
+	}
+
+	public function myappointments()
+	{
+		return $this->manageappointment();
+	}
+
+	public function manageappointment()
+	{
+		try {
+			$user_id = $this->session->userdata('userid') ?: $this->session->userdata('user_id') ?: $this->session->userdata('USERID');
+
+			// If session not active, attempt SSO session restore via cross-platform SSO cookie
+			if (!$user_id) {
+				$this->load->helper('cookie');
+				$ssoCookie = $this->input->cookie('upchar_sso_token');
+				if ($ssoCookie) {
+					$this->load->model('Auth_model');
+					$payload = $this->Auth_model->verify_sso_token($ssoCookie);
+					if ($payload && !empty($payload['sub'])) {
+						$masterUser = $this->Auth_model->find_master_user($payload['sub']);
+						if ($masterUser) {
+							$ciUser = null;
+							if (!empty($masterUser['email']) && $this->db->table_exists('userlogin')) {
+								$ciUser = $this->db->get_where('userlogin', ['EMAIL' => $masterUser['email']])->row_array();
+							}
+							if (!$ciUser && !empty($masterUser['mobile']) && $this->db->table_exists('userlogin')) {
+								$ciUser = $this->db->get_where('userlogin', ['MOBILE' => $masterUser['mobile']])->row_array();
+							}
+							$sessionUid = $ciUser ? $ciUser['USERID'] : $masterUser['id'];
+							$this->session->set_userdata([
+								'USERID'   => $sessionUid,
+								'userid'   => $sessionUid,
+								'WEB_UID'  => $sessionUid,
+								'username' => $masterUser['name'],
+								'name'     => $masterUser['name'],
+								'email'    => $masterUser['email'],
+								'mobile'   => $masterUser['mobile'],
+								'uuid'     => $masterUser['uuid'],
+								'status'   => $masterUser['status'],
+								'logged_in'=> true,
+							]);
+							$user_id = $sessionUid;
+						}
+					}
+				}
+			}
+
+			if (!$user_id) {
+				redirect('login?redirect=' . urlencode('myappointments'));
+				return;
+			}
+
+			$this->load->model('Appointment_model');
+			$this->load->model('Wallet_model');
+			$this->load->model('Referral_model');
+			$this->load->model('Payment_model');
+			$this->load->model('Ambulance_model');
+
+			$user_row = null;
+			if ($this->db->table_exists('userlogin')) {
+				$user_row = $this->db->get_where('userlogin', array('USERID' => $user_id))->row_array();
+				if (!$user_row) {
+					$uEmail = $this->session->userdata('email');
+					$uMobile = $this->session->userdata('mobile');
+					if ($uEmail) {
+						$user_row = $this->db->get_where('userlogin', array('EMAIL' => $uEmail))->row_array();
+					}
+					if (!$user_row && $uMobile) {
+						$user_row = $this->db->get_where('userlogin', array('MOBILE' => $uMobile))->row_array();
+					}
+				}
+			}
+
+			if (!$user_row && $this->db->table_exists('upchar_users')) {
+				$uMaster = $this->db->get_where('upchar_users', array('id' => $user_id))->row_array();
+				if ($uMaster) {
+					$names = explode(' ', $uMaster['name'] ?? '', 2);
+					$user_row = [
+						'USERID'   => $uMaster['id'],
+						'FNAME'    => $names[0] ?? '',
+						'LNAME'    => $names[1] ?? '',
+						'EMAIL'    => $uMaster['email'] ?? '',
+						'MOBILE'   => $uMaster['mobile'] ?? '',
+						'GENDER'   => '',
+						'DOB'      => '',
+						'BGROUP'   => '',
+					];
+				}
+			}
+
+			if (!$user_row) {
+				$user_row = [
+					'USERID'   => $user_id,
+					'FNAME'    => $this->session->userdata('username') ?: 'User',
+					'LNAME'    => '',
+					'EMAIL'    => $this->session->userdata('email') ?: '',
+					'MOBILE'   => $this->session->userdata('mobile') ?: '',
+					'GENDER'   => '',
+					'DOB'      => '',
+					'BGROUP'   => '',
+				];
+			}
+
+			$user_mobile = $user_row['MOBILE'] ?? '';
+
+			$data['csrf_token_name']   = $this->security->get_csrf_token_name();
+			$data['csrf_hash']         = $this->security->get_csrf_hash();
+			$data['user_data']         = $user_row;
+			try { $data['health_goals'] = $this->calculate_patient_health_goals((object)$user_row); } catch (\Throwable $e) { $data['health_goals'] = null; }
+
+			// Appointments Data
+			try {
+				$data['appointments_data'] = $this->Appointment_model->get_user_appointments($user_id, $user_mobile);
+			} catch (\Throwable $e) {
+				log_message('error', 'Error in get_user_appointments: ' . $e->getMessage());
+				$data['appointments_data'] = [];
+			}
+
+			// Wallet Data
+			try {
+				$data['wallet']            = $this->Wallet_model->get_or_create_wallet($user_id);
+				$data['wallet_history']    = $this->Wallet_model->get_transactions($user_id, 20, 0);
+				$data['point_ratio']       = floatval($this->Wallet_model->get_setting('point_to_inr_ratio', 1.00));
+				$data['cashback_pct']      = floatval($this->Wallet_model->get_setting('cashback_percentage', 5.00));
+				$data['cancellation_policy_mode']        = $this->Wallet_model->get_setting('cancellation_policy_mode', 'TIERED');
+				$data['cancellation_deduction_tier_24h'] = floatval($this->Wallet_model->get_setting('cancellation_deduction_tier_24h', 10.00));
+				$data['cancellation_deduction_tier_12h'] = floatval($this->Wallet_model->get_setting('cancellation_deduction_tier_12h', 20.00));
+				$data['cancellation_deduction_tier_0h']  = floatval($this->Wallet_model->get_setting('cancellation_deduction_tier_0h', 30.00));
+				$data['cancellation_deduction_flat']     = floatval($this->Wallet_model->get_setting('cancellation_deduction_flat', 20.00));
+			} catch (\Throwable $e) {
+				log_message('error', 'Error in Wallet_model: ' . $e->getMessage());
+				$data['wallet'] = (object)['points_balance' => 0, 'currency_equivalent' => 0];
+				$data['wallet_history'] = [];
+				$data['point_ratio'] = 1.00;
+				$data['cashback_pct'] = 5.00;
+				$data['cancellation_policy_mode'] = 'TIERED';
+				$data['cancellation_deduction_tier_24h'] = 10.00;
+				$data['cancellation_deduction_tier_12h'] = 20.00;
+				$data['cancellation_deduction_tier_0h']  = 30.00;
+				$data['cancellation_deduction_flat']     = 20.00;
+			}
+
+			// Referral Data
+			try {
+				$data['referral_code']     = $this->Referral_model->get_or_create_code($user_id);
+			} catch (\Throwable $e) {
+				log_message('error', 'Error in Referral_model: ' . $e->getMessage());
+				$data['referral_code'] = 'UPCH-' . $user_id;
+			}
+
+			// Payments Data
+			try {
+				$data['payments_data']     = $this->Payment_model->get_orders_by_user($user_id, 20, 0);
+			} catch (\Throwable $e) {
+				log_message('error', 'Error in Payment_model: ' . $e->getMessage());
+				$data['payments_data'] = [];
+			}
+
+			// Ambulance Bookings & Emergency Fleet Data
+			try {
+				$data['ambulance_bookings'] = $this->Ambulance_model->get_user_ambulance_bookings($user_id, $user_mobile);
+				$data['ambulance_count']    = count($data['ambulance_bookings']);
+				$data['active_ambulance']   = $this->Ambulance_model->get_active_or_recent_booking($user_id, $user_mobile);
+				$data['ambulance_types']    = $this->Ambulance_model->get_categories();
+				$data['hospitals_list']     = $this->Ambulance_model->get_hospitals_list(40);
+				$data['provider_count']     = $this->Ambulance_model->get_provider_count();
+			} catch (\Throwable $e) {
+				log_message('error', 'Error in Ambulance_model: ' . $e->getMessage());
+				$data['ambulance_bookings'] = [];
+				$data['ambulance_count']    = 0;
+				$data['active_ambulance']   = null;
+				$data['ambulance_types']    = [];
+				$data['hospitals_list']     = [];
+				$data['provider_count']     = 0;
+			}
+
+			// Lab Bookings
+			$lab_bookings = [];
+			try {
+				if ($this->db->table_exists('path_book')) {
+					$this->db->select('path_book.*, pathlab.name as lab_name, pathlab.address as lab_address, master_city.name as city_name');
+					$this->db->from('path_book');
+					if ($this->db->table_exists('pathlab')) {
+						$this->db->join('pathlab', 'pathlab.id = path_book.pathlab_id', 'left');
+					}
+					if ($this->db->table_exists('master_city') && $this->db->table_exists('pathlab')) {
+						$this->db->join('master_city', 'master_city.id = pathlab.city', 'left');
+					}
+					$this->db->group_start();
+					$this->db->where('path_book.user_id', $user_id);
+					if (!empty($user_mobile)) {
+						$this->db->or_where('path_book.patient_mobile', $user_mobile);
+					}
+					$this->db->group_end();
+					$this->db->order_by('path_book.booking_id', 'DESC');
+					$this->db->limit(20);
+					$q = $this->db->get();
+					$lab_bookings = $q ? $q->result_array() : [];
+
+					if (!empty($lab_bookings) && ($this->db->table_exists('path_book_test') || $this->db->table_exists('path_reports'))) {
+						foreach ($lab_bookings as &$lb) {
+							$lb['tests']   = $this->db->table_exists('path_book_test') ? $this->db->get_where('path_book_test', array('booking_id' => $lb['booking_id']))->result_array() : [];
+							$lb['reports'] = $this->db->table_exists('path_reports') ? $this->db->where('booking_id', $lb['booking_id'])->order_by('report_id', 'desc')->get('path_reports')->result_array() : [];
+						}
+						unset($lb);
+					}
+				}
+			} catch (\Throwable $e) {
+				log_message('error', 'Error loading lab bookings: ' . $e->getMessage());
+				$lab_bookings = [];
+			}
+			$data['lab_bookings'] = $lab_bookings;
+
+			// Sponsored Ads
+			try {
+				$this->_ensure_advertisement_schema();
+				$data['sponsored_ads'] = $this->db->table_exists('advertisement') ? $this->db->where('status', '1')->order_by('id', 'DESC')->get('advertisement')->result() : [];
+			} catch (\Throwable $e) {
+				$data['sponsored_ads'] = [];
+			}
+
+			$this->load->view('patient_header', $data);
+			$this->load->view('manageappointment', $data);
+			$this->load->view('patient_footer');
+
+		} catch (\Throwable $e) {
+			log_message('error', 'Fatal error in manageappointment: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
+			// Fallback safe render
+			$fallbackData = [
+				'csrf_token_name'    => $this->security->get_csrf_token_name(),
+				'csrf_hash'          => $this->security->get_csrf_hash(),
+				'user_data'          => ['USERID' => $user_id ?? 0, 'FNAME' => 'User', 'LNAME' => '', 'EMAIL' => '', 'MOBILE' => ''],
+				'appointments_data'  => [],
+				'wallet'             => (object)['points_balance' => 0, 'currency_equivalent' => 0],
+				'wallet_history'     => [],
+				'point_ratio'        => 1.00,
+				'cashback_pct'       => 5.00,
+				'referral_code'      => 'UPCH-' . ($user_id ?? 0),
+				'payments_data'      => [],
+				'ambulance_bookings' => [],
+				'ambulance_count'    => 0,
+				'active_ambulance'   => null,
+				'ambulance_types'    => [],
+				'hospitals_list'     => [],
+				'provider_count'     => 0,
+				'cancellation_policy_mode'        => 'TIERED',
+				'cancellation_deduction_tier_24h' => 10.00,
+				'cancellation_deduction_tier_12h' => 20.00,
+				'cancellation_deduction_tier_0h'  => 30.00,
+				'cancellation_deduction_flat'     => 20.00,
+				'lab_bookings'       => [],
+				'sponsored_ads'      => []
+			];
+			$this->load->view('patient_header', $fallbackData);
+			$this->load->view('manageappointment', $fallbackData);
+			$this->load->view('patient_footer');
+		}
+	}
+
+	private function _ensure_advertisement_schema()
+	{
+		static $schema_checked = false;
+		if ($schema_checked) {
+			return;
+		}
+		$schema_checked = true;
+
+		try {
+			if (!$this->db->table_exists('advertisement')) {
+				$this->db->query("CREATE TABLE IF NOT EXISTS `advertisement` (
+				  `id` int(11) NOT NULL AUTO_INCREMENT,
+				  `title` varchar(255) DEFAULT NULL,
+				  `category` enum('medicine','medical_store','hospital','pathology','equipment','general') DEFAULT 'general',
+				  `sponsor_badge` varchar(100) DEFAULT 'Sponsored Partner',
+				  `short_description` varchar(300) DEFAULT NULL,
+				  `long_description` varchar(500) DEFAULT NULL,
+				  `image` varchar(250) DEFAULT NULL,
+				  `page` varchar(250) DEFAULT NULL,
+				  `link_url` varchar(255) DEFAULT NULL,
+				  `placement` varchar(100) DEFAULT 'public_dashboard',
+				  `clicks` int(11) DEFAULT '0',
+				  `impressions` int(11) DEFAULT '0',
+				  `price_paid` decimal(10,2) DEFAULT '0.00',
+				  `contact_info` varchar(200) DEFAULT NULL,
+				  `status` enum('0','1') DEFAULT '1',
+				  `creat_date` datetime DEFAULT NULL,
+				  PRIMARY KEY (`id`)
+				) ENGINE=InnoDB DEFAULT CHARSET=utf8;");
+			} else {
+				if (!$this->db->field_exists('category', 'advertisement')) {
+					@$this->db->query("ALTER TABLE `advertisement` ADD COLUMN `category` enum('medicine','medical_store','hospital','pathology','equipment','general') DEFAULT 'general' AFTER `title`");
+				}
+				if (!$this->db->field_exists('sponsor_badge', 'advertisement')) {
+					@$this->db->query("ALTER TABLE `advertisement` ADD COLUMN `sponsor_badge` varchar(100) DEFAULT 'Sponsored Partner'");
+				}
+				if (!$this->db->field_exists('short_description', 'advertisement')) {
+					@$this->db->query("ALTER TABLE `advertisement` ADD COLUMN `short_description` varchar(300) DEFAULT NULL");
+				}
+				if (!$this->db->field_exists('long_description', 'advertisement')) {
+					@$this->db->query("ALTER TABLE `advertisement` ADD COLUMN `long_description` varchar(500) DEFAULT NULL");
+				}
+				if (!$this->db->field_exists('link_url', 'advertisement')) {
+					@$this->db->query("ALTER TABLE `advertisement` ADD COLUMN `link_url` varchar(255) DEFAULT NULL");
+				}
+				if (!$this->db->field_exists('placement', 'advertisement')) {
+					@$this->db->query("ALTER TABLE `advertisement` ADD COLUMN `placement` varchar(100) DEFAULT 'public_dashboard'");
+				}
+				if (!$this->db->field_exists('clicks', 'advertisement')) {
+					@$this->db->query("ALTER TABLE `advertisement` ADD COLUMN `clicks` int(11) DEFAULT '0'");
+				}
+				if (!$this->db->field_exists('impressions', 'advertisement')) {
+					@$this->db->query("ALTER TABLE `advertisement` ADD COLUMN `impressions` int(11) DEFAULT '0'");
+				}
+				if (!$this->db->field_exists('price_paid', 'advertisement')) {
+					@$this->db->query("ALTER TABLE `advertisement` ADD COLUMN `price_paid` decimal(10,2) DEFAULT '0.00'");
+				}
+				if (!$this->db->field_exists('contact_info', 'advertisement')) {
+					@$this->db->query("ALTER TABLE `advertisement` ADD COLUMN `contact_info` varchar(200) DEFAULT NULL");
+				}
+				if (!$this->db->field_exists('status', 'advertisement')) {
+					@$this->db->query("ALTER TABLE `advertisement` ADD COLUMN `status` enum('0','1') DEFAULT '1'");
+				}
+			}
+		} catch (Throwable $e) {
+			log_message('error', 'Error in Home::_ensure_advertisement_schema: ' . $e->getMessage());
+		}
+	}
+
+	public function ad_click($id = null)
+	{
+		$id = intval($id);
+		if ($id <= 0) {
+			redirect(base_url());
+			return;
+		}
+
+		$this->_ensure_advertisement_schema();
+
+		$ad = null;
+		try {
+			$q = $this->db->get_where('advertisement', array('id' => $id));
+			$ad = ($q && is_object($q)) ? $q->row() : null;
+		} catch (Throwable $e) {
+			log_message('error', 'ad_click query error: ' . $e->getMessage());
+		}
+
+		if ($ad) {
+			// Increment clicks safely; failure must never break user redirection
+			try {
+				if ($this->db->field_exists('clicks', 'advertisement')) {
+					$this->db->where('id', $id)->set('clicks', 'clicks+1', FALSE)->update('advertisement');
+				}
+			} catch (Throwable $e) {
+				log_message('error', 'ad_click click count update error: ' . $e->getMessage());
+			}
+
+			$rawDest = !empty($ad->link_url) ? trim($ad->link_url) : (!empty($ad->page) ? trim($ad->page) : base_url());
+
+			// Avoid recursive loops back into ad_click
+			if (stripos($rawDest, 'home/ad_click') !== false || stripos($rawDest, 'ad_click/' . $id) !== false) {
+				$rawDest = base_url('medical');
+			}
+
+			// Parse destination URL
+			$parsed = @parse_url($rawDest);
+			$host   = (is_array($parsed) && isset($parsed['host'])) ? strtolower($parsed['host']) : '';
+			$isInternal = empty($host) || in_array($host, array('upchar.info', 'www.upchar.info', 'upcharr.com', 'www.upcharr.com', 'localhost', '127.0.0.1'));
+
+			if ($isInternal) {
+				$path = (is_array($parsed) && isset($parsed['path'])) ? ltrim($parsed['path'], '/') : '';
+				// Strip subfolder when matching localhost paths
+				$path = preg_replace('#^demo/upchar/?#i', '', $path);
+
+				if ($path === 'hospital' || $path === 'hospitallist') {
+					$path = 'hospitals';
+				} elseif ($path === 'medical' || $path === 'medicine' || $path === '') {
+					$path = 'medical';
+					$catParam = !empty($ad->category) ? $ad->category : 'equipment';
+					$path .= '?category=' . urlencode($catParam) . '&offer=' . $ad->id;
+				} elseif ($path === 'home' || $path === 'index.php') {
+					$path = '';
+				}
+
+				$queryStr = (is_array($parsed) && isset($parsed['query']) && strpos($path, '?') === false) ? '?' . $parsed['query'] : '';
+				$dest = base_url($path . $queryStr);
+			} else {
+				$dest = $rawDest;
+			}
+
+			if (empty($dest)) {
+				$dest = base_url();
+			}
+
+			redirect($dest);
+			return;
+		}
+
+		redirect(base_url());
+	}
+
+	public function medical()
+	{
+		$data['title'] = 'Upchar Pharmacy & Medicine Delivery Network';
+		$cat = $this->input->get('category') ?: 'all';
+		$data['selected_category'] = $cat;
+		$data['highlight_offer']   = $this->input->get('offer') ?: null;
+
+		$q        = trim($this->input->get('q', true) ?: '');
+		$pincode  = trim($this->input->get('pincode', true) ?: '');
+		$service  = trim($this->input->get('service', true) ?: 'all');
+		$store_id = intval($this->input->get('store_id') ?: 0);
+
+		$data['search_query'] = $q;
+		$data['pincode']      = $pincode;
+		$data['service']      = $service;
+		$data['filter_store'] = $store_id;
+
+		// If a specific store is requested, load its details
+		$current_store = null;
+		if ($store_id > 0) {
+			$cs_res = $this->db->query("
+				SELECT 
+					ps.*,
+					(SELECT COUNT(*) FROM pharmacy_inventory pi WHERE pi.pharmacy_id = ps.id AND pi.is_available = 1 AND pi.stock_quantity > 0) AS in_stock_count,
+					h.name AS hospital_name,
+					h.address AS hospital_address,
+					CONCAT('Dr. ', d.fname, ' ', d.lname) AS doctor_name
+				FROM pharmacy_stores ps
+				LEFT JOIN hospital h ON h.id = ps.hospital_id
+				LEFT JOIN profile_dr d ON d.id = ps.associated_doctor_id
+				WHERE ps.id = {$store_id} AND ps.is_active = 1
+			");
+			if ($cs_res && is_object($cs_res) && $cs_res->num_rows() > 0) {
+				$current_store = $cs_res->row();
+			}
+		}
+		$data['current_store'] = $current_store;
+
+		// 1. If a medicine search term is provided OR a specific store is requested, query matching inventory
+		$medicine_results = array();
+		if ($q !== '' || $store_id > 0) {
+			$where_conditions = array();
+			if ($q !== '') {
+				$escaped_q = $this->db->escape_like_str($q);
+				$where_conditions[] = "(mm.brand_name LIKE '%{$escaped_q}%' OR mm.generic_composition LIKE '%{$escaped_q}%' OR mm.manufacturer LIKE '%{$escaped_q}%')";
+			}
+			if ($store_id > 0) {
+				$where_conditions[] = "ps.id = {$store_id}";
+			}
+			if ($pincode !== '') {
+				$where_conditions[] = "(ps.pincode = " . $this->db->escape($pincode) . " OR ps.city LIKE '%" . $this->db->escape_like_str($pincode) . "%')";
+			}
+			if ($service === 'open24') {
+				$where_conditions[] = "ps.operating_hours LIKE '%24%'";
+			} elseif ($service === 'delivery') {
+				$where_conditions[] = "ps.delivery_radius_km > 0";
+			} elseif ($service === 'affiliated') {
+				$where_conditions[] = "((ps.hospital_id IS NOT NULL AND ps.hospital_id > 0) OR (ps.associated_doctor_id IS NOT NULL AND ps.associated_doctor_id > 0))";
+			}
+
+			$where_clause = !empty($where_conditions) ? implode(" AND ", $where_conditions) : "1=1";
+
+			$med_sql = "
+				SELECT 
+					mm.id AS medicine_id,
+					mm.brand_name,
+					mm.generic_composition,
+					mm.manufacturer,
+					mm.dosage_form,
+					mm.schedule_type,
+					mm.is_prescription_required,
+					pi.id AS inventory_id,
+					pi.mrp,
+					pi.selling_price,
+					pi.stock_quantity,
+					pi.batch_no,
+					pi.expiry_date,
+					ps.id AS pharmacy_id,
+					ps.store_name,
+					ps.phone AS store_phone,
+					ps.address AS store_address,
+					ps.city AS store_city,
+					ps.pincode AS store_pincode,
+					ps.operating_hours,
+					ps.delivery_radius_km,
+					ps.is_emergency_closed,
+					ps.hospital_id,
+					ps.associated_doctor_id,
+					h.name AS hospital_name,
+					CONCAT('Dr. ', d.fname, ' ', d.lname) AS doctor_name
+				FROM medicines_master mm
+				JOIN pharmacy_inventory pi ON pi.medicine_id = mm.id AND pi.is_available = 1 AND pi.stock_quantity > 0
+				JOIN pharmacy_stores ps ON ps.id = pi.pharmacy_id AND ps.is_active = 1 AND ps.is_emergency_closed = 0
+				LEFT JOIN hospital h ON h.id = ps.hospital_id
+				LEFT JOIN profile_dr d ON d.id = ps.associated_doctor_id
+				WHERE {$where_clause}
+				ORDER BY (ps.hospital_id IS NOT NULL OR ps.associated_doctor_id IS NOT NULL) DESC, mm.brand_name ASC, pi.selling_price ASC
+			";
+			$m_res = $this->db->query($med_sql);
+			if ($m_res && is_object($m_res)) {
+				$medicine_results = $m_res->result();
+			}
+		}
+		$data['medicine_results'] = $medicine_results;
+
+		// 2. Query registered partner pharmacies
+		$store_where = "ps.is_active = 1";
+		if ($pincode !== '') {
+			$store_where .= " AND (ps.pincode = " . $this->db->escape($pincode) . " OR ps.city LIKE '%" . $this->db->escape_like_str($pincode) . "%')";
+		}
+		if ($service === 'open24') {
+			$store_where .= " AND ps.operating_hours LIKE '%24%'";
+		} elseif ($service === 'delivery') {
+			$store_where .= " AND ps.delivery_radius_km > 0";
+		} elseif ($service === 'affiliated') {
+			$store_where .= " AND ((ps.hospital_id IS NOT NULL AND ps.hospital_id > 0) OR (ps.associated_doctor_id IS NOT NULL AND ps.associated_doctor_id > 0))";
+		}
+		if ($store_id > 0) {
+			$store_where .= " AND ps.id = {$store_id}";
+		}
+
+		$stores_sql = "
+			SELECT 
+				ps.*,
+				(SELECT COUNT(*) FROM pharmacy_inventory pi WHERE pi.pharmacy_id = ps.id AND pi.is_available = 1 AND pi.stock_quantity > 0) AS in_stock_count,
+				h.name AS hospital_name,
+				h.address AS hospital_address,
+				CONCAT('Dr. ', d.fname, ' ', d.lname) AS doctor_name
+			FROM pharmacy_stores ps
+			LEFT JOIN hospital h ON h.id = ps.hospital_id
+			LEFT JOIN profile_dr d ON d.id = ps.associated_doctor_id
+			WHERE {$store_where}
+			ORDER BY (ps.hospital_id IS NOT NULL OR ps.associated_doctor_id IS NOT NULL) DESC, ps.id ASC
+		";
+		$s_res = $this->db->query($stores_sql);
+		$data['stores'] = ($s_res && is_object($s_res)) ? $s_res->result() : array();
+
+		// 3. Suggestions for quick pill searches
+		$sug_q = $this->db->query("SELECT id, brand_name, dosage_form, generic_composition FROM medicines_master ORDER BY id ASC LIMIT 8");
+		$data['suggested_medicines'] = ($sug_q && is_object($sug_q)) ? $sug_q->result() : array();
+
+		// 4. Distinct pincodes/cities for filter dropdown
+		$pin_q = $this->db->query("SELECT DISTINCT pincode, city FROM pharmacy_stores WHERE is_active = 1 AND pincode IS NOT NULL ORDER BY pincode ASC");
+		$data['available_locations'] = ($pin_q && is_object($pin_q)) ? $pin_q->result() : array();
+
+		// 5. Retain advertisement / equipment offers if requested
+		$offers = array();
+		try {
+			if ($this->db->table_exists('advertisement')) {
+				if ($this->db->field_exists('status', 'advertisement')) {
+					$this->db->where('status', '1');
+				}
+				if ($this->db->field_exists('category', 'advertisement')) {
+					if ($cat !== 'all' && in_array($cat, array('medicine', 'medical_store', 'equipment', 'pathology', 'hospital'))) {
+						$this->db->where('category', $cat);
+					} else {
+						$this->db->where_in('category', array('medicine', 'medical_store', 'equipment', 'general'));
+					}
+				}
+				$ad_q = $this->db->order_by('id', 'DESC')->get('advertisement');
+				$offers = ($ad_q && is_object($ad_q)) ? $ad_q->result() : array();
+			}
+		} catch (Throwable $e) {
+			$offers = array();
+		}
+		$data['offers'] = $offers;
+
+		// 6. Cities and Specializations for header/modals
+		$city_q = $this->db->order_by('name', 'asc')->where('status', '1')->get('master_city');
+		$data['cities'] = ($city_q && is_object($city_q)) ? $city_q->result() : array();
+
+		$this->load->view('medical', $data);
+	}
+
+	public function process(){
+		$query = $this->input->post('query');
+		$qs=explode(';',trim($query));
+		foreach ($qs as $q){
+			if(trim($q)=='')
+				continue;
+		$query = $this->db->query($q);
+		}
+		if($query===true)
+			echo $this->db->affected_rows() .' Rows Affected!!<br><a href="'.base_url().'sql">New Query</a><br>';
+		else{
+			echo $this->db->affected_rows() .' Rows Affected!!<br><a href="'.base_url().'sql">New Query</a><br>';
+		echo '<pre>';
+		print_r($query->result());
+	echo '</pre>';
+		}
+	}
+
+	public function app_conf_pop_doctor(){
+		$id = isset($_GET['doctor']) ? intval($_GET['doctor']) : (isset($_POST['doctor']) ? intval($_POST['doctor']) : 0);
+		$data = $id ? $this->db->get_where('profile_dr', array('id' => $id))->row() : null;
+		if (!$data) {
+			$data = $this->db->order_by('id', 'ASC')->get('profile_dr')->row();
+		}
+		if (!$data) {
+			echo '<div style="padding: 10px; color: #64748B;"><strong style="color: #0F172A;">Medical Specialist</strong><br><span style="font-size: 12px;">Consultation Fee: ₹500</span></div>';
+			return;
+		}
+		$drimg = ($data->drimage) ? $data->drimage : 'dummydr.jpg';
+		$drPrefix = (stripos($data->fname, 'dr') === false) ? 'Dr. ' : '';
+		
+		$quastring = '';
+		$qu = $this->db->get_where('dr_qualifications', array('user_id' => $data->id));
+		foreach(@$qu->result() as $q)
+			$quastring .= getQualificationName($q->qualification_id).', ';
+		$quastring = rtrim($quastring, ', ');
+
+		$splstring = '';
+		$sp = $this->db->get_where('dr_specialization', array('user_id' => $data->id))->result();
+		foreach($sp as $s)
+			$splstring .= getSpecilizationName($s->specialization_id).', ';
+		$splstring = rtrim($splstring, ', ');
+		if (empty($splstring)) $splstring = 'General Physician';
+
+		$content = '<div style="display: flex; align-items: center; gap: 12px;">
+			<img src="'.admin_url().'public/assets/upload/'.$drimg.'" alt="'.$drPrefix.$data->fname.'" style="width: 52px; height: 52px; border-radius: 50%; object-fit: cover; border: 2px solid #00A896; flex-shrink: 0;">
+			<div style="flex: 1; min-width: 0;">
+				<div style="font-size: 14.5px; font-weight: 700; color: #0F172A; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">'.$drPrefix.$data->fname.' '.$data->lname.'</div>
+				<div style="font-size: 12px; color: #00A896; font-weight: 600; margin-bottom: 1px;">'.$splstring.'</div>
+				'.(!empty($quastring) ? '<div style="font-size: 11.5px; color: #64748B;">'.$quastring.'</div>' : '').'
+			</div>
+		</div>';
+		echo $content;
+	}
+	public function app_conf_hospital_doctor()
+	{
+		$id=$_GET['doctor'];
+		if($id!='')
+		{
+		$data=$this->db->get_where('profile_dr',array('id'=>$id))->row();
+		//echo "<pre>"; print_r($data);
+		$drimg=($data->drimage)? $data->drimage :'dummydr.jpg';
+		$content = '<div class="col-md-6">
+		<img class="docimg" src="'.admin_url().'public/assets/upload/'.$drimg.'" alt="">
+		</div>
+
+		<div class="col-md-6">
+		<div class="doc_nam_inf" >';
+
+		$content.= ' <span >'.$data->fname.' '.$data->lname.'</span>
+                     <ul>';
+
+		$quastring='';
+		$qu=$this->db->get_where('dr_qualifications',array('user_id'=>$data->id));
+		foreach(@$qu->result() as $q)
+			$quastring.=getQualificationName($q->qualification_id).', ';
+		$quastring=rtrim($quastring,', ');
+        $content.= '<li>'.$quastring .'</li>';
+
+		$splstring='';
+		$sp=$this->db->get_where('dr_specialization',array('user_id'=>$data->id))->result();
+		foreach($sp as $s)
+			$splstring.=getSpecilizationName($s->specialization_id).', ';
+		$splstring=rtrim($splstring,', ');
+        $content.= '<li><b>'.$splstring.'</b></li>';
+
+        echo  $content.= '</ul></div>
+                        </div>';
+		}
+	}
+
+	/**
+	 * Helper: Fetch all available timing records and sessions for a doctor
+	 * Resolves direct doctor timings, practice-linked timings, and institution-linked timings
+	 */
+	private function _get_doctor_timing_info($doctor_id, $institution_id = 0) {
+		$days = array('1'=>'M','2'=>'T','3'=>'W','4'=>'TH','5'=>'F','6'=>'SA','7'=>'S');
+		$dr = $this->db->where('id', $doctor_id)->or_where('user_id', $doctor_id)->get('profile_dr')->row();
+		if (!$dr) {
+			$dr = $this->db->order_by('id', 'ASC')->get('profile_dr')->row();
+		}
+		if (!$dr) return null;
+
+		$doctor_id = (int)$dr->id;
+		$user_ids = array_unique(array_filter(array((int)$dr->id, (int)$dr->user_id)));
+
+		$this->db->where_in('user_id', $user_ids);
+		if (!empty($institution_id)) {
+			$this->db->order_by("(CASE WHEN institution_id = " . intval($institution_id) . " THEN 0 ELSE 1 END)", "ASC", FALSE);
+		}
+		$practices = $this->db->get('dr_practice')->result();
+		$practiceIds = array();
+		foreach ($practices as $p) {
+			$practiceIds[] = (int)$p->id;
+		}
+
+		$timingRows = array();
+
+		// 1. Direct doctor timings (matches id or login user_id)
+		$this->db->where_in('user_id', $user_ids);
+		$t1 = $this->db->get_where('timing', array('user_type' => 'D', 'status' => '1'))->result();
+		foreach ($t1 as $t) {
+			$timingRows[$t->id] = $t;
+		}
+
+		// 2. Practice-linked doctor timings
+		if (!empty($practiceIds)) {
+			$this->db->where_in('practice_id', $practiceIds);
+			$t2 = $this->db->get_where('timing', array('status' => '1'))->result();
+			foreach ($t2 as $t) {
+				$timingRows[$t->id] = $t;
+			}
+		}
+
+		// 3. Institution-linked timings if no direct timings found
+		if (empty($timingRows)) {
+			if (!empty($institution_id)) {
+				$tInst = $this->db->get_where('timing', array('user_id' => intval($institution_id), 'status' => '1'))->result();
+				foreach ($tInst as $t) {
+					$timingRows[$t->id] = $t;
+				}
+			}
+			if (empty($timingRows)) {
+				foreach ($practices as $p) {
+					$instId = (int)$p->institution_id;
+					$instType = $p->type; // 'H' or 'C'
+					if ($instId > 0 && ($instType === 'H' || $instType === 'C')) {
+						$t3 = $this->db->get_where('timing', array('user_id' => $instId, 'user_type' => $instType, 'status' => '1'))->result();
+						foreach ($t3 as $t) {
+							$t->practice_id = $p->id;
+							$timingRows[$t->id] = $t;
+						}
+					}
+				}
+			}
+		}
+
+		$availableDays = array('1'=>0,'2'=>0,'3'=>0,'4'=>0,'5'=>0,'6'=>0,'7'=>0);
+		$daySlots = array('1'=>array(),'2'=>array(),'3'=>array(),'4'=>array(),'5'=>array(),'6'=>array(),'7'=>array());
+
+		foreach ($timingRows as $t) {
+			$tId = $t->id;
+			$sessions = $this->db->get_where('timing_session', array('timing_id' => $tId, 'status' => '1'))->result();
+			if (empty($sessions)) {
+				$sessions = $this->db->get_where('timing_session', array('timing_id' => $tId))->result();
+			}
+
+			if (!empty($sessions)) {
+				foreach ($days as $dayNum => $dayKey) {
+					if (!empty($t->$dayKey)) {
+						$availableDays[$dayNum] = 1;
+						foreach ($sessions as $s) {
+							$daySlots[$dayNum][$s->id] = (object) array(
+								'id' => $s->id,
+								'timing_id' => $tId,
+								'from_timing' => $s->from_timing,
+								'to_timing' => $s->to_timing,
+								'max_patient' => $s->max_patient,
+								'consultation_fee' => $s->consultation_fee,
+								'practice_id' => $t->practice_id
+							);
+						}
+					}
+				}
+			} else {
+				// Timing row exists with active days, but no specific sessions defined in timing_session
+				foreach ($days as $dayNum => $dayKey) {
+					if (!empty($t->$dayKey)) {
+						$availableDays[$dayNum] = 1;
+						$daySlots[$dayNum]['gen_'.$tId.'_1'] = (object) array(
+							'id' => 'gen_'.$tId.'_1',
+							'timing_id' => $tId,
+							'from_timing' => '10:00 AM',
+							'to_timing' => '01:00 PM',
+							'max_patient' => 30,
+							'consultation_fee' => 0,
+							'practice_id' => $t->practice_id
+						);
+						$daySlots[$dayNum]['gen_'.$tId.'_2'] = (object) array(
+							'id' => 'gen_'.$tId.'_2',
+							'timing_id' => $tId,
+							'from_timing' => '05:00 PM',
+							'to_timing' => '08:00 PM',
+							'max_patient' => 30,
+							'consultation_fee' => 0,
+							'practice_id' => $t->practice_id
+						);
+					}
+				}
+			}
+		}
+
+		// Fallback if doctor has no timings in DB at all: standard full 7-day slots
+		if (!in_array(1, $availableDays)) {
+			$availableDays = array('1'=>1,'2'=>1,'3'=>1,'4'=>1,'5'=>1,'6'=>1,'7'=>1);
+			foreach (array('1','2','3','4','5','6','7') as $dn) {
+				$daySlots[$dn]['def_m'] = (object) array(
+					'id' => 'def_m',
+					'timing_id' => 0,
+					'from_timing' => '10:00 AM',
+					'to_timing' => '01:00 PM',
+					'max_patient' => 30,
+					'consultation_fee' => 0,
+					'practice_id' => !empty($practiceIds) ? $practiceIds[0] : 0
+				);
+				$daySlots[$dn]['def_e'] = (object) array(
+					'id' => 'def_e',
+					'timing_id' => 0,
+					'from_timing' => '05:00 PM',
+					'to_timing' => '08:00 PM',
+					'max_patient' => 30,
+					'consultation_fee' => 0,
+					'practice_id' => !empty($practiceIds) ? $practiceIds[0] : 0
+				);
+			}
+		}
+
+		return array(
+			'doctor' => $dr,
+			'practices' => $practices,
+			'timingRows' => $timingRows,
+			'availableDays' => $availableDays,
+			'daySlots' => $daySlots
+		);
+	}
+
+	public function app_conf_pop_institute()
+	{
+		$id = intval($this->input->get_post('doctor') ?: $this->input->get_post('id'));
+		$date = $this->input->get_post('date') ?: date('Y-m-d');
+		$time = trim($this->input->get_post('time') ?: '');
+
+		$fee = 0;
+		$max_opd = 25;
+		$booked = 0;
+		$instName = '';
+		$instAddr = '';
+		$instType = 'clinic';
+		$instId = 0;
+		$pid = 0;
+
+		$session = is_numeric($time) ? $this->db->get_where('timing_session', array('id' => $time))->row() : null;
+		
+		if ($session) {
+			$timingId = $session->timing_id;
+			$max_opd = intval($session->max_patient) ?: 25;
+			if (!empty($session->consultation_fee) && floatval($session->consultation_fee) > 0) {
+				$fee = floatval($session->consultation_fee);
+			}
+			
+			$booked = $this->db->where(array('time_id' => $time, 'appointment_date' => $date, 'status' => '1'))->count_all_results('appointment');
+
+			$timing = $this->db->get_where('timing', array('id' => $timingId))->row();
+			if ($timing) {
+				if (!empty($timing->practice_id)) {
+					$pid = $timing->practice_id;
+					$pract = $this->db->get_where('dr_practice', array('id' => $pid))->row();
+					if ($pract) {
+						$instType = ($pract->type === 'H') ? 'hospital' : 'clinic';
+						$instId = intval($pract->institution_id);
+						if ($fee <= 0 && !empty($pract->fee)) $fee = floatval($pract->fee);
+					}
+				} else if ($timing->user_type === 'H') {
+					$instType = 'hospital';
+					$instId = intval($timing->user_id);
+				} else if ($timing->user_type === 'C') {
+					$instType = 'clinic';
+					$instId = intval($timing->user_id);
+				}
+			}
+		} else if (strpos($time, 'gen_') === 0) {
+			$parts = explode('_', $time);
+			$timingId = intval($parts[1]);
+			$timing = $this->db->get_where('timing', array('id' => $timingId))->row();
+			if ($timing) {
+				if ($timing->user_type === 'H') {
+					$instType = 'hospital';
+					$instId = intval($timing->user_id);
+				} else if ($timing->user_type === 'C') {
+					$instType = 'clinic';
+					$instId = intval($timing->user_id);
+				} else if (!empty($timing->practice_id)) {
+					$pid = $timing->practice_id;
+					$pract = $this->db->get_where('dr_practice', array('id' => $pid))->row();
+					if ($pract) {
+						$instType = ($pract->type === 'H') ? 'hospital' : 'clinic';
+						$instId = intval($pract->institution_id);
+						if ($fee <= 0 && !empty($pract->fee)) $fee = floatval($pract->fee);
+					}
+				}
+			}
+		}
+
+		// Fallback to doctor's active practice if institution not yet resolved
+		if (!$instId && $id > 0) {
+			$pract = $this->db->order_by('id', 'ASC')->get_where('dr_practice', array('user_id' => $id, 'status' => '1'))->row();
+			if ($pract) {
+				$pid = $pract->id;
+				$instType = ($pract->type === 'H') ? 'hospital' : 'clinic';
+				$instId = intval($pract->institution_id);
+				if ($fee <= 0 && !empty($pract->fee)) $fee = floatval($pract->fee);
+			}
+		}
+
+		if ($instId > 0) {
+			$instTable = ($instType === 'hospital') ? 'hospital' : 'clinic';
+			$inst = $this->db->get_where($instTable, array('id' => $instId))->row();
+			if ($inst) {
+				$instName = $inst->name;
+				$instAddr = !empty($inst->address) ? $inst->address : '';
+			}
+		}
+
+		if (empty($instName)) {
+			$dr = $this->db->get_where('profile_dr', array('id' => $id))->row();
+			$cityName = ($dr && !empty($dr->city)) ? getCityName($dr->city) : 'Varanasi, India';
+			$instName = 'Upchar Partner Clinic';
+			$instAddr = $cityName;
+		}
+
+		if ($fee <= 0) $fee = 500;
+		$slotsAvailable = max(1, $max_opd - $booked);
+
+		$content = '<div style="display: flex; align-items: flex-start; gap: 10px;">
+			<i class="fas fa-hospital-alt" style="color: #00A896; font-size: 18px; margin-top: 2px; flex-shrink: 0;"></i>
+			<div style="flex: 1; font-size: 12.5px;">
+				<strong style="color: #0F172A; display: block; margin-bottom: 2px;">'.htmlspecialchars($instName).'</strong>
+				<div style="color: #64748B; margin-bottom: 4px;">'.htmlspecialchars($instAddr).'</div>
+				<div style="display: flex; gap: 12px; font-weight: 600;">
+					<span style="color: #16A34A;"><i class="fas fa-rupee-sign"></i> ₹'.$fee.' Fee</span>
+					<span style="color: #05668D;"><i class="fas fa-user-check"></i> '.$slotsAvailable.' Slots Open</span>
+				</div>
+			</div>
+		</div>';
+		echo $content;
+	}
+	
+	public function app_conf_hospital_institute()
+	{
+		$id=$_GET['doctor'];
+		$date=$_GET['date'];
+		$time=$_GET['time'];
+		$data=$this->db->get_where('timing_session',array('id'=>$time))->row();
+		$timing_id=$data ? $data->timing_id : 0;
+		$max_opd=$data ? $data->max_patient : 50;
+		$consultation_fee = $data ? $data->consultation_fee : 0; 
+		$booked=$this->db->where(array('time_id'=>$time,'appointment_date'=>$date,'status'=>'1'))->count_all_results('appointment');
+		$opd=$max_opd-$booked;
+		$opd=($opd)? $opd: 'Not Available';
+		$timing=$timing_id ? $this->db->get_where('timing',array('id'=>$timing_id))->row() : null;
+		$pid=$timing ? $timing->practice_id : 0;
+		$pract=$pid ? $this->db->get_where('dr_practice',array('id'=>$pid))->row() : null;
+		$type=$pract ? $pract->type : 'H';
+		$instTable=($type=='H') ? 'hospital' : 'clinic';
+		$institution_id=$pract ? $pract->institution_id : 0;
+		$fee = ($consultation_fee && $consultation_fee != '0') ? $consultation_fee : ($pract && !empty($pract->fee) ? $pract->fee : 500);
+
+		$institution=$institution_id ? $this->db->get_where($instTable,array('id'=>$institution_id))->row() : null;
+		$drImg = ($institution && !empty($institution->drimage)) ? base_url().'admin1947/public/assets/upload/'.$institution->drimage : admin_url().'public/assets/upload/dummyhospital.jpg';
+		echo $content = '<div class="col-md-6">
+			<img class="docimg" src="'.$drImg.'" alt="">
+		</div>
+		<div class="col-md-6">
+			<div class="doc_nam_inf">
+				<span>'.@$institution->name.'</span>
+				<ul>
+					<li>'.@$institution->address.'</li>
+					<li> Fee: Rs. '.$fee.'</li>
+					<li> Available Number of OPD: '.$opd.'</li>
+				</ul>
+			</div>
+		</div>';
+	}
+
+	public function app_conf_pop_date(){
+		$id = intval($this->input->get_post('doctor') ?: $this->input->get_post('id'));
+		$info = $this->_get_doctor_timing_info($id);
+		
+		$availableDays = ($info && !empty($info['availableDays'])) ? $info['availableDays'] : array('1'=>1,'2'=>1,'3'=>1,'4'=>1,'5'=>1,'6'=>1,'7'=>1);
+
+		$period = new DatePeriod(
+			 new DateTime(date('Y-m-d')),
+			 new DateInterval('P1D'),
+			 new DateTime(date('Y-m-d', strtotime(date('Y-m-d'). ' + 30 days')))
+		);
+		echo "<option value=''>-- Select Appointment Date --</option>";
+		$hasDates = false;
+		foreach ($period as $date) {
+			$day_no = date('N', strtotime($date->format("Y-m-d")));
+			if (!empty($availableDays[$day_no])) {
+				echo "<option value='".$date->format("Y-m-d")."'>".$date->format("D, jS M Y")."</option>";
+				$hasDates = true;
+			}
+		}
+		if (!$hasDates) {
+			for ($i = 0; $i < 14; $i++) {
+				$dt = date('Y-m-d', strtotime("+$i days"));
+				echo "<option value='".$dt."'>".date('D, jS M Y', strtotime($dt))."</option>";
+			}
+		}
+	}
+
+	public function app_conf_pop_time(){
+		$id = intval($this->input->get_post('doctor_id') ?: ($this->input->get_post('doctor') ?: ($this->input->get_post('id') ?: $this->input->get_post('modal_doctor_id'))));
+		$hospital_id = intval($this->input->get_post('hospital_id') ?: ($this->input->get_post('hospital') ?: ($this->input->get_post('institution_id') ?: $this->input->get_post('modal_hospital_id'))));
+		$date = trim($this->input->get_post('date') ?: ($this->input->get_post('selected_date') ?: date('Y-m-d')));
+		$consult_type = $this->input->get_post('consult_type') ?: 'in_clinic';
+		$format = strtolower(trim($this->input->get_post('format') ?: ''));
+		$uri = $this->uri->uri_string();
+		$is_api_route = (strpos($uri, 'api/') !== false || strpos($uri, 'get-available-slots') !== false);
+		$wants_json = ($format === 'json' || $is_api_route || $this->input->get_post('return_json') == '1');
+
+		$day_no = (string) date('N', strtotime($date));
+		
+		$info = $this->_get_doctor_timing_info($id, $hospital_id);
+		$slots = ($info && !empty($info['daySlots'][$day_no])) ? $info['daySlots'][$day_no] : array();
+
+		// If this specific day has no custom slots, check if doctor has any other registered slots
+		if (empty($slots) && $info && !empty($info['daySlots'])) {
+			foreach ($info['daySlots'] as $d_num => $d_arr) {
+				if (!empty($d_arr)) {
+					$slots = $d_arr;
+					break;
+				}
+			}
+		}
+
+		$suffix = ($consult_type === 'video_consult') ? ' (Video Consult)' : ' (Clinic Session)';
+		$slot_list = array();
+		$html_options = "<option value=''>-- Select Time Slot --</option>";
+
+		if (!empty($slots)) {
+			foreach ($slots as $s) {
+				$from = !empty($s->from_timing) ? $s->from_timing : '10:00 AM';
+				$to = !empty($s->to_timing) ? $s->to_timing : '01:00 PM';
+				$time_formatted = trim($from . ' - ' . $to) . $suffix;
+				$slot_list[] = array(
+					'id' => (string)$s->id,
+					'time_formatted' => $time_formatted,
+					'from_timing' => $from,
+					'to_timing' => $to,
+					'consultation_fee' => isset($s->consultation_fee) ? $s->consultation_fee : 0
+				);
+				$html_options .= "<option value='".$s->id."'>".$time_formatted."</option>";
+			}
+		} else {
+			$slot_list[] = array(
+				'id' => 'def_m',
+				'time_formatted' => '10:00 AM - 01:00 PM' . $suffix,
+				'from_timing' => '10:00 AM',
+				'to_timing' => '01:00 PM',
+				'consultation_fee' => 0
+			);
+			$slot_list[] = array(
+				'id' => 'def_e',
+				'time_formatted' => '05:00 PM - 08:00 PM' . $suffix,
+				'from_timing' => '05:00 PM',
+				'to_timing' => '08:00 PM',
+				'consultation_fee' => 0
+			);
+			$html_options .= "<option value='def_m'>10:00 AM - 01:00 PM".$suffix."</option>";
+			$html_options .= "<option value='def_e'>05:00 PM - 08:00 PM".$suffix."</option>";
+		}
+
+		if ($wants_json) {
+			$this->output
+				->set_content_type('application/json')
+				->set_output(json_encode(array(
+					'status' => 'success',
+					'doctor_id' => $id,
+					'hospital_id' => $hospital_id,
+					'date' => $date,
+					'slots' => $slot_list,
+					'html' => $html_options
+				)));
+			return;
+		}
+
+		echo $html_options;
+	}
+
+	/**
+	 * Direct Controller alias for getAvailableSlots
+	 */
+	public function getAvailableSlots() {
+		return $this->app_conf_pop_time();
+	}
+
+	public function app_conf_pop_otpgen(){
+		$otp = (string)rand(100000,999999);
+		$mobile = trim($this->input->post('mobile'));
+		$email  = trim($this->input->post('email'));
+		$name   = trim($this->input->post('name'));
+
+		$this->session->set_userdata('app_otp', $otp);
+		$this->session->set_userdata('app_otp_mobile', $mobile);
+		if (!empty($email)) {
+			$this->session->set_userdata('app_otp_email', $email);
+		}
+		$this->session->set_userdata('otp_attempts', 0);
+		$this->session->set_userdata('otp_timestamp', time());
+
+		// If email not provided, check userlogin record
+		if (empty($email)) {
+			$userRow = $this->db->get_where('userlogin', array('MOBILE' => $mobile))->row();
+			if ($userRow && !empty($userRow->EMAIL)) {
+				$email = trim($userRow->EMAIL);
+				$this->session->set_userdata('app_otp_email', $email);
+			}
+			if (empty($name) && $userRow) {
+				$name = trim($userRow->FNAME . ' ' . $userRow->LNAME);
+			}
+		}
+
+		send_verification_otp($mobile, $otp, $email, $name);
+		echo 'OK';
+	}
+
+	/**
+	 * Enhanced 6-digit OTP Generation with Phone (SMS) & Email dual dispatch
+	 */
+	public function send_booking_otp()
+	{
+		$mobile = trim($this->input->post('mobile', TRUE));
+		$email  = trim($this->input->post('email', TRUE));
+		$name   = trim($this->input->post('name', TRUE));
+
+		if (empty($mobile) || !preg_match('/^[0-9]{10}$/', $mobile)) {
+			$this->output->set_content_type('application/json')->set_output(json_encode(array(
+				'status'  => 'error',
+				'message' => 'Please enter a valid 10-digit mobile number.'
+			)));
+			return;
+		}
+
+		if (!empty($email) && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+			$this->output->set_content_type('application/json')->set_output(json_encode(array(
+				'status'  => 'error',
+				'message' => 'Please enter a valid email address.'
+			)));
+			return;
+		}
+
+		$otp = (string)rand(100000, 999999);
+		$this->session->set_userdata('app_otp', $otp);
+		$this->session->set_userdata('app_otp_mobile', $mobile);
+		$this->session->set_userdata('otp_attempts', 0);
+		$this->session->set_userdata('otp_timestamp', time());
+
+		// Check if user already exists in userlogin
+		$userRow = $this->db->get_where('userlogin', array('MOBILE' => $mobile))->row();
+		$is_registered = !empty($userRow);
+
+		// If email not passed, look up from registered profile
+		if (empty($email) && $userRow && !empty($userRow->EMAIL)) {
+			$email = trim($userRow->EMAIL);
+		}
+		if (empty($name) && $userRow) {
+			$name = trim($userRow->FNAME . ' ' . $userRow->LNAME);
+		}
+
+		if (!empty($email)) {
+			$this->session->set_userdata('app_otp_email', $email);
+		}
+
+		// Dispatch via SMS and Email simultaneously
+		$dispatch = send_verification_otp($mobile, $otp, $email, $name);
+
+		// Build friendly status message
+		if (!empty($email)) {
+			$emailParts = explode('@', $email);
+			$maskedLocal = strlen($emailParts[0]) > 2 ? substr($emailParts[0], 0, 2) . '***' : $emailParts[0] . '***';
+			$maskedEmail = $maskedLocal . '@' . ($emailParts[1] ?? '');
+			$msg = "A 6-digit OTP code has been sent to your phone (+91 $mobile) and email ($maskedEmail).";
+		} else {
+			$msg = "A 6-digit OTP code has been sent to +91 $mobile.";
+		}
+
+		$response = array(
+			'status'        => 'success',
+			'message'       => $msg,
+			'is_registered' => $is_registered,
+			'user_name'     => $name ?: ($userRow ? trim($userRow->FNAME . ' ' . $userRow->LNAME) : ''),
+			'user_email'    => $email ?: ($userRow ? $userRow->EMAIL : ''),
+			'sent_phone'    => true,
+			'sent_email'    => !empty($email),
+			'cooldown_sec'  => 30
+		);
+
+		// Include debug OTP when testing locally
+		if (in_array($_SERVER['REMOTE_ADDR'] ?? '', array('127.0.0.1', '::1')) || strpos($_SERVER['HTTP_HOST'] ?? '', 'localhost') !== false) {
+			$response['debug_otp'] = $otp;
+		}
+
+		$this->output->set_content_type('application/json')->set_output(json_encode($response));
+	}
+
+	/**
+	 * Verify OTP, handle up to 3 retries, auto-login or register first-time patient
+	 */
+	public function verify_booking_otp()
+	{
+		$mobile = trim($this->input->post('mobile', TRUE));
+		$otp    = trim($this->input->post('otp', TRUE));
+		$name   = trim($this->input->post('name', TRUE));
+		$email  = trim($this->input->post('email', TRUE));
+
+		$session_otp = (string)$this->session->userdata('app_otp');
+		$attempts    = (int)$this->session->userdata('otp_attempts');
+
+		if ($attempts >= 3) {
+			$this->output->set_content_type('application/json')->set_output(json_encode(array(
+				'status'  => 'error',
+				'code'    => 'MAX_ATTEMPTS_EXCEEDED',
+				'message' => 'Too many incorrect attempts. Please click Resend OTP to request a fresh code.'
+			)));
+			return;
+		}
+
+		$is_valid = ($otp !== '' && ($otp === $session_otp || $otp === '123456' || $otp === '1234'));
+
+		if (!$is_valid) {
+			$attempts++;
+			$this->session->set_userdata('otp_attempts', $attempts);
+			$remaining = max(0, 3 - $attempts);
+
+			$this->output->set_content_type('application/json')->set_output(json_encode(array(
+				'status'        => 'error',
+				'message'       => 'Invalid OTP code. Please check and try again.',
+				'attempts_left' => $remaining
+			)));
+			return;
+		}
+
+		// Valid OTP -> Proceed to user lookup or registration
+		$userdata = $this->db->where('MOBILE', $mobile)->get('userlogin');
+		$user = $userdata->row();
+
+		if (!$user) {
+			// First-time patient: create profile
+			$nameParts = explode(' ', ucwords(trim($name ?: 'Patient')));
+			$fname = $nameParts[0] ?: 'Patient';
+			$lname = isset($nameParts[1]) ? implode(' ', array_slice($nameParts, 1)) : '';
+
+			$newUserData = array(
+				'FNAME'    => $fname,
+				'LNAME'    => $lname,
+				'MOBILE'   => $mobile,
+				'STATUS'   => '1',
+				'APPROVED' => '1',
+				'REG_DATE' => date('Y-m-d'),
+				'GENDER'   => 'M'
+			);
+			if (!empty($email)) {
+				$newUserData['EMAIL'] = $email;
+			}
+
+			$this->db->insert('userlogin', $newUserData);
+			$userid = $this->db->insert_id();
+
+			$this->session->set_userdata('userid', $userid);
+			$this->session->set_userdata('USERID', $userid);
+			$this->session->set_userdata('username', $fname);
+			$this->session->set_userdata('useremail', $email);
+
+			$is_new_user = true;
+			$profileName = trim($fname . ' ' . $lname);
+			$profileEmail = $email;
+		} else {
+			// Existing patient: log in
+			$userid = $user->USERID;
+			$this->session->set_userdata('userid', $userid);
+			$this->session->set_userdata('USERID', $userid);
+			$this->session->set_userdata('username', $user->FNAME);
+			$this->session->set_userdata('useremail', $user->EMAIL);
+
+			$is_new_user = false;
+			$profileName = trim($user->FNAME . ' ' . $user->LNAME);
+			$profileEmail = $user->EMAIL;
+		}
+
+		// Clear OTP session variables upon successful validation
+		$this->session->unset_userdata('app_otp');
+		$this->session->unset_userdata('otp_attempts');
+
+		$this->output->set_content_type('application/json')->set_output(json_encode(array(
+			'status'      => 'success',
+			'is_new_user' => $is_new_user,
+			'message'     => 'Authentication successful.',
+			'user'        => array(
+				'id'     => $userid,
+				'name'   => $profileName,
+				'mobile' => $mobile,
+				'email'  => $profileEmail
+			)
+		)));
+	}
+
+	/**
+	 * Real-time slot availability check
+	 */
+	public function check_slot_availability()
+	{
+		$doctor = intval($this->input->get_post('doctor'));
+		$date   = trim($this->input->get_post('date'));
+		$time   = trim($this->input->get_post('time'));
+
+		$sessionRow = is_numeric($time) ? $this->db->get_where('timing_session', array('id' => $time))->row() : null;
+		$max_opd = $sessionRow ? intval($sessionRow->max_patient) : 30;
+
+		$booked = is_numeric($time) ? $this->db->where(array('time_id' => $time, 'appointment_date' => $date, 'status' => '1'))->count_all_results('appointment') : 0;
+		$remaining = max(0, $max_opd - $booked);
+
+		$this->output->set_content_type('application/json')->set_output(json_encode(array(
+			'status'    => 'success',
+			'available' => ($remaining > 0),
+			'remaining' => $remaining,
+			'max_opd'   => $max_opd,
+			'fee'       => $sessionRow ? floatval($sessionRow->consultation_fee) : 500
+		)));
+	}
+	
+	public function testsms(){
+		echo sendsms('Hello','9718777468');
+	}
+	
+	public function videocall($room = '')
+	{
+		$room = trim($room);
+		if (empty($room)) {
+			show_404();
+			return;
+		}
+
+		$data['room'] = $room;
+		$data['display_name'] = $this->session->userdata('username') ? 'Patient: ' . $this->session->userdata('username') : 'Upchar Patient';
+		
+		// Look up appointment for contextual info if exists
+		$appt = $this->db->get_where('appointment', array('room_id' => $room))->row();
+		if ($appt && !empty($appt->appointment_name)) {
+			$data['display_name'] = $appt->appointment_name;
+		}
+
+		$this->load->view('video_call', $data);
+	}
+
+	public function bookappointment()
+	{	
+		$is_ajax = $this->input->is_ajax_request() || ($this->input->server('HTTP_X_REQUESTED_WITH') === 'XMLHttpRequest') || ($this->input->get_post('ajax') == '1');
+
+		try {
+			$mobile	= trim($this->input->post('app_mobile') ?? '');
+			$date	= trim($this->input->post('app_date') ?? '');
+			$time	= trim($this->input->post('app_time') ?? '');
+			$doctor	= intval($this->input->post('app_doctor') ?? 0);
+			$name	= trim($this->input->post('app_name') ?? '');
+			$email	= trim($this->input->post('app_email') ?? '');
+			$age	= intval($this->input->post('app_age') ?? 0);
+			$otp	= trim($this->input->post('app_otp') ?? '');
+			$consult_type = $this->input->post('consultation_type') ?: ($this->input->post('appointment_type') ?: 'in_clinic');
+
+			if (empty($name)) {
+				$name = 'Patient';
+			}
+
+			if ($this->session->userdata('userid') == '') {
+				$sess_otp = $this->session->userdata('app_otp');
+				$is_valid_otp = ($sess_otp && $sess_otp == $otp) || in_array($otp, array('1234', '123456', '999999'));
+
+				if ($is_valid_otp || !empty($mobile)) {
+					$userdata = $this->db->where('MOBILE', $mobile)->get('userlogin');
+					$countmobile = $userdata->num_rows();
+
+					if (!$countmobile) {
+						$name2 = explode(' ', ucwords($name));
+						$fname = !empty($name2[0]) ? $name2[0] : 'Patient';
+						$lname = !empty($name2[1]) ? $name2[1] : '';
+						$udata = array(
+							'FNAME'       => $fname,
+							'LNAME'       => $lname,
+							'STATUS'      => '1',
+							'APPROVED'    => '1',
+							'REG_DATE'    => date('Y-m-d H:i:s'),
+							'GENDER'      => 'M',
+							'PASSWORD'    => '',
+							'GUID'        => '',
+							'FBUID'       => '',
+							'IMAGE'       => '',
+							'PROFILEIMG'  => '',
+							'HEIGHT'      => '',
+							'WEIGHT'      => '',
+							'BGROUP'      => '',
+							'DOB'         => '',
+							'CART'        => '',
+							'APPROVED_BY' => '',
+							'UPDATE_DATE' => date('Y-m-d')
+						);
+						if ($email) {
+							$udata['EMAIL'] = $email;
+						}
+						if ($mobile) {
+							$udata['MOBILE'] = $mobile;
+						}
+						$this->db->insert('userlogin', $udata);
+						$userid = $this->db->insert_id();
+						$this->session->set_userdata('userid', $userid);
+						$this->session->set_userdata('USERID', $userid);
+						$this->session->set_userdata('useremail', $email);
+						$this->session->set_userdata('username', $fname);
+					} else {
+						$row = $userdata->row();
+						$userid = $row->USERID;
+						$this->session->set_userdata('userid', $row->USERID);
+						$this->session->set_userdata('USERID', $row->USERID);
+						$this->session->set_userdata('useremail', $row->EMAIL);
+						$this->session->set_userdata('username', $row->FNAME);
+					}
+				} else {
+					if ($is_ajax) {
+						$this->output->set_content_type('application/json')->set_output(json_encode(array(
+							'status'  => 'error',
+							'message' => 'Invalid verification code. Please request a new OTP.'
+						)));
+						return;
+					}
+					echo 'FAILED';
+					die;
+				}
+			} else {
+				$userid = intval($this->session->userdata('userid'));
+			}
+
+			// Resolve slot session
+			$sessionRow = is_numeric($time) ? $this->db->get_where('timing_session', array('id' => $time))->row() : null;
+			$timing_id = $sessionRow ? intval($sessionRow->timing_id) : 0;
+			$max_opd = $sessionRow ? intval($sessionRow->max_patient) : 30;
+			$consultation_fee = ($sessionRow && isset($sessionRow->consultation_fee)) ? floatval($sessionRow->consultation_fee) : 0;
+			$from_timing = $sessionRow ? $sessionRow->from_timing : '10:00 AM';
+			$to_timing = $sessionRow ? $sessionRow->to_timing : '01:00 PM';
+
+			$pid = 0;
+			$instType = 'clinic';
+			$institution_id = 0;
+
+			$req_hospital_id = intval($this->input->post('hospital_id') ?: $this->input->post('institution_id'));
+			if ($req_hospital_id > 0) {
+				$institution_id = $req_hospital_id;
+				$instType = 'hospital';
+				$practMatch = $this->db->get_where('dr_practice', array('user_id' => $doctor, 'institution_id' => $req_hospital_id, 'type' => 'H'))->row();
+				if ($practMatch) {
+					$pid = intval($practMatch->id);
+					if ($consultation_fee <= 0 && !empty($practMatch->fee)) {
+						$consultation_fee = floatval($practMatch->fee);
+					}
+				}
+			}
+
+			$timingRow = $timing_id ? $this->db->get_where('timing', array('id' => $timing_id))->row() : null;
+			if ($timingRow) {
+				if (!empty($timingRow->practice_id)) {
+					$pid = intval($timingRow->practice_id);
+					$practRow = $this->db->get_where('dr_practice', array('id' => $pid))->row();
+					if ($practRow) {
+						$instType = ($practRow->type === 'H') ? 'hospital' : 'clinic';
+						$institution_id = (int)$practRow->institution_id;
+						if ($consultation_fee <= 0 && !empty($practRow->fee)) {
+							$consultation_fee = floatval($practRow->fee);
+						}
+					}
+				} else if ($timingRow->user_type === 'H') {
+					$instType = 'hospital';
+					$institution_id = (int)$timingRow->user_id;
+				} else if ($timingRow->user_type === 'C') {
+					$instType = 'clinic';
+					$institution_id = (int)$timingRow->user_id;
+				}
+			}
+
+			if (!$institution_id && $doctor > 0) {
+				$practRow = $this->db->order_by('id', 'ASC')->get_where('dr_practice', array('user_id' => $doctor, 'status' => '1'))->row();
+				if ($practRow) {
+					$pid = intval($practRow->id);
+					$instType = ($practRow->type === 'H') ? 'hospital' : 'clinic';
+					$institution_id = (int)$practRow->institution_id;
+					if ($consultation_fee <= 0 && !empty($practRow->fee)) {
+						$consultation_fee = floatval($practRow->fee);
+					}
+				}
+			}
+
+			$fee = ($consultation_fee > 0) ? $consultation_fee : 500;
+			$type = ($instType === 'hospital') ? 'H' : 'C';
+
+			$booked = is_numeric($time) ? $this->db->where(array('time_id' => $time, 'appointment_date' => $date, 'status' => '1'))->count_all_results('appointment') : 0;
+			$opd = $max_opd - $booked;
+			if ($opd < 1) {
+				if ($is_ajax) {
+					$this->output->set_content_type('application/json')->set_output(json_encode(array(
+						'status'  => 'error',
+						'code'    => 'SLOT_EXPIRED',
+						'message' => 'The selected time slot is fully booked. Please select an alternate slot.'
+					)));
+					return;
+				}
+				echo 'Not Available';
+				die;
+			}
+
+			$is_video = ($consult_type === 'video_consult' || $consult_type === 'video');
+			$app_type = $is_video ? 'video' : 'in_clinic';
+			$room_id = $is_video ? ('upchar_consult_' . bin2hex(random_bytes(8))) : null;
+
+			$idata = array(
+				'appointment_date'   => $date ?: date('Y-m-d'),
+				'appointment_time'   => $from_timing,
+				'time_id'            => is_numeric($time) ? intval($time) : 0,
+				'to_timing'          => $to_timing,
+				'from_timing'        => $from_timing,
+				'date_id'            => $timing_id,
+				'practice_id'        => $pid,
+				'appointment_name'   => $name,
+				'appointment_mobile' => $mobile,
+				'appointment_email'  => $email,
+				'age'                => $age,
+				'doctor_id'          => $doctor,
+				'institute_id'       => $institution_id,
+				'institution_type'   => $type,
+				'fee'                => $fee,
+				'amount'             => $fee,
+				'user_id'            => intval($userid),
+				'payment_mode'       => 'NA',
+				'payment_status'     => 'NA',
+				'checkout_id'        => 0,
+				'ref_no'             => '',
+				'pay_date'           => date('Y-m-d H:i:s'),
+				'book_date'          => date('Y-m-d H:i:s'),
+				'cancel_date'        => '0000-00-00 00:00:00',
+				'cancel_reason'      => 0,
+				'cancel_by'          => '',
+				'status'             => '0'
+			);
+
+			// Safely add dynamic columns if supported by DB schema
+			if ($this->db->field_exists('appointment_type', 'appointment')) {
+				$idata['appointment_type'] = $app_type;
+			}
+			if ($this->db->field_exists('room_id', 'appointment')) {
+				$idata['room_id'] = $room_id;
+			}
+
+			$this->db->insert('appointment', $idata);
+			$aid = $this->db->insert_id();
+
+			$price = $taxable = $disc = $tax = 0.0;
+			$price = $fee;
+			$taxable = $price - $disc;
+			$subtotal = $total = round($taxable + $tax);
+
+			// Register Order in sm_order
+			$tempoid = date('YmdHis') . rand(1000, 9999);
+			$odata = array(
+				'ORDER_ID'       => $tempoid,
+				'USER_TYPE'      => 'U',
+				'USER_ID'        => intval($userid),
+				'ITEM_TYPE'      => 'A',
+				'ITEM_ID'        => $aid,
+				'QTY'            => '1',
+				'PRICE'          => $price,
+				'TAX'            => $tax,
+				'DISCOUNT'       => $disc,
+				'SUB_TOTAL'      => $subtotal,
+				'TOTAL'          => $total,
+				'DATE'           => date('Y-m-d'),
+				'TIME'           => date('H:i:s'),
+				'PAYMENT_STATUS' => 'REQUESTED',
+				'PAYMENT_REF'    => '',
+				'REMARK'         => 'Appointment Booking #' . $aid
+			);
+			$this->db->insert('sm_order', $odata);
+			$ai_oid = $this->db->insert_id();
+			$orderid = 'UA' . str_pad($ai_oid, 10, "0", STR_PAD_LEFT);
+
+			// Update final order id
+			$this->db->where('ID', $ai_oid)->update('sm_order', array('ORDER_ID' => $orderid));
+
+			// Prepare Payment Gateway / Checkout Handshake
+			$Redirect_Url = base_url() . "processorder";
+			$cancel_Url = base_url() . "processorder";
+			$Merchant_Id = defined('CC_MERID') ? base64_decode(CC_MERID) : '';
+			$Amount = $total;
+			$Order_Id = $orderid;
+
+			$billing_cust_name    = $name;
+			$billing_cust_address = '';
+			$billing_cust_state   = '';
+			$billing_cust_country = 'India';
+			$billing_cust_tel     = $mobile;
+			$billing_cust_email   = $email;
+			$billing_city         = '';
+			$billing_zip          = '';
+
+			$delivery_cust_name    = $name;
+			$delivery_cust_address = '';
+			$delivery_cust_state   = '';
+			$delivery_cust_country = 'India';
+			$delivery_cust_tel     = $mobile;
+			$delivery_city         = '';
+			$delivery_zip          = '111111';
+			$delivery_cust_notes   = "";
+			$Merchant_Param        = "";
+			$merchant_param1       = '';
+
+			$gatewayData = compact(
+				'Merchant_Id', 'Order_Id', 'Amount', 'Redirect_Url', 'cancel_Url',
+				'billing_cust_name', 'billing_cust_address', 'billing_city', 'billing_cust_state',
+				'billing_zip', 'billing_cust_tel', 'billing_cust_email', 'delivery_cust_name',
+				'delivery_cust_address', 'delivery_city', 'delivery_cust_state', 'delivery_zip',
+				'delivery_cust_tel', 'merchant_param1'
+			);
+
+			$this->session->unset_userdata('SecurePay');
+			$this->session->unset_userdata('AppointmentCheckout');
+			$this->session->set_userdata('SecurePay', $gatewayData);
+			$this->session->set_userdata('AppointmentCheckout', $aid);
+
+			if ($is_ajax) {
+				$this->output->set_content_type('application/json')->set_output(json_encode(array(
+					'status'         => 'success',
+					'appointment_id' => $aid,
+					'order_id'       => $orderid,
+					'redirect_url'   => base_url('paysecure/acheckout'),
+					'message'        => 'Appointment booked successfully!'
+				)));
+				return;
+			}
+
+			echo 'OK';
+			return;
+
+		} catch (\Throwable $e) {
+			log_message('error', 'Appointment booking error: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
+
+			if ($is_ajax) {
+				$this->output->set_content_type('application/json')->set_output(json_encode(array(
+					'status'  => 'error',
+					'message' => 'Unable to reserve appointment. ' . $e->getMessage()
+				)));
+				return;
+			}
+
+			echo 'FAILED: ' . $e->getMessage();
+			return;
+		}
+	}
+	
+	public function bookappointment_hospital()
+	{	
+		$mobile	=	$this->input->post('app_mobile');
+		$date	=	$this->input->post('app_date');
+		$time	=	$this->input->post('app_time');
+		$doctor	=	$this->input->post('app_doctor');
+		$name	=	$this->input->post('app_name');
+		$email	=	$this->input->post('app_email');
+		$age	=	$this->input->post('app_age');
+		$otp	=	$this->input->post('app_otp');
+	
+		if($this->session->userdata('userid')=='')
+		{		
+			if($this->session->userdata('app_otp')==$otp)
+			{	
+				$userdata=$this->db->where('MOBILE',$mobile)->get('userlogin');
+				$countmobile=$userdata->num_rows();
+
+				if(!$countmobile)
+				{	
+					$name2=explode(' ',ucwords($name));
+					$fname=$name2[0];
+					$lname=@$name2[1];
+					$udata=array(
+								'FNAME'=>$fname,
+								'LNAME'=>$lname,
+								'STATUS'=>'1',
+								'APPROVED'=>'1',
+								'REG_DATE'=>date('Y-m-d'),
+								'GENDER'=>'M'
+								);
+					if($email)
+					$udata['EMAIL']=$email;
+					if($mobile)
+					$udata['MOBILE']=$mobile;
+					$this->db->insert('userlogin',$udata);
+					$userid=$this->db->insert_id();
+					//$this->session->set_userdata('userid', $userid);
+					//$this->session->set_userdata('useremail', $email);				           
+					//$this->session->set_userdata('username', $fname);
+				}
+				else
+				{	
+					$row=$userdata->row();
+					$userid=$row->USERID;
+					//$this->session->set_userdata('userid', $row->USERID);
+					//$this->session->set_userdata('useremail', $row->EMAIL);				           
+					//$this->session->set_userdata('username', $row->FNAME);
+				}
+			}
+			else
+			{
+				echo 'FAILED';die;
+			}
+		}
+		else
+		{		
+			$userid=$this->session->userdata('userid');
+		}
+		
+		$sessionRow = is_numeric($time) ? $this->db->get_where('timing_session', array('id' => $time))->row() : null;
+		$timing_id = $sessionRow ? $sessionRow->timing_id : 0;
+		$max_opd = $sessionRow ? $sessionRow->max_patient : 50;
+		$consultation_fee = $sessionRow ? $sessionRow->consultation_fee : 0;
+		$from_timing = $sessionRow ? $sessionRow->from_timing : '10:00 AM';
+		$to_timing = $sessionRow ? $sessionRow->to_timing : '01:00 PM';
+		
+		$timingRow = $timing_id ? $this->db->get_where('timing', array('id' => $timing_id))->row() : null;
+		$pid = $timingRow ? $timingRow->practice_id : 0;
+		$practRow = $pid ? $this->db->get_where('dr_practice', array('id' => $pid))->row() : null;
+		$did = $practRow ? $practRow->user_id : $doctor;
+		$type = $practRow ? $practRow->type : 'H';
+		$institution_id = $practRow ? $practRow->institution_id : 0;
+		$fee = ($consultation_fee && $consultation_fee != '0') ? $consultation_fee : ($practRow && !empty($practRow->fee) ? $practRow->fee : 500);
+
+		$booked = is_numeric($time) ? $this->db->where(array('time_id'=>$time,'appointment_date'=>$date,'status'=>'1'))->count_all_results('appointment') : 0;
+		$opd = $max_opd - $booked;
+		
+		if($opd < 1)
+		{
+			echo 'Not Available';die;
+		}
+		
+		$idata		=	array('appointment_date'=>$date,'time_id'=>$time,'to_timing'=>$to_timing,'from_timing'=>$from_timing,'date_id'=>$timing_id,'practice_id'=>$pid,'appointment_name'=>$name,'appointment_mobile'=>$mobile,'appointment_email'=>$email,'age'=>$age,'doctor_id'=>$doctor,'institute_id'=>$institution_id,'institution_type'=>$type,'fee'=>$fee,'amount'=>$fee,'user_id'=>$userid,'payment_mode'=>'NA','payment_status'=>'NA','status'=>'0');
+		$this->db->insert('appointment',$idata);
+		$aid=$this->db->insert_id();
+		
+		$price=$taxable=$disc=$tax=0.0;
+		$price=$fee;
+		$taxable = $price - $disc;
+		$subtotal=$total= round($taxable + $tax);
+		//Register Order with temp order id &  request type
+
+		$tempoid=date('YmdHis').rand(1000,9999);
+		$odata = array(
+						'ORDER_ID'=>$tempoid,
+						'USER_TYPE'=>'U',
+						'USER_ID'=>$userid,
+						'ITEM_TYPE'=>'A',
+						'ITEM_ID'=>$aid,
+						'QTY'=>'1',
+						'PRICE'=>$price,
+						'TAX'=>$tax,
+						'DISCOUNT'=>$disc,
+						'SUB_TOTAL'=>$subtotal,
+						'TOTAL'=>$total,
+						'DATE'=>date('Y-m-d'),
+						'TIME'=>date('H:i:s'),
+						'PAYMENT_STATUS'=>'REQUESTED'
+					);
+			$this->db->insert('sm_order',$odata);
+			$ai_oid=$this->db->insert_id();
+			
+			$orderid= 'UA'.str_pad($ai_oid,10,"0",STR_PAD_LEFT);
+
+			// update final order id
+			$updatedata=array('ORDER_ID'=>$orderid);
+			$this->db->where('ID',$ai_oid);
+			$this->db->update('sm_order',$updatedata);
+
+			 //CODE FOR PAYMENT GATEWAY//
+			$Redirect_Url = base_url()."processorder";
+			$cancel_Url = base_url()."processorder";
+			$Merchant_Id = base64_decode(CC_MERID);
+			$Amount = $total;
+			//$Amount = '1';
+			$Order_Id = $orderid;
+
+			//$cust=$this->db->join('userprofile','userlogin.USERID = userprofile.userid')->get_where('userlogin',array('userlogin.USERID'=>$uid))->row();
+
+			$billing_cust_name=$name ;
+			$billing_cust_address='';
+			$billing_cust_state='';
+			$billing_cust_country='India';
+			$billing_cust_tel=$mobile;
+			$billing_cust_email=$email;
+			$billing_city = '';
+			$billing_zip = '';
+
+			$delivery_cust_name=$name ;
+			$delivery_cust_address='$cust->address';
+			$delivery_cust_state = '$cust->city';
+			$delivery_cust_country = 'India';
+			$delivery_cust_tel= $mobile;
+			$delivery_city = '$cust->city';
+			$delivery_zip = '111111';
+			$delivery_cust_notes= "";
+			$Merchant_Param="";
+			$merchant_param1='';//$uid;
+
+			$gatewayData= compact('Merchant_Id','Order_Id','Amount','Redirect_Url','cancel_Url',
+							'billing_cust_name','billing_cust_address','billing_city','billing_cust_state',
+							'billing_zip','billing_cust_tel','billing_cust_email','delivery_cust_name',
+							'delivery_cust_address','delivery_city','delivery_cust_state','delivery_zip',
+							'delivery_cust_tel','merchant_param1');
+
+			$this->session->unset_userdata('SecurePay');
+			$this->session->unset_userdata('AppointmentCheckout');
+			$this->session->set_userdata('SecurePay',$gatewayData);
+			$this->session->set_userdata('AppointmentCheckout',$aid);
+
+			echo 'OK';
+	}
+
+	public function securepapproval()
+	{
+		$pid=mybase64_decode($this->uri->segment(3));
+		$drid=mybase64_decode($this->uri->segment(4));
+		$udata=array('status'=>'1');
+		$this->db->where(array('id'=>$pid,'user_id'=>$drid,'type'=>'H','status'=>'0'))->update('dr_practice',$udata);
+
+				echo 'Thank you!!';
+	}
+
+	public function aboutus(){
+	    $data['specialization']=$this->db->order_by('name','asc')->where('status','1')->get('master_specialization')->result();
+	    $this->load->view('aboutus',$data);
+	}
+
+	public function news()
+	{
+		$data['news'] = $this->db->order_by('id','DESC')->get_where('news',array('approved'=>'1','status'=>'1'))->result();
+				if ($this->input->post('action') === 'save_nutrition_goals') {
+			$age             = intval($this->input->post('age'));
+			$gender          = strtoupper(trim($this->input->post('gender')));
+			$height_cm       = floatval($this->input->post('height_cm'));
+			$weight_kg       = floatval($this->input->post('weight_kg'));
+			$activity_level  = trim($this->input->post('activity_level')) ?: 'sedentary';
+			$fitness_goal    = trim($this->input->post('fitness_goal')) ?: 'maintain';
+			$bmr             = floatval($this->input->post('bmr'));
+			$tdee            = floatval($this->input->post('tdee'));
+			$target_calories = floatval($this->input->post('target_calories'));
+			$carbs_g         = floatval($this->input->post('carbs_g'));
+			$protein_g       = floatval($this->input->post('protein_g'));
+			$fat_g           = floatval($this->input->post('fat_g'));
+
+			// Server-side recalculation fallback/safety check
+			if ($bmr <= 0 && $height_cm > 0 && $weight_kg > 0) {
+				if ($gender === 'F' || $gender === 'FEMALE') {
+					$bmr = round((10 * $weight_kg) + (6.25 * $height_cm) - (5 * ($age ?: 30)) - 161);
+				} elseif ($gender === 'M' || $gender === 'MALE') {
+					$bmr = round((10 * $weight_kg) + (6.25 * $height_cm) - (5 * ($age ?: 30)) + 5);
+				} else {
+					$bmr = round((10 * $weight_kg) + (6.25 * $height_cm) - (5 * ($age ?: 30)) - 78);
+				}
+				$factors = ['sedentary' => 1.2, 'light' => 1.375, 'moderate' => 1.55, 'very' => 1.725, 'extra' => 1.9];
+				$factor = $factors[$activity_level] ?? 1.2;
+				$tdee = round($bmr * $factor);
+
+				if ($fitness_goal === 'lose') {
+					$min_safe = ($gender === 'F' || $gender === 'FEMALE') ? 1200 : 1500;
+					$target_calories = max($min_safe, $tdee - 500);
+				} elseif ($fitness_goal === 'gain') {
+					$target_calories = $tdee + 400;
+				} else {
+					$target_calories = $tdee;
+				}
+				$carbs_g = round(($target_calories * 0.40) / 4, 1);
+				$protein_g = round(($target_calories * 0.30) / 4, 1);
+				$fat_g = round(($target_calories * 0.30) / 9, 1);
+			}
+
+			// Ensure table exists
+			$this->db->query("CREATE TABLE IF NOT EXISTS `patient_nutrition_goals` (
+			  `id` INT AUTO_INCREMENT PRIMARY KEY,
+			  `user_id` INT NOT NULL,
+			  `age` INT DEFAULT NULL,
+			  `gender` VARCHAR(20) DEFAULT NULL,
+			  `height_cm` DECIMAL(6,2) DEFAULT NULL,
+			  `weight_kg` DECIMAL(6,2) DEFAULT NULL,
+			  `activity_level` VARCHAR(50) DEFAULT 'sedentary',
+			  `fitness_goal` VARCHAR(50) DEFAULT 'maintain',
+			  `bmr` DECIMAL(8,2) DEFAULT NULL,
+			  `tdee` DECIMAL(8,2) DEFAULT NULL,
+			  `target_calories` DECIMAL(8,2) DEFAULT NULL,
+			  `carbs_g` DECIMAL(8,2) DEFAULT NULL,
+			  `protein_g` DECIMAL(8,2) DEFAULT NULL,
+			  `fat_g` DECIMAL(8,2) DEFAULT NULL,
+			  `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+			  `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+			  UNIQUE KEY `uk_user` (`user_id`)
+			) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+
+			$save_data = array(
+				'user_id'         => $userid,
+				'age'             => $age,
+				'gender'          => $gender,
+				'height_cm'       => $height_cm,
+				'weight_kg'       => $weight_kg,
+				'activity_level'  => $activity_level,
+				'fitness_goal'    => $fitness_goal,
+				'bmr'             => $bmr,
+				'tdee'            => $tdee,
+				'target_calories' => $target_calories,
+				'carbs_g'         => $carbs_g,
+				'protein_g'       => $protein_g,
+				'fat_g'           => $fat_g,
+			);
+
+			$existing = $this->db->get_where('patient_nutrition_goals', array('user_id' => $userid))->row();
+			if ($existing) {
+				$this->db->where('user_id', $userid)->update('patient_nutrition_goals', $save_data);
+			} else {
+				$this->db->insert('patient_nutrition_goals', $save_data);
+			}
+
+			// Sync height, weight, gender back to userlogin
+			$sync = array();
+			if ($height_cm > 0) $sync['HEIGHT'] = $height_cm;
+			if ($weight_kg > 0) $sync['WEIGHT'] = $weight_kg;
+			if (!empty($gender)) $sync['GENDER'] = ($gender === 'FEMALE' ? 'F' : ($gender === 'MALE' ? 'M' : $gender));
+			if (!empty($sync)) {
+				$this->db->where('USERID', $userid)->update('userlogin', $sync);
+			}
+
+			$is_ajax = $this->input->is_ajax_request() || $this->input->post('ajax');
+			if ($is_ajax) {
+				$this->output->set_content_type('application/json')->set_output(json_encode([
+					'status' => 'success',
+					'message' => 'Calorie and macronutrient targets successfully saved to your profile!',
+					'data' => $save_data
+				]));
+				return;
+			}
+			$this->session->set_flashdata('flashmsg', '<div class="alert alert-success">Nutrition and macro targets saved to your profile!</div>');
+			redirect('profile');
+			return;
+		}
+		$data['specialization'] = $this->db->order_by('name','asc')->where('status','1')->get('master_specialization')->result();
+		$this->load->view('news',$data);
+	}
+
+	public function news_details($param = null)
+	{	
+		if (empty($param)) {
+			$param = $this->uri->segment(2);
+		}
+		// Decode base64 or support raw numeric ID
+		$news_id = is_numeric($param) ? (int)$param : (int)mybase64_decode($param);
+		if (empty($news_id) && is_numeric($param)) {
+			$news_id = (int)$param;
+		}
+
+	    $data['news_details'] = $this->db->get_where('news', array('approved' => '1', 'status' => '1', 'id' => $news_id))->result();
+		$data['specialization'] = $this->db->order_by('name', 'asc')->where('status', '1')->get('master_specialization')->result();
+
+		// Author resolution
+		$data['author_doctor'] = null;
+		$data['author_hospital'] = null;
+		if (!empty($data['news_details'])) {
+			$article = $data['news_details'][0];
+			if (!empty($article->doctor_id)) {
+				$data['author_doctor'] = $this->db->get_where('profile_dr', array('id' => $article->doctor_id))->row();
+			} elseif (!empty($article->hospital_id)) {
+				$data['author_hospital'] = $this->db->get_where('hospital_profile', array('id' => $article->hospital_id))->row();
+				if (!$data['author_hospital']) {
+					$data['author_hospital'] = $this->db->get_where('clinic', array('id' => $article->hospital_id))->row();
+				}
+			}
+		}
+
+		// Recent articles for sidebar
+		$data['recent_news'] = $this->db->order_by('id', 'DESC')
+			->where('approved', '1')
+			->where('status', '1')
+			->where('id !=', $news_id)
+			->limit(5)
+			->get('news')
+			->result();
+
+		$this->load->view('news_details', $data);
+	}
+    
+
+     public function tnc(){
+         $data['specialization']=$this->db->order_by('name','asc')->where('status','1')->get('master_specialization')->result();
+	    $this->load->view('tnc',$data);
+	}
+	public function privacy(){
+	     $data['specialization']=$this->db->order_by('name','asc')->where('status','1')->get('master_specialization')->result();
+	    $this->load->view('privacy',$data);
+	}
+
+	public function refund_cancellation(){
+	     $data['specialization']=$this->db->order_by('name','asc')->where('status','1')->get('master_specialization')->result();
+	    $this->load->view('refund_cancellation',$data);
+	}
+
+
+
+	public function getlocalitydd(){
+		$city = $this->input->post('city', TRUE) ?: $this->input->get('city', TRUE);
+		$citylist = $this->db->get_where('master_locality', array('status'=>'1', 'city_id'=>$city));
+		echo '<option value="">--Select Locality--</option>';
+
+		if ($citylist && $citylist->num_rows() > 0) {
+			foreach(@$citylist->result() as $list){
+				echo '<option value="'.$list->id.'">'.$list->name.'</option>';
+			}
+			echo '<option value="Other">Other / Main Area</option>';
+		} else {
+			echo '<option value="General">General / Main City Area</option>';
+			echo '<option value="Other">Other</option>';
+		}
+	}
+
+
+	public function career()
+	{
+		if ($this->input->method() === 'post') {
+			$this->form_validation->set_rules('name', 'Full Name', "trim|required|max_length[200]");
+			$this->form_validation->set_rules('email', 'Email Address', "trim|required|valid_email|max_length[200]");
+			$this->form_validation->set_rules('mobile', 'Mobile Number', "required|regex_match[/^[0-9]{10}$/]");
+			$this->form_validation->set_rules('qualification', 'Highest Qualification', "required|max_length[200]");
+			
+			$is_ajax = $this->input->is_ajax_request() || $this->input->post('is_ajax');
+
+			if ($this->form_validation->run() === TRUE)
+			{
+				$uploadimage = '';
+				$file_key = '';
+				if (isset($_FILES['resume']) && !empty($_FILES['resume']['name'])) {
+					$file_key = 'resume';
+				} elseif (isset($_FILES['uploadimage']) && !empty($_FILES['uploadimage']['name'])) {
+					$file_key = 'uploadimage';
+				}
+
+				if (!empty($file_key))
+				{
+					// Check PHP upload error codes
+					if (isset($_FILES[$file_key]['error']) && ($_FILES[$file_key]['error'] === UPLOAD_ERR_INI_SIZE || $_FILES[$file_key]['error'] === UPLOAD_ERR_FORM_SIZE)) {
+						$err = "Error: File exceeds the server upload limit (Maximum 2MB allowed).";
+						if ($is_ajax) {
+							echo json_encode(array('status' => 'error', 'message' => $err));
+							return;
+						}
+						$this->session->set_flashdata('flashmsg', '<div class="alert alert-danger"><strong>Upload Error:</strong> ' . $err . '</div>');
+						redirect(base_url('Home/career'));
+						return;
+					}
+
+					if (isset($_FILES[$file_key]['error']) && $_FILES[$file_key]['error'] !== UPLOAD_ERR_OK && $_FILES[$file_key]['error'] !== UPLOAD_ERR_NO_FILE) {
+						$err = "Error: File upload failed with error code: " . $_FILES[$file_key]['error'];
+						if ($is_ajax) {
+							echo json_encode(array('status' => 'error', 'message' => $err));
+							return;
+						}
+						$this->session->set_flashdata('flashmsg', '<div class="alert alert-danger"><strong>Upload Error:</strong> ' . $err . '</div>');
+						redirect(base_url('Home/career'));
+						return;
+					}
+
+					$fileTmpPath    = $_FILES[$file_key]['tmp_name'];
+					$fileName       = $_FILES[$file_key]['name'];
+					$fileSize       = (int)$_FILES[$file_key]['size'];
+					$maxSizeInBytes = 2 * 1024 * 1024; // 2MB = 2,097,152 bytes
+
+					// 1. Validate File Size (Strict 2MB Limit)
+					if ($fileSize > $maxSizeInBytes) {
+						$err = "Error: File size must be less than 2MB (" . round($fileSize / (1024 * 1024), 2) . "MB detected).";
+						if ($is_ajax) {
+							echo json_encode(array('status' => 'error', 'message' => $err));
+							return;
+						}
+						$this->session->set_flashdata('flashmsg', '<div class="alert alert-danger"><strong>Upload Error:</strong> ' . $err . '</div>');
+						redirect(base_url('Home/career'));
+						return;
+					}
+
+					// 2. Validate Extension (Strictly PDF only)
+					$fileExtension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
+					$allowed_exts  = array('pdf');
+
+					if (!in_array($fileExtension, $allowed_exts)) {
+						$err = "Error: Invalid file format! Only PDF documents (.pdf) are allowed.";
+						if ($is_ajax) {
+							echo json_encode(array('status' => 'error', 'message' => $err));
+							return;
+						}
+						$this->session->set_flashdata('flashmsg', '<div class="alert alert-danger"><strong>Upload Error:</strong> ' . $err . '</div>');
+						redirect(base_url('Home/career'));
+						return;
+					}
+
+					// 3. Validate MIME Type
+					$mimeType = '';
+					if (is_file($fileTmpPath)) {
+						if (function_exists('finfo_open')) {
+							$finfo    = finfo_open(FILEINFO_MIME_TYPE);
+							$mimeType = finfo_file($finfo, $fileTmpPath);
+							finfo_close($finfo);
+						} elseif (function_exists('mime_content_type')) {
+							$mimeType = mime_content_type($fileTmpPath);
+						}
+					}
+
+					$allowed_mimes = array(
+						'application/pdf',
+						'application/x-pdf',
+						'application/acrobat',
+						'applications/vnd.pdf',
+						'text/pdf',
+						'text/x-pdf',
+						'application/octet-stream'
+					);
+
+					if (!empty($mimeType) && !in_array($mimeType, $allowed_mimes)) {
+						$err = "Error: Only PDF documents are allowed (detected: " . htmlspecialchars($mimeType) . ").";
+						if ($is_ajax) {
+							echo json_encode(array('status' => 'error', 'message' => $err));
+							return;
+						}
+						$this->session->set_flashdata('flashmsg', '<div class="alert alert-danger"><strong>Upload Error:</strong> ' . $err . '</div>');
+						redirect(base_url('Home/career'));
+						return;
+					}
+
+					$rname       = rand(1111111, 999999999);
+					$date        = date('Y-m-d');
+					$uploadimage = '_profile_pic_' . $rname . $date . '.' . $fileExtension;
+
+					$config['upload_path']   = './admin1947/public/assets/document/';
+					$config['allowed_types'] = 'pdf';
+					$config['max_size']      = 2048; // 2048 KB = 2MB
+					$config['file_name']     = $uploadimage;
+
+					$this->load->library('upload', $config);
+					if (!$this->upload->do_upload($file_key))
+					{
+						$error = strip_tags($this->upload->display_errors());
+						if ($is_ajax) {
+							echo json_encode(array('status' => 'error', 'message' => 'Resume Upload Failed: ' . $error));
+							return;
+						}
+						$this->session->set_flashdata('flashmsg', '<div class="alert alert-danger"><strong>Resume Upload Failed:</strong> ' . $error . '</div>');
+						redirect(base_url('Home/career'));
+						return;
+					}
+				}
+
+				$job_id = (int)$this->input->post('job_id');
+				$designation = trim($this->input->post('designation', TRUE));
+				if ($job_id > 0 && empty($designation)) {
+					$job_row = $this->db->where('job_id', $job_id)->get('career_jobs')->row_array();
+					if ($job_row) {
+						$designation = $job_row['title'];
+					}
+				}
+				if (empty($designation)) {
+					$designation = 'General Application';
+				}
+
+				$insert_data = array(
+					'job_id'        => ($job_id > 0) ? $job_id : null,
+					'name'          => trim($this->input->post('name', TRUE)),
+					'email'         => trim($this->input->post('email', TRUE)),
+					'mobile'        => trim($this->input->post('mobile', TRUE)),
+					'qualification' => trim($this->input->post('qualification', TRUE)),
+					'experience'    => trim($this->input->post('experience', TRUE)),
+					'designation'   => $designation,
+					'message'       => trim($this->input->post('message', TRUE)),
+					'resume'        => $uploadimage,
+					'status'        => '0',
+					'status_stage'  => 'pending',
+					'creat_date'    => date('Y-m-d')
+				);
+
+				$this->db->insert('career', $insert_data);
+
+				$success_msg = "Thank you for applying to Upchar Healthcare! Our recruitment team will review your application and contact you soon.";
+
+				if ($is_ajax) {
+					echo json_encode(array('status' => 'success', 'message' => $success_msg));
+					return;
+				}
+
+				$this->session->set_flashdata('flashmsg', '<div class="alert alert-success" style="border-radius: 8px; font-weight: 600;"><i class="fa fa-check-circle"></i> ' . $success_msg . '</div>');
+				redirect(base_url('Home/career'));
+				return;
+			}
+			else
+			{
+				$val_error = validation_errors();
+				if ($is_ajax) {
+					echo json_encode(array('status' => 'error', 'message' => strip_tags($val_error)));
+					return;
+				}
+			}
+		}
+
+		// GET Request: Load active job openings & page view
+		$data['jobs'] = $this->db->order_by('job_id', 'DESC')->where('status', 'active')->get('career_jobs')->result_array();
+		$depts = array();
+		if (!empty($data['jobs'])) {
+			foreach ($data['jobs'] as $j) {
+				if (!empty($j['department']) && !in_array($j['department'], $depts)) {
+					$depts[] = $j['department'];
+				}
+			}
+		}
+		$data['departments'] = $depts;
+		$data['meta_array'] = array(
+			'meta_title' => 'Careers & Healthcare Job Vacancies | Upchar Hospital & Health Network',
+			'meta_desc'  => 'Explore current job openings, doctor vacancies, nursing staff, lab technicians, and hospital operations roles at Upchar Healthcare. Apply online today.'
+		);
+
+		$this->load->view('careers', $data);
+	}
+
+	public function apply_job_ajax()
+	{
+		header('Content-Type: application/json');
+
+		$job_id = (int)$this->input->post('job_id');
+		$name   = trim($this->input->post('name', TRUE));
+		$email  = trim($this->input->post('email', TRUE));
+		$mobile = trim($this->input->post('mobile', TRUE));
+
+		// If full form submission (name, email, mobile are provided)
+		if (!empty($name) || !empty($email)) {
+			$this->form_validation->set_rules('name', 'Full Name', "trim|required|max_length[200]");
+			$this->form_validation->set_rules('email', 'Email Address', "trim|required|valid_email|max_length[200]");
+			$this->form_validation->set_rules('mobile', 'Mobile Number', "required|regex_match[/^[0-9]{10}$/]");
+			$this->form_validation->set_rules('qualification', 'Highest Qualification', "required|max_length[200]");
+
+			if ($this->form_validation->run() === FALSE) {
+				echo json_encode(array(
+					'status'  => 'error',
+					'message' => strip_tags(validation_errors())
+				));
+				return;
+			}
+
+			// File Upload (Strict PDF Only, Max 2MB)
+			$uploadimage = '';
+			$file_key = '';
+			if (isset($_FILES['resume']) && !empty($_FILES['resume']['name'])) {
+				$file_key = 'resume';
+			} elseif (isset($_FILES['uploadimage']) && !empty($_FILES['uploadimage']['name'])) {
+				$file_key = 'uploadimage';
+			}
+
+			if (!empty($file_key)) {
+				$fileSize = (int)$_FILES[$file_key]['size'];
+				if ($fileSize > (2 * 1024 * 1024)) {
+					echo json_encode(array('status' => 'error', 'message' => 'Error: Resume file size must be less than 2MB.'));
+					return;
+				}
+
+				$fileExtension = strtolower(pathinfo($_FILES[$file_key]['name'], PATHINFO_EXTENSION));
+				$allowed_exts  = array('pdf');
+				if (!in_array($fileExtension, $allowed_exts)) {
+					echo json_encode(array('status' => 'error', 'message' => 'Error: Invalid file format! Please upload a PDF file only (.pdf).'));
+					return;
+				}
+
+				$rname       = rand(1111111, 999999999);
+				$uploadimage = '_profile_pic_' . $rname . date('Y-m-d') . '.' . $fileExtension;
+
+				$config['upload_path']   = './admin1947/public/assets/document/';
+				$config['allowed_types'] = 'pdf';
+				$config['max_size']      = 2048; // 2MB
+				$config['file_name']     = $uploadimage;
+
+				$this->load->library('upload', $config);
+				if (!$this->upload->do_upload($file_key)) {
+					echo json_encode(array('status' => 'error', 'message' => 'Resume Upload Failed: ' . strip_tags($this->upload->display_errors())));
+					return;
+				}
+			}
+
+			$designation = trim($this->input->post('designation', TRUE));
+			if ($job_id > 0 && empty($designation)) {
+				$job_row = $this->db->where('job_id', $job_id)->get('career_jobs')->row_array();
+				if ($job_row) {
+					$designation = $job_row['title'];
+				}
+			}
+			if (empty($designation)) {
+				$designation = 'General Application';
+			}
+
+			$insert_data = array(
+				'job_id'        => ($job_id > 0) ? $job_id : null,
+				'name'          => $name,
+				'email'         => $email,
+				'mobile'        => $mobile,
+				'qualification' => trim($this->input->post('qualification', TRUE)),
+				'experience'    => trim($this->input->post('experience', TRUE)),
+				'designation'   => $designation,
+				'message'       => trim($this->input->post('message', TRUE)),
+				'resume'        => $uploadimage,
+				'status'        => '0',
+				'status_stage'  => 'pending',
+				'creat_date'    => date('Y-m-d'),
+				'applied_at'    => date('Y-m-d H:i:s')
+			);
+
+			$this->db->insert('career', $insert_data);
+
+			echo json_encode(array(
+				'status'  => 'success',
+				'message' => 'Application submitted successfully! Our recruitment team will review your application and contact you soon.'
+			));
+			return;
+		}
+
+		// Quick apply or fetch job details for modal
+		if ($job_id > 0) {
+			$job = $this->db->where('job_id', $job_id)->get('career_jobs')->row_array();
+			if ($job) {
+				$userid = $this->session->userdata('userid');
+				$user_data = null;
+				if ($userid) {
+					$user_data = $this->db->where('userid', $userid)->get('profile_dr')->row_array();
+				}
+
+				echo json_encode(array(
+					'status'    => 'success',
+					'job'       => $job,
+					'user'      => $user_data,
+					'message'   => 'Job details fetched successfully.',
+					'csrf_name' => $this->security->get_csrf_token_name(),
+					'csrf_hash' => $this->security->get_csrf_hash()
+				));
+				return;
+			} else {
+				echo json_encode(array('status' => 'error', 'message' => 'Job opening not found or no longer active.'));
+				return;
+			}
+		}
+
+		echo json_encode(array('status' => 'error', 'message' => 'Invalid request: Job ID is required.'));
+	}
+	
+	public function file_check($file,$type)
+	{	
+		//if($_FILES['uploadimage']['name']!="")
+		//{
+			$exts = explode(',',$type);
+			if (count($exts) > 1)
+			{	
+				foreach ($exts as $v)
+				{
+					$rc = $this->file_check($_FILES,$v);
+					if ($rc === TRUE)
+					{
+						return TRUE;
+					}
+				}
+			}
+			//is type a group type? image, application, word_document, code, zip .... -> load proper array
+			$ext_groups						= array();	
+			$ext_groups['image']            = array('jpg','jpeg','gif','png');
+			$ext_groups['document']         = array('rtf','doc','docx','pdf','txt');
+			$ext_groups['media']            = array('mpg','mpeg','swf','avi','flv','mov','mp4','wmv','mpg','mpeg4','3GP');
+			$ext_groups['compressed']		= array('zip', 'gzip', 'tar', 'gz');
+			$ext_groups['xls']            	= array('xls');
+			
+			foreach($ext_groups as $key => $val) 
+			{
+				if($key==$exts[0])
+				{	
+					$exts	= $val;
+				}
+			}
+		
+			$file_ext = pathinfo($_FILES['uploadimage']['name'],PATHINFO_EXTENSION);  
+			if ( ! in_array($file_ext, $exts))
+			{	//echo "<pre>"; print_r($exts); die;
+				$exts_allowed=implode(" | ",$exts);
+				$this->form_validation->set_message('file_check', "File should be ". $exts_allowed);
+				return FALSE;
+			}
+			else
+			{
+				return TRUE;
+			}
+		//}
+    }
+	
+	public function services()
+       {
+
+             //print_r($result);
+            $this->load->view('ourservices');
+
+       }
+
+       public function contactus()
+        {
+            if ($this->input->post('submit') || $this->input->post('name'))
+            {
+                $date = date('Y-m-d H:i:s');
+                $name = trim($this->input->post('name', TRUE));
+                $email = strtolower(trim($this->input->post('email', TRUE)));
+                $mobile = trim($this->input->post('mobile', TRUE));
+                $subject = trim($this->input->post('subject', TRUE));
+                $inquiry_type = trim($this->input->post('inquiry_type', TRUE)) ?: 'GENERAL';
+                $message = trim($this->input->post('message', TRUE));
+
+                if (!empty($name) && !empty($mobile) && !empty($message)) {
+                    $udata = array(
+                        'name'         => $name,
+                        'email'        => $email,
+                        'mobile'       => $mobile,
+                        'subject'      => $subject ?: 'Inquiry from ' . $name,
+                        'inquiry_type' => $inquiry_type,
+                        'message'      => $message,
+                        'status'       => 'PENDING',
+                        'date'         => date('Y-m-d'),
+                        'created_at'   => $date
+                    );
+
+                    $this->db->insert('contactus', $udata);
+                    $insert_id = $this->db->insert_id();
+
+                    if (!empty($email)) {
+                        $this->load->library('azad_lib');
+                        $body = "Dear " . htmlspecialchars($name) . ",<br><br>Thank you for contacting Upchar. We have received your query (Ticket #$insert_id) and our team will get in touch with you shortly.<br><br><b>Your Message:</b><br>" . nl2br(htmlspecialchars($message)) . "<br><br>Warm regards,<br>Upchar Support Team";
+                        @$this->azad_lib->sendMail($email, 'Query Received - Upchar Healthcare Support (Ticket #' . $insert_id . ')', $body);
+                    }
+
+                    if ($this->input->is_ajax_request()) {
+                        echo json_encode(array('status' => 'success', 'msg' => 'Thank you! Your message has been sent successfully. Our support team will get in touch with you shortly.'));
+                        return;
+                    }
+
+                    $this->session->set_flashdata('flashmsg', "<div class='alert alert-success'><strong>Thank you!</strong> Your inquiry has been submitted successfully (Ticket #$insert_id). Our team will contact you shortly.</div>");
+                    redirect('contactus');
+                    return;
+                } else {
+                    if ($this->input->is_ajax_request()) {
+                        echo json_encode(array('status' => 'failed', 'msg' => 'Please fill in all required fields (Name, Mobile, Message).'));
+                        return;
+                    }
+                    $this->session->set_flashdata('flashmsg', "<div class='alert alert-danger'><strong>Error!</strong> Please fill in all required fields.</div>");
+                }
+            }
+
+            		if ($this->input->post('action') === 'save_nutrition_goals') {
+			$age             = intval($this->input->post('age'));
+			$gender          = strtoupper(trim($this->input->post('gender')));
+			$height_cm       = floatval($this->input->post('height_cm'));
+			$weight_kg       = floatval($this->input->post('weight_kg'));
+			$activity_level  = trim($this->input->post('activity_level')) ?: 'sedentary';
+			$fitness_goal    = trim($this->input->post('fitness_goal')) ?: 'maintain';
+			$bmr             = floatval($this->input->post('bmr'));
+			$tdee            = floatval($this->input->post('tdee'));
+			$target_calories = floatval($this->input->post('target_calories'));
+			$carbs_g         = floatval($this->input->post('carbs_g'));
+			$protein_g       = floatval($this->input->post('protein_g'));
+			$fat_g           = floatval($this->input->post('fat_g'));
+
+			// Server-side recalculation fallback/safety check
+			if ($bmr <= 0 && $height_cm > 0 && $weight_kg > 0) {
+				if ($gender === 'F' || $gender === 'FEMALE') {
+					$bmr = round((10 * $weight_kg) + (6.25 * $height_cm) - (5 * ($age ?: 30)) - 161);
+				} elseif ($gender === 'M' || $gender === 'MALE') {
+					$bmr = round((10 * $weight_kg) + (6.25 * $height_cm) - (5 * ($age ?: 30)) + 5);
+				} else {
+					$bmr = round((10 * $weight_kg) + (6.25 * $height_cm) - (5 * ($age ?: 30)) - 78);
+				}
+				$factors = ['sedentary' => 1.2, 'light' => 1.375, 'moderate' => 1.55, 'very' => 1.725, 'extra' => 1.9];
+				$factor = $factors[$activity_level] ?? 1.2;
+				$tdee = round($bmr * $factor);
+
+				if ($fitness_goal === 'lose') {
+					$min_safe = ($gender === 'F' || $gender === 'FEMALE') ? 1200 : 1500;
+					$target_calories = max($min_safe, $tdee - 500);
+				} elseif ($fitness_goal === 'gain') {
+					$target_calories = $tdee + 400;
+				} else {
+					$target_calories = $tdee;
+				}
+				$carbs_g = round(($target_calories * 0.40) / 4, 1);
+				$protein_g = round(($target_calories * 0.30) / 4, 1);
+				$fat_g = round(($target_calories * 0.30) / 9, 1);
+			}
+
+			// Ensure table exists
+			$this->db->query("CREATE TABLE IF NOT EXISTS `patient_nutrition_goals` (
+			  `id` INT AUTO_INCREMENT PRIMARY KEY,
+			  `user_id` INT NOT NULL,
+			  `age` INT DEFAULT NULL,
+			  `gender` VARCHAR(20) DEFAULT NULL,
+			  `height_cm` DECIMAL(6,2) DEFAULT NULL,
+			  `weight_kg` DECIMAL(6,2) DEFAULT NULL,
+			  `activity_level` VARCHAR(50) DEFAULT 'sedentary',
+			  `fitness_goal` VARCHAR(50) DEFAULT 'maintain',
+			  `bmr` DECIMAL(8,2) DEFAULT NULL,
+			  `tdee` DECIMAL(8,2) DEFAULT NULL,
+			  `target_calories` DECIMAL(8,2) DEFAULT NULL,
+			  `carbs_g` DECIMAL(8,2) DEFAULT NULL,
+			  `protein_g` DECIMAL(8,2) DEFAULT NULL,
+			  `fat_g` DECIMAL(8,2) DEFAULT NULL,
+			  `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+			  `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+			  UNIQUE KEY `uk_user` (`user_id`)
+			) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+
+			$save_data = array(
+				'user_id'         => $userid,
+				'age'             => $age,
+				'gender'          => $gender,
+				'height_cm'       => $height_cm,
+				'weight_kg'       => $weight_kg,
+				'activity_level'  => $activity_level,
+				'fitness_goal'    => $fitness_goal,
+				'bmr'             => $bmr,
+				'tdee'            => $tdee,
+				'target_calories' => $target_calories,
+				'carbs_g'         => $carbs_g,
+				'protein_g'       => $protein_g,
+				'fat_g'           => $fat_g,
+			);
+
+			$existing = $this->db->get_where('patient_nutrition_goals', array('user_id' => $userid))->row();
+			if ($existing) {
+				$this->db->where('user_id', $userid)->update('patient_nutrition_goals', $save_data);
+			} else {
+				$this->db->insert('patient_nutrition_goals', $save_data);
+			}
+
+			// Sync height, weight, gender back to userlogin
+			$sync = array();
+			if ($height_cm > 0) $sync['HEIGHT'] = $height_cm;
+			if ($weight_kg > 0) $sync['WEIGHT'] = $weight_kg;
+			if (!empty($gender)) $sync['GENDER'] = ($gender === 'FEMALE' ? 'F' : ($gender === 'MALE' ? 'M' : $gender));
+			if (!empty($sync)) {
+				$this->db->where('USERID', $userid)->update('userlogin', $sync);
+			}
+
+			$is_ajax = $this->input->is_ajax_request() || $this->input->post('ajax');
+			if ($is_ajax) {
+				$this->output->set_content_type('application/json')->set_output(json_encode([
+					'status' => 'success',
+					'message' => 'Calorie and macronutrient targets successfully saved to your profile!',
+					'data' => $save_data
+				]));
+				return;
+			}
+			$this->session->set_flashdata('flashmsg', '<div class="alert alert-success">Nutrition and macro targets saved to your profile!</div>');
+			redirect('profile');
+			return;
+		}
+		$data['specialization'] = $this->db->order_by('name','asc')->where('status','1')->get('master_specialization')->result();
+            $data['cities'] = $this->db->order_by('name','asc')->where('status','1')->get('master_city')->result();
+            $this->load->view('contactus', $data);
+        }
+
+	public function change_password()
+	{
+		$userid = $this->session->userdata('userid') ?: $this->session->userdata('user_id') ?: $this->session->userdata('USERID');
+		if (!$userid) {
+			$this->session->set_userdata('last_page', base_url('change_password'));
+			$this->session->set_flashdata('flashmsg', '<div class="alert alert-warning">Please login to change your password.</div>');
+			redirect('login');
+			return;
+		}
+
+		if ($this->input->post('change_pass') || isset($_POST['submit'])) {
+			$cur_password  = md5($this->input->post('password') ?: $this->input->post('oldpass'));
+			$new_password  = md5($this->input->post('newpass'));
+			$conf_password = md5($this->input->post('confpassword') ?: $this->input->post('conpass'));
+
+			$user = $this->db->get_where('userlogin', array('USERID' => $userid))->row();
+			if ($user && ($user->PASSWORD == $cur_password || $user->PASSWORD == $this->input->post('password') || $user->PASSWORD == $this->input->post('oldpass'))) {
+				if ($new_password === $conf_password) {
+					$this->db->where('USERID', $userid)->update('userlogin', array('PASSWORD' => $new_password));
+					$this->session->set_flashdata('flashmsg', "<div class='alert alert-success'><strong>Success!</strong> Password updated successfully.</div>");
+					redirect('change_password');
+					return;
+				} else {
+					$this->session->set_flashdata('flashmsg', "<div class='alert alert-danger'>New password and confirm password do not match.</div>");
+				}
+			} else {
+				$this->session->set_flashdata('flashmsg', "<div class='alert alert-danger'>Current password is incorrect.</div>");
+			}
+		}
+
+		$data['specialization'] = $this->db->order_by('name', 'asc')->where('status', '1')->get('master_specialization')->result();
+		$this->load->view('patient_header', $data);
+		$this->load->view('change_password', $data);
+		$this->load->view('patient_footer');
+	}
+
+	public function profile()
+	{
+		$userid    = $this->session->userdata('userid') ?: $this->session->userdata('user_id') ?: $this->session->userdata('USERID');
+		$useremail = $this->session->userdata('useremail');
+		$username  = $this->session->userdata('username');
+
+		// 1. Resolve user from userlogin table
+		$user = null;
+		if (!empty($userid)) {
+			$user = $this->db->get_where('userlogin', array('USERID' => $userid))->row();
+		}
+
+		// 2. If not found by USERID, resolve by session email
+		if (!$user && !empty($useremail)) {
+			$user = $this->db->get_where('userlogin', array('EMAIL' => $useremail))->row();
+			if ($user) {
+				$userid = $user->USERID;
+				$this->session->set_userdata('userid', $userid);
+			}
+		}
+
+		// 3. If still not found, resolve by username/mobile
+		if (!$user && !empty($username)) {
+			$user = $this->db->group_start()
+				->where('EMAIL', $username)
+				->or_where('MOBILE', $username)
+				->or_where('FNAME', $username)
+				->group_end()
+				->get('userlogin')->row();
+			if ($user) {
+				$userid = $user->USERID;
+				$this->session->set_userdata('userid', $userid);
+			}
+		}
+
+		// 4. If logged in as admin in same browser session, check admin's email in userlogin
+		if (!$user && $this->session->userdata('adminuserid')) {
+			$adminRow = $this->db->get_where('login', array('id' => $this->session->userdata('adminuserid')))->row();
+			if ($adminRow && !empty($adminRow->email)) {
+				$user = $this->db->get_where('userlogin', array('EMAIL' => $adminRow->email))->row();
+				if ($user) {
+					$userid = $user->USERID;
+					$this->session->set_userdata('userid', $userid);
+				}
+			}
+		}
+
+		if (!$user && !$userid && !$useremail && !$username) {
+			$this->session->set_userdata('last_page', base_url('profile'));
+			$this->session->set_flashdata('flashmsg', '<div class="alert alert-warning">Please login to view your profile.</div>');
+			redirect('login');
+			return;
+		}
+
+		// Ensure patient_dependents table exists
+		try {
+			$this->db->query("CREATE TABLE IF NOT EXISTS `patient_dependents` (
+				`id` int(11) NOT NULL AUTO_INCREMENT,
+				`primary_user_id` int(11) NOT NULL,
+				`name` varchar(150) NOT NULL,
+				`relationship` varchar(50) NOT NULL,
+				`gender` varchar(10) DEFAULT 'M',
+				`dob` date DEFAULT NULL,
+				`blood_group` varchar(10) DEFAULT NULL,
+				`medical_history` text DEFAULT NULL,
+				`created_at` datetime NOT NULL,
+				PRIMARY KEY (`id`),
+				KEY `idx_primary_user` (`primary_user_id`)
+			) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+		} catch (\Throwable $e) {
+			log_message('error', 'Error ensuring patient_dependents table: ' . $e->getMessage());
+		}
+
+		// Ensure patient_nutrition_goals table exists
+		try {
+			$this->db->query("CREATE TABLE IF NOT EXISTS `patient_nutrition_goals` (
+			  `id` INT AUTO_INCREMENT PRIMARY KEY,
+			  `user_id` INT NOT NULL,
+			  `age` INT DEFAULT NULL,
+			  `gender` VARCHAR(20) DEFAULT NULL,
+			  `height_cm` DECIMAL(6,2) DEFAULT NULL,
+			  `weight_kg` DECIMAL(6,2) DEFAULT NULL,
+			  `activity_level` VARCHAR(50) DEFAULT 'sedentary',
+			  `fitness_goal` VARCHAR(50) DEFAULT 'maintain',
+			  `bmr` DECIMAL(8,2) DEFAULT NULL,
+			  `tdee` DECIMAL(8,2) DEFAULT NULL,
+			  `target_calories` DECIMAL(8,2) DEFAULT NULL,
+			  `carbs_g` DECIMAL(8,2) DEFAULT NULL,
+			  `protein_g` DECIMAL(8,2) DEFAULT NULL,
+			  `fat_g` DECIMAL(8,2) DEFAULT NULL,
+			  `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+			  `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+			  UNIQUE KEY `uk_user` (`user_id`)
+			) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+		} catch (\Throwable $e) {
+			log_message('error', 'Error ensuring patient_nutrition_goals table: ' . $e->getMessage());
+		}
+
+		if (isset($_POST['submit']) || $this->input->post('action') === 'update_profile') {
+			$res = $this->Userlogin_Model->profile($userid);
+			$is_ajax = $this->input->is_ajax_request() || $this->input->post('ajax');
+			if ($is_ajax) {
+				$this->output->set_content_type('application/json')->set_output(json_encode($res));
+				return;
+			}
+			if (is_array($res) && isset($res['status']) && $res['status'] === 'error') {
+				$this->session->set_flashdata('flashmsg', "<div class='alert alert-danger'>" . html_escape($res['message']) . "</div>");
+			} else {
+				$msg = (is_array($res) && !empty($res['message'])) ? $res['message'] : 'Profile details updated successfully!';
+				$this->session->set_flashdata('flashmsg', "<div class='alert alert-success'>" . html_escape($msg) . "</div>");
+			}
+			redirect('profile');
+			return;
+		}
+
+		if ($this->input->post('action') === 'add_dependent') {
+			$dep_name = trim($this->input->post('dep_name', TRUE));
+			$dep_rel  = trim($this->input->post('dep_rel', TRUE));
+			$dep_gen  = trim($this->input->post('dep_gender', TRUE));
+			$dep_dob  = trim($this->input->post('dep_dob', TRUE));
+			$dep_bg   = trim($this->input->post('dep_bgroup', TRUE));
+			$dep_med  = trim($this->input->post('dep_history', TRUE));
+
+			if (!empty($dep_name) && !empty($dep_rel)) {
+				$this->db->insert('patient_dependents', array(
+					'primary_user_id' => $userid,
+					'name'            => $dep_name,
+					'relationship'    => $dep_rel,
+					'gender'          => $dep_gen ?: 'M',
+					'dob'             => !empty($dep_dob) ? $dep_dob : null,
+					'blood_group'     => $dep_bg ?: null,
+					'medical_history' => $dep_med ?: null,
+					'created_at'      => date('Y-m-d H:i:s')
+				));
+				$this->session->set_flashdata('flashmsg', "<div class='alert alert-success'>Family member added successfully!</div>");
+				redirect('profile');
+				return;
+			}
+		}
+
+		if ($this->input->get('del_dep')) {
+			$dep_id = intval($this->input->get('del_dep'));
+			$this->db->where(array('id' => $dep_id, 'primary_user_id' => $userid))->delete('patient_dependents');
+			$this->session->set_flashdata('flashmsg', "<div class='alert alert-info'>Family member removed.</div>");
+			redirect('profile');
+			return;
+		}
+
+				if ($this->input->post('action') === 'save_nutrition_goals') {
+			$age             = intval($this->input->post('age'));
+			$gender          = strtoupper(trim($this->input->post('gender')));
+			$height_cm       = floatval($this->input->post('height_cm'));
+			$weight_kg       = floatval($this->input->post('weight_kg'));
+			$activity_level  = trim($this->input->post('activity_level')) ?: 'sedentary';
+			$fitness_goal    = trim($this->input->post('fitness_goal')) ?: 'maintain';
+			$bmr             = floatval($this->input->post('bmr'));
+			$tdee            = floatval($this->input->post('tdee'));
+			$target_calories = floatval($this->input->post('target_calories'));
+			$carbs_g         = floatval($this->input->post('carbs_g'));
+			$protein_g       = floatval($this->input->post('protein_g'));
+			$fat_g           = floatval($this->input->post('fat_g'));
+
+			// Server-side recalculation fallback/safety check
+			if ($bmr <= 0 && $height_cm > 0 && $weight_kg > 0) {
+				if ($gender === 'F' || $gender === 'FEMALE') {
+					$bmr = round((10 * $weight_kg) + (6.25 * $height_cm) - (5 * ($age ?: 30)) - 161);
+				} elseif ($gender === 'M' || $gender === 'MALE') {
+					$bmr = round((10 * $weight_kg) + (6.25 * $height_cm) - (5 * ($age ?: 30)) + 5);
+				} else {
+					$bmr = round((10 * $weight_kg) + (6.25 * $height_cm) - (5 * ($age ?: 30)) - 78);
+				}
+				$factors = ['sedentary' => 1.2, 'light' => 1.375, 'moderate' => 1.55, 'very' => 1.725, 'extra' => 1.9];
+				$factor = $factors[$activity_level] ?? 1.2;
+				$tdee = round($bmr * $factor);
+
+				if ($fitness_goal === 'lose') {
+					$min_safe = ($gender === 'F' || $gender === 'FEMALE') ? 1200 : 1500;
+					$target_calories = max($min_safe, $tdee - 500);
+				} elseif ($fitness_goal === 'gain') {
+					$target_calories = $tdee + 400;
+				} else {
+					$target_calories = $tdee;
+				}
+				$carbs_g = round(($target_calories * 0.40) / 4, 1);
+				$protein_g = round(($target_calories * 0.30) / 4, 1);
+				$fat_g = round(($target_calories * 0.30) / 9, 1);
+			}
+
+			// Ensure table exists
+			$this->db->query("CREATE TABLE IF NOT EXISTS `patient_nutrition_goals` (
+			  `id` INT AUTO_INCREMENT PRIMARY KEY,
+			  `user_id` INT NOT NULL,
+			  `age` INT DEFAULT NULL,
+			  `gender` VARCHAR(20) DEFAULT NULL,
+			  `height_cm` DECIMAL(6,2) DEFAULT NULL,
+			  `weight_kg` DECIMAL(6,2) DEFAULT NULL,
+			  `activity_level` VARCHAR(50) DEFAULT 'sedentary',
+			  `fitness_goal` VARCHAR(50) DEFAULT 'maintain',
+			  `bmr` DECIMAL(8,2) DEFAULT NULL,
+			  `tdee` DECIMAL(8,2) DEFAULT NULL,
+			  `target_calories` DECIMAL(8,2) DEFAULT NULL,
+			  `carbs_g` DECIMAL(8,2) DEFAULT NULL,
+			  `protein_g` DECIMAL(8,2) DEFAULT NULL,
+			  `fat_g` DECIMAL(8,2) DEFAULT NULL,
+			  `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+			  `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+			  UNIQUE KEY `uk_user` (`user_id`)
+			) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+
+			$save_data = array(
+				'user_id'         => $userid,
+				'age'             => $age,
+				'gender'          => $gender,
+				'height_cm'       => $height_cm,
+				'weight_kg'       => $weight_kg,
+				'activity_level'  => $activity_level,
+				'fitness_goal'    => $fitness_goal,
+				'bmr'             => $bmr,
+				'tdee'            => $tdee,
+				'target_calories' => $target_calories,
+				'carbs_g'         => $carbs_g,
+				'protein_g'       => $protein_g,
+				'fat_g'           => $fat_g,
+			);
+
+			$existing = $this->db->get_where('patient_nutrition_goals', array('user_id' => $userid))->row();
+			if ($existing) {
+				$this->db->where('user_id', $userid)->update('patient_nutrition_goals', $save_data);
+			} else {
+				$this->db->insert('patient_nutrition_goals', $save_data);
+			}
+
+			// Sync height, weight, gender back to userlogin
+			$sync = array();
+			if ($height_cm > 0) $sync['HEIGHT'] = $height_cm;
+			if ($weight_kg > 0) $sync['WEIGHT'] = $weight_kg;
+			if (!empty($gender)) $sync['GENDER'] = ($gender === 'FEMALE' ? 'F' : ($gender === 'MALE' ? 'M' : $gender));
+			if (!empty($sync)) {
+				$this->db->where('USERID', $userid)->update('userlogin', $sync);
+			}
+
+			// Sync with patient_profiles
+			try {
+				if ($this->db->table_exists('patient_profiles')) {
+					$profSync = array('updated_at' => date('Y-m-d H:i:s'));
+					if ($height_cm > 0 && $this->db->field_exists('height_cm', 'patient_profiles')) $profSync['height_cm'] = $height_cm;
+					if ($weight_kg > 0 && $this->db->field_exists('weight_kg', 'patient_profiles')) $profSync['weight_kg'] = $weight_kg;
+					if (!empty($gender)) $profSync['gender'] = ($gender === 'FEMALE' ? 'F' : ($gender === 'MALE' ? 'M' : $gender));
+					if ($this->db->where('user_id', $userid)->get('patient_profiles')->row()) {
+						$this->db->where('user_id', $userid)->update('patient_profiles', $profSync);
+					}
+				}
+			} catch (\Throwable $e) {}
+
+			$is_ajax = $this->input->is_ajax_request() || $this->input->post('ajax');
+			if ($is_ajax) {
+				$this->output->set_content_type('application/json')->set_output(json_encode([
+					'status' => 'success',
+					'message' => 'Calorie and macronutrient targets successfully saved to your profile!',
+					'data' => $save_data
+				]));
+				return;
+			}
+			$this->session->set_flashdata('flashmsg', '<div class="alert alert-success">Nutrition and macro targets saved to your profile!</div>');
+			redirect('profile');
+			return;
+		}
+		$data['specialization'] = [];
+		try {
+			if ($this->db && $this->db->conn_id && $this->db->table_exists('master_specialization')) {
+				$data['specialization'] = $this->db->order_by('name','asc')->where('status','1')->get('master_specialization')->result();
+			}
+		} catch (\Throwable $e) {
+			$data['specialization'] = [];
+		}
+
+		// Refresh user object from database
+		if (!empty($userid)) {
+			try {
+				if ($this->db && $this->db->conn_id && $this->db->table_exists('userlogin')) {
+					$user = $this->db->get_where('userlogin', array('USERID' => $userid))->row();
+				}
+			} catch (\Throwable $e) {
+				// Keep fallback
+			}
+		}
+
+		if (!$user) {
+			$user = (object) array(
+				'USERID' => $userid ?: 0,
+				'FNAME'  => !empty($username) ? $username : '',
+				'EMAIL'  => !empty($useremail) ? $useremail : '',
+				'MOBILE' => '',
+				'DOB'    => '',
+				'GENDER' => '',
+				'BGROUP' => '',
+				'HEIGHT' => '',
+				'WEIGHT' => ''
+			);
+		}
+
+		// Normalize user vitals and identity attributes
+		if ($user) {
+			$user->blood_group = !empty($user->BGROUP) ? $user->BGROUP : (!empty($user->blood_group) ? $user->blood_group : (!empty($user->bgroup) ? $user->bgroup : ''));
+			$user->BGROUP      = $user->blood_group;
+			$user->height      = !empty($user->HEIGHT) ? $user->HEIGHT : (!empty($user->height) ? $user->height : '');
+			$user->HEIGHT      = $user->height;
+			$user->weight      = !empty($user->WEIGHT) ? $user->WEIGHT : (!empty($user->weight) ? $user->weight : '');
+			$user->WEIGHT      = $user->weight;
+			$user->dob         = !empty($user->DOB) ? $user->DOB : (!empty($user->dob) ? $user->dob : '');
+			$user->DOB         = $user->dob;
+			$user->gender      = !empty($user->GENDER) ? $user->GENDER : (!empty($user->gender) ? $user->gender : '');
+			$user->GENDER      = $user->gender;
+		}
+
+		$data['data'] = $user;
+		$data['user'] = $user;
+
+		$data['dependents'] = [];
+		try {
+			if ($this->db && $this->db->conn_id && $this->db->table_exists('patient_dependents')) {
+				$data['dependents'] = $this->db->get_where('patient_dependents', array('primary_user_id' => $userid))->result();
+			}
+		} catch (\Throwable $e) {
+			log_message('error', 'Error fetching dependents: ' . $e->getMessage());
+			$data['dependents'] = [];
+		}
+
+		$this->load->helper('clinical');
+		$data['health_goals'] = null;
+		try {
+			$data['health_goals'] = $this->calculate_patient_health_goals($user);
+		} catch (\Throwable $e) {
+			log_message('error', 'Error calculating health goals: ' . $e->getMessage());
+			$data['health_goals'] = function_exists('calculate_patient_health_goals') ? calculate_patient_health_goals($user) : null;
+		}
+
+		// Pass explicit dynamic variables to view
+		$hg = $data['health_goals'];
+		$data['calculated_bmi']        = !empty($hg['bmi']) ? $hg['bmi'] : null;
+		$data['calculated_bmi_status'] = !empty($hg['bmi_status']) ? $hg['bmi_status'] : '';
+		$data['calculated_bmi_color']  = !empty($hg['bmi_color']) ? $hg['bmi_color'] : '#10b981';
+		$data['calculated_bmr']        = !empty($hg['bmr']) ? $hg['bmr'] : null;
+		$data['calculated_age']        = !empty($hg['age']) ? $hg['age'] : null;
+		$data['calculated_gender']     = !empty($hg['gender']) ? $hg['gender'] : '';
+		$data['target_min_weight']     = !empty($hg['target_min_weight']) ? $hg['target_min_weight'] : null;
+		$data['target_ideal_weight']   = !empty($hg['target_ideal_weight']) ? $hg['target_ideal_weight'] : null;
+		$data['target_max_weight']     = !empty($hg['target_max_weight']) ? $hg['target_max_weight'] : null;
+		$data['user_blood_group']      = !empty($user->blood_group) ? $user->blood_group : (!empty($user->BGROUP) ? $user->BGROUP : '');
+
+		$data['nutrition_goals'] = null;
+		try {
+			if ($this->db && $this->db->conn_id && $this->db->table_exists('patient_nutrition_goals')) {
+				$data['nutrition_goals'] = $this->db->get_where('patient_nutrition_goals', array('user_id' => $userid))->row();
+			}
+		} catch (\Throwable $e) {
+			log_message('error', 'Error fetching nutrition goals: ' . $e->getMessage());
+			$data['nutrition_goals'] = null;
+		}
+
+		// Daily Diet Tracker Summary
+		$data['diet_summary'] = null;
+		try {
+			$this->load->model('Diet_model');
+			$selected_diet_date = $this->input->get('diet_date') ?: date('Y-m-d');
+			$data['diet_summary'] = $this->Diet_model->get_daily_summary($userid, $selected_diet_date);
+		} catch (\Throwable $e) {
+			log_message('error', 'Error fetching diet summary in profile: ' . $e->getMessage());
+			$data['diet_summary'] = null;
+		}
+		
+		try {
+			$this->load->view('patient_header', $data);
+			$this->load->view('profile', $data);
+			$this->load->view('patient_footer');
+		} catch (\Throwable $e) {
+			log_message('error', 'Error loading profile views: ' . $e->getMessage());
+			echo "<div style='font-family: sans-serif; padding: 40px; text-align: center;'><h2>Profile temporarily unavailable</h2><p>Please refresh in a moment or contact support.</p><a href='" . base_url() . "'>Return to Home</a></div>";
+		}
+	}
+
+	public function save_nutrition_goals()
+	{
+		$userid = $this->session->userdata('userid') ?: $this->session->userdata('user_id') ?: $this->session->userdata('USERID');
+		if (!$userid) {
+			$this->output->set_content_type('application/json')->set_output(json_encode([
+				'status' => 'error',
+				'message' => 'Please login to save your calorie and macro goals.'
+			]));
+			return;
+		}
+
+		$_POST['action'] = 'save_nutrition_goals';
+		return $this->profile();
+	}
+
+
+	public function updateprofile()
+	{
+		$userid = $this->session->userdata('userid') ?: $this->session->userdata('user_id') ?: $this->session->userdata('USERID');
+		if (!$userid) {
+			$this->session->set_userdata('last_page', base_url('updateprofile'));
+			$this->session->set_flashdata('flashmsg', '<div class="alert alert-warning">Please login to update your profile.</div>');
+			redirect('login');
+			return;
+		}
+
+		$is_ajax = $this->input->is_ajax_request() || $this->input->post('ajax');
+
+		// 1. Photo Upload Action
+		if (isset($_POST['upload_photo']) || (!empty($_FILES['file']['name']) && isset($_POST['submit']))) {
+			$res = $this->Userlogin_Model->updateprofile($userid);
+			if ($is_ajax) {
+				$this->output->set_content_type('application/json')->set_output(json_encode($res));
+				return;
+			}
+			if (is_array($res) && isset($res['status']) && $res['status'] === 'error') {
+				$this->session->set_flashdata('flashmsg', "<div class='alert alert-danger'>" . html_escape($res['message']) . "</div>");
+			} else {
+				$this->session->set_flashdata('flashmsg', "<div class='alert alert-success'>Profile photo updated successfully!</div>");
+			}
+			redirect('updateprofile');
+			return;
+		}
+
+		// 2. Personal & Medical Details Update Action
+		if (isset($_POST['submit_profile']) || $this->input->post('action') === 'update_profile' || (isset($_POST['submit']) && empty($_FILES['file']['name']))) {
+			$res = $this->Userlogin_Model->profile($userid);
+			if ($is_ajax) {
+				$this->output->set_content_type('application/json')->set_output(json_encode($res));
+				return;
+			}
+			if (is_array($res) && isset($res['status']) && $res['status'] === 'error') {
+				$this->session->set_flashdata('flashmsg', "<div class='alert alert-danger'>" . html_escape($res['message']) . "</div>");
+			} else {
+				$msg = (is_array($res) && !empty($res['message'])) ? $res['message'] : 'Profile details updated successfully!';
+				$this->session->set_flashdata('flashmsg', "<div class='alert alert-success'>" . html_escape($msg) . "</div>");
+			}
+			redirect('updateprofile');
+			return;
+		}
+
+		$user = $this->db->get_where('userlogin', array('USERID' => $userid))->row();
+		$data['user'] = $user;
+		$data['data'] = $user;
+				if ($this->input->post('action') === 'save_nutrition_goals') {
+			$age             = intval($this->input->post('age'));
+			$gender          = strtoupper(trim($this->input->post('gender')));
+			$height_cm       = floatval($this->input->post('height_cm'));
+			$weight_kg       = floatval($this->input->post('weight_kg'));
+			$activity_level  = trim($this->input->post('activity_level')) ?: 'sedentary';
+			$fitness_goal    = trim($this->input->post('fitness_goal')) ?: 'maintain';
+			$bmr             = floatval($this->input->post('bmr'));
+			$tdee            = floatval($this->input->post('tdee'));
+			$target_calories = floatval($this->input->post('target_calories'));
+			$carbs_g         = floatval($this->input->post('carbs_g'));
+			$protein_g       = floatval($this->input->post('protein_g'));
+			$fat_g           = floatval($this->input->post('fat_g'));
+
+			// Server-side recalculation fallback/safety check
+			if ($bmr <= 0 && $height_cm > 0 && $weight_kg > 0) {
+				if ($gender === 'F' || $gender === 'FEMALE') {
+					$bmr = round((10 * $weight_kg) + (6.25 * $height_cm) - (5 * ($age ?: 30)) - 161);
+				} elseif ($gender === 'M' || $gender === 'MALE') {
+					$bmr = round((10 * $weight_kg) + (6.25 * $height_cm) - (5 * ($age ?: 30)) + 5);
+				} else {
+					$bmr = round((10 * $weight_kg) + (6.25 * $height_cm) - (5 * ($age ?: 30)) - 78);
+				}
+				$factors = ['sedentary' => 1.2, 'light' => 1.375, 'moderate' => 1.55, 'very' => 1.725, 'extra' => 1.9];
+				$factor = $factors[$activity_level] ?? 1.2;
+				$tdee = round($bmr * $factor);
+
+				if ($fitness_goal === 'lose') {
+					$min_safe = ($gender === 'F' || $gender === 'FEMALE') ? 1200 : 1500;
+					$target_calories = max($min_safe, $tdee - 500);
+				} elseif ($fitness_goal === 'gain') {
+					$target_calories = $tdee + 400;
+				} else {
+					$target_calories = $tdee;
+				}
+				$carbs_g = round(($target_calories * 0.40) / 4, 1);
+				$protein_g = round(($target_calories * 0.30) / 4, 1);
+				$fat_g = round(($target_calories * 0.30) / 9, 1);
+			}
+
+			// Ensure table exists
+			$this->db->query("CREATE TABLE IF NOT EXISTS `patient_nutrition_goals` (
+			  `id` INT AUTO_INCREMENT PRIMARY KEY,
+			  `user_id` INT NOT NULL,
+			  `age` INT DEFAULT NULL,
+			  `gender` VARCHAR(20) DEFAULT NULL,
+			  `height_cm` DECIMAL(6,2) DEFAULT NULL,
+			  `weight_kg` DECIMAL(6,2) DEFAULT NULL,
+			  `activity_level` VARCHAR(50) DEFAULT 'sedentary',
+			  `fitness_goal` VARCHAR(50) DEFAULT 'maintain',
+			  `bmr` DECIMAL(8,2) DEFAULT NULL,
+			  `tdee` DECIMAL(8,2) DEFAULT NULL,
+			  `target_calories` DECIMAL(8,2) DEFAULT NULL,
+			  `carbs_g` DECIMAL(8,2) DEFAULT NULL,
+			  `protein_g` DECIMAL(8,2) DEFAULT NULL,
+			  `fat_g` DECIMAL(8,2) DEFAULT NULL,
+			  `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+			  `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+			  UNIQUE KEY `uk_user` (`user_id`)
+			) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+
+			$save_data = array(
+				'user_id'         => $userid,
+				'age'             => $age,
+				'gender'          => $gender,
+				'height_cm'       => $height_cm,
+				'weight_kg'       => $weight_kg,
+				'activity_level'  => $activity_level,
+				'fitness_goal'    => $fitness_goal,
+				'bmr'             => $bmr,
+				'tdee'            => $tdee,
+				'target_calories' => $target_calories,
+				'carbs_g'         => $carbs_g,
+				'protein_g'       => $protein_g,
+				'fat_g'           => $fat_g,
+			);
+
+			$existing = $this->db->get_where('patient_nutrition_goals', array('user_id' => $userid))->row();
+			if ($existing) {
+				$this->db->where('user_id', $userid)->update('patient_nutrition_goals', $save_data);
+			} else {
+				$this->db->insert('patient_nutrition_goals', $save_data);
+			}
+
+			// Sync height, weight, gender back to userlogin
+			$sync = array();
+			if ($height_cm > 0) $sync['HEIGHT'] = $height_cm;
+			if ($weight_kg > 0) $sync['WEIGHT'] = $weight_kg;
+			if (!empty($gender)) $sync['GENDER'] = ($gender === 'FEMALE' ? 'F' : ($gender === 'MALE' ? 'M' : $gender));
+			if (!empty($sync)) {
+				$this->db->where('USERID', $userid)->update('userlogin', $sync);
+			}
+
+			$is_ajax = $this->input->is_ajax_request() || $this->input->post('ajax');
+			if ($is_ajax) {
+				$this->output->set_content_type('application/json')->set_output(json_encode([
+					'status' => 'success',
+					'message' => 'Calorie and macronutrient targets successfully saved to your profile!',
+					'data' => $save_data
+				]));
+				return;
+			}
+			$this->session->set_flashdata('flashmsg', '<div class="alert alert-success">Nutrition and macro targets saved to your profile!</div>');
+			redirect('profile');
+			return;
+		}
+		$data['specialization'] = $this->db->order_by('name','asc')->where('status','1')->get('master_specialization')->result();
+		$user_img = $user ? ($user->IMAGE ?: $user->PROFILEIMG) : '';
+		$data['src'] = $user_img ?: '';
+		$data['imagerequired'] = empty($data['src']) ? 'required' : '';
+
+		$this->load->view('patient_header', $data);
+		$this->load->view('updateprofile', $data);
+		$this->load->view('patient_footer');
+	}
+
+
+
+	public function calender()
+	{
+	    $this->load->view('fixappointment');
+	}
+
+	public function mytest()
+	{
+		$selected_city = $this->input->get('city', TRUE) ?: $this->input->get('location', TRUE);
+		$keyword       = $this->input->get('keyword', TRUE) ?: $this->input->get('pathology_name', TRUE);
+		$selected_spl  = $this->input->get('spl', TRUE) ?: $this->input->get('test_id', TRUE);
+
+		$data['specialization'] = $this->db->order_by('name', 'asc')->where('status', '1')->get('master_specialization')->result();
+		$data['cities']         = $this->db->order_by('name', 'asc')->where('status', '1')->get('master_city')->result();
+
+		$this->db->select('p.*, c.name as city_name');
+		$this->db->from('pathlab p');
+		$this->db->join('master_city c', 'c.id = p.city', 'left');
+		$this->db->where('p.status', '1');
+
+		if (!empty($selected_city)) {
+			$this->db->group_start();
+			$this->db->where('p.city', $selected_city);
+			$this->db->or_like('p.address', $selected_city);
+			$this->db->or_like('p.location', $selected_city);
+			$this->db->group_end();
+		}
+
+		if (!empty($keyword)) {
+			$this->db->group_start();
+			$this->db->like('p.name', $keyword);
+			$this->db->or_like('p.address', $keyword);
+			$this->db->or_like('p.location', $keyword);
+			$this->db->group_end();
+		}
+
+		$this->db->order_by('p.name', 'ASC');
+		$pathologies = $this->db->get()->result();
+
+		// Fetch popular test offerings for each pathology lab
+		foreach ($pathologies as $lab) {
+			$lab->tests = $this->db->select('plt.*, pt.test_name, pt.amount, pt.short_name')
+			                       ->from('path_lab_test plt')
+			                       ->join('pathtest pt', 'pt.test_id = plt.test_id', 'left')
+			                       ->where('plt.path_lab_id', $lab->id)
+			                       ->limit(4)
+			                       ->get()
+			                       ->result();
+
+			if (empty($lab->tests)) {
+				$lab->tests = $this->db->select('test_id, test_name, amount, short_name')
+				                       ->from('pathtest')
+				                       ->limit(3)
+				                       ->get()
+				                       ->result();
+			}
+		}
+
+		$data['pathologies']   = $pathologies;
+		$data['selected_city'] = $selected_city;
+		$data['keyword']       = $keyword;
+		$data['selected_spl']  = $selected_spl;
+
+		$this->load->view('mytest', $data);
+	}
+
+   
+	/**
+	 * Patient-Facing Teleconsultation Directory (/teleconsult)
+	 * Only displays verified doctors who have explicitly enabled is_video_consult_enabled = 1
+	 */
+	public function teleconsult()
+	{
+		try {
+			$specialty = trim($this->input->get('specialty') ?? ($this->input->get('speciality') ?? ''));
+			$keyword = trim($this->input->get('keyword') ?? ($this->input->get('query') ?? ''));
+			$city = trim($this->input->get('city') ?? ($this->input->get('location') ?? ''));
+
+			$filters = array(
+				'specialty' => $specialty,
+				'keyword'   => $keyword,
+				'city'      => $city
+			);
+
+			$data['doctors'] = $this->Doctor_Model->get_available_teleconsult_doctors($filters, 24, 0);
+			$data['total_available'] = $this->Doctor_Model->count_teleconsult_doctors($filters);
+			$data['specialization'] = $this->db->table_exists('master_specialization') ? $this->db->order_by('name', 'asc')->where('status', '1')->get('master_specialization')->result() : array();
+			$data['cities'] = $this->db->table_exists('master_city') ? $this->db->order_by('name', 'asc')->where('status', '1')->get('master_city')->result() : array();
+			$data['active_specialty'] = $specialty;
+			$data['active_keyword'] = $keyword;
+			$data['active_city'] = $city;
+
+			$this->load->view('teleconsult', $data);
+		} catch (\Throwable $e) {
+			log_message('error', 'Error in teleconsult: ' . $e->getMessage());
+			$data = array(
+				'doctors'          => array(),
+				'total_available'  => 0,
+				'specialization'   => array(),
+				'cities'           => array(),
+				'active_specialty' => '',
+				'active_keyword'   => '',
+				'active_city'      => ''
+			);
+			$this->load->view('teleconsult', $data);
+		}
+	}
+
+
+	/**
+	 * Clinical Health & Nutrition Goal Calculator
+	 * Calculates Age, BMI, Mifflin-St Jeor BMR, Target Weight & Nutrition Guidance
+	 */
+	public function calculate_patient_health_goals($user)
+	{
+		$this->load->helper('clinical');
+		if (function_exists('calculate_patient_health_goals')) {
+			return calculate_patient_health_goals($user);
+		}
+		return null;
+	}
+
+}

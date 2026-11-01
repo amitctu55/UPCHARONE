@@ -1,434 +1,437 @@
-<?php if (!defined('BASEPATH')) exit('No direct script access allowed');
-
-class User_Model extends CI_Model {
-    
-    public function changepass($userid){
-		$this -> db -> select(' * ');
-        $this -> db -> from('userlogin');
-        $this -> db -> where('USERID', $userid);        
-		//$this -> db -> or_where('MOBILE', $mobile);
-        $this -> db -> where('STATUS', '1');
-        $this -> db -> where('APPROVED', '1');
-        $this -> db -> limit(1);
-        $query = $this -> db -> get();
-		if($query -> num_rows() > 0)
-        {			
-			$row = $query->row();
-			if($row->STATUS==1){
-			$newpass=$this->input->post('pass');
-				$this->db->where('USERID',$userid)->set('PASSWORD',md5($newpass))->update('userlogin');
-				return 'SUCCESS';
-			}
-			else {
-				return 'FAILED';
-			}
-        }
-        else
-        {
-            return 'INVALID';
-        }
-	}
-	
-    public function forgotpass($mobile){
-        $this->load->library('notification_service');
-        $res = $this->notification_service->send_forgot_password_otp($mobile);
-        if (isset($res['status']) && $res['status'] === 'success') {
-            return 'SUCCESS';
-        } elseif (isset($res['status']) && $res['status'] === 'invalid') {
-            return 'INVALID';
-        }
-        return 'FAILED';
-    }
-	
-	public function resendotp($mobile)
-	{
-		$this->load->library('notification_service');
-		$res = $this->notification_service->send_forgot_password_otp($mobile);
-		if (isset($res['status']) && $res['status'] === 'success') {
-			return 'SUCCESS';
-		} elseif (isset($res['status']) && $res['status'] === 'invalid') {
-			return 'INVALID';
-		}
-		return 'FAILED';
-	}
-	 
-    public function login($email,$password){
-		$email = trim($email);
-		$cleanMobile = preg_replace('/[^0-9]/', '', $email);
-		if (strlen($cleanMobile) > 10) $cleanMobile = substr($cleanMobile, -10);
-
-		$this->db->select('*')->from('userlogin');
-		$this->db->group_start();
-		$this->db->where('EMAIL', $email);        
-		$this->db->or_where('MOBILE', $email);
-		if (!empty($cleanMobile) && strlen($cleanMobile) >= 10) {
-			$this->db->or_where('MOBILE', $cleanMobile);
-		}
-		$this->db->group_end();
-		$this->db->where('PASSWORD', $password);
-		$this->db->limit(1);
-		$query = $this->db->get();
-
-		if($query->num_rows() > 0)
-        {			
-			$row = $query->row();
-
-			// If partner account, check approval
-			if (isset($row->TYPE) && in_array(strtoupper($row->TYPE), array('DOCTOR', 'HOSPITAL', 'CLINIC', 'PATHOLOGY', 'CHEMIST', 'PATHDOCTOR'))) {
-				if ($row->APPROVED == '0') {
-					return 'UNVERIFIED';
-				}
-			}
-
-            if($row->STATUS==1){
-                $this->load->helper('custom_helper');
-                enforce_single_session_role('user');
-
-                $this->session->set_userdata('userid', $row->USERID);
-                $this->session->set_userdata('useremail', $row->EMAIL);				           
-				$this->session->set_userdata('username', $row->FNAME);
-           
-				if(!empty($row->CART)){
-					$cartArray = unserialize($row->CART);
-					if (is_array($cartArray)) {
-						$this->cart->insert($cartArray);
-					}
-				}
-				$this->load->model('Cart_Model');
-				$this->Cart_Model->process_pending_cart($row->USERID);
-				$this->Cart_Model->update_cart_db();
-				return 'SUCCESS';
-			}
-			else if($row->STATUS==0){
-				$otp=rand(100000,999999);
-				$this->db->where('USERID',$row->USERID)->set('OTP',$otp)->update('userlogin');
-				$this->session->set_userdata('signupuserid', $row->USERID);
-				send_verification_otp($row->MOBILE, $otp, $row->EMAIL, $row->FNAME . ' ' . $row->LNAME);
-				return 'OTP';
-			}
-			else if($row->STATUS==2){
-				return 'BLOCKED';
-			}
-        }
-        else
-        {
-            return 'FAILED';
-        }
-	}
-	
-	public function verifysignupotp($userid,$otp){
-		$this -> db -> select(' * ');
-        $this -> db -> from('userlogin');
-        $this -> db -> where('USERID', $userid);        
-		$this -> db -> where('OTP', $otp);
-		$this -> db -> where('STATUS', '0');
-       // $this -> db -> where('APPROVED', '1');
-        $this -> db -> limit(1);
-        $query = $this -> db -> get();//echo  $this->db->last_query();
-		if($query -> num_rows() > 0)
-        {			
-			$row = $query->row();
-            if($row->OTP==$otp){
-				$this->db->where('USERID',$userid)->set('STATUS','1')->set('OTP',null)->update('userlogin');
-                $this->load->helper('custom_helper');
-                enforce_single_session_role('user');
-
-                $this->session->set_userdata('userid', $row->USERID);
-                $this->session->set_userdata('useremail', $row->EMAIL);				           
-				$this->session->set_userdata('username', $row->FNAME);
-           
-			if($row->CART!=''){
-				$cartArray = unserialize($row->CART);
-				$this->cart->insert($cartArray);
-			}
-			$this->load->model('Cart_Model');
-			$this->Cart_Model->update_cart_db();
-			return 'SUCCESS';
-			}
-			else {
-				return 'FAILED';
-			}
-        }
-        else
-        {
-            return 'FAILED';
-        }
-	}
-	
-	public function verifyforgototp($userid,$otp){
-		$this->db->select('*');
-        $this->db->from('userlogin');
-        $this->db->where('USERID', $userid);        
-		$this->db->where('OTP', $otp);
-        $this->db->limit(1);
-        $query = $this->db->get();
-		if($query->num_rows() > 0)
-        {			
-			$row = $query->row();
-			if (!empty($row->otp_expires_at) && strtotime($row->otp_expires_at) < time()) {
-				return 'EXPIRED';
-			}
-            if($row->OTP == $otp){
-				$this->db->where('USERID', $userid)->update('userlogin', [
-					'STATUS'         => '1',
-					'OTP'            => null,
-					'otp_expires_at' => null
-				]);
-				return 'SUCCESS';
-			}
-			return 'FAILED';
-        }
-        return 'FAILED';
-	}
-	
-	public function register(){
-		$email=strtolower(trim($this->input->post('email')));
-		
-		$mobile=trim($this->input->post('mobile'));
-		$countemail=$this->db->where('EMAIL',$email)->count_all_results('userlogin');
-		$countmobile=$this->db->where('MOBILE',$mobile)->count_all_results('userlogin');
-		if($countemail > 0  && $email!='')
-		{
-			$response=array('status'=>'failed','msg'=>'Email Id Already Registered, Reset Your Password if You Forgotten ! ');
-		}
-		else if($countmobile > 0 && $mobile!='')
-		{
-			$response=array('status'=>'failed','msg'=>'Mobile No. Already Registered, Reset Your Password if You Forgotten ! ');
-		}
-		else if($mobile!='' || $email!='')
-		{
-			$pass=md5($this->input->post('password'));
-			$name=$this->input->post('name');
-			$name=explode(' ',ucwords($name));
-			$fname=$name[0];
-			$lname=@$name[1];
-			$otp=rand(100000,999999);
-			//$msg="Dear ".$name[0].",Thank you for registration, Verification OTP is $otp UPCHAR";
-			send_verification_otp($mobile, $otp, $email, $fname . ' ' . $lname);
-			$udata=array(
-					'PASSWORD'=>$pass,
-					'FNAME'=>$fname,
-					'LNAME'=>$lname,
-					
-					'STATUS'=>'0',
-					'APPROVED'=>'1',
-					'OTP'=>$otp,
-					'REG_DATE'=>date('Y-m-d'),
-					'GENDER'=>'M'
-					); 
-			if($email)
-			$udata['EMAIL']=$email;
-			if($mobile)
-			$udata['MOBILE']=$mobile;
-			if($this->db->insert('userlogin',$udata))
-			{   
-				$thisid = $this->db->insert_id();
-				$this->session->set_userdata('signupuserid', $thisid);
-			
-				// Send secure email verification link upon registration
-				if (!empty($email)) {
-					try {
-						$this->load->library('notification_service');
-						$this->notification_service->send_email_verification($thisid, $email, $fname . ' ' . $lname);
-					} catch (\Throwable $e) {
-						log_message('error', 'Registration verification email error: ' . $e->getMessage());
-					}
-				}
-
-				$response=array('status'=>'success','msg'=>'Registration Successful! A verification link has been sent to your email.');
-			}
-			else
-			{
-				$response=array('status'=>'failed','msg'=>'Something Went Wrong, Please Retry! ');
-			}
-		}else{
-				$response=array('status'=>'failed','msg'=>'Please Enter atleast any one either Email id or Mobile');
-		}
-		return $response;
-	}
-	
-	function logout(){
-		$this->cart->destroy();
-		$this->session->sess_destroy();
-	}
-	
-	public function get_appointment_details($appointment_id)
-	{				
-	    if($appointment_id!='')
-		{
-			$this->db->where("appointment_id",$appointment_id);
-		}
-		$this->db->select('profile_dr.fname,profile_dr.email as dr_email,hospital.name,appointment.*');
-		$this->db->join('profile_dr','profile_dr.id=appointment.doctor_id');
-		$this->db->join('hospital','hospital.uid=appointment.institute_id');
-		$result = $this->db->get('appointment')->row_array();
-		return $result;
-	}
-	
-    public function update_profile($userid){
-		$this -> db -> select(' * ');
-        $this -> db -> from('userlogin');
-        $this -> db -> where('USERID', $userid);        
-		$this -> db -> where('STATUS', '1');
-        $this -> db -> where('APPROVED', '1');
-        $this -> db -> limit(1);
-        $query = $this -> db -> get();//echo  $this->db->last_query();
-		if($query -> num_rows() > 0)
-        {	
-			
-			$name=$this->input->post('name');
-			$mobile=$this->input->post('mobile');
-			$email=$this->input->post('email');
-			$dob=$this->input->post('dob');
-			$gender=$this->input->post('gender');
-			$bgroup=$this->input->post('bgroup');
-			$height=$this->input->post('height');
-			$weight=$this->input->post('weight');
-			$imagename=$this->input->post('imagename');
-			$imagestring=$this->input->post('imagestring');
-
-			if($email){	
-					$this -> db -> where('USERID !=', $userid); 
-					$this -> db -> where('EMAIL', $email);	
-					$query2 = $this -> db -> get('userlogin');
-					$countemail=$query2 -> num_rows();
-					if($countemail)
-						return 'EMAIL';
-			}
-			if($mobile){	
-					$this -> db -> where('USERID !=', $userid); 
-					$this -> db -> where('MOBILE', $mobile);	
-					$query3 = $this -> db -> get('userlogin');
-					$countmobile=$query3 -> num_rows();
-					if($countmobile)
-						return 'MOBILE';
-			}
-                
-			
-
-				if($mobile)		
-					$this -> db -> set('MOBILE', $mobile);
-				if($email)		
-					$this -> db -> set('EMAIL', $email);
-				if($gender)		
-					$this -> db -> set('GENDER', $gender);
-				if($dob)		
-					$this -> db -> set('DOB', $dob);
-				if($bgroup)		
-					$this -> db -> set('BGROUP', $bgroup);
-				if($height)		
-					$this -> db -> set('HEIGHT', $height);
-				if($weight)		
-					$this -> db -> set('WEIGHT', $weight);
-				if($name){		
-					$this -> db -> set('FNAME', $name);
-					$this -> db -> set('LNAME', '');
-				}
-				if($imagestring !='' )
-				{	
-					$binary = base64_decode($imagestring);
-					$uploads_dir='assets/userimages/';
-					$finalimagename   = date('YmdHis') . rand(10, 99) . $imagename;
-					file_put_contents($uploads_dir . $finalimagename, $binary);
-					$this -> db -> set('PROFILEIMG', $finalimagename);
-				}
-				
-				$res=$this->db->where('USERID',$userid)->update('userlogin');
-				last_query();
-				if($res)		
-					return 'SUCCESS';
-				else
-					return 'FAILED';
-			
-        }
-        else
-        {
-            return 'INVALID';
-        }
-	}
-
-	public function google_auth_sync($googleData)
-	{
-		$guid    = trim(@$googleData['guid']);
-		$email   = strtolower(trim(@$googleData['email']));
-		$fname   = trim(@$googleData['fname'] ?: @$googleData['name'] ?: 'Google User');
-		$lname   = trim(@$googleData['lname'] ?: '');
-		$image   = trim(@$googleData['image'] ?: @$googleData['picture'] ?: '');
-		$mobile  = trim(@$googleData['mobile'] ?: '');
-
-		if (empty($email) && empty($guid)) {
-			return false;
-		}
-
-		// Check if user exists by GUID or EMAIL
-		$user = null;
-		if (!empty($guid)) {
-			$user = $this->db->get_where('userlogin', array('GUID' => $guid))->row();
-		}
-		if (!$user && !empty($email)) {
-			$user = $this->db->get_where('userlogin', array('EMAIL' => $email))->row();
-		}
-
-		$userId = 0;
-		if ($user) {
-			$userId = $user->USERID;
-			$updateData = array();
-			if (!empty($guid) && empty($user->GUID)) {
-				$updateData['GUID'] = $guid;
-			}
-			if (!empty($image) && empty($user->IMAGE)) {
-				$updateData['IMAGE'] = $image;
-			}
-			if ($user->STATUS != '1') {
-				$updateData['STATUS'] = '1';
-			}
-			if (!empty($updateData)) {
-				$this->db->where('USERID', $userId)->update('userlogin', $updateData);
-			}
-			$finalUser = $this->db->get_where('userlogin', array('USERID' => $userId))->row();
-		} else {
-			$insertData = array(
-				'EMAIL'     => !empty($email) ? $email : null,
-				'FNAME'     => $fname,
-				'LNAME'     => !empty($lname) ? $lname : null,
-				'GUID'      => !empty($guid) ? $guid : null,
-				'IMAGE'     => !empty($image) ? $image : null,
-				'MOBILE'    => !empty($mobile) ? $mobile : null,
-				'STATUS'    => '1',
-				'APPROVED'  => '1',
-				'REG_DATE'  => date('Y-m-d H:i:s')
-			);
-			$this->db->insert('userlogin', $insertData);
-			$userId = $this->db->insert_id();
-			$finalUser = $this->db->get_where('userlogin', array('USERID' => $userId))->row();
-		}
-
-		if ($userId) {
-			$this->load->helper('custom_helper');
-			enforce_single_session_role('user');
-
-			// Initialize wallet
-			$this->load->model('Wallet_model');
-			$this->Wallet_model->get_or_create_wallet($userId);
-
-			// Set session
-			$this->session->set_userdata('userid', $userId);
-			$this->session->set_userdata('useremail', $finalUser->EMAIL);
-			$this->session->set_userdata('username', $finalUser->FNAME);
-			if (!empty($finalUser->IMAGE)) {
-				$this->session->set_userdata('userimage', $finalUser->IMAGE);
-			}
-
-			// Restore Cart
-			if (!empty($finalUser->CART)) {
-				$cartArray = @unserialize($finalUser->CART);
-				if (is_array($cartArray)) {
-					$this->cart->insert($cartArray);
-				}
-			}
-			return $finalUser;
-		}
-
-		return false;
-	}
+<?php if (!defined('BASEPATH')) exit('No direct script access allowed');
+
+class User_Model extends CI_Model {
+    
+    public function changepass($userid){
+		$this -> db -> select(' * ');
+        $this -> db -> from('userlogin');
+        $this -> db -> where('USERID', $userid);        
+		//$this -> db -> or_where('MOBILE', $mobile);
+        $this -> db -> where('STATUS', '1');
+        $this -> db -> where('APPROVED', '1');
+        $this -> db -> limit(1);
+        $query = $this -> db -> get();
+		if($query -> num_rows() > 0)
+        {			
+			$row = $query->row();
+			if($row->STATUS==1){
+			$newpass=$this->input->post('pass');
+				$this->db->where('USERID',$userid)->set('PASSWORD',md5($newpass))->update('userlogin');
+				return 'SUCCESS';
+			}
+			else {
+				return 'FAILED';
+			}
+        }
+        else
+        {
+            return 'INVALID';
+        }
+	}
+	
+    public function forgotpass($mobile){
+        $this->load->library('notification_service');
+        $res = $this->notification_service->send_forgot_password_otp($mobile);
+        if (isset($res['status']) && $res['status'] === 'success') {
+            return 'SUCCESS';
+        } elseif (isset($res['status']) && $res['status'] === 'invalid') {
+            return 'INVALID';
+        }
+        return 'FAILED';
+    }
+	
+	public function resendotp($mobile)
+	{
+		$this->load->library('notification_service');
+		$res = $this->notification_service->send_forgot_password_otp($mobile);
+		if (isset($res['status']) && $res['status'] === 'success') {
+			return 'SUCCESS';
+		} elseif (isset($res['status']) && $res['status'] === 'invalid') {
+			return 'INVALID';
+		}
+		return 'FAILED';
+	}
+	 
+    public function login($email,$password){
+		$email = trim($email);
+		$cleanMobile = preg_replace('/[^0-9]/', '', $email);
+		if (strlen($cleanMobile) > 10) $cleanMobile = substr($cleanMobile, -10);
+
+		$this->db->select('*')->from('userlogin');
+		$this->db->group_start();
+		$this->db->where('EMAIL', $email);        
+		$this->db->or_where('MOBILE', $email);
+		if (!empty($cleanMobile) && strlen($cleanMobile) >= 10) {
+			$this->db->or_where('MOBILE', $cleanMobile);
+		}
+		$this->db->group_end();
+		$this->db->where('PASSWORD', $password);
+		$this->db->limit(1);
+		$query = $this->db->get();
+
+		if($query->num_rows() > 0)
+        {			
+			$row = $query->row();
+
+			// If partner account, check approval
+			if (isset($row->TYPE) && in_array(strtoupper($row->TYPE), array('DOCTOR', 'HOSPITAL', 'CLINIC', 'PATHOLOGY', 'CHEMIST', 'PATHDOCTOR'))) {
+				if ($row->APPROVED == '0') {
+					return 'UNVERIFIED';
+				}
+			}
+
+            if($row->STATUS==1){
+                $this->load->helper('custom_helper');
+                enforce_single_session_role('user');
+
+                $this->session->set_userdata('userid', $row->USERID);
+                $this->session->set_userdata('useremail', $row->EMAIL);				           
+				$this->session->set_userdata('username', $row->FNAME);
+           
+				if(!empty($row->CART)){
+					$cartArray = unserialize($row->CART);
+					if (is_array($cartArray)) {
+						$this->cart->insert($cartArray);
+					}
+				}
+				$this->load->model('Cart_Model');
+				$this->Cart_Model->process_pending_cart($row->USERID);
+				$this->Cart_Model->update_cart_db();
+				return 'SUCCESS';
+			}
+			else if($row->STATUS==0){
+				$otp=rand(100000,999999);
+				$this->db->where('USERID',$row->USERID)->set('OTP',$otp)->update('userlogin');
+				$this->session->set_userdata('signupuserid', $row->USERID);
+				send_verification_otp($row->MOBILE, $otp, $row->EMAIL, $row->FNAME . ' ' . $row->LNAME);
+				return 'OTP';
+			}
+			else if($row->STATUS==2){
+				return 'BLOCKED';
+			}
+        }
+        else
+        {
+            return 'FAILED';
+        }
+	}
+	
+	public function verifysignupotp($userid,$otp){
+		$this -> db -> select(' * ');
+        $this -> db -> from('userlogin');
+        $this -> db -> where('USERID', $userid);        
+		$this -> db -> where('OTP', $otp);
+		$this -> db -> where('STATUS', '0');
+       // $this -> db -> where('APPROVED', '1');
+        $this -> db -> limit(1);
+        $query = $this -> db -> get();//echo  $this->db->last_query();
+		if($query -> num_rows() > 0)
+        {			
+			$row = $query->row();
+            if($row->OTP==$otp){
+				$this->db->where('USERID',$userid)->set('STATUS','1')->set('OTP',null)->update('userlogin');
+                $this->load->helper('custom_helper');
+                enforce_single_session_role('user');
+
+                $this->session->set_userdata('userid', $row->USERID);
+                $this->session->set_userdata('useremail', $row->EMAIL);				           
+				$this->session->set_userdata('username', $row->FNAME);
+           
+			if($row->CART!=''){
+				$cartArray = unserialize($row->CART);
+				$this->cart->insert($cartArray);
+			}
+			$this->load->model('Cart_Model');
+			$this->Cart_Model->update_cart_db();
+			return 'SUCCESS';
+			}
+			else {
+				return 'FAILED';
+			}
+        }
+        else
+        {
+            return 'FAILED';
+        }
+	}
+	
+	public function verifyforgototp($userid,$otp){
+		$this->db->select('*');
+        $this->db->from('userlogin');
+        $this->db->where('USERID', $userid);        
+		$this->db->where('OTP', $otp);
+        $this->db->limit(1);
+        $query = $this->db->get();
+		if($query->num_rows() > 0)
+        {			
+			$row = $query->row();
+			if (!empty($row->otp_expires_at) && strtotime($row->otp_expires_at) < time()) {
+				return 'EXPIRED';
+			}
+            if($row->OTP == $otp){
+				$this->db->where('USERID', $userid)->update('userlogin', [
+					'STATUS'         => '1',
+					'OTP'            => null,
+					'otp_expires_at' => null
+				]);
+				return 'SUCCESS';
+			}
+			return 'FAILED';
+        }
+        return 'FAILED';
+	}
+	
+	public function register(){
+		$email=strtolower(trim($this->input->post('email')));
+		
+		$mobile=trim($this->input->post('mobile'));
+		$countemail=$this->db->where('EMAIL',$email)->count_all_results('userlogin');
+		$countmobile=$this->db->where('MOBILE',$mobile)->count_all_results('userlogin');
+		if($countemail > 0  && $email!='')
+		{
+			$response=array('status'=>'failed','msg'=>'Email Id Already Registered, Reset Your Password if You Forgotten ! ');
+		}
+		else if($countmobile > 0 && $mobile!='')
+		{
+			$response=array('status'=>'failed','msg'=>'Mobile No. Already Registered, Reset Your Password if You Forgotten ! ');
+		}
+		else if($mobile!='' || $email!='')
+		{
+			$pass=md5($this->input->post('password'));
+			$name=$this->input->post('name');
+			if(empty($name)){
+				$name=trim($this->input->post('fname').' '.$this->input->post('lname'));
+			}
+			$name=explode(' ',ucwords($name));
+			$fname=$name[0];
+			$lname=@$name[1];
+			$otp=rand(100000,999999);
+			//$msg="Dear ".$name[0].",Thank you for registration, Verification OTP is $otp UPCHAR";
+			send_verification_otp($mobile, $otp, $email, $fname . ' ' . $lname);
+			$udata=array(
+					'PASSWORD'=>$pass,
+					'FNAME'=>$fname,
+					'LNAME'=>$lname,
+					
+					'STATUS'=>'0',
+					'APPROVED'=>'1',
+					'OTP'=>$otp,
+					'REG_DATE'=>date('Y-m-d'),
+					'GENDER'=>'M'
+					); 
+			if($email)
+			$udata['EMAIL']=$email;
+			if($mobile)
+			$udata['MOBILE']=$mobile;
+			if($this->db->insert('userlogin',$udata))
+			{   
+				$thisid = $this->db->insert_id();
+				$this->session->set_userdata('signupuserid', $thisid);
+			
+				// Send secure email verification link upon registration
+				if (!empty($email)) {
+					try {
+						$this->load->library('notification_service');
+						$this->notification_service->send_email_verification($thisid, $email, $fname . ' ' . $lname);
+					} catch (\Throwable $e) {
+						log_message('error', 'Registration verification email error: ' . $e->getMessage());
+					}
+				}
+
+				$response=array('status'=>'success','msg'=>'Registration Successful! A verification link has been sent to your email.','userid'=>(string)$thisid);
+			}
+			else
+			{
+				$response=array('status'=>'failed','msg'=>'Something Went Wrong, Please Retry! ');
+			}
+		}else{
+				$response=array('status'=>'failed','msg'=>'Please Enter atleast any one either Email id or Mobile');
+		}
+		return $response;
+	}
+	
+	function logout(){
+		$this->cart->destroy();
+		$this->session->sess_destroy();
+	}
+	
+	public function get_appointment_details($appointment_id)
+	{				
+	    if($appointment_id!='')
+		{
+			$this->db->where("appointment_id",$appointment_id);
+		}
+		$this->db->select('profile_dr.fname,profile_dr.email as dr_email,hospital.name,appointment.*');
+		$this->db->join('profile_dr','profile_dr.id=appointment.doctor_id');
+		$this->db->join('hospital','hospital.uid=appointment.institute_id');
+		$result = $this->db->get('appointment')->row_array();
+		return $result;
+	}
+	
+    public function update_profile($userid){
+		$this -> db -> select(' * ');
+        $this -> db -> from('userlogin');
+        $this -> db -> where('USERID', $userid);        
+		$this -> db -> where('STATUS', '1');
+        $this -> db -> where('APPROVED', '1');
+        $this -> db -> limit(1);
+        $query = $this -> db -> get();//echo  $this->db->last_query();
+		if($query -> num_rows() > 0)
+        {	
+			
+			$name=$this->input->post('name');
+			$mobile=$this->input->post('mobile');
+			$email=$this->input->post('email');
+			$dob=$this->input->post('dob');
+			$gender=$this->input->post('gender');
+			$bgroup=$this->input->post('bgroup');
+			$height=$this->input->post('height');
+			$weight=$this->input->post('weight');
+			$imagename=$this->input->post('imagename');
+			$imagestring=$this->input->post('imagestring');
+
+			if($email){	
+					$this -> db -> where('USERID !=', $userid); 
+					$this -> db -> where('EMAIL', $email);	
+					$query2 = $this -> db -> get('userlogin');
+					$countemail=$query2 -> num_rows();
+					if($countemail)
+						return 'EMAIL';
+			}
+			if($mobile){	
+					$this -> db -> where('USERID !=', $userid); 
+					$this -> db -> where('MOBILE', $mobile);	
+					$query3 = $this -> db -> get('userlogin');
+					$countmobile=$query3 -> num_rows();
+					if($countmobile)
+						return 'MOBILE';
+			}
+                
+			
+
+				if($mobile)		
+					$this -> db -> set('MOBILE', $mobile);
+				if($email)		
+					$this -> db -> set('EMAIL', $email);
+				if($gender)		
+					$this -> db -> set('GENDER', $gender);
+				if($dob)		
+					$this -> db -> set('DOB', $dob);
+				if($bgroup)		
+					$this -> db -> set('BGROUP', $bgroup);
+				if($height)		
+					$this -> db -> set('HEIGHT', $height);
+				if($weight)		
+					$this -> db -> set('WEIGHT', $weight);
+				if($name){		
+					$this -> db -> set('FNAME', $name);
+					$this -> db -> set('LNAME', '');
+				}
+				if($imagestring !='' )
+				{	
+					$binary = base64_decode($imagestring);
+					$uploads_dir='assets/userimages/';
+					$finalimagename   = date('YmdHis') . rand(10, 99) . $imagename;
+					file_put_contents($uploads_dir . $finalimagename, $binary);
+					$this -> db -> set('PROFILEIMG', $finalimagename);
+				}
+				
+				$res=$this->db->where('USERID',$userid)->update('userlogin');
+				last_query();
+				if($res)		
+					return 'SUCCESS';
+				else
+					return 'FAILED';
+			
+        }
+        else
+        {
+            return 'INVALID';
+        }
+	}
+
+	public function google_auth_sync($googleData)
+	{
+		$guid    = trim(@$googleData['guid']);
+		$email   = strtolower(trim(@$googleData['email']));
+		$fname   = trim(@$googleData['fname'] ?: @$googleData['name'] ?: 'Google User');
+		$lname   = trim(@$googleData['lname'] ?: '');
+		$image   = trim(@$googleData['image'] ?: @$googleData['picture'] ?: '');
+		$mobile  = trim(@$googleData['mobile'] ?: '');
+
+		if (empty($email) && empty($guid)) {
+			return false;
+		}
+
+		// Check if user exists by GUID or EMAIL
+		$user = null;
+		if (!empty($guid)) {
+			$user = $this->db->get_where('userlogin', array('GUID' => $guid))->row();
+		}
+		if (!$user && !empty($email)) {
+			$user = $this->db->get_where('userlogin', array('EMAIL' => $email))->row();
+		}
+
+		$userId = 0;
+		if ($user) {
+			$userId = $user->USERID;
+			$updateData = array();
+			if (!empty($guid) && empty($user->GUID)) {
+				$updateData['GUID'] = $guid;
+			}
+			if (!empty($image) && empty($user->IMAGE)) {
+				$updateData['IMAGE'] = $image;
+			}
+			if ($user->STATUS != '1') {
+				$updateData['STATUS'] = '1';
+			}
+			if (!empty($updateData)) {
+				$this->db->where('USERID', $userId)->update('userlogin', $updateData);
+			}
+			$finalUser = $this->db->get_where('userlogin', array('USERID' => $userId))->row();
+		} else {
+			$insertData = array(
+				'EMAIL'     => !empty($email) ? $email : null,
+				'FNAME'     => $fname,
+				'LNAME'     => !empty($lname) ? $lname : null,
+				'GUID'      => !empty($guid) ? $guid : null,
+				'IMAGE'     => !empty($image) ? $image : null,
+				'MOBILE'    => !empty($mobile) ? $mobile : null,
+				'STATUS'    => '1',
+				'APPROVED'  => '1',
+				'REG_DATE'  => date('Y-m-d H:i:s')
+			);
+			$this->db->insert('userlogin', $insertData);
+			$userId = $this->db->insert_id();
+			$finalUser = $this->db->get_where('userlogin', array('USERID' => $userId))->row();
+		}
+
+		if ($userId) {
+			$this->load->helper('custom_helper');
+			enforce_single_session_role('user');
+
+			// Initialize wallet
+			$this->load->model('Wallet_model');
+			$this->Wallet_model->get_or_create_wallet($userId);
+
+			// Set session
+			$this->session->set_userdata('userid', $userId);
+			$this->session->set_userdata('useremail', $finalUser->EMAIL);
+			$this->session->set_userdata('username', $finalUser->FNAME);
+			if (!empty($finalUser->IMAGE)) {
+				$this->session->set_userdata('userimage', $finalUser->IMAGE);
+			}
+
+			// Restore Cart
+			if (!empty($finalUser->CART)) {
+				$cartArray = @unserialize($finalUser->CART);
+				if (is_array($cartArray)) {
+					$this->cart->insert($cartArray);
+				}
+			}
+			return $finalUser;
+		}
+
+		return false;
+	}
 }

@@ -354,4 +354,20 @@ $expYears = ($d->exp > 0) ? $d->exp : 8;
 </div>
 
 <?php include (APPPATH . 'views/modals/medicine_order_modals.php'); ?>
+
+<?php if (!empty($auto_book)) { ?>
+<script>
+$(document).ready(function() {
+    setTimeout(function() {
+        var bookBtn = $('.btn-book-appointment').first();
+        if (bookBtn.length) {
+            bookBtn.trigger('click');
+        } else if ($('#myModal').length) {
+            $('#myModal').modal('show');
+        }
+    }, 400);
+});
+</script>
+<?php } ?>
+
 <?php include ('includes/footer.php'); ?>
